@@ -95,17 +95,15 @@ if [ "${buildTest}" == "yes" ]; then
   ctest -L dmn
 
   # clean up build, we do not want to check in binary
-  echo "clean up build..."
+  echo "******** clean up build..."
   make clean
 
   cd ../
 fi
 
 # clang-format the source files
-echo "******** run clang-format..."
-
 if which clang-format &>/dev/null; then
-  echo "perform clang-format..."
+  echo "******** perform clang-format..."
 
   for f in `source_files`; do
     clang-format ${f} > ${f}_tmp
