@@ -64,7 +64,7 @@ function source_files
 # annoying for source files saved in visual studio kind of IDE and reopen in
 # vi.
 
-echo "Trim space and check tab at the start of lines..."
+echo "******** check for tab character..."
 
 has_invalid_tab=""
 for f in `source_files`; do
