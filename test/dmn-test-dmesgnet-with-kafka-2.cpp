@@ -1,5 +1,12 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that the Dmn_DMesgNet object can integrate with
+ * the external Dmn_Kafka objects that Dmn_DmesgPb message sent by Dmn_DMesgNet
+ * object through outbound handler of Dmn_Kafka object (as producer) can be
+ * consumed by external Dmn_kafka object serves as consumer of the same topic
+ * published through outbound handler of Dmn_kafka object (within Dmn_DMesgNet
+ * object).
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -71,7 +78,7 @@ int main(int argc, char *argv[]) {
     auto dataRead = consumer_other.read();
     if (dataRead) {
       dmesgPbRead.ParseFromString(*dataRead);
- 
+
       if (dmesgPbRead.body().sys().self().state() == Dmn::DMesgStatePb::Ready) {
         break;
       }

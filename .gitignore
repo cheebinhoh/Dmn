@@ -2,6 +2,8 @@ a.out
 *.out
 *.o 
 .*.swp
+*.pb.cc
+*.pb.h
 lib*.a
 lib*.so
 CMakeCache.txt

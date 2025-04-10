@@ -5,7 +5,7 @@
  * that joins in a virtual distrbuted messaging network that spans cross a
  * confluent.cloud via Dmn_Kafka I/O and rdkafka.
  *
- * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes 
+ * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
  * another object identifier as its neighbor.
  */
 
