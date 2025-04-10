@@ -1,5 +1,13 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that we can have two Dmn_DMesgNet objects with
+ * external Dmn_Kafka objects as its input and output handlers and join in
+ * a virtual distrbuted messaging network that spans cross a confluent.cloud
+ * via Dmn_Kafka I/O and rdkafka, aka the primitive form of Dmn_DMesgNet_Kafka.
+ *
+ * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
+ * another object identifier as its neighbor.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -136,7 +144,7 @@ int main(int argc, char *argv[]) {
             }
           }
 
-          master = mp.second;         
+          master = mp.second;
         }
 
         if (ok) {

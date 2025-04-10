@@ -12,6 +12,23 @@
 # - git commit changes
 # - git push changes
 
+buildTest=""
+commitMessage=""
+
+while [ "$1" != "" ]; do
+  case "$1" in
+    -t) 
+      buildTest="yes"
+      shift
+      ;;
+
+   -m)
+     shift
+     commitMessage="$1"
+     shift
+  esac 
+done
+
 oldpwd=$PWD
 rootdir=`dirname $0`
 if [ $rootdir != "" ]; then
@@ -63,24 +80,26 @@ if [ "$has_invalid_tab" == "yes" ]; then
 fi
 
 # test build, we do not want to check in things that break
-echo "******** run build..."
-if [ ! -d ./Build ]; then
-  mkdir ./Build
+if [ "${buildTest}" == "yes" ]; then
+  echo "******** run build..."
+  if [ ! -d ./Build ]; then
+    mkdir ./Build
+  fi
+
+  cd ./Build
+  cmake ../
+
+  make 
+
+  echo "******** run ctest..."
+  ctest -L dmn
+
+  # clean up build, we do not want to check in binary
+  echo "clean up build..."
+  make clean
+
+  cd ../
 fi
-
-cd ./Build
-cmake ../
-
-make 
-
-echo "******** run ctest..."
-ctest -L dmn
-
-# clean up build, we do not want to check in binary
-echo "clean up build..."
-make clean
-
-cd ../
 
 # clang-format the source files
 echo "******** run clang-format..."
@@ -96,14 +115,14 @@ if which clang-format &>/dev/null; then
 
     rm ${f}_tmp
   done
-fi
+fi 
 
 # git activities
 echo "******** git add, commit and push..."
 echo
 
 git add .
-git commit -m "${1:-"no comment"}"
+git commit -m "${commitMessage:-"no comment"}"
 git push origin `git branch  | grep '^*'  | sed -e 's/\*//g'` --force
 
 
