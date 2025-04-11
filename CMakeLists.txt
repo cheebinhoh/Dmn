@@ -44,7 +44,14 @@ FetchContent_MakeAvailable(rdkafka)
 
 string(REPLACE "-src" "-build" rdkafka_BUILD_DIR "${rdkafka_SOURCE_DIR}")
 set(rdkafka_INCLUDE ${rdkafka_SOURCE_DIR}/src)
-set(rdkafka_LIB ${rdkafka_BUILD_DIR}/src/librdkafka.dylib)
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    message(STATUS "Running on macOS")
+    set(rdkafka_LIB ${rdkafka_BUILD_DIR}/src/librdkafka.dylib)
+else()
+    set(rdkafka_LIB ${RDKAFKA_LDFLAGS})
+endif()
+
+
 set(CMAKE_BUILD_RPATH "${rdkafka_BUILD_DIR}/src")
 
 if(BUILD_NDEBUG)
