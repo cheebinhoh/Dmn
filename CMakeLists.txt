@@ -1,6 +1,6 @@
 # Copyright © 2025 Chee Bin HOH. All rights reserved.
 
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.26)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
@@ -48,7 +48,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "Running on macOS")
     set(rdkafka_LIB ${rdkafka_BUILD_DIR}/src/librdkafka.dylib)
 else()
-    set(rdkafka_LIB ${RDKAFKA_LDFLAGS})
+    message(STATUS "Running on none-macOS")
+    set(rdkafka_LIB ${rdkafak_BUILD_DIR}/src/librdkafka.so) 
 endif()
 
 
