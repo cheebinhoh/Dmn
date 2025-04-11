@@ -18,6 +18,7 @@
 #include <cassert>
 #include <cstring>
 #include <deque>
+#include <optional>
 #include <stdexcept>
 
 #include <pthread.h>
