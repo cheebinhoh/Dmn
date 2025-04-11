@@ -143,6 +143,7 @@ add_executable(dmn-dmesg-daemon
 target_link_libraries(dmn-dmesg-daemon
                         PRIVATE
                         dmn
+                        ${rdkafka_LIB}
 )
 
 
@@ -154,11 +155,13 @@ add_executable(dmn-kafka-receiver
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
                              dmn
+                             ${rdkafka_LIB}
 )
 
 target_link_libraries(dmn-kafka-receiver
                         PRIVATE
                         dmn
+                        ${rdkafka_LIB}
 )
 
 add_executable(dmn-kafka-sender
@@ -168,10 +171,12 @@ add_executable(dmn-kafka-sender
 target_include_directories(dmn-kafka-sender
                              PRIVATE
                              dmn
+                             ${rdkafka_LIB}
 )
 
 target_link_libraries(dmn-kafka-sender
                         PRIVATE
                         dmn
+                        ${rdkafka_LIB}
 )
 
