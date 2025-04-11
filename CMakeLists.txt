@@ -46,14 +46,15 @@ string(REPLACE "-src" "-build" rdkafka_BUILD_DIR "${rdkafka_SOURCE_DIR}")
 set(rdkafka_INCLUDE ${rdkafka_SOURCE_DIR}/src)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "Running on macOS")
-    set(rdkafka_LIB ${rdkafka_BUILD_DIR}/src/librdkafka.dylib)
+    set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib)
 else()
     message(STATUS "Running on none-macOS")
-    set(rdkafka_LIB ${rdkafak_BUILD_DIR}/src/librdkafka.so) 
+    set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so) 
 endif()
 
+message("kakfa library reference is in ${rdkafka_LIB}")
 
-set(CMAKE_BUILD_RPATH "${rdkafka_BUILD_DIR}/src")
+set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
 
 if(BUILD_NDEBUG)
   add_compile_definitions(NDEBUG)
