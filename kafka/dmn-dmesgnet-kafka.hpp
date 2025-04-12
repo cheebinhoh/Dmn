@@ -43,7 +43,17 @@ public:
    * @brief This method is a forwarding call to the Dmn_DMesgNet::openHandler().
    */
   template <class... U>
-  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> openHandler(U &&...arg);
+  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> openHandler(U &&...arg) {
+    return m_dmesgNet->openHandler(std::forward<U>(arg)...);
+  }
+
+  /**
+   * @brief This method is a forwarding call to the Dmn_DMesgNet::closeHandler().
+   */
+  template <class... U>
+  void closeHandler(U &&...arg) {
+    m_dmesgNet->closeHandler(std::forward<U>(arg)...);
+  }
 
 private:
   std::string m_name{};

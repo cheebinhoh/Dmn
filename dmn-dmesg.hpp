@@ -381,12 +381,14 @@ public:
    *        published message and returns the handler to the caller. It takes
    *        forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
-   * @param name         the name or unique identification to the handler
-   * @param filterFn     the functor callback that returns false to filter out
-   *                     DMesgPB message, if no functor is provided, no filter
-   *                     is performed
-   * @param asyncProcess the functor callback to process each notified DMesgPb
-   *                     message
+   * @param name            the name or unique identification to the handler
+   * @param includeDMesgSys True if the handler will be notified of DMesgPb
+   *                        sys message, default is false
+   * @param filterFn        the functor callback that returns false to filter
+   *                        out DMesgPB message, if no functor is provided,
+   *                        no filter is performed
+   * @param asyncProcess    the functor callback to process each notified
+   *                        DMesgPb message
    *
    * @return newly created handler
    */
@@ -408,14 +410,16 @@ public:
    *        certain published message (by topic) and returns the handler to the
    *        caller.
    *
-   * @param topics       the list of topics to be subscribed for the opened
-   *                     handler
-   * @param name         the name or unique identification to the handler
-   * @param filterFn     the functor callback that returns false to filter out
-   *                     DMesgPB message, if no functor is provided, no filter
-   *                     is performed
-   * @param asyncProcess the functor callback to process each notified DMesgPb
-   *                     message
+   * @param topics          the list of topics to be subscribed for the opened
+   *                        handler
+   * @param name            the name or unique identification to the handler
+   * @param includeDMesgSys True if the handler will be notified of DMesgPb
+   *                        sys message, default is false
+   * @param filterFn        the functor callback that returns false to filter
+   *                        out DMesgPB message, if no functor is provided,
+   *                        no filter is performed
+   * @param asyncProcess    the functor callback to process each notified
+   *                        DMesgPb message
    *
    * @return newly created handler
    */
