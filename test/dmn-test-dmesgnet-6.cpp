@@ -1,5 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This program asserts that a Dmn_DMesgNet object will self-proclaim
+ * as a master if it is started without other Dmn_DMesgNet objects
+ * and a emulated system message with other node identifier as master
+ * will not derail the Dmn_DMesgNet object notion of who is master
+ * as long as the Dmn_DMesgNet object timestamp is earlier than other.
  */
 
 #include "dmn-dmesgnet.hpp"
