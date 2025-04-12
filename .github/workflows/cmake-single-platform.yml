@@ -4,7 +4,7 @@ name: CMake on a single platform
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "release/1.0.0", "feature/development-1.0.0" ]
   pull_request:
     types: [opened, synchronize, reopened]
 
