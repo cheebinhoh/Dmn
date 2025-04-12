@@ -25,7 +25,7 @@
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  
+
   char *dirpath = dirname(argv[0]);
   std::vector<std::string> files{std::string(dirpath) + "/teepipe-test-data-1.txt",
                                  std::string(dirpath) + "/teepipe-test-data-2.txt"};

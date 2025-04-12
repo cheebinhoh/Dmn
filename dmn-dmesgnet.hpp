@@ -480,4 +480,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* DMN_DMESGNET_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_DMESGNET_HPP_HAVE_SEEN */

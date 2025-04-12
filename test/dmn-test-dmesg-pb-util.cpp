@@ -12,8 +12,8 @@
 int main(int argc, char *argv[])
 {
   ::testing::InitGoogleTest(&argc, argv);
-  struct timeval tv;                                                                
-  gettimeofday(&tv, NULL);     
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
 
   Dmn::DMesgPb dmesgPb{};
 

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
       auto data = readSocket2->read();
       if (data) {
         Dmn::DMesgPb dmesgPbRead{};
-      
+
         dmesgPbRead.ParseFromString(*data);
         dmesgPbLast = dmesgPbRead;
         std::cout << "DMesgPb: " << dmesgPbRead.ShortDebugString() << "\n";
