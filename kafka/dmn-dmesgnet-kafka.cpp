@@ -44,10 +44,4 @@ Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {
   return;
 }
 
-template <class... U>
-std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
-Dmn_DMesgNet_Kafka::openHandler(U &&...arg) {
-  return m_dmesgNet->openHandler(std::forward<U>(arg)...);
-}
-
 } /* End of namespace Dmn */
