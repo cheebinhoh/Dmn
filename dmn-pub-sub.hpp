@@ -48,10 +48,10 @@ public:
       return;
     }
 
-    Dmn_Sub(const Dmn_Sub &dmnSub) = delete;
-    const Dmn_Sub &operator=(const Dmn_Sub &dmnSub) = delete;
-    Dmn_Sub(Dmn_Sub &&dmnSub) = delete;
-    Dmn_Sub &operator=(Dmn_Sub &&dmnSub) = delete;
+    Dmn_Sub(const Dmn_Sub &obj) = delete;
+    const Dmn_Sub &operator=(const Dmn_Sub &obj) = delete;
+    Dmn_Sub(Dmn_Sub &&obj) = delete;
+    Dmn_Sub &operator=(Dmn_Sub &&obj) = delete;
 
     /**
      * @brief The method notifies the subscriber of the data item from
@@ -101,10 +101,10 @@ public:
     return;
   }
 
-  Dmn_Pub(const Dmn_Pub &dmnPub) = delete;
-  const Dmn_Pub &operator=(const Dmn_Pub &dmnPub) = delete;
-  Dmn_Pub(Dmn_Pub &&dmnPub) = delete;
-  Dmn_Pub &operator=(Dmn_Pub &&dmnPub) = delete;
+  Dmn_Pub(const Dmn_Pub &obj) = delete;
+  const Dmn_Pub &operator=(const Dmn_Pub &obj) = delete;
+  Dmn_Pub(Dmn_Pub &&obj) = delete;
+  Dmn_Pub &operator=(Dmn_Pub &&obj) = delete;
 
   /**
    * @brief The method copies the item and publish it to all subscribers. The
@@ -141,19 +141,21 @@ public:
     m_subscribers.push_back(sub);
     sub->m_pub = this;
 
-    // resend the data items that the registered subscriber
-    // miss.
-    if (m_next > m_first) {
-      for (std::size_t n = m_first; n < m_next; n++) {
-        sub->notifyInternal(m_buffer[n]);
-      }
-    } else if (m_first > 0) {
-      for (std::size_t n = m_first; n < m_capacity; n++) {
-        sub->notifyInternal(m_buffer[n]);
-      }
+    if (m_capacity > 0) {
+      // resend the data items that the registered subscriber
+      // miss.
+      if (m_next > m_first) {
+        for (std::size_t n = m_first; n < m_next; n++) {
+          sub->notifyInternal(m_buffer[n]);
+        }
+      } else if (m_first > 0) {
+        for (std::size_t n = m_first; n < m_capacity; n++) {
+          sub->notifyInternal(m_buffer[n]);
+        }
 
-      for (std::size_t n = 0; n < m_first; n++) {
-        sub->notifyInternal(m_buffer[n]);
+        for (std::size_t n = 0; n < m_first; n++) {
+          sub->notifyInternal(m_buffer[n]);
+        }
       }
     }
   }
@@ -205,19 +207,21 @@ protected:
      */
     std::lock_guard<std::mutex> lck(m_subscribersLock);
 
-    /* Keep the published item in circular ring buffer for
-     * efficient access to playback to new subscribers whose misses the
-     * data.
-     */
-    if (m_next >= m_capacity) {
-      m_next = 0;
-      m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
-    } else if (m_first > 0 && m_next >= m_first) {
-      m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
-    }
+    if (m_capacity > 0) {
+      /* Keep the published item in circular ring buffer for
+       * efficient access to playback to new subscribers whose misses the
+       * data.
+       */
+      if (m_next >= m_capacity) {
+        m_next = 0;
+        m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
+      } else if (m_first > 0 && m_next >= m_first) {
+        m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
+      }
 
-    m_buffer[m_next] = item;
-    m_next++;
+      m_buffer[m_next] = item;
+      m_next++;
+    }
 
     for (auto &sub : m_subscribers) {
       if (!m_filterFn || m_filterFn(sub, item)) {

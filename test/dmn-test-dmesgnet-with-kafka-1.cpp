@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * This test program asserts that the Dmn_DMesgNet object can be constructed
- * with the external Dmn_Kafka objects as its input and output handler and 
+ * with the external Dmn_Kafka objects as its input and output handler and
  * perform object teardown without problem.
  */
 

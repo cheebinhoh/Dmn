@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that the Dmn_DMesg class support
+ * that one publisher and two subscribers work.
  */
 
 #include "dmn-dmesg.hpp"
@@ -14,7 +17,7 @@ int main(int argc, char *argv[])
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
-  
+
   auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
   EXPECT_TRUE(dmesgWriteHandler);
 
@@ -83,6 +86,6 @@ int main(int argc, char *argv[])
   dmesg.closeHandler(dmesgWriteHandler);
   dmesg.closeHandler(dmesgReadHandler1);
   dmesg.closeHandler(dmesgReadHandler2);
- 
+
   return RUN_ALL_TESTS();
 }

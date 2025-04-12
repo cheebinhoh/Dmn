@@ -12,7 +12,7 @@
 int main(int argc, char *argv[])
 {
   ::testing::InitGoogleTest(&argc, argv);
- 
+
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("id1");
   dmesgPb.set_runningcounter(99);

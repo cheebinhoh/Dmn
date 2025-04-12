@@ -49,12 +49,12 @@ int main(int argc, char *argv[])
 
                                gettimeofday(&tv, NULL);
 
-                               DMESG_PB_SET_MSG_TOPIC(sys, "sys.dmn-dmesg");                          
+                               DMESG_PB_SET_MSG_TOPIC(sys, "sys.dmn-dmesg");
                                DMESG_PB_SET_MSG_TYPE(sys, Dmn::DMesgTypePb::sys);
                                DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV(sys, tv);
                                DMESG_PB_SET_MSG_SOURCEIDENTIFIER(sys, "dmesg-4");
 
-                               auto *self = sys.mutable_body()->mutable_sys()->mutable_self();          
+                               auto *self = sys.mutable_body()->mutable_sys()->mutable_self();
                                DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV(self, tv);
                                DMESG_PB_SYS_NODE_SET_IDENTIFIER(self, "dmesg-4");
                                DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Ready);
@@ -63,9 +63,9 @@ int main(int argc, char *argv[])
                                for (long long n = 0; n < 30; n++) {
                                  DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
                                  std::string serialized_string{};
-            
+
                                  sys.SerializeToString(&serialized_string);
-        
+
                                  writeSocket1->write(serialized_string);
                                  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

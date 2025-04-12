@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
   auto dmesgHandler = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler);
- 
+
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
   dmesgPb.set_type(Dmn::DMesgTypePb::message);
@@ -57,6 +57,6 @@ int main(int argc, char *argv[])
   EXPECT_TRUE(dmesgPbRead.type() == dmesgPb.type());
   EXPECT_TRUE(dmesgPbRead.sourceidentifier() == "dmesg2"); // the source is the local DmesgNet agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
- 
+
   return RUN_ALL_TESTS();
 }

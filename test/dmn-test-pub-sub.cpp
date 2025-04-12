@@ -1,5 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that the Dmn_Pub and Dmn_Pub::Sub model.
  */
 
 #include "dmn-pub-sub.hpp"
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
 
 
   Dmn::Dmn_Pub<std::string> pub{"radio", 2, [](const Dmn::Dmn_Pub<std::string>::Dmn_Sub *const sub,
-                                          const std::string &data) -> bool 
+                                          const std::string &data) -> bool
                                           {
  					    auto *msgReceiver = dynamic_cast<const Dmn_Msg_Receiver * const>(sub);
 

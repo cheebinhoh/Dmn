@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
   bool timerRun{};
   Dmn::Dmn_Timer timer{std::chrono::seconds(5),
                   [&timerRun]() {
-                    timerRun = true; 
-                    std::cout << "timer is run\n"; 
+                    timerRun = true;
+                    std::cout << "timer is run\n";
                   }};
 
   EXPECT_TRUE(!timerRun);
