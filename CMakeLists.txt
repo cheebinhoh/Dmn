@@ -49,7 +49,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib)
 else()
     message(STATUS "Running on none-macOS")
-    set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so) 
+    set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so)
 endif()
 
 message("kakfa library reference is in ${rdkafka_LIB}")

@@ -1,5 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test programs asserts that the Dmn_DMesgNet object does
+ * send out sys message and self-proclaim as a master node by
+ * set up another Dmn_Socket that receives data at the particular
+ * ip and port that the Dmn_DMesgNet object send out message through
+ * its outbound Dmn_Io object.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -23,7 +29,7 @@ int main(int argc, char *argv[])
       auto data = readSocket2->read();
       if (data) {
         Dmn::DMesgPb dmesgPbRead{};
-      
+
         dmesgPbRead.ParseFromString(*data);
         dmesgPbLast = dmesgPbRead;
         std::cout << "DMesgPb: " << dmesgPbRead.ShortDebugString() << "\n";

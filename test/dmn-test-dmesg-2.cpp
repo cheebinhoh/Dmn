@@ -1,5 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that the Dmn_DMesg class support
+ * that one publisher and one subscriber are able to continuing
+ * read and write multiple messages between them.
  */
 
 #include "dmn-dmesg.hpp"
@@ -15,7 +19,7 @@ int main(int argc, char *argv[])
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
-  
+
   auto dmesgHandler1 = dmesg.openHandler("handler1");
   EXPECT_TRUE(dmesgHandler1);
 
@@ -40,11 +44,11 @@ int main(int argc, char *argv[])
 
       std::stringstream is{dmesgPb->body().message()};
       int val{};
-      
+
       is >> val;
       EXPECT_TRUE(!is.fail());
       EXPECT_TRUE(val == valCheck);
-   
+
       val++;
 
       std::stringstream os;
@@ -58,7 +62,7 @@ int main(int argc, char *argv[])
       dmsgbodyPbRet->set_message(os.str());
 
       dmesgHandler1->write(dmesgPbRet);
- 
+
       valCheck += 2;
     }
   }};
@@ -102,7 +106,7 @@ int main(int argc, char *argv[])
 
       std::stringstream is{dmesgPbRet->body().message()};
       is >> valRet;
- 
+
       EXPECT_TRUE(valRet == (val + 1));
       val += 2;
     }
@@ -116,6 +120,6 @@ int main(int argc, char *argv[])
 
   dmesg.closeHandler(dmesgHandler1);
   dmesg.closeHandler(dmesgHandler2);
- 
+
   return RUN_ALL_TESTS();
 }

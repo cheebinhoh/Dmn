@@ -370,6 +370,7 @@ protected:
       this->m_sysHandler->write(this->m_sys);
     } else if (self->state() == Dmn::DMesgStatePb::Ready) {
       assert("" != self->masteridentifier());
+      assert(0 == this->m_masterPendingCounter);
 
       if (other.identifier() == self->masteridentifier()) {
         if (other.state() == Dmn::DMesgStatePb::Ready) {
@@ -386,7 +387,7 @@ protected:
 
           DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
 
-          this->m_lastRemoteMasterTimestamp = tv;
+          this->m_lastRemoteMasterTimestamp = {};
           this->m_masterPendingCounter = 0;
           this->m_masterSyncPendingCounter = 0;
           this->m_sysHandler->write(this->m_sys);
@@ -480,4 +481,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* DMN_DMESGNET_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_DMESGNET_HPP_HAVE_SEEN */

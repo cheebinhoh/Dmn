@@ -1,5 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test programs asserts that two Dmn_DMesgNet objects can
+ * one send message through a Dmn_Socket at a particular ip and port
+ * and another one receive sent message through another Dmn_Socket
+ * at the same ip and port.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -40,7 +45,7 @@ int main(int argc, char *argv[])
 
   auto dmesgHandler = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler);
- 
+
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
   dmesgPb.set_type(Dmn::DMesgTypePb::message);
@@ -57,6 +62,6 @@ int main(int argc, char *argv[])
   EXPECT_TRUE(dmesgPbRead.type() == dmesgPb.type());
   EXPECT_TRUE(dmesgPbRead.sourceidentifier() == "dmesg2"); // the source is the local DmesgNet agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
- 
+
   return RUN_ALL_TESTS();
 }

@@ -1,5 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that two subscribers of the same
+ * Dmn_DMesg object will receive the same DMesgPb message
+ * published by publisher of the Dmn_DMesg object.
  */
 
 #include "dmn-dmesg.hpp"
@@ -29,12 +33,12 @@ int main(int argc, char *argv[])
                                          [&data2](Dmn::DMesgPb dmesgPb) {
                                            data2 = dmesgPb.body().message();
                                          });
- 
+
   EXPECT_TRUE(dmesgHandler2);
 
   auto dmesgHandler3 = dmesg.openHandler("handler3", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler3);
- 
+
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
   dmesgPb.set_type(Dmn::DMesgTypePb::message);
@@ -46,7 +50,7 @@ int main(int argc, char *argv[])
   dmesgHandler3->write(dmesgPb);
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
- 
+
   std::cout << "after wait for data to sync\n";
 
   dmesg.waitForEmpty();
@@ -59,6 +63,6 @@ int main(int argc, char *argv[])
 
   EXPECT_TRUE(data == data1);
   EXPECT_TRUE(data == data2);
- 
+
   return RUN_ALL_TESTS();
 }

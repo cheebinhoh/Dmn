@@ -1,5 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that when two Dmn_DMesgNet objects
+ * are existence at the same time, the first created object
+ * is the master, and when the first object exits, the 2nd object
+ * becomes master.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -39,7 +44,7 @@ int main(int argc, char *argv[])
   std::this_thread::sleep_for(std::chrono::seconds(3));
   Dmn::Dmn_Proc dmesg_4_Proc{"dmesg_4_Proc",
                              [&sysPb_4]() mutable {
-                               std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket1 = 
+                               std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
                                  std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000);
                                std::shared_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
                                  std::make_shared<Dmn::Dmn_Socket>("127.0.0.1",
@@ -70,11 +75,10 @@ int main(int argc, char *argv[])
 
   listenHandler3 = {};
   dmesgnet1 = {};
-  
+
   dmesg_4_Proc.wait();
   EXPECT_TRUE(sysPb_4.body().sys().self().identifier() == "dmesg-4");
   EXPECT_TRUE(sysPb_4.body().sys().self().masteridentifier() == "dmesg-4");
-
 
   return RUN_ALL_TESTS();
 }

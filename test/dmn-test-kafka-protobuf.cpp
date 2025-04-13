@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     if (!dataRead) {
       break; // no data
     }
-  
+
     std::cout << "skip data\n";
   }
 

@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that the subscriber can subscribe to
+ * certain topic of the Dmn_DMesg object.
  */
 
 #include "dmn-dmesg.hpp"
