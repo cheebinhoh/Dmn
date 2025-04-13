@@ -13,7 +13,7 @@
  *   subscribes to a specific set of topic (optional, or all topics), and can
  *   use to handler to publish and subscribe Dmn::DMesgPb message through the
  *   Dmn_Io like interface' read and write API methods, so instead of
- *   inherittence frin Dmn_DMesg, clients can use object composition with it.
+ *   inherittence from Dmn_DMesg, clients can use object composition with it.
  * - it supports the concept that subscriber can subscribe to certain topic
  *   as defined in the Dmn::DMesgPb message.
  * - it allows various clients of the Dmn_Dmesg to publish data of certain
@@ -55,6 +55,12 @@ class Dmn_DMesg : public Dmn_Pub<Dmn::DMesgPb> {
 public:
   using FilterTask = std::function<bool(const Dmn::DMesgPb &)>;
   using AsyncProcessTask = std::function<void(Dmn::DMesgPb)>;
+
+  /**
+   * @brief The key (std::string) and value (std::string) for Dmn_DMesg
+   *        configuration.
+   */
+  using KeyValueConfiguration = std::map<std::string, std::string>;
 
   /**
    * @brief The Dmn_DMesgHandler is intentionalled modelled to inherit from
@@ -367,8 +373,8 @@ public:
    *
    * @param name The identification name for the instantiated object
    */
-  Dmn_DMesg(std::string_view name)
-      : Dmn_Pub{name, 0, // Dmn_DMesg does not store prior message.
+  Dmn_DMesg(std::string_view name, KeyValueConfiguration config = {})
+      : Dmn_Pub{name, 0, // Dmn_DMesg handles re-send per topic
                 [this](const Dmn_Sub *const sub, const Dmn::DMesgPb &msg) {
                   const Dmn_DMesgHandler::Dmn_DMesgHandlerSub
                       *const handlerSub = dynamic_cast<
@@ -384,7 +390,7 @@ public:
                                    msg.topic()) !=
                              handler->m_subscribedTopics.end();
                 }},
-        m_name{name} {}
+        m_name{name}, m_config{config} {}
 
   virtual ~Dmn_DMesg() noexcept try {
     for (auto &handler : m_handlers) {
@@ -425,6 +431,9 @@ public:
     m_handlers.push_back(handler);
     handler->m_owner = this;
     this->registerSubscriber(&(handler->m_sub));
+
+    DMN_ASYNC_CALL_WITH_CAPTURE({ this->playbackLastTopicDMesgPbInternal(); },
+                                this);
 
     return handlerRet;
   }
@@ -519,29 +528,37 @@ protected:
    * @param dmesgPb The dmesgPb to be published
    */
   void publishInternal(Dmn::DMesgPb dmesgPb) override {
-    std::string id = dmesgPb.topic();
+    // for message that is playback, we skip the check if it is conflict as
+    // only openHandler with lower running counter will read those message.
+    if (dmesgPb.playback()) {
+      Dmn_Pub::publishInternal(dmesgPb);
+    } else {
+      std::string id = dmesgPb.topic();
 
-    long long nextRunningCounter = incrementByOne(m_topicRunningCounter[id]);
+      long long nextRunningCounter = incrementByOne(m_topicRunningCounter[id]);
 
-    std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
-        m_handlers.begin(), m_handlers.end(), [&dmesgPb](auto handler) {
-          return handler->m_name == dmesgPb.sourceidentifier();
-        });
+      std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
+          std::find_if(m_handlers.begin(), m_handlers.end(),
+                       [&dmesgPb](auto handler) {
+                         return handler->m_name == dmesgPb.sourceidentifier();
+                       });
 
-    if (it != m_handlers.end() && (*it)->isInConflict()) {
-      // avoid throw conflict multiple times
-      return;
-    } else if (dmesgPb.runningcounter() < nextRunningCounter) {
-      if (it != m_handlers.end()) {
-        (*it)->throwConflict(dmesgPb);
-
+      if (it != m_handlers.end() && (*it)->isInConflict()) {
+        // avoid throw conflict multiple times
         return;
-      }
-    }
+      } else if (dmesgPb.runningcounter() < nextRunningCounter) {
+        if (it != m_handlers.end()) {
+          (*it)->throwConflict(dmesgPb);
 
-    DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgPb, nextRunningCounter);
-    Dmn_Pub::publishInternal(dmesgPb);
-    m_topicRunningCounter[id] = nextRunningCounter;
+          return;
+        }
+      }
+
+      DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgPb, nextRunningCounter);
+      Dmn_Pub::publishInternal(dmesgPb);
+      m_topicRunningCounter[id] = nextRunningCounter;
+      m_topicLastDMesgPb[id] = dmesgPb;
+    }
   }
 
   /**
@@ -557,6 +574,19 @@ protected:
   }
 
 private:
+  /**
+   * @brief The internal method is to be called in the publisher's singleton
+   *        asynchronous thread context to playback last message of each topic.
+   */
+  void playbackLastTopicDMesgPbInternal() {
+    for (auto &topicDmesgPb : m_topicLastDMesgPb) {
+      Dmn::DMesgPb pb = topicDmesgPb.second;
+
+      pb.set_playback(true);
+      this->publishInternal(pb);
+    }
+  }
+
   /**
    * @brief The method resets the handler conflict state, it must be called
    *        within the publisher' singleton asynchronous thread context to be
@@ -579,12 +609,14 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
+  KeyValueConfiguration m_config{};
 
   /**
    * data members for internal logic.
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
   std::map<std::string, long long> m_topicRunningCounter{};
+  std::map<std::string, Dmn::DMesgPb> m_topicLastDMesgPb{};
 }; /* End of class Dmn_DMesg */
 
 } /* End of namespace Dmn */
