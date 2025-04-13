@@ -1,5 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that two Dmn_DMesgNet objects that
+ * participates in the same network through its inbound and outbound
+ * Dmn_Io objects are sync in their sys message and agree on the
+ * master node through the Dmn_DMesgNet algorithm.
  */
 
 #include "dmn-dmesgnet.hpp"
