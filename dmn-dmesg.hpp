@@ -544,7 +544,8 @@ protected:
       std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
           std::find_if(m_handlers.begin(), m_handlers.end(),
                        [&dmesgPb](auto handler) {
-                         return handler->m_name == dmesgPb.sourcewritehandleridentifier();
+                         return handler->m_name ==
+                                dmesgPb.sourcewritehandleridentifier();
                        });
 
       if (it != m_handlers.end() && (*it)->isInConflict()) {

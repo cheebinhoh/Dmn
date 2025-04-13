@@ -159,7 +159,8 @@ public:
                   //
                   // This is point we check if outgoing is in conflict
                   // for the message stream with the identifier.
-                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite, this->m_name);
+                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite,
+                                                                this->m_name);
                   dmesgPbWrite.SerializeToString(&serialized_string);
                   m_outputHandler->write(serialized_string);
 
@@ -285,21 +286,23 @@ public:
 
               this->m_sysHandler->write(this->m_sys);
 
-              bool master = this->m_sys.body().sys().self().masteridentifier() ==
-                            this->m_sys.body().sys().self().identifier();
+              bool master =
+                  this->m_sys.body().sys().self().masteridentifier() ==
+                  this->m_sys.body().sys().self().identifier();
 
-              // if self is a master, and it is becoming master or # of neighbor increase,
-              // let resend prior last message per topic.
+              // if self is a master, and it is becoming master or # of neighbor
+              // increase, let resend prior last message per topic.
               // FIXME: maybe it is good that master resend them prioritically?
-              if (m_outputHandler &&
-                  master &&
+              if (m_outputHandler && master &&
                   ((master != m_isMaster) ||
-                  (m_numberOfNeighbor != this->m_sys.body().sys().nodelist().size()))) {
-                for (auto & topicDmesgPb : m_topicLastDMesgPb) {
+                   (m_numberOfNeighbor !=
+                    this->m_sys.body().sys().nodelist().size()))) {
+                for (auto &topicDmesgPb : m_topicLastDMesgPb) {
                   Dmn::DMesgPb pb = topicDmesgPb.second;
 
                   DMESG_PB_SET_MSG_PLAYBACK(pb, true);
-                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, this->m_name);
+                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb,
+                                                                this->m_name);
 
                   std::string serialized_string{};
                   pb.SerializeToString(&serialized_string);
