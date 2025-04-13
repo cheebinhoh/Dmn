@@ -143,7 +143,7 @@ public:
         m_name,
         true, // include DMesgSys!
         [this](const Dmn::DMesgPb &dmesgPb) {
-          return dmesgPb.sourceidentifier() != this->m_name;
+          return dmesgPb.sourcewritehandleridentifier() != this->m_name;
         },
         [this](Dmn::DMesgPb dmesgPbWrite) mutable {
           if (m_outputHandler) {
@@ -159,10 +159,13 @@ public:
                   //
                   // This is point we check if outgoing is in conflict
                   // for the message stream with the identifier.
-                  DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgPbWrite, this->m_name);
+                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite, this->m_name);
                   dmesgPbWrite.SerializeToString(&serialized_string);
-
                   m_outputHandler->write(serialized_string);
+
+                  if (dmesgPbWrite.type() != Dmn::DMesgTypePb::sys) {
+                    m_topicLastDMesgPb[dmesgPbWrite.topic()] = dmesgPbWrite;
+                  }
                 },
                 this, dmesgPbWrite);
           }
@@ -176,7 +179,7 @@ public:
           auto data = this->m_inputHandler->read();
           if (data) {
             dmesgPbRead.ParseFromString(*data);
-            if (dmesgPbRead.sourceidentifier() != this->m_name) {
+            if (dmesgPbRead.sourcewritehandleridentifier() != this->m_name) {
               // this is important to prevent that the
               // m_subscriptHandler of this DMesgNet from
               // reading this message again and send out.
@@ -184,10 +187,6 @@ public:
               // the Dmn_DMesgHandler->write will add the name
               // of the Dmn_DMesgHandler from read it again,
               // but it is good to be explicit.
-              //
-              // FIXME: the source is now used by both application
-              // and the DMesg protocol level, maybe we should
-              // separate the namespace of source.
 
               if (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
@@ -196,10 +195,12 @@ public:
               } else {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     {
-                      dmesgPbRead.set_sourceidentifier(this->m_name);
-
                       try {
                         this->m_subscriptHandler->write(dmesgPbRead);
+
+                        if (dmesgPbRead.type() != Dmn::DMesgTypePb::sys) {
+                          m_topicLastDMesgPb[dmesgPbRead.topic()] = dmesgPbRead;
+                        }
                       } catch (...) {
                         // The data from network is out of sync with data
                         // in the Dmn_DMesg, and a few should happen:
@@ -283,6 +284,31 @@ public:
               }
 
               this->m_sysHandler->write(this->m_sys);
+
+              bool master = this->m_sys.body().sys().self().masteridentifier() ==
+                            this->m_sys.body().sys().self().identifier();
+
+              // if self is a master, and it is becoming master or # of neighbor increase,
+              // let resend prior last message per topic.
+              // FIXME: maybe it is good that master resend them prioritically?
+              if (m_outputHandler &&
+                  master &&
+                  ((master != m_isMaster) ||
+                  (m_numberOfNeighbor != this->m_sys.body().sys().nodelist().size()))) {
+                for (auto & topicDmesgPb : m_topicLastDMesgPb) {
+                  Dmn::DMesgPb pb = topicDmesgPb.second;
+
+                  DMESG_PB_SET_MSG_PLAYBACK(pb, true);
+                  DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, this->m_name);
+
+                  std::string serialized_string{};
+                  pb.SerializeToString(&serialized_string);
+                  m_outputHandler->write(serialized_string);
+                }
+              }
+
+              m_numberOfNeighbor = this->m_sys.body().sys().nodelist().size();
+              m_isMaster = master;
             });
           });
     } else {
@@ -317,6 +343,7 @@ public:
       gettimeofday(&tv, NULL);
 
       DMESG_PB_SET_MSG_SOURCEIDENTIFIER(this->m_sys, this->m_name);
+      DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(this->m_sys, this->m_name);
 
       auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
@@ -477,6 +504,10 @@ private:
   long long m_masterPendingCounter{};
   long long m_masterSyncPendingCounter{};
   struct timeval m_lastRemoteMasterTimestamp {};
+  std::map<std::string, Dmn::DMesgPb> m_topicLastDMesgPb{};
+
+  bool m_isMaster{};
+  long long m_numberOfNeighbor{};
 }; /* End of class Dmn_DMesgNet */
 
 } /* End of namespace Dmn */

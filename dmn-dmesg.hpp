@@ -114,7 +114,7 @@ public:
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
       void notify(Dmn::DMesgPb dmesgPb) override {
-        if (dmesgPb.sourceidentifier() != m_owner->m_name ||
+        if (dmesgPb.sourcewritehandleridentifier() != m_owner->m_name ||
             dmesgPb.type() == Dmn::DMesgTypePb::sys) {
           std::string id = dmesgPb.topic();
           long long runningCounter = m_owner->m_topicRunningCounter[id];
@@ -301,8 +301,12 @@ public:
           incrementByOne(m_topicRunningCounter[topic]);
 
       DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgPb, tv);
-      DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgPb, m_name);
+      DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPb, m_name);
       DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgPb, nextRunningCounter);
+
+      if ("" == dmesgPb.sourceidentifier()) {
+        DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgPb, m_name);
+      }
 
       if (move) {
         m_owner->publish(std::move_if_noexcept(dmesgPb));
@@ -540,7 +544,7 @@ protected:
       std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
           std::find_if(m_handlers.begin(), m_handlers.end(),
                        [&dmesgPb](auto handler) {
-                         return handler->m_name == dmesgPb.sourceidentifier();
+                         return handler->m_name == dmesgPb.sourcewritehandleridentifier();
                        });
 
       if (it != m_handlers.end() && (*it)->isInConflict()) {
@@ -582,7 +586,8 @@ private:
     for (auto &topicDmesgPb : m_topicLastDMesgPb) {
       Dmn::DMesgPb pb = topicDmesgPb.second;
 
-      pb.set_playback(true);
+      DMESG_PB_SET_MSG_PLAYBACK(pb, true);
+
       this->publishInternal(pb);
     }
   }

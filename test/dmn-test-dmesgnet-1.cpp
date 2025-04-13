@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
   dmesgPb.set_type(Dmn::DMesgTypePb::message);
-
+  dmesgPb.set_sourceidentifier("writehandler");
   std::string data{"Hello dmesg async"};
   Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
   dmsgbodyPb->set_message(data);
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
   std::string source = dmesgPbRead.sourceidentifier();
   EXPECT_TRUE(dmesgPbRead.type() == dmesgPb.type());
-  EXPECT_TRUE(dmesgPbRead.sourceidentifier() == "dmesg2"); // the source is the local DmesgNet agent that read
+  EXPECT_TRUE(dmesgPbRead.sourceidentifier() == dmesgPb.sourceidentifier()); // the source is the local DmesgNet agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
 
   return RUN_ALL_TESTS();
