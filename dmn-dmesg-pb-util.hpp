@@ -37,7 +37,12 @@
 #define DMESG_PB_SET_MSG_SOURCEIDENTIFIER(pb, val)                             \
   ((pb).set_sourceidentifier((val)))
 
+#define DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, val)                 \
+  ((pb).set_sourcewritehandleridentifier((val)))
+
 #define DMESG_PB_SET_MSG_TYPE(pb, val) ((pb).set_type((val)))
+
+#define DMESG_PB_SET_MSG_PLAYBACK(pb, val) ((pb).set_playback((val)))
 
 /**
  * DMesgPb message body message setters
