@@ -1,5 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * This test program asserts that Dmn_DMesgNet object will self
+ * proclaim as the master node if no Dmn_DMesgNet object in its
+ * network, and when the object is destroyed, it will relinquish
+ * its master node status and inform others that it is in destroyed
+ * state in its last heartbeat message.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -23,7 +29,7 @@ int main(int argc, char *argv[])
       auto data = readSocket2->read();
       if (data) {
         Dmn::DMesgPb dmesgPbRead{};
-      
+
         dmesgPbRead.ParseFromString(*data);
         dmesgPbLast = dmesgPbRead;
         std::cout << "DMesgPb: " << dmesgPbRead.ShortDebugString() << "\n";
