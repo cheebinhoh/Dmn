@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
                                                                                             true);
 
   Dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", readSocket2, writeSocket2};
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-
   auto writeHandler = dmesgnet2.openHandler("dmesg-2-handler", false, nullptr, nullptr);
 
   Dmn::DMesgPb dmesgPb2{};
