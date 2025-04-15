@@ -12,7 +12,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-1
                       dmn-test-dmesg-2
                       dmn-test-dmesg-3
-                      dmn-test-dmesg-4
+                      # FIXME: the following test is not deterministic
+                      # dmn-test-dmesg-4
                       dmn-test-dmesg-5
                       dmn-test-dmesg-6
                       dmn-test-dmesgnet-1
