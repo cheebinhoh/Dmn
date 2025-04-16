@@ -190,6 +190,7 @@ public:
     }
 
     ~Dmn_DMesgHandler() noexcept try {
+      m_sub.waitForEmpty();
     } catch (...) {
       // explicit return to resolve exception as destructor must be noexcept
       return;
@@ -267,8 +268,6 @@ public:
     }
 
     void waitForEmpty() {
-      assert(nullptr != m_owner);
-
       m_sub.waitForEmpty();
     }
 
@@ -397,9 +396,7 @@ public:
         m_name{name}, m_config{config} {}
 
   virtual ~Dmn_DMesg() noexcept try {
-    for (auto &handler : m_handlers) {
-      this->unregisterSubscriber(&(handler->m_sub));
-    }
+    this->waitForEmpty();
   } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
@@ -486,9 +483,12 @@ public:
    */
   void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose) {
     this->unregisterSubscriber(&(handlerToClose->m_sub));
+    handlerToClose->waitForEmpty();
     handlerToClose->m_owner = nullptr;
 
     std::string handlerName = handlerToClose->m_name;
+    handlerToClose = {};
+
     DMN_ASYNC_CALL_WITH_CAPTURE(
         {
           std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
@@ -502,8 +502,6 @@ public:
         },
         this,
         handlerName);
-
-    handlerToClose = {};
   }
 
 protected:

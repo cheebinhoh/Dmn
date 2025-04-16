@@ -359,15 +359,17 @@ public:
 
       m_outputHandler->write(serialized_string);
     }
+
+    this->waitForEmpty();
   } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
   }
 
-  Dmn_DMesgNet(const Dmn_DMesgNet &dmnDMesgNet) = delete;
-  const Dmn_DMesgNet &operator=(const Dmn_DMesgNet &dmnDMesgNet) = delete;
-  Dmn_DMesgNet(Dmn_DMesgNet &&dmnDMesgNet) = delete;
-  Dmn_DMesgNet &operator=(Dmn_DMesgNet &&dmnDMesgNet) = delete;
+  Dmn_DMesgNet(const Dmn_DMesgNet &obj) = delete;
+  const Dmn_DMesgNet &operator=(const Dmn_DMesgNet &obj) = delete;
+  Dmn_DMesgNet(Dmn_DMesgNet &&obj) = delete;
+  Dmn_DMesgNet &operator=(Dmn_DMesgNet &&obj) = delete;
 
 protected:
   /**

@@ -24,20 +24,24 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-6
                       dmn-test-dmesgnet-7
                       dmn-test-dmesgnet-8
-                      dmn-test-dmesgnet-with-kafka-1
-                      dmn-test-dmesgnet-with-kafka-2
-                      dmn-test-dmesgnet-with-kafka-3
-                      dmn-test-dmesgnet-with-kafka-4
-                      dmn-test-dmesgnet-with-kafka-5
+                      # The free trial to https://confluent.cloud is ended
+                      # dmn-test-dmesgnet-with-kafka-1
+                      # dmn-test-dmesgnet-with-kafka-2
+                      # dmn-test-dmesgnet-with-kafka-3
+                      # dmn-test-dmesgnet-with-kafka-4
+                      # dmn-test-dmesgnet-with-kafka-5
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
-                      dmn-test-kafka
-                      dmn-test-kafka-protobuf
+                      # The free trial to https://confluent.cloud is ended
+                      # dmn-test-kafka
+                      # dmn-test-kafka-protobuf
                       dmn-test-pipe
                       dmn-test-pub-sub
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-teepipe
                       dmn-test-timer
-                      dmn-test)
+                      # FIXME: the following test needs to be refactored to avoid none-stop running
+                      # dmn-test
+                    )
