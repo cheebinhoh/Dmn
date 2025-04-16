@@ -138,8 +138,8 @@ public:
            "The subscriber has been registered with another publisher");
 
     std::lock_guard<std::mutex> lck(m_subscribersLock);
-    m_subscribers.push_back(sub);
     sub->m_pub = this;
+    m_subscribers.push_back(sub);
 
     if (m_capacity > 0) {
       // resend the data items that the registered subscriber
