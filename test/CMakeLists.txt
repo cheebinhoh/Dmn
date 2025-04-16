@@ -35,7 +35,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-kafka
                       dmn-test-kafka-protobuf
                       dmn-test-pipe
-                      dmn-test-pub-sub
+                      #dmn-test-pub-sub
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-teepipe

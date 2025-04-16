@@ -432,12 +432,15 @@ public:
         std::make_shared<Dmn_DMesgHandler>(std::forward<U>(arg)...);
     auto handlerRet = handler;
 
-    m_handlers.push_back(handler);
     handler->m_owner = this;
     this->registerSubscriber(&(handler->m_sub));
 
-    DMN_ASYNC_CALL_WITH_CAPTURE({ this->playbackLastTopicDMesgPbInternal(); },
-                                this);
+    DMN_ASYNC_CALL_WITH_CAPTURE({
+                                  this->m_handlers.push_back(handler);
+                                  this->playbackLastTopicDMesgPbInternal();
+                                },
+                                this,
+                                handler);
 
     return handlerRet;
   }
@@ -483,17 +486,23 @@ public:
    */
   void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose) {
     this->unregisterSubscriber(&(handlerToClose->m_sub));
-
-    std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
-        m_handlers.begin(), m_handlers.end(), [handlerToClose](auto handler) {
-          return handler.get() == handlerToClose.get();
-        });
-
-    if (it != m_handlers.end()) {
-      m_handlers.erase(it);
-    }
-
     handlerToClose->m_owner = nullptr;
+
+    std::string handlerName = handlerToClose->m_name;
+    DMN_ASYNC_CALL_WITH_CAPTURE(
+        {
+          std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
+            m_handlers.begin(), m_handlers.end(), [handlerName](auto handler) {
+            return handler->m_name == handlerName;
+           });
+
+          if (it != m_handlers.end()) {
+            m_handlers.erase(it);
+          }
+        },
+        this,
+        handlerName);
+
     handlerToClose = {};
   }
 

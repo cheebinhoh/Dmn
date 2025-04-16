@@ -56,6 +56,8 @@ int main(int argc, char *argv[]) {
   pub.waitForEmpty();
   rec1.waitForEmpty();
   rec2.waitForEmpty();
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+
   EXPECT_TRUE(rec1.m_notifiedList.size() == 4);
   EXPECT_TRUE(rec1.m_notifiedList[0] == "hello pub sub");
   EXPECT_TRUE(rec1.m_notifiedList[1] == "hello world");
@@ -71,6 +73,7 @@ int main(int argc, char *argv[]) {
   pub.registerSubscriber(&rec3);
   pub.waitForEmpty();
   rec3.waitForEmpty();
+  std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(rec3.m_notifiedList.size() == 2);
   EXPECT_TRUE(rec3.m_notifiedList[0] == "hello world 3");
   EXPECT_TRUE(rec3.m_notifiedList[1] == "string 1");
