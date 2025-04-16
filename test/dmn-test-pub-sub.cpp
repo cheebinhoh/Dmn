@@ -90,6 +90,10 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(rec3.m_notifiedList.size() == 3);
   EXPECT_TRUE(rec3.m_notifiedList[2] == "hello world last");
+
+  pub.unregisterSubscriber(&rec2);
+  pub.unregisterSubscriber(&rec3);
+
 /*
   {
     Dmn_Msg_Receiver rec4{"receiver 4"};
@@ -123,5 +127,6 @@ int main(int argc, char *argv[]) {
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 */
+
   return RUN_ALL_TESTS();
 }
