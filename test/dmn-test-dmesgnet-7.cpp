@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(! readData);
 
-/*
   std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket2 = std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000);
   std::shared_ptr<Dmn::Dmn_Io<std::string>> writeSocket2 = std::make_shared<Dmn::Dmn_Socket>("127.0.0.1",
                                                                                             5001,
@@ -77,7 +76,6 @@ int main(int argc, char *argv[])
 
   dmesgnet1.closeHandler(readHandler);
   dmesgnet2.closeHandler(writeHandler);
-*/
 
   return RUN_ALL_TESTS();
 }
