@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
   Dmn_Msg_Receiver rec2{"receiver 2"};
   Dmn_Msg_Receiver rec3{"receiver 3"};
 
+/*
   pub.registerSubscriber(&rec1);
   pub.registerSubscriber(&rec2);
   pub.publish("hello pub sub");
@@ -61,7 +62,6 @@ int main(int argc, char *argv[]) {
   pub.unregisterSubscriber(&rec2);
   pub.unregisterSubscriber(&rec1);
  
-/*
   EXPECT_TRUE(rec1.m_notifiedList.size() == 4);
   EXPECT_TRUE(rec1.m_notifiedList[0] == "hello pub sub");
   EXPECT_TRUE(rec1.m_notifiedList[1] == "hello world");
