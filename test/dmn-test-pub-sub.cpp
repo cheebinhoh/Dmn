@@ -58,6 +58,9 @@ int main(int argc, char *argv[]) {
   rec2.waitForEmpty();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
+  pub.unregisterSubscriber(&rec2);
+  pub.unregisterSubscriber(&rec1);
+ 
 /*
   EXPECT_TRUE(rec1.m_notifiedList.size() == 4);
   EXPECT_TRUE(rec1.m_notifiedList[0] == "hello pub sub");
