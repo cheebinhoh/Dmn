@@ -106,6 +106,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     fn(std::move_if_noexcept(item));
@@ -120,6 +122,8 @@ public:
     }
 
     pthread_testcancel();
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -162,6 +166,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     while (m_count < inboundCount) {
@@ -172,6 +178,8 @@ public:
 
       pthread_testcancel();
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
