@@ -12,6 +12,9 @@
 
 #define DMN_PROC_HPP_HAVE_SEEN
 
+#define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex) pthread_cleanup_push(&Dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
+#define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...)    pthread_cleanup_pop(0)
+
 #include <functional>
 #include <string>
 #include <string_view>
@@ -20,6 +23,8 @@
 
 namespace Dmn {
 
+void cleanupFuncToUnlockPthreadMutex(void *mutex);
+
 /**
  * Dmn_Proc thread cancellation via (StopExec) is synchronous, so if the functor
  * runs infinitely without any pthread cancellation point, we should voluntarily
@@ -27,7 +32,7 @@ namespace Dmn {
  *
  * It is RAII model where in destruction of Dmn_Proc object, it will try to
  * cancel the thread and join it to free resource, so the thread should respond
- * to pthread cancellation.
+ * to pthread cancellation if it is in a loop.
  */
 class Dmn_Proc {
   using Task = std::function<void()>;
@@ -38,10 +43,10 @@ public:
   Dmn_Proc(std::string_view name, Dmn_Proc::Task fn = {});
   virtual ~Dmn_Proc() noexcept;
 
-  Dmn_Proc(const Dmn_Proc &dmnProc) = delete;
-  const Dmn_Proc &operator=(const Dmn_Proc &dmnProc) = delete;
-  Dmn_Proc(Dmn_Proc &&dmnProc) = delete;
-  Dmn_Proc &operator=(Dmn_Proc &&dmnProcc) = delete;
+  Dmn_Proc(const Dmn_Proc &obj) = delete;
+  const Dmn_Proc &operator=(const Dmn_Proc &obj) = delete;
+  Dmn_Proc(Dmn_Proc &&obj) = delete;
+  Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
 
   bool exec(Dmn_Proc::Task fn = {});
   bool wait();
@@ -53,8 +58,8 @@ protected:
   Dmn_Proc::State setState(Dmn_Proc::State state);
   void setTask(Dmn_Proc::Task fn);
 
-  bool stopExec();
   bool runExec();
+  bool stopExec();
 
 private:
   static void *runFnInThreadHelper(void *context);
