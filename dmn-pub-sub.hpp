@@ -76,9 +76,7 @@ public:
      * @param item The data item notified by publisher
      */
     void notifyInternal(T item) {
-      this->write([this, item]() mutable {
-                    this->notify(item);
-                  });
+      DMN_ASYNC_CALL_WITH_CAPTURE({ this->notify(item); }, this, item);
     }
 
     Dmn_Pub *m_pub{};
@@ -91,7 +89,6 @@ public:
           Dmn_Pub_Filter_Task filterFn = {})
       : Dmn_Async(name), m_name{name}, m_capacity{capacity},
         m_filterFn{filterFn} {
-    resize(capacity);
   }
 
   virtual ~Dmn_Pub() noexcept try {
@@ -231,15 +228,6 @@ protected:
   } /* End of method publishInternal */
 
 private:
-  /**
-   * @brief The method will resize the capacity of the publisher's buffers.
-   *
-   * @param size The new capacity size for the publisher's buffer
-   */
-  void resize(ssize_t size) {
-    m_capacity = size;
-  }
-
   /**
    * data members for constructor to instantiate the object.
    */
