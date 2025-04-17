@@ -67,15 +67,20 @@ int main(int argc, char *argv[])
 
                                std::this_thread::sleep_for(std::chrono::seconds(30));
                                std::cout << "exit dmesg_4_proc\n";
+
+                               dmesgnet1.closeHandler(listenHandler4);
+                               std::cout << "end dmesg4_Proc\n";
                              }};
 
   dmesg_4_Proc.exec();
 
   std::this_thread::sleep_for(std::chrono::seconds(15));
 
-  listenHandler3 = {};
+  dmesgnet1->closeHandler(listenHandler3);
+  std::cout << "close listenHandler3\n";
   dmesgnet1 = {};
 
+  std::cout << "before wait for dmesg_4_Proc to end\n";
   dmesg_4_Proc.wait();
   EXPECT_TRUE(sysPb_4.body().sys().self().identifier() == "dmesg-4");
   EXPECT_TRUE(sysPb_4.body().sys().self().masteridentifier() == "dmesg-4");

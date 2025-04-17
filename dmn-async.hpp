@@ -50,6 +50,7 @@ public:
                  }} {}
 
   ~Dmn_Async() noexcept try {
+    this->waitForEmpty();
   } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
