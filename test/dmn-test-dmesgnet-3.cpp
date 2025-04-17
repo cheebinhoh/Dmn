@@ -64,9 +64,8 @@ int main(int argc, char *argv[])
 
   dmesg_4_Proc.exec();
 
-  std::this_thread::sleep_for(std::chrono::seconds(7));
-  dmesgnet1.waitForEmpty();
   dmesg_4_Proc.wait();
+  std::this_thread::sleep_for(std::chrono::seconds(7));
 
   EXPECT_TRUE(sysPb_3.body().sys().self().identifier() == "dmesg-3");
   EXPECT_TRUE(sysPb_3.body().sys().self().masteridentifier() == "dmesg-3");

@@ -43,6 +43,8 @@ public:
       if (m_pub) {
         m_pub->unregisterSubscriber(this);
       }
+
+      this->waitForEmpty(); // make sure that no asynchronoous task pending.
     } catch (...) {
       // explicit return to resolve exception as destructor must be noexcept
       return;
@@ -87,15 +89,18 @@ public:
           Dmn_Pub_Filter_Task filterFn = {})
       : Dmn_Async(name), m_name{name}, m_capacity{capacity},
         m_filterFn{filterFn} {
-    resize(capacity);
   }
 
   virtual ~Dmn_Pub() noexcept try {
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
+    {
+      std::lock_guard<std::mutex> lck(m_subscribersLock);
 
-    for (auto &sub : m_subscribers) {
-      sub->m_pub = nullptr;
+      for (auto &sub : m_subscribers) {
+        sub->m_pub = nullptr;
+      }
     }
+
+    this->waitForEmpty();
   } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
@@ -116,7 +121,9 @@ public:
    * @param item The data item to be published to subscribers
    */
   void publish(T item) {
-    DMN_ASYNC_CALL_WITH_CAPTURE({ this->publishInternal(item); }, this, item);
+    this->write([this, item]() mutable {
+                  this->publishInternal(item);
+                });
   }
 
   /**
@@ -130,6 +137,8 @@ public:
    * @param sub The subscriber instance to be registered
    */
   void registerSubscriber(Dmn_Sub *sub) {
+    std::lock_guard<std::mutex> lck(m_subscribersLock);
+
     if (this == sub->m_pub) {
       return;
     }
@@ -137,25 +146,14 @@ public:
     assert(nullptr == sub->m_pub ||
            "The subscriber has been registered with another publisher");
 
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
-    m_subscribers.push_back(sub);
     sub->m_pub = this;
+    m_subscribers.push_back(sub);
 
     if (m_capacity > 0) {
       // resend the data items that the registered subscriber
       // miss.
-      if (m_next > m_first) {
-        for (std::size_t n = m_first; n < m_next; n++) {
-          sub->notifyInternal(m_buffer[n]);
-        }
-      } else if (m_first > 0) {
-        for (std::size_t n = m_first; n < m_capacity; n++) {
-          sub->notifyInternal(m_buffer[n]);
-        }
-
-        for (std::size_t n = 0; n < m_first; n++) {
-          sub->notifyInternal(m_buffer[n]);
-        }
+      for (auto & item : m_buffer) {
+        sub->notifyInternal(item);
       }
     }
   }
@@ -170,6 +168,8 @@ public:
    * @param sub The subscriber instance to be de-registered
    */
   void unregisterSubscriber(Dmn_Sub *sub) {
+    std::lock_guard<std::mutex> lck(m_subscribersLock);
+
     if (nullptr == sub->m_pub) {
       return;
     }
@@ -177,7 +177,6 @@ public:
     assert(this == sub->m_pub ||
            "The subscriber' registered publisher is NOT this" == nullptr);
 
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
     sub->m_pub = nullptr;
     m_subscribers.erase(
         std::remove(m_subscribers.begin(), m_subscribers.end(), sub),
@@ -212,15 +211,13 @@ protected:
        * efficient access to playback to new subscribers whose misses the
        * data.
        */
-      if (m_next >= m_capacity) {
-        m_next = 0;
-        m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
-      } else if (m_first > 0 && m_next >= m_first) {
-        m_first = (m_first + 1) >= m_capacity ? 0 : m_first + 1;
-      }
 
-      m_buffer[m_next] = item;
-      m_next++;
+      m_buffer.push_back(item);
+      std::size_t numOfElementToBeRemoved = std::max(0ul, m_buffer.size() - m_capacity);
+      while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
+        m_buffer.erase(m_buffer.begin());
+        numOfElementToBeRemoved--;
+      }
     }
 
     for (auto &sub : m_subscribers) {
@@ -232,16 +229,6 @@ protected:
 
 private:
   /**
-   * @brief The method will resize the capacity of the publisher's buffers.
-   *
-   * @param size The new capacity size for the publisher's buffer
-   */
-  void resize(ssize_t size) {
-    m_capacity = size;
-    m_buffer.reserve(m_capacity);
-  }
-
-  /**
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
@@ -252,8 +239,6 @@ private:
    * data members for internal logic.
    */
   std::vector<T> m_buffer{};
-  ssize_t m_first{};
-  ssize_t m_next{};
 
   std::mutex m_subscribersLock{};
   std::vector<Dmn_Sub *> m_subscribers{};
