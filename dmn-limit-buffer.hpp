@@ -105,6 +105,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     while (m_size >= m_maxCapacity) {
@@ -126,6 +128,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
@@ -146,9 +150,13 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     size = m_size;
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -181,15 +189,18 @@ private:
    */
   std::optional<T> popOptional(bool wait) override {
     int err{};
+    std::optional<T> val{};
 
     err = pthread_mutex_lock(&m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
-    auto val = Dmn_Buffer<T>::popOptional(wait);
+    val = Dmn_Buffer<T>::popOptional(wait);
     m_size--;
 
     err = pthread_cond_signal(&m_pushCond);
@@ -198,6 +209,8 @@ private:
 
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
