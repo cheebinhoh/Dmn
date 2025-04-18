@@ -28,12 +28,18 @@ FetchContent_Declare(googletest
 
 FetchContent_MakeAvailable(googletest)
 
+find_package(Protobuf QUIET)
+
+if (NOT Protobuf_FOUND)
+
 FetchContent_Declare(protobuf
                        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
                        GIT_TAG        v30.0-rc1
 )
 
 FetchContent_MakeAvailable(protobuf)
+
+endif()
 
 FetchContent_Declare(rdkafka
                        GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git

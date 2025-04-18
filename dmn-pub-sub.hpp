@@ -100,11 +100,7 @@ public:
   }
 
   virtual ~Dmn_Pub() noexcept try {
-    int err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      assert("~Dmn_Pub(): pthread_mutex_lock error");
-      return;
-    }
+    pthread_mutex_lock(&m_mutex);
 
     DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 

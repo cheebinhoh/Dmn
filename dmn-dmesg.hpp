@@ -212,13 +212,14 @@ public:
      *                 is thrown.
      */
     std::optional<Dmn::DMesgPb> read() override {
-      assert(nullptr != m_owner);
+      if (nullptr != m_owner) {
+        try {
+          Dmn::DMesgPb mesgPb = m_buffers.pop();
 
-      try {
-        Dmn::DMesgPb mesgPb = m_buffers.pop();
-
-        return mesgPb;
-      } catch (...) {
+          return mesgPb;
+        } catch (...) {
+          // do nothing
+        }
       }
 
       return {};
@@ -248,7 +249,9 @@ public:
      * @param dMesgPb The DMesgPb message to be published
      */
     void write(Dmn::DMesgPb &&dmesgPb) override {
-      assert(nullptr != m_owner);
+      if (nullptr == m_owner) {
+        return;
+      }
 
       Dmn::DMesgPb movedDMesgPb = std::move_if_noexcept(dmesgPb);
 
@@ -263,7 +266,9 @@ public:
      * @param dMesgPb The DMesgPb message to be published
      */
     void write(Dmn::DMesgPb &dmesgPb) override {
-      assert(nullptr != m_owner);
+      if (nullptr == m_owner) {
+        return;
+      }
 
       writeDMesgInternal(dmesgPb, false);
     }
