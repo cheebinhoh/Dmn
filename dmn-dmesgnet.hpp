@@ -334,7 +334,12 @@ public:
     m_inputHandler.reset();
     m_timerProc.reset();
 
-    if (m_sysHandler && m_outputHandler) {
+    if (m_sysHandler) {
+      Dmn_DMesg::closeHandler(m_sysHandler);
+      m_sysHandler.reset();
+    }
+
+    if (m_outputHandler) {
       // it is about to destroy the Dmn_DMesgNet and free everything
       // it will send last heartbeat and reliquinsh itself as master (if
       // itself is master).
