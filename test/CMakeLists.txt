@@ -24,7 +24,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-6
                       dmn-test-dmesgnet-7
                       dmn-test-dmesgnet-8
-                      # The free trial to https://confluent.cloud is ended
+                      # FIXME: The old free trial to https://confluent.cloud is ended,
+                      # we are working to restore it
                       # dmn-test-dmesgnet-with-kafka-1
                       # dmn-test-dmesgnet-with-kafka-2
                       # dmn-test-dmesgnet-with-kafka-3
@@ -33,9 +34,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
-                      # The free trial to https://confluent.cloud is ended
-                      # dmn-test-kafka
-                      # dmn-test-kafka-protobuf
+                      dmn-test-kafka
+                      dmn-test-kafka-protobuf
                       dmn-test-pipe
                       dmn-test-pub-sub
                       dmn-test-singleton
