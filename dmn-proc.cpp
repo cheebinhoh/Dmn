@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstring>
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -16,6 +17,12 @@
 #include <sched.h>
 
 namespace Dmn {
+
+void cleanupFuncToUnlockPthreadMutex(void *arg) {
+  pthread_mutex_t *mutex = (pthread_mutex_t *)arg;
+
+  pthread_mutex_unlock(mutex);
+}
 
 Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
   setState(State::New);

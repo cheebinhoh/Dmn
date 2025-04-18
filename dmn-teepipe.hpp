@@ -92,7 +92,10 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
         throw std::runtime_error(strerror(err));
       }
 
+      DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&(m_teePipe->m_mutex));
+
       pthread_testcancel();
+
       m_teePipe->m_fillBufferCount++;
 
       err = pthread_cond_signal(&(m_teePipe->m_cond));
@@ -101,6 +104,8 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
 
         throw std::runtime_error(strerror(err));
       }
+
+      DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
       err = pthread_mutex_unlock(&(m_teePipe->m_mutex));
       if (err) {
@@ -176,6 +181,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     m_buffers.push_back(sp_tpSource);
@@ -186,6 +193,8 @@ public:
 
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -211,6 +220,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     auto iter =
@@ -233,12 +244,14 @@ public:
       tps = {};
     }
 
-    err = pthread_cond_signal(&m_cond);
+     err = pthread_cond_signal(&m_cond);
     if (err) {
       pthread_mutex_unlock(&m_mutex);
 
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -256,6 +269,8 @@ private:
     if (err) {
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
     pthread_testcancel();
 
@@ -281,6 +296,8 @@ private:
 
       pthread_testcancel();
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -311,6 +328,8 @@ private:
         if (err) {
           throw std::runtime_error(strerror(err));
         }
+
+        DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
         pthread_testcancel();
 
@@ -350,6 +369,8 @@ private:
 
           throw std::runtime_error(strerror(err));
         }
+
+        DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
         err = pthread_mutex_unlock(&m_mutex);
         if (err) {

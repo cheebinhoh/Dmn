@@ -10,6 +10,7 @@
 #define DMN_PUB_SUB_HPP_HAVE_SEEN
 
 #include "dmn-async.hpp"
+#include "dmn-proc.hpp"
 
 #include <algorithm>
 #include <array>
@@ -20,6 +21,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "pthread.h"
 
 namespace Dmn {
 
@@ -89,18 +92,31 @@ public:
           Dmn_Pub_Filter_Task filterFn = {})
       : Dmn_Async(name), m_name{name}, m_capacity{capacity},
         m_filterFn{filterFn} {
+
+    int err = pthread_mutex_init(&m_mutex, NULL);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
   }
 
   virtual ~Dmn_Pub() noexcept try {
-    {
-      std::lock_guard<std::mutex> lck(m_subscribersLock);
+    int err = pthread_mutex_lock(&m_mutex);
+    if (err) {
+      assert("~Dmn_Pub(): pthread_mutex_lock error");
+      return;
+    }
 
-      for (auto &sub : m_subscribers) {
-        sub->m_pub = nullptr;
-      }
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+    for (auto &sub : m_subscribers) {
+      sub->m_pub = nullptr;
     }
 
     this->waitForEmpty();
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+    pthread_mutex_unlock(&m_mutex);
   } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
@@ -128,16 +144,21 @@ public:
 
   /**
    * @brief The method registers a subscriber and send out prior published data
-   *        item, The method is called immediately with m_subscribersLock
-   *        than executed in the singleton asynchronous context, and that
-   *        allows caller to be sure that the Dmn_Sub instance has been
-   *        registered with the publisher upon return of the method. The
-   *        register and unregister methods work in synchronization manner.
+   *        item, The method is called immediately with m_lock than executed in
+   *        the singleton asynchronous context, and that allows caller to be
+   *        sure that the Dmn_Sub instance has been registered with the publisher
+   *        upon return of the method. The register and unregister methods work
+   *        in synchronization manner.
    *
    * @param sub The subscriber instance to be registered
    */
   void registerSubscriber(Dmn_Sub *sub) {
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
+    int err = pthread_mutex_lock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
     if (this == sub->m_pub) {
       return;
@@ -156,31 +177,49 @@ public:
         sub->notifyInternal(item);
       }
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+    err = pthread_mutex_unlock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
   }
 
   /**
    * @brief The method de-registers a subscriber. The method is called
-   *        immediately with m_subscribersLock than executed in the
-   *        singleton asynchronous thread context, and that allows caller to
+   *        immediately with m_lock than executed in the singleton
+   *        asynchronous thread context, and that allows caller to
    *        be sure that the Dmn_Sub instance has been de-registered
    *        from the publisher upon return of the method.
    *
    * @param sub The subscriber instance to be de-registered
    */
   void unregisterSubscriber(Dmn_Sub *sub) {
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
-
-    if (nullptr == sub->m_pub) {
-      return;
+    int err = pthread_mutex_lock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
     }
 
-    assert(this == sub->m_pub ||
-           "The subscriber' registered publisher is NOT this" == nullptr);
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
-    sub->m_pub = nullptr;
-    m_subscribers.erase(
+    if (nullptr != sub->m_pub) {
+      assert(this == sub->m_pub ||
+             "The subscriber' registered publisher is NOT this" == nullptr);
+
+      sub->m_pub = nullptr;
+
+      m_subscribers.erase(
         std::remove(m_subscribers.begin(), m_subscribers.end(), sub),
-        m_subscribers.end());
+          m_subscribers.end());
+    }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+    err = pthread_mutex_unlock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
   }
 
 protected:
@@ -204,7 +243,12 @@ protected:
      * as most clients are registered upon application brought up, and only
      * deregister upon application shutdown.
      */
-    std::lock_guard<std::mutex> lck(m_subscribersLock);
+    int err = pthread_mutex_lock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
     if (m_capacity > 0) {
       /* Keep the published item in circular ring buffer for
@@ -225,6 +269,13 @@ protected:
         sub->notifyInternal(item);
       }
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+    err = pthread_mutex_unlock(&m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
   } /* End of method publishInternal */
 
 private:
@@ -240,7 +291,7 @@ private:
    */
   std::vector<T> m_buffer{};
 
-  std::mutex m_subscribersLock{};
+  pthread_mutex_t m_mutex{};
   std::vector<Dmn_Sub *> m_subscribers{};
 }; /* End of class Dmn_Pub */
 

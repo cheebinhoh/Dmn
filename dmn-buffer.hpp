@@ -14,6 +14,8 @@
 
 #define DMN_BUFFER_HPP_HAVE_SEEN
 
+#include "dmn-proc.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -108,6 +110,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     if (move) {
@@ -124,6 +128,8 @@ public:
 
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -148,6 +154,8 @@ public:
       throw std::runtime_error(strerror(err));
     }
 
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
     pthread_testcancel();
 
     while (!m_queue.empty()) {
@@ -161,6 +169,8 @@ public:
 
     assert(m_popCount == m_pushCount);
     inboundCount = m_popCount;
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
@@ -183,11 +193,14 @@ protected:
    */
   virtual std::optional<T> popOptional(bool wait) {
     int err{};
+    T val{};
 
     err = pthread_mutex_lock(&m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }
+
+    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
     pthread_testcancel();
 
@@ -211,7 +224,7 @@ protected:
       } while (m_queue.empty());
     }
 
-    T val = std::move(m_queue.front());
+    val = std::move(m_queue.front());
     m_queue.pop_front();
 
     ++m_popCount;
@@ -224,6 +237,8 @@ protected:
         throw std::runtime_error(strerror(err));
       }
     }
+
+    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
     err = pthread_mutex_unlock(&m_mutex);
     if (err) {
