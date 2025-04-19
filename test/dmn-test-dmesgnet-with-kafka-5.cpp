@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
   // reader
   Dmn::Dmn_Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs_other["sasl.username"] = "C3T2TGVAQYYF7H6T";
-  readConfigs_other["sasl.password"] = "4JNbCdwNsK6HSgj65AHdZT5d9VsyWPX+lQysSPca70ehKN7uHsCuIyPlHw32gmNr";
+  readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+  readConfigs_other["sasl.password"] = "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
   readConfigs_other["security.protocol"] = "SASL_SSL";
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
   // writer for DMesgNet
   Dmn::Dmn_Kafka::ConfigType configs{};
   configs["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  configs["sasl.username"] = "C3T2TGVAQYYF7H6T";
-  configs["sasl.password"] = "4JNbCdwNsK6HSgj65AHdZT5d9VsyWPX+lQysSPca70ehKN7uHsCuIyPlHw32gmNr";
+  configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+  configs["sasl.password"] = "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
   configs["security.protocol"] = "SASL_SSL";
   configs["sasl.mechanisms"] = "PLAIN";
 

@@ -4,8 +4,8 @@
  * The Dmn_DMesg implements a specific publisher subscriber model (inherit
  * from dmn-pub-sub module) where the difference is that:
  * - the data item is a Protobuf message (Dmn::DMesgPb) defined in
- *   proto/dmn-dmesg.proto, so instead of subclass the Dmn_DMesg, clients of the
- *   Dmn_DMesg can extend the Dmn::DMesgPb protobuf message to varying the
+ *   proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg, clients
+ *   can extend the Dmn::DMesgPb protobuf message to varying the
  *   message without reinvent the wheel through subclass of the dmn-pub-sub
  *   module.
  * - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
@@ -69,12 +69,13 @@ public:
    *        just another IO, because of that we do NOT able to inherit from
    *        Dmn_Pub as Dmn_Pub inherits Dmn_Async which inherits from Dmn_Pipe
    *        which inherit Dmn_Io with template type specialized to functor,
-   *        this is a diamond shape multiple inherittance where common parent
+   *        this is a diamond shape multiple inheritance where common parent
    *        has to have same instantiated template type. Instead the class
    *        Dmn_DMesgHandler uses a wrapper class Dmn_DMesgHandlerSub which
    *        inherits from Dmn_Pub<Dmn::DMesgPb>::Dmn_Sub.
    */
   class Dmn_DMesgHandler : public Dmn_Io<Dmn::DMesgPb> {
+  private:
     using ConflictCallbackTask =
         std::function<void(Dmn_DMesgHandler &handler, const Dmn::DMesgPb &)>;
 
@@ -211,13 +212,14 @@ public:
      *                 is thrown.
      */
     std::optional<Dmn::DMesgPb> read() override {
-      assert(nullptr != m_owner);
+      if (nullptr != m_owner) {
+        try {
+          Dmn::DMesgPb mesgPb = m_buffers.pop();
 
-      try {
-        Dmn::DMesgPb mesgPb = m_buffers.pop();
-
-        return mesgPb;
-      } catch (...) {
+          return mesgPb;
+        } catch (...) {
+          // do nothing
+        }
       }
 
       return {};
@@ -247,7 +249,9 @@ public:
      * @param dMesgPb The DMesgPb message to be published
      */
     void write(Dmn::DMesgPb &&dmesgPb) override {
-      assert(nullptr != m_owner);
+      if (nullptr == m_owner) {
+        return;
+      }
 
       Dmn::DMesgPb movedDMesgPb = std::move_if_noexcept(dmesgPb);
 
@@ -262,7 +266,9 @@ public:
      * @param dMesgPb The DMesgPb message to be published
      */
     void write(Dmn::DMesgPb &dmesgPb) override {
-      assert(nullptr != m_owner);
+      if (nullptr == m_owner) {
+        return;
+      }
 
       writeDMesgInternal(dmesgPb, false);
     }
@@ -369,12 +375,15 @@ public:
 
     ConflictCallbackTask m_conflictCallbackFn{};
     std::atomic<bool> m_inConflict{};
+
+    bool m_afterInitialPlayback{};
   }; /* End of class Dmn_DMesgHandler */
 
   /**
    * @brief The constructor for Dmn_DMesg.
    *
-   * @param name The identification name for the instantiated object
+   * @param name   The identification name for the instantiated object
+   * @param config The configuration key value (reserved for future use)
    */
   Dmn_DMesg(std::string_view name, KeyValueConfiguration config = {})
       : Dmn_Pub{name, 0, // Dmn_DMesg handles re-send per topic
@@ -387,11 +396,15 @@ public:
 
                   Dmn_DMesgHandler *handler = handlerSub->m_owner;
 
-                  return handler->m_subscribedTopics.size() == 0 ||
-                         std::find(handler->m_subscribedTopics.begin(),
-                                   handler->m_subscribedTopics.end(),
-                                   msg.topic()) !=
-                             handler->m_subscribedTopics.end();
+                  return nullptr != handler &&
+                         nullptr != handler->m_owner &&
+                         (true == msg.playback() ||
+                          handler->m_afterInitialPlayback) &&
+                         (handler->m_subscribedTopics.size() == 0 ||
+                          std::find(handler->m_subscribedTopics.begin(),
+                                    handler->m_subscribedTopics.end(),
+                                    msg.topic()) !=
+                              handler->m_subscribedTopics.end());
                 }},
         m_name{name}, m_config{config} {}
 
@@ -408,9 +421,9 @@ public:
   Dmn_DMesg &operator=(Dmn_DMesg &&obj) = delete;
 
   /**
-   * @brief The method creates a new handler, registers the handler to receive
-   *        published message and returns the handler to the caller. It takes
-   *        forward arguments as in Dmn_DMesgHandler::openHandler(...).
+   * @brief The method creates a new Dmn_DMesgHandler, registers the handler to
+   *        receive published message and returns the handler to the caller. It
+   *        takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
    * @param name            The name or unique identification to the handler
    * @param includeDMesgSys True if the handler will be notified of DMesgPb
@@ -421,23 +434,13 @@ public:
    * @param asyncProcessFn  The functor callback to process each notified
    *                        DMesgPb message
    *
-   * @return newly created handler
+   * @return newly created Dmn_DMesgHandler
    */
   template <class... U>
   std::shared_ptr<Dmn_DMesgHandler> openHandler(U &&...arg) {
-    std::shared_ptr<Dmn_DMesgHandler> handler =
-        std::make_shared<Dmn_DMesgHandler>(std::forward<U>(arg)...);
-    auto handlerRet = handler;
+    static const std::vector<std::string> emptyTopics{};
 
-    handler->m_owner = this;
-    this->registerSubscriber(&(handler->m_sub));
-
-    DMN_ASYNC_CALL_WITH_CAPTURE({
-                                  this->m_handlers.push_back(handler);
-                                  this->playbackLastTopicDMesgPbInternal();
-                                },
-                                this,
-                                handler);
+    auto handlerRet = this->openHandler(emptyTopics, std::forward<U>(arg)...);
 
     return handlerRet;
   }
@@ -463,13 +466,40 @@ public:
   template <class... U>
   std::shared_ptr<Dmn_DMesgHandler> openHandler(std::vector<std::string> topics,
                                                 U &&...arg) {
-    auto handlerRet = this->openHandler(std::forward<U>(arg)...);
+    // this is primitive openHandler() method that will
+    // - create the handler
+    // - register the handler as subscriber
+    // - chain up the different level of objects to its owner, handler's subscriber
+    //   to handler, handler to the DMesg publisher
+    // - then add an asynchronous task to run in the publisher singleton asynchronous
+    //   thread context and the task will add the handler to the list of handlers
+    //   known to the DMesg subscriber, playback prior data per topic, and set
+    //   flag that the newly created handler has been fully initialized after playback
+    //   of prior data.
+    //
+    // This allows us to maintain a singleton asynchronous thread context is responsible
+    // for publishing and notifying data between subscriber and publisher.
+
+    std::shared_ptr<Dmn_DMesgHandler> handler =
+        std::make_shared<Dmn_DMesgHandler>(std::forward<U>(arg)...);
+    auto handlerRet = handler;
+
+    this->registerSubscriber(&(handler->m_sub));
+    handler->m_owner = this;
 
     /* The topic filter is executed within the DMesg singleton asynchronous
      * thread context, but the filter value is maintained per Dmn_DMesgHandler,
      * and this allow the DMesg to be mutex free while thread safe.
      */
     handlerRet->m_subscribedTopics = topics;
+
+    DMN_ASYNC_CALL_WITH_CAPTURE({
+                                  this->m_handlers.push_back(handler);
+                                  this->playbackLastTopicDMesgPbInternal();
+                                  handler->m_afterInitialPlayback = true;
+                                },
+                                this,
+                                handler);
 
     return handlerRet;
   }

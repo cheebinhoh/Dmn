@@ -20,7 +20,7 @@
 #include <mutex>
 #include <string>
 #include <string_view>
-#include <vector>
+#include <deque>
 
 #include "pthread.h"
 
@@ -100,11 +100,7 @@ public:
   }
 
   virtual ~Dmn_Pub() noexcept try {
-    int err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      assert("~Dmn_Pub(): pthread_mutex_lock error");
-      return;
-    }
+    pthread_mutex_lock(&m_mutex);
 
     DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
@@ -170,12 +166,10 @@ public:
     sub->m_pub = this;
     m_subscribers.push_back(sub);
 
-    if (m_capacity > 0) {
-      // resend the data items that the registered subscriber
-      // miss.
-      for (auto & item : m_buffer) {
-        sub->notifyInternal(item);
-      }
+    // resend the data items that the registered subscriber
+    // miss.
+    for (auto & item : m_buffer) {
+      sub->notifyInternal(item);
     }
 
     DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
@@ -250,18 +244,16 @@ protected:
 
     DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
 
-    if (m_capacity > 0) {
-      /* Keep the published item in circular ring buffer for
-       * efficient access to playback to new subscribers whose misses the
-       * data.
-       */
+    /* Keep the published item in circular ring buffer for
+     * efficient access to playback to new subscribers whose misses the
+     * data.
+     */
 
-      m_buffer.push_back(item);
-      std::size_t numOfElementToBeRemoved = std::max(0ul, m_buffer.size() - m_capacity);
-      while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
-        m_buffer.erase(m_buffer.begin());
-        numOfElementToBeRemoved--;
-      }
+    m_buffer.push_back(item);
+    std::size_t numOfElementToBeRemoved = std::max(0ul, m_buffer.size() - m_capacity);
+    while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
+      m_buffer.erase(m_buffer.begin());
+      numOfElementToBeRemoved--;
     }
 
     for (auto &sub : m_subscribers) {
@@ -289,7 +281,7 @@ private:
   /**
    * data members for internal logic.
    */
-  std::vector<T> m_buffer{};
+  std::deque<T> m_buffer{};
 
   pthread_mutex_t m_mutex{};
   std::vector<Dmn_Sub *> m_subscribers{};
