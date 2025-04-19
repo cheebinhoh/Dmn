@@ -244,7 +244,7 @@ public:
       tps = {};
     }
 
-     err = pthread_cond_signal(&m_cond);
+    err = pthread_cond_signal(&m_cond);
     if (err) {
       pthread_mutex_unlock(&m_mutex);
 

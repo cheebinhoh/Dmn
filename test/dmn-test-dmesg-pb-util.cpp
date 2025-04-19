@@ -9,8 +9,7 @@
 #include <iostream>
 #include <sys/time.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -50,7 +49,7 @@ int main(int argc, char *argv[])
   DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV(self, tv);
   DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
   DMESG_PB_SYS_NODE_SET_IDENTIFIER(self, "id4");
-  DMESG_PB_SYS_NODE_SET_STATE(self,Dmn::DMesgStatePb::Ready);
+  DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Ready);
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "id5");
 
   EXPECT_TRUE(self->mutable_initializedtimestamp()->seconds() != 0);
@@ -77,18 +76,35 @@ int main(int argc, char *argv[])
 
   EXPECT_TRUE(dmesgPb2.body().sys().nodelist().size() == 2);
 
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).initializedtimestamp().seconds() != 0);
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).initializedtimestamp().nanos() != 0);
+  EXPECT_TRUE(dmesgPb2.body()
+                  .sys()
+                  .nodelist()
+                  .Get(0)
+                  .initializedtimestamp()
+                  .seconds() != 0);
+  EXPECT_TRUE(
+      dmesgPb2.body().sys().nodelist().Get(0).initializedtimestamp().nanos() !=
+      0);
   EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).identifier() == "id10");
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).masteridentifier() == "id15");
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).state() == Dmn::DMesgStatePb::MasterPending);
+  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).masteridentifier() ==
+              "id15");
+  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(0).state() ==
+              Dmn::DMesgStatePb::MasterPending);
 
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).initializedtimestamp().seconds() != 0);
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).initializedtimestamp().nanos() != 0);
+  EXPECT_TRUE(dmesgPb2.body()
+                  .sys()
+                  .nodelist()
+                  .Get(1)
+                  .initializedtimestamp()
+                  .seconds() != 0);
+  EXPECT_TRUE(
+      dmesgPb2.body().sys().nodelist().Get(1).initializedtimestamp().nanos() !=
+      0);
   EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).identifier() == "id20");
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).masteridentifier() == "id25");
-  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).state() == Dmn::DMesgStatePb::Ready);
+  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).masteridentifier() ==
+              "id25");
+  EXPECT_TRUE(dmesgPb2.body().sys().nodelist().Get(1).state() ==
+              Dmn::DMesgStatePb::Ready);
 
   return RUN_ALL_TESTS();
 }
-
