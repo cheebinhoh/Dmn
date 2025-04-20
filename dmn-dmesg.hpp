@@ -228,7 +228,7 @@ public:
      *        asynchronous action on publisher singleton asynchronous thread
      *        context to reset the handler' context state.
      */
-    void resolveConflict() { m_owner->resetHandlerConflictState(this->m_name); }
+    void resolveConflict() { m_owner->resetHandlerConflictState(this); }
 
     /**
      * @brief The method set the callback function for conflict.
@@ -510,22 +510,22 @@ public:
     handlerToClose->waitForEmpty();
     handlerToClose->m_owner = nullptr;
 
-    std::string handlerName = handlerToClose->m_name;
+    Dmn_DMesgHandler *handlerPtr = handlerToClose.get();
     handlerToClose = {};
 
     DMN_ASYNC_CALL_WITH_CAPTURE(
         {
           std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
               std::find_if(m_handlers.begin(), m_handlers.end(),
-                           [handlerName](auto handler) {
-                             return handler->m_name == handlerName;
+                           [handlerPtr](auto handler) {
+                             return handler.get() == handlerPtr;
                            });
 
           if (it != m_handlers.end()) {
             m_handlers.erase(it);
           }
         },
-        this, handlerName);
+        this, handlerPtr);
   }
 
 protected:
@@ -603,10 +603,10 @@ protected:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictState(std::string_view handlerName) {
+  void resetHandlerConflictState(const Dmn_DMesgHandler *handlerPtr) {
     DMN_ASYNC_CALL_WITH_CAPTURE(
-        { this->resetHandlerConflictStateInternal(handlerName); }, this,
-        handlerName);
+        { this->resetHandlerConflictStateInternal(handlerPtr); }, this,
+        handlerPtr);
   }
 
 private:
@@ -632,10 +632,10 @@ private:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictStateInternal(std::string_view handlerName) {
+  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handlerPtr) {
     std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
         m_handlers.begin(), m_handlers.end(),
-        [handlerName](auto handler) { return handler->m_name == handlerName; });
+        [handlerPtr](auto handler) { return handler.get() == handlerPtr; });
 
     if (it != m_handlers.end()) {
       (*it)->resolveConflictInternal();
