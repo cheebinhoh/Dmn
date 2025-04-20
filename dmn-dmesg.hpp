@@ -510,22 +510,22 @@ public:
     handlerToClose->waitForEmpty();
     handlerToClose->m_owner = nullptr;
 
-    std::string handlerName = handlerToClose->m_name;
+    Dmn_DMesgHandler *handlerPtr = handlerToClose.get();
     handlerToClose = {};
 
     DMN_ASYNC_CALL_WITH_CAPTURE(
         {
           std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
               std::find_if(m_handlers.begin(), m_handlers.end(),
-                           [handlerName](auto handler) {
-                             return handler->m_name == handlerName;
+                           [handlerPtr](auto handler) {
+                             return handler.get() == handlerPtr;
                            });
 
           if (it != m_handlers.end()) {
             m_handlers.erase(it);
           }
         },
-        this, handlerName);
+        this, handlerPtr);
   }
 
 protected:
