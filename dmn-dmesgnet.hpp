@@ -178,57 +178,58 @@ public:
           Dmn::DMesgPb dmesgPbRead{};
 
           auto data = this->m_inputHandler->read();
+          Dmn_Proc::yield();
+
           if (data) {
             dmesgPbRead.ParseFromString(*data);
-            if (dmesgPbRead.sourcewritehandleridentifier() != this->m_name) {
-              // this is important to prevent that the
-              // m_subscriptHandler of this DMesgNet from
-              // reading this message again and send out.
-              //
-              // the Dmn_DMesgHandler->write will add the name
-              // of the Dmn_DMesgHandler from read it again,
-              // but it is good to be explicit.
-
-              if (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) {
-                DMN_ASYNC_CALL_WITH_CAPTURE(
-                    { this->reconciliateDMesgPbSys(dmesgPbRead); }, this,
-                    dmesgPbRead);
-              } else {
-                DMN_ASYNC_CALL_WITH_CAPTURE(
-                    {
-                      try {
-                        this->m_subscriptHandler->write(dmesgPbRead);
-
-                        if (dmesgPbRead.type() != Dmn::DMesgTypePb::sys) {
-                          m_topicLastDMesgPb[dmesgPbRead.topic()] = dmesgPbRead;
-                        }
-                      } catch (...) {
-                        // The data from network is out of sync with data
-                        // in the Dmn_DMesg, and a few should happen:
-                        // - mark the topic as in conflict for local Dmn_DMesg
-                        // - the local Dmn_DMesg will mark all openHandler in
-                        //   conflict but waiting for resolution with
-                        //   Dmn_DMesgNet master, so they will not allow any
-                        //   message on the same topic band.
-                        // - the local Dmn_DMesgNet will broadcast a sys
-                        // conflict
-                        //   message.
-                        // - all networked DMesgNet(s) receives the sys conflict
-                        //   message will then put its local Dmn_DMesg in
-                        //   conflict state for the same topic.
-                        // - master node will then send its last message for the
-                        //   to all nodes, and all nodes receives the message
-                        //   will use new message as its last valid message for
-                        //   the topic and clear it conflict state.
-                      }
-                    },
-                    this, dmesgPbRead);
-              }
+            if (dmesgPbRead.sourcewritehandleridentifier() == this->m_name) {
+              continue;
             }
-          }
 
-          // do nothing
-          Dmn_Proc::yield();
+            // this is important to prevent that the
+            // m_subscriptHandler of this DMesgNet from
+            // reading this message again and send out.
+            //
+            // the Dmn_DMesgHandler->write will add the name
+            // of the Dmn_DMesgHandler from read it again,
+            // but it is good to be explicit.
+
+            if (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) {
+              DMN_ASYNC_CALL_WITH_CAPTURE(
+                  { this->reconciliateDMesgPbSys(dmesgPbRead); }, this,
+                  dmesgPbRead);
+            } else {
+              DMN_ASYNC_CALL_WITH_CAPTURE(
+                  {
+                    try {
+                      this->m_subscriptHandler->write(dmesgPbRead);
+
+                      if (dmesgPbRead.type() != Dmn::DMesgTypePb::sys) {
+                        m_topicLastDMesgPb[dmesgPbRead.topic()] = dmesgPbRead;
+                      }
+                    } catch (...) {
+                      // The data from network is out of sync with data
+                      // in the Dmn_DMesg, and a few should happen:
+                      // - mark the topic as in conflict for local Dmn_DMesg
+                      // - the local Dmn_DMesg will mark all openHandler in
+                      //   conflict but waiting for resolution with
+                      //   Dmn_DMesgNet master, so they will not allow any
+                      //   message on the same topic band.
+                      // - the local Dmn_DMesgNet will broadcast a sys
+                      // conflict
+                      //   message.
+                      // - all networked DMesgNet(s) receives the sys conflict
+                      //   message will then put its local Dmn_DMesg in
+                      //   conflict state for the same topic.
+                      // - master node will then send its last message for the
+                      //   to all nodes, and all nodes receives the message
+                      //   will use new message as its last valid message for
+                      //   the topic and clear it conflict state.
+                    }
+                  },
+                  this, dmesgPbRead);
+            } /* else (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) */
+          }
         }
       });
 
@@ -334,11 +335,6 @@ public:
     m_inputProc.reset();
     m_timerProc.reset();
 
-    if (m_sysHandler) {
-      Dmn_DMesg::closeHandler(m_sysHandler);
-      m_sysHandler.reset();
-    }
-
     if (m_outputHandler) {
       // it is about to destroy the Dmn_DMesgNet and free everything
       // it will send last heartbeat and reliquinsh itself as master (if
@@ -363,6 +359,14 @@ public:
       this->m_sys.SerializeToString(&serialized_string);
 
       m_outputHandler->write(serialized_string);
+    }
+
+    if (m_sysHandler) {
+      Dmn_DMesg::closeHandler(m_sysHandler);
+    }
+
+    if (m_subscriptHandler) {
+      Dmn_DMesg::closeHandler(m_subscriptHandler);
     }
 
     this->waitForEmpty();

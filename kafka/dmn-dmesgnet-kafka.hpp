@@ -60,12 +60,12 @@ public:
   }
 
   /**
-   * @brief This method is a forwarding call to the Dmn_DMesgNet::closeHandler().
+   * @brief This method is a forwarding call to the
+   * Dmn_DMesgNet::closeHandler().
    *
    * @param handlerToClose The handler to be closed
    */
-  template <class... U>
-  void closeHandler(U &&...arg) {
+  template <class... U> void closeHandler(U &&...arg) {
     m_dmesgNet->closeHandler(std::forward<U>(arg)...);
   }
 
