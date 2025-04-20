@@ -4,6 +4,7 @@
 
 #include "dmn-kafka.hpp"
 #include "dmn-kafka-util.hpp"
+
 #include "dmn-proc.hpp"
 
 #include "rdkafka.h"
@@ -27,27 +28,27 @@ const std::string Dmn_Kafka::PollTimeoutMs = "Dmn_Kafka.PollTimeoutMs";
 void Dmn_Kafka::producerCallback(rd_kafka_t *kafka_handle,
                                  const rd_kafka_message_t *rkmessage,
                                  void *opaque) {
-  Dmn_Kafka *obj = (Dmn_Kafka *)opaque;
+  Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
 
   obj->m_kafkaErr = rkmessage->err;
-  obj->m_atomicFlag.clear();
-  obj->m_atomicFlag.notify_all();
+  obj->m_writeAtomicFlag.clear();
+  obj->m_writeAtomicFlag.notify_all();
 }
 
 void Dmn_Kafka::errorCallback(rd_kafka_t *kafka_handle, int err,
                               const char *reason, void *opaque) {
-  Dmn_Kafka *obj = (Dmn_Kafka *)opaque;
+  Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
 
   obj->m_kafkaErr = static_cast<rd_kafka_resp_err_t>(err);
-  obj->m_atomicFlag.clear();
-  obj->m_atomicFlag.notify_all();
+  obj->m_writeAtomicFlag.clear();
+  obj->m_writeAtomicFlag.notify_all();
 }
 
 Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     : m_role{role}, m_configs{configs} {
-  rd_kafka_conf_t *kafkaConf{};
+  rd_kafka_conf_t *kafkaConfig{};
 
-  kafkaConf = rd_kafka_conf_new();
+  kafkaConfig = rd_kafka_conf_new();
 
   for (auto &c : m_configs) {
     if (Dmn_Kafka::Topic == c.first) {
@@ -57,51 +58,53 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     } else if (Dmn_Kafka::PollTimeoutMs == c.first) {
       m_pollTimeoutMs = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
-      auto res = Dmn::set_config(kafkaConf, c.first.c_str(), c.second.c_str());
+      auto res =
+          Dmn::set_config(kafkaConfig, c.first.c_str(), c.second.c_str());
       if (!res.has_value()) {
-        rd_kafka_conf_destroy(kafkaConf);
+        rd_kafka_conf_destroy(kafkaConfig);
 
-        throw std::runtime_error("Error in setting kafka configuration: " +
-                                 c.first + " to value: " + c.second);
+        throw std::runtime_error(
+            "Error in setting kafka configuration: " + c.first +
+            " to value: " + c.second + ", error: " + res.error());
       }
 
       assert(res.value() == RD_KAFKA_CONF_OK);
     }
   }
 
-  char errstr[512]{};
+  char errstr[KAFKA_ERROR_STRING_LENGTH]{};
 
-  rd_kafka_conf_set_opaque(kafkaConf, (void *)this);
-  rd_kafka_conf_set_error_cb(kafkaConf, Dmn_Kafka::errorCallback);
+  rd_kafka_conf_set_opaque(kafkaConfig, (void *)this);
+  rd_kafka_conf_set_error_cb(kafkaConfig, Dmn_Kafka::errorCallback);
 
   if (Role::Producer == m_role) {
-    rd_kafka_conf_set_dr_msg_cb(kafkaConf, Dmn_Kafka::producerCallback);
+    rd_kafka_conf_set_dr_msg_cb(kafkaConfig, Dmn_Kafka::producerCallback);
 
     m_kafka =
-        rd_kafka_new(RD_KAFKA_PRODUCER, kafkaConf, errstr, sizeof(errstr));
+        rd_kafka_new(RD_KAFKA_PRODUCER, kafkaConfig, errstr, sizeof(errstr));
     if (!m_kafka) {
-      rd_kafka_conf_destroy(kafkaConf);
+      rd_kafka_conf_destroy(kafkaConfig);
 
       throw std::runtime_error("Failed to create new producer: " +
                                std::string(errstr));
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
-    kafkaConf = NULL;
+    kafkaConfig = NULL;
   } else {
     assert(Role::Consumer == m_role);
 
     m_kafka =
-        rd_kafka_new(RD_KAFKA_CONSUMER, kafkaConf, errstr, sizeof(errstr));
+        rd_kafka_new(RD_KAFKA_CONSUMER, kafkaConfig, errstr, sizeof(errstr));
     if (!m_kafka) {
-      rd_kafka_conf_destroy(kafkaConf);
+      rd_kafka_conf_destroy(kafkaConfig);
 
       throw std::runtime_error("Failed to create new consumer: " +
                                std::string(errstr));
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
-    kafkaConf = NULL;
+    kafkaConfig = NULL;
 
     rd_kafka_poll_set_consumer(m_kafka);
 
@@ -134,7 +137,7 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
     rd_kafka_consumer_close(m_kafka);
   } else {
     rd_kafka_poll(m_kafka, 100);
-    rd_kafka_flush(m_kafka, 1000); // this is not configurable, and 1000ms shall
+    rd_kafka_flush(m_kafka, 1000); // this is not configurable
   }
 
   rd_kafka_destroy(m_kafka);
@@ -147,11 +150,11 @@ std::optional<std::string> Dmn_Kafka::read() {
   rd_kafka_message_t *consumer_message{};
 
   consumer_message = rd_kafka_consumer_poll(m_kafka, m_pollTimeoutMs);
+  Dmn_Proc::yield();
+
   if (!consumer_message) {
     return {};
   }
-
-  Dmn_Proc::yield();
 
   std::optional<std::string> ret{};
 
@@ -181,13 +184,15 @@ void Dmn_Kafka::write(std::string &item) { write(item, false); }
 void Dmn_Kafka::write(std::string &&item) { write(item, true); }
 
 void Dmn_Kafka::write(std::string &item, bool move) {
+  assert(Role::Producer == m_role);
+
   // this make sure only one thread is accessing the Dmn_Kafka write,
   // it is used to wait for message to be delivered to kafka broker and
   // the producerCallback() to be called, so we can return from this
   // method and assert that the message is delivered successfully or
   // fail affirmatively.
-  while (m_atomicFlag.test_and_set(std::memory_order_acquire)) {
-    m_atomicFlag.wait(true, std::memory_order_relaxed);
+  while (m_writeAtomicFlag.test_and_set(std::memory_order_acquire)) {
+    m_writeAtomicFlag.wait(true, std::memory_order_relaxed);
   }
 
   m_kafkaErr = static_cast<rd_kafka_resp_err_t>(0);
@@ -205,16 +210,19 @@ void Dmn_Kafka::write(std::string &item, bool move) {
       RD_KAFKA_V_VALUE((void *)value, valueLen), RD_KAFKA_V_OPAQUE(NULL),
       RD_KAFKA_V_END);
 
+  Dmn_Proc::yield();
+
   if (err) {
-    m_atomicFlag.clear();
+    m_writeAtomicFlag.clear();
 
     throw std::runtime_error("Failed to produce to topic: " + m_topic +
                              ", error: " + std::string(rd_kafka_err2str(err)));
   }
 
-  // we loop until message is delivered or declared fail, and the poll is needed
-  // to poll generic error like network not reachable.
-  while (m_atomicFlag.test()) {
+  // we loop until message is delivered or pronounced fail, and the poll is
+  // needed to poll generic error like network not reachable beyond message
+  // specific error.
+  while (m_writeAtomicFlag.test()) {
     rd_kafka_poll(m_kafka, 100);
     rd_kafka_flush(m_kafka, 1000); // this is not configurable, and 1000ms shall
                                    // be good enough for a single message to be

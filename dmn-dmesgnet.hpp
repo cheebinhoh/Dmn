@@ -119,8 +119,8 @@ public:
   Dmn_DMesgNet(std::string_view name,
                std::shared_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
                std::shared_ptr<Dmn_Io<std::string>> outputHandler = nullptr)
-      : Dmn_DMesg{name}, m_name{name}, m_outputHandler{outputHandler},
-        m_inputHandler{inputHandler} {
+      : Dmn_DMesg{name}, m_name{name}, m_inputHandler{inputHandler},
+        m_outputHandler{outputHandler} {
 
     // Initialize the DMesgNet state
     struct timeval tv;
@@ -225,7 +225,7 @@ public:
                     this, dmesgPbRead);
               }
             }
-          } 
+          }
 
           // do nothing
           Dmn_Proc::yield();

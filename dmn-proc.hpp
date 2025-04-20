@@ -12,8 +12,10 @@
 
 #define DMN_PROC_HPP_HAVE_SEEN
 
-#define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex) pthread_cleanup_push(&Dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
-#define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...)    pthread_cleanup_pop(0)
+#define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex)                            \
+  pthread_cleanup_push(&Dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
+
+#define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
 
 #include <functional>
 #include <string>

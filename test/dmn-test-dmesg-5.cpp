@@ -13,8 +13,7 @@
 #include <memory>
 #include <thread>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
@@ -23,11 +22,12 @@ int main(int argc, char *argv[])
   std::vector<std::string> subscribedTopics{"counter sync 1"};
 
   int cnt{0};
-  std::shared_ptr<Dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler = dmesg.openHandler(subscribedTopics, "handler", false, nullptr,
-                                                                                     [&cnt](const Dmn::DMesgPb &msg) mutable {
-                                                                                        EXPECT_TRUE("counter sync 1" == msg.topic());
-                                                                                        cnt++;
-                                                                                     });
+  std::shared_ptr<Dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
+      dmesg.openHandler(subscribedTopics, "handler", false, nullptr,
+                        [&cnt](const Dmn::DMesgPb &msg) mutable {
+                          EXPECT_TRUE("counter sync 1" == msg.topic());
+                          cnt++;
+                        });
   EXPECT_TRUE(dmesgHandler);
 
   auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
