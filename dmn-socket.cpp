@@ -62,7 +62,7 @@ std::optional<std::string> Dmn_Socket::read() {
   ssize_t nRead{};
 
   if ((nRead = recv(m_fd, buf, sizeof(buf), MSG_WAITALL)) < 0) {
-    throw std::runtime_error("Error in recv: " + std::string(strerror(errno)));
+    return {};
   } else if (nRead == 0) {
     return {};
   }
