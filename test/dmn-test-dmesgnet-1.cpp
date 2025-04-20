@@ -25,10 +25,13 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<Dmn::Dmn_Io<std::string>> readSocket2 =
       std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000);
 
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(writeSocket1)};
-  Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(readSocket2)};
+  std::unique_ptr<Dmn::Dmn_DMesgNet> dmesgnet1 =
+      std::make_unique<Dmn::Dmn_DMesgNet>("dmesg1", nullptr,
+                                          std::move(writeSocket1));
+  std::unique_ptr<Dmn::Dmn_DMesgNet> dmesgnet2 =
+      std::make_unique<Dmn::Dmn_DMesgNet>("dmesg2", std::move(readSocket2));
 
-  auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
+  auto readHandler2 = dmesgnet2->openHandler("dmesg2.readHandler");
 
   Dmn::DMesgPb dmesgPbRead{};
   Dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgPbRead]() {
@@ -42,8 +45,8 @@ int main(int argc, char *argv[]) {
   Dmn::Dmn_Proc::yield();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  auto dmesgHandler = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);
-  EXPECT_TRUE(dmesgHandler);
+  auto dmesgHandler1 = dmesgnet1->openHandler("writeHandler", nullptr, nullptr);
+  EXPECT_TRUE(dmesgHandler1);
 
   Dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
@@ -53,7 +56,7 @@ int main(int argc, char *argv[]) {
   Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
   dmsgbodyPb->set_message(data);
 
-  dmesgHandler->write(dmesgPb);
+  dmesgHandler1->write(dmesgPb);
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -63,6 +66,12 @@ int main(int argc, char *argv[]) {
               dmesgPb.sourceidentifier()); // the source is the local DmesgNet
                                            // agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
+
+  dmesgnet1->closeHandler(dmesgHandler1);
+  dmesgnet1.reset();
+
+  dmesgnet2->closeHandler(readHandler2);
+  dmesgnet2.reset();
 
   return RUN_ALL_TESTS();
 }
