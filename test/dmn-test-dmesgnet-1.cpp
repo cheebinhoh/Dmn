@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
               dmesgPb.sourceidentifier()); // the source is the local DmesgNet
                                            // agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
-  
+
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   return RUN_ALL_TESTS();

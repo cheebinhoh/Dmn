@@ -113,13 +113,13 @@ int main(int argc, char *argv[]) {
 
   // dmesgnet1
   Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", consumer1, producer1};
-  producer1 = {};
-  consumer1 = {};
+  producer1.reset();
+  consumer1.reset();
 
   // dmesgnet2
   Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", consumer2, producer2};
-  producer2 = {};
-  consumer2 = {};
+  producer2.reset();
+  consumer2.reset();
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
