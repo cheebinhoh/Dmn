@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
   writeConfigs1[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   writeConfigs1[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> producer1 = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> producer1 = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs1);
 
   // reader for DMesgNet
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   readConfigs1["auto.offset.reset"] = "earliest";
   readConfigs1[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> consumer1 = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> consumer1 = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Consumer, readConfigs1);
 
   // dmesgnet2
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   writeConfigs2[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   writeConfigs2[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> producer2 = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> producer2 = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs2);
 
   // reader for DMesgNet
@@ -108,16 +108,18 @@ int main(int argc, char *argv[]) {
   readConfigs2["auto.offset.reset"] = "earliest";
   readConfigs2[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> consumer2 = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> consumer2 = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Consumer, readConfigs2);
 
   // dmesgnet1
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", consumer1, producer1};
+  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
+                              std::move(producer1)};
   producer1 = {};
   consumer1 = {};
 
   // dmesgnet2
-  Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", consumer2, producer2};
+  Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
+                              std::move(producer2)};
   producer2 = {};
   consumer2 = {};
 

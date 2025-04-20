@@ -117,10 +117,10 @@ public:
    *                      DMesgPb message
    */
   Dmn_DMesgNet(std::string_view name,
-               std::shared_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
-               std::shared_ptr<Dmn_Io<std::string>> outputHandler = nullptr)
-      : Dmn_DMesg{name}, m_name{name}, m_inputHandler{inputHandler},
-        m_outputHandler{outputHandler} {
+               std::unique_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
+               std::unique_ptr<Dmn_Io<std::string>> outputHandler = nullptr)
+      : Dmn_DMesg{name}, m_name{name}, m_inputHandler{std::move(inputHandler)},
+        m_outputHandler{std::move(outputHandler)} {
 
     // Initialize the DMesgNet state
     struct timeval tv;
@@ -174,13 +174,18 @@ public:
 
     if (m_inputHandler) {
       m_inputProc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
-        while (true && this->m_inputHandler) {
-          Dmn::DMesgPb dmesgPbRead{};
+        bool stop{};
 
-          auto data = this->m_inputHandler->read();
-          if (data) {
-            dmesgPbRead.ParseFromString(*data);
-            if (dmesgPbRead.sourcewritehandleridentifier() != this->m_name) {
+        while (!stop && this->m_inputHandler) {
+          try {
+            Dmn::DMesgPb dmesgPbRead{};
+            auto data = this->m_inputHandler->read();
+            if (data) {
+              dmesgPbRead.ParseFromString(*data);
+              if (dmesgPbRead.sourcewritehandleridentifier() == this->m_name) {
+                continue;
+              }
+
               // this is important to prevent that the
               // m_subscriptHandler of this DMesgNet from
               // reading this message again and send out.
@@ -224,11 +229,14 @@ public:
                     },
                     this, dmesgPbRead);
               }
-            }
-          }
+            } /* if (data) */
 
-          // do nothing
-          Dmn_Proc::yield();
+            // do nothing
+            Dmn_Proc::yield();
+          } catch (...) {
+            Dmn_Proc::yield();
+            stop = true;
+          }
         }
       });
 
@@ -499,8 +507,8 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
-  std::shared_ptr<Dmn_Io<std::string>> m_inputHandler{};
-  std::shared_ptr<Dmn_Io<std::string>> m_outputHandler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_inputHandler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_outputHandler{};
 
   /**
    * data members for internal logic.
