@@ -27,8 +27,9 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   char *dirpath = dirname(argv[0]);
-  std::vector<std::string> files{std::string(dirpath) + "/teepipe-test-data-1.txt",
-                                 std::string(dirpath) + "/teepipe-test-data-2.txt"};
+  std::vector<std::string> files{
+      std::string(dirpath) + "/teepipe-test-data-1.txt",
+      std::string(dirpath) + "/teepipe-test-data-2.txt"};
   Dmn::Dmn_TeePipe<long> tpipe{
       "teepipe", [](long val) { std::cout << val << "\n"; },
       [](std::vector<long> list) { std::sort(list.begin(), list.end()); }};

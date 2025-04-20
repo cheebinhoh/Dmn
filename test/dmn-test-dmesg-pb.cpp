@@ -9,8 +9,7 @@
 #include <iostream>
 #include <sys/time.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::DMesgPb dmesgPb{};
@@ -66,8 +65,10 @@ int main(int argc, char *argv[])
   EXPECT_TRUE(!dmesgSysPb.body().has_message());
   EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().size() == 2);
   EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().Get(0).identifier() == "id3");
-  EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().Get(0).masteridentifier() == "id3");
-  EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().Get(0).state() == Dmn::DMesgStatePb::Ready);
+  EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().Get(0).masteridentifier() ==
+              "id3");
+  EXPECT_TRUE(dmesgSysPb.body().sys().nodelist().Get(0).state() ==
+              Dmn::DMesgStatePb::Ready);
 
   return RUN_ALL_TESTS();
 }

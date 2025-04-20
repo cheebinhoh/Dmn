@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * The Dmn_Kafka is a wrapper module to Kafka c++ interface and implement Dmn_Io
+ * interface with integration to Kafka broker through Kafka c++ interface.
  */
 
 #ifndef DMN_KAFKA_HPP_HAVE_SEEN
@@ -26,10 +29,10 @@ public:
    * @brief The configuration key specific to the Dmn_Kafka module (not directly
    *        to rdkafka).
    */
-  const static std::string Topic; // topic to read from or write to
-  const static std::string Key;   // the key that the topic is writen to
-  const static std::string
-      PollTimeoutMs; // timeout in ms before consumer poll is break out
+  const static std::string Topic;         // topic to read from or write to
+  const static std::string Key;           // the key that the topic is writen to
+  const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
+                                          // break out
 
   using ConfigType = std::map<std::string, std::string>;
 
@@ -49,10 +52,10 @@ public:
 
   ~Dmn_Kafka() noexcept;
 
-  Dmn_Kafka(const Dmn_Kafka &dmnDMesgHandlerSub) = delete;
-  const Dmn_Kafka &operator=(const Dmn_Kafka &dmnDMesgHandlerSub) = delete;
-  Dmn_Kafka(Dmn_Kafka &&dmnDMesgHandlerSub) = delete;
-  Dmn_Kafka &operator=(Dmn_Kafka &&dmnDMesgHandlerSub) = delete;
+  Dmn_Kafka(const Dmn_Kafka &obj) = delete;
+  const Dmn_Kafka &operator=(const Dmn_Kafka &obj) = delete;
+  Dmn_Kafka(Dmn_Kafka &&obj) = delete;
+  Dmn_Kafka &operator=(Dmn_Kafka &&obj) = delete;
 
   /**
    * @brief The method returns next topic' message that kafka consumer fetches
@@ -73,7 +76,7 @@ public:
 
   /**
    * @brief The method writes the message (of the topic) to Kafka broker, this
-   *        might move the string if implementation desires it.
+   *        might move the string if implementation desires and supports it.
    *
    * @param item The string to be written to the Kafka broker
    */
@@ -81,19 +84,36 @@ public:
 
 private:
   /**
-   * @brief The callback for rdkafka general error (not message specific error).
+   * @brief The callback for rdkafka message specific error, so it is callback
+   *        for producer.
+   *
+   * @param kafka_handle The kafka handler from kafka c++ module
+   * @param rkmessage    The kafka message sent delivered by kafka producer
+   * @param opaque       The pointer to Dmn_Kafka object
    */
   static void producerCallback(rd_kafka_t *kafka_handle,
                                const rd_kafka_message_t *rkmessage,
                                void *opaque);
 
   /**
-   * @brief The callback for rdkafka message specific error, so it is callback
-   *        for producer.
+   * @brief The callback invoked by kafka c++ module for generic rdkafka error
+   *        (not message specific error) for producer.
+   *
+   * @param kafka_handle The kafka handler from kafka c++ module
+   * @param err          The kafka error code related to deliverying the message
+   * @param reason       The kafka error code explanation in string
+   * @param opaque       The pointer to Dmn_Kafka object
    */
   static void errorCallback(rd_kafka_t *kafka_handle, int err,
                             const char *reason, void *opaque);
 
+  /**
+   * @brief The method publishes the data item to kafka broker, the data item
+   *        is moved (if supported) if move is true, or copy otherwise.
+   *
+   * @param item The data item to be published
+   * @param move The data item is moved (if support) and then published if true
+   */
   void write(std::string &item, bool move);
 
   /**
@@ -112,7 +132,7 @@ private:
   rd_kafka_t *m_kafka{};
   rd_kafka_resp_err_t m_kafkaErr{};
 
-  std::atomic_flag m_atomicFlag{};
+  std::atomic_flag m_writeAtomicFlag{};
 };
 
 } /* End of namespace Dmn */

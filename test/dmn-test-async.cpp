@@ -30,18 +30,18 @@ int main(int argc, char *argv[]) {
 
   Counter cnt{};
   Dmn::Dmn_Proc proc1{"proc1", [&cnt]() {
-                   for (int n = 0; n < 100; n++) {
-                     cnt.increment();
-                     Dmn::Dmn_Proc::yield();
-                   }
-                 }};
+                        for (int n = 0; n < 100; n++) {
+                          cnt.increment();
+                          Dmn::Dmn_Proc::yield();
+                        }
+                      }};
 
   Dmn::Dmn_Proc proc2{"proc2", [&cnt]() {
-                   for (int n = 0; n < 100; n++) {
-                     cnt.increment();
-                     Dmn::Dmn_Proc::yield();
-                   }
-                 }};
+                        for (int n = 0; n < 100; n++) {
+                          cnt.increment();
+                          Dmn::Dmn_Proc::yield();
+                        }
+                      }};
 
   proc1.exec();
   proc2.exec();
@@ -51,9 +51,7 @@ int main(int argc, char *argv[]) {
 
   Dmn::Dmn_Async async{"timer"};
   int val = 1;
-  async.execAfter(std::chrono::seconds(5), [&val]() {
-                    val = 2;
-                  });
+  async.execAfter(std::chrono::seconds(5), [&val]() { val = 2; });
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(1 == val);
 

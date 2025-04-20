@@ -18,30 +18,28 @@
 #include <memory>
 #include <thread>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
 
   int cnt{1};
 
-  std::shared_ptr<Dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler = dmesg.openHandler("handler", false,
-                                                                                     [](const Dmn::DMesgPb &msg) {
-                                                                                       return true;
-                                                                                     },
-                                                                                     [&dmesgHandler, &cnt](const Dmn::DMesgPb &msg) mutable {
-                                                                                       std::cout << msg.ShortDebugString() << "\n";
+  std::shared_ptr<Dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
+      dmesg.openHandler(
+          "handler", false, [](const Dmn::DMesgPb &msg) { return true; },
+          [&dmesgHandler, &cnt](const Dmn::DMesgPb &msg) mutable {
+            std::cout << msg.ShortDebugString() << "\n";
 
-                                                                                       Dmn::DMesgPb ret{msg};
-                                                                                       try {
-                                                                                         dmesgHandler->write(ret);
-                                                                                         cnt++;
-                                                                                       } catch (...) {
-                                                                                         std::cout << "except cnt: " << cnt << "\n";
-                                                                                         dmesgHandler->resolveConflict();
-                                                                                       }
-                                                                                     });
+            Dmn::DMesgPb ret{msg};
+            try {
+              dmesgHandler->write(ret);
+              cnt++;
+            } catch (...) {
+              std::cout << "except cnt: " << cnt << "\n";
+              dmesgHandler->resolveConflict();
+            }
+          });
   EXPECT_TRUE(dmesgHandler);
 
   auto dmesgWriteHandler = dmesg.openHandler("writeHandler");

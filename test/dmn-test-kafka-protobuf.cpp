@@ -10,17 +10,19 @@
 
 #include <chrono>
 #include <iostream>
-#include <thread>
 #include <sys/time.h>
+#include <thread>
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
   Dmn::Dmn_Kafka::ConfigType writeConfigs{};
-  writeConfigs["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
+  writeConfigs["bootstrap.servers"] =
+      "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  writeConfigs["sasl.password"] = "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+  writeConfigs["sasl.password"] =
+      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
@@ -31,13 +33,15 @@ int main(int argc, char *argv[]) {
 
   // reader
   Dmn::Dmn_Kafka::ConfigType readConfigs{};
-  readConfigs["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
+  readConfigs["bootstrap.servers"] =
+      "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs["sasl.password"] = "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+  readConfigs["sasl.password"] =
+      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
   readConfigs["security.protocol"] = "SASL_SSL";
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmesg1";
-  readConfigs["auto.offset.reset"] =  "latest";
+  readConfigs["auto.offset.reset"] = "latest";
   readConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 

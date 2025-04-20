@@ -35,7 +35,7 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
   std::shared_ptr<Dmn::Dmn_Kafka> producer = std::make_shared<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs);
 
-  m_dmesgNet = std::make_shared<Dmn::Dmn_DMesgNet>(name, consumer, producer);
+  m_dmesgNet = std::make_unique<Dmn::Dmn_DMesgNet>(name, consumer, producer);
 }
 
 Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {

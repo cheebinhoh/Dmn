@@ -14,13 +14,13 @@
 
 #include <algorithm>
 #include <array>
+#include <deque>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <string_view>
-#include <deque>
 
 #include "pthread.h"
 
@@ -133,18 +133,16 @@ public:
    * @param item The data item to be published to subscribers
    */
   void publish(T item) {
-    this->write([this, item]() mutable {
-                  this->publishInternal(item);
-                });
+    this->write([this, item]() mutable { this->publishInternal(item); });
   }
 
   /**
    * @brief The method registers a subscriber and send out prior published data
    *        item, The method is called immediately with m_lock than executed in
    *        the singleton asynchronous context, and that allows caller to be
-   *        sure that the Dmn_Sub instance has been registered with the publisher
-   *        upon return of the method. The register and unregister methods work
-   *        in synchronization manner.
+   *        sure that the Dmn_Sub instance has been registered with the
+   *        publisher upon return of the method. The register and unregister
+   *        methods work in synchronization manner.
    *
    * @param sub The subscriber instance to be registered
    */
@@ -168,7 +166,7 @@ public:
 
     // resend the data items that the registered subscriber
     // miss.
-    for (auto & item : m_buffer) {
+    for (auto &item : m_buffer) {
       sub->notifyInternal(item);
     }
 
@@ -204,7 +202,7 @@ public:
       sub->m_pub = nullptr;
 
       m_subscribers.erase(
-        std::remove(m_subscribers.begin(), m_subscribers.end(), sub),
+          std::remove(m_subscribers.begin(), m_subscribers.end(), sub),
           m_subscribers.end());
     }
 
@@ -250,7 +248,8 @@ protected:
      */
 
     m_buffer.push_back(item);
-    std::size_t numOfElementToBeRemoved = std::max(0ul, m_buffer.size() - m_capacity);
+    std::size_t numOfElementToBeRemoved =
+        std::max(0ul, m_buffer.size() - m_capacity);
     while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
       m_buffer.erase(m_buffer.begin());
       numOfElementToBeRemoved--;
