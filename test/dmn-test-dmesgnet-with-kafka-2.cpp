@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   writeConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   writeConfigs[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> producer = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> producer = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs);
 
   // reader for DMesgNet
@@ -72,10 +72,11 @@ int main(int argc, char *argv[]) {
   readConfigs["auto.offset.reset"] = "latest";
   readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> consumer = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> consumer = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Consumer, readConfigs);
 
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", consumer, producer};
+  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
+                              std::move(producer)};
   consumer.reset();
   producer.reset();
 
