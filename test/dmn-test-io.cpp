@@ -45,14 +45,15 @@ int main(int argc, char *argv[]) {
   int input_to_sleep_nanoseconds = 500000; /* 0.5 milliseconds */
   int input_to_run_seconds = 5;
 
-  Dmn::Dmn_Pipe<std::string> out_pipe{"out_pipe", [&input_cnt](std::string item) {
-                                   std::size_t found = item.find(": ");
-                                   if (found != std::string::npos) {
-                                     std::string source = item.substr(0, found);
+  Dmn::Dmn_Pipe<std::string> out_pipe{
+      "out_pipe", [&input_cnt](std::string item) {
+        std::size_t found = item.find(": ");
+        if (found != std::string::npos) {
+          std::string source = item.substr(0, found);
 
-                                     input_cnt[source]++;
-                                   }
-                                 }};
+          input_cnt[source]++;
+        }
+      }};
 
   Dmn::Dmn_Pipe<std::string> cal_pipe{
       "cal_input", [&out_pipe](std::string item) { out_pipe.write(item); }};
@@ -71,8 +72,8 @@ int main(int argc, char *argv[]) {
     system_clock::time_point start = system_clock::now();
 
     while (true) {
-      std::string item =
-          "sensor_input: " + std::to_string(sensor_input_i) + ": " + std::string(2000, 'x');
+      std::string item = "sensor_input: " + std::to_string(sensor_input_i) +
+                         ": " + std::string(2000, 'x');
       staging_pipe.write(item);
 
       sensor_input_i++;
@@ -91,7 +92,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    safethread_log(std::cout << "sensor input: end: " << sensor_input_i << "\n");
+    safethread_log(std::cout << "sensor input: end: " << sensor_input_i
+                             << "\n");
   });
 
   int gps_input_i{0};
@@ -158,7 +160,6 @@ int main(int argc, char *argv[]) {
   ext_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
                   input_to_run_seconds, &ext_input_i]() {
-
     system_clock::time_point start = system_clock::now();
 
     while (true) {
@@ -196,14 +197,11 @@ int main(int argc, char *argv[]) {
 
       if (pair.first == "gps_input") {
         EXPECT_TRUE(gps_input_i == pair.second);
-      }
-      else if (pair.first == "ext_input") {
+      } else if (pair.first == "ext_input") {
         EXPECT_TRUE(ext_input_i == pair.second);
-      }
-      else if (pair.first == "imu_input") {
+      } else if (pair.first == "imu_input") {
         EXPECT_TRUE(imu_input_i == pair.second);
-      }
-      else if (pair.first == "sensor_input") {
+      } else if (pair.first == "sensor_input") {
         EXPECT_TRUE(sensor_input_i == pair.second);
       }
     }

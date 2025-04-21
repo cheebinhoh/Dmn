@@ -110,7 +110,7 @@ public:
        *          the Dmn_DMesgHandlerSub) is opened with m_includeDMesgSys
        *          as true, the Dmn_DMesgPB message will be either pushed into
        *          the buffer waiting to be read through Dmn_DMesgHandler' read
-       *          or handled through m_asyncProcessFn callback.
+       *          or handling through m_asyncProcessFn callback.
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
@@ -190,9 +190,7 @@ public:
       m_sub.m_owner = this;
     }
 
-    ~Dmn_DMesgHandler() noexcept try {
-      m_sub.waitForEmpty();
-    } catch (...) {
+    ~Dmn_DMesgHandler() noexcept try { m_sub.waitForEmpty(); } catch (...) {
       // explicit return to resolve exception as destructor must be noexcept
       return;
     }
@@ -230,7 +228,7 @@ public:
      *        asynchronous action on publisher singleton asynchronous thread
      *        context to reset the handler' context state.
      */
-    void resolveConflict() { m_owner->resetHandlerConflictState(this->m_name); }
+    void resolveConflict() { m_owner->resetHandlerConflictState(this); }
 
     /**
      * @brief The method set the callback function for conflict.
@@ -273,9 +271,7 @@ public:
       writeDMesgInternal(dmesgPb, false);
     }
 
-    void waitForEmpty() {
-      m_sub.waitForEmpty();
-    }
+    void waitForEmpty() { m_sub.waitForEmpty(); }
 
     friend class Dmn_DMesg;
     friend class Dmn_DMesgHandlerSub;
@@ -386,7 +382,7 @@ public:
    * @param config The configuration key value (reserved for future use)
    */
   Dmn_DMesg(std::string_view name, KeyValueConfiguration config = {})
-      : Dmn_Pub{name, 0, // Dmn_DMesg handles re-send per topic
+      : Dmn_Pub{name, 0, // Dmn_DMesg manages re-send per topic
                 [this](const Dmn_Sub *const sub, const Dmn::DMesgPb &msg) {
                   const Dmn_DMesgHandler::Dmn_DMesgHandlerSub
                       *const handlerSub = dynamic_cast<
@@ -396,8 +392,7 @@ public:
 
                   Dmn_DMesgHandler *handler = handlerSub->m_owner;
 
-                  return nullptr != handler &&
-                         nullptr != handler->m_owner &&
+                  return nullptr != handler && nullptr != handler->m_owner &&
                          (true == msg.playback() ||
                           handler->m_afterInitialPlayback) &&
                          (handler->m_subscribedTopics.size() == 0 ||
@@ -408,9 +403,7 @@ public:
                 }},
         m_name{name}, m_config{config} {}
 
-  virtual ~Dmn_DMesg() noexcept try {
-    this->waitForEmpty();
-  } catch (...) {
+  virtual ~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
     // explicit return to resolve exception as destructor must be noexcept
     return;
   }
@@ -469,16 +462,17 @@ public:
     // this is primitive openHandler() method that will
     // - create the handler
     // - register the handler as subscriber
-    // - chain up the different level of objects to its owner, handler's subscriber
-    //   to handler, handler to the DMesg publisher
-    // - then add an asynchronous task to run in the publisher singleton asynchronous
-    //   thread context and the task will add the handler to the list of handlers
-    //   known to the DMesg subscriber, playback prior data per topic, and set
-    //   flag that the newly created handler has been fully initialized after playback
-    //   of prior data.
+    // - chain up the different level of objects to its owner, handler's
+    //   subscriber to handler, handler to the DMesg publisher
+    // - then add an asynchronous task to run in the publisher singleton
+    //   asynchronous thread context and the task will add the handler to the
+    //   list of handlers known to the DMesg subscriber, playback prior data per
+    //   topic, and set flag that the newly created handler has been fully
+    //   initialized after playback of prior data.
     //
-    // This allows us to maintain a singleton asynchronous thread context is responsible
-    // for publishing and notifying data between subscriber and publisher.
+    // This allows us to maintain a singleton asynchronous thread context is
+    // responsible for publishing and notifying data between subscriber and
+    // publisher.
 
     std::shared_ptr<Dmn_DMesgHandler> handler =
         std::make_shared<Dmn_DMesgHandler>(std::forward<U>(arg)...);
@@ -493,13 +487,13 @@ public:
      */
     handlerRet->m_subscribedTopics = topics;
 
-    DMN_ASYNC_CALL_WITH_CAPTURE({
-                                  this->m_handlers.push_back(handler);
-                                  this->playbackLastTopicDMesgPbInternal();
-                                  handler->m_afterInitialPlayback = true;
-                                },
-                                this,
-                                handler);
+    DMN_ASYNC_CALL_WITH_CAPTURE(
+        {
+          this->m_handlers.push_back(handler);
+          this->playbackLastTopicDMesgPbInternal();
+          handler->m_afterInitialPlayback = true;
+        },
+        this, handler);
 
     return handlerRet;
   }
@@ -516,22 +510,22 @@ public:
     handlerToClose->waitForEmpty();
     handlerToClose->m_owner = nullptr;
 
-    std::string handlerName = handlerToClose->m_name;
+    Dmn_DMesgHandler *handlerPtr = handlerToClose.get();
     handlerToClose = {};
 
     DMN_ASYNC_CALL_WITH_CAPTURE(
         {
-          std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
-            m_handlers.begin(), m_handlers.end(), [handlerName](auto handler) {
-            return handler->m_name == handlerName;
-           });
+          std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
+              std::find_if(m_handlers.begin(), m_handlers.end(),
+                           [handlerPtr](auto handler) {
+                             return handler.get() == handlerPtr;
+                           });
 
           if (it != m_handlers.end()) {
             m_handlers.erase(it);
           }
         },
-        this,
-        handlerName);
+        this, handlerPtr);
   }
 
 protected:
@@ -609,10 +603,10 @@ protected:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictState(std::string_view handlerName) {
+  void resetHandlerConflictState(const Dmn_DMesgHandler *handlerPtr) {
     DMN_ASYNC_CALL_WITH_CAPTURE(
-        { this->resetHandlerConflictStateInternal(handlerName); }, this,
-        handlerName);
+        { this->resetHandlerConflictStateInternal(handlerPtr); }, this,
+        handlerPtr);
   }
 
 private:
@@ -638,10 +632,10 @@ private:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictStateInternal(std::string_view handlerName) {
+  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handlerPtr) {
     std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
         m_handlers.begin(), m_handlers.end(),
-        [handlerName](auto handler) { return handler->m_name == handlerName; });
+        [handlerPtr](auto handler) { return handler.get() == handlerPtr; });
 
     if (it != m_handlers.end()) {
       (*it)->resolveConflictInternal();

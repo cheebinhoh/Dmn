@@ -14,10 +14,11 @@ int main(int argc, char *argv[]) {
   long cnt{};
 
   Dmn::Dmn_Pipe<long> pipe{"pipe", [&cnt](long val) {
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
-                        cnt++;
-                        std::cout << "read\n";
-                      }};
+                             std::this_thread::sleep_for(
+                                 std::chrono::seconds(1));
+                             cnt++;
+                             std::cout << "read\n";
+                           }};
 
   for (int i = 0; i < 5; i++) {
     pipe.write(i);

@@ -14,8 +14,7 @@
 #include <sstream>
 #include <thread>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
@@ -26,91 +25,94 @@ int main(int argc, char *argv[])
   auto dmesgHandler2 = dmesg.openHandler("handler2");
   EXPECT_TRUE(dmesgHandler2);
 
-  Dmn::Dmn_Proc proc1{"proc1", [&dmesgHandler1]() {
-    int valCheck{1};
+  Dmn::Dmn_Proc proc1{
+      "proc1", [&dmesgHandler1]() {
+        int valCheck{1};
 
-    while (true) {
-      auto dmesgPb = dmesgHandler1->read();
-      if (!dmesgPb) {
-        break;
-      }
+        while (true) {
+          auto dmesgPb = dmesgHandler1->read();
+          if (!dmesgPb) {
+            break;
+          }
 
-      assert(dmesgPb->type() == Dmn::DMesgTypePb::message);
-      if (dmesgPb->body().message() == "") {
-        break;
-      }
+          assert(dmesgPb->type() == Dmn::DMesgTypePb::message);
+          if (dmesgPb->body().message() == "") {
+            break;
+          }
 
-      std::cout << "proc1: message: " << dmesgPb->body().message() << "\n";
+          std::cout << "proc1: message: " << dmesgPb->body().message() << "\n";
 
-      std::stringstream is{dmesgPb->body().message()};
-      int val{};
+          std::stringstream is{dmesgPb->body().message()};
+          int val{};
 
-      is >> val;
-      EXPECT_TRUE(!is.fail());
-      EXPECT_TRUE(val == valCheck);
+          is >> val;
+          EXPECT_TRUE(!is.fail());
+          EXPECT_TRUE(val == valCheck);
 
-      val++;
+          val++;
 
-      std::stringstream os;
-      os << val;
+          std::stringstream os;
+          os << val;
 
-      Dmn::DMesgPb dmesgPbRet{};
-      dmesgPbRet.set_topic("counter sync");
-      dmesgPbRet.set_type(Dmn::DMesgTypePb::message);
+          Dmn::DMesgPb dmesgPbRet{};
+          dmesgPbRet.set_topic("counter sync");
+          dmesgPbRet.set_type(Dmn::DMesgTypePb::message);
 
-      Dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgPbRet.mutable_body();
-      dmsgbodyPbRet->set_message(os.str());
+          Dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgPbRet.mutable_body();
+          dmsgbodyPbRet->set_message(os.str());
 
-      dmesgHandler1->write(dmesgPbRet);
+          dmesgHandler1->write(dmesgPbRet);
 
-      valCheck += 2;
-    }
-  }};
+          valCheck += 2;
+        }
+      }};
 
-  Dmn::Dmn_Proc proc2{"proc2", [&dmesgHandler2]() {
-    int val{1};
+  Dmn::Dmn_Proc proc2{
+      "proc2", [&dmesgHandler2]() {
+        int val{1};
 
-    while (true) {
-      std::stringstream os{};
+        while (true) {
+          std::stringstream os{};
 
-      if (val <= 10) {
-        os << val;
-      } else {
-        os << "";
-      }
+          if (val <= 10) {
+            os << val;
+          } else {
+            os << "";
+          }
 
-      Dmn::DMesgPb dmesgPb{};
-      dmesgPb.set_topic("counter sync");
-      dmesgPb.set_type(Dmn::DMesgTypePb::message);
+          Dmn::DMesgPb dmesgPb{};
+          dmesgPb.set_topic("counter sync");
+          dmesgPb.set_type(Dmn::DMesgTypePb::message);
 
-      Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
-      dmsgbodyPb->set_message(os.str());
+          Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+          dmsgbodyPb->set_message(os.str());
 
-      dmesgHandler2->write(dmesgPb);
+          dmesgHandler2->write(dmesgPb);
 
-      if (os.str() == "") {
-        break;
-      }
+          if (os.str() == "") {
+            break;
+          }
 
-      auto dmesgPbRet = dmesgHandler2->read();
-      if (!dmesgPbRet) {
-        break;
-      }
+          auto dmesgPbRet = dmesgHandler2->read();
+          if (!dmesgPbRet) {
+            break;
+          }
 
-      assert(dmesgPbRet->type() == Dmn::DMesgTypePb::message);
-      assert(dmesgPbRet->body().message() != "");
+          assert(dmesgPbRet->type() == Dmn::DMesgTypePb::message);
+          assert(dmesgPbRet->body().message() != "");
 
-      std::cout << "proc2: message: " << dmesgPbRet->body().message() << "\n";
+          std::cout << "proc2: message: " << dmesgPbRet->body().message()
+                    << "\n";
 
-      int valRet{};
+          int valRet{};
 
-      std::stringstream is{dmesgPbRet->body().message()};
-      is >> valRet;
+          std::stringstream is{dmesgPbRet->body().message()};
+          is >> valRet;
 
-      EXPECT_TRUE(valRet == (val + 1));
-      val += 2;
-    }
-  }};
+          EXPECT_TRUE(valRet == (val + 1));
+          val += 2;
+        }
+      }};
 
   proc2.exec();
   proc1.exec();

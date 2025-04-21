@@ -9,17 +9,21 @@
 #include <cassert>
 #include <expected>
 #include <string>
+#include <string_view>
 
 namespace Dmn {
 
 std::expected<rd_kafka_conf_res_t, std::string>
-set_config(rd_kafka_conf_t *conf, const char *key, const char *value) {
-  char errstr[512]{};
+set_config(rd_kafka_conf_t *config, std::string_view key,
+           std::string_view value) {
+  char errstr[KAFKA_ERROR_STRING_LENGTH]{};
   rd_kafka_conf_res_t res{};
 
-  assert(nullptr != conf || nullptr == "conf parameter must not be nullptr");
+  assert(nullptr != config ||
+         nullptr == "config parameter must not be nullptr");
 
-  res = rd_kafka_conf_set(conf, key, value, errstr, sizeof(errstr));
+  res = rd_kafka_conf_set(config, key.data(), value.data(), errstr,
+                          sizeof(errstr));
   if (RD_KAFKA_CONF_OK != res) {
     std::string unexpectedErrStr = std::string(errstr);
 

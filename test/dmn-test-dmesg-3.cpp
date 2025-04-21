@@ -15,24 +15,23 @@
 #include <sstream>
 #include <thread>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Dmn::Dmn_DMesg dmesg{"dmesg"};
   std::string data1{};
   std::string data2{};
 
-  auto dmesgHandler1 = dmesg.openHandler("handler1", nullptr,
-                                         [&data1](Dmn::DMesgPb dmesgPb) {
-                                           data1 = dmesgPb.body().message();
-                                         });
+  auto dmesgHandler1 =
+      dmesg.openHandler("handler1", nullptr, [&data1](Dmn::DMesgPb dmesgPb) {
+        data1 = dmesgPb.body().message();
+      });
   EXPECT_TRUE(dmesgHandler1);
 
-  auto dmesgHandler2 = dmesg.openHandler("handler2", nullptr,
-                                         [&data2](Dmn::DMesgPb dmesgPb) {
-                                           data2 = dmesgPb.body().message();
-                                         });
+  auto dmesgHandler2 =
+      dmesg.openHandler("handler2", nullptr, [&data2](Dmn::DMesgPb dmesgPb) {
+        data2 = dmesgPb.body().message();
+      });
 
   EXPECT_TRUE(dmesgHandler2);
 

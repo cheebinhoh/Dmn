@@ -10,8 +10,8 @@
 #include "dmn-teepipe.hpp"
 #include "dmn.hpp"
 
-#include <gtest/gtest.h>
 #include <algorithm>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 
@@ -27,7 +27,8 @@ public:
 
   void post(std::string event) {
     DMN_ASYNC_CALL_WITH_CAPTURE(std::cout << "Event: " << count++ << ": "
-                                          << event << "\n", this, event);
+                                          << event << "\n",
+                                this, event);
   }
 
 private:
@@ -44,18 +45,18 @@ int main(int argc, char *argv[]) {
   std::vector<int> s1{1, 3, 5, 7, 9};
   auto p1 = sortPipe.addDmn_TeePipeSource();
   Dmn::Dmn_Proc proc1{"s1", [&p1, &s1]() {
-                   for (auto &v : s1) {
-                     p1->write(v);
-                   }
-                 }};
+                        for (auto &v : s1) {
+                          p1->write(v);
+                        }
+                      }};
 
   std::vector<int> s2{2, 4, 6, 8, 10};
   auto p2 = sortPipe.addDmn_TeePipeSource();
   Dmn::Dmn_Proc proc2{"s2", [&p2, &s2]() {
-                   for (auto &v : s2) {
-                     p2->write(v);
-                   }
-                 }};
+                        for (auto &v : s2) {
+                          p2->write(v);
+                        }
+                      }};
 
   proc2.exec();
   proc1.exec();
@@ -89,11 +90,11 @@ int main(int argc, char *argv[]) {
 
   {
     Dmn::Dmn_Proc nonestop{"none-stop", []() {
-                        std::cout << "start none-stop\n";
-                        while (true) {
-                          Dmn::Dmn_Proc::yield();
-                        }
-                      }};
+                             std::cout << "start none-stop\n";
+                             while (true) {
+                               Dmn::Dmn_Proc::yield();
+                             }
+                           }};
     nonestop.exec();
     Dmn::Dmn_Proc::yield();
   }
@@ -115,9 +116,10 @@ int main(int argc, char *argv[]) {
 
   auto pipeBlock = std::make_unique<Dmn::Dmn_Pipe<std::string>>("pipeBlock");
   Dmn::Dmn_Proc pipeBlockProc{"pipeBlockProc", [&pipeBlock]() {
-                           std::this_thread::sleep_for(std::chrono::seconds(5));
-                           pipeBlock = {};
-                         }};
+                                std::this_thread::sleep_for(
+                                    std::chrono::seconds(5));
+                                pipeBlock = {};
+                              }};
 
   pipeBlockProc.exec();
   Dmn::Dmn_Proc::yield();

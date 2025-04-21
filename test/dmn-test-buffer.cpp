@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   auto buf = std::make_unique<Dmn::Dmn_Buffer<std::string>>();
   auto proc = std::make_unique<Dmn::Dmn_Proc>("proc", [&buf]() {
     static std::vector<std::string> result{"hello", "abc"};
-    static int index {};
+    static int index{};
 
     auto s = buf->pop();
     EXPECT_TRUE(s == result[index++]);
