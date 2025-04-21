@@ -117,10 +117,10 @@ public:
    *                      DMesgPb message
    */
   Dmn_DMesgNet(std::string_view name,
-               std::shared_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
-               std::shared_ptr<Dmn_Io<std::string>> outputHandler = nullptr)
-      : Dmn_DMesg{name}, m_name{name}, m_inputHandler{inputHandler},
-        m_outputHandler{outputHandler} {
+               std::unique_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
+               std::unique_ptr<Dmn_Io<std::string>> outputHandler = nullptr)
+      : Dmn_DMesg{name}, m_name{name}, m_inputHandler{std::move(inputHandler)},
+        m_outputHandler{std::move(outputHandler)} {
 
     // Initialize the DMesgNet state
     struct timeval tv;
@@ -505,8 +505,8 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
-  std::shared_ptr<Dmn_Io<std::string>> m_inputHandler{};
-  std::shared_ptr<Dmn_Io<std::string>> m_outputHandler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_inputHandler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_outputHandler{};
 
   /**
    * data members for internal logic.

@@ -20,13 +20,14 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
-      std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::shared_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
+      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5001);
+  std::unique_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
+      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
   Dmn::DMesgPb sysPb_3{};
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-3", readSocket1, writeSocket1};
+  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-3", std::move(readSocket1),
+                              std::move(writeSocket1)};
   readSocket1.reset();
   writeSocket1.reset();
 
@@ -42,12 +43,13 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
   Dmn::Dmn_Proc dmesg_4_Proc{
       "dmesg_4_Proc", [&sysPb_4]() mutable {
-        std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
-            std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000);
-        std::shared_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
-            std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+        std::unique_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
+            std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000);
+        std::unique_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
+            std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5001, true);
 
-        Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-4", readSocket1, writeSocket1};
+        Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-4", std::move(readSocket1),
+                                    std::move(writeSocket1)};
         readSocket1.reset();
         writeSocket1.reset();
 

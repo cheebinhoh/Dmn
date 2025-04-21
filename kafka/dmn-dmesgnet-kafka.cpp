@@ -23,7 +23,7 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
   readConfigs["auto.offset.reset"] = "earliest";
   readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "500";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> consumer = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> consumer = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Consumer, readConfigs);
 
   // writer for DMesgNet
@@ -32,12 +32,11 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
   writeConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   writeConfigs[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::shared_ptr<Dmn::Dmn_Kafka> producer = std::make_shared<Dmn::Dmn_Kafka>(
+  std::unique_ptr<Dmn::Dmn_Kafka> producer = std::make_unique<Dmn::Dmn_Kafka>(
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs);
 
-  m_dmesgNet = std::make_unique<Dmn::Dmn_DMesgNet>(name, consumer, producer);
-  consumer.reset();
-  producer.reset();
+  m_dmesgNet = std::make_unique<Dmn::Dmn_DMesgNet>(name, std::move(consumer),
+                                                   std::move(producer));
 }
 
 Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {
