@@ -30,6 +30,8 @@ int main(int argc, char *argv[]) {
   Dmn::DMesgPb sysPb_3{};
   std::unique_ptr<Dmn::Dmn_DMesgNet> dmesgnet1 =
       std::make_unique<Dmn::Dmn_DMesgNet>("dmesg-3", readSocket1, writeSocket1);
+  readSocket1.reset();
+  writeSocket1.reset();
 
   auto listenHandler3 = dmesgnet1->openHandler(
       "dmesg-3-listen", true, nullptr, [&sysPb_3](Dmn::DMesgPb data) mutable {

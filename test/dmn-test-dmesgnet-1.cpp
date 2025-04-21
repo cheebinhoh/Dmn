@@ -26,7 +26,10 @@ int main(int argc, char *argv[]) {
       std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000);
 
   Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, writeSocket1};
+  writeSocket1.reset();
+
   Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", readSocket2};
+  readSocket2.reset();
 
   auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
 
@@ -63,6 +66,8 @@ int main(int argc, char *argv[]) {
               dmesgPb.sourceidentifier()); // the source is the local DmesgNet
                                            // agent that read
   EXPECT_TRUE(dmesgPbRead.body().message() == dmesgPb.body().message());
+
+  std::this_thread::sleep_for(std::chrono::seconds(5));
 
   return RUN_ALL_TESTS();
 }

@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
   bool readData{};
   Dmn::DMesgPb msgPb{};
   Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-1", readSocket1, writeSocket1};
+  readSocket1.reset();
+  writeSocket1.reset();
 
   auto readHandler =
       dmesgnet1.openHandler("dmesg-1-handler", false, nullptr,

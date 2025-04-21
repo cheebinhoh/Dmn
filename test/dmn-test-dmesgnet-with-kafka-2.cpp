@@ -76,9 +76,10 @@ int main(int argc, char *argv[]) {
       Dmn::Dmn_Kafka::Role::Consumer, readConfigs);
 
   Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", consumer, producer};
+  consumer.reset();
+  producer.reset();
+
   std::this_thread::sleep_for(std::chrono::seconds(3));
-  producer = {};
-  consumer = {};
 
   // consume prior messages from topic.
   Dmn::DMesgPb dmesgPbRead{};

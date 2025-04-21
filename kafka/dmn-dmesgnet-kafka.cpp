@@ -36,6 +36,8 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
       Dmn::Dmn_Kafka::Role::Producer, writeConfigs);
 
   m_dmesgNet = std::make_unique<Dmn::Dmn_DMesgNet>(name, consumer, producer);
+  consumer.reset();
+  producer.reset();
 }
 
 Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {

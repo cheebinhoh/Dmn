@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
   bool readData{};
   Dmn::DMesgPb msgPb{};
   Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-1", readSocket1, writeSocket1};
+  readSocket1.reset();
+  writeSocket1.reset();
 
   auto writeHandler1 =
       dmesgnet1.openHandler("dmesg-1-handler", false, nullptr,
@@ -56,6 +58,9 @@ int main(int argc, char *argv[]) {
       std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5001, true);
 
   Dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", readSocket2, writeSocket2};
+  readSocket2.reset();
+  writeSocket2.reset();
+
   Dmn::DMesgPb msgPb2{};
   auto readHandler2 =
       dmesgnet2.openHandler("dmesg-2-handler", false, nullptr,

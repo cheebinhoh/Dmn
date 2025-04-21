@@ -50,7 +50,8 @@ int main(int argc, char *argv[]) {
       std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5001);
   std::unique_ptr<Dmn::Dmn_DMesgNet> dmesgnet1 =
       std::make_unique<Dmn::Dmn_DMesgNet>("dmesg1", readSocket1, writeSocket1);
-
+  readSocket1.reset();
+  writeSocket1.reset();
   std::this_thread::sleep_for(std::chrono::seconds(10));
   dmesgnet1->waitForEmpty();
   EXPECT_TRUE(dmesgPbLast.body().sys().self().masteridentifier() != "");

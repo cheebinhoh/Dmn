@@ -174,7 +174,9 @@ public:
 
     if (m_inputHandler) {
       m_inputProc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
-        while (true && this->m_inputHandler) {
+        bool stop{};
+
+        while ((!stop) && this->m_inputHandler) {
           Dmn::DMesgPb dmesgPbRead{};
 
           auto data = this->m_inputHandler->read();
