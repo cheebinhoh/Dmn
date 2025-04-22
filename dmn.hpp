@@ -2,9 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_H_HAVE_SEEN
+#ifndef DMN_H_
 
-#define DMN_H_HAVE_SEEN
+#define DMN_H_
 
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
@@ -23,4 +23,8 @@
 #include "dmn-timer.hpp"
 #include "dmn-util.hpp"
 
-#endif /* End of macro DMN_H_HAVE_SEEN */
+#include "kafka/dmn-dmesgnet-kafka.hpp"
+#include "kafka/dmn-kafka-util.hpp"
+#include "kafka/dmn-kafka.hpp"
+
+#endif /* End of macro DMN_H_ */

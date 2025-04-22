@@ -6,14 +6,14 @@
  * published by publisher of the Dmn_DMesg object.
  */
 
-#include "dmn-dmesg.hpp"
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
+
+#include "dmn-dmesg.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

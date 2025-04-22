@@ -14,15 +14,15 @@
  * dmn-pub-sub.hpp for an example usage of this class).
  */
 
-#ifndef DMN_ASYNC_HPP_HAVE_SEEN
+#ifndef DMN_ASYNC_HPP_
 
-#define DMN_ASYNC_HPP_HAVE_SEEN
-
-#include "dmn-pipe.hpp"
+#define DMN_ASYNC_HPP_
 
 #include <chrono>
 #include <functional>
 #include <string_view>
+
+#include "dmn-pipe.hpp"
 
 #define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \
   do {                                                                         \
@@ -111,4 +111,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_ASYNC_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_ASYNC_HPP_ */

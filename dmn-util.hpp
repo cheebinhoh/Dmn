@@ -2,9 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_UTIL_HPP_HAVE_SEEN
+#ifndef DMN_UTIL_HPP_
 
-#define DMN_UTIL_HPP_HAVE_SEEN
+#define DMN_UTIL_HPP_
 
 #include <algorithm>
 

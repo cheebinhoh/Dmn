@@ -14,14 +14,9 @@
  * output pipe.
  */
 
-#ifndef DMN_TEEPIPE_HPP_HAVE_SEEN
+#ifndef DMN_TEEPIPE_HPP_
 
-#define DMN_TEEPIPE_HPP_HAVE_SEEN
-
-#include "dmn-io.hpp"
-#include "dmn-limit-buffer.hpp"
-#include "dmn-pipe.hpp"
-#include "dmn-proc.hpp"
+#define DMN_TEEPIPE_HPP_
 
 #include <algorithm>
 #include <cassert>
@@ -35,6 +30,11 @@
 #include <thread>
 #include <type_traits>
 #include <vector>
+
+#include "dmn-io.hpp"
+#include "dmn-limit-buffer.hpp"
+#include "dmn-pipe.hpp"
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 
@@ -398,4 +398,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_TEEPIPE_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_TEEPIPE_HPP_ */

@@ -7,8 +7,10 @@
  * coordinate high level sorting between two stream of data.
  */
 
-#include "dmn-proc.hpp"
-#include "dmn-teepipe.hpp"
+#include <fcntl.h>
+#include <libgen.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <gtest/gtest.h>
 
@@ -18,10 +20,8 @@
 #include <string>
 #include <vector>
 
-#include <fcntl.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "dmn-proc.hpp"
+#include "dmn-teepipe.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

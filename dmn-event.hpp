@@ -5,17 +5,17 @@
  * and programatic events in general.
  */
 
-#ifndef DMN_EVENT_HPP_HAVE_SEEN
+#ifndef DMN_EVENT_HPP_
 
-#define DMN_EVENT_HPP_HAVE_SEEN
-
-#include "dmn-async.hpp"
-#include "dmn-singleton.hpp"
+#define DMN_EVENT_HPP_
 
 #include <csignal>
 #include <functional>
 #include <map>
 #include <mutex>
+
+#include "dmn-async.hpp"
+#include "dmn-singleton.hpp"
 
 namespace Dmn {
 
@@ -99,4 +99,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_EVENT_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_EVENT_HPP_ */

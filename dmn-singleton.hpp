@@ -6,9 +6,9 @@
  * to the subclass constructor.
  */
 
-#ifndef DMN_SINGLETON_HPP_HAVE_SEEN
+#ifndef DMN_SINGLETON_HPP_
 
-#define DMN_SINGLETON_HPP_HAVE_SEEN
+#define DMN_SINGLETON_HPP_
 
 #include <memory>
 #include <utility>
@@ -38,4 +38,4 @@ public:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_SINGLETON_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_SINGLETON_HPP_ */

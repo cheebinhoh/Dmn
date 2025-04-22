@@ -2,15 +2,15 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-proc.hpp"
-#include "dmn-socket.hpp"
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
 #include <memory>
 #include <thread>
+
+#include "dmn-proc.hpp"
+#include "dmn-socket.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

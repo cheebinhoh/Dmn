@@ -5,13 +5,14 @@
  * certain topic of the Dmn_DMesg object.
  */
 
-#include "dmn-dmesg.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <thread>
+
+#include "dmn-dmesg.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

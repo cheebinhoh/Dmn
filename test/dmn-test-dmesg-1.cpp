@@ -5,12 +5,13 @@
  * that one publisher and two subscribers work.
  */
 
-#include "dmn-dmesg.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <thread>
+
+#include "dmn-dmesg.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

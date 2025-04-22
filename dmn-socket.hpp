@@ -2,15 +2,15 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_SOCKET_HPP_HAVE_SEEN
+#ifndef DMN_SOCKET_HPP_
 
-#define DMN_SOCKET_HPP_HAVE_SEEN
-
-#include "dmn-io.hpp"
+#define DMN_SOCKET_HPP_
 
 #include <optional>
 #include <string>
 #include <string_view>
+
+#include "dmn-io.hpp"
 
 namespace Dmn {
 
@@ -38,4 +38,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_SOCKET_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_SOCKET_HPP_ */

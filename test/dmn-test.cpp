@@ -2,6 +2,12 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <iostream>
+#include <string>
+
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
 #include "dmn-limit-buffer.hpp"
@@ -9,11 +15,6 @@
 #include "dmn-proc.hpp"
 #include "dmn-teepipe.hpp"
 #include "dmn.hpp"
-
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <string>
 
 /* An example usage of Dmn async where we can wrap the api body within
  * dmn async call to serialize multiple api called from different threads,

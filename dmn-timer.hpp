@@ -8,15 +8,15 @@
  * will be executed at the first moment that the duration is elapsed.
  */
 
-#ifndef DMN_TIMER_HPP_HAVE_SEEN
+#ifndef DMN_TIMER_HPP_
 
-#define DMN_TIMER_HPP_HAVE_SEEN
-
-#include "dmn-proc.hpp"
+#define DMN_TIMER_HPP_
 
 #include <chrono>
 #include <functional>
 #include <thread>
+
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 
@@ -80,4 +80,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_TIMER_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_TIMER_HPP_ */

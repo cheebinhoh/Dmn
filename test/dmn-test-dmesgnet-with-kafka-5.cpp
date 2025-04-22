@@ -14,18 +14,20 @@
  * network.
  */
 
-#include "kafka/dmn-dmesgnet-kafka.hpp"
-#include "kafka/dmn-kafka.hpp"
-
-#include "proto/dmn-dmesg.pb.h"
+#include <sys/time.h>
 
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
 #include <memory>
-#include <sys/time.h>
 #include <thread>
+
+#include "kafka/dmn-dmesgnet-kafka.hpp"
+
+#include "kafka/dmn-kafka.hpp"
+
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

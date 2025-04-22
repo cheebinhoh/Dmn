@@ -6,13 +6,13 @@
  * read and write multiple messages between them.
  */
 
-#include "dmn-dmesg.hpp"
-
 #include <gtest/gtest.h>
 
 #include <iostream>
 #include <sstream>
 #include <thread>
+
+#include "dmn-dmesg.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -6,11 +6,11 @@
  * - pop is blocking if no data (optional) in the queue
  */
 
-#ifndef DMN_LIMITBUFFER_HPP_HAVE_SEEN
+#ifndef DMN_LIMITBUFFER_HPP_
 
-#define DMN_LIMITBUFFER_HPP_HAVE_SEEN
+#define DMN_LIMITBUFFER_HPP_
 
-#include "dmn-buffer.hpp"
+#include <pthread.h>
 
 #include <algorithm>
 #include <cassert>
@@ -20,7 +20,7 @@
 #include <optional>
 #include <stdexcept>
 
-#include <pthread.h>
+#include "dmn-buffer.hpp"
 
 namespace Dmn {
 
@@ -238,4 +238,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_LIMITBUFFER_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_LIMITBUFFER_HPP_ */

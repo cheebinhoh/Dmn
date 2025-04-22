@@ -4,13 +4,14 @@
  * This test program asserts that the Dmn_Pub and Dmn_Pub::Sub model.
  */
 
-#include "dmn-pub-sub.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <string>
 #include <thread>
+
+#include "dmn-pub-sub.hpp"
 
 class Dmn_Msg_Receiver : public Dmn::Dmn_Pub<std::string>::Dmn_Sub {
 public:

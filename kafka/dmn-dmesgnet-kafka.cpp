@@ -4,12 +4,12 @@
 
 #include "dmn-dmesgnet-kafka.hpp"
 
+#include <memory>
+#include <string_view>
+
 #include "dmn-dmesg.hpp"
 #include "dmn-kafka-util.hpp"
 #include "dmn-kafka.hpp"
-
-#include <memory>
-#include <string_view>
 
 namespace Dmn {
 
