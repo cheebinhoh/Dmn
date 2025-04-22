@@ -2,9 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_KAFKA_UTIL_HPP_HAVE_SEEN
+#ifndef DMN_KAFKA_UTIL_HPP_
 
-#define DMN_KAFKA_UTIL_HPP_HAVE_SEEN
+#define DMN_KAFKA_UTIL_HPP_
 
 #include "rdkafka.h"
 
@@ -31,4 +31,4 @@ set_config(rd_kafka_conf_t *conf, std::string_view key, std::string_view value);
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_KAFKA_UTIL_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_KAFKA_UTIL_HPP_ */

@@ -2,9 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_DMESGNET_KAFKA_HPP_HAVE_SEEN
+#ifndef DMN_DMESGNET_KAFKA_HPP_
 
-#define DMN_DMESGNET_KAFKA_HPP_HAVE_SEEN
+#define DMN_DMESGNET_KAFKA_HPP_
 
 #include "dmn-dmesg.hpp"
 #include "dmn-dmesgnet.hpp"
@@ -83,4 +83,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_DMESGNET_KAFKA_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_DMESGNET_KAFKA_HPP_ */

@@ -10,9 +10,9 @@
  * - write (with lvalue) will not move but copy data
  */
 
-#ifndef DMN_IO_HPP_HAVE_SEEN
+#ifndef DMN_IO_HPP_
 
-#define DMN_IO_HPP_HAVE_SEEN
+#define DMN_IO_HPP_
 
 #include <optional>
 
@@ -28,4 +28,4 @@ public:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_IO_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_IO_HPP_ */

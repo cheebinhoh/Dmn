@@ -2,9 +2,9 @@
  * Copyright ©  2025 Chee Bin HOH. All rights reserved.
  */
 
-#ifndef DMN_DEBUG_HPP_HAVE_SEEN
+#ifndef DMN_DEBUG_HPP_
 
-#define DMN_DEBUG_HPP_HAVE_SEEN
+#define DMN_DEBUG_HPP_
 
 #include <iostream>
 
@@ -20,4 +20,4 @@
   } while (false)
 #endif
 
-#endif /* DMN_DEBUG_HPP_HAVE_SEEN */
+#endif /* DMN_DEBUG_HPP_ */

@@ -8,20 +8,20 @@
  * proliferation of subclass and hard to be maintained.
  */
 
-#ifndef DMN_PROC_HPP_HAVE_SEEN
+#ifndef DMN_PROC_HPP_
 
-#define DMN_PROC_HPP_HAVE_SEEN
+#define DMN_PROC_HPP_
 
 #define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex)                            \
   pthread_cleanup_push(&Dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
 
 #define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
 
+#include <pthread.h>
+
 #include <functional>
 #include <string>
 #include <string_view>
-
-#include <pthread.h>
 
 namespace Dmn {
 
@@ -81,4 +81,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_PROC_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_PROC_HPP_ */

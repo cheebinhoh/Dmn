@@ -2,14 +2,14 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-async.hpp"
-#include "dmn-proc.hpp"
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
 #include <thread>
+
+#include "dmn-async.hpp"
+#include "dmn-proc.hpp"
 
 class Counter : Dmn::Dmn_Async {
 public:

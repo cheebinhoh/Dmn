@@ -7,15 +7,16 @@
  * master node through the Dmn_DMesgNet algorithm.
  */
 
-#include "dmn-dmesgnet.hpp"
-#include "dmn-socket.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <thread>
+
+#include "dmn-dmesgnet.hpp"
+#include "dmn-socket.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

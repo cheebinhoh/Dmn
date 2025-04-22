@@ -2,14 +2,15 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "kafka/dmn-kafka.hpp"
+#include <sys/time.h>
 
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
-#include <sys/time.h>
 #include <thread>
+
+#include "kafka/dmn-kafka.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

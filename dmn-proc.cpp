@@ -4,6 +4,9 @@
 
 #include "dmn-proc.hpp"
 
+#include <pthread.h>
+#include <sched.h>
+
 #include <cassert>
 #include <cstring>
 #include <exception>
@@ -12,9 +15,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-
-#include <pthread.h>
-#include <sched.h>
 
 namespace Dmn {
 

@@ -2,11 +2,12 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-singleton.hpp"
-
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <thread>
+
+#include "dmn-singleton.hpp"
 
 class Dmn_A : public Dmn::Dmn_Singleton {
 public:

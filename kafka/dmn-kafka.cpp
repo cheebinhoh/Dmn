@@ -3,9 +3,6 @@
  */
 
 #include "dmn-kafka.hpp"
-#include "dmn-kafka-util.hpp"
-
-#include "dmn-proc.hpp"
 
 #include "rdkafka.h"
 
@@ -18,6 +15,9 @@
 #include <map>
 #include <optional>
 #include <string>
+
+#include "dmn-kafka-util.hpp"
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 

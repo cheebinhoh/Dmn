@@ -4,14 +4,15 @@
  * This is wrapper API to access DMesgPb protobuf message.
  */
 
-#ifndef DMN_DMESG_PB_UTIL_HPP_HAVE_SEEN
+#ifndef DMN_DMESG_PB_UTIL_HPP_
 
-#define DMN_DMESG_PB_UTIL_HPP_HAVE_SEEN
+#define DMN_DMESG_PB_UTIL_HPP_
 
-#include "proto/dmn-dmesg.pb.h"
+#include <sys/time.h>
 
 #include <cassert>
-#include <sys/time.h>
+
+#include "proto/dmn-dmesg.pb.h"
 
 #define DMESG_PB_SET_TIMESTAMP_SECONDS(ts, val) (ts)->set_seconds(val)
 
@@ -117,4 +118,4 @@
                                  (val).nanos());                               \
   } while (false)
 
-#endif /* DMN_DMESG_PB_UTIL_HPP_HAVE_SEEN */
+#endif /* DMN_DMESG_PB_UTIL_HPP_ */

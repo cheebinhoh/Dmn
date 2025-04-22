@@ -8,15 +8,16 @@
  * state in its last heartbeat message.
  */
 
-#include "dmn-dmesgnet.hpp"
-#include "dmn-socket.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <thread>
+
+#include "dmn-dmesgnet.hpp"
+#include "dmn-socket.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

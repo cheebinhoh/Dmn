@@ -5,9 +5,9 @@
  * interface with integration to Kafka broker through Kafka c++ interface.
  */
 
-#ifndef DMN_KAFKA_HPP_HAVE_SEEN
+#ifndef DMN_KAFKA_HPP_
 
-#define DMN_KAFKA_HPP_HAVE_SEEN
+#define DMN_KAFKA_HPP_
 
 #include "dmn-io.hpp"
 #include "dmn-kafka-util.hpp"
@@ -137,4 +137,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_KAFKA_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_KAFKA_HPP_ */

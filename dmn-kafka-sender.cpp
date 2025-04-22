@@ -1,11 +1,11 @@
 // For study purpose, and copy from
 // https://developer.confluent.io/get-started/c/
 
-#include "kafka/dmn-kafka.hpp"
-
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include "kafka/dmn-kafka.hpp"
 
 int main(int argc, char **argv) {
   Dmn::Dmn_Kafka::ConfigType writeConfigs{};

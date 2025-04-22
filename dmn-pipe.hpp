@@ -12,20 +12,20 @@
  *   for one if the fifo pipe is empty.
  */
 
-#ifndef DMN_PIPE_HPP_HAVE_SEEN
+#ifndef DMN_PIPE_HPP_
 
-#define DMN_PIPE_HPP_HAVE_SEEN
+#define DMN_PIPE_HPP_
 
-#include "dmn-buffer.hpp"
-#include "dmn-debug.hpp"
-#include "dmn-io.hpp"
-#include "dmn-proc.hpp"
+#include <pthread.h>
 
 #include <cstring>
 #include <functional>
 #include <optional>
 
-#include <pthread.h>
+#include "dmn-buffer.hpp"
+#include "dmn-debug.hpp"
+#include "dmn-io.hpp"
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 
@@ -201,4 +201,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_PIPE_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_PIPE_HPP_ */

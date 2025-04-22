@@ -1,13 +1,14 @@
 // For study purpose, and copy from
 // https://developer.confluent.io/get-started/c/
 
-#include "kafka/dmn-kafka.hpp"
+#include <signal.h>
+#include <stdlib.h>
 
+#include <atomic>
 #include <cassert>
 #include <iostream>
 
-#include <signal.h>
-#include <stdlib.h>
+#include "kafka/dmn-kafka.hpp"
 
 static volatile sig_atomic_t run = 1;
 
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
     auto data = consumer.read();
 
     if (data) {
-      printf("Consumed message: %s\n", data->c_str());
+      std::cout << "Consumed message: " << (*data) << "\n";
     }
   }
 

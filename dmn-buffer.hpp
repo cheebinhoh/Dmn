@@ -10,11 +10,11 @@
  * STL class it uses.
  */
 
-#ifndef DMN_BUFFER_HPP_HAVE_SEEN
+#ifndef DMN_BUFFER_HPP_
 
-#define DMN_BUFFER_HPP_HAVE_SEEN
+#define DMN_BUFFER_HPP_
 
-#include "dmn-proc.hpp"
+#include <pthread.h>
 
 #include <algorithm>
 #include <cassert>
@@ -23,7 +23,7 @@
 #include <optional>
 #include <stdexcept>
 
-#include <pthread.h>
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 
@@ -259,4 +259,4 @@ private:
 
 } /* End of namespace Dmn */
 
-#endif /* End of macro DMN_BUFFER_HPP_HAVE_SEEN */
+#endif /* End of macro DMN_BUFFER_HPP_ */

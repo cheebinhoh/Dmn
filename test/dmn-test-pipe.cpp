@@ -2,12 +2,13 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-pipe.hpp"
-
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 #include <thread>
+
+#include "dmn-pipe.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

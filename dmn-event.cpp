@@ -3,12 +3,14 @@
  */
 
 #include "dmn-event.hpp"
-#include "dmn-async.hpp"
-#include "dmn-proc.hpp"
 
 #include <csignal>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+
+#include "dmn-async.hpp"
+#include "dmn-proc.hpp"
 
 namespace Dmn {
 

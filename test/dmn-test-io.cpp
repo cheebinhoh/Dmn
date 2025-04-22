@@ -2,8 +2,8 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-pipe.hpp"
-#include "dmn-proc.hpp"
+#include <pthread.h>
+#include <unistd.h>
 
 #include <gtest/gtest.h>
 
@@ -16,8 +16,8 @@
 #include <mutex>
 #include <thread>
 
-#include <pthread.h>
-#include <unistd.h>
+#include "dmn-pipe.hpp"
+#include "dmn-proc.hpp"
 
 std::mutex log_mutex{};
 

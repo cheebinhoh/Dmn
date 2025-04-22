@@ -2,12 +2,13 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-dmesg-pb-util.hpp"
+#include <sys/time.h>
 
 #include <gtest/gtest.h>
 
 #include <iostream>
-#include <sys/time.h>
+
+#include "dmn-dmesg-pb-util.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
