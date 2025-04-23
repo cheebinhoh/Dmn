@@ -9,7 +9,7 @@
 
 #include "dmn-singleton.hpp"
 
-class Dmn_A : public Dmn::Dmn_Singleton {
+class Dmn_A : public dmn::Dmn_Singleton {
 public:
   Dmn_A(int int1, int int2) : m_int1{int1}, m_int2{int2} {}
 

@@ -22,7 +22,7 @@
 
 #include "dmn-buffer.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
 public:
@@ -234,8 +234,8 @@ private:
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_popCond{};
   pthread_cond_t m_pushCond{};
-}; /* End of class Dmn_LimitBuffer */
+}; // class Dmn_LimitBuffer
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_LIMITBUFFER_HPP_ */
+#endif // DMN_LIMITBUFFER_HPP_

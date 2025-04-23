@@ -3,19 +3,19 @@
  *
  * The Dmn_DMesg implements a specific publisher subscriber model (inherit
  * from dmn-pub-sub module) where the difference is that:
- * - the data item is a Protobuf message (Dmn::DMesgPb) defined in
+ * - the data item is a Protobuf message (dmn::DMesgPb) defined in
  *   proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg, clients
- *   can extend the Dmn::DMesgPb protobuf message to varying the
+ *   can extend the dmn::DMesgPb protobuf message to varying the
  *   message without reinvent the wheel through subclass of the dmn-pub-sub
  *   module.
  * - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
  *   subscriber, the client of the API asks Dmn_DMesg to return a handler that
  *   subscribes to a specific set of topic (optional, or all topics), and can
- *   use to handler to publish and subscribe Dmn::DMesgPb message through the
+ *   use to handler to publish and subscribe dmn::DMesgPb message through the
  *   Dmn_Io like interface' read and write API methods, so instead of
  *   inherittence from Dmn_DMesg, clients can use object composition with it.
  * - it supports the concept that subscriber can subscribe to certain topic
- *   as defined in the Dmn::DMesgPb message.
+ *   as defined in the dmn::DMesgPb message.
  * - it allows various clients of the Dmn_Dmesg to publish data of certain
  *   topic at the same time, and implements a simple conflict detection and
  *   resolution for participated clients of the same Dmn_Dmesg object, Dmn_DMesg
@@ -44,14 +44,14 @@
 
 #include "proto/dmn-dmesg.pb.h"
 
-namespace Dmn {
+namespace dmn {
 
-extern const std::string DMesgSysIdentifier;
+extern const char *DMesgSysIdentifier;
 
-class Dmn_DMesg : public Dmn_Pub<Dmn::DMesgPb> {
+class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
-  using FilterTask = std::function<bool(const Dmn::DMesgPb &)>;
-  using AsyncProcessTask = std::function<void(Dmn::DMesgPb)>;
+  using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
+  using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
 
   /**
    * @brief The key (std::string) and value (std::string) for Dmn_DMesg
@@ -69,14 +69,14 @@ public:
    *        this is a diamond shape multiple inheritance where common parent
    *        has to have same instantiated template type. Instead the class
    *        Dmn_DMesgHandler uses a wrapper class Dmn_DMesgHandlerSub which
-   *        inherits from Dmn_Pub<Dmn::DMesgPb>::Dmn_Sub.
+   *        inherits from Dmn_Pub<dmn::DMesgPb>::Dmn_Sub.
    */
-  class Dmn_DMesgHandler : public Dmn_Io<Dmn::DMesgPb> {
+  class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb> {
   private:
     using ConflictCallbackTask =
-        std::function<void(Dmn_DMesgHandler &handler, const Dmn::DMesgPb &)>;
+        std::function<void(Dmn_DMesgHandler &handler, const dmn::DMesgPb &)>;
 
-    class Dmn_DMesgHandlerSub : public Dmn::Dmn_Pub<Dmn::DMesgPb>::Dmn_Sub {
+    class Dmn_DMesgHandlerSub : public dmn::Dmn_Pub<dmn::DMesgPb>::Dmn_Sub {
     public:
       Dmn_DMesgHandlerSub() = default;
 
@@ -89,7 +89,7 @@ public:
       Dmn_DMesgHandlerSub &operator=(Dmn_DMesgHandlerSub &&obj) = delete;
 
       /**
-       * @brief The method is called by the Dmn::Pub (publisher) object to
+       * @brief The method is called by the dmn::Pub (publisher) object to
        *        notify the Dmn_DMesgHandlerSub about the new DMesgPB message.
        *
        *        The Dmn_DMesgHandlerSub will follow the following to process
@@ -107,7 +107,7 @@ public:
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
-      void notify(Dmn::DMesgPb dmesgPb) override;
+      void notify(dmn::DMesgPb dmesgPb) override;
 
       // WARNING: it is marked as public so that a closure function
       // to Dmn_DMesg can access and manipulate it, as there is no
@@ -123,7 +123,7 @@ public:
       // marking m_owner as public does not violate data encapsulation.
 
       Dmn_DMesgHandler *m_owner{};
-    }; /* End of class Dmn_DMesgHandlerSub */
+    }; // class Dmn_DMesgHandlerSub
 
   public:
     /**
@@ -169,7 +169,7 @@ public:
      * @return DMesgPb The next DMesgPb message or nullopt if exception
      *                 is thrown.
      */
-    std::optional<Dmn::DMesgPb> read() override;
+    std::optional<dmn::DMesgPb> read() override;
 
     /**
      * @brief The method marks the handler as conflict resolved by posting an
@@ -192,7 +192,7 @@ public:
      *
      * @param dMesgPb The DMesgPb message to be published
      */
-    void write(Dmn::DMesgPb &&dmesgPb) override;
+    void write(dmn::DMesgPb &&dmesgPb) override;
 
     /**
      * @brief The method writes and publishes the DMesgPb message through DMesg
@@ -201,7 +201,7 @@ public:
      *
      * @param dMesgPb The DMesgPb message to be published
      */
-    void write(Dmn::DMesgPb &dmesgPb) override;
+    void write(dmn::DMesgPb &dmesgPb) override;
 
     /**
      * @brief The method returns true if the handler has NO pending to be
@@ -222,7 +222,7 @@ public:
      * @param dmesgPb The DMesgPb messsgeto be published
      * @param move    True to move than copy the data
      */
-    void writeDMesgInternal(Dmn::DMesgPb &dmesgPb, bool move);
+    void writeDMesgInternal(dmn::DMesgPb &dmesgPb, bool move);
 
   private:
     /**
@@ -246,7 +246,7 @@ public:
      *
      * @param mesgPb The dmesgPb data that results in conflict state
      */
-    void throwConflict(const Dmn::DMesgPb dmesgPb);
+    void throwConflict(const dmn::DMesgPb dmesgPb);
 
     /**
      * data member for constructor to instantiate the object.
@@ -264,15 +264,15 @@ public:
 
     std::vector<std::string> m_subscribedTopics{};
 
-    Dmn_Buffer<Dmn::DMesgPb> m_buffers{};
-    Dmn::DMesgPb m_lastDMesgSysPb{};
+    Dmn_Buffer<dmn::DMesgPb> m_buffers{};
+    dmn::DMesgPb m_lastDMesgSysPb{};
     std::map<std::string, long long> m_topicRunningCounter{};
 
     ConflictCallbackTask m_conflictCallbackFn{};
     std::atomic<bool> m_inConflict{};
 
     bool m_afterInitialPlayback{};
-  }; /* End of class Dmn_DMesgHandler */
+  }; // class Dmn_DMesgHandler
 
   /**
    * @brief The constructor for Dmn_DMesg.
@@ -346,13 +346,13 @@ protected:
    *
    * @param dmesgSysPb The system DMesgPb message
    */
-  void publishSysInternal(Dmn::DMesgPb dmesgSysPb);
+  void publishSysInternal(dmn::DMesgPb dmesgSysPb);
 
   /**
    * @brief The method publishes dmesgPb to registered subscribers. If the to be
    *        published dmesgPb' topic has smaller runningcounter than what is in
    *        the m_topicRunningCounter, it means that the writer is out of sync
-   *        and in race condition that its published Dmn::DMesgPb' topic has a
+   *        and in race condition that its published dmn::DMesgPb' topic has a
    *        runningcounter that is early in value than the same topic's running
    *        counter published by the DMesg. In this case, we put the writer
    *        handler to be in conflict state, and throws exception for future
@@ -362,7 +362,7 @@ protected:
    *
    * @param dmesgPb The dmesgPb to be published
    */
-  void publishInternal(Dmn::DMesgPb dmesgPb) override;
+  void publishInternal(dmn::DMesgPb dmesgPb) override;
 
   /**
    * @brief The method posts an asynchronous action in the publisher's singleton
@@ -400,8 +400,8 @@ private:
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
   std::map<std::string, long long> m_topicRunningCounter{};
-  std::map<std::string, Dmn::DMesgPb> m_topicLastDMesgPb{};
-}; /* End of class Dmn_DMesg */
+  std::map<std::string, dmn::DMesgPb> m_topicLastDMesgPb{};
+}; // class Dmn_DMesg
 
 template <class... U>
 std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
@@ -455,6 +455,6 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
   return handlerRet;
 }
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_DMESG_HPP_ */
+#endif // DMN_DMESG_HPP_

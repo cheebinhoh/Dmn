@@ -16,36 +16,36 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::Dmn_DMesg dmesg{"dmesg"};
 
   auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
   EXPECT_TRUE(dmesgWriteHandler);
 
   auto dmesgReadHandler1 = dmesg.openHandler("readHandler1");
   auto dmesgReadHandler2 = dmesg.openHandler(
-      "readHandler2", [](const Dmn::DMesgPb &dmesgPb) -> bool {
+      "readHandler2", [](const dmn::DMesgPb &dmesgPb) -> bool {
         return dmesgPb.body().message() != "message string 1";
       });
 
-  Dmn::DMesgPb dmesgPb1{};
+  dmn::DMesgPb dmesgPb1{};
   dmesgPb1.set_topic("id1");
   dmesgPb1.set_runningcounter(99);
   dmesgPb1.set_sourceidentifier("unknown");
-  dmesgPb1.set_type(Dmn::DMesgTypePb::message);
+  dmesgPb1.set_type(dmn::DMesgTypePb::message);
 
-  Dmn::DMesgBodyPb *dmsgbodyPb1 = dmesgPb1.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb1 = dmesgPb1.mutable_body();
   dmsgbodyPb1->set_message("message string 1");
 
-  Dmn::DMesgPb dmesgPb2{};
+  dmn::DMesgPb dmesgPb2{};
   dmesgPb2.set_topic("id1");
   dmesgPb2.set_runningcounter(99);
   dmesgPb2.set_sourceidentifier("unknown");
-  dmesgPb2.set_type(Dmn::DMesgTypePb::message);
+  dmesgPb2.set_type(dmn::DMesgTypePb::message);
 
-  Dmn::DMesgBodyPb *dmsgbodyPb2 = dmesgPb2.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb2 = dmesgPb2.mutable_body();
   dmsgbodyPb2->set_message("message string 2");
 
-  Dmn::Dmn_Proc procRead1{
+  dmn::Dmn_Proc procRead1{
       "read1", [&dmesgReadHandler1, &dmesgPb1]() {
         std::cout << "before read1\n";
         auto dmesgPbRead = dmesgReadHandler1->read();
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         EXPECT_TRUE(dmesgPbRead->body().message() == dmesgPb1.body().message());
       }};
 
-  Dmn::Dmn_Proc procRead2{
+  dmn::Dmn_Proc procRead2{
       "read2", [&dmesgReadHandler2, &dmesgPb2]() {
         std::cout << "before read2\n";
         auto dmesgPbRead = dmesgReadHandler2->read();
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 
   procRead1.exec();
   procRead2.exec();
-  Dmn::Dmn_Proc::yield();
+  dmn::Dmn_Proc::yield();
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
   std::cout << "after sleep 3 seconds\n";

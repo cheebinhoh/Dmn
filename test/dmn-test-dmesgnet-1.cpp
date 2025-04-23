@@ -21,21 +21,21 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000, true);
-  std::unique_ptr<Dmn::Dmn_Io<std::string>> readSocket2 =
-      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000);
+  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket2 =
+      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
 
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(writeSocket1)};
+  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(writeSocket1)};
   writeSocket1.reset();
 
-  Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(readSocket2)};
+  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(readSocket2)};
   readSocket2.reset();
 
   auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
 
-  Dmn::DMesgPb dmesgPbRead{};
-  Dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgPbRead]() {
+  dmn::DMesgPb dmesgPbRead{};
+  dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgPbRead]() {
                         auto data = readHandler2->read();
                         if (data) {
                           dmesgPbRead = *data;
@@ -43,18 +43,18 @@ int main(int argc, char *argv[]) {
                       }};
 
   proc2.exec();
-  Dmn::Dmn_Proc::yield();
+  dmn::Dmn_Proc::yield();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   auto dmesgHandler = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler);
 
-  Dmn::DMesgPb dmesgPb{};
+  dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
-  dmesgPb.set_type(Dmn::DMesgTypePb::message);
+  dmesgPb.set_type(dmn::DMesgTypePb::message);
   dmesgPb.set_sourceidentifier("writehandler");
   std::string data{"Hello dmesg async"};
-  Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
   dmsgbodyPb->set_message(data);
 
   dmesgHandler->write(dmesgPb);

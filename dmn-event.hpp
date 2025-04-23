@@ -17,7 +17,7 @@
 #include "dmn-async.hpp"
 #include "dmn-singleton.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Event_Manager : public Dmn_Singleton, private Dmn_Async {
   using SignalHandler = std::function<void(int signo)>;
@@ -79,7 +79,7 @@ private:
     }
 
     return Dmn_Event_Manager::s_instance;
-  } /* End of static method createInstanceInternal() */
+  } // static method createInstanceInternal()
 
   /**
    * data members for internal logic.
@@ -95,8 +95,8 @@ private:
   static std::once_flag s_initOnce;
   static std::shared_ptr<Dmn_Event_Manager> s_instance;
   static sigset_t s_mask;
-}; /* End of class Dmn_Event_Manager */
+}; // class Dmn_Event_Manager
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_EVENT_HPP_ */
+#endif // DMN_EVENT_HPP_

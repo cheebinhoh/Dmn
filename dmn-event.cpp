@@ -12,7 +12,7 @@
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 std::once_flag Dmn_Event_Manager::s_initOnce{};
 std::shared_ptr<Dmn_Event_Manager> Dmn_Event_Manager::s_instance{};
@@ -129,4 +129,4 @@ void Dmn_Event_Manager::registerSignalHandlerInternal(int signo,
   extHandlers.push_back(handler);
 }
 
-} // namespace Dmn
+} // namespace dmn

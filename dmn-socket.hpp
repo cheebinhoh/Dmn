@@ -12,7 +12,7 @@
 
 #include "dmn-io.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Socket : public Dmn_Io<std::string> {
 public:
@@ -36,6 +36,6 @@ private:
   int m_fd{-1};
 };
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_SOCKET_HPP_ */
+#endif // DMN_SOCKET_HPP_

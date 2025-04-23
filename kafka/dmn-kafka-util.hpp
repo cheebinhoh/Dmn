@@ -6,13 +6,13 @@
 
 #define DMN_KAFKA_UTIL_HPP_
 
-#include "rdkafka.h"
-
 #include <expected>
 #include <string>
 #include <string_view>
 
-namespace Dmn {
+#include "rdkafka.h"
+
+namespace dmn {
 
 constexpr size_t KAFKA_ERROR_STRING_LENGTH = 512;
 
@@ -23,12 +23,12 @@ constexpr size_t KAFKA_ERROR_STRING_LENGTH = 512;
  * @param key   The configuration key
  * @param value The configuration value
  *
- * @return It returns the RD_KAFKA_CONF_OK if it has expected result, else
- *         a string describing the kafka error
+ * @return It returns the RD_KAFKA_CONF_OK if everything is ok, else a string
+ *         describing the kafka error
  */
 std::expected<rd_kafka_conf_res_t, std::string>
 set_config(rd_kafka_conf_t *conf, std::string_view key, std::string_view value);
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_KAFKA_UTIL_HPP_ */
+#endif // DMN_KAFKA_UTIL_HPP_

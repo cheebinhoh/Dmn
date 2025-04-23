@@ -15,7 +15,7 @@
 #include <optional>
 #include <stdexcept>
 
-namespace Dmn {
+namespace dmn {
 
 Dmn_Socket::Dmn_Socket(std::string_view ip4, int portno, bool writeOnly)
     : m_ip4{ip4}, m_portno{portno}, m_writeOnly{writeOnly} {
@@ -103,4 +103,4 @@ void Dmn_Socket::write(std::string &&item) {
   write(moveString);
 }
 
-} // namespace Dmn
+} // namespace dmn

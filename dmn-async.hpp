@@ -39,20 +39,12 @@
     this->write([__VA_ARGS__]() mutable { block; });                           \
   } while (false)
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
 public:
-  Dmn_Async(std::string_view name = "")
-      : Dmn_Pipe{name, [](std::function<void()> &&task) {
-                   task();
-                   Dmn_Proc::yield();
-                 }} {}
-
-  ~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
-    // explicit return to resolve exception as destructor must be noexcept
-    return;
-  }
+  Dmn_Async(std::string_view name = "");
+  ~Dmn_Async() noexcept;
 
   Dmn_Async(const Dmn_Async &dmnAsync) = delete;
   const Dmn_Async &operator=(const Dmn_Async &dmnAsync) = delete;
@@ -71,15 +63,7 @@ public:
    */
   template <class Rep, class Period>
   void execAfter(const std::chrono::duration<Rep, Period> &duration,
-                 std::function<void()> fn) {
-    long long timeInFuture =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count() +
-        std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-
-    this->execAfterInternal(timeInFuture, fn);
-  }
+                 std::function<void()> fn);
 
 private:
   /**
@@ -92,23 +76,21 @@ private:
    *                     task is executed
    * @param fn           asynchronous task to be executed
    */
-  void execAfterInternal(long long timeInFuture, std::function<void()> fn) {
-    this->write([this, timeInFuture, fn]() {
-      long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                          std::chrono::system_clock::now().time_since_epoch())
-                          .count();
+  void execAfterInternal(long long timeInFuture, std::function<void()> fn);
+}; // class Dmn_Async
 
-      if (now >= timeInFuture) {
-        if (fn) {
-          fn();
-        }
-      } else {
-        this->execAfterInternal(timeInFuture, fn);
-      }
-    });
-  }
-}; /* End of class Dmn_Async */
+template <class Rep, class Period>
+void Dmn_Async::execAfter(const std::chrono::duration<Rep, Period> &duration,
+                          std::function<void()> fn) {
+  long long timeInFuture =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count() +
+      std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
-} /* End of namespace Dmn */
+  this->execAfterInternal(timeInFuture, fn);
+}
 
-#endif /* End of macro DMN_ASYNC_HPP_ */
+} // namespace dmn
+
+#endif // DMN_ASYNC_HPP_

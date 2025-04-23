@@ -13,7 +13,7 @@
 #include <memory>
 #include <utility>
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Singleton {
 public:
@@ -28,14 +28,17 @@ public:
    *            type' createInstanceInternal() method arguments
    */
   template <typename T, class... U>
-  static std::shared_ptr<T> createInstance(U &&...arg) {
-    std::shared_ptr<T> new_instance =
-        T::createInstanceInternal(std::forward<U>(arg)...);
-
-    return new_instance;
-  }
+  static std::shared_ptr<T> createInstance(U &&...arg);
 };
 
-} /* End of namespace Dmn */
+template <typename T, class... U>
+std::shared_ptr<T> Dmn_Singleton::createInstance(U &&...arg) {
+  std::shared_ptr<T> new_instance =
+      T::createInstanceInternal(std::forward<U>(arg)...);
 
-#endif /* End of macro DMN_SINGLETON_HPP_ */
+  return new_instance;
+}
+
+} // namespace dmn
+
+#endif // DMN_SINGLETON_HPP_

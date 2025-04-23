@@ -17,7 +17,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::Dmn_DMesg dmesg{"dmesg"};
 
   auto dmesgHandler1 = dmesg.openHandler("handler1");
   EXPECT_TRUE(dmesgHandler1);
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   auto dmesgHandler2 = dmesg.openHandler("handler2");
   EXPECT_TRUE(dmesgHandler2);
 
-  Dmn::Dmn_Proc proc1{
+  dmn::Dmn_Proc proc1{
       "proc1", [&dmesgHandler1]() {
         int valCheck{1};
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
             break;
           }
 
-          assert(dmesgPb->type() == Dmn::DMesgTypePb::message);
+          assert(dmesgPb->type() == dmn::DMesgTypePb::message);
           if (dmesgPb->body().message() == "") {
             break;
           }
@@ -54,11 +54,11 @@ int main(int argc, char *argv[]) {
           std::stringstream os;
           os << val;
 
-          Dmn::DMesgPb dmesgPbRet{};
+          dmn::DMesgPb dmesgPbRet{};
           dmesgPbRet.set_topic("counter sync");
-          dmesgPbRet.set_type(Dmn::DMesgTypePb::message);
+          dmesgPbRet.set_type(dmn::DMesgTypePb::message);
 
-          Dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgPbRet.mutable_body();
+          dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgPbRet.mutable_body();
           dmsgbodyPbRet->set_message(os.str());
 
           dmesgHandler1->write(dmesgPbRet);
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
         }
       }};
 
-  Dmn::Dmn_Proc proc2{
+  dmn::Dmn_Proc proc2{
       "proc2", [&dmesgHandler2]() {
         int val{1};
 
@@ -80,11 +80,11 @@ int main(int argc, char *argv[]) {
             os << "";
           }
 
-          Dmn::DMesgPb dmesgPb{};
+          dmn::DMesgPb dmesgPb{};
           dmesgPb.set_topic("counter sync");
-          dmesgPb.set_type(Dmn::DMesgTypePb::message);
+          dmesgPb.set_type(dmn::DMesgTypePb::message);
 
-          Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+          dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
           dmsgbodyPb->set_message(os.str());
 
           dmesgHandler2->write(dmesgPb);
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
             break;
           }
 
-          assert(dmesgPbRet->type() == Dmn::DMesgTypePb::message);
+          assert(dmesgPbRet->type() == dmn::DMesgTypePb::message);
           assert(dmesgPbRet->body().message() != "");
 
           std::cout << "proc2: message: " << dmesgPbRet->body().message()

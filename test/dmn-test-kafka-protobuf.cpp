@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
-  Dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Dmn_Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  Dmn::Dmn_Kafka producer{Dmn::Dmn_Kafka::Role::Producer, writeConfigs};
+  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::Producer, writeConfigs};
 
   // reader
-  Dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Dmn_Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmesg1";
   readConfigs["auto.offset.reset"] = "latest";
-  readConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  Dmn::Dmn_Kafka consumer{Dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
 
   // consume prior messages from topic.
   while (true) {
@@ -60,14 +60,14 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::string> data{"heartbeat : test 1", "heartbeat : test 2"};
   for (auto &d : data) {
-    Dmn::DMesgPb dmesgPb{};
+    dmn::DMesgPb dmesgPb{};
 
     dmesgPb.set_topic("id1");
     dmesgPb.set_runningcounter(99);
     dmesgPb.set_sourceidentifier("dmesg1");
-    dmesgPb.set_type(Dmn::DMesgTypePb::message);
+    dmesgPb.set_type(dmn::DMesgTypePb::message);
 
-    Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+    dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
     dmsgbodyPb->set_message(d);
 
     std::string protobufString{};
@@ -89,13 +89,13 @@ int main(int argc, char *argv[]) {
       break; // no data
     }
 
-    Dmn::DMesgPb dmesgPbRead{};
+    dmn::DMesgPb dmesgPbRead{};
     dmesgPbRead.ParseFromString(*dataRead);
 
     EXPECT_TRUE("id1" == dmesgPbRead.topic());
     EXPECT_TRUE("dmesg1" == dmesgPbRead.sourceidentifier());
     EXPECT_TRUE(99 == dmesgPbRead.runningcounter());
-    EXPECT_TRUE(Dmn::DMesgTypePb::message == dmesgPbRead.type());
+    EXPECT_TRUE(dmn::DMesgTypePb::message == dmesgPbRead.type());
 
     std::cout << "message read: \"" << dmesgPbRead.body().message() << "\"\n";
     EXPECT_TRUE(data[index] == dmesgPbRead.body().message());
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(data.size() == index);
 
-  readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
-  Dmn::Dmn_Kafka consumer2{Dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
 
   std::cout << "read without data\n";
   struct timeval tv;

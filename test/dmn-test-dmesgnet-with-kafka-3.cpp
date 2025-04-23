@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  Dmn::Dmn_Kafka::ConfigType readConfigs_other{};
+  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -39,15 +39,15 @@ int main(int argc, char *argv[]) {
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
   readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  Dmn::Dmn_Kafka consumer_other{Dmn::Dmn_Kafka::Role::Consumer,
+  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::Consumer,
                                 readConfigs_other};
 
   // dmesgnet1
   // writer for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType writeConfigs1{};
+  dmn::Dmn_Kafka::ConfigType writeConfigs1{};
   writeConfigs1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -56,14 +56,14 @@ int main(int argc, char *argv[]) {
   writeConfigs1["security.protocol"] = "SASL_SSL";
   writeConfigs1["sasl.mechanisms"] = "PLAIN";
   writeConfigs1["acks"] = "all";
-  writeConfigs1[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs1[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  writeConfigs1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> producer1 = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Producer, writeConfigs1);
+  std::unique_ptr<dmn::Dmn_Kafka> producer1 = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Producer, writeConfigs1);
 
   // reader for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType readConfigs1{};
+  dmn::Dmn_Kafka::ConfigType readConfigs1{};
   readConfigs1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -72,16 +72,16 @@ int main(int argc, char *argv[]) {
   readConfigs1["security.protocol"] = "SASL_SSL";
   readConfigs1["sasl.mechanisms"] = "PLAIN";
   readConfigs1["group.id"] = "dmesg1";
-  readConfigs1[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs1["auto.offset.reset"] = "earliest";
-  readConfigs1[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> consumer1 = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Consumer, readConfigs1);
+  std::unique_ptr<dmn::Dmn_Kafka> consumer1 = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Consumer, readConfigs1);
 
   // dmesgnet2
   // writer for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType writeConfigs2{};
+  dmn::Dmn_Kafka::ConfigType writeConfigs2{};
   writeConfigs2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -90,14 +90,14 @@ int main(int argc, char *argv[]) {
   writeConfigs2["security.protocol"] = "SASL_SSL";
   writeConfigs2["sasl.mechanisms"] = "PLAIN";
   writeConfigs2["acks"] = "all";
-  writeConfigs2[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs2[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  writeConfigs2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> producer2 = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Producer, writeConfigs2);
+  std::unique_ptr<dmn::Dmn_Kafka> producer2 = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Producer, writeConfigs2);
 
   // reader for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType readConfigs2{};
+  dmn::Dmn_Kafka::ConfigType readConfigs2{};
   readConfigs2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -106,21 +106,21 @@ int main(int argc, char *argv[]) {
   readConfigs2["security.protocol"] = "SASL_SSL";
   readConfigs2["sasl.mechanisms"] = "PLAIN";
   readConfigs2["group.id"] = "dmesg2";
-  readConfigs2[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs2["auto.offset.reset"] = "earliest";
-  readConfigs2[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> consumer2 = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Consumer, readConfigs2);
+  std::unique_ptr<dmn::Dmn_Kafka> consumer2 = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Consumer, readConfigs2);
 
   // dmesgnet1
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
+  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
                               std::move(producer1)};
   producer1.reset();
   consumer1.reset();
 
   // dmesgnet2
-  Dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
+  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
                               std::move(producer2)};
   producer2.reset();
   consumer2.reset();
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // consume prior messages from topic.
-  Dmn::DMesgPb dmesgPbRead{};
+  dmn::DMesgPb dmesgPbRead{};
   std::map<std::string, std::string> nodeList{};
   std::map<std::string, std::string> masterList{};
   int n{};

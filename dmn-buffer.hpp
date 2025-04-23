@@ -25,7 +25,7 @@
 
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_Buffer {
 public:
@@ -246,7 +246,7 @@ protected:
     }
 
     return std::move_if_noexcept(val);
-  } /* End of method popOptional() */
+  } // method popOptional()
 
 private:
   std::deque<T> m_queue{};
@@ -255,8 +255,8 @@ private:
   pthread_cond_t m_emptyCond{};
   long long m_pushCount{};
   long long m_popCount{};
-}; /* End of class Dmn_Buffer */
+}; // class Dmn_Buffer
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_BUFFER_HPP_ */
+#endif // DMN_BUFFER_HPP_

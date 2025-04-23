@@ -36,7 +36,7 @@
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
   using Task = std::function<void(T)>;
@@ -117,7 +117,7 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
     std::optional<T> read() override { return Dmn_LimitBuffer<T>::pop(); }
 
     Dmn_TeePipe *m_teePipe{};
-  }; /* End of class Dmn_TeePipeSource */
+  }; // class Dmn_TeePipeSource
 
 public:
   Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
@@ -394,8 +394,8 @@ private:
   pthread_cond_t m_emptyCond{};
   size_t m_fillBufferCount{};
   std::vector<std::shared_ptr<Dmn_TeePipeSource>> m_buffers{};
-}; /* End of class Dmn_TeePipe */
+}; // class Dmn_TeePipe
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_TEEPIPE_HPP_ */
+#endif // DMN_TEEPIPE_HPP_

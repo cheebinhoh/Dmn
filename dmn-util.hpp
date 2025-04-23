@@ -8,12 +8,12 @@
 
 #include <algorithm>
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> inline T incrementByOne(T value) {
   return std::max<T>(1, value + 1);
 }
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* end of DMN_UTIL_HPP_HAVE_ SEEN */
+#endif // DMN_UTIL_HPP_

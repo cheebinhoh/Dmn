@@ -4,14 +4,14 @@
 
 #include "dmn-kafka-util.hpp"
 
-#include "rdkafka.h"
-
 #include <cassert>
 #include <expected>
 #include <string>
 #include <string_view>
 
-namespace Dmn {
+#include "rdkafka.h"
+
+namespace dmn {
 
 std::expected<rd_kafka_conf_res_t, std::string>
 set_config(rd_kafka_conf_t *config, std::string_view key,
@@ -33,4 +33,4 @@ set_config(rd_kafka_conf_t *config, std::string_view key,
   return res;
 }
 
-} // namespace Dmn
+} // namespace dmn

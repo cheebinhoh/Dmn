@@ -11,32 +11,33 @@
 #include "dmn-kafka-util.hpp"
 #include "dmn-kafka.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
                                        Dmn_Kafka::ConfigType configs)
     : m_name{name} {
-  // reader for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType readConfigs{configs};
-  readConfigs["group.id"] = name;
-  readConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs["auto.offset.reset"] = "earliest";
-  readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "500";
+  // input handle for DMesgNet
+  dmn::Dmn_Kafka::ConfigType inputConfigs{configs};
+  inputConfigs["group.id"] = name;
+  inputConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  inputConfigs["auto.offset.reset"] = "earliest";
+  inputConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "500";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> consumer = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Consumer, readConfigs);
+  std::unique_ptr<dmn::Dmn_Kafka> input = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Consumer, inputConfigs);
 
-  // writer for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType writeConfigs{configs};
-  writeConfigs["acks"] = "all";
-  writeConfigs[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[Dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  // output handle for DMesgNet
+  dmn::Dmn_Kafka::ConfigType outputConfigs{configs};
+  outputConfigs["acks"] = "all";
+  outputConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  outputConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::unique_ptr<Dmn::Dmn_Kafka> producer = std::make_unique<Dmn::Dmn_Kafka>(
-      Dmn::Dmn_Kafka::Role::Producer, writeConfigs);
+  std::unique_ptr<dmn::Dmn_Kafka> output = std::make_unique<dmn::Dmn_Kafka>(
+      dmn::Dmn_Kafka::Role::Producer, outputConfigs);
 
-  m_dmesgNet = std::make_unique<Dmn::Dmn_DMesgNet>(name, std::move(consumer),
-                                                   std::move(producer));
+  // DMesgNet
+  m_dmesgNet = std::make_unique<dmn::Dmn_DMesgNet>(name, std::move(input),
+                                                   std::move(output));
 }
 
 Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {
@@ -45,4 +46,4 @@ Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {
   return;
 }
 
-} /* End of namespace Dmn */
+} // namespace dmn

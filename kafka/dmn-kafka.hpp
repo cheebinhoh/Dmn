@@ -9,11 +9,6 @@
 
 #define DMN_KAFKA_HPP_
 
-#include "dmn-io.hpp"
-#include "dmn-kafka-util.hpp"
-
-#include "rdkafka.h"
-
 #include <atomic>
 #include <expected>
 #include <functional>
@@ -21,9 +16,14 @@
 #include <optional>
 #include <string>
 
-namespace Dmn {
+#include "rdkafka.h"
 
-class Dmn_Kafka : public Dmn::Dmn_Io<std::string> {
+#include "dmn-io.hpp"
+#include "dmn-kafka-util.hpp"
+
+namespace dmn {
+
+class Dmn_Kafka : public dmn::Dmn_Io<std::string> {
 public:
   /**
    * @brief The configuration key specific to the Dmn_Kafka module (not directly
@@ -49,7 +49,6 @@ public:
    * @param configs The set of key value configurations to rdkafka or Dmn_Kafka
    */
   Dmn_Kafka(Role role, ConfigType configs = {});
-
   ~Dmn_Kafka() noexcept;
 
   Dmn_Kafka(const Dmn_Kafka &obj) = delete;
@@ -133,8 +132,8 @@ private:
   rd_kafka_resp_err_t m_kafkaErr{};
 
   std::atomic_flag m_writeAtomicFlag{};
-};
+}; // class Dmn_Kafka
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_KAFKA_HPP_ */
+#endif // DMN_KAFKA_HPP_

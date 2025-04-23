@@ -34,10 +34,10 @@ int main(int argc, char *argv[]) {
   using std::chrono::system_clock;
 
   std::map<std::string, long long> input_cnt{};
-  Dmn::Dmn_Proc sensor_input{"sensor input"};
-  Dmn::Dmn_Proc gps_input{"gps input"};
-  Dmn::Dmn_Proc imu_input{"imu input"};
-  Dmn::Dmn_Proc ext_input{"ext input"};
+  dmn::Dmn_Proc sensor_input{"sensor input"};
+  dmn::Dmn_Proc gps_input{"gps input"};
+  dmn::Dmn_Proc imu_input{"imu input"};
+  dmn::Dmn_Proc ext_input{"ext input"};
 
   // parameters to tune
   bool input_to_sleep_use_ns = true; /* nano or milliseconds */
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   int input_to_sleep_nanoseconds = 500000; /* 0.5 milliseconds */
   int input_to_run_seconds = 5;
 
-  Dmn::Dmn_Pipe<std::string> out_pipe{
+  dmn::Dmn_Pipe<std::string> out_pipe{
       "out_pipe", [&input_cnt](std::string item) {
         std::size_t found = item.find(": ");
         if (found != std::string::npos) {
@@ -55,13 +55,13 @@ int main(int argc, char *argv[]) {
         }
       }};
 
-  Dmn::Dmn_Pipe<std::string> cal_pipe{
+  dmn::Dmn_Pipe<std::string> cal_pipe{
       "cal_input", [&out_pipe](std::string item) { out_pipe.write(item); }};
 
-  Dmn::Dmn_Pipe<std::string> filter_pipe{
+  dmn::Dmn_Pipe<std::string> filter_pipe{
       "filter_input", [&cal_pipe](std::string item) { cal_pipe.write(item); }};
 
-  Dmn::Dmn_Pipe<std::string> staging_pipe{
+  dmn::Dmn_Pipe<std::string> staging_pipe{
       "staging_input",
       [&filter_pipe](std::string item) { filter_pipe.write(item); }};
 

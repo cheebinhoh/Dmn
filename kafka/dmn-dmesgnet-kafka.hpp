@@ -6,28 +6,29 @@
 
 #define DMN_DMESGNET_KAFKA_HPP_
 
+#include <memory>
+#include <string>
+#include <string_view>
+
 #include "dmn-dmesg.hpp"
 #include "dmn-dmesgnet.hpp"
 #include "dmn-kafka.hpp"
 
-#include <memory>
-#include <string_view>
-
-namespace Dmn {
+namespace dmn {
 
 class Dmn_DMesgNet_Kafka {
 public:
   /**
    * @brief The constructor method to initiate a created kafka consumer and
-   *        producer from configs and used them as input and output handles
-   *        for the Dmn_DMesgNet objects.
+   *        producer from configuration as input and output handles for the
+   *        Dmn_DMesgNet object.
    *
    *        The user of the api must provide most of the kafka configuration
    *        besides following "group.id", "auto.offset.reset", "acks",
-   *        Dmn::Dmn_Kafka::Topic and Dmn::Dmn_Kafka::Key which are provided
+   *        dmn::Dmn_Kafka::Topic and dmn::Dmn_Kafka::Key which are provided
    *        by Dmn_DMesgNet_Kafka.
    *
-   * @param name    The name for Dmn_DMesgNet and kafka group id for consumer
+   * @param name    The name for Dmn_DMesgNet and kafka group id
    * @param configs The Dmn_Kafka configuration
    */
   Dmn_DMesgNet_Kafka(std::string_view name, Dmn_Kafka::ConfigType configs);
@@ -61,7 +62,7 @@ public:
 
   /**
    * @brief This method is a forwarding call to the
-   * Dmn_DMesgNet::closeHandler().
+   *        Dmn_DMesgNet::closeHandler().
    *
    * @param handlerToClose The handler to be closed
    */
@@ -79,8 +80,8 @@ private:
    * data members for internal logic.
    */
   std::unique_ptr<Dmn_DMesgNet> m_dmesgNet{};
-};
+}; // class Dmn_DMesgNet_Kafka
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_DMESGNET_KAFKA_HPP_ */
+#endif // DMN_DMESGNET_KAFKA_HPP_

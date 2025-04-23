@@ -14,10 +14,10 @@
 #include "dmn.hpp"
 
 int main(int argc, char *argv[]) {
-  auto inst = Dmn::Dmn_Singleton::createInstance<Dmn::Dmn_Event_Manager>();
+  auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Event_Manager>();
 
   // for TESTING
-  Dmn::Dmn_Proc proc{
+  dmn::Dmn_Proc proc{
       "exitMainLoop", [&inst]() {
         DMN_DEBUG_PRINT(
             std::cout

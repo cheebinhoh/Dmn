@@ -20,4 +20,4 @@
   } while (false)
 #endif
 
-#endif /* DMN_DEBUG_HPP_ */
+#endif // DMN_DEBUG_HPP_

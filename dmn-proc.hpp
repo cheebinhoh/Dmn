@@ -13,7 +13,7 @@
 #define DMN_PROC_HPP_
 
 #define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex)                            \
-  pthread_cleanup_push(&Dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
+  pthread_cleanup_push(&dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
 
 #define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
 
@@ -23,7 +23,7 @@
 #include <string>
 #include <string_view>
 
-namespace Dmn {
+namespace dmn {
 
 void cleanupFuncToUnlockPthreadMutex(void *mutex);
 
@@ -77,8 +77,8 @@ private:
   Dmn_Proc::Task m_fn{};
   Dmn_Proc::State m_state{};
   pthread_t m_th{};
-}; /* End of class Dmn_Proc */
+}; // class Dmn_Proc
 
-} /* End of namespace Dmn */
+} // namespace dmn
 
-#endif /* End of macro DMN_PROC_HPP_ */
+#endif // DMN_PROC_HPP_

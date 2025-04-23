@@ -22,31 +22,31 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<Dmn::Dmn_Io<std::string>> readSocket1 =
-      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<Dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
+      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
+  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
   bool readData{};
-  Dmn::DMesgPb msgPb{};
-  Dmn::Dmn_DMesgNet dmesgnet1{"dmesg-1", std::move(readSocket1),
+  dmn::DMesgPb msgPb{};
+  dmn::Dmn_DMesgNet dmesgnet1{"dmesg-1", std::move(readSocket1),
                               std::move(writeSocket1)};
   readSocket1.reset();
   writeSocket1.reset();
 
   auto readHandler =
       dmesgnet1.openHandler("dmesg-1-handler", false, nullptr,
-                            [&msgPb, &readData](Dmn::DMesgPb data) mutable {
+                            [&msgPb, &readData](dmn::DMesgPb data) mutable {
                               readData = true;
                               msgPb = data;
                             });
 
-  Dmn::DMesgPb dmesgPb{};
+  dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
-  dmesgPb.set_type(Dmn::DMesgTypePb::message);
+  dmesgPb.set_type(dmn::DMesgTypePb::message);
   dmesgPb.set_sourceidentifier("handler-1");
   std::string data{"Hello dmesg async"};
-  Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
   dmsgbodyPb->set_message(data);
 
   readHandler->write(dmesgPb);
@@ -55,21 +55,21 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(!readData);
 
   /*
-    std::shared_ptr<Dmn::Dmn_Io<std::string>> readSocket2 =
-    std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5000);
-    std::shared_ptr<Dmn::Dmn_Io<std::string>> writeSocket2 =
-    std::make_shared<Dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+    std::shared_ptr<dmn::Dmn_Io<std::string>> readSocket2 =
+    std::make_shared<dmn::Dmn_Socket>("127.0.0.1", 5000);
+    std::shared_ptr<dmn::Dmn_Io<std::string>> writeSocket2 =
+    std::make_shared<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
 
-    Dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", readSocket2, writeSocket2};
+    dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", readSocket2, writeSocket2};
     auto writeHandler = dmesgnet2.openHandler("dmesg-2-handler", false, nullptr,
     nullptr);
 
-    Dmn::DMesgPb dmesgPb2{};
+    dmn::DMesgPb dmesgPb2{};
     dmesgPb2.set_topic("counter sync");
-    dmesgPb2.set_type(Dmn::DMesgTypePb::message);
+    dmesgPb2.set_type(dmn::DMesgTypePb::message);
     dmesgPb2.set_sourceidentifier("handler-2");
     std::string data2{"Hello dmesg async from 2"};
-    Dmn::DMesgBodyPb *dmsgbodyPb2 = dmesgPb2.mutable_body();
+    dmn::DMesgBodyPb *dmsgbodyPb2 = dmesgPb2.mutable_body();
     dmsgbodyPb2->set_message(data2);
 
     writeHandler->write(dmesgPb2);
