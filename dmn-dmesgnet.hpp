@@ -162,8 +162,8 @@ private:
 
   bool m_isMaster{};
   long long m_numberOfNeighbor{};
-}; /* End of class Dmn_DMesgNet */
+}; // class Dmn_DMesgNet
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_DMESGNET_HPP_ */
+#endif // DMN_DMESGNET_HPP_

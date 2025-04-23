@@ -34,37 +34,9 @@ class Dmn_Pipe : public Dmn_Buffer<T>, public Dmn_Io<T>, public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
-  Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {}) : Dmn_Proc{name} {
-    int err = pthread_mutex_init(&m_mutex, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
+  Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {});
 
-    err = pthread_cond_init(&m_emptyCond, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    if (fn) {
-      exec([this, fn]() {
-        while (true) {
-          readAndProcess(fn);
-        }
-      });
-    }
-  }
-
-  virtual ~Dmn_Pipe() noexcept try {
-    // stopExec is not noexcept, so we need to resolve it in destructor
-    Dmn_Proc::stopExec();
-
-    pthread_cond_signal(&m_emptyCond);
-    pthread_cond_destroy(&m_emptyCond);
-    pthread_mutex_destroy(&m_mutex);
-  } catch (...) {
-    // explicit return to resolve exception as destructor must be noexcept
-    return;
-  }
+  virtual ~Dmn_Pipe() noexcept;
 
   Dmn_Pipe(const Dmn_Pipe<T> &dmnPipe) = delete;
   const Dmn_Pipe<T> &operator=(const Dmn_Pipe<T> &dmnPipe) = delete;
@@ -79,17 +51,7 @@ public:
    * @return optional item if there is next item from pipe, or std::nullopt
    *         if pipe is closed
    */
-  std::optional<T> read() override {
-    T data{};
-
-    try {
-      readAndProcess([&data](T &&item) { data = item; });
-    } catch (...) {
-      return {};
-    }
-
-    return std::move_if_noexcept(data);
-  }
+  std::optional<T> read() override;
 
   /**
    * @brief The method read the next item pop out of pipe and call fn functor
@@ -98,38 +60,7 @@ public:
    *
    * @param fn functor to process next item pop out of pipe
    */
-  void readAndProcess(Dmn_Pipe::Task fn) {
-    T &&item = this->pop();
-
-    int err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    fn(std::move_if_noexcept(item));
-
-    ++m_count;
-
-    err = pthread_cond_signal(&m_emptyCond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
-
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-  }
+  void readAndProcess(Dmn_Pipe::Task fn);
 
   /**
    * @brief The method will write data into the pipe, the data is copied
@@ -137,7 +68,7 @@ public:
    *
    * @param rItem The data item to be copied into pipe
    */
-  void write(T &item) override { Dmn_Buffer<T>::push(item, false); }
+  void write(T &item) override;
 
   /**
    * @brief The method will write data into the pipe, the data is moved
@@ -145,7 +76,7 @@ public:
    *
    * @param item The data item to be moved into pipe
    */
-  void write(T &&item) override { Dmn_Buffer<T>::push(item, true); }
+  void write(T &&item) override;
 
   /**
    * @brief The method will put the client on blocking wait until
@@ -156,38 +87,7 @@ public:
    * @return The number of items that were passed through the pipe
    *         in total
    */
-  long long waitForEmpty() override {
-    long long inboundCount{};
-
-    inboundCount = Dmn_Buffer<T>::waitForEmpty();
-
-    int err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    while (m_count < inboundCount) {
-      err = pthread_cond_wait(&m_emptyCond, &m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
-      pthread_testcancel();
-    }
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    return inboundCount;
-  }
+  long long waitForEmpty() override;
 
 private:
   using Dmn_Buffer<T>::pop;
@@ -197,8 +97,128 @@ private:
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_emptyCond{};
   long long m_count{};
-}; /* End of class Dmn_Pipe */
+}; // class Dmn_Pipe
 
-} /* End of namespace Dmn */
+template <typename T>
+Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn)
+    : Dmn_Proc{name} {
+  int err = pthread_mutex_init(&m_mutex, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
 
-#endif /* End of macro DMN_PIPE_HPP_ */
+  err = pthread_cond_init(&m_emptyCond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  if (fn) {
+    exec([this, fn]() {
+      while (true) {
+        readAndProcess(fn);
+      }
+    });
+  }
+}
+
+template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
+  // stopExec is not noexcept, so we need to resolve it in destructor
+  Dmn_Proc::stopExec();
+
+  pthread_cond_signal(&m_emptyCond);
+  pthread_cond_destroy(&m_emptyCond);
+  pthread_mutex_destroy(&m_mutex);
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
+}
+
+template <typename T> std::optional<T> Dmn_Pipe<T>::read() {
+  T data{};
+
+  try {
+    readAndProcess([&data](T &&item) { data = item; });
+  } catch (...) {
+    return {};
+  }
+
+  return std::move_if_noexcept(data);
+}
+
+template <typename T> void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn) {
+  T &&item = this->pop();
+
+  int err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  fn(std::move_if_noexcept(item));
+
+  ++m_count;
+
+  err = pthread_cond_signal(&m_emptyCond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
+
+    throw std::runtime_error(strerror(err));
+  }
+
+  pthread_testcancel();
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T> void Dmn_Pipe<T>::write(T &item) {
+  Dmn_Buffer<T>::push(item, false);
+}
+
+template <typename T> void Dmn_Pipe<T>::write(T &&item) {
+  Dmn_Buffer<T>::push(item, true);
+}
+
+template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
+  long long inboundCount{};
+
+  inboundCount = Dmn_Buffer<T>::waitForEmpty();
+
+  int err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  while (m_count < inboundCount) {
+    err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    pthread_testcancel();
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return inboundCount;
+}
+
+} // namespace Dmn
+
+#endif // DMN_PIPE_HPP_

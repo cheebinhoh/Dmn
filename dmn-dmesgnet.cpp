@@ -345,7 +345,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
         this->m_sysHandler->write(this->m_sys);
       }
     }
-  } /* End of condition: self->state() == Dmn::DMesgStatePb::Ready */
+  } // if (self->state() == Dmn::DMesgStatePb::Ready)
 
   int i = 0;
   while (i < this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
@@ -384,6 +384,6 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
     DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP(this->m_sys, i,
                                                     other.updatedtimestamp());
   }
-} /* End of method reconciliateDmesgPbSys */
+} // method reconciliateDmesgPbSys
 
-} /* End of namespace Dmn */
+} // namespace Dmn

@@ -26,6 +26,6 @@ public:
   virtual void write(T &&item) = 0;
 };
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_IO_HPP_ */
+#endif // DMN_IO_HPP_

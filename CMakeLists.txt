@@ -69,6 +69,7 @@ endif()
 
 # build the dmn library
 add_library(dmn
+              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-async.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-event.cpp

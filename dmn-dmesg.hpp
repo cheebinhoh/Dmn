@@ -46,7 +46,7 @@
 
 namespace Dmn {
 
-extern const std::string DMesgSysIdentifier;
+extern const char *DMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<Dmn::DMesgPb> {
 public:
@@ -123,7 +123,7 @@ public:
       // marking m_owner as public does not violate data encapsulation.
 
       Dmn_DMesgHandler *m_owner{};
-    }; /* End of class Dmn_DMesgHandlerSub */
+    }; // class Dmn_DMesgHandlerSub
 
   public:
     /**
@@ -272,7 +272,7 @@ public:
     std::atomic<bool> m_inConflict{};
 
     bool m_afterInitialPlayback{};
-  }; /* End of class Dmn_DMesgHandler */
+  }; // class Dmn_DMesgHandler
 
   /**
    * @brief The constructor for Dmn_DMesg.
@@ -401,7 +401,7 @@ private:
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
   std::map<std::string, long long> m_topicRunningCounter{};
   std::map<std::string, Dmn::DMesgPb> m_topicLastDMesgPb{};
-}; /* End of class Dmn_DMesg */
+}; // class Dmn_DMesg
 
 template <class... U>
 std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
@@ -455,6 +455,6 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
   return handlerRet;
 }
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_DMESG_HPP_ */
+#endif // DMN_DMESG_HPP_

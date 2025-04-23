@@ -26,7 +26,7 @@
 
 namespace Dmn {
 
-const std::string DMesgSysIdentifier = "sys.dmn-dmesg";
+const char *DMesgSysIdentifier = "sys.dmn-dmesg";
 
 // class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
@@ -301,4 +301,4 @@ void Dmn_DMesg::resetHandlerConflictStateInternal(
   }
 }
 
-} /* End of namespace Dmn */
+} // namespace Dmn

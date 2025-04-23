@@ -77,8 +77,8 @@ private:
   Dmn_Proc::Task m_fn{};
   Dmn_Proc::State m_state{};
   pthread_t m_th{};
-}; /* End of class Dmn_Proc */
+}; // class Dmn_Proc
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_PROC_HPP_ */
+#endif // DMN_PROC_HPP_

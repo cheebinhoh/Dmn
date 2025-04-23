@@ -71,7 +71,7 @@ public:
     void notifyInternal(T item);
 
     Dmn_Pub *m_pub{};
-  }; // End of class Dmn_Sub
+  }; // class Dmn_Sub
 
   using Dmn_Pub_Filter_Task =
       std::function<bool(const Dmn_Sub *const, const T &t)>;
@@ -142,7 +142,7 @@ private:
 
   pthread_mutex_t m_mutex{};
   std::vector<Dmn_Sub *> m_subscribers{};
-}; /* End of class Dmn_Pub */
+}; // class Dmn_Pub
 
 // class Dmn_Pub::Dmn_Sub
 template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
@@ -243,7 +243,7 @@ template <typename T> void Dmn_Pub<T>::publishInternal(T item) {
   if (err) {
     throw std::runtime_error(strerror(err));
   }
-} /* End of method publishInternal */
+} // method publishInternal()
 
 template <typename T> void Dmn_Pub<T>::registerSubscriber(Dmn_Sub *sub) {
   int err = pthread_mutex_lock(&m_mutex);
@@ -304,6 +304,6 @@ template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
   }
 }
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_PUB_SUB_HPP_ */
+#endif // DMN_PUB_SUB_HPP_

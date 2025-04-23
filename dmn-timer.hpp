@@ -76,8 +76,8 @@ private:
    */
   std::function<void()> m_fn{};
   T m_reltime{};
-}; /* End of class Dmn_Timer */
+}; // class Dmn_Timer
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_TIMER_HPP_ */
+#endif // DMN_TIMER_HPP_

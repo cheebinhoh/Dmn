@@ -4,12 +4,12 @@
 
 #include "dmn-kafka-util.hpp"
 
-#include "rdkafka.h"
-
 #include <cassert>
 #include <expected>
 #include <string>
 #include <string_view>
+
+#include "rdkafka.h"
 
 namespace Dmn {
 

@@ -36,6 +36,6 @@ private:
   int m_fd{-1};
 };
 
-} /* End of namespace Dmn */
+} // namespace Dmn
 
-#endif /* End of macro DMN_SOCKET_HPP_ */
+#endif // DMN_SOCKET_HPP_

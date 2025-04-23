@@ -118,4 +118,4 @@
                                  (val).nanos());                               \
   } while (false)
 
-#endif /* DMN_DMESG_PB_UTIL_HPP_ */
+#endif // DMN_DMESG_PB_UTIL_HPP_

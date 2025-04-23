@@ -27,4 +27,4 @@
 #include "kafka/dmn-kafka-util.hpp"
 #include "kafka/dmn-kafka.hpp"
 
-#endif /* End of macro DMN_H_ */
+#endif // DMN_H_

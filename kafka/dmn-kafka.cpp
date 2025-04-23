@@ -4,8 +4,6 @@
 
 #include "dmn-kafka.hpp"
 
-#include "rdkafka.h"
-
 #include <cassert>
 #include <cstdlib>
 #include <exception>
@@ -15,6 +13,8 @@
 #include <map>
 #include <optional>
 #include <string>
+
+#include "rdkafka.h"
 
 #include "dmn-kafka-util.hpp"
 #include "dmn-proc.hpp"
