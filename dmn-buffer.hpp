@@ -29,37 +29,8 @@ namespace dmn {
 
 template <typename T> class Dmn_Buffer {
 public:
-  Dmn_Buffer() {
-    int err{};
-
-    err = pthread_mutex_init(&m_mutex, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    err = pthread_cond_init(&m_cond, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    err = pthread_cond_init(&m_emptyCond, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-  }
-
-  virtual ~Dmn_Buffer() noexcept try {
-    // RAII! we wake up any thread waiting
-    pthread_cond_signal(&m_cond);
-    pthread_cond_signal(&m_emptyCond);
-
-    pthread_cond_destroy(&m_emptyCond);
-    pthread_cond_destroy(&m_cond);
-    pthread_mutex_destroy(&m_mutex);
-  } catch (...) {
-    // explicit return to resolve exception as destructor must be noexcept
-    return;
-  }
+  Dmn_Buffer();
+  virtual ~Dmn_Buffer() noexcept;
 
   Dmn_Buffer(const Dmn_Buffer<T> &dmnBuffer) = delete;
   const Dmn_Buffer<T> &operator=(const Dmn_Buffer<T> &dmnBuffer) = delete;
@@ -72,7 +43,7 @@ public:
    *
    * @return front item of the queue
    */
-  virtual T pop() { return *popOptional(true); }
+  virtual T pop();
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -81,7 +52,7 @@ public:
    *
    * @return optional item from the front of the queue
    */
-  virtual std::optional<T> popNoWait() { return popOptional(false); }
+  virtual std::optional<T> popNoWait();
 
   /**
    * @brief The method will push the item into queue using move semantics
@@ -89,11 +60,7 @@ public:
    *
    * @param item The item to be pushed into queue
    */
-  virtual void push(T &&item) {
-    T movedItem = std::move_if_noexcept(item);
-
-    push(movedItem, true);
-  }
+  virtual void push(T &&item);
 
   /**
    * @brief The method will push the item into the queue using move semantic
@@ -102,40 +69,7 @@ public:
    * @param item The item to be pushed into queue
    * @param move  True to move, else copy semantics
    */
-  virtual void push(T &item, bool move = true) {
-    int err{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    if (move) {
-      m_queue.push_back(std::move_if_noexcept(item));
-    } else {
-      m_queue.push_back(item);
-    }
-
-    ++m_pushCount;
-
-    err = pthread_cond_signal(&m_cond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
-
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-  }
+  virtual void push(T &item, bool move = true);
 
   /**
    * @brief The method will put the client on blocking wait until
@@ -145,40 +79,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  virtual long long waitForEmpty() {
-    int err{};
-    long long inboundCount{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    while (!m_queue.empty()) {
-      err = pthread_cond_wait(&m_emptyCond, &m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
-      pthread_testcancel();
-    }
-
-    assert(m_popCount == m_pushCount);
-    inboundCount = m_popCount;
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    return inboundCount;
-  }
+  virtual long long waitForEmpty();
 
 protected:
   /**
@@ -191,62 +92,7 @@ protected:
    *
    * @return optional value from front item of the queue
    */
-  virtual std::optional<T> popOptional(bool wait) {
-    int err{};
-    T val{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    if (m_queue.empty()) {
-      if (!wait) {
-        err = pthread_mutex_unlock(&m_mutex);
-        if (err) {
-          throw std::runtime_error(strerror(err));
-        }
-
-        return {};
-      }
-
-      do {
-        err = pthread_cond_wait(&m_cond, &m_mutex);
-        if (err) {
-          throw std::runtime_error(strerror(err));
-        }
-
-        pthread_testcancel();
-      } while (m_queue.empty());
-    }
-
-    val = std::move(m_queue.front());
-    m_queue.pop_front();
-
-    ++m_popCount;
-
-    if (m_queue.empty()) {
-      err = pthread_cond_signal(&m_emptyCond);
-      if (err) {
-        pthread_mutex_unlock(&m_mutex);
-
-        throw std::runtime_error(strerror(err));
-      }
-    }
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    return std::move_if_noexcept(val);
-  } // method popOptional()
+  virtual std::optional<T> popOptional(bool wait);
 
 private:
   std::deque<T> m_queue{};
@@ -256,6 +102,177 @@ private:
   long long m_pushCount{};
   long long m_popCount{};
 }; // class Dmn_Buffer
+
+template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
+  int err{};
+
+  err = pthread_mutex_init(&m_mutex, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  err = pthread_cond_init(&m_cond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  err = pthread_cond_init(&m_emptyCond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
+  // RAII! we wake up any thread waiting
+  pthread_cond_signal(&m_cond);
+  pthread_cond_signal(&m_emptyCond);
+
+  pthread_cond_destroy(&m_emptyCond);
+  pthread_cond_destroy(&m_cond);
+  pthread_mutex_destroy(&m_mutex);
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
+}
+
+template <typename T> T Dmn_Buffer<T>::pop() { return *popOptional(true); }
+
+template <typename T> std::optional<T> Dmn_Buffer<T>::popNoWait() {
+  return popOptional(false);
+}
+
+template <typename T> void Dmn_Buffer<T>::push(T &&item) {
+  T movedItem = std::move_if_noexcept(item);
+
+  push(movedItem, true);
+}
+
+template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
+  int err{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  if (move) {
+    m_queue.push_back(std::move_if_noexcept(item));
+  } else {
+    m_queue.push_back(item);
+  }
+
+  ++m_pushCount;
+
+  err = pthread_cond_signal(&m_cond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
+
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
+  int err{};
+  long long inboundCount{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  while (!m_queue.empty()) {
+    err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    pthread_testcancel();
+  }
+
+  assert(m_popCount == m_pushCount);
+  inboundCount = m_popCount;
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return inboundCount;
+}
+
+template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
+  int err{};
+  T val{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  if (m_queue.empty()) {
+    if (!wait) {
+      err = pthread_mutex_unlock(&m_mutex);
+      if (err) {
+        throw std::runtime_error(strerror(err));
+      }
+
+      return {};
+    }
+
+    do {
+      err = pthread_cond_wait(&m_cond, &m_mutex);
+      if (err) {
+        throw std::runtime_error(strerror(err));
+      }
+
+      pthread_testcancel();
+    } while (m_queue.empty());
+  }
+
+  val = std::move(m_queue.front());
+  m_queue.pop_front();
+
+  ++m_popCount;
+
+  if (m_queue.empty()) {
+    err = pthread_cond_signal(&m_emptyCond);
+    if (err) {
+      pthread_mutex_unlock(&m_mutex);
+
+      throw std::runtime_error(strerror(err));
+    }
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return std::move_if_noexcept(val);
+} // method popOptional()
 
 } // namespace dmn
 
