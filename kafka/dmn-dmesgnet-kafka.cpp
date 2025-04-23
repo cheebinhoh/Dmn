@@ -17,23 +17,23 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
                                        Dmn_Kafka::ConfigType configs)
     : m_name{name} {
   // input handle for DMesgNet
-  dmn::Dmn_Kafka::ConfigType inputConfigs{configs};
-  inputConfigs["group.id"] = name;
-  inputConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  inputConfigs["auto.offset.reset"] = "earliest";
-  inputConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "500";
+  dmn::Dmn_Kafka::ConfigType input_configs{configs};
+  input_configs["group.id"] = name;
+  input_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  input_configs["auto.offset.reset"] = "earliest";
+  input_configs[dmn::Dmn_Kafka::PollTimeoutMs] = "500";
 
   std::unique_ptr<dmn::Dmn_Kafka> input = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Consumer, inputConfigs);
+      dmn::Dmn_Kafka::Role::Consumer, input_configs);
 
   // output handle for DMesgNet
-  dmn::Dmn_Kafka::ConfigType outputConfigs{configs};
-  outputConfigs["acks"] = "all";
-  outputConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  outputConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  dmn::Dmn_Kafka::ConfigType output_configs{configs};
+  output_configs["acks"] = "all";
+  output_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  output_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> output = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Producer, outputConfigs);
+      dmn::Dmn_Kafka::Role::Producer, output_configs);
 
   // DMesgNet
   m_dmesgNet = std::make_unique<dmn::Dmn_DMesgNet>(name, std::move(input),

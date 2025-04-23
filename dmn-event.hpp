@@ -44,42 +44,7 @@ private:
   void execSignalHandlerInternal(int signo);
 
   template <class... U>
-  static std::shared_ptr<Dmn_Event_Manager> createInstanceInternal(U &&...u) {
-    if (!Dmn_Event_Manager::s_instance) {
-      std::call_once(
-          s_initOnce,
-          [](U &&...arg) {
-            // We need to mask off signals before any thread is created, so that
-            // all created threads will inherit the same signal mask, and block
-            // the signals.
-            //
-            // We can NOT sigmask the signals in Dmn_Event_Manager constructor
-            // as its parent class Dmn_Async thread has been created by the time
-            // the Dmn_Event_Manager constructor is run.
-            sigset_t oldmask{};
-            int err{};
-
-            sigemptyset(&Dmn_Event_Manager::s_mask);
-            sigaddset(&Dmn_Event_Manager::s_mask, SIGINT);
-            sigaddset(&Dmn_Event_Manager::s_mask, SIGTERM);
-            sigaddset(&Dmn_Event_Manager::s_mask, SIGQUIT);
-            sigaddset(&Dmn_Event_Manager::s_mask, SIGHUP);
-
-            err = pthread_sigmask(SIG_BLOCK, &Dmn_Event_Manager::s_mask,
-                                  &oldmask);
-            if (0 != err) {
-              throw std::runtime_error("Error in pthread_sigmask: " +
-                                       std::string(strerror(errno)));
-            }
-
-            Dmn_Event_Manager::s_instance =
-                std::make_shared<Dmn_Event_Manager>(std::forward<U>(arg)...);
-          },
-          std::forward<U>(u)...);
-    }
-
-    return Dmn_Event_Manager::s_instance;
-  } // static method createInstanceInternal()
+  static std::shared_ptr<Dmn_Event_Manager> createInstanceInternal(U &&...u);
 
   /**
    * data members for internal logic.
@@ -96,6 +61,45 @@ private:
   static std::shared_ptr<Dmn_Event_Manager> s_instance;
   static sigset_t s_mask;
 }; // class Dmn_Event_Manager
+
+template <class... U>
+std::shared_ptr<Dmn_Event_Manager>
+Dmn_Event_Manager::createInstanceInternal(U &&...u) {
+  if (!Dmn_Event_Manager::s_instance) {
+    std::call_once(
+        s_initOnce,
+        [](U &&...arg) {
+          // We need to mask off signals before any thread is created, so that
+          // all created threads will inherit the same signal mask, and block
+          // the signals.
+          //
+          // We can NOT sigmask the signals in Dmn_Event_Manager constructor
+          // as its parent class Dmn_Async thread has been created by the time
+          // the Dmn_Event_Manager constructor is run.
+          sigset_t oldmask{};
+          int err{};
+
+          sigemptyset(&Dmn_Event_Manager::s_mask);
+          sigaddset(&Dmn_Event_Manager::s_mask, SIGINT);
+          sigaddset(&Dmn_Event_Manager::s_mask, SIGTERM);
+          sigaddset(&Dmn_Event_Manager::s_mask, SIGQUIT);
+          sigaddset(&Dmn_Event_Manager::s_mask, SIGHUP);
+
+          err =
+              pthread_sigmask(SIG_BLOCK, &Dmn_Event_Manager::s_mask, &oldmask);
+          if (0 != err) {
+            throw std::runtime_error("Error in pthread_sigmask: " +
+                                     std::string(strerror(errno)));
+          }
+
+          Dmn_Event_Manager::s_instance =
+              std::make_shared<Dmn_Event_Manager>(std::forward<U>(arg)...);
+        },
+        std::forward<U>(u)...);
+  }
+
+  return Dmn_Event_Manager::s_instance;
+} // static method createInstanceInternal()
 
 } // namespace dmn
 

@@ -16,18 +16,18 @@ namespace dmn {
 std::expected<rd_kafka_conf_res_t, std::string>
 set_config(rd_kafka_conf_t *config, std::string_view key,
            std::string_view value) {
-  char errstr[KAFKA_ERROR_STRING_LENGTH]{};
+  char err_str[kKafkaErrorStringLength]{};
   rd_kafka_conf_res_t res{};
 
   assert(nullptr != config ||
          nullptr == "config parameter must not be nullptr");
 
-  res = rd_kafka_conf_set(config, key.data(), value.data(), errstr,
-                          sizeof(errstr));
+  res = rd_kafka_conf_set(config, key.data(), value.data(), err_str,
+                          sizeof(err_str));
   if (RD_KAFKA_CONF_OK != res) {
-    std::string unexpectedErrStr = std::string(errstr);
+    std::string unexpected_err_str = std::string(err_str);
 
-    return std::unexpected(unexpectedErrStr);
+    return std::unexpected(unexpected_err_str);
   }
 
   return res;

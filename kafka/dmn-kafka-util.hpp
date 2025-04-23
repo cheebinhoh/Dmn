@@ -14,7 +14,7 @@
 
 namespace dmn {
 
-constexpr size_t KAFKA_ERROR_STRING_LENGTH = 512;
+constexpr size_t kKafkaErrorStringLength = 512;
 
 /**
  * @brief The method sets kafka configuration to key value.

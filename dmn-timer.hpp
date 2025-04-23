@@ -22,16 +22,13 @@ namespace dmn {
 
 template <typename T> class Dmn_Timer : public Dmn_Proc {
 public:
-  Dmn_Timer(const T &reltime, std::function<void()> fn)
-      : Dmn_Proc{"timer"}, m_fn{fn}, m_reltime{reltime} {
-    this->start(this->m_reltime, this->m_fn);
-  }
+  Dmn_Timer(const T &reltime, std::function<void()> fn);
+  ~Dmn_Timer() noexcept;
 
-  ~Dmn_Timer() noexcept try {
-  } catch (...) {
-    // explicit return to resolve exception as destructor must be noexcept
-    return;
-  }
+  Dmn_Timer(const Dmn_Timer &obj) = delete;
+  const Dmn_Timer &operator=(const Dmn_Timer &obj) = delete;
+  Dmn_Timer(Dmn_Timer &&obj) = delete;
+  Dmn_Timer &operator=(Dmn_Timer &&obj) = delete;
 
   /**
    * @brief The method starts the timer that executes fn repeatedly after
@@ -41,34 +38,12 @@ public:
    * @param reltime The std::chrono::duration timer
    * @param fn The functor to be run by timer
    */
-  void start(const T &reltime, std::function<void()> fn = {}) {
-    m_reltime = reltime;
-
-    if (fn) {
-      m_fn = fn;
-    }
-
-    this->stop();
-
-    this->exec([this]() {
-      while (true) {
-        std::this_thread::sleep_for(this->m_reltime);
-        Dmn_Proc::yield();
-
-        this->m_fn();
-      }
-    });
-  }
+  void start(const T &reltime, std::function<void()> fn = {});
 
   /**
    * @brief The method stops the timer.
    */
-  void stop() {
-    try {
-      this->stopExec();
-    } catch (...) {
-    }
-  }
+  void stop();
 
 private:
   /**
@@ -77,6 +52,45 @@ private:
   std::function<void()> m_fn{};
   T m_reltime{};
 }; // class Dmn_Timer
+
+template <typename T>
+Dmn_Timer<T>::Dmn_Timer(const T &reltime, std::function<void()> fn)
+    : Dmn_Proc{"timer"}, m_fn{fn}, m_reltime{reltime} {
+  this->start(this->m_reltime, this->m_fn);
+}
+
+template <typename T> Dmn_Timer<T>::~Dmn_Timer() noexcept try {
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
+}
+
+template <typename T>
+void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
+  m_reltime = reltime;
+
+  if (fn) {
+    m_fn = fn;
+  }
+
+  this->stop();
+
+  this->exec([this]() {
+    while (true) {
+      std::this_thread::sleep_for(this->m_reltime);
+      Dmn_Proc::yield();
+
+      this->m_fn();
+    }
+  });
+}
+
+template <typename T> void Dmn_Timer<T>::stop() {
+  try {
+    this->stopExec();
+  } catch (...) {
+  }
+}
 
 } // namespace dmn
 
