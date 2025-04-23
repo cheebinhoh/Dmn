@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
-  Dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Dmn_Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -25,13 +25,13 @@ int main(int argc, char *argv[]) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[Dmn::Dmn_Kafka::Topic] = "timer_counter";
-  writeConfigs[Dmn::Dmn_Kafka::Key] = "tick";
+  writeConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
+  writeConfigs[dmn::Dmn_Kafka::Key] = "tick";
 
-  Dmn::Dmn_Kafka producer{Dmn::Dmn_Kafka::Role::Producer, writeConfigs};
+  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::Producer, writeConfigs};
 
   // reader
-  Dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Dmn_Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
   readConfigs["security.protocol"] = "SASL_SSL";
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmn-kafka-receiver";
-  readConfigs[Dmn::Dmn_Kafka::Topic] = "timer_counter";
+  readConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   readConfigs["auto.offset.reset"] = "earliest";
 
-  Dmn::Dmn_Kafka consumer{Dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
 
   std::vector<std::string> data{"heartbeat : test 1", "heartbeat : test 2"};
   for (auto &d : data) {
@@ -67,8 +67,8 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(data.size() == index);
 
-  readConfigs[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
-  Dmn::Dmn_Kafka consumer2{Dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
 
   std::cout << "read without data\n";
   struct timeval tv;

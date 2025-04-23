@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  Dmn::Dmn_Kafka::ConfigType readConfigs_other{};
+  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -38,15 +38,15 @@ int main(int argc, char *argv[]) {
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
   readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[Dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[Dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  Dmn::Dmn_Kafka consumer_other{Dmn::Dmn_Kafka::Role::Consumer,
+  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::Consumer,
                                 readConfigs_other};
 
   // dmesgnet1
   // writer for DMesgNet
-  Dmn::Dmn_Kafka::ConfigType configs{};
+  dmn::Dmn_Kafka::ConfigType configs{};
   configs["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   configs["sasl.username"] = "ICCN4A57TNKONPQ3";
   configs["sasl.password"] =
@@ -55,15 +55,15 @@ int main(int argc, char *argv[]) {
   configs["sasl.mechanisms"] = "PLAIN";
 
   // dmesgnet1
-  Dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
+  dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
 
   // dmesgnet2
-  Dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
+  dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // consume prior messages from topic.
-  Dmn::DMesgPb dmesgPbRead{};
+  dmn::DMesgPb dmesgPbRead{};
   std::map<std::string, std::string> nodeList{};
   std::map<std::string, std::string> masterList{};
   int n{};

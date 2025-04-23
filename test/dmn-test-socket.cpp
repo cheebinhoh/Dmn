@@ -15,15 +15,15 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_Socket writeSocket{"127.0.0.1", 5000, true};
-  std::unique_ptr<Dmn::Dmn_Socket> input =
-      std::make_unique<Dmn::Dmn_Socket>("127.0.0.1", 5000);
-  Dmn::Dmn_Io<std::string> *output{&writeSocket};
+  dmn::Dmn_Socket writeSocket{"127.0.0.1", 5000, true};
+  std::unique_ptr<dmn::Dmn_Socket> input =
+      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
+  dmn::Dmn_Io<std::string> *output{&writeSocket};
 
   std::string readData{};
 
-  std::unique_ptr<Dmn::Dmn_Socket> inputHandle = std::move(input);
-  Dmn::Dmn_Proc readProc{"readProc", [&inputHandle, &readData]() {
+  std::unique_ptr<dmn::Dmn_Socket> inputHandle = std::move(input);
+  dmn::Dmn_Proc readProc{"readProc", [&inputHandle, &readData]() {
                            auto data = inputHandle->read();
                            if (data) {
                              readData = std::move_if_noexcept(*data);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
                          }};
 
   std::string writeData{"hello socket"};
-  Dmn::Dmn_Proc writeProc{"readProc",
+  dmn::Dmn_Proc writeProc{"readProc",
                           [output, &writeData]() { output->write(writeData); }};
 
   readProc.exec();

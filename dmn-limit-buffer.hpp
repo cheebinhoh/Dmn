@@ -22,7 +22,7 @@
 
 #include "dmn-buffer.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
 public:
@@ -236,6 +236,6 @@ private:
   pthread_cond_t m_pushCond{};
 }; // class Dmn_LimitBuffer
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_LIMITBUFFER_HPP_

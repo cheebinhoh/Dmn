@@ -6,7 +6,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-package Dmn;
+package dmn;
 
 enum DMesgStatePb
 {

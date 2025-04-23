@@ -12,7 +12,7 @@
 
 #include "rdkafka.h"
 
-namespace Dmn {
+namespace dmn {
 
 constexpr size_t KAFKA_ERROR_STRING_LENGTH = 512;
 
@@ -29,6 +29,6 @@ constexpr size_t KAFKA_ERROR_STRING_LENGTH = 512;
 std::expected<rd_kafka_conf_res_t, std::string>
 set_config(rd_kafka_conf_t *conf, std::string_view key, std::string_view value);
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_KAFKA_UTIL_HPP_

@@ -21,9 +21,9 @@
 #include "dmn-io.hpp"
 #include "dmn-kafka-util.hpp"
 
-namespace Dmn {
+namespace dmn {
 
-class Dmn_Kafka : public Dmn::Dmn_Io<std::string> {
+class Dmn_Kafka : public dmn::Dmn_Io<std::string> {
 public:
   /**
    * @brief The configuration key specific to the Dmn_Kafka module (not directly
@@ -134,6 +134,6 @@ private:
   std::atomic_flag m_writeAtomicFlag{};
 }; // class Dmn_Kafka
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_KAFKA_HPP_

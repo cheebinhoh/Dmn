@@ -13,7 +13,7 @@
 
 #include "dmn-pub-sub.hpp"
 
-class Dmn_Msg_Receiver : public Dmn::Dmn_Pub<std::string>::Dmn_Sub {
+class Dmn_Msg_Receiver : public dmn::Dmn_Pub<std::string>::Dmn_Sub {
 public:
   Dmn_Msg_Receiver(std::string_view name) : m_name{name} {}
 
@@ -32,7 +32,7 @@ public:
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_Pub<std::string> pub{"radio", 2};
+  dmn::Dmn_Pub<std::string> pub{"radio", 2};
   Dmn_Msg_Receiver rec1{"receiver 1"};
 
   pub.registerSubscriber(&rec1);

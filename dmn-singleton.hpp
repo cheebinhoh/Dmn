@@ -13,7 +13,7 @@
 #include <memory>
 #include <utility>
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Singleton {
 public:
@@ -39,6 +39,6 @@ std::shared_ptr<T> Dmn_Singleton::createInstance(U &&...arg) {
   return new_instance;
 }
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_SINGLETON_HPP_

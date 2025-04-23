@@ -22,9 +22,9 @@
  * thread responsible to run api call that changes the object, this will
  * de-couple caller and callee and avoid mutex delay
  */
-class Dmn_Event : public Dmn::Dmn_Async {
+class Dmn_Event : public dmn::Dmn_Async {
 public:
-  Dmn_Event() : Dmn::Dmn_Async{"event manager"} {}
+  Dmn_Event() : dmn::Dmn_Async{"event manager"} {}
 
   void post(std::string event) {
     DMN_ASYNC_CALL_WITH_CAPTURE(std::cout << "Event: " << count++ << ": "
@@ -39,13 +39,13 @@ private:
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_TeePipe<int> sortPipe{
+  dmn::Dmn_TeePipe<int> sortPipe{
       "sortPipe", [](int v) { std::cout << "val: " << v << "\n"; },
       [](std::vector<int> list) { std::sort(list.begin(), list.end()); }};
 
   std::vector<int> s1{1, 3, 5, 7, 9};
   auto p1 = sortPipe.addDmn_TeePipeSource();
-  Dmn::Dmn_Proc proc1{"s1", [&p1, &s1]() {
+  dmn::Dmn_Proc proc1{"s1", [&p1, &s1]() {
                         for (auto &v : s1) {
                           p1->write(v);
                         }
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
   std::vector<int> s2{2, 4, 6, 8, 10};
   auto p2 = sortPipe.addDmn_TeePipeSource();
-  Dmn::Dmn_Proc proc2{"s2", [&p2, &s2]() {
+  dmn::Dmn_Proc proc2{"s2", [&p2, &s2]() {
                         for (auto &v : s2) {
                           p2->write(v);
                         }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
   sortPipe.waitForEmpty();
 
-  Dmn::Dmn_Async ha{"Test"};
+  dmn::Dmn_Async ha{"Test"};
   std::function<void()> functor{
       []() { std::cout << "Executing the functor\n"; }};
 
@@ -90,17 +90,17 @@ int main(int argc, char *argv[]) {
   std::cout << "End of Dmn test\n";
 
   {
-    Dmn::Dmn_Proc nonestop{"none-stop", []() {
+    dmn::Dmn_Proc nonestop{"none-stop", []() {
                              std::cout << "start none-stop\n";
                              while (true) {
-                               Dmn::Dmn_Proc::yield();
+                               dmn::Dmn_Proc::yield();
                              }
                            }};
     nonestop.exec();
-    Dmn::Dmn_Proc::yield();
+    dmn::Dmn_Proc::yield();
   }
 
-  Dmn::Dmn_Pipe<std::string> pipe{"string"};
+  dmn::Dmn_Pipe<std::string> pipe{"string"};
   std::string valToPipe{"Hello Pipe"};
   std::string valFromPipe{};
 
@@ -115,15 +115,15 @@ int main(int argc, char *argv[]) {
   std::cout << "value from Pipe: " << (*optionalValFromPipe)
             << ", value to Pipe: " << valToPipe << "\n";
 
-  auto pipeBlock = std::make_unique<Dmn::Dmn_Pipe<std::string>>("pipeBlock");
-  Dmn::Dmn_Proc pipeBlockProc{"pipeBlockProc", [&pipeBlock]() {
+  auto pipeBlock = std::make_unique<dmn::Dmn_Pipe<std::string>>("pipeBlock");
+  dmn::Dmn_Proc pipeBlockProc{"pipeBlockProc", [&pipeBlock]() {
                                 std::this_thread::sleep_for(
                                     std::chrono::seconds(5));
                                 pipeBlock = {};
                               }};
 
   pipeBlockProc.exec();
-  Dmn::Dmn_Proc::yield();
+  dmn::Dmn_Proc::yield();
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   std::cout << "before pipeBlock->read\n";

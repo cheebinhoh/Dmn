@@ -22,17 +22,17 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::Dmn_DMesg dmesg{"dmesg"};
 
   int cnt{1};
 
-  std::shared_ptr<Dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
+  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
       dmesg.openHandler(
-          "handler", false, [](const Dmn::DMesgPb &msg) { return true; },
-          [&dmesgHandler, &cnt](const Dmn::DMesgPb &msg) mutable {
+          "handler", false, [](const dmn::DMesgPb &msg) { return true; },
+          [&dmesgHandler, &cnt](const dmn::DMesgPb &msg) mutable {
             std::cout << msg.ShortDebugString() << "\n";
 
-            Dmn::DMesgPb ret{msg};
+            dmn::DMesgPb ret{msg};
             try {
               dmesgHandler->write(ret);
               cnt++;
@@ -49,12 +49,12 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   for (int n = 0; n < 3; n++) {
-    Dmn::DMesgPb dmesgPb{};
+    dmn::DMesgPb dmesgPb{};
     dmesgPb.set_topic("counter sync");
-    dmesgPb.set_type(Dmn::DMesgTypePb::message);
+    dmesgPb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
-    Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+    dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
     dmsgbodyPb->set_message(data);
 
     dmesgWriteHandler->write(dmesgPb);

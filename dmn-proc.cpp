@@ -16,7 +16,7 @@
 #include <string>
 #include <string_view>
 
-namespace Dmn {
+namespace dmn {
 
 void cleanupFuncToUnlockPthreadMutex(void *arg) {
   pthread_mutex_t *mutex = (pthread_mutex_t *)arg;
@@ -146,4 +146,4 @@ void *Dmn_Proc::runFnInThreadHelper(void *context) {
   return NULL;
 }
 
-} // namespace Dmn
+} // namespace dmn

@@ -36,7 +36,7 @@
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
   using Task = std::function<void(T)>;
@@ -396,6 +396,6 @@ private:
   std::vector<std::shared_ptr<Dmn_TeePipeSource>> m_buffers{};
 }; // class Dmn_TeePipe
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_TEEPIPE_HPP_

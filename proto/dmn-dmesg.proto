@@ -9,7 +9,7 @@ import "proto/dmn-dmesg-body.proto";
 
 import "google/protobuf/timestamp.proto";
 
-package Dmn;
+package dmn;
 
 message DMesgPb
 {

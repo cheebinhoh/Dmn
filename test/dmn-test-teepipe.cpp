@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
   std::vector<std::string> files{
       std::string(dirpath) + "/teepipe-test-data-1.txt",
       std::string(dirpath) + "/teepipe-test-data-2.txt"};
-  Dmn::Dmn_TeePipe<long> tpipe{
+  dmn::Dmn_TeePipe<long> tpipe{
       "teepipe", [](long val) { std::cout << val << "\n"; },
       [](std::vector<long> list) { std::sort(list.begin(), list.end()); }};
-  std::vector<std::unique_ptr<Dmn::Dmn_Proc>> proclist{};
+  std::vector<std::unique_ptr<dmn::Dmn_Proc>> proclist{};
 
   for (auto &filename : files) {
     auto tpipeSource = tpipe.addDmn_TeePipeSource();
-    auto proc = std::make_unique<Dmn::Dmn_Proc>(
+    auto proc = std::make_unique<dmn::Dmn_Proc>(
         filename, [&tpipe, tpipeSource, filename, prog = argv[0]]() {
           int fd{};
           FILE *file{};
@@ -81,10 +81,10 @@ int main(int argc, char *argv[]) {
 
   for (auto &proc : proclist) {
     proc->exec();
-    Dmn::Dmn_Proc::yield();
+    dmn::Dmn_Proc::yield();
   }
 
-  Dmn::Dmn_Proc::yield();
+  dmn::Dmn_Proc::yield();
 
   for (auto &proc : proclist) {
     proc->wait();

@@ -25,7 +25,7 @@
 #include "dmn-io.hpp"
 #include "dmn-timer.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 #define DMN_DMESGNET_HEARTBEAT_IN_NS (1000000000)
 #define DMN_DMESGNET_MASTERPENDING_MAX_COUNTER (3)
@@ -112,9 +112,9 @@ public:
    * @brief The constructor method for DMesgNet.
    *
    * @param name          The identification name for the DMesgNet object
-   * @param inputHandler  The Dmn::Hal_Io object to receive inbound stringified
+   * @param inputHandler  The dmn::Hal_Io object to receive inbound stringified
    *                      DMesgPb message
-   * @param outputHandler The Dmn::Hal_Io object to send outbound stringified
+   * @param outputHandler The dmn::Hal_Io object to send outbound stringified
    *                      DMesgPb message
    */
   Dmn_DMesgNet(std::string_view name,
@@ -136,7 +136,7 @@ protected:
    *
    * @param dmesgPbOther The other node DMesgPb
    */
-  void reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther);
+  void reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther);
 
 private:
   /**
@@ -149,21 +149,21 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn::Dmn_Proc> m_inputProc{};
+  std::unique_ptr<dmn::Dmn_Proc> m_inputProc{};
   std::shared_ptr<Dmn_DMesgHandler> m_subscriptHandler{};
   std::shared_ptr<Dmn_DMesgHandler> m_sysHandler{};
-  std::unique_ptr<Dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timerProc{};
+  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timerProc{};
 
-  Dmn::DMesgPb m_sys{};
+  dmn::DMesgPb m_sys{};
   long long m_masterPendingCounter{};
   long long m_masterSyncPendingCounter{};
   struct timeval m_lastRemoteMasterTimestamp {};
-  std::map<std::string, Dmn::DMesgPb> m_topicLastDMesgPb{};
+  std::map<std::string, dmn::DMesgPb> m_topicLastDMesgPb{};
 
   bool m_isMaster{};
   long long m_numberOfNeighbor{};
 }; // class Dmn_DMesgNet
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_DMESGNET_HPP_

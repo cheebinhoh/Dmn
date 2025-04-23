@@ -50,7 +50,7 @@
  */
 #define DMESG_PB_MSG_SET_MESSAGE(pb, val)                                      \
   do {                                                                         \
-    assert((pb).type() == Dmn::DMesgTypePb::message);                          \
+    assert((pb).type() == dmn::DMesgTypePb::message);                          \
     ((pb).mutable_body()->set_message((val)));                                 \
   } while (false)
 

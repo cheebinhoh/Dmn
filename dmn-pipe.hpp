@@ -27,7 +27,7 @@
 #include "dmn-io.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T>
 class Dmn_Pipe : public Dmn_Buffer<T>, public Dmn_Io<T>, public Dmn_Proc {
@@ -219,6 +219,6 @@ template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
   return inboundCount;
 }
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_PIPE_HPP_

@@ -18,7 +18,7 @@
 
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_Timer : public Dmn_Proc {
 public:
@@ -78,6 +78,6 @@ private:
   T m_reltime{};
 }; // class Dmn_Timer
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_TIMER_HPP_

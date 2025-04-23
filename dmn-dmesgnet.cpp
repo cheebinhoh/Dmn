@@ -17,7 +17,7 @@
 #include "dmn-io.hpp"
 #include "dmn-timer.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                            std::unique_ptr<Dmn_Io<std::string>> inputHandler,
@@ -30,7 +30,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   gettimeofday(&tv, NULL);
 
   DMESG_PB_SET_MSG_TOPIC(this->m_sys, DMesgSysIdentifier);
-  DMESG_PB_SET_MSG_TYPE(this->m_sys, Dmn::DMesgTypePb::sys);
+  DMESG_PB_SET_MSG_TYPE(this->m_sys, dmn::DMesgTypePb::sys);
 
   DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV(this->m_sys, tv);
 
@@ -38,17 +38,17 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV(self, tv);
   DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
   DMESG_PB_SYS_NODE_SET_IDENTIFIER(self, this->m_name);
-  DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::MasterPending);
+  DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::MasterPending);
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
   // subscriptHandler to read and write with local DMesg
   m_subscriptHandler = Dmn_DMesg::openHandler(
       m_name,
       true, // include DMesgSys!
-      [this](const Dmn::DMesgPb &dmesgPb) {
+      [this](const dmn::DMesgPb &dmesgPb) {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
-      [this](Dmn::DMesgPb dmesgPbWrite) mutable {
+      [this](dmn::DMesgPb dmesgPbWrite) mutable {
         if (m_outputHandler) {
           DMN_ASYNC_CALL_WITH_CAPTURE(
               {
@@ -67,7 +67,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 dmesgPbWrite.SerializeToString(&serialized_string);
                 m_outputHandler->write(serialized_string);
 
-                if (dmesgPbWrite.type() != Dmn::DMesgTypePb::sys) {
+                if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
                   m_topicLastDMesgPb[dmesgPbWrite.topic()] = dmesgPbWrite;
                 }
               },
@@ -80,7 +80,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       bool stop{};
 
       while ((!stop) && this->m_inputHandler) {
-        Dmn::DMesgPb dmesgPbRead{};
+        dmn::DMesgPb dmesgPbRead{};
 
         auto data = this->m_inputHandler->read();
         Dmn_Proc::yield();
@@ -99,7 +99,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
           // of the Dmn_DMesgHandler from read it again,
           // but it is good to be explicit.
 
-          if (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) {
+          if (dmesgPbRead.type() == dmn::DMesgTypePb::sys) {
             DMN_ASYNC_CALL_WITH_CAPTURE(
                 { this->reconciliateDMesgPbSys(dmesgPbRead); }, this,
                 dmesgPbRead);
@@ -109,7 +109,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                   try {
                     this->m_subscriptHandler->write(dmesgPbRead);
 
-                    if (dmesgPbRead.type() != Dmn::DMesgTypePb::sys) {
+                    if (dmesgPbRead.type() != dmn::DMesgTypePb::sys) {
                       m_topicLastDMesgPb[dmesgPbRead.topic()] = dmesgPbRead;
                     }
                   } catch (...) {
@@ -133,7 +133,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                   }
                 },
                 this, dmesgPbRead);
-          } /* else (dmesgPbRead.type() == Dmn::DMesgTypePb::sys) */
+          } /* else (dmesgPbRead.type() == dmn::DMesgTypePb::sys) */
         }
       }
     });
@@ -141,17 +141,17 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
     m_inputProc->exec();
 
     m_sysHandler = Dmn_DMesg::openHandler(
-        m_name + "_sys", [this](const Dmn::DMesgPb &dmesgPb) { return false; },
+        m_name + "_sys", [this](const dmn::DMesgPb &dmesgPb) { return false; },
         nullptr);
   }
 
   if (m_inputHandler && m_outputHandler) {
     // into MasterPending
-    m_timerProc = std::make_unique<Dmn::Dmn_Timer<std::chrono::nanoseconds>>(
+    m_timerProc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS), [this]() {
           this->write([this]() mutable {
             if (this->m_sys.body().sys().self().state() ==
-                Dmn::DMesgStatePb::MasterPending) {
+                dmn::DMesgStatePb::MasterPending) {
               this->m_masterPendingCounter++;
 
               if (this->m_masterPendingCounter >=
@@ -160,7 +160,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
                 auto *self =
                     this->m_sys.mutable_body()->mutable_sys()->mutable_self();
-                DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Ready);
+                DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
                 DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
 
                 struct timeval tv;
@@ -169,7 +169,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
               }
             } else if (this->m_sys.body().sys().self().state() ==
-                       Dmn::DMesgStatePb::Ready) {
+                       dmn::DMesgStatePb::Ready) {
               if (this->m_sys.body().sys().self().masteridentifier() !=
                   this->m_sys.body().sys().self().identifier()) {
                 this->m_masterSyncPendingCounter++;
@@ -184,7 +184,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
                   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
                   DMESG_PB_SYS_NODE_SET_STATE(self,
-                                              Dmn::DMesgStatePb::MasterPending);
+                                              dmn::DMesgStatePb::MasterPending);
                 }
               }
             }
@@ -202,7 +202,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                  (m_numberOfNeighbor !=
                   this->m_sys.body().sys().nodelist().size()))) {
               for (auto &topicDmesgPb : m_topicLastDMesgPb) {
-                Dmn::DMesgPb pb = topicDmesgPb.second;
+                dmn::DMesgPb pb = topicDmesgPb.second;
 
                 DMESG_PB_SET_MSG_PLAYBACK(pb, true);
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, this->m_name);
@@ -219,7 +219,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
         });
   } else {
     auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
-    DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Ready);
+    DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
   }
 
@@ -253,7 +253,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
     auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
-    DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Destroyed);
+    DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Destroyed);
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
     DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
 
@@ -277,19 +277,19 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
-void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
+void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
   auto other = dmesgPbOther.body().sys().self();
   auto self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
-  if (self->state() == Dmn::DMesgStatePb::MasterPending &&
-      other.state() == Dmn::DMesgStatePb::Ready) {
+  if (self->state() == dmn::DMesgStatePb::MasterPending &&
+      other.state() == dmn::DMesgStatePb::Ready) {
     assert(self->masteridentifier() == "");
     assert(other.masteridentifier() != "");
 
-    DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::Ready);
+    DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, other.masteridentifier());
 
     DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
@@ -298,12 +298,12 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
     this->m_masterPendingCounter = 0;
     this->m_masterSyncPendingCounter = 0;
     this->m_sysHandler->write(this->m_sys);
-  } else if (self->state() == Dmn::DMesgStatePb::Ready) {
+  } else if (self->state() == dmn::DMesgStatePb::Ready) {
     assert("" != self->masteridentifier());
     assert(0 == this->m_masterPendingCounter);
 
     if (other.identifier() == self->masteridentifier()) {
-      if (other.state() == Dmn::DMesgStatePb::Ready) {
+      if (other.state() == dmn::DMesgStatePb::Ready) {
         this->m_masterSyncPendingCounter = 0;
         this->m_lastRemoteMasterTimestamp = tv;
       } else {
@@ -312,7 +312,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
          */
         assert(other.masteridentifier() == "");
 
-        DMESG_PB_SYS_NODE_SET_STATE(self, Dmn::DMesgStatePb::MasterPending);
+        DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::MasterPending);
         DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
         DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
@@ -322,7 +322,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
         this->m_masterSyncPendingCounter = 0;
         this->m_sysHandler->write(this->m_sys);
       }
-    } else if (other.state() == Dmn::DMesgStatePb::Ready &&
+    } else if (other.state() == dmn::DMesgStatePb::Ready &&
                other.masteridentifier() != self->masteridentifier()) {
       assert("" != self->masteridentifier());
       assert("" != other.masteridentifier());
@@ -345,7 +345,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
         this->m_sysHandler->write(this->m_sys);
       }
     }
-  } // if (self->state() == Dmn::DMesgStatePb::Ready)
+  } // if (self->state() == dmn::DMesgStatePb::Ready)
 
   int i = 0;
   while (i < this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
@@ -360,7 +360,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
     i++;
   }
 
-  if (other.state() == Dmn::DMesgStatePb::Destroyed) {
+  if (other.state() == dmn::DMesgStatePb::Destroyed) {
     if (i >= this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
       // do nothing
     } else {
@@ -386,4 +386,4 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(Dmn::DMesgPb dmesgPbOther) {
   }
 } // method reconciliateDmesgPbSys
 
-} // namespace Dmn
+} // namespace dmn

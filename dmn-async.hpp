@@ -39,7 +39,7 @@
     this->write([__VA_ARGS__]() mutable { block; });                           \
   } while (false)
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
 public:
@@ -91,6 +91,6 @@ void Dmn_Async::execAfter(const std::chrono::duration<Rep, Period> &duration,
   this->execAfterInternal(timeInFuture, fn);
 }
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_ASYNC_HPP_

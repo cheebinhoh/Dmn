@@ -18,18 +18,18 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  Dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::Dmn_DMesg dmesg{"dmesg"};
   std::string data1{};
   std::string data2{};
 
   auto dmesgHandler1 =
-      dmesg.openHandler("handler1", nullptr, [&data1](Dmn::DMesgPb dmesgPb) {
+      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgPb) {
         data1 = dmesgPb.body().message();
       });
   EXPECT_TRUE(dmesgHandler1);
 
   auto dmesgHandler2 =
-      dmesg.openHandler("handler2", nullptr, [&data2](Dmn::DMesgPb dmesgPb) {
+      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgPb) {
         data2 = dmesgPb.body().message();
       });
 
@@ -38,12 +38,12 @@ int main(int argc, char *argv[]) {
   auto dmesgHandler3 = dmesg.openHandler("handler3", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler3);
 
-  Dmn::DMesgPb dmesgPb{};
+  dmn::DMesgPb dmesgPb{};
   dmesgPb.set_topic("counter sync");
-  dmesgPb.set_type(Dmn::DMesgTypePb::message);
+  dmesgPb.set_type(dmn::DMesgTypePb::message);
 
   std::string data{"Hello dmesg async"};
-  Dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
   dmsgbodyPb->set_message(data);
 
   dmesgHandler3->write(dmesgPb);
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   std::string data3{};
 
   auto dmesgHandler4 =
-      dmesg.openHandler("handler4", nullptr, [&data3](Dmn::DMesgPb dmesgPb) {
+      dmesg.openHandler("handler4", nullptr, [&data3](dmn::DMesgPb dmesgPb) {
         data3 = dmesgPb.body().message();
       });
 

@@ -14,7 +14,7 @@
 #include "dmn-dmesgnet.hpp"
 #include "dmn-kafka.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 class Dmn_DMesgNet_Kafka {
 public:
@@ -25,7 +25,7 @@ public:
    *
    *        The user of the api must provide most of the kafka configuration
    *        besides following "group.id", "auto.offset.reset", "acks",
-   *        Dmn::Dmn_Kafka::Topic and Dmn::Dmn_Kafka::Key which are provided
+   *        dmn::Dmn_Kafka::Topic and dmn::Dmn_Kafka::Key which are provided
    *        by Dmn_DMesgNet_Kafka.
    *
    * @param name    The name for Dmn_DMesgNet and kafka group id
@@ -82,6 +82,6 @@ private:
   std::unique_ptr<Dmn_DMesgNet> m_dmesgNet{};
 }; // class Dmn_DMesgNet_Kafka
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_DMESGNET_KAFKA_HPP_

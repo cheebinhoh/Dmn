@@ -19,7 +19,7 @@
 #include "dmn-kafka-util.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 const std::string Dmn_Kafka::Topic = "Dmn_Kafka.Topic";
 const std::string Dmn_Kafka::Key = "Dmn_Kafka.Key";
@@ -59,7 +59,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
       m_pollTimeoutMs = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
       auto res =
-          Dmn::set_config(kafkaConfig, c.first.c_str(), c.second.c_str());
+          dmn::set_config(kafkaConfig, c.first.c_str(), c.second.c_str());
       if (!res.has_value()) {
         rd_kafka_conf_destroy(kafkaConfig);
 
@@ -238,4 +238,4 @@ void Dmn_Kafka::write(std::string &item, bool move) {
   }
 }
 
-} // namespace Dmn
+} // namespace dmn

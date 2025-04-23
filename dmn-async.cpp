@@ -22,7 +22,7 @@
 
 #include "dmn-pipe.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 Dmn_Async::Dmn_Async(std::string_view name)
     : Dmn_Pipe{name, [](std::function<void()> &&task) {
@@ -52,4 +52,4 @@ void Dmn_Async::execAfterInternal(long long timeInFuture,
   });
 }
 
-} // namespace Dmn
+} // namespace dmn

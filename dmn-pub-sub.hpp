@@ -24,7 +24,7 @@
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_Pub : public Dmn_Async {
 public:
@@ -304,6 +304,6 @@ template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
   }
 }
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_PUB_SUB_HPP_

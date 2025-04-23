@@ -16,7 +16,7 @@
 
 #include <optional>
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_Io {
 public:
@@ -26,6 +26,6 @@ public:
   virtual void write(T &&item) = 0;
 };
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_IO_HPP_

@@ -25,7 +25,7 @@
 
 #include "dmn-proc.hpp"
 
-namespace Dmn {
+namespace dmn {
 
 template <typename T> class Dmn_Buffer {
 public:
@@ -257,6 +257,6 @@ private:
   long long m_popCount{};
 }; // class Dmn_Buffer
 
-} // namespace Dmn
+} // namespace dmn
 
 #endif // DMN_BUFFER_HPP_
