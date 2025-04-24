@@ -17,8 +17,8 @@
 
 namespace dmn {
 
-Dmn_Socket::Dmn_Socket(std::string_view ip4, int portno, bool writeOnly)
-    : m_ip4{ip4}, m_portno{portno}, m_writeOnly{writeOnly} {
+Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
+    : m_ip4{ip4}, m_port_no{port_no}, m_write_only{write_only} {
   constexpr int broadcast{1};
   struct sockaddr_in servaddr;
   int type{SOCK_DGRAM};
@@ -31,7 +31,7 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int portno, bool writeOnly)
   memset(&servaddr, 0, sizeof(servaddr));
 
   servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(m_portno);
+  servaddr.sin_port = htons(m_port_no);
   if ("" == m_ip4) {
     servaddr.sin_addr.s_addr = INADDR_ANY;
   } else {
@@ -44,9 +44,9 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int portno, bool writeOnly)
                              std::string(strerror(errno)));
   }
 
-  if (!m_writeOnly &&
+  if (!m_write_only &&
       bind(m_fd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-    throw std::runtime_error("Error in bind(" + std::to_string(m_portno) +
+    throw std::runtime_error("Error in bind(" + std::to_string(m_port_no) +
                              "): " + std::string(strerror(errno)));
   }
 }
@@ -82,7 +82,7 @@ void Dmn_Socket::write(std::string &item) {
   struct sockaddr_in servaddr;
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(m_portno);
+  servaddr.sin_port = htons(m_port_no);
   if ("" == m_ip4) {
     servaddr.sin_addr.s_addr = INADDR_ANY;
   } else {

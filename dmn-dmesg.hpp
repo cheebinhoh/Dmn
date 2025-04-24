@@ -79,8 +79,7 @@ public:
     class Dmn_DMesgHandlerSub : public dmn::Dmn_Pub<dmn::DMesgPb>::Dmn_Sub {
     public:
       Dmn_DMesgHandlerSub() = default;
-
-      ~Dmn_DMesgHandlerSub() noexcept;
+      virtual ~Dmn_DMesgHandlerSub() noexcept;
 
       Dmn_DMesgHandlerSub(const Dmn_DMesgHandlerSub &obj) = delete;
       const Dmn_DMesgHandlerSub &
@@ -153,7 +152,7 @@ public:
     Dmn_DMesgHandler(std::string_view name, bool includeDMesgSys,
                      FilterTask filterFn, AsyncProcessTask asyncProcessFn);
 
-    ~Dmn_DMesgHandler() noexcept;
+    virtual ~Dmn_DMesgHandler() noexcept;
 
     Dmn_DMesgHandler(const Dmn_DMesgHandler &obj) = delete;
     const Dmn_DMesgHandler &operator=(const Dmn_DMesgHandler &obj) = delete;

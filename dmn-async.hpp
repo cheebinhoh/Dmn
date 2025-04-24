@@ -44,7 +44,7 @@ namespace dmn {
 class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
 public:
   Dmn_Async(std::string_view name = "");
-  ~Dmn_Async() noexcept;
+  virtual ~Dmn_Async() noexcept;
 
   Dmn_Async(const Dmn_Async &dmnAsync) = delete;
   const Dmn_Async &operator=(const Dmn_Async &dmnAsync) = delete;
