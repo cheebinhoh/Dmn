@@ -26,33 +26,8 @@ namespace dmn {
 
 template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
 public:
-  Dmn_LimitBuffer(size_t capacity = 1) : m_maxCapacity(capacity) {
-    int err{};
-
-    err = pthread_mutex_init(&m_mutex, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    err = pthread_cond_init(&m_pushCond, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    err = pthread_cond_init(&m_popCond, NULL);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-  }
-
-  virtual ~Dmn_LimitBuffer() {
-    pthread_cond_signal(&m_popCond);
-    pthread_cond_signal(&m_pushCond);
-
-    pthread_cond_destroy(&m_pushCond);
-    pthread_cond_destroy(&m_popCond);
-    pthread_mutex_destroy(&m_mutex);
-  }
+  Dmn_LimitBuffer(size_t capacity = 1);
+  virtual ~Dmn_LimitBuffer();
 
   Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &dmnLimitBuffer) = delete;
   const Dmn_LimitBuffer<T> &
@@ -66,7 +41,7 @@ public:
    *
    * @return front item of the queue
    */
-  T pop() override { return *popOptional(true); }
+  T pop() override;
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -74,7 +49,7 @@ public:
    *
    * @return optional item from the front of the queue
    */
-  std::optional<T> popNoWait() override { return popOptional(false); }
+  std::optional<T> popNoWait() override;
 
   /**
    * @brief The method will push the item into queue using move semantics
@@ -83,88 +58,16 @@ public:
    *
    * @param item The item to be pushed into queue
    */
-  void push(T &&item) override {
-    T movedItem = std::move_if_noexcept(item);
+  void push(T &&item) override;
 
-    push(movedItem, true);
-  }
-
-  /**
-   * @brief The method will push the item into queue using move semantics
-   *        if move is true (and noexcept is true). The caller is blocked
-   *        waiting if the queue is full.
-   *
-   * @param item The item to be pushed into queue
-   * @param move True to use move semantics, else copy semantic
-   */
-  void push(T &item, bool move = true) override {
-    int err{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    while (m_size >= m_maxCapacity) {
-      err = pthread_cond_wait(&m_pushCond, &m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
-      pthread_testcancel();
-    }
-
-    Dmn_Buffer<T>::push(item, move);
-    ++m_size;
-
-    err = pthread_cond_signal(&m_popCond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
-
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-  }
+  void push(T &item, bool move = true) override;
 
   /**
    * @brief The method returns the number of items held in the queue now.
    *
    * @return The number of items held in the queue now
    */
-  size_t size() {
-    int err{};
-    size_t size{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    size = m_size;
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    return size;
-  }
+  size_t size();
 
   /**
    * @brief The method will put the client on blocking wait until
@@ -174,7 +77,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  long long waitForEmpty() override { return Dmn_Buffer<T>::waitForEmpty(); }
+  long long waitForEmpty() override;
 
 private:
   /**
@@ -187,39 +90,7 @@ private:
    *
    * @return optional value from front item of the queue
    */
-  std::optional<T> popOptional(bool wait) override {
-    int err{};
-    std::optional<T> val{};
-
-    err = pthread_mutex_lock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
-
-    pthread_testcancel();
-
-    val = Dmn_Buffer<T>::popOptional(wait);
-    m_size--;
-
-    err = pthread_cond_signal(&m_pushCond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
-
-      throw std::runtime_error(strerror(err));
-    }
-
-    DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-    err = pthread_mutex_unlock(&m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    return val; // val is local variable, hence rvalue and hence move semantic
-                // by default for efficient copy.
-  }
+  std::optional<T> popOptional(bool wait) override;
 
 private:
   /**
@@ -235,6 +106,150 @@ private:
   pthread_cond_t m_popCond{};
   pthread_cond_t m_pushCond{};
 }; // class Dmn_LimitBuffer
+
+template <typename T>
+Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity) : m_maxCapacity(capacity) {
+  int err{};
+
+  err = pthread_mutex_init(&m_mutex, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  err = pthread_cond_init(&m_pushCond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  err = pthread_cond_init(&m_popCond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
+  pthread_cond_signal(&m_popCond);
+  pthread_cond_signal(&m_pushCond);
+
+  pthread_cond_destroy(&m_pushCond);
+  pthread_cond_destroy(&m_popCond);
+  pthread_mutex_destroy(&m_mutex);
+}
+
+template <typename T> T Dmn_LimitBuffer<T>::pop() { return *popOptional(true); }
+
+template <typename T> std::optional<T> Dmn_LimitBuffer<T>::popNoWait() {
+  return popOptional(false);
+}
+
+template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
+  T movedItem = std::move_if_noexcept(item);
+
+  push(movedItem, true);
+}
+
+template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
+  int err{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  while (m_size >= m_maxCapacity) {
+    err = pthread_cond_wait(&m_pushCond, &m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    pthread_testcancel();
+  }
+
+  Dmn_Buffer<T>::push(item, move);
+  ++m_size;
+
+  err = pthread_cond_signal(&m_popCond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
+
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T> size_t Dmn_LimitBuffer<T>::size() {
+  int err{};
+  size_t size{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  size = m_size;
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return size;
+}
+
+template <typename T> long long Dmn_LimitBuffer<T>::waitForEmpty() {
+  return Dmn_Buffer<T>::waitForEmpty();
+}
+
+template <typename T>
+std::optional<T> Dmn_LimitBuffer<T>::popOptional(bool wait) {
+  int err{};
+  std::optional<T> val{};
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  val = Dmn_Buffer<T>::popOptional(wait);
+  m_size--;
+
+  err = pthread_cond_signal(&m_pushCond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
+
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return val; // val is local variable, hence rvalue and hence move semantic
+              // by default for efficient copy.
+}
 
 } // namespace dmn
 

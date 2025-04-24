@@ -23,7 +23,7 @@ namespace dmn {
 template <typename T> class Dmn_Timer : public Dmn_Proc {
 public:
   Dmn_Timer(const T &reltime, std::function<void()> fn);
-  ~Dmn_Timer() noexcept;
+  virtual ~Dmn_Timer() noexcept;
 
   Dmn_Timer(const Dmn_Timer &obj) = delete;
   const Dmn_Timer &operator=(const Dmn_Timer &obj) = delete;
@@ -36,7 +36,7 @@ public:
    *        the new timer is started.
    *
    * @param reltime The std::chrono::duration timer
-   * @param fn The functor to be run by timer
+   * @param fn      The functor to be run by timer
    */
   void start(const T &reltime, std::function<void()> fn = {});
 
