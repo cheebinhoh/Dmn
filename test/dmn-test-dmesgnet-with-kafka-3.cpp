@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::Consumer,
+  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
                                 readConfigs_other};
 
   // dmesgnet1
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   writeConfigs1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> producer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Producer, writeConfigs1);
+      dmn::Dmn_Kafka::Role::kProducer, writeConfigs1);
 
   // reader for DMesgNet
   dmn::Dmn_Kafka::ConfigType readConfigs1{};
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   readConfigs1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   std::unique_ptr<dmn::Dmn_Kafka> consumer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Consumer, readConfigs1);
+      dmn::Dmn_Kafka::Role::kConsumer, readConfigs1);
 
   // dmesgnet2
   // writer for DMesgNet
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
   writeConfigs2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> producer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Producer, writeConfigs2);
+      dmn::Dmn_Kafka::Role::kProducer, writeConfigs2);
 
   // reader for DMesgNet
   dmn::Dmn_Kafka::ConfigType readConfigs2{};
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   readConfigs2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   std::unique_ptr<dmn::Dmn_Kafka> consumer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::Consumer, readConfigs2);
+      dmn::Dmn_Kafka::Role::kConsumer, readConfigs2);
 
   // dmesgnet1
   dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),

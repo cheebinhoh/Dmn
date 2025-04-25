@@ -133,7 +133,7 @@ private:
    */
   std::string m_name{};
   ssize_t m_capacity{};
-  Dmn_Pub_Filter_Task m_filterFn{};
+  Dmn_Pub_Filter_Task m_filter_fn{};
 
   /**
    * data members for internal logic.
@@ -165,7 +165,7 @@ template <typename T>
 Dmn_Pub<T>::Dmn_Pub(std::string_view name, ssize_t capacity,
                     Dmn_Pub_Filter_Task filterFn)
     : Dmn_Async(name), m_name{name}, m_capacity{capacity},
-      m_filterFn{filterFn} {
+      m_filter_fn{filterFn} {
 
   int err = pthread_mutex_init(&m_mutex, NULL);
   if (err) {
@@ -232,7 +232,7 @@ template <typename T> void Dmn_Pub<T>::publishInternal(T item) {
   }
 
   for (auto &sub : m_subscribers) {
-    if (!m_filterFn || m_filterFn(sub, item)) {
+    if (!m_filter_fn || m_filter_fn(sub, item)) {
       sub->notifyInternal(item);
     }
   }

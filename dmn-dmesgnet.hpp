@@ -111,15 +111,15 @@ public:
   /**
    * @brief The constructor method for DMesgNet.
    *
-   * @param name          The identification name for the DMesgNet object
-   * @param inputHandler  The dmn::Hal_Io object to receive inbound stringified
-   *                      DMesgPb message
-   * @param outputHandler The dmn::Hal_Io object to send outbound stringified
-   *                      DMesgPb message
+   * @param name           The identification name for the DMesgNet object
+   * @param input_handler  The dmn::Hal_Io object to receive inbound stringified
+   *                       DMesgPb message
+   * @param output_handler The dmn::Hal_Io object to send outbound stringified
+   *                       DMesgPb message
    */
   Dmn_DMesgNet(std::string_view name,
-               std::unique_ptr<Dmn_Io<std::string>> inputHandler = nullptr,
-               std::unique_ptr<Dmn_Io<std::string>> outputHandler = nullptr);
+               std::unique_ptr<Dmn_Io<std::string>> input_handler = nullptr,
+               std::unique_ptr<Dmn_Io<std::string>> output_handler = nullptr);
 
   virtual ~Dmn_DMesgNet() noexcept;
 
@@ -143,25 +143,25 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
-  std::unique_ptr<Dmn_Io<std::string>> m_inputHandler{};
-  std::unique_ptr<Dmn_Io<std::string>> m_outputHandler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_input_handler{};
+  std::unique_ptr<Dmn_Io<std::string>> m_output_handler{};
 
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<dmn::Dmn_Proc> m_inputProc{};
-  std::shared_ptr<Dmn_DMesgHandler> m_subscriptHandler{};
-  std::shared_ptr<Dmn_DMesgHandler> m_sysHandler{};
-  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timerProc{};
+  std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};
+  std::shared_ptr<Dmn_DMesgHandler> m_subscript_handler{};
+  std::shared_ptr<Dmn_DMesgHandler> m_sys_handler{};
+  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timer_proc{};
 
   dmn::DMesgPb m_sys{};
-  long long m_masterPendingCounter{};
-  long long m_masterSyncPendingCounter{};
-  struct timeval m_lastRemoteMasterTimestamp {};
-  std::map<std::string, dmn::DMesgPb> m_topicLastDMesgPb{};
+  long long m_master_pending_counter{};
+  long long m_master_sync_pending_counter{};
+  struct timeval m_last_remote_master_timestamp {};
+  std::map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 
-  bool m_isMaster{};
-  long long m_numberOfNeighbor{};
+  bool m_is_master{};
+  long long m_number_of_neighbor{};
 }; // class Dmn_DMesgNet
 
 } // namespace dmn

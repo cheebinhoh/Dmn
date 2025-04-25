@@ -81,7 +81,7 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
   private:
     std::optional<T> read() override;
 
-    Dmn_TeePipe *m_teePipe{};
+    Dmn_TeePipe *m_teepipe{};
   }; // class Dmn_TeePipeSource
 
 public:
@@ -137,22 +137,22 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::unique_ptr<Dmn_Proc> m_conveyor{};
-  Dmn_TeePipe::PostProcessingTask m_postProcessingTaskFn{};
+  Dmn_TeePipe::PostProcessingTask m_post_processing_task_fn{};
 
   /**
    * data members for internal logic.
    */
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_cond{};
-  pthread_cond_t m_emptyCond{};
-  size_t m_fillBufferCount{};
+  pthread_cond_t m_empty_cond{};
+  size_t m_fill_buffer_count{};
   std::vector<std::shared_ptr<Dmn_TeePipeSource>> m_buffers{};
 }; // class Dmn_TeePipe
 
 template <typename T>
 Dmn_TeePipe<T>::Dmn_TeePipeSource::Dmn_TeePipeSource(size_t capacity,
                                                      Dmn_TeePipe *tp)
-    : Dmn_LimitBuffer<T>{capacity}, m_teePipe(tp) {}
+    : Dmn_LimitBuffer<T>{capacity}, m_teepipe(tp) {}
 
 template <typename T> void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item) {
   write(item, false);
@@ -166,31 +166,31 @@ template <typename T> void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &&item) {
 
 template <typename T>
 void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
-  assert(m_teePipe);
+  assert(m_teepipe);
 
   Dmn_LimitBuffer<T>::push(item, move);
 
-  int err = pthread_mutex_lock(&(m_teePipe->m_mutex));
+  int err = pthread_mutex_lock(&(m_teepipe->m_mutex));
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&(m_teePipe->m_mutex));
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&(m_teepipe->m_mutex));
 
   pthread_testcancel();
 
-  m_teePipe->m_fillBufferCount++;
+  m_teepipe->m_fill_buffer_count++;
 
-  err = pthread_cond_signal(&(m_teePipe->m_cond));
+  err = pthread_cond_signal(&(m_teepipe->m_cond));
   if (err) {
-    pthread_mutex_unlock(&(m_teePipe->m_mutex));
+    pthread_mutex_unlock(&(m_teepipe->m_mutex));
 
     throw std::runtime_error(strerror(err));
   }
 
   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
-  err = pthread_mutex_unlock(&(m_teePipe->m_mutex));
+  err = pthread_mutex_unlock(&(m_teepipe->m_mutex));
   if (err) {
     throw std::runtime_error(strerror(err));
   }
@@ -206,7 +206,7 @@ Dmn_TeePipe<T>::Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn,
                             Dmn_TeePipe::PostProcessingTask pfn)
     : Dmn_Pipe<T>{name, fn},
       m_conveyor{std::make_unique<Dmn_Proc>(std::string(name) + "-conveyor")},
-      m_postProcessingTaskFn{pfn} {
+      m_post_processing_task_fn{pfn} {
   int err{};
 
   err = pthread_mutex_init(&m_mutex, NULL);
@@ -219,7 +219,7 @@ Dmn_TeePipe<T>::Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn,
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_emptyCond, NULL);
+  err = pthread_cond_init(&m_empty_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
@@ -236,7 +236,7 @@ template <typename T> Dmn_TeePipe<T>::~Dmn_TeePipe() noexcept try {
   m_conveyor = {};
 
   pthread_cond_destroy(&m_cond);
-  pthread_cond_destroy(&m_emptyCond);
+  pthread_cond_destroy(&m_empty_cond);
   pthread_mutex_destroy(&m_mutex);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
@@ -281,7 +281,7 @@ template <typename T>
 void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
     std::shared_ptr<typename Dmn_TeePipe<T>::Dmn_TeePipeSource> &tps) {
   assert(nullptr != tps);
-  assert(this == tps->m_teePipe);
+  assert(this == tps->m_teepipe);
 
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
@@ -300,7 +300,7 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
 
   if (iter != m_buffers.end()) {
     while (tps->size() > 0) {
-      err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+      err = pthread_cond_wait(&m_empty_cond, &m_mutex);
       if (err) {
         throw std::runtime_error(strerror(err));
       }
@@ -357,8 +357,8 @@ template <typename T> long long Dmn_TeePipe<T>::wait(bool noOpenSource) {
   }
 
   // only returns if no data in buffer from Dmn_TeePipeSource to conveyor
-  while (m_fillBufferCount > 0) {
-    err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+  while (m_fill_buffer_count > 0) {
+    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }
@@ -394,7 +394,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
 
       pthread_testcancel();
 
-      while (m_buffers.empty() || m_fillBufferCount < m_buffers.size()) {
+      while (m_buffers.empty() || m_fill_buffer_count < m_buffers.size()) {
         err = pthread_cond_wait(&m_cond, &m_mutex);
         if (err) {
           throw std::runtime_error(strerror(err));
@@ -406,7 +406,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
       std::vector<T> postProcessingBuffers{};
 
       for (auto tps : m_buffers) {
-        m_fillBufferCount--;
+        m_fill_buffer_count--;
 
         auto data = tps->read();
         assert(data);
@@ -414,8 +414,8 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
         postProcessingBuffers.push_back(std::move_if_noexcept(*data));
       }
 
-      if (m_postProcessingTaskFn != nullptr) {
-        m_postProcessingTaskFn(postProcessingBuffers);
+      if (m_post_processing_task_fn != nullptr) {
+        m_post_processing_task_fn(postProcessingBuffers);
       }
 
       for (auto &data : postProcessingBuffers) {
@@ -424,7 +424,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
 
       postProcessingBuffers.clear();
 
-      err = pthread_cond_signal(&m_emptyCond);
+      err = pthread_cond_signal(&m_empty_cond);
       if (err) {
         pthread_mutex_unlock(&m_mutex);
 

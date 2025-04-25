@@ -30,18 +30,18 @@ void Dmn_Kafka::producerCallback(rd_kafka_t *kafka_handle,
                                  void *opaque) {
   Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
 
-  obj->m_kafkaErr = rkmessage->err;
-  obj->m_writeAtomicFlag.clear();
-  obj->m_writeAtomicFlag.notify_all();
+  obj->m_kafka_err = rkmessage->err;
+  obj->m_write_atomic_flag.clear();
+  obj->m_write_atomic_flag.notify_all();
 }
 
 void Dmn_Kafka::errorCallback(rd_kafka_t *kafka_handle, int err,
                               const char *reason, void *opaque) {
   Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
 
-  obj->m_kafkaErr = static_cast<rd_kafka_resp_err_t>(err);
-  obj->m_writeAtomicFlag.clear();
-  obj->m_writeAtomicFlag.notify_all();
+  obj->m_kafka_err = static_cast<rd_kafka_resp_err_t>(err);
+  obj->m_write_atomic_flag.clear();
+  obj->m_write_atomic_flag.notify_all();
 }
 
 Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
@@ -56,7 +56,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     } else if (Dmn_Kafka::Key == c.first) {
       m_topic = c.second;
     } else if (Dmn_Kafka::PollTimeoutMs == c.first) {
-      m_pollTimeoutMs = std::strtoll(c.second.c_str(), nullptr, 0);
+      m_poll_timeout_ms = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
       auto res =
           dmn::set_config(kafka_config, c.first.c_str(), c.second.c_str());
@@ -77,7 +77,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
   rd_kafka_conf_set_opaque(kafka_config, (void *)this);
   rd_kafka_conf_set_error_cb(kafka_config, Dmn_Kafka::errorCallback);
 
-  if (Role::Producer == m_role) {
+  if (Role::kProducer == m_role) {
     rd_kafka_conf_set_dr_msg_cb(kafka_config, Dmn_Kafka::producerCallback);
 
     m_kafka =
@@ -92,7 +92,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
     kafka_config = NULL;
   } else {
-    assert(Role::Consumer == m_role);
+    assert(Role::kConsumer == m_role);
 
     m_kafka =
         rd_kafka_new(RD_KAFKA_CONSUMER, kafka_config, err_str, sizeof(err_str));
@@ -133,7 +133,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
 Dmn_Kafka::~Dmn_Kafka() noexcept try {
   assert(m_kafka);
 
-  if (Role::Consumer == m_role) {
+  if (Role::kConsumer == m_role) {
     rd_kafka_consumer_close(m_kafka);
   } else {
     rd_kafka_poll(m_kafka, 100);
@@ -149,7 +149,7 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
 std::optional<std::string> Dmn_Kafka::read() {
   rd_kafka_message_t *consumer_message{};
 
-  consumer_message = rd_kafka_consumer_poll(m_kafka, m_pollTimeoutMs);
+  consumer_message = rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms);
   Dmn_Proc::yield();
 
   if (!consumer_message) {
@@ -167,7 +167,7 @@ std::optional<std::string> Dmn_Kafka::read() {
     } else {
       std::cerr << "Consumer error: "
                 << rd_kafka_message_errstr(consumer_message) << "\n";
-      m_kafkaErr = consumer_message->err;
+      m_kafka_err = consumer_message->err;
     }
   } else {
     ret = std::string((char *)consumer_message->payload,
@@ -184,18 +184,18 @@ void Dmn_Kafka::write(std::string &item) { write(item, false); }
 void Dmn_Kafka::write(std::string &&item) { write(item, true); }
 
 void Dmn_Kafka::write(std::string &item, bool move) {
-  assert(Role::Producer == m_role);
+  assert(Role::kProducer == m_role);
 
   // this make sure only one thread is accessing the Dmn_Kafka write,
   // it is used to wait for message to be delivered to kafka broker and
   // the producerCallback() to be called, so we can return from this
   // method and assert that the message is delivered successfully or
   // fail affirmatively.
-  while (m_writeAtomicFlag.test_and_set(std::memory_order_acquire)) {
-    m_writeAtomicFlag.wait(true, std::memory_order_relaxed);
+  while (m_write_atomic_flag.test_and_set(std::memory_order_acquire)) {
+    m_write_atomic_flag.wait(true, std::memory_order_relaxed);
   }
 
-  m_kafkaErr = static_cast<rd_kafka_resp_err_t>(0);
+  m_kafka_err = static_cast<rd_kafka_resp_err_t>(0);
 
   const char *topic = m_topic.c_str();
   const char *key = m_key.c_str();
@@ -213,7 +213,7 @@ void Dmn_Kafka::write(std::string &item, bool move) {
   Dmn_Proc::yield();
 
   if (err) {
-    m_writeAtomicFlag.clear();
+    m_write_atomic_flag.clear();
 
     throw std::runtime_error("Failed to produce to topic: " + m_topic +
                              ", error: " + std::string(rd_kafka_err2str(err)));
@@ -222,7 +222,7 @@ void Dmn_Kafka::write(std::string &item, bool move) {
   // we loop until message is delivered or pronounced fail, and the poll is
   // needed to poll generic error like network not reachable beyond message
   // specific error.
-  while (m_writeAtomicFlag.test()) {
+  while (m_write_atomic_flag.test()) {
     rd_kafka_poll(m_kafka, 100);
     rd_kafka_flush(m_kafka, 1000); // this is not configurable, and 1000ms shall
                                    // be good enough for a single message to be
@@ -231,10 +231,10 @@ void Dmn_Kafka::write(std::string &item, bool move) {
 
   // the producerCallback is returned, if an error from delivery the message,
   // we want to return it to the caller of the write api.
-  if (m_kafkaErr) {
+  if (m_kafka_err) {
     throw std::runtime_error(
         "Failed to delivered to topic: " + m_topic +
-        ", error: " + std::string(rd_kafka_err2str(m_kafkaErr)));
+        ", error: " + std::string(rd_kafka_err2str(m_kafka_err)));
   }
 }
 

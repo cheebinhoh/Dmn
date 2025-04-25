@@ -20,16 +20,16 @@
 namespace dmn {
 
 Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
-                           std::unique_ptr<Dmn_Io<std::string>> inputHandler,
-                           std::unique_ptr<Dmn_Io<std::string>> outputHandler)
-    : Dmn_DMesg{name}, m_name{name}, m_inputHandler{std::move(inputHandler)},
-      m_outputHandler{std::move(outputHandler)} {
+                           std::unique_ptr<Dmn_Io<std::string>> input_handler,
+                           std::unique_ptr<Dmn_Io<std::string>> output_handler)
+    : Dmn_DMesg{name}, m_name{name}, m_input_handler{std::move(input_handler)},
+      m_output_handler{std::move(output_handler)} {
 
   // Initialize the DMesgNet state
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
-  DMESG_PB_SET_MSG_TOPIC(this->m_sys, DMesgSysIdentifier);
+  DMESG_PB_SET_MSG_TOPIC(this->m_sys, kDMesgSysIdentifier);
   DMESG_PB_SET_MSG_TYPE(this->m_sys, dmn::DMesgTypePb::sys);
 
   DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV(this->m_sys, tv);
@@ -42,14 +42,14 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
   // subscriptHandler to read and write with local DMesg
-  m_subscriptHandler = Dmn_DMesg::openHandler(
+  m_subscript_handler = Dmn_DMesg::openHandler(
       m_name,
       true, // include DMesgSys!
       [this](const dmn::DMesgPb &dmesgPb) {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
       [this](dmn::DMesgPb dmesgPbWrite) mutable {
-        if (m_outputHandler) {
+        if (m_output_handler) {
           DMN_ASYNC_CALL_WITH_CAPTURE(
               {
                 std::string serialized_string{};
@@ -65,24 +65,24 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite,
                                                               this->m_name);
                 dmesgPbWrite.SerializeToString(&serialized_string);
-                m_outputHandler->write(serialized_string);
+                m_output_handler->write(serialized_string);
 
                 if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
-                  m_topicLastDMesgPb[dmesgPbWrite.topic()] = dmesgPbWrite;
+                  m_topic_last_dmesgpb[dmesgPbWrite.topic()] = dmesgPbWrite;
                 }
               },
               this, dmesgPbWrite);
         }
       });
 
-  if (m_inputHandler) {
-    m_inputProc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
+  if (m_input_handler) {
+    m_input_proc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
       bool stop{};
 
-      while ((!stop) && this->m_inputHandler) {
+      while ((!stop) && this->m_input_handler) {
         dmn::DMesgPb dmesgPbRead{};
 
-        auto data = this->m_inputHandler->read();
+        auto data = this->m_input_handler->read();
         Dmn_Proc::yield();
 
         if (data) {
@@ -92,7 +92,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
           }
 
           // this is important to prevent that the
-          // m_subscriptHandler of this DMesgNet from
+          // m_subscript_handler of this DMesgNet from
           // reading this message again and send out.
           //
           // the Dmn_DMesgHandler->write will add the name
@@ -107,10 +107,10 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
             DMN_ASYNC_CALL_WITH_CAPTURE(
                 {
                   try {
-                    this->m_subscriptHandler->write(dmesgPbRead);
+                    this->m_subscript_handler->write(dmesgPbRead);
 
                     if (dmesgPbRead.type() != dmn::DMesgTypePb::sys) {
-                      m_topicLastDMesgPb[dmesgPbRead.topic()] = dmesgPbRead;
+                      m_topic_last_dmesgpb[dmesgPbRead.topic()] = dmesgPbRead;
                     }
                   } catch (...) {
                     // The data from network is out of sync with data
@@ -138,25 +138,25 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       }
     });
 
-    m_inputProc->exec();
+    m_input_proc->exec();
 
-    m_sysHandler = Dmn_DMesg::openHandler(
+    m_sys_handler = Dmn_DMesg::openHandler(
         m_name + "_sys", [this](const dmn::DMesgPb &dmesgPb) { return false; },
         nullptr);
   }
 
-  if (m_inputHandler && m_outputHandler) {
+  if (m_input_handler && m_output_handler) {
     // into MasterPending
-    m_timerProc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
+    m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS), [this]() {
           this->write([this]() mutable {
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
-              this->m_masterPendingCounter++;
+              this->m_master_pending_counter++;
 
-              if (this->m_masterPendingCounter >=
+              if (this->m_master_pending_counter >=
                   DMN_DMESGNET_MASTERPENDING_MAX_COUNTER) {
-                this->m_masterPendingCounter = 0;
+                this->m_master_pending_counter = 0;
 
                 auto *self =
                     this->m_sys.mutable_body()->mutable_sys()->mutable_self();
@@ -172,12 +172,12 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                        dmn::DMesgStatePb::Ready) {
               if (this->m_sys.body().sys().self().masteridentifier() !=
                   this->m_sys.body().sys().self().identifier()) {
-                this->m_masterSyncPendingCounter++;
+                this->m_master_sync_pending_counter++;
 
-                if (this->m_masterSyncPendingCounter >=
+                if (this->m_master_sync_pending_counter >=
                     DMN_DMESGNET_MASTERSYNC_MAX_COUNTER) {
-                  this->m_masterSyncPendingCounter = 0;
-                  this->m_lastRemoteMasterTimestamp = {};
+                  this->m_master_sync_pending_counter = 0;
+                  this->m_last_remote_master_timestamp = {};
 
                   auto *self =
                       this->m_sys.mutable_body()->mutable_sys()->mutable_self();
@@ -189,7 +189,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
               }
             }
 
-            this->m_sysHandler->write(this->m_sys);
+            this->m_sys_handler->write(this->m_sys);
 
             bool master = this->m_sys.body().sys().self().masteridentifier() ==
                           this->m_sys.body().sys().self().identifier();
@@ -197,11 +197,11 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
             // if self is a master, and it is becoming master or # of neighbor
             // increase, let resend prior last message per topic.
             // FIXME: maybe it is good that master resend them prioritically?
-            if (m_outputHandler && master &&
-                ((master != m_isMaster) ||
-                 (m_numberOfNeighbor !=
+            if (m_output_handler && master &&
+                ((master != m_is_master) ||
+                 (m_number_of_neighbor !=
                   this->m_sys.body().sys().nodelist().size()))) {
-              for (auto &topicDmesgPb : m_topicLastDMesgPb) {
+              for (auto &topicDmesgPb : m_topic_last_dmesgpb) {
                 dmn::DMesgPb pb = topicDmesgPb.second;
 
                 DMESG_PB_SET_MSG_PLAYBACK(pb, true);
@@ -209,12 +209,12 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
                 std::string serialized_string{};
                 pb.SerializeToString(&serialized_string);
-                m_outputHandler->write(serialized_string);
+                m_output_handler->write(serialized_string);
               }
             }
 
-            m_numberOfNeighbor = this->m_sys.body().sys().nodelist().size();
-            m_isMaster = master;
+            m_number_of_neighbor = this->m_sys.body().sys().nodelist().size();
+            m_is_master = master;
           });
         });
   } else {
@@ -223,26 +223,26 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
   }
 
-  if (m_sysHandler) {
-    m_sysHandler->write(this->m_sys);
+  if (m_sys_handler) {
+    m_sys_handler->write(this->m_sys);
   }
 }
 
 Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
-  // it is important that we free up m_inputHandler as if it is a
+  // it is important that we free up m_input_handler as if it is a
   // kafka handler, it will be continuing to be feed of incoming
   // message and including one that is generated by this dmesgnet,
   // and that will prolong it closing.
-  m_inputHandler.reset();
-  m_inputProc.reset();
-  m_timerProc.reset();
+  m_input_handler.reset();
+  m_input_proc.reset();
+  m_timer_proc.reset();
 
-  if (m_outputHandler) {
+  if (m_output_handler) {
     // it is about to destroy the Dmn_DMesgNet and free everything
     // it will send last heartbeat and reliquinsh itself as master (if
     // itself is master).
     //
-    // we avoid use of m_sysHandler as we are to destroy it, so we
+    // we avoid use of m_sys_handler as we are to destroy it, so we
     // do not want to hold the object life up and have to wait for
     // asynchrononous action to send last heartbeat messge.
     struct timeval tv;
@@ -260,15 +260,15 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
     std::string serialized_string{};
     this->m_sys.SerializeToString(&serialized_string);
 
-    m_outputHandler->write(serialized_string);
+    m_output_handler->write(serialized_string);
   }
 
-  if (m_sysHandler) {
-    Dmn_DMesg::closeHandler(m_sysHandler);
+  if (m_sys_handler) {
+    Dmn_DMesg::closeHandler(m_sys_handler);
   }
 
-  if (m_subscriptHandler) {
-    Dmn_DMesg::closeHandler(m_subscriptHandler);
+  if (m_subscript_handler) {
+    Dmn_DMesg::closeHandler(m_subscript_handler);
   }
 
   this->waitForEmpty();
@@ -294,18 +294,18 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
 
     DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
 
-    this->m_lastRemoteMasterTimestamp = tv;
-    this->m_masterPendingCounter = 0;
-    this->m_masterSyncPendingCounter = 0;
-    this->m_sysHandler->write(this->m_sys);
+    this->m_last_remote_master_timestamp = tv;
+    this->m_master_pending_counter = 0;
+    this->m_master_sync_pending_counter = 0;
+    this->m_sys_handler->write(this->m_sys);
   } else if (self->state() == dmn::DMesgStatePb::Ready) {
     assert("" != self->masteridentifier());
-    assert(0 == this->m_masterPendingCounter);
+    assert(0 == this->m_master_pending_counter);
 
     if (other.identifier() == self->masteridentifier()) {
       if (other.state() == dmn::DMesgStatePb::Ready) {
-        this->m_masterSyncPendingCounter = 0;
-        this->m_lastRemoteMasterTimestamp = tv;
+        this->m_master_sync_pending_counter = 0;
+        this->m_last_remote_master_timestamp = tv;
       } else {
         /* other node relinquish its self-proclaim master state
          * so local node also reset the master state
@@ -317,10 +317,10 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
 
         DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
 
-        this->m_lastRemoteMasterTimestamp = {};
-        this->m_masterPendingCounter = 0;
-        this->m_masterSyncPendingCounter = 0;
-        this->m_sysHandler->write(this->m_sys);
+        this->m_last_remote_master_timestamp = {};
+        this->m_master_pending_counter = 0;
+        this->m_master_sync_pending_counter = 0;
+        this->m_sys_handler->write(this->m_sys);
       }
     } else if (other.state() == dmn::DMesgStatePb::Ready &&
                other.masteridentifier() != self->masteridentifier()) {
@@ -339,10 +339,10 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
         DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, other.masteridentifier());
         DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
 
-        this->m_lastRemoteMasterTimestamp = tv;
-        this->m_masterPendingCounter = 0;
-        this->m_masterSyncPendingCounter = 0;
-        this->m_sysHandler->write(this->m_sys);
+        this->m_last_remote_master_timestamp = tv;
+        this->m_master_pending_counter = 0;
+        this->m_master_sync_pending_counter = 0;
+        this->m_sys_handler->write(this->m_sys);
       }
     }
   } // if (self->state() == dmn::DMesgStatePb::Ready)

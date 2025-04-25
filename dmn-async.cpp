@@ -35,19 +35,19 @@ Dmn_Async::~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
   return;
 }
 
-void Dmn_Async::execAfterInternal(long long timeInFuture,
+void Dmn_Async::execAfterInternal(long long time_in_future,
                                   std::function<void()> fn) {
-  this->write([this, timeInFuture, fn]() {
+  this->write([this, time_in_future, fn]() {
     long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
                         std::chrono::system_clock::now().time_since_epoch())
                         .count();
 
-    if (now >= timeInFuture) {
+    if (now >= time_in_future) {
       if (fn) {
         fn();
       }
     } else {
-      this->execAfterInternal(timeInFuture, fn);
+      this->execAfterInternal(time_in_future, fn);
     }
   });
 }

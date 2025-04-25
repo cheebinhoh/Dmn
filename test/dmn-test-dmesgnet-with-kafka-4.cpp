@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::Consumer,
+  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
                                 readConfigs_other};
 
   // dmesgnet1

@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   writeConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   writeConfigs[dmn::Dmn_Kafka::Key] = "tick";
 
-  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::Producer, writeConfigs};
+  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::kProducer, writeConfigs};
 
   // reader
   dmn::Dmn_Kafka::ConfigType readConfigs{};
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   readConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   readConfigs["auto.offset.reset"] = "earliest";
 
-  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
 
   std::vector<std::string> data{"heartbeat : test 1", "heartbeat : test 2"};
   for (auto &d : data) {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(data.size() == index);
 
   readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
-  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
 
   std::cout << "read without data\n";
   struct timeval tv;

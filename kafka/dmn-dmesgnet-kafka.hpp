@@ -57,7 +57,7 @@ public:
    */
   template <class... U>
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> openHandler(U &&...arg) {
-    return m_dmesgNet->openHandler(std::forward<U>(arg)...);
+    return m_dmesgnet->openHandler(std::forward<U>(arg)...);
   }
 
   /**
@@ -67,7 +67,7 @@ public:
    * @param handlerToClose The handler to be closed
    */
   template <class... U> void closeHandler(U &&...arg) {
-    m_dmesgNet->closeHandler(std::forward<U>(arg)...);
+    m_dmesgnet->closeHandler(std::forward<U>(arg)...);
   }
 
 private:
@@ -79,7 +79,7 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn_DMesgNet> m_dmesgNet{};
+  std::unique_ptr<Dmn_DMesgNet> m_dmesgnet{};
 }; // class Dmn_DMesgNet_Kafka
 
 } // namespace dmn
