@@ -95,7 +95,7 @@ private:
   using Dmn_Buffer<T>::push;
 
   pthread_mutex_t m_mutex{};
-  pthread_cond_t m_emptyCond{};
+  pthread_cond_t m_empty_cond{};
   long long m_count{};
 }; // class Dmn_Pipe
 
@@ -107,7 +107,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn)
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_emptyCond, NULL);
+  err = pthread_cond_init(&m_empty_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
@@ -125,8 +125,8 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
   Dmn_Proc::stopExec();
 
-  pthread_cond_signal(&m_emptyCond);
-  pthread_cond_destroy(&m_emptyCond);
+  pthread_cond_signal(&m_empty_cond);
+  pthread_cond_destroy(&m_empty_cond);
   pthread_mutex_destroy(&m_mutex);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
@@ -161,7 +161,7 @@ template <typename T> void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn) {
 
   ++m_count;
 
-  err = pthread_cond_signal(&m_emptyCond);
+  err = pthread_cond_signal(&m_empty_cond);
   if (err) {
     pthread_mutex_unlock(&m_mutex);
 
@@ -201,7 +201,7 @@ template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
   pthread_testcancel();
 
   while (m_count < inboundCount) {
-    err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }

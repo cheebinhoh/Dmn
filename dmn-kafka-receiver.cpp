@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   readConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   readConfigs["auto.offset.reset"] = "earliest";
 
-  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
 
   // Install a signal handler for clean shutdown.
   signal(SIGINT, stop);

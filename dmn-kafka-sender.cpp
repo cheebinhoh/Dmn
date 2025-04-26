@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   writeConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   writeConfigs[dmn::Dmn_Kafka::Key] = "tick";
 
-  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::Producer, writeConfigs};
+  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::kProducer, writeConfigs};
 
   for (int i = 0; i < 10; i++) {
     std::stringstream os{};

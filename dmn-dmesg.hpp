@@ -46,7 +46,7 @@
 
 namespace dmn {
 
-extern const char *DMesgSysIdentifier;
+extern const char *kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
@@ -99,10 +99,10 @@ public:
        *          counter of the topic the Dmn_DMesgHandlerSub has received.
        *        - store a copy of the message as last system message if it is.
        *        - if it is system message and the Dmn_DMesgHandler (owner of
-       *          the Dmn_DMesgHandlerSub) is opened with m_includeDMesgSys
+       *          the Dmn_DMesgHandlerSub) is opened with m_include_dmesgsys
        *          as true, the Dmn_DMesgPB message will be either pushed into
        *          the buffer waiting to be read through Dmn_DMesgHandler' read
-       *          or handling through m_asyncProcessFn callback.
+       *          or handling through m_async_process_fn callback.
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
@@ -251,9 +251,9 @@ public:
      * data member for constructor to instantiate the object.
      */
     std::string m_name{};
-    bool m_includeDMesgSys{};
-    FilterTask m_filterFn{};
-    AsyncProcessTask m_asyncProcessFn{};
+    bool m_include_dmesgsys{};
+    FilterTask m_filter_fn{};
+    AsyncProcessTask m_async_process_fn{};
 
     /**
      * data members for internal logic
@@ -261,16 +261,16 @@ public:
     Dmn_DMesg *m_owner{};
     Dmn_DMesgHandlerSub m_sub{};
 
-    std::vector<std::string> m_subscribedTopics{};
+    std::vector<std::string> m_subscribed_topics{};
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
-    dmn::DMesgPb m_lastDMesgSysPb{};
-    std::map<std::string, long long> m_topicRunningCounter{};
+    dmn::DMesgPb m_last_dmesgsyspb{};
+    std::map<std::string, long long> m_topic_running_counter{};
 
-    ConflictCallbackTask m_conflictCallbackFn{};
-    std::atomic<bool> m_inConflict{};
+    ConflictCallbackTask m_conflict_callback_fn{};
+    std::atomic<bool> m_in_conflict{};
 
-    bool m_afterInitialPlayback{};
+    bool m_after_initial_playback{};
   }; // class Dmn_DMesgHandler
 
   /**
@@ -350,7 +350,7 @@ protected:
   /**
    * @brief The method publishes dmesgPb to registered subscribers. If the to be
    *        published dmesgPb' topic has smaller runningcounter than what is in
-   *        the m_topicRunningCounter, it means that the writer is out of sync
+   *        the m_topic_running_counter, it means that the writer is out of sync
    *        and in race condition that its published dmn::DMesgPb' topic has a
    *        runningcounter that is early in value than the same topic's running
    *        counter published by the DMesg. In this case, we put the writer
@@ -398,8 +398,8 @@ private:
    * data members for internal logic.
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
-  std::map<std::string, long long> m_topicRunningCounter{};
-  std::map<std::string, dmn::DMesgPb> m_topicLastDMesgPb{};
+  std::map<std::string, long long> m_topic_running_counter{};
+  std::map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 
 template <class... U>
@@ -441,13 +441,13 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
    * thread context, but the filter value is maintained per Dmn_DMesgHandler,
    * and this allow the DMesg to be mutex free while thread safe.
    */
-  handlerRet->m_subscribedTopics = topics;
+  handlerRet->m_subscribed_topics = topics;
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
       {
         this->m_handlers.push_back(handler);
         this->playbackLastTopicDMesgPbInternal();
-        handler->m_afterInitialPlayback = true;
+        handler->m_after_initial_playback = true;
       },
       this, handler);
 

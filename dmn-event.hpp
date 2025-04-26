@@ -51,13 +51,13 @@ private:
    */
   Dmn_Proc m_signalWaitProc{"DmnEventManager_SignalWait"};
   sigset_t m_mask{};
-  std::map<int, SignalHandler> m_signalHandlers{};
-  std::map<int, std::vector<SignalHandler>> m_extSignalHandlers{};
+  std::map<int, SignalHandler> m_signal_handlers{};
+  std::map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
   /**
    * static variables for the global singleton instance
    */
-  static std::once_flag s_initOnce;
+  static std::once_flag s_init_once;
   static std::shared_ptr<Dmn_Event_Manager> s_instance;
   static sigset_t s_mask;
 }; // class Dmn_Event_Manager
@@ -67,7 +67,7 @@ std::shared_ptr<Dmn_Event_Manager>
 Dmn_Event_Manager::createInstanceInternal(U &&...u) {
   if (!Dmn_Event_Manager::s_instance) {
     std::call_once(
-        s_initOnce,
+        s_init_once,
         [](U &&...arg) {
           // We need to mask off signals before any thread is created, so that
           // all created threads will inherit the same signal mask, and block

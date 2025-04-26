@@ -14,7 +14,7 @@
 
 namespace dmn {
 
-std::once_flag Dmn_Event_Manager::s_initOnce{};
+std::once_flag Dmn_Event_Manager::s_init_once{};
 std::shared_ptr<Dmn_Event_Manager> Dmn_Event_Manager::s_instance{};
 sigset_t Dmn_Event_Manager::s_mask{};
 
@@ -22,11 +22,11 @@ Dmn_Event_Manager::Dmn_Event_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Event_Manager"},
       m_mask{Dmn_Event_Manager::s_mask} {
   // default and to be overridden if needed
-  m_signalHandlers[SIGTERM] = [this](int signo) {
+  m_signal_handlers[SIGTERM] = [this](int signo) {
     this->exitMainLoopInternal();
   };
 
-  m_signalHandlers[SIGINT] = [this](int signo) {
+  m_signal_handlers[SIGINT] = [this](int signo) {
     this->exitMainLoopInternal();
   };
 
@@ -86,15 +86,15 @@ void Dmn_Event_Manager::enterMainLoop() {
  * @param signo signal number that is raised
  */
 void Dmn_Event_Manager::execSignalHandlerInternal(int signo) {
-  auto extHandlers = m_extSignalHandlers.find(signo);
-  if (m_extSignalHandlers.end() != extHandlers) {
+  auto extHandlers = m_ext_signal_handlers.find(signo);
+  if (m_ext_signal_handlers.end() != extHandlers) {
     for (auto &handler : extHandlers->second) {
       handler(signo);
     }
   }
 
-  auto handler = m_signalHandlers.find(signo);
-  if (m_signalHandlers.end() != handler) {
+  auto handler = m_signal_handlers.find(signo);
+  if (m_signal_handlers.end() != handler) {
     handler->second(signo);
   }
 }
@@ -125,7 +125,7 @@ void Dmn_Event_Manager::registerSignalHandler(int signo,
  */
 void Dmn_Event_Manager::registerSignalHandlerInternal(int signo,
                                                       SignalHandler handler) {
-  auto &extHandlers = m_extSignalHandlers[signo];
+  auto &extHandlers = m_ext_signal_handlers[signo];
   extHandlers.push_back(handler);
 }
 

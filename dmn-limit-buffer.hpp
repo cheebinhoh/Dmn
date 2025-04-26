@@ -96,19 +96,20 @@ private:
   /**
    * data members for constructor to instantiate the object.
    */
-  size_t m_maxCapacity{1};
+  size_t m_max_capacity{1};
 
   /**
    * data members for internal logic.
    */
   size_t m_size{0};
   pthread_mutex_t m_mutex{};
-  pthread_cond_t m_popCond{};
-  pthread_cond_t m_pushCond{};
+  pthread_cond_t m_pop_cond{};
+  pthread_cond_t m_push_cond{};
 }; // class Dmn_LimitBuffer
 
 template <typename T>
-Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity) : m_maxCapacity(capacity) {
+Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
+    : m_max_capacity(capacity) {
   int err{};
 
   err = pthread_mutex_init(&m_mutex, NULL);
@@ -116,23 +117,23 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity) : m_maxCapacity(capacity) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_pushCond, NULL);
+  err = pthread_cond_init(&m_push_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_popCond, NULL);
+  err = pthread_cond_init(&m_pop_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 }
 
 template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
-  pthread_cond_signal(&m_popCond);
-  pthread_cond_signal(&m_pushCond);
+  pthread_cond_signal(&m_pop_cond);
+  pthread_cond_signal(&m_push_cond);
 
-  pthread_cond_destroy(&m_pushCond);
-  pthread_cond_destroy(&m_popCond);
+  pthread_cond_destroy(&m_push_cond);
+  pthread_cond_destroy(&m_pop_cond);
   pthread_mutex_destroy(&m_mutex);
 }
 
@@ -160,8 +161,8 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
 
   pthread_testcancel();
 
-  while (m_size >= m_maxCapacity) {
-    err = pthread_cond_wait(&m_pushCond, &m_mutex);
+  while (m_size >= m_max_capacity) {
+    err = pthread_cond_wait(&m_push_cond, &m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }
@@ -172,7 +173,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
   Dmn_Buffer<T>::push(item, move);
   ++m_size;
 
-  err = pthread_cond_signal(&m_popCond);
+  err = pthread_cond_signal(&m_pop_cond);
   if (err) {
     pthread_mutex_unlock(&m_mutex);
 
@@ -233,7 +234,7 @@ std::optional<T> Dmn_LimitBuffer<T>::popOptional(bool wait) {
   val = Dmn_Buffer<T>::popOptional(wait);
   m_size--;
 
-  err = pthread_cond_signal(&m_pushCond);
+  err = pthread_cond_signal(&m_push_cond);
   if (err) {
     pthread_mutex_unlock(&m_mutex);
 

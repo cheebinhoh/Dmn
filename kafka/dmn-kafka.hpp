@@ -37,8 +37,8 @@ public:
   using ConfigType = std::map<std::string, std::string>;
 
   enum class Role {
-    Consumer,
-    Producer,
+    kConsumer,
+    kProducer,
   };
 
   /**
@@ -126,12 +126,12 @@ private:
    */
   std::string m_key{};
   std::string m_topic{};
-  long long m_pollTimeoutMs{};
+  long long m_poll_timeout_ms{};
 
   rd_kafka_t *m_kafka{};
-  rd_kafka_resp_err_t m_kafkaErr{};
+  rd_kafka_resp_err_t m_kafka_err{};
 
-  std::atomic_flag m_writeAtomicFlag{};
+  std::atomic_flag m_write_atomic_flag{};
 }; // class Dmn_Kafka
 
 } // namespace dmn

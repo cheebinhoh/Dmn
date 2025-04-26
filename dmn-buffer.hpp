@@ -98,9 +98,9 @@ private:
   std::deque<T> m_queue{};
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_cond{};
-  pthread_cond_t m_emptyCond{};
-  long long m_pushCount{};
-  long long m_popCount{};
+  pthread_cond_t m_empty_cond{};
+  long long m_push_count{};
+  long long m_pop_count{};
 }; // class Dmn_Buffer
 
 template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
@@ -116,7 +116,7 @@ template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_emptyCond, NULL);
+  err = pthread_cond_init(&m_empty_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
@@ -125,9 +125,9 @@ template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
 template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   // RAII! we wake up any thread waiting
   pthread_cond_signal(&m_cond);
-  pthread_cond_signal(&m_emptyCond);
+  pthread_cond_signal(&m_empty_cond);
 
-  pthread_cond_destroy(&m_emptyCond);
+  pthread_cond_destroy(&m_empty_cond);
   pthread_cond_destroy(&m_cond);
   pthread_mutex_destroy(&m_mutex);
 } catch (...) {
@@ -165,7 +165,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
     m_queue.push_back(item);
   }
 
-  ++m_pushCount;
+  ++m_push_count;
 
   err = pthread_cond_signal(&m_cond);
   if (err) {
@@ -184,7 +184,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
 
 template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
   int err{};
-  long long inboundCount{};
+  long long inbound_count{};
 
   err = pthread_mutex_lock(&m_mutex);
   if (err) {
@@ -196,7 +196,7 @@ template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
   pthread_testcancel();
 
   while (!m_queue.empty()) {
-    err = pthread_cond_wait(&m_emptyCond, &m_mutex);
+    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
     }
@@ -204,8 +204,8 @@ template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
     pthread_testcancel();
   }
 
-  assert(m_popCount == m_pushCount);
-  inboundCount = m_popCount;
+  assert(m_pop_count == m_push_count);
+  inbound_count = m_pop_count;
 
   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
 
@@ -214,7 +214,7 @@ template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
     throw std::runtime_error(strerror(err));
   }
 
-  return inboundCount;
+  return inbound_count;
 }
 
 template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
@@ -253,10 +253,10 @@ template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
   val = std::move(m_queue.front());
   m_queue.pop_front();
 
-  ++m_popCount;
+  ++m_pop_count;
 
   if (m_queue.empty()) {
-    err = pthread_cond_signal(&m_emptyCond);
+    err = pthread_cond_signal(&m_empty_cond);
     if (err) {
       pthread_mutex_unlock(&m_mutex);
 

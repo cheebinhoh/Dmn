@@ -9,14 +9,14 @@
 #include <iostream>
 
 #ifdef NDEBUG
-#define DMN_DEBUG_PRINT(printstmt)                                             \
+#define DMN_DEBUG_PRINT(print_stmt)                                            \
   do {                                                                         \
     ;                                                                          \
   } while (false)
 #else
-#define DMN_DEBUG_PRINT(printstmt)                                             \
+#define DMN_DEBUG_PRINT(print_stmt)                                            \
   do {                                                                         \
-    (printstmt);                                                               \
+    (print_stmt);                                                              \
   } while (false)
 #endif
 

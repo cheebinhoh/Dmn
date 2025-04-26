@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::Producer, writeConfigs};
+  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::kProducer, writeConfigs};
 
   // reader
   dmn::Dmn_Kafka::ConfigType readConfigs{};
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
 
   // consume prior messages from topic.
   while (true) {
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(data.size() == index);
 
   readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
-  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::Consumer, readConfigs};
+  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
 
   std::cout << "read without data\n";
   struct timeval tv;

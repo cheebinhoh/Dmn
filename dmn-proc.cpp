@@ -25,7 +25,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg) {
 }
 
 Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
-  setState(State::New);
+  setState(State::kNew);
 
   if (fn) {
     setTask(fn);
@@ -33,11 +33,11 @@ Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
 }
 
 Dmn_Proc::~Dmn_Proc() noexcept try {
-  if (getState() == State::Running) {
+  if (getState() == State::kRunning) {
     stopExec();
   }
 
-  setState(State::Invalid);
+  setState(State::kInvalid);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -54,25 +54,25 @@ bool Dmn_Proc::exec(Dmn_Proc::Task fn) {
 Dmn_Proc::State Dmn_Proc::getState() const { return m_state; }
 
 Dmn_Proc::State Dmn_Proc::setState(State state) {
-  State oldstate = this->m_state;
+  State old_state = this->m_state;
 
   this->m_state = state;
 
-  return oldstate;
+  return old_state;
 }
 
 void Dmn_Proc::setTask(Dmn_Proc::Task fn) {
-  assert(getState() == State::New || getState() == State::Ready);
+  assert(getState() == State::kNew || getState() == State::kReady);
 
   this->m_fn = fn;
-  setState(State::Ready);
+  setState(State::kReady);
 }
 
 bool Dmn_Proc::wait() {
   int err{};
   void *pRet{};
 
-  if (getState() != State::Running) {
+  if (getState() != State::kRunning) {
     throw std::runtime_error("No task is exec");
   }
 
@@ -81,7 +81,7 @@ bool Dmn_Proc::wait() {
     throw std::runtime_error(strerror(err));
   }
 
-  setState(State::Ready);
+  setState(State::kReady);
 
   return 0 == err;
 }
@@ -94,7 +94,7 @@ void Dmn_Proc::yield() {
 bool Dmn_Proc::stopExec() {
   int err{};
 
-  if (getState() != State::Running) {
+  if (getState() != State::kRunning) {
     throw std::runtime_error("No task is exec");
   }
 
@@ -108,17 +108,17 @@ bool Dmn_Proc::stopExec() {
 
 bool Dmn_Proc::runExec() {
   int err{};
-  State oldstate{};
+  State old_state{};
 
-  if (getState() != State::Ready) {
+  if (getState() != State::kReady) {
     throw std::runtime_error("No task is assigned to the Dmn_Proc (" + m_name +
                              ")");
   }
 
-  oldstate = setState(State::Running);
+  old_state = setState(State::kRunning);
   err = pthread_create(&m_th, NULL, &(Dmn_Proc::runFnInThreadHelper), this);
   if (err) {
-    setState(oldstate);
+    setState(old_state);
     return false;
   }
 
@@ -127,15 +127,15 @@ bool Dmn_Proc::runExec() {
 
 void *Dmn_Proc::runFnInThreadHelper(void *context) {
   Dmn_Proc *proc{};
-  int oldstate{};
+  int old_state{};
   int err{};
 
-  err = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldstate);
+  err = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldstate);
+  err = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_state);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
