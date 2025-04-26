@@ -21,41 +21,41 @@
 
 namespace dmn {
 
-const std::string Dmn_Kafka::Topic = "Dmn_Kafka.Topic";
-const std::string Dmn_Kafka::Key = "Dmn_Kafka.Key";
-const std::string Dmn_Kafka::PollTimeoutMs = "Dmn_Kafka.PollTimeoutMs";
+const std::string Kafka::Topic = "Kafka.Topic";
+const std::string Kafka::Key = "Kafka.Key";
+const std::string Kafka::PollTimeoutMs = "Kafka.PollTimeoutMs";
 
-void Dmn_Kafka::producerCallback(rd_kafka_t *kafka_handle,
-                                 const rd_kafka_message_t *rkmessage,
-                                 void *opaque) {
-  Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
+void Kafka::producerCallback(rd_kafka_t *kafka_handle,
+                             const rd_kafka_message_t *rkmessage,
+                             void *opaque) {
+  Kafka *obj = static_cast<Kafka *>(opaque);
 
   obj->m_kafka_err = rkmessage->err;
   obj->m_write_atomic_flag.clear();
   obj->m_write_atomic_flag.notify_all();
 }
 
-void Dmn_Kafka::errorCallback(rd_kafka_t *kafka_handle, int err,
-                              const char *reason, void *opaque) {
-  Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
+void Kafka::errorCallback(rd_kafka_t *kafka_handle, int err, const char *reason,
+                          void *opaque) {
+  Kafka *obj = static_cast<Kafka *>(opaque);
 
   obj->m_kafka_err = static_cast<rd_kafka_resp_err_t>(err);
   obj->m_write_atomic_flag.clear();
   obj->m_write_atomic_flag.notify_all();
 }
 
-Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
+Kafka::Kafka(Kafka::Role role, Kafka::ConfigType configs)
     : m_role{role}, m_configs{configs} {
   rd_kafka_conf_t *kafka_config{};
 
   kafka_config = rd_kafka_conf_new();
 
   for (auto &c : m_configs) {
-    if (Dmn_Kafka::Topic == c.first) {
+    if (Kafka::Topic == c.first) {
       m_topic = c.second;
-    } else if (Dmn_Kafka::Key == c.first) {
+    } else if (Kafka::Key == c.first) {
       m_topic = c.second;
-    } else if (Dmn_Kafka::PollTimeoutMs == c.first) {
+    } else if (Kafka::PollTimeoutMs == c.first) {
       m_poll_timeout_ms = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
       auto res =
@@ -75,10 +75,10 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
   char err_str[kKafkaErrorStringLength]{};
 
   rd_kafka_conf_set_opaque(kafka_config, (void *)this);
-  rd_kafka_conf_set_error_cb(kafka_config, Dmn_Kafka::errorCallback);
+  rd_kafka_conf_set_error_cb(kafka_config, Kafka::errorCallback);
 
   if (Role::kProducer == m_role) {
-    rd_kafka_conf_set_dr_msg_cb(kafka_config, Dmn_Kafka::producerCallback);
+    rd_kafka_conf_set_dr_msg_cb(kafka_config, Kafka::producerCallback);
 
     m_kafka =
         rd_kafka_new(RD_KAFKA_PRODUCER, kafka_config, err_str, sizeof(err_str));
@@ -130,7 +130,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
   }
 }
 
-Dmn_Kafka::~Dmn_Kafka() noexcept try {
+Kafka::~Kafka() noexcept try {
   assert(m_kafka);
 
   if (Role::kConsumer == m_role) {
@@ -146,11 +146,11 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
   return;
 }
 
-std::optional<std::string> Dmn_Kafka::read() {
+std::optional<std::string> Kafka::read() {
   rd_kafka_message_t *consumer_message{};
 
   consumer_message = rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms);
-  Dmn_Proc::yield();
+  Proc::yield();
 
   if (!consumer_message) {
     return {};
@@ -179,14 +179,14 @@ std::optional<std::string> Dmn_Kafka::read() {
   return ret;
 }
 
-void Dmn_Kafka::write(std::string &item) { write(item, false); }
+void Kafka::write(std::string &item) { write(item, false); }
 
-void Dmn_Kafka::write(std::string &&item) { write(item, true); }
+void Kafka::write(std::string &&item) { write(item, true); }
 
-void Dmn_Kafka::write(std::string &item, bool move) {
+void Kafka::write(std::string &item, bool move) {
   assert(Role::kProducer == m_role);
 
-  // this make sure only one thread is accessing the Dmn_Kafka write,
+  // this make sure only one thread is accessing the Kafka write,
   // it is used to wait for message to be delivered to kafka broker and
   // the producerCallback() to be called, so we can return from this
   // method and assert that the message is delivered successfully or
@@ -210,7 +210,7 @@ void Dmn_Kafka::write(std::string &item, bool move) {
       RD_KAFKA_V_VALUE((void *)value, value_len), RD_KAFKA_V_OPAQUE(NULL),
       RD_KAFKA_V_END);
 
-  Dmn_Proc::yield();
+  Proc::yield();
 
   if (err) {
     m_write_atomic_flag.clear();

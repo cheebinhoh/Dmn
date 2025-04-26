@@ -18,7 +18,7 @@ static volatile sig_atomic_t run = 1;
 static void stop(int sig) { run = 0; }
 
 int main(int argc, char **argv) {
-  dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "C3T2TGVAQYYF7H6T";
@@ -27,10 +27,10 @@ int main(int argc, char **argv) {
   readConfigs["security.protocol"] = "SASL_SSL";
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmn-kafka-receiver";
-  readConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
+  readConfigs[dmn::Kafka::Topic] = "timer_counter";
   readConfigs["auto.offset.reset"] = "earliest";
 
-  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
+  dmn::Kafka consumer{dmn::Kafka::Role::kConsumer, readConfigs};
 
   // Install a signal handler for clean shutdown.
   signal(SIGINT, stop);

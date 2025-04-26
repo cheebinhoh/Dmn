@@ -4,8 +4,8 @@
  * This class implements base class for other class to adapt and implementing
  * asynchronous execution API.
  *
- * A client class can inherit from Dmn_Async or composes an Dmn_Async object,
- * and implement the client class API to pass a functor to the Dmn_Async object
+ * A client class can inherit from Async or composes an Async object,
+ * and implement the client class API to pass a functor to the Async object
  * for execution on behalf of the client API call' execution. This will help
  * serialize multiple the API call executions, avoid any explicit mutex lock on
  * client API calls, and more important is that it can shorten the latency of
@@ -41,15 +41,15 @@
 
 namespace dmn {
 
-class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
+class Async : public Pipe<std::function<void()>> {
 public:
-  Dmn_Async(std::string_view name = "");
-  virtual ~Dmn_Async() noexcept;
+  Async(std::string_view name = "");
+  virtual ~Async() noexcept;
 
-  Dmn_Async(const Dmn_Async &dmnAsync) = delete;
-  const Dmn_Async &operator=(const Dmn_Async &dmnAsync) = delete;
-  Dmn_Async(Dmn_Async &&dmnAsync) = delete;
-  Dmn_Async &operator=(Dmn_Async &&dmnAsync) = delete;
+  Async(const Async &dmnAsync) = delete;
+  const Async &operator=(const Async &dmnAsync) = delete;
+  Async(Async &&dmnAsync) = delete;
+  Async &operator=(Async &&dmnAsync) = delete;
 
   /**
    * @brief The method will execute the asynchronous task after duration
@@ -77,11 +77,11 @@ private:
    * @param fn             asynchronous task to be executed
    */
   void execAfterInternal(long long time_in_future, std::function<void()> fn);
-}; // class Dmn_Async
+}; // class Async
 
 template <class Rep, class Period>
-void Dmn_Async::execAfter(const std::chrono::duration<Rep, Period> &duration,
-                          std::function<void()> fn) {
+void Async::execAfter(const std::chrono::duration<Rep, Period> &duration,
+                      std::function<void()> fn) {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::system_clock::now().time_since_epoch())

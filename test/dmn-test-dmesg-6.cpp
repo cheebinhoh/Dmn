@@ -2,8 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * This test program asserts that two subscribers of the same
- * Dmn_DMesg object will receive the same DMesgPb message
- * published by publisher of the Dmn_DMesg object.
+ * DMesg object will receive the same DMesgPb message
+ * published by publisher of the DMesg object.
  */
 
 #include <gtest/gtest.h>
@@ -18,7 +18,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::DMesg dmesg{"dmesg"};
   std::string data1{};
   std::string data2{};
 

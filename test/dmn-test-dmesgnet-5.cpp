@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that when two Dmn_DMesgNet objects
+ * This test program asserts that when two DMesgNet objects
  * are existence at the same time, the first created object
  * is the master, and when the first object exits, the 2nd object
  * becomes master.
@@ -21,15 +21,14 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Io<std::string>> readSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5001);
+  std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000, true);
 
   dmn::DMesgPb sysPb_3{};
-  std::unique_ptr<dmn::Dmn_DMesgNet> dmesgnet1 =
-      std::make_unique<dmn::Dmn_DMesgNet>("dmesg-3", std::move(readSocket1),
-                                          std::move(writeSocket1));
+  std::unique_ptr<dmn::DMesgNet> dmesgnet1 = std::make_unique<dmn::DMesgNet>(
+      "dmesg-3", std::move(readSocket1), std::move(writeSocket1));
   readSocket1.reset();
   writeSocket1.reset();
 
@@ -43,15 +42,15 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb sysPb_4{};
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
-  dmn::Dmn_Proc dmesg_4_Proc{
+  dmn::Proc dmesg_4_Proc{
       "dmesg_4_Proc", [&sysPb_4]() mutable {
-        std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
-            std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-        std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-            std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+        std::unique_ptr<dmn::Io<std::string>> readSocket1 =
+            std::make_unique<dmn::Socket>("127.0.0.1", 5000);
+        std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+            std::make_unique<dmn::Socket>("127.0.0.1", 5001, true);
 
-        dmn::Dmn_DMesgNet dmesgnet1{"dmesg-4", std::move(readSocket1),
-                                    std::move(writeSocket1)};
+        dmn::DMesgNet dmesgnet1{"dmesg-4", std::move(readSocket1),
+                                std::move(writeSocket1)};
         readSocket1.reset();
         writeSocket1.reset();
 

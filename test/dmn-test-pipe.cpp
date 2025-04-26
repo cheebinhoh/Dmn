@@ -14,12 +14,11 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   long cnt{};
 
-  dmn::Dmn_Pipe<long> pipe{"pipe", [&cnt](long val) {
-                             std::this_thread::sleep_for(
-                                 std::chrono::seconds(1));
-                             cnt++;
-                             std::cout << "read\n";
-                           }};
+  dmn::Pipe<long> pipe{"pipe", [&cnt](long val) {
+                         std::this_thread::sleep_for(std::chrono::seconds(1));
+                         cnt++;
+                         std::cout << "read\n";
+                       }};
 
   for (int i = 0; i < 5; i++) {
     pipe.write(i);

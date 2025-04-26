@@ -1,26 +1,26 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_DMesg implements a specific publisher subscriber model (inherit
+ * The DMesg implements a specific publisher subscriber model (inherit
  * from dmn-pub-sub module) where the difference is that:
  * - the data item is a Protobuf message (dmn::DMesgPb) defined in
- *   proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg, clients
+ *   proto/dmn-dmesg.proto, so instead of subclassing the DMesg, clients
  *   can extend the dmn::DMesgPb protobuf message to varying the
  *   message without reinvent the wheel through subclass of the dmn-pub-sub
  *   module.
- * - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
- *   subscriber, the client of the API asks Dmn_DMesg to return a handler that
+ * - instead of subclass Pub::Sub class to implement specific
+ *   subscriber, the client of the API asks DMesg to return a handler that
  *   subscribes to a specific set of topic (optional, or all topics), and can
  *   use to handler to publish and subscribe dmn::DMesgPb message through the
- *   Dmn_Io like interface' read and write API methods, so instead of
- *   inherittence from Dmn_DMesg, clients can use object composition with it.
+ *   Io like interface' read and write API methods, so instead of
+ *   inherittence from DMesg, clients can use object composition with it.
  * - it supports the concept that subscriber can subscribe to certain topic
  *   as defined in the dmn::DMesgPb message.
- * - it allows various clients of the Dmn_Dmesg to publish data of certain
+ * - it allows various clients of the Dmesg to publish data of certain
  *   topic at the same time, and implements a simple conflict detection and
- *   resolution for participated clients of the same Dmn_Dmesg object, Dmn_DMesg
+ *   resolution for participated clients of the same Dmesg object, DMesg
  *   object takes care of synchronizing message between publisher and all
- *   subscribers of the same Dmn_DMesg object.
+ *   subscribers of the same DMesg object.
  */
 
 #ifndef DMN_DMESG_HPP_
@@ -48,60 +48,59 @@ namespace dmn {
 
 extern const char *kDMesgSysIdentifier;
 
-class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
+class DMesg : public Pub<dmn::DMesgPb> {
 public:
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
 
   /**
-   * @brief The key (std::string) and value (std::string) for Dmn_DMesg
+   * @brief The key (std::string) and value (std::string) for DMesg
    *        configuration.
    */
   using KeyValueConfiguration = std::map<std::string, std::string>;
 
   /**
-   * @brief The Dmn_DMesgHandler is intentionalled modelled to inherit from
-   *        Dmn_Io that provides read/write IO interface across a range of
-   *        IO, like socket, file, kafka, etc, and the Dmn_DMesgHandler is
+   * @brief The DMesgHandler is intentionalled modelled to inherit from
+   *        Io that provides read/write IO interface across a range of
+   *        IO, like socket, file, kafka, etc, and the DMesgHandler is
    *        just another IO, because of that we do NOT able to inherit from
-   *        Dmn_Pub as Dmn_Pub inherits Dmn_Async which inherits from Dmn_Pipe
-   *        which inherit Dmn_Io with template type specialized to functor,
+   *        Pub as Pub inherits Async which inherits from Pipe
+   *        which inherit Io with template type specialized to functor,
    *        this is a diamond shape multiple inheritance where common parent
    *        has to have same instantiated template type. Instead the class
-   *        Dmn_DMesgHandler uses a wrapper class Dmn_DMesgHandlerSub which
-   *        inherits from Dmn_Pub<dmn::DMesgPb>::Dmn_Sub.
+   *        DMesgHandler uses a wrapper class DMesgHandlerSub which
+   *        inherits from Pub<dmn::DMesgPb>::Sub.
    */
-  class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb> {
+  class DMesgHandler : public Io<dmn::DMesgPb> {
   private:
     using ConflictCallbackTask =
-        std::function<void(Dmn_DMesgHandler &handler, const dmn::DMesgPb &)>;
+        std::function<void(DMesgHandler &handler, const dmn::DMesgPb &)>;
 
-    class Dmn_DMesgHandlerSub : public dmn::Dmn_Pub<dmn::DMesgPb>::Dmn_Sub {
+    class DMesgHandlerSub : public dmn::Pub<dmn::DMesgPb>::Sub {
     public:
-      Dmn_DMesgHandlerSub() = default;
-      virtual ~Dmn_DMesgHandlerSub() noexcept;
+      DMesgHandlerSub() = default;
+      virtual ~DMesgHandlerSub() noexcept;
 
-      Dmn_DMesgHandlerSub(const Dmn_DMesgHandlerSub &obj) = delete;
-      const Dmn_DMesgHandlerSub &
-      operator=(const Dmn_DMesgHandlerSub &obj) = delete;
-      Dmn_DMesgHandlerSub(Dmn_DMesgHandlerSub &&obj) = delete;
-      Dmn_DMesgHandlerSub &operator=(Dmn_DMesgHandlerSub &&obj) = delete;
+      DMesgHandlerSub(const DMesgHandlerSub &obj) = delete;
+      const DMesgHandlerSub &operator=(const DMesgHandlerSub &obj) = delete;
+      DMesgHandlerSub(DMesgHandlerSub &&obj) = delete;
+      DMesgHandlerSub &operator=(DMesgHandlerSub &&obj) = delete;
 
       /**
        * @brief The method is called by the dmn::Pub (publisher) object to
-       *        notify the Dmn_DMesgHandlerSub about the new DMesgPB message.
+       *        notify the DMesgHandlerSub about the new DMesgPB message.
        *
-       *        The Dmn_DMesgHandlerSub will follow the following to process
+       *        The DMesgHandlerSub will follow the following to process
        *        the message:
-       *        - skip messages sent through the same Dmn_DMesgHandler handler,
+       *        - skip messages sent through the same DMesgHandler handler,
        *          unless it is a system message (of DMesgPb).
        *        - skip message which running counter is lower than running
-       *          counter of the topic the Dmn_DMesgHandlerSub has received.
+       *          counter of the topic the DMesgHandlerSub has received.
        *        - store a copy of the message as last system message if it is.
-       *        - if it is system message and the Dmn_DMesgHandler (owner of
-       *          the Dmn_DMesgHandlerSub) is opened with m_include_dmesgsys
-       *          as true, the Dmn_DMesgPB message will be either pushed into
-       *          the buffer waiting to be read through Dmn_DMesgHandler' read
+       *        - if it is system message and the DMesgHandler (owner of
+       *          the DMesgHandlerSub) is opened with m_include_dmesgsys
+       *          as true, the DMesgPB message will be either pushed into
+       *          the buffer waiting to be read through DMesgHandler' read
        *          or handling through m_async_process_fn callback.
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
@@ -109,24 +108,24 @@ public:
       void notify(dmn::DMesgPb dmesgPb) override;
 
       // WARNING: it is marked as public so that a closure function
-      // to Dmn_DMesg can access and manipulate it, as there is no
+      // to DMesg can access and manipulate it, as there is no
       // direct way to declare an inline closure as friend (we can
-      // define a function that accept object of type Dmn_DMesgHandlerSub
+      // define a function that accept object of type DMesgHandlerSub
       // class and then pass the object as capture to a closure
       // created within the function and returns the closure to
       // DMesg, but all the trouble to access this.
       //
-      // But no external client will access the nested Dmn_DMesgHandlerSub
-      // class and it is just a composite object within the Dmn_DMesgHandler
-      // class to integrate with dmn-pub-sub through Dmn_Pub::Dmn_sub, so
+      // But no external client will access the nested DMesgHandlerSub
+      // class and it is just a composite object within the DMesgHandler
+      // class to integrate with dmn-pub-sub through Pub::sub, so
       // marking m_owner as public does not violate data encapsulation.
 
-      Dmn_DMesgHandler *m_owner{};
-    }; // class Dmn_DMesgHandlerSub
+      DMesgHandler *m_owner{};
+    }; // class DMesgHandlerSub
 
   public:
     /**
-     * @brief The delegating constructor for Dmn_DMesgHandler.
+     * @brief The delegating constructor for DMesgHandler.
      *
      * @param name           The name or unique identification to the handler
      * @param filterFn       The functor callback that returns false to filter
@@ -134,11 +133,11 @@ public:
      * @param asyncProcessFn The functor callback to process each notified
      * DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filterFn = nullptr,
-                     AsyncProcessTask asyncProcessFn = nullptr);
+    DMesgHandler(std::string_view name, FilterTask filterFn = nullptr,
+                 AsyncProcessTask asyncProcessFn = nullptr);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for DMesgHandler.
      *
      * @param name            The name or unique identification to the handler
      * @param includeDMesgSys True if the handler will be notified of DMesgPb
@@ -149,15 +148,15 @@ public:
      * @param asyncProcessFn  The functor callback to process each notified
      *                        DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, bool includeDMesgSys,
-                     FilterTask filterFn, AsyncProcessTask asyncProcessFn);
+    DMesgHandler(std::string_view name, bool includeDMesgSys,
+                 FilterTask filterFn, AsyncProcessTask asyncProcessFn);
 
-    virtual ~Dmn_DMesgHandler() noexcept;
+    virtual ~DMesgHandler() noexcept;
 
-    Dmn_DMesgHandler(const Dmn_DMesgHandler &obj) = delete;
-    const Dmn_DMesgHandler &operator=(const Dmn_DMesgHandler &obj) = delete;
-    Dmn_DMesgHandler(Dmn_DMesgHandler &&obj) = delete;
-    Dmn_DMesgHandler &operator=(Dmn_DMesgHandler &&obj) = delete;
+    DMesgHandler(const DMesgHandler &obj) = delete;
+    const DMesgHandler &operator=(const DMesgHandler &obj) = delete;
+    DMesgHandler(DMesgHandler &&obj) = delete;
+    DMesgHandler &operator=(DMesgHandler &&obj) = delete;
 
     /**
      * @brief The method reads a DMesgPb message out of the handler
@@ -208,8 +207,8 @@ public:
      */
     void waitForEmpty();
 
-    friend class Dmn_DMesg;
-    friend class Dmn_DMesgHandlerSub;
+    friend class DMesg;
+    friend class DMesgHandlerSub;
 
   protected:
     /**
@@ -258,12 +257,12 @@ public:
     /**
      * data members for internal logic
      */
-    Dmn_DMesg *m_owner{};
-    Dmn_DMesgHandlerSub m_sub{};
+    DMesg *m_owner{};
+    DMesgHandlerSub m_sub{};
 
     std::vector<std::string> m_subscribed_topics{};
 
-    Dmn_Buffer<dmn::DMesgPb> m_buffers{};
+    Buffer<dmn::DMesgPb> m_buffers{};
     dmn::DMesgPb m_last_dmesgsyspb{};
     std::map<std::string, long long> m_topic_running_counter{};
 
@@ -271,26 +270,26 @@ public:
     std::atomic<bool> m_in_conflict{};
 
     bool m_after_initial_playback{};
-  }; // class Dmn_DMesgHandler
+  }; // class DMesgHandler
 
   /**
-   * @brief The constructor for Dmn_DMesg.
+   * @brief The constructor for DMesg.
    *
    * @param name   The identification name for the instantiated object
    * @param config The configuration key value (reserved for future use)
    */
-  Dmn_DMesg(std::string_view name, KeyValueConfiguration config = {});
-  virtual ~Dmn_DMesg() noexcept;
+  DMesg(std::string_view name, KeyValueConfiguration config = {});
+  virtual ~DMesg() noexcept;
 
-  Dmn_DMesg(const Dmn_DMesg &obj) = delete;
-  const Dmn_DMesg &operator=(const Dmn_DMesg &obj) = delete;
-  Dmn_DMesg(Dmn_DMesg &&obj) = delete;
-  Dmn_DMesg &operator=(Dmn_DMesg &&obj) = delete;
+  DMesg(const DMesg &obj) = delete;
+  const DMesg &operator=(const DMesg &obj) = delete;
+  DMesg(DMesg &&obj) = delete;
+  DMesg &operator=(DMesg &&obj) = delete;
 
   /**
-   * @brief The method creates a new Dmn_DMesgHandler, registers the handler to
+   * @brief The method creates a new DMesgHandler, registers the handler to
    *        receive published message and returns the handler to the caller. It
-   *        takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
+   *        takes forward arguments as in DMesgHandler::openHandler(...).
    *
    * @param name            The name or unique identification to the handler
    * @param includeDMesgSys True if the handler will be notified of DMesgPb
@@ -301,10 +300,9 @@ public:
    * @param asyncProcessFn  The functor callback to process each notified
    *                        DMesgPb message
    *
-   * @return newly created Dmn_DMesgHandler
+   * @return newly created DMesgHandler
    */
-  template <class... U>
-  std::shared_ptr<Dmn_DMesgHandler> openHandler(U &&...arg);
+  template <class... U> std::shared_ptr<DMesgHandler> openHandler(U &&...arg);
 
   /**
    * @brief The method creates a new handler, registers the handler to receive
@@ -325,8 +323,8 @@ public:
    * @return newly created handler
    */
   template <class... U>
-  std::shared_ptr<Dmn_DMesgHandler> openHandler(std::vector<std::string> topics,
-                                                U &&...arg);
+  std::shared_ptr<DMesgHandler> openHandler(std::vector<std::string> topics,
+                                            U &&...arg);
 
   /**
    * @brief The method unregisters and removes the handler from the DMesg and
@@ -335,10 +333,10 @@ public:
    *
    * @param handlerToClose The handler to be closed
    */
-  void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose);
+  void closeHandler(std::shared_ptr<DMesgHandler> &handlerToClose);
 
 protected:
-  using Dmn_Pub::publish;
+  using Pub::publish;
 
   /**
    * @brief The method publishes system message through async context queue.
@@ -369,7 +367,7 @@ protected:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictState(const Dmn_DMesgHandler *handlerPtr);
+  void resetHandlerConflictState(const DMesgHandler *handlerPtr);
 
 private:
   /**
@@ -386,7 +384,7 @@ private:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handlerPtr);
+  void resetHandlerConflictStateInternal(const DMesgHandler *handlerPtr);
 
   /**
    * data members for constructor to instantiate the object.
@@ -397,14 +395,13 @@ private:
   /**
    * data members for internal logic.
    */
-  std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
+  std::vector<std::shared_ptr<DMesgHandler>> m_handlers{};
   std::map<std::string, long long> m_topic_running_counter{};
   std::map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
-}; // class Dmn_DMesg
+}; // class DMesg
 
 template <class... U>
-std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
-Dmn_DMesg::openHandler(U &&...arg) {
+std::shared_ptr<DMesg::DMesgHandler> DMesg::openHandler(U &&...arg) {
   static const std::vector<std::string> emptyTopics{};
 
   auto handlerRet = this->openHandler(emptyTopics, std::forward<U>(arg)...);
@@ -413,8 +410,8 @@ Dmn_DMesg::openHandler(U &&...arg) {
 }
 
 template <class... U>
-std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
-Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
+std::shared_ptr<DMesg::DMesgHandler>
+DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
   // this is primitive openHandler() method that will
   // - create the handler
   // - register the handler as subscriber
@@ -430,15 +427,15 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
   // responsible for publishing and notifying data between subscriber and
   // publisher.
 
-  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
-      std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
+  std::shared_ptr<DMesg::DMesgHandler> handler =
+      std::make_shared<DMesg::DMesgHandler>(std::forward<U>(arg)...);
   auto handlerRet = handler;
 
   this->registerSubscriber(&(handler->m_sub));
   handler->m_owner = this;
 
   /* The topic filter is executed within the DMesg singleton asynchronous
-   * thread context, but the filter value is maintained per Dmn_DMesgHandler,
+   * thread context, but the filter value is maintained per DMesgHandler,
    * and this allow the DMesg to be mutex free while thread safe.
    */
   handlerRet->m_subscribed_topics = topics;

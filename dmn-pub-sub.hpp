@@ -26,27 +26,27 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Pub : public Dmn_Async {
+template <typename T> class Pub : public Async {
 public:
   /**
    * The Subscriber class implements the Interface of Subscriber to be
    * working with Publisher.
    *
-   * Subscriber will be notified of published data item via Dmn_Pub
+   * Subscriber will be notified of published data item via Pub
    * (publisher).
    *
    * Subscriber subclass can override notify() method to have specific
    * functionality.
    */
-  class Dmn_Sub : public Dmn_Async {
+  class Sub : public Async {
   public:
-    Dmn_Sub() = default;
-    virtual ~Dmn_Sub() noexcept;
+    Sub() = default;
+    virtual ~Sub() noexcept;
 
-    Dmn_Sub(const Dmn_Sub &obj) = delete;
-    const Dmn_Sub &operator=(const Dmn_Sub &obj) = delete;
-    Dmn_Sub(Dmn_Sub &&obj) = delete;
-    Dmn_Sub &operator=(Dmn_Sub &&obj) = delete;
+    Sub(const Sub &obj) = delete;
+    const Sub &operator=(const Sub &obj) = delete;
+    Sub(Sub &&obj) = delete;
+    Sub &operator=(Sub &&obj) = delete;
 
     /**
      * @brief The method notifies the subscriber of the data item from
@@ -57,7 +57,7 @@ public:
      */
     virtual void notify(T item) = 0;
 
-    friend class Dmn_Pub;
+    friend class Pub;
 
   private:
     /**
@@ -70,20 +70,19 @@ public:
      */
     void notifyInternal(T item);
 
-    Dmn_Pub *m_pub{};
-  }; // class Dmn_Sub
+    Pub *m_pub{};
+  }; // class Sub
 
-  using Dmn_Pub_Filter_Task =
-      std::function<bool(const Dmn_Sub *const, const T &t)>;
+  using Pub_Filter_Task = std::function<bool(const Sub *const, const T &t)>;
 
-  Dmn_Pub(std::string_view name, ssize_t capacity = 10,
-          Dmn_Pub_Filter_Task filterFn = {});
-  virtual ~Dmn_Pub() noexcept;
+  Pub(std::string_view name, ssize_t capacity = 10,
+      Pub_Filter_Task filterFn = {});
+  virtual ~Pub() noexcept;
 
-  Dmn_Pub(const Dmn_Pub &obj) = delete;
-  const Dmn_Pub &operator=(const Dmn_Pub &obj) = delete;
-  Dmn_Pub(Dmn_Pub &&obj) = delete;
-  Dmn_Pub &operator=(Dmn_Pub &&obj) = delete;
+  Pub(const Pub &obj) = delete;
+  const Pub &operator=(const Pub &obj) = delete;
+  Pub(Pub &&obj) = delete;
+  Pub &operator=(Pub &&obj) = delete;
 
   /**
    * @brief The method copies the item and publish it to all subscribers. The
@@ -100,24 +99,24 @@ public:
    * @brief The method registers a subscriber and send out prior published data
    *        item, The method is called immediately with m_lock than executed in
    *        the singleton asynchronous context, and that allows caller to be
-   *        sure that the Dmn_Sub instance has been registered with the
+   *        sure that the Sub instance has been registered with the
    *        publisher upon return of the method. The register and unregister
    *        methods work in synchronization manner.
    *
    * @param sub The subscriber instance to be registered
    */
-  void registerSubscriber(Dmn_Sub *sub);
+  void registerSubscriber(Sub *sub);
 
   /**
    * @brief The method de-registers a subscriber. The method is called
    *        immediately with m_lock than executed in the singleton
    *        asynchronous thread context, and that allows caller to
-   *        be sure that the Dmn_Sub instance has been de-registered
+   *        be sure that the Sub instance has been de-registered
    *        from the publisher upon return of the method.
    *
    * @param sub The subscriber instance to be de-registered
    */
-  void unregisterSubscriber(Dmn_Sub *sub);
+  void unregisterSubscriber(Sub *sub);
 
 protected:
   /**
@@ -133,7 +132,7 @@ private:
    */
   std::string m_name{};
   ssize_t m_capacity{};
-  Dmn_Pub_Filter_Task m_filter_fn{};
+  Pub_Filter_Task m_filter_fn{};
 
   /**
    * data members for internal logic.
@@ -141,11 +140,11 @@ private:
   std::deque<T> m_buffer{};
 
   pthread_mutex_t m_mutex{};
-  std::vector<Dmn_Sub *> m_subscribers{};
-}; // class Dmn_Pub
+  std::vector<Sub *> m_subscribers{};
+}; // class Pub
 
-// class Dmn_Pub::Dmn_Sub
-template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
+// class Pub::Sub
+template <typename T> Pub<T>::Sub::~Sub() noexcept try {
   if (m_pub) {
     m_pub->unregisterSubscriber(this);
   }
@@ -156,16 +155,14 @@ template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(T item) {
+template <typename T> void Pub<T>::Sub::notifyInternal(T item) {
   DMN_ASYNC_CALL_WITH_CAPTURE({ this->notify(item); }, this, item);
 }
 
-// class Dmn_Pub
+// class Pub
 template <typename T>
-Dmn_Pub<T>::Dmn_Pub(std::string_view name, ssize_t capacity,
-                    Dmn_Pub_Filter_Task filterFn)
-    : Dmn_Async(name), m_name{name}, m_capacity{capacity},
-      m_filter_fn{filterFn} {
+Pub<T>::Pub(std::string_view name, ssize_t capacity, Pub_Filter_Task filterFn)
+    : Async(name), m_name{name}, m_capacity{capacity}, m_filter_fn{filterFn} {
 
   int err = pthread_mutex_init(&m_mutex, NULL);
   if (err) {
@@ -173,7 +170,7 @@ Dmn_Pub<T>::Dmn_Pub(std::string_view name, ssize_t capacity,
   }
 }
 
-template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
+template <typename T> Pub<T>::~Pub() noexcept try {
   pthread_mutex_lock(&m_mutex);
 
   DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
@@ -192,12 +189,12 @@ template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::publish(T item) {
+template <typename T> void Pub<T>::publish(T item) {
   this->write([this, item]() mutable { this->publishInternal(item); });
 }
 
-template <typename T> void Dmn_Pub<T>::publishInternal(T item) {
-  /* Though through Dmn_Async (parent class), we have a mean to
+template <typename T> void Pub<T>::publishInternal(T item) {
+  /* Though through Async (parent class), we have a mean to
    * guarantee that only one thread is executing the core logic
    * and manipulate the m_subscribers state in a singleton asynchronous
    * thread context and without the use of mutex to protect the m_subscribers,
@@ -245,7 +242,7 @@ template <typename T> void Dmn_Pub<T>::publishInternal(T item) {
   }
 } // method publishInternal()
 
-template <typename T> void Dmn_Pub<T>::registerSubscriber(Dmn_Sub *sub) {
+template <typename T> void Pub<T>::registerSubscriber(Sub *sub) {
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
     throw std::runtime_error(strerror(err));
@@ -277,7 +274,7 @@ template <typename T> void Dmn_Pub<T>::registerSubscriber(Dmn_Sub *sub) {
   }
 }
 
-template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
+template <typename T> void Pub<T>::unregisterSubscriber(Sub *sub) {
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
     throw std::runtime_error(strerror(err));

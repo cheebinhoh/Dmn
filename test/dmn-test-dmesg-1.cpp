@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that the Dmn_DMesg class support
+ * This test program asserts that the DMesg class support
  * that one publisher and two subscribers work.
  */
 
@@ -16,7 +16,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::DMesg dmesg{"dmesg"};
 
   auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
   EXPECT_TRUE(dmesgWriteHandler);
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   dmn::DMesgBodyPb *dmsgbodyPb2 = dmesgPb2.mutable_body();
   dmsgbodyPb2->set_message("message string 2");
 
-  dmn::Dmn_Proc procRead1{
+  dmn::Proc procRead1{
       "read1", [&dmesgReadHandler1, &dmesgPb1]() {
         std::cout << "before read1\n";
         auto dmesgPbRead = dmesgReadHandler1->read();
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         EXPECT_TRUE(dmesgPbRead->body().message() == dmesgPb1.body().message());
       }};
 
-  dmn::Dmn_Proc procRead2{
+  dmn::Proc procRead2{
       "read2", [&dmesgReadHandler2, &dmesgPb2]() {
         std::cout << "before read2\n";
         auto dmesgPbRead = dmesgReadHandler2->read();
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 
   procRead1.exec();
   procRead2.exec();
-  dmn::Dmn_Proc::yield();
+  dmn::Proc::yield();
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
   std::cout << "after sleep 3 seconds\n";

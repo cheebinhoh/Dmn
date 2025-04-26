@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that the Dmn_Pub and Dmn_Pub::Sub model.
+ * This test program asserts that the Pub and Pub::Sub model.
  */
 
 #include <gtest/gtest.h>
@@ -13,11 +13,11 @@
 
 #include "dmn-pub-sub.hpp"
 
-class Dmn_Msg_Receiver : public dmn::Dmn_Pub<std::string>::Dmn_Sub {
+class Msg_Receiver : public dmn::Pub<std::string>::Sub {
 public:
-  Dmn_Msg_Receiver(std::string_view name) : m_name{name} {}
+  Msg_Receiver(std::string_view name) : m_name{name} {}
 
-  ~Dmn_Msg_Receiver() {}
+  ~Msg_Receiver() {}
 
   void notify(std::string item) override {
     std::cout << m_name << " is notified: " << item << "\n";
@@ -32,8 +32,8 @@ public:
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_Pub<std::string> pub{"radio", 2};
-  Dmn_Msg_Receiver rec1{"receiver 1"};
+  dmn::Pub<std::string> pub{"radio", 2};
+  Msg_Receiver rec1{"receiver 1"};
 
   pub.registerSubscriber(&rec1);
   pub.publish("hello pub sub");
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     EXPECT_TRUE(rec3.m_notifiedList[2] == "hello world last");
 
     {
-      Dmn_Msg_Receiver rec4{"receiver 4"};
+      Msg_Receiver rec4{"receiver 4"};
       pub.registerSubscriber(&rec4);
 
       std::this_thread::sleep_for(std::chrono::seconds(1));

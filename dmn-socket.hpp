@@ -14,15 +14,15 @@
 
 namespace dmn {
 
-class Dmn_Socket : public Dmn_Io<std::string> {
+class Socket : public Io<std::string> {
 public:
-  Dmn_Socket(std::string_view ip4, int port_no, bool write_only = false);
-  virtual ~Dmn_Socket();
+  Socket(std::string_view ip4, int port_no, bool write_only = false);
+  virtual ~Socket();
 
-  Dmn_Socket(const Dmn_Socket &obj) = delete;
-  const Dmn_Socket &operator=(const Dmn_Socket &obj) = delete;
-  Dmn_Socket(Dmn_Socket &&obj) = delete;
-  Dmn_Socket &operator=(Dmn_Socket &&obj) = delete;
+  Socket(const Socket &obj) = delete;
+  const Socket &operator=(const Socket &obj) = delete;
+  Socket(Socket &&obj) = delete;
+  Socket &operator=(Socket &&obj) = delete;
 
   std::optional<std::string> read() override;
   void write(std::string &item) override;

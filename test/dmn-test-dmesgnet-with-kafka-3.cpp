@@ -1,12 +1,12 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that we can have two Dmn_DMesgNet objects with
- * external Dmn_Kafka objects as its input and output handlers and join in
+ * This test program asserts that we can have two DMesgNet objects with
+ * external Kafka objects as its input and output handlers and join in
  * a virtual distrbuted messaging network that spans cross a confluent.cloud
- * via Dmn_Kafka I/O and rdkafka, aka the primitive form of Dmn_DMesgNet_Kafka.
+ * via Kafka I/O and rdkafka, aka the primitive form of DMesgNet_Kafka.
  *
- * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
+ * Each DMesgNet_Kafka object has a sys state' nodelist that includes
  * another object identifier as its neighbor.
  */
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
+  dmn::Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -39,15 +39,14 @@ int main(int argc, char *argv[]) {
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
   readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs_other[dmn::Kafka::Topic] = "dmesgnet";
+  readConfigs_other[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+  dmn::Kafka consumer_other{dmn::Kafka::Role::kConsumer, readConfigs_other};
 
   // dmesgnet1
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType writeConfigs1{};
+  dmn::Kafka::ConfigType writeConfigs1{};
   writeConfigs1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -56,14 +55,14 @@ int main(int argc, char *argv[]) {
   writeConfigs1["security.protocol"] = "SASL_SSL";
   writeConfigs1["sasl.mechanisms"] = "PLAIN";
   writeConfigs1["acks"] = "all";
-  writeConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs1[dmn::Kafka::Topic] = "dmesgnet";
+  writeConfigs1[dmn::Kafka::Key] = "dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> producer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs1);
+  std::unique_ptr<dmn::Kafka> producer1 =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kProducer, writeConfigs1);
 
   // reader for DMesgNet
-  dmn::Dmn_Kafka::ConfigType readConfigs1{};
+  dmn::Kafka::ConfigType readConfigs1{};
   readConfigs1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -72,16 +71,16 @@ int main(int argc, char *argv[]) {
   readConfigs1["security.protocol"] = "SASL_SSL";
   readConfigs1["sasl.mechanisms"] = "PLAIN";
   readConfigs1["group.id"] = "dmesg1";
-  readConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs1[dmn::Kafka::Topic] = "dmesgnet";
   readConfigs1["auto.offset.reset"] = "earliest";
-  readConfigs1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs1[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  std::unique_ptr<dmn::Dmn_Kafka> consumer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs1);
+  std::unique_ptr<dmn::Kafka> consumer1 =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kConsumer, readConfigs1);
 
   // dmesgnet2
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType writeConfigs2{};
+  dmn::Kafka::ConfigType writeConfigs2{};
   writeConfigs2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -90,14 +89,14 @@ int main(int argc, char *argv[]) {
   writeConfigs2["security.protocol"] = "SASL_SSL";
   writeConfigs2["sasl.mechanisms"] = "PLAIN";
   writeConfigs2["acks"] = "all";
-  writeConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs2[dmn::Kafka::Topic] = "dmesgnet";
+  writeConfigs2[dmn::Kafka::Key] = "dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> producer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs2);
+  std::unique_ptr<dmn::Kafka> producer2 =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kProducer, writeConfigs2);
 
   // reader for DMesgNet
-  dmn::Dmn_Kafka::ConfigType readConfigs2{};
+  dmn::Kafka::ConfigType readConfigs2{};
   readConfigs2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -106,22 +105,20 @@ int main(int argc, char *argv[]) {
   readConfigs2["security.protocol"] = "SASL_SSL";
   readConfigs2["sasl.mechanisms"] = "PLAIN";
   readConfigs2["group.id"] = "dmesg2";
-  readConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs2[dmn::Kafka::Topic] = "dmesgnet";
   readConfigs2["auto.offset.reset"] = "earliest";
-  readConfigs2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs2[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  std::unique_ptr<dmn::Dmn_Kafka> consumer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs2);
+  std::unique_ptr<dmn::Kafka> consumer2 =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kConsumer, readConfigs2);
 
   // dmesgnet1
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
-                              std::move(producer1)};
+  dmn::DMesgNet dmesgnet1{"dmesg1", std::move(consumer1), std::move(producer1)};
   producer1.reset();
   consumer1.reset();
 
   // dmesgnet2
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
-                              std::move(producer2)};
+  dmn::DMesgNet dmesgnet2{"dmesg2", std::move(consumer2), std::move(producer2)};
   producer2.reset();
   consumer2.reset();
 

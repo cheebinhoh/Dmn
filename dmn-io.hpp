@@ -18,9 +18,9 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Io {
+template <typename T> class Io {
 public:
-  virtual ~Dmn_Io() = default;
+  virtual ~Io() = default;
   virtual std::optional<T> read() = 0;
   virtual void write(T &item) = 0;
   virtual void write(T &&item) = 0;

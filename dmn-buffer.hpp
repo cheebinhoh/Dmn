@@ -27,15 +27,15 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Buffer {
+template <typename T> class Buffer {
 public:
-  Dmn_Buffer();
-  virtual ~Dmn_Buffer() noexcept;
+  Buffer();
+  virtual ~Buffer() noexcept;
 
-  Dmn_Buffer(const Dmn_Buffer<T> &dmnBuffer) = delete;
-  const Dmn_Buffer<T> &operator=(const Dmn_Buffer<T> &dmnBuffer) = delete;
-  Dmn_Buffer(const Dmn_Buffer<T> &&dmnBuffer) = delete;
-  Dmn_Buffer<T> &operator=(Dmn_Buffer<T> &&dmnBuffer) = delete;
+  Buffer(const Buffer<T> &dmnBuffer) = delete;
+  const Buffer<T> &operator=(const Buffer<T> &dmnBuffer) = delete;
+  Buffer(const Buffer<T> &&dmnBuffer) = delete;
+  Buffer<T> &operator=(Buffer<T> &&dmnBuffer) = delete;
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -101,9 +101,9 @@ private:
   pthread_cond_t m_empty_cond{};
   long long m_push_count{};
   long long m_pop_count{};
-}; // class Dmn_Buffer
+}; // class Buffer
 
-template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
+template <typename T> Buffer<T>::Buffer() {
   int err{};
 
   err = pthread_mutex_init(&m_mutex, NULL);
@@ -122,7 +122,7 @@ template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
   }
 }
 
-template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
+template <typename T> Buffer<T>::~Buffer() noexcept try {
   // RAII! we wake up any thread waiting
   pthread_cond_signal(&m_cond);
   pthread_cond_signal(&m_empty_cond);
@@ -135,19 +135,19 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   return;
 }
 
-template <typename T> T Dmn_Buffer<T>::pop() { return *popOptional(true); }
+template <typename T> T Buffer<T>::pop() { return *popOptional(true); }
 
-template <typename T> std::optional<T> Dmn_Buffer<T>::popNoWait() {
+template <typename T> std::optional<T> Buffer<T>::popNoWait() {
   return popOptional(false);
 }
 
-template <typename T> void Dmn_Buffer<T>::push(T &&item) {
+template <typename T> void Buffer<T>::push(T &&item) {
   T movedItem = std::move_if_noexcept(item);
 
   push(movedItem, true);
 }
 
-template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
+template <typename T> void Buffer<T>::push(T &item, bool move) {
   int err{};
 
   err = pthread_mutex_lock(&m_mutex);
@@ -182,7 +182,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   }
 }
 
-template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
+template <typename T> long long Buffer<T>::waitForEmpty() {
   int err{};
   long long inbound_count{};
 
@@ -217,7 +217,7 @@ template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
   return inbound_count;
 }
 
-template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
+template <typename T> std::optional<T> Buffer<T>::popOptional(bool wait) {
   int err{};
   T val{};
 

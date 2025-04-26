@@ -4,8 +4,8 @@
  * This class implements base class for other class to adapt and implementing
  * asynchronous execution API.
  *
- * A client class can inherit from Dmn_Async or composes an Dmn_Async object,
- * and implement the client class API to pass a functor to the Dmn_Async object
+ * A client class can inherit from Async or composes an Async object,
+ * and implement the client class API to pass a functor to the Async object
  * for execution on behalf of the client API call' execution. This will help
  * serialize multiple the API call executions, avoid any explicit mutex lock on
  * client API calls, and more important is that it can shorten the latency of
@@ -24,19 +24,19 @@
 
 namespace dmn {
 
-Dmn_Async::Dmn_Async(std::string_view name)
-    : Dmn_Pipe{name, [](std::function<void()> &&task) {
-                 task();
-                 Dmn_Proc::yield();
-               }} {}
+Async::Async(std::string_view name)
+    : Pipe{name, [](std::function<void()> &&task) {
+             task();
+             Proc::yield();
+           }} {}
 
-Dmn_Async::~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
+Async::~Async() noexcept try { this->waitForEmpty(); } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-void Dmn_Async::execAfterInternal(long long time_in_future,
-                                  std::function<void()> fn) {
+void Async::execAfterInternal(long long time_in_future,
+                              std::function<void()> fn) {
   this->write([this, time_in_future, fn]() {
     long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
                         std::chrono::system_clock::now().time_since_epoch())

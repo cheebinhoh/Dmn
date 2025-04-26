@@ -1,10 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_DMesgNet stands for Distributed Messaging Network, it is an
- * extension to the Dmn_DMesg with support of serializing the DMesgPb
- * message and send to the output Dmn_Io and deserialize the data read
- * from input Dmn_Io and then publish it to the local Dmn_DMesg
+ * The DMesgNet stands for Distributed Messaging Network, it is an
+ * extension to the DMesg with support of serializing the DMesgPb
+ * message and send to the output Io and deserialize the data read
+ * from input Io and then publish it to the local DMesg
  * subscribed handlers.
  */
 
@@ -31,7 +31,7 @@ namespace dmn {
 #define DMN_DMESGNET_MASTERPENDING_MAX_COUNTER (3)
 #define DMN_DMESGNET_MASTERSYNC_MAX_COUNTER (5)
 
-class Dmn_DMesgNet : public Dmn_DMesg {
+class DMesgNet : public DMesg {
 public:
   /**
    * 1.    Initialized - [send heartbeat] -> MasterElectionPending
@@ -117,16 +117,16 @@ public:
    * @param output_handler The dmn::Hal_Io object to send outbound stringified
    *                       DMesgPb message
    */
-  Dmn_DMesgNet(std::string_view name,
-               std::unique_ptr<Dmn_Io<std::string>> input_handler = nullptr,
-               std::unique_ptr<Dmn_Io<std::string>> output_handler = nullptr);
+  DMesgNet(std::string_view name,
+           std::unique_ptr<Io<std::string>> input_handler = nullptr,
+           std::unique_ptr<Io<std::string>> output_handler = nullptr);
 
-  virtual ~Dmn_DMesgNet() noexcept;
+  virtual ~DMesgNet() noexcept;
 
-  Dmn_DMesgNet(const Dmn_DMesgNet &obj) = delete;
-  const Dmn_DMesgNet &operator=(const Dmn_DMesgNet &obj) = delete;
-  Dmn_DMesgNet(Dmn_DMesgNet &&obj) = delete;
-  Dmn_DMesgNet &operator=(Dmn_DMesgNet &&obj) = delete;
+  DMesgNet(const DMesgNet &obj) = delete;
+  const DMesgNet &operator=(const DMesgNet &obj) = delete;
+  DMesgNet(DMesgNet &&obj) = delete;
+  DMesgNet &operator=(DMesgNet &&obj) = delete;
 
 protected:
   /**
@@ -143,16 +143,16 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
-  std::unique_ptr<Dmn_Io<std::string>> m_input_handler{};
-  std::unique_ptr<Dmn_Io<std::string>> m_output_handler{};
+  std::unique_ptr<Io<std::string>> m_input_handler{};
+  std::unique_ptr<Io<std::string>> m_output_handler{};
 
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};
-  std::shared_ptr<Dmn_DMesgHandler> m_subscript_handler{};
-  std::shared_ptr<Dmn_DMesgHandler> m_sys_handler{};
-  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timer_proc{};
+  std::unique_ptr<dmn::Proc> m_input_proc{};
+  std::shared_ptr<DMesgHandler> m_subscript_handler{};
+  std::shared_ptr<DMesgHandler> m_sys_handler{};
+  std::unique_ptr<dmn::Timer<std::chrono::nanoseconds>> m_timer_proc{};
 
   dmn::DMesgPb m_sys{};
   long long m_master_pending_counter{};
@@ -162,7 +162,7 @@ private:
 
   bool m_is_master{};
   long long m_number_of_neighbor{};
-}; // class Dmn_DMesgNet
+}; // class DMesgNet
 
 } // namespace dmn
 

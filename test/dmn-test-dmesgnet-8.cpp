@@ -1,11 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that two Dmn_DMesgNet objects that
+ * This test program asserts that two DMesgNet objects that
  * participates in the same network through its inbound and outbound
- * Dmn_Io objects are in sync in the Dmn network, and message sent priorly
- * in one Dmn_DMesgNet will be resent by the master when a new
- * Dmn_DMesgNet object joins the same Dmn network.
+ * Io objects are in sync in the Dmn network, and message sent priorly
+ * in one DMesgNet will be resent by the master when a new
+ * DMesgNet object joins the same Dmn network.
  */
 
 #include <gtest/gtest.h>
@@ -22,15 +22,15 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Io<std::string>> readSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5001);
+  std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000, true);
 
   bool readData{};
   dmn::DMesgPb msgPb{};
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg-1", std::move(readSocket1),
-                              std::move(writeSocket1)};
+  dmn::DMesgNet dmesgnet1{"dmesg-1", std::move(readSocket1),
+                          std::move(writeSocket1)};
   readSocket1.reset();
   writeSocket1.reset();
 
@@ -54,13 +54,13 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(!readData);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket2 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket2 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+  std::unique_ptr<dmn::Io<std::string>> readSocket2 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000);
+  std::unique_ptr<dmn::Io<std::string>> writeSocket2 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5001, true);
 
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", std::move(readSocket2),
-                              std::move(writeSocket2)};
+  dmn::DMesgNet dmesgnet2{"dmesg-2", std::move(readSocket2),
+                          std::move(writeSocket2)};
   readSocket2.reset();
   writeSocket2.reset();
 

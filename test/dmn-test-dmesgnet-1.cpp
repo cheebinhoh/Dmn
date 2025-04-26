@@ -1,9 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
+ * This test programs asserts that two DMesgNet objects can
+ * one send message through a Socket at a particular ip and port
+ * and another one receive sent message through another Socket
  * at the same ip and port.
  */
 
@@ -21,29 +21,29 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket2 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
+  std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Io<std::string>> readSocket2 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000);
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(writeSocket1)};
+  dmn::DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(writeSocket1)};
   writeSocket1.reset();
 
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(readSocket2)};
+  dmn::DMesgNet dmesgnet2{"dmesg2", std::move(readSocket2)};
   readSocket2.reset();
 
   auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
 
   dmn::DMesgPb dmesgPbRead{};
-  dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgPbRead]() {
-                        auto data = readHandler2->read();
-                        if (data) {
-                          dmesgPbRead = *data;
-                        }
-                      }};
+  dmn::Proc proc2{"dmesg2", [readHandler2, &dmesgPbRead]() {
+                    auto data = readHandler2->read();
+                    if (data) {
+                      dmesgPbRead = *data;
+                    }
+                  }};
 
   proc2.exec();
-  dmn::Dmn_Proc::yield();
+  dmn::Proc::yield();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   auto dmesgHandler = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);

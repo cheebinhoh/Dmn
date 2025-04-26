@@ -16,31 +16,31 @@
 
 namespace dmn {
 
-class Dmn_DMesgNet_Kafka {
+class DMesgNet_Kafka {
 public:
   /**
    * @brief The constructor method to initiate a created kafka consumer and
    *        producer from configuration as input and output handles for the
-   *        Dmn_DMesgNet object.
+   *        DMesgNet object.
    *
    *        The user of the api must provide most of the kafka configuration
    *        besides following "group.id", "auto.offset.reset", "acks",
-   *        dmn::Dmn_Kafka::Topic and dmn::Dmn_Kafka::Key which are provided
-   *        by Dmn_DMesgNet_Kafka.
+   *        dmn::Kafka::Topic and dmn::Kafka::Key which are provided
+   *        by DMesgNet_Kafka.
    *
-   * @param name    The name for Dmn_DMesgNet and kafka group id
-   * @param configs The Dmn_Kafka configuration
+   * @param name    The name for DMesgNet and kafka group id
+   * @param configs The Kafka configuration
    */
-  Dmn_DMesgNet_Kafka(std::string_view name, Dmn_Kafka::ConfigType configs);
-  ~Dmn_DMesgNet_Kafka() noexcept;
+  DMesgNet_Kafka(std::string_view name, Kafka::ConfigType configs);
+  ~DMesgNet_Kafka() noexcept;
 
-  Dmn_DMesgNet_Kafka(const Dmn_DMesgNet_Kafka &obj) = delete;
-  const Dmn_DMesgNet_Kafka &operator=(const Dmn_DMesgNet_Kafka &obj) = delete;
-  Dmn_DMesgNet_Kafka(Dmn_DMesgNet_Kafka &&obj) = delete;
-  Dmn_DMesgNet_Kafka &operator=(Dmn_DMesgNet_Kafka &&obj) = delete;
+  DMesgNet_Kafka(const DMesgNet_Kafka &obj) = delete;
+  const DMesgNet_Kafka &operator=(const DMesgNet_Kafka &obj) = delete;
+  DMesgNet_Kafka(DMesgNet_Kafka &&obj) = delete;
+  DMesgNet_Kafka &operator=(DMesgNet_Kafka &&obj) = delete;
 
   /**
-   * @brief This method is a forwarding call to the Dmn_DMesgNet::openHandler().
+   * @brief This method is a forwarding call to the DMesgNet::openHandler().
    *
    * @param topics          The list of topics to be subscribed for the opened
    *                        handler
@@ -56,13 +56,13 @@ public:
    * @return newly created handler
    */
   template <class... U>
-  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> openHandler(U &&...arg) {
+  std::shared_ptr<DMesg::DMesgHandler> openHandler(U &&...arg) {
     return m_dmesgnet->openHandler(std::forward<U>(arg)...);
   }
 
   /**
    * @brief This method is a forwarding call to the
-   *        Dmn_DMesgNet::closeHandler().
+   *        DMesgNet::closeHandler().
    *
    * @param handlerToClose The handler to be closed
    */
@@ -79,8 +79,8 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn_DMesgNet> m_dmesgnet{};
-}; // class Dmn_DMesgNet_Kafka
+  std::unique_ptr<DMesgNet> m_dmesgnet{};
+}; // class DMesgNet_Kafka
 
 } // namespace dmn
 

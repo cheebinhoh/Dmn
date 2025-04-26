@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_Kafka is a wrapper module to Kafka c++ interface and implement Dmn_Io
+ * The Kafka is a wrapper module to Kafka c++ interface and implement Io
  * interface with integration to Kafka broker through Kafka c++ interface.
  */
 
@@ -23,10 +23,10 @@
 
 namespace dmn {
 
-class Dmn_Kafka : public dmn::Dmn_Io<std::string> {
+class Kafka : public dmn::Io<std::string> {
 public:
   /**
-   * @brief The configuration key specific to the Dmn_Kafka module (not directly
+   * @brief The configuration key specific to the Kafka module (not directly
    *        to rdkafka).
    */
   const static std::string Topic;         // topic to read from or write to
@@ -46,15 +46,15 @@ public:
    *        the set of configurations passed in.
    *
    * @param role    The object created acts as a kafka consumer or producer
-   * @param configs The set of key value configurations to rdkafka or Dmn_Kafka
+   * @param configs The set of key value configurations to rdkafka or Kafka
    */
-  Dmn_Kafka(Role role, ConfigType configs = {});
-  ~Dmn_Kafka() noexcept;
+  Kafka(Role role, ConfigType configs = {});
+  ~Kafka() noexcept;
 
-  Dmn_Kafka(const Dmn_Kafka &obj) = delete;
-  const Dmn_Kafka &operator=(const Dmn_Kafka &obj) = delete;
-  Dmn_Kafka(Dmn_Kafka &&obj) = delete;
-  Dmn_Kafka &operator=(Dmn_Kafka &&obj) = delete;
+  Kafka(const Kafka &obj) = delete;
+  const Kafka &operator=(const Kafka &obj) = delete;
+  Kafka(Kafka &&obj) = delete;
+  Kafka &operator=(Kafka &&obj) = delete;
 
   /**
    * @brief The method returns next topic' message that kafka consumer fetches
@@ -88,7 +88,7 @@ private:
    *
    * @param kafka_handle The kafka handler from kafka c++ module
    * @param rkmessage    The kafka message sent delivered by kafka producer
-   * @param opaque       The pointer to Dmn_Kafka object
+   * @param opaque       The pointer to Kafka object
    */
   static void producerCallback(rd_kafka_t *kafka_handle,
                                const rd_kafka_message_t *rkmessage,
@@ -101,7 +101,7 @@ private:
    * @param kafka_handle The kafka handler from kafka c++ module
    * @param err          The kafka error code related to deliverying the message
    * @param reason       The kafka error code explanation in string
-   * @param opaque       The pointer to Dmn_Kafka object
+   * @param opaque       The pointer to Kafka object
    */
   static void errorCallback(rd_kafka_t *kafka_handle, int err,
                             const char *reason, void *opaque);
@@ -132,7 +132,7 @@ private:
   rd_kafka_resp_err_t m_kafka_err{};
 
   std::atomic_flag m_write_atomic_flag{};
-}; // class Dmn_Kafka
+}; // class Kafka
 
 } // namespace dmn
 

@@ -8,7 +8,7 @@
 #include "kafka/dmn-kafka.hpp"
 
 int main(int argc, char **argv) {
-  dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "C3T2TGVAQYYF7H6T";
@@ -17,10 +17,10 @@ int main(int argc, char **argv) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[dmn::Dmn_Kafka::Topic] = "timer_counter";
-  writeConfigs[dmn::Dmn_Kafka::Key] = "tick";
+  writeConfigs[dmn::Kafka::Topic] = "timer_counter";
+  writeConfigs[dmn::Kafka::Key] = "tick";
 
-  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::kProducer, writeConfigs};
+  dmn::Kafka producer{dmn::Kafka::Role::kProducer, writeConfigs};
 
   for (int i = 0; i < 10; i++) {
     std::stringstream os{};

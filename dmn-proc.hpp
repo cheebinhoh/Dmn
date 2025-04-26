@@ -28,37 +28,37 @@ namespace dmn {
 void cleanupFuncToUnlockPthreadMutex(void *mutex);
 
 /**
- * Dmn_Proc thread cancellation via (StopExec) is synchronous, so if the functor
+ * Proc thread cancellation via (StopExec) is synchronous, so if the functor
  * runs infinitely without any pthread cancellation point, we should voluntarily
- * call Dmn_Proc::yield() at different point in time in the loop.
+ * call Proc::yield() at different point in time in the loop.
  *
- * It is RAII model where in destruction of Dmn_Proc object, it will try to
+ * It is RAII model where in destruction of Proc object, it will try to
  * cancel the thread and join it to free resource, so the thread should respond
  * to pthread cancellation if it is in a loop.
  */
-class Dmn_Proc {
+class Proc {
   using Task = std::function<void()>;
 
   enum State { kInvalid, kNew, kReady, kRunning };
 
 public:
-  Dmn_Proc(std::string_view name, Dmn_Proc::Task fn = {});
-  virtual ~Dmn_Proc() noexcept;
+  Proc(std::string_view name, Proc::Task fn = {});
+  virtual ~Proc() noexcept;
 
-  Dmn_Proc(const Dmn_Proc &obj) = delete;
-  const Dmn_Proc &operator=(const Dmn_Proc &obj) = delete;
-  Dmn_Proc(Dmn_Proc &&obj) = delete;
-  Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
+  Proc(const Proc &obj) = delete;
+  const Proc &operator=(const Proc &obj) = delete;
+  Proc(Proc &&obj) = delete;
+  Proc &operator=(Proc &&obj) = delete;
 
-  bool exec(Dmn_Proc::Task fn = {});
+  bool exec(Proc::Task fn = {});
   bool wait();
 
   static void yield();
 
 protected:
-  Dmn_Proc::State getState() const;
-  Dmn_Proc::State setState(Dmn_Proc::State state);
-  void setTask(Dmn_Proc::Task fn);
+  Proc::State getState() const;
+  Proc::State setState(Proc::State state);
+  void setTask(Proc::Task fn);
 
   bool runExec();
   bool stopExec();
@@ -74,10 +74,10 @@ private:
   /**
    * data members for internal logic.
    */
-  Dmn_Proc::Task m_fn{};
-  Dmn_Proc::State m_state{};
+  Proc::Task m_fn{};
+  Proc::State m_state{};
   pthread_t m_th{};
-}; // class Dmn_Proc
+}; // class Proc
 
 } // namespace dmn
 

@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   using namespace std::string_literals;
 
-  auto buf = std::make_unique<dmn::Dmn_Buffer<std::string>>();
-  auto proc = std::make_unique<dmn::Dmn_Proc>("proc", [&buf]() {
+  auto buf = std::make_unique<dmn::Buffer<std::string>>();
+  auto proc = std::make_unique<dmn::Proc>("proc", [&buf]() {
     static std::vector<std::string> result{"hello", "abc"};
     static int index{};
 
@@ -33,17 +33,17 @@ int main(int argc, char *argv[]) {
 
   proc->exec();
 
-  dmn::Dmn_Proc::yield();
+  dmn::Proc::yield();
   proc->wait();
 
   buf->push("abc"s);
 
   proc->exec();
-  dmn::Dmn_Proc::yield();
+  dmn::Proc::yield();
   proc->wait();
 
   proc->exec();
-  dmn::Dmn_Proc::yield();
+  dmn::Proc::yield();
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
   proc = {};
@@ -51,12 +51,12 @@ int main(int argc, char *argv[]) {
   buf = {};
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  dmn::Dmn_Buffer<int> intBuf{};
+  dmn::Buffer<int> intBuf{};
   intBuf.push(2);
 
   EXPECT_TRUE(2 == intBuf.pop());
 
-  dmn::Dmn_Buffer<std::string> stringNotMoveBuf{};
+  dmn::Buffer<std::string> stringNotMoveBuf{};
   std::string stringToNotMoveBuf{"not move"};
   stringNotMoveBuf.push(stringToNotMoveBuf, false);
   std::string stringFromNotMoveBuf = stringNotMoveBuf.pop();

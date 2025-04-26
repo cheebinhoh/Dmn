@@ -34,10 +34,10 @@ int main(int argc, char *argv[]) {
   using std::chrono::system_clock;
 
   std::map<std::string, long long> input_cnt{};
-  dmn::Dmn_Proc sensor_input{"sensor input"};
-  dmn::Dmn_Proc gps_input{"gps input"};
-  dmn::Dmn_Proc imu_input{"imu input"};
-  dmn::Dmn_Proc ext_input{"ext input"};
+  dmn::Proc sensor_input{"sensor input"};
+  dmn::Proc gps_input{"gps input"};
+  dmn::Proc imu_input{"imu input"};
+  dmn::Proc ext_input{"ext input"};
 
   // parameters to tune
   bool input_to_sleep_use_ns = true; /* nano or milliseconds */
@@ -45,23 +45,23 @@ int main(int argc, char *argv[]) {
   int input_to_sleep_nanoseconds = 500000; /* 0.5 milliseconds */
   int input_to_run_seconds = 5;
 
-  dmn::Dmn_Pipe<std::string> out_pipe{
-      "out_pipe", [&input_cnt](std::string item) {
-        std::size_t found = item.find(": ");
-        if (found != std::string::npos) {
-          std::string source = item.substr(0, found);
+  dmn::Pipe<std::string> out_pipe{"out_pipe", [&input_cnt](std::string item) {
+                                    std::size_t found = item.find(": ");
+                                    if (found != std::string::npos) {
+                                      std::string source =
+                                          item.substr(0, found);
 
-          input_cnt[source]++;
-        }
-      }};
+                                      input_cnt[source]++;
+                                    }
+                                  }};
 
-  dmn::Dmn_Pipe<std::string> cal_pipe{
+  dmn::Pipe<std::string> cal_pipe{
       "cal_input", [&out_pipe](std::string item) { out_pipe.write(item); }};
 
-  dmn::Dmn_Pipe<std::string> filter_pipe{
+  dmn::Pipe<std::string> filter_pipe{
       "filter_input", [&cal_pipe](std::string item) { cal_pipe.write(item); }};
 
-  dmn::Dmn_Pipe<std::string> staging_pipe{
+  dmn::Pipe<std::string> staging_pipe{
       "staging_input",
       [&filter_pipe](std::string item) { filter_pipe.write(item); }};
 
@@ -209,6 +209,6 @@ int main(int argc, char *argv[]) {
     break;
   }
 
-  // Dmn_Proc and Dmn_Pipe will be destroyed and display statistics
+  // Proc and Pipe will be destroyed and display statistics
   return RUN_ALL_TESTS();
 }

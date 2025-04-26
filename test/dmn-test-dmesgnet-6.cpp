@@ -1,11 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This program asserts that a Dmn_DMesgNet object will self-proclaim
- * as a master if it is started without other Dmn_DMesgNet objects
+ * This program asserts that a DMesgNet object will self-proclaim
+ * as a master if it is started without other DMesgNet objects
  * and a emulated system message with other node identifier as master
- * will not derail the Dmn_DMesgNet object notion of who is master
- * as long as the Dmn_DMesgNet object timestamp is earlier than other.
+ * will not derail the DMesgNet object notion of who is master
+ * as long as the DMesgNet object timestamp is earlier than other.
  */
 
 #include <sys/time.h>
@@ -24,15 +24,14 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::unique_ptr<dmn::Io<std::string>> readSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5001);
+  std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+      std::make_unique<dmn::Socket>("127.0.0.1", 5000, true);
 
   dmn::DMesgPb sysPb_3{};
-  std::unique_ptr<dmn::Dmn_DMesgNet> dmesgnet1 =
-      std::make_unique<dmn::Dmn_DMesgNet>("dmesg-3", std::move(readSocket1),
-                                          std::move(writeSocket1));
+  std::unique_ptr<dmn::DMesgNet> dmesgnet1 = std::make_unique<dmn::DMesgNet>(
+      "dmesg-3", std::move(readSocket1), std::move(writeSocket1));
   readSocket1.reset();
   writeSocket1.reset();
 
@@ -46,10 +45,10 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb sysPb_4{};
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  dmn::Dmn_Proc dmesg_4_Proc{
+  dmn::Proc dmesg_4_Proc{
       "dmesg_4_Proc", [&sysPb_4]() mutable {
-        std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-            std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+        std::unique_ptr<dmn::Io<std::string>> writeSocket1 =
+            std::make_unique<dmn::Socket>("127.0.0.1", 5001, true);
         dmn::DMesgPb sys{};
         struct timeval tv;
 

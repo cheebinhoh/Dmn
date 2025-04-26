@@ -24,7 +24,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg) {
   pthread_mutex_unlock(mutex);
 }
 
-Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
+Proc::Proc(std::string_view name, Proc::Task fn) : m_name{name} {
   setState(State::kNew);
 
   if (fn) {
@@ -32,7 +32,7 @@ Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
   }
 }
 
-Dmn_Proc::~Dmn_Proc() noexcept try {
+Proc::~Proc() noexcept try {
   if (getState() == State::kRunning) {
     stopExec();
   }
@@ -43,7 +43,7 @@ Dmn_Proc::~Dmn_Proc() noexcept try {
   return;
 }
 
-bool Dmn_Proc::exec(Dmn_Proc::Task fn) {
+bool Proc::exec(Proc::Task fn) {
   if (fn) {
     setTask(fn);
   }
@@ -51,9 +51,9 @@ bool Dmn_Proc::exec(Dmn_Proc::Task fn) {
   return runExec();
 }
 
-Dmn_Proc::State Dmn_Proc::getState() const { return m_state; }
+Proc::State Proc::getState() const { return m_state; }
 
-Dmn_Proc::State Dmn_Proc::setState(State state) {
+Proc::State Proc::setState(State state) {
   State old_state = this->m_state;
 
   this->m_state = state;
@@ -61,14 +61,14 @@ Dmn_Proc::State Dmn_Proc::setState(State state) {
   return old_state;
 }
 
-void Dmn_Proc::setTask(Dmn_Proc::Task fn) {
+void Proc::setTask(Proc::Task fn) {
   assert(getState() == State::kNew || getState() == State::kReady);
 
   this->m_fn = fn;
   setState(State::kReady);
 }
 
-bool Dmn_Proc::wait() {
+bool Proc::wait() {
   int err{};
   void *pRet{};
 
@@ -86,12 +86,12 @@ bool Dmn_Proc::wait() {
   return 0 == err;
 }
 
-void Dmn_Proc::yield() {
+void Proc::yield() {
   pthread_testcancel();
   sched_yield();
 }
 
-bool Dmn_Proc::stopExec() {
+bool Proc::stopExec() {
   int err{};
 
   if (getState() != State::kRunning) {
@@ -106,17 +106,17 @@ bool Dmn_Proc::stopExec() {
   return wait();
 }
 
-bool Dmn_Proc::runExec() {
+bool Proc::runExec() {
   int err{};
   State old_state{};
 
   if (getState() != State::kReady) {
-    throw std::runtime_error("No task is assigned to the Dmn_Proc (" + m_name +
+    throw std::runtime_error("No task is assigned to the Proc (" + m_name +
                              ")");
   }
 
   old_state = setState(State::kRunning);
-  err = pthread_create(&m_th, NULL, &(Dmn_Proc::runFnInThreadHelper), this);
+  err = pthread_create(&m_th, NULL, &(Proc::runFnInThreadHelper), this);
   if (err) {
     setState(old_state);
     return false;
@@ -125,8 +125,8 @@ bool Dmn_Proc::runExec() {
   return true;
 }
 
-void *Dmn_Proc::runFnInThreadHelper(void *context) {
-  Dmn_Proc *proc{};
+void *Proc::runFnInThreadHelper(void *context) {
+  Proc *proc{};
   int old_state{};
   int err{};
 
@@ -140,7 +140,7 @@ void *Dmn_Proc::runFnInThreadHelper(void *context) {
     throw std::runtime_error(strerror(err));
   }
 
-  proc = (Dmn_Proc *)context;
+  proc = (Proc *)context;
   proc->m_fn();
 
   return NULL;

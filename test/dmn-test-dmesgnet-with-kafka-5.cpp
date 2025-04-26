@@ -1,16 +1,16 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that we can have two Dmn_DMesgNet_Kafka object(s)
+ * This test program asserts that we can have two DMesgNet_Kafka object(s)
  * that joins in a virtual distrbuted messaging network that spans cross a
- * confluent.cloud via Dmn_Kafka I/O and rdkafka.
+ * confluent.cloud via Kafka I/O and rdkafka.
  *
- * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
+ * Each DMesgNet_Kafka object has a sys state' nodelist that includes
  * another object identifier as its neighbor.
  *
- * Part of the last test is to have a handler from one Dmn_DMesgNet_Kafka
+ * Part of the last test is to have a handler from one DMesgNet_Kafka
  * object to subscribe a topic and then another handler of another
- * Dmn_DMesgNet_Kafka object to write a series of topic message over kafka
+ * DMesgNet_Kafka object to write a series of topic message over kafka
  * network.
  */
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
+  dmn::Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -43,15 +43,14 @@ int main(int argc, char *argv[]) {
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
   readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs_other[dmn::Kafka::Topic] = "dmesgnet";
+  readConfigs_other[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+  dmn::Kafka consumer_other{dmn::Kafka::Role::kConsumer, readConfigs_other};
 
   // dmesgnet1
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType configs{};
+  dmn::Kafka::ConfigType configs{};
   configs["bootstrap.servers"] = "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   configs["sasl.username"] = "ICCN4A57TNKONPQ3";
   configs["sasl.password"] =
@@ -60,10 +59,10 @@ int main(int argc, char *argv[]) {
   configs["sasl.mechanisms"] = "PLAIN";
 
   // dmesgnet1
-  dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
+  dmn::DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
 
   // dmesgnet2
-  dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
+  dmn::DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -120,7 +119,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::string> subscribedTopics{"counter sync 1"};
 
   int cnt{0};
-  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
+  std::shared_ptr<dmn::DMesg::DMesgHandler> dmesgHandler =
       dmesgnet1.openHandler(subscribedTopics, "handler1", false, nullptr,
                             [&cnt](const dmn::DMesgPb &msg) mutable {
                               EXPECT_TRUE("counter sync 1" == msg.topic());

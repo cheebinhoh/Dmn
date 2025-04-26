@@ -19,10 +19,10 @@
 
 namespace dmn {
 
-Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
-                           std::unique_ptr<Dmn_Io<std::string>> input_handler,
-                           std::unique_ptr<Dmn_Io<std::string>> output_handler)
-    : Dmn_DMesg{name}, m_name{name}, m_input_handler{std::move(input_handler)},
+DMesgNet::DMesgNet(std::string_view name,
+                   std::unique_ptr<Io<std::string>> input_handler,
+                   std::unique_ptr<Io<std::string>> output_handler)
+    : DMesg{name}, m_name{name}, m_input_handler{std::move(input_handler)},
       m_output_handler{std::move(output_handler)} {
 
   // Initialize the DMesgNet state
@@ -42,7 +42,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
   // subscriptHandler to read and write with local DMesg
-  m_subscript_handler = Dmn_DMesg::openHandler(
+  m_subscript_handler = DMesg::openHandler(
       m_name,
       true, // include DMesgSys!
       [this](const dmn::DMesgPb &dmesgPb) {
@@ -55,7 +55,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 std::string serialized_string{};
 
                 // set the source, so that we can skip it if the
-                // data is read back over the input Dmn_Io.
+                // data is read back over the input Io.
                 //
                 // FIXME: shall we generate UUID internally to guarantee
                 // uniqueness across networked nodes or global Internet?
@@ -76,14 +76,14 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       });
 
   if (m_input_handler) {
-    m_input_proc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
+    m_input_proc = std::make_unique<Proc>(m_name + "_inputProc", [this]() {
       bool stop{};
 
       while ((!stop) && this->m_input_handler) {
         dmn::DMesgPb dmesgPbRead{};
 
         auto data = this->m_input_handler->read();
-        Dmn_Proc::yield();
+        Proc::yield();
 
         if (data) {
           dmesgPbRead.ParseFromString(*data);
@@ -95,8 +95,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
           // m_subscript_handler of this DMesgNet from
           // reading this message again and send out.
           //
-          // the Dmn_DMesgHandler->write will add the name
-          // of the Dmn_DMesgHandler from read it again,
+          // the DMesgHandler->write will add the name
+          // of the DMesgHandler from read it again,
           // but it is good to be explicit.
 
           if (dmesgPbRead.type() == dmn::DMesgTypePb::sys) {
@@ -114,17 +114,17 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                     }
                   } catch (...) {
                     // The data from network is out of sync with data
-                    // in the Dmn_DMesg, and a few should happen:
-                    // - mark the topic as in conflict for local Dmn_DMesg
-                    // - the local Dmn_DMesg will mark all openHandler in
+                    // in the DMesg, and a few should happen:
+                    // - mark the topic as in conflict for local DMesg
+                    // - the local DMesg will mark all openHandler in
                     //   conflict but waiting for resolution with
-                    //   Dmn_DMesgNet master, so they will not allow any
+                    //   DMesgNet master, so they will not allow any
                     //   message on the same topic band.
-                    // - the local Dmn_DMesgNet will broadcast a sys
+                    // - the local DMesgNet will broadcast a sys
                     // conflict
                     //   message.
                     // - all networked DMesgNet(s) receives the sys conflict
-                    //   message will then put its local Dmn_DMesg in
+                    //   message will then put its local DMesg in
                     //   conflict state for the same topic.
                     // - master node will then send its last message for the
                     //   to all nodes, and all nodes receives the message
@@ -140,14 +140,14 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
     m_input_proc->exec();
 
-    m_sys_handler = Dmn_DMesg::openHandler(
+    m_sys_handler = DMesg::openHandler(
         m_name + "_sys", [this](const dmn::DMesgPb &dmesgPb) { return false; },
         nullptr);
   }
 
   if (m_input_handler && m_output_handler) {
     // into MasterPending
-    m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
+    m_timer_proc = std::make_unique<dmn::Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS), [this]() {
           this->write([this]() mutable {
             if (this->m_sys.body().sys().self().state() ==
@@ -228,7 +228,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   }
 }
 
-Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
+DMesgNet::~DMesgNet() noexcept try {
   // it is important that we free up m_input_handler as if it is a
   // kafka handler, it will be continuing to be feed of incoming
   // message and including one that is generated by this dmesgnet,
@@ -238,7 +238,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   m_timer_proc.reset();
 
   if (m_output_handler) {
-    // it is about to destroy the Dmn_DMesgNet and free everything
+    // it is about to destroy the DMesgNet and free everything
     // it will send last heartbeat and reliquinsh itself as master (if
     // itself is master).
     //
@@ -264,11 +264,11 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   }
 
   if (m_sys_handler) {
-    Dmn_DMesg::closeHandler(m_sys_handler);
+    DMesg::closeHandler(m_sys_handler);
   }
 
   if (m_subscript_handler) {
-    Dmn_DMesg::closeHandler(m_subscript_handler);
+    DMesg::closeHandler(m_subscript_handler);
   }
 
   this->waitForEmpty();
@@ -277,7 +277,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
-void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
+void DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
   auto other = dmesgPbOther.body().sys().self();
   auto self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 

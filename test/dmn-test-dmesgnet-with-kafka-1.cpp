@@ -1,8 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that the Dmn_DMesgNet object can be constructed
- * with the external Dmn_Kafka objects as its input and output handler and
+ * This test program asserts that the DMesgNet object can be constructed
+ * with the external Kafka objects as its input and output handler and
  * perform object teardown without problem.
  */
 
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
-  dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -34,14 +34,14 @@ int main(int argc, char *argv[]) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs[dmn::Kafka::Topic] = "dmesgnet";
+  writeConfigs[dmn::Kafka::Key] = "dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> producer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs);
+  std::unique_ptr<dmn::Kafka> producer =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kProducer, writeConfigs);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -50,15 +50,14 @@ int main(int argc, char *argv[]) {
   readConfigs["security.protocol"] = "SASL_SSL";
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmesg1";
-  readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs[dmn::Kafka::Topic] = "dmesgnet";
   readConfigs["auto.offset.reset"] = "latest";
-  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "1000";
+  readConfigs[dmn::Kafka::PollTimeoutMs] = "1000";
 
-  std::unique_ptr<dmn::Dmn_Kafka> consumer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs);
+  std::unique_ptr<dmn::Kafka> consumer =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kConsumer, readConfigs);
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
-                              std::move(producer)};
+  dmn::DMesgNet dmesgnet1{"dmesg1", std::move(consumer), std::move(producer)};
   consumer.reset();
   producer.reset();
 

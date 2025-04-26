@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
-  dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs[dmn::Kafka::Topic] = "dmesgnet";
+  writeConfigs[dmn::Kafka::Key] = "dmesgnet";
 
-  dmn::Dmn_Kafka producer{dmn::Dmn_Kafka::Role::kProducer, writeConfigs};
+  dmn::Kafka producer{dmn::Kafka::Role::kProducer, writeConfigs};
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmesg1";
   readConfigs["auto.offset.reset"] = "latest";
-  readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs[dmn::Kafka::Topic] = "dmesgnet";
+  readConfigs[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
+  dmn::Kafka consumer{dmn::Kafka::Role::kConsumer, readConfigs};
 
   // consume prior messages from topic.
   while (true) {
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(data.size() == index);
 
-  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
-  dmn::Dmn_Kafka consumer2{dmn::Dmn_Kafka::Role::kConsumer, readConfigs};
+  readConfigs[dmn::Kafka::PollTimeoutMs] = "7000";
+  dmn::Kafka consumer2{dmn::Kafka::Role::kConsumer, readConfigs};
 
   std::cout << "read without data\n";
   struct timeval tv;

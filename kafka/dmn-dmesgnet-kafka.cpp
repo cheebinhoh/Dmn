@@ -13,34 +13,33 @@
 
 namespace dmn {
 
-Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
-                                       Dmn_Kafka::ConfigType configs)
+DMesgNet_Kafka::DMesgNet_Kafka(std::string_view name, Kafka::ConfigType configs)
     : m_name{name} {
   // input handle for DMesgNet
-  dmn::Dmn_Kafka::ConfigType input_configs{configs};
+  dmn::Kafka::ConfigType input_configs{configs};
   input_configs["group.id"] = name;
-  input_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  input_configs[dmn::Kafka::Topic] = "dmesgnet";
   input_configs["auto.offset.reset"] = "earliest";
-  input_configs[dmn::Dmn_Kafka::PollTimeoutMs] = "500";
+  input_configs[dmn::Kafka::PollTimeoutMs] = "500";
 
-  std::unique_ptr<dmn::Dmn_Kafka> input = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, input_configs);
+  std::unique_ptr<dmn::Kafka> input =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kConsumer, input_configs);
 
   // output handle for DMesgNet
-  dmn::Dmn_Kafka::ConfigType output_configs{configs};
+  dmn::Kafka::ConfigType output_configs{configs};
   output_configs["acks"] = "all";
-  output_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  output_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  output_configs[dmn::Kafka::Topic] = "dmesgnet";
+  output_configs[dmn::Kafka::Key] = "dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> output = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, output_configs);
+  std::unique_ptr<dmn::Kafka> output =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kProducer, output_configs);
 
   // DMesgNet
-  m_dmesgnet = std::make_unique<dmn::Dmn_DMesgNet>(name, std::move(input),
-                                                   std::move(output));
+  m_dmesgnet = std::make_unique<dmn::DMesgNet>(name, std::move(input),
+                                               std::move(output));
 }
 
-Dmn_DMesgNet_Kafka::~Dmn_DMesgNet_Kafka() noexcept try {
+DMesgNet_Kafka::~DMesgNet_Kafka() noexcept try {
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;

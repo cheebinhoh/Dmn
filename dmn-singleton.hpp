@@ -15,7 +15,7 @@
 
 namespace dmn {
 
-class Dmn_Singleton {
+class Singleton {
 public:
   /**
    * @brief The static method called to create singleton instance of the
@@ -32,7 +32,7 @@ public:
 };
 
 template <typename T, class... U>
-std::shared_ptr<T> Dmn_Singleton::createInstance(U &&...arg) {
+std::shared_ptr<T> Singleton::createInstance(U &&...arg) {
   std::shared_ptr<T> new_instance =
       T::createInstanceInternal(std::forward<U>(arg)...);
 

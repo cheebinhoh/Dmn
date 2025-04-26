@@ -24,16 +24,16 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
+template <typename T> class LimitBuffer : private Buffer<T> {
 public:
-  Dmn_LimitBuffer(size_t capacity = 1);
-  virtual ~Dmn_LimitBuffer();
+  LimitBuffer(size_t capacity = 1);
+  virtual ~LimitBuffer();
 
-  Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &dmnLimitBuffer) = delete;
-  const Dmn_LimitBuffer<T> &
-  operator=(const Dmn_LimitBuffer<T> &dmnLimitBuffer) = delete;
-  Dmn_LimitBuffer(Dmn_LimitBuffer<T> &&dmnLimitBuffer) = delete;
-  Dmn_LimitBuffer<T> &&operator=(Dmn_LimitBuffer<T> &&dmnLimitBuffer) = delete;
+  LimitBuffer(const LimitBuffer<T> &dmnLimitBuffer) = delete;
+  const LimitBuffer<T> &
+  operator=(const LimitBuffer<T> &dmnLimitBuffer) = delete;
+  LimitBuffer(LimitBuffer<T> &&dmnLimitBuffer) = delete;
+  LimitBuffer<T> &&operator=(LimitBuffer<T> &&dmnLimitBuffer) = delete;
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -105,11 +105,10 @@ private:
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_pop_cond{};
   pthread_cond_t m_push_cond{};
-}; // class Dmn_LimitBuffer
+}; // class LimitBuffer
 
 template <typename T>
-Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
-    : m_max_capacity(capacity) {
+LimitBuffer<T>::LimitBuffer(size_t capacity) : m_max_capacity(capacity) {
   int err{};
 
   err = pthread_mutex_init(&m_mutex, NULL);
@@ -128,7 +127,7 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
   }
 }
 
-template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
+template <typename T> LimitBuffer<T>::~LimitBuffer() {
   pthread_cond_signal(&m_pop_cond);
   pthread_cond_signal(&m_push_cond);
 
@@ -137,19 +136,19 @@ template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
   pthread_mutex_destroy(&m_mutex);
 }
 
-template <typename T> T Dmn_LimitBuffer<T>::pop() { return *popOptional(true); }
+template <typename T> T LimitBuffer<T>::pop() { return *popOptional(true); }
 
-template <typename T> std::optional<T> Dmn_LimitBuffer<T>::popNoWait() {
+template <typename T> std::optional<T> LimitBuffer<T>::popNoWait() {
   return popOptional(false);
 }
 
-template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
+template <typename T> void LimitBuffer<T>::push(T &&item) {
   T movedItem = std::move_if_noexcept(item);
 
   push(movedItem, true);
 }
 
-template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
+template <typename T> void LimitBuffer<T>::push(T &item, bool move) {
   int err{};
 
   err = pthread_mutex_lock(&m_mutex);
@@ -170,7 +169,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
     pthread_testcancel();
   }
 
-  Dmn_Buffer<T>::push(item, move);
+  Buffer<T>::push(item, move);
   ++m_size;
 
   err = pthread_cond_signal(&m_pop_cond);
@@ -188,7 +187,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
   }
 }
 
-template <typename T> size_t Dmn_LimitBuffer<T>::size() {
+template <typename T> size_t LimitBuffer<T>::size() {
   int err{};
   size_t size{};
 
@@ -213,12 +212,11 @@ template <typename T> size_t Dmn_LimitBuffer<T>::size() {
   return size;
 }
 
-template <typename T> long long Dmn_LimitBuffer<T>::waitForEmpty() {
-  return Dmn_Buffer<T>::waitForEmpty();
+template <typename T> long long LimitBuffer<T>::waitForEmpty() {
+  return Buffer<T>::waitForEmpty();
 }
 
-template <typename T>
-std::optional<T> Dmn_LimitBuffer<T>::popOptional(bool wait) {
+template <typename T> std::optional<T> LimitBuffer<T>::popOptional(bool wait) {
   int err{};
   std::optional<T> val{};
 
@@ -231,7 +229,7 @@ std::optional<T> Dmn_LimitBuffer<T>::popOptional(bool wait) {
 
   pthread_testcancel();
 
-  val = Dmn_Buffer<T>::popOptional(wait);
+  val = Buffer<T>::popOptional(wait);
   m_size--;
 
   err = pthread_cond_signal(&m_push_cond);

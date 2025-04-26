@@ -1,11 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that the Dmn_DMesgNet object can integrate with
- * the external Dmn_Kafka objects that Dmn_DmesgPb message sent by Dmn_DMesgNet
- * object through outbound handler of Dmn_Kafka object (as producer) can be
- * consumed by external Dmn_kafka object serves as consumer of the same topic
- * published through outbound handler of Dmn_kafka object (within Dmn_DMesgNet
+ * This test program asserts that the DMesgNet object can integrate with
+ * the external Kafka objects that DmesgPb message sent by DMesgNet
+ * object through outbound handler of Kafka object (as producer) can be
+ * consumed by external kafka object serves as consumer of the same topic
+ * published through outbound handler of kafka object (within DMesgNet
  * object).
  */
 
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
+  dmn::Kafka::ConfigType readConfigs_other{};
   readConfigs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -38,14 +38,13 @@ int main(int argc, char *argv[]) {
   readConfigs_other["sasl.mechanisms"] = "PLAIN";
   readConfigs_other["group.id"] = "dmesg_other";
   readConfigs_other["auto.offset.reset"] = "latest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs_other[dmn::Kafka::Topic] = "dmesgnet";
+  readConfigs_other[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+  dmn::Kafka consumer_other{dmn::Kafka::Role::kConsumer, readConfigs_other};
 
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType writeConfigs{};
+  dmn::Kafka::ConfigType writeConfigs{};
   writeConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -54,14 +53,14 @@ int main(int argc, char *argv[]) {
   writeConfigs["security.protocol"] = "SASL_SSL";
   writeConfigs["sasl.mechanisms"] = "PLAIN";
   writeConfigs["acks"] = "all";
-  writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  writeConfigs[dmn::Kafka::Topic] = "dmesgnet";
+  writeConfigs[dmn::Kafka::Key] = "dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> producer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs);
+  std::unique_ptr<dmn::Kafka> producer =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kProducer, writeConfigs);
 
   // reader for DMesgNet
-  dmn::Dmn_Kafka::ConfigType readConfigs{};
+  dmn::Kafka::ConfigType readConfigs{};
   readConfigs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
   readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
@@ -70,15 +69,14 @@ int main(int argc, char *argv[]) {
   readConfigs["security.protocol"] = "SASL_SSL";
   readConfigs["sasl.mechanisms"] = "PLAIN";
   readConfigs["group.id"] = "dmesg1";
-  readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  readConfigs[dmn::Kafka::Topic] = "dmesgnet";
   readConfigs["auto.offset.reset"] = "latest";
-  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  readConfigs[dmn::Kafka::PollTimeoutMs] = "7000";
 
-  std::unique_ptr<dmn::Dmn_Kafka> consumer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs);
+  std::unique_ptr<dmn::Kafka> consumer =
+      std::make_unique<dmn::Kafka>(dmn::Kafka::Role::kConsumer, readConfigs);
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
-                              std::move(producer)};
+  dmn::DMesgNet dmesgnet1{"dmesg1", std::move(consumer), std::move(producer)};
   consumer.reset();
   producer.reset();
 

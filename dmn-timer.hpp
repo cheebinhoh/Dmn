@@ -20,15 +20,15 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Timer : public Dmn_Proc {
+template <typename T> class Timer : public Proc {
 public:
-  Dmn_Timer(const T &reltime, std::function<void()> fn);
-  virtual ~Dmn_Timer() noexcept;
+  Timer(const T &reltime, std::function<void()> fn);
+  virtual ~Timer() noexcept;
 
-  Dmn_Timer(const Dmn_Timer &obj) = delete;
-  const Dmn_Timer &operator=(const Dmn_Timer &obj) = delete;
-  Dmn_Timer(Dmn_Timer &&obj) = delete;
-  Dmn_Timer &operator=(Dmn_Timer &&obj) = delete;
+  Timer(const Timer &obj) = delete;
+  const Timer &operator=(const Timer &obj) = delete;
+  Timer(Timer &&obj) = delete;
+  Timer &operator=(Timer &&obj) = delete;
 
   /**
    * @brief The method starts the timer that executes fn repeatedly after
@@ -51,22 +51,22 @@ private:
    */
   std::function<void()> m_fn{};
   T m_reltime{};
-}; // class Dmn_Timer
+}; // class Timer
 
 template <typename T>
-Dmn_Timer<T>::Dmn_Timer(const T &reltime, std::function<void()> fn)
-    : Dmn_Proc{"timer"}, m_fn{fn}, m_reltime{reltime} {
+Timer<T>::Timer(const T &reltime, std::function<void()> fn)
+    : Proc{"timer"}, m_fn{fn}, m_reltime{reltime} {
   this->start(this->m_reltime, this->m_fn);
 }
 
-template <typename T> Dmn_Timer<T>::~Dmn_Timer() noexcept try {
+template <typename T> Timer<T>::~Timer() noexcept try {
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
 template <typename T>
-void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
+void Timer<T>::start(const T &reltime, std::function<void()> fn) {
   m_reltime = reltime;
 
   if (fn) {
@@ -78,14 +78,14 @@ void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
   this->exec([this]() {
     while (true) {
       std::this_thread::sleep_for(this->m_reltime);
-      Dmn_Proc::yield();
+      Proc::yield();
 
       this->m_fn();
     }
   });
 }
 
-template <typename T> void Dmn_Timer<T>::stop() {
+template <typename T> void Timer<T>::stop() {
   try {
     this->stopExec();
   } catch (...) {

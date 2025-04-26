@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test program asserts that the Dmn_DMesg class support
+ * This test program asserts that the DMesg class support
  * that one publisher and one subscriber are able to continuing
  * read and write multiple messages between them.
  */
@@ -17,7 +17,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  dmn::DMesg dmesg{"dmesg"};
 
   auto dmesgHandler1 = dmesg.openHandler("handler1");
   EXPECT_TRUE(dmesgHandler1);
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   auto dmesgHandler2 = dmesg.openHandler("handler2");
   EXPECT_TRUE(dmesgHandler2);
 
-  dmn::Dmn_Proc proc1{
+  dmn::Proc proc1{
       "proc1", [&dmesgHandler1]() {
         int valCheck{1};
 
@@ -67,52 +67,52 @@ int main(int argc, char *argv[]) {
         }
       }};
 
-  dmn::Dmn_Proc proc2{
-      "proc2", [&dmesgHandler2]() {
-        int val{1};
+  dmn::Proc proc2{"proc2", [&dmesgHandler2]() {
+                    int val{1};
 
-        while (true) {
-          std::stringstream os{};
+                    while (true) {
+                      std::stringstream os{};
 
-          if (val <= 10) {
-            os << val;
-          } else {
-            os << "";
-          }
+                      if (val <= 10) {
+                        os << val;
+                      } else {
+                        os << "";
+                      }
 
-          dmn::DMesgPb dmesgPb{};
-          dmesgPb.set_topic("counter sync");
-          dmesgPb.set_type(dmn::DMesgTypePb::message);
+                      dmn::DMesgPb dmesgPb{};
+                      dmesgPb.set_topic("counter sync");
+                      dmesgPb.set_type(dmn::DMesgTypePb::message);
 
-          dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
-          dmsgbodyPb->set_message(os.str());
+                      dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+                      dmsgbodyPb->set_message(os.str());
 
-          dmesgHandler2->write(dmesgPb);
+                      dmesgHandler2->write(dmesgPb);
 
-          if (os.str() == "") {
-            break;
-          }
+                      if (os.str() == "") {
+                        break;
+                      }
 
-          auto dmesgPbRet = dmesgHandler2->read();
-          if (!dmesgPbRet) {
-            break;
-          }
+                      auto dmesgPbRet = dmesgHandler2->read();
+                      if (!dmesgPbRet) {
+                        break;
+                      }
 
-          assert(dmesgPbRet->type() == dmn::DMesgTypePb::message);
-          assert(dmesgPbRet->body().message() != "");
+                      assert(dmesgPbRet->type() == dmn::DMesgTypePb::message);
+                      assert(dmesgPbRet->body().message() != "");
 
-          std::cout << "proc2: message: " << dmesgPbRet->body().message()
-                    << "\n";
+                      std::cout
+                          << "proc2: message: " << dmesgPbRet->body().message()
+                          << "\n";
 
-          int valRet{};
+                      int valRet{};
 
-          std::stringstream is{dmesgPbRet->body().message()};
-          is >> valRet;
+                      std::stringstream is{dmesgPbRet->body().message()};
+                      is >> valRet;
 
-          EXPECT_TRUE(valRet == (val + 1));
-          val += 2;
-        }
-      }};
+                      EXPECT_TRUE(valRet == (val + 1));
+                      val += 2;
+                    }
+                  }};
 
   proc2.exec();
   proc1.exec();

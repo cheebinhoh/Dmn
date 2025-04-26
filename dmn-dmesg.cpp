@@ -28,17 +28,15 @@ namespace dmn {
 
 const char *kDMesgSysIdentifier = "sys.dmn-dmesg";
 
-// class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
-Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
-    ~Dmn_DMesgHandlerSub() noexcept try {
+// class DMesg::DMesgHandler::DMesgHandlerSub
+DMesg::DMesgHandler::DMesgHandlerSub::~DMesgHandlerSub() noexcept try {
 
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
-    dmn::DMesgPb dmesgPb) {
+void DMesg::DMesgHandler::DMesgHandlerSub::notify(dmn::DMesgPb dmesgPb) {
   if (dmesgPb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgPb.type() == dmn::DMesgTypePb::sys) {
     std::string id = dmesgPb.topic();
@@ -64,30 +62,28 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
   }
 }
 
-// class Dmn_DMesg::Dmn_DMesgHandler
-Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
-                                              FilterTask filterFn,
-                                              AsyncProcessTask asyncProcessFn)
-    : Dmn_DMesgHandler{name, false, filterFn, asyncProcessFn} {}
+// class DMesg::DMesgHandler
+DMesg::DMesgHandler::DMesgHandler(std::string_view name, FilterTask filterFn,
+                                  AsyncProcessTask asyncProcessFn)
+    : DMesgHandler{name, false, filterFn, asyncProcessFn} {}
 
-Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
-                                              bool includeDMesgSys,
-                                              FilterTask filterFn,
-                                              AsyncProcessTask asyncProcessFn)
+DMesg::DMesgHandler::DMesgHandler(std::string_view name, bool includeDMesgSys,
+                                  FilterTask filterFn,
+                                  AsyncProcessTask asyncProcessFn)
     : m_name{name}, m_include_dmesgsys{includeDMesgSys}, m_filter_fn{filterFn},
       m_async_process_fn{asyncProcessFn} {
-  // set the chained of owner for composite Dmn_DMesgHandlerSub object
+  // set the chained of owner for composite DMesgHandlerSub object
   m_sub.m_owner = this;
 }
 
-Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
+DMesg::DMesgHandler::~DMesgHandler() noexcept try {
   m_sub.waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-std::optional<dmn::DMesgPb> Dmn_DMesg::Dmn_DMesgHandler::read() {
+std::optional<dmn::DMesgPb> DMesg::DMesgHandler::read() {
   if (nullptr != m_owner) {
     try {
       dmn::DMesgPb mesgPb = m_buffers.pop();
@@ -101,16 +97,16 @@ std::optional<dmn::DMesgPb> Dmn_DMesg::Dmn_DMesgHandler::read() {
   return {};
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict() {
+void DMesg::DMesgHandler::resolveConflict() {
   m_owner->resetHandlerConflictState(this);
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
+void DMesg::DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflictFn) {
   m_conflict_callback_fn = conflictFn;
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgPb) {
+void DMesg::DMesgHandler::write(dmn::DMesgPb &&dmesgPb) {
   if (nullptr == m_owner) {
     return;
   }
@@ -120,7 +116,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgPb) {
   writeDMesgInternal(movedDMesgPb, true);
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgPb) {
+void DMesg::DMesgHandler::write(dmn::DMesgPb &dmesgPb) {
   if (nullptr == m_owner) {
     return;
   }
@@ -128,10 +124,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgPb) {
   writeDMesgInternal(dmesgPb, false);
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
+void DMesg::DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
 
-void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgPb,
-                                                     bool move) {
+void DMesg::DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgPb, bool move) {
   assert(nullptr != m_owner);
 
   if (m_in_conflict) {
@@ -162,13 +157,11 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgPb,
   m_topic_running_counter[topic] = nextRunningCounter;
 }
 
-bool Dmn_DMesg::Dmn_DMesgHandler::isInConflict() const { return m_in_conflict; }
+bool DMesg::DMesgHandler::isInConflict() const { return m_in_conflict; }
 
-void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal() {
-  m_in_conflict = false;
-}
+void DMesg::DMesgHandler::resolveConflictInternal() { m_in_conflict = false; }
 
-void Dmn_DMesg::Dmn_DMesgHandler::throwConflict(const dmn::DMesgPb dmesgPb) {
+void DMesg::DMesgHandler::throwConflict(const dmn::DMesgPb dmesgPb) {
   m_in_conflict = true;
 
   if (m_conflict_callback_fn) {
@@ -177,50 +170,45 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflict(const dmn::DMesgPb dmesgPb) {
   }
 }
 
-// class Dmn_DMesg
-Dmn_DMesg::Dmn_DMesg(std::string_view name, KeyValueConfiguration config)
-    : Dmn_Pub{name, 0, // Dmn_DMesg manages re-send per topic
-              [this](const Dmn_Sub *const sub, const dmn::DMesgPb &msg) {
-                const Dmn_DMesgHandler::Dmn_DMesgHandlerSub *const handlerSub =
-                    dynamic_cast<
-                        const Dmn_DMesgHandler::Dmn_DMesgHandlerSub *const>(
-                        sub);
-                assert(handlerSub != nullptr);
+// class DMesg
+DMesg::DMesg(std::string_view name, KeyValueConfiguration config)
+    : Pub{name, 0, // DMesg manages re-send per topic
+          [this](const Sub *const sub, const dmn::DMesgPb &msg) {
+            const DMesgHandler::DMesgHandlerSub *const handlerSub =
+                dynamic_cast<const DMesgHandler::DMesgHandlerSub *const>(sub);
+            assert(handlerSub != nullptr);
 
-                Dmn_DMesgHandler *handler = handlerSub->m_owner;
+            DMesgHandler *handler = handlerSub->m_owner;
 
-                return nullptr != handler && nullptr != handler->m_owner &&
-                       (true == msg.playback() ||
-                        handler->m_after_initial_playback) &&
-                       (handler->m_subscribed_topics.size() == 0 ||
-                        std::find(handler->m_subscribed_topics.begin(),
-                                  handler->m_subscribed_topics.end(),
-                                  msg.topic()) !=
-                            handler->m_subscribed_topics.end());
-              }},
+            return nullptr != handler && nullptr != handler->m_owner &&
+                   (true == msg.playback() ||
+                    handler->m_after_initial_playback) &&
+                   (handler->m_subscribed_topics.size() == 0 ||
+                    std::find(handler->m_subscribed_topics.begin(),
+                              handler->m_subscribed_topics.end(),
+                              msg.topic()) !=
+                        handler->m_subscribed_topics.end());
+          }},
       m_name{name}, m_config{config} {}
 
-Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
+DMesg::~DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-void Dmn_DMesg::closeHandler(
-    std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> &handlerToClose) {
+void DMesg::closeHandler(std::shared_ptr<DMesg::DMesgHandler> &handlerToClose) {
   this->unregisterSubscriber(&(handlerToClose->m_sub));
   handlerToClose->waitForEmpty();
   handlerToClose->m_owner = nullptr;
 
-  Dmn_DMesgHandler *handlerPtr = handlerToClose.get();
+  DMesgHandler *handlerPtr = handlerToClose.get();
   handlerToClose = {};
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
       {
-        std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it =
-            std::find_if(m_handlers.begin(), m_handlers.end(),
-                         [handlerPtr](auto handler) {
-                           return handler.get() == handlerPtr;
-                         });
+        std::vector<std::shared_ptr<DMesgHandler>>::iterator it = std::find_if(
+            m_handlers.begin(), m_handlers.end(),
+            [handlerPtr](auto handler) { return handler.get() == handlerPtr; });
 
         if (it != m_handlers.end()) {
           m_handlers.erase(it);
@@ -229,7 +217,7 @@ void Dmn_DMesg::closeHandler(
       this, handlerPtr);
 }
 
-void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
+void DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topicDmesgPb : m_topic_last_dmesgpb) {
     dmn::DMesgPb pb = topicDmesgPb.second;
 
@@ -239,17 +227,17 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   }
 }
 
-void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgPb) {
+void DMesg::publishInternal(dmn::DMesgPb dmesgPb) {
   // for message that is playback, we skip the check if it is conflict as
   // only openHandler with lower running counter will read those message.
   if (dmesgPb.playback()) {
-    Dmn_Pub::publishInternal(dmesgPb);
+    Pub::publishInternal(dmesgPb);
   } else {
     std::string id = dmesgPb.topic();
 
     long long nextRunningCounter = incrementByOne(m_topic_running_counter[id]);
 
-    std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
+    std::vector<std::shared_ptr<DMesgHandler>>::iterator it = std::find_if(
         m_handlers.begin(), m_handlers.end(), [&dmesgPb](auto handler) {
           return handler->m_name == dmesgPb.sourcewritehandleridentifier();
         });
@@ -266,13 +254,13 @@ void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgPb) {
     }
 
     DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgPb, nextRunningCounter);
-    Dmn_Pub::publishInternal(dmesgPb);
+    Pub::publishInternal(dmesgPb);
     m_topic_running_counter[id] = nextRunningCounter;
     m_topic_last_dmesgpb[id] = dmesgPb;
   }
 }
 
-void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgSysPb) {
+void DMesg::publishSysInternal(dmn::DMesgPb dmesgSysPb) {
   assert(dmesgSysPb.topic() == kDMesgSysIdentifier);
   assert(dmesgSysPb.type() == dmn::DMesgTypePb::sys);
 
@@ -280,19 +268,18 @@ void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgSysPb) {
   long long nextRunningCounter = incrementByOne(m_topic_running_counter[id]);
 
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgSysPb, nextRunningCounter);
-  Dmn_Pub::publishInternal(dmesgSysPb);
+  Pub::publishInternal(dmesgSysPb);
   m_topic_running_counter[id] = nextRunningCounter;
 }
 
-void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handlerPtr) {
+void DMesg::resetHandlerConflictState(const DMesgHandler *handlerPtr) {
   DMN_ASYNC_CALL_WITH_CAPTURE(
       { this->resetHandlerConflictStateInternal(handlerPtr); }, this,
       handlerPtr);
 }
 
-void Dmn_DMesg::resetHandlerConflictStateInternal(
-    const Dmn_DMesgHandler *handlerPtr) {
-  std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
+void DMesg::resetHandlerConflictStateInternal(const DMesgHandler *handlerPtr) {
+  std::vector<std::shared_ptr<DMesgHandler>>::iterator it = std::find_if(
       m_handlers.begin(), m_handlers.end(),
       [handlerPtr](auto handler) { return handler.get() == handlerPtr; });
 
