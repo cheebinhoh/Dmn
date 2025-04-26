@@ -12,9 +12,9 @@
 #include <atomic>
 #include <expected>
 #include <functional>
-#include <map>
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 #include "rdkafka.h"
 
@@ -34,7 +34,7 @@ public:
   const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
                                           // break out
 
-  using ConfigType = std::map<std::string, std::string>;
+  using ConfigType = std::unordered_map<std::string, std::string>;
 
   enum class Role {
     kConsumer,

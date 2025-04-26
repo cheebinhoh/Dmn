@@ -59,23 +59,23 @@ Dmn_Socket::~Dmn_Socket() {
 
 std::optional<std::string> Dmn_Socket::read() {
   char buf[BUFSIZ]; /* FIXME: need to scale it as size of DMesgPb */
-  ssize_t nRead{};
+  ssize_t n_read{};
 
-  if ((nRead = recv(m_fd, buf, sizeof(buf), MSG_WAITALL)) < 0) {
+  if ((n_read = recv(m_fd, buf, sizeof(buf), MSG_WAITALL)) < 0) {
     return {};
-  } else if (nRead == 0) {
+  } else if (n_read == 0) {
     return {};
   }
 
-  std::string string(buf, nRead);
+  std::string string(buf, n_read);
 
   return string;
 }
 
 void Dmn_Socket::write(std::string &item) {
   const char *buf{item.c_str()};
-  size_t nRead{item.size()};
-  size_t nWrite{};
+  size_t n_read{item.size()};
+  size_t n_write{};
 
   /* FIXME: it might be effectiveto store socket_addr as member value per object
    */
@@ -89,9 +89,9 @@ void Dmn_Socket::write(std::string &item) {
     inet_pton(AF_INET, m_ip4.c_str(), &servaddr.sin_addr);
   }
 
-  nWrite = sendto(m_fd, buf, nRead, 0, /* FIXME: temporary for macOS */
-                  (const struct sockaddr *)&servaddr, sizeof(servaddr));
-  if (nWrite != nRead) {
+  n_write = sendto(m_fd, buf, n_read, 0, /* FIXME: temporary for macOS */
+                   (const struct sockaddr *)&servaddr, sizeof(servaddr));
+  if (n_write != n_read) {
     throw std::runtime_error("Error in sendto: " +
                              std::string(strerror(errno)));
   }

@@ -37,15 +37,15 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   for (int n = 0; n < 6; n++) {
-    dmn::DMesgPb dmesgPb{};
-    dmesgPb.set_topic(topics[n % 2]);
-    dmesgPb.set_type(dmn::DMesgTypePb::message);
+    dmn::DMesgPb dmesgpb{};
+    dmesgpb.set_topic(topics[n % 2]);
+    dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
-    dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+    dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
     dmsgbodyPb->set_message(data);
 
-    dmesgWriteHandler->write(dmesgPb);
+    dmesgWriteHandler->write(dmesgpb);
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));

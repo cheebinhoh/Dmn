@@ -139,7 +139,6 @@ private:
    * data members for internal logic.
    */
   std::deque<T> m_buffer{};
-
   pthread_mutex_t m_mutex{};
   std::vector<Dmn_Sub *> m_subscribers{};
 }; // class Dmn_Pub

@@ -24,16 +24,9 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-6
                       dmn-test-dmesgnet-7
                       dmn-test-dmesgnet-8
-                      dmn-test-dmesgnet-with-kafka-1
-                      dmn-test-dmesgnet-with-kafka-2
-                      dmn-test-dmesgnet-with-kafka-3
-                      dmn-test-dmesgnet-with-kafka-4
-                      dmn-test-dmesgnet-with-kafka-5
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
-                      dmn-test-kafka
-                      dmn-test-kafka-protobuf
                       dmn-test-pipe
                       dmn-test-pub-sub
                       dmn-test-singleton
@@ -43,3 +36,15 @@ ADD_TEST_EXECUTABLE(dmn
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
                     )
+
+if (BUILD_KAFKA_TEST)
+ADD_TEST_EXECUTABLE(dmn-kafka
+                      dmn-test-dmesgnet-with-kafka-1
+                      dmn-test-dmesgnet-with-kafka-2
+                      dmn-test-dmesgnet-with-kafka-3
+                      dmn-test-dmesgnet-with-kafka-4
+                      dmn-test-dmesgnet-with-kafka-5
+                      dmn-test-kafka
+                      dmn-test-kafka-protobuf
+                    )
+endif()

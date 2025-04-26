@@ -32,12 +32,12 @@
 #include <atomic>
 #include <cassert>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "dmn-pub-sub.hpp"
@@ -57,7 +57,7 @@ public:
    * @brief The key (std::string) and value (std::string) for Dmn_DMesg
    *        configuration.
    */
-  using KeyValueConfiguration = std::map<std::string, std::string>;
+  using KeyValueConfiguration = std::unordered_map<std::string, std::string>;
 
   /**
    * @brief The Dmn_DMesgHandler is intentionalled modelled to inherit from
@@ -106,7 +106,7 @@ public:
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
-      void notify(dmn::DMesgPb dmesgPb) override;
+      void notify(dmn::DMesgPb dmesgpb) override;
 
       // WARNING: it is marked as public so that a closure function
       // to Dmn_DMesg can access and manipulate it, as there is no
@@ -128,14 +128,15 @@ public:
     /**
      * @brief The delegating constructor for Dmn_DMesgHandler.
      *
-     * @param name           The name or unique identification to the handler
-     * @param filterFn       The functor callback that returns false to filter
-     * out DMesgPB message, if no functor is provided, no filter is performed
-     * @param asyncProcessFn The functor callback to process each notified
-     * DMesgPb message
+     * @param name             The name or unique identification to the handler
+     * @param filter_fn        The functor callback that returns false to filter
+     *                         out DMesgPB message, if no functor is provided,
+     *                         no filter is performed
+     * @param async_process_fn The functor callback to process each notified
+     *                         DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filterFn = nullptr,
-                     AsyncProcessTask asyncProcessFn = nullptr);
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn = nullptr,
+                     AsyncProcessTask async_process_fn = nullptr);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
@@ -265,7 +266,7 @@ public:
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
     dmn::DMesgPb m_last_dmesgsyspb{};
-    std::map<std::string, long long> m_topic_running_counter{};
+    std::unordered_map<std::string, long long> m_topic_running_counter{};
 
     ConflictCallbackTask m_conflict_callback_fn{};
     std::atomic<bool> m_in_conflict{};
@@ -398,18 +399,16 @@ private:
    * data members for internal logic.
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
-  std::map<std::string, long long> m_topic_running_counter{};
-  std::map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
+  std::unordered_map<std::string, long long> m_topic_running_counter{};
+  std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 
 template <class... U>
 std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
 Dmn_DMesg::openHandler(U &&...arg) {
-  static const std::vector<std::string> emptyTopics{};
+  auto handler_ret = this->openHandler({}, std::forward<U>(arg)...);
 
-  auto handlerRet = this->openHandler(emptyTopics, std::forward<U>(arg)...);
-
-  return handlerRet;
+  return handler_ret;
 }
 
 template <class... U>
@@ -432,7 +431,7 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
 
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
-  auto handlerRet = handler;
+  auto handler_ret = handler;
 
   this->registerSubscriber(&(handler->m_sub));
   handler->m_owner = this;
@@ -441,7 +440,7 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
    * thread context, but the filter value is maintained per Dmn_DMesgHandler,
    * and this allow the DMesg to be mutex free while thread safe.
    */
-  handlerRet->m_subscribed_topics = topics;
+  handler_ret->m_subscribed_topics = topics;
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
       {
@@ -451,7 +450,7 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
       },
       this, handler);
 
-  return handlerRet;
+  return handler_ret;
 }
 
 } // namespace dmn

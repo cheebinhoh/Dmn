@@ -46,10 +46,10 @@ public:
   Dmn_Async(std::string_view name = "");
   virtual ~Dmn_Async() noexcept;
 
-  Dmn_Async(const Dmn_Async &dmnAsync) = delete;
-  const Dmn_Async &operator=(const Dmn_Async &dmnAsync) = delete;
-  Dmn_Async(Dmn_Async &&dmnAsync) = delete;
-  Dmn_Async &operator=(Dmn_Async &&dmnAsync) = delete;
+  Dmn_Async(const Dmn_Async &obj) = delete;
+  const Dmn_Async &operator=(const Dmn_Async &obj) = delete;
+  Dmn_Async(Dmn_Async &&obj) = delete;
+  Dmn_Async &operator=(Dmn_Async &&obj) = delete;
 
   /**
    * @brief The method will execute the asynchronous task after duration

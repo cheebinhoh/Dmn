@@ -80,14 +80,14 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       bool stop{};
 
       while ((!stop) && this->m_input_handler) {
-        dmn::DMesgPb dmesgPbRead{};
+        dmn::DMesgPb dmesgpb_read{};
 
         auto data = this->m_input_handler->read();
         Dmn_Proc::yield();
 
         if (data) {
-          dmesgPbRead.ParseFromString(*data);
-          if (dmesgPbRead.sourcewritehandleridentifier() == this->m_name) {
+          dmesgpb_read.ParseFromString(*data);
+          if (dmesgpb_read.sourcewritehandleridentifier() == this->m_name) {
             continue;
           }
 
@@ -99,18 +99,18 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
           // of the Dmn_DMesgHandler from read it again,
           // but it is good to be explicit.
 
-          if (dmesgPbRead.type() == dmn::DMesgTypePb::sys) {
+          if (dmesgpb_read.type() == dmn::DMesgTypePb::sys) {
             DMN_ASYNC_CALL_WITH_CAPTURE(
-                { this->reconciliateDMesgPbSys(dmesgPbRead); }, this,
-                dmesgPbRead);
+                { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
+                dmesgpb_read);
           } else {
             DMN_ASYNC_CALL_WITH_CAPTURE(
                 {
                   try {
-                    this->m_subscript_handler->write(dmesgPbRead);
+                    this->m_subscript_handler->write(dmesgpb_read);
 
-                    if (dmesgPbRead.type() != dmn::DMesgTypePb::sys) {
-                      m_topic_last_dmesgpb[dmesgPbRead.topic()] = dmesgPbRead;
+                    if (dmesgpb_read.type() != dmn::DMesgTypePb::sys) {
+                      m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
                     }
                   } catch (...) {
                     // The data from network is out of sync with data
@@ -132,8 +132,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                     //   the topic and clear it conflict state.
                   }
                 },
-                this, dmesgPbRead);
-          } /* else (dmesgPbRead.type() == dmn::DMesgTypePb::sys) */
+                this, dmesgpb_read);
+          } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
         }
       }
     });
@@ -141,7 +141,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
     m_input_proc->exec();
 
     m_sys_handler = Dmn_DMesg::openHandler(
-        m_name + "_sys", [this](const dmn::DMesgPb &dmesgPb) { return false; },
+        m_name + "_sys", [this](const dmn::DMesgPb &dmesgpb) { return false; },
         nullptr);
   }
 
@@ -277,8 +277,8 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
-void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther) {
-  auto other = dmesgPbOther.body().sys().self();
+void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
+  auto other = dmesgpb_other.body().sys().self();
   auto self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
   struct timeval tv;

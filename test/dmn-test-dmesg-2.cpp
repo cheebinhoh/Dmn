@@ -30,19 +30,19 @@ int main(int argc, char *argv[]) {
         int valCheck{1};
 
         while (true) {
-          auto dmesgPb = dmesgHandler1->read();
-          if (!dmesgPb) {
+          auto dmesgpb = dmesgHandler1->read();
+          if (!dmesgpb) {
             break;
           }
 
-          assert(dmesgPb->type() == dmn::DMesgTypePb::message);
-          if (dmesgPb->body().message() == "") {
+          assert(dmesgpb->type() == dmn::DMesgTypePb::message);
+          if (dmesgpb->body().message() == "") {
             break;
           }
 
-          std::cout << "proc1: message: " << dmesgPb->body().message() << "\n";
+          std::cout << "proc1: message: " << dmesgpb->body().message() << "\n";
 
-          std::stringstream is{dmesgPb->body().message()};
+          std::stringstream is{dmesgpb->body().message()};
           int val{};
 
           is >> val;
@@ -54,14 +54,14 @@ int main(int argc, char *argv[]) {
           std::stringstream os;
           os << val;
 
-          dmn::DMesgPb dmesgPbRet{};
-          dmesgPbRet.set_topic("counter sync");
-          dmesgPbRet.set_type(dmn::DMesgTypePb::message);
+          dmn::DMesgPb dmesgpb_ret{};
+          dmesgpb_ret.set_topic("counter sync");
+          dmesgpb_ret.set_type(dmn::DMesgTypePb::message);
 
-          dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgPbRet.mutable_body();
+          dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgpb_ret.mutable_body();
           dmsgbodyPbRet->set_message(os.str());
 
-          dmesgHandler1->write(dmesgPbRet);
+          dmesgHandler1->write(dmesgpb_ret);
 
           valCheck += 2;
         }
@@ -80,36 +80,36 @@ int main(int argc, char *argv[]) {
             os << "";
           }
 
-          dmn::DMesgPb dmesgPb{};
-          dmesgPb.set_topic("counter sync");
-          dmesgPb.set_type(dmn::DMesgTypePb::message);
+          dmn::DMesgPb dmesgpb{};
+          dmesgpb.set_topic("counter sync");
+          dmesgpb.set_type(dmn::DMesgTypePb::message);
 
-          dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+          dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
           dmsgbodyPb->set_message(os.str());
 
-          dmesgHandler2->write(dmesgPb);
+          dmesgHandler2->write(dmesgpb);
 
           if (os.str() == "") {
             break;
           }
 
-          auto dmesgPbRet = dmesgHandler2->read();
-          if (!dmesgPbRet) {
+          auto dmesgpb_ret = dmesgHandler2->read();
+          if (!dmesgpb_ret) {
             break;
           }
 
-          assert(dmesgPbRet->type() == dmn::DMesgTypePb::message);
-          assert(dmesgPbRet->body().message() != "");
+          assert(dmesgpb_ret->type() == dmn::DMesgTypePb::message);
+          assert(dmesgpb_ret->body().message() != "");
 
-          std::cout << "proc2: message: " << dmesgPbRet->body().message()
+          std::cout << "proc2: message: " << dmesgpb_ret->body().message()
                     << "\n";
 
-          int valRet{};
+          int val_ret{};
 
-          std::stringstream is{dmesgPbRet->body().message()};
-          is >> valRet;
+          std::stringstream is{dmesgpb_ret->body().message()};
+          is >> val_ret;
 
-          EXPECT_TRUE(valRet == (val + 1));
+          EXPECT_TRUE(val_ret == (val + 1));
           val += 2;
         }
       }};

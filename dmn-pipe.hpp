@@ -187,9 +187,9 @@ template <typename T> void Dmn_Pipe<T>::write(T &&item) {
 }
 
 template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
-  long long inboundCount{};
+  long long inbound_count{};
 
-  inboundCount = Dmn_Buffer<T>::waitForEmpty();
+  inbound_count = Dmn_Buffer<T>::waitForEmpty();
 
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
@@ -200,7 +200,7 @@ template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
 
   pthread_testcancel();
 
-  while (m_count < inboundCount) {
+  while (m_count < inbound_count) {
     err = pthread_cond_wait(&m_empty_cond, &m_mutex);
     if (err) {
       throw std::runtime_error(strerror(err));
@@ -216,7 +216,7 @@ template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
     throw std::runtime_error(strerror(err));
   }
 
-  return inboundCount;
+  return inbound_count;
 }
 
 } // namespace dmn
