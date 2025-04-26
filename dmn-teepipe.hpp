@@ -403,7 +403,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
         pthread_testcancel();
       }
 
-      std::vector<T> postProcessingBuffers{};
+      std::vector<T> post_processing_buffers{};
 
       for (auto tps : m_buffers) {
         m_fill_buffer_count--;
@@ -411,18 +411,18 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
         auto data = tps->read();
         assert(data);
 
-        postProcessingBuffers.push_back(std::move_if_noexcept(*data));
+        post_processing_buffers.push_back(std::move_if_noexcept(*data));
       }
 
       if (m_post_processing_task_fn != nullptr) {
-        m_post_processing_task_fn(postProcessingBuffers);
+        m_post_processing_task_fn(post_processing_buffers);
       }
 
-      for (auto &data : postProcessingBuffers) {
+      for (auto &data : post_processing_buffers) {
         write(data);
       }
 
-      postProcessingBuffers.clear();
+      post_processing_buffers.clear();
 
       err = pthread_cond_signal(&m_empty_cond);
       if (err) {

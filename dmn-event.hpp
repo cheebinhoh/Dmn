@@ -11,8 +11,8 @@
 
 #include <csignal>
 #include <functional>
-#include <map>
 #include <mutex>
+#include <unordered_map>
 
 #include "dmn-async.hpp"
 #include "dmn-singleton.hpp"
@@ -26,11 +26,10 @@ public:
   Dmn_Event_Manager();
   virtual ~Dmn_Event_Manager() noexcept;
 
-  Dmn_Event_Manager(const Dmn_Event_Manager &dmnEventMgr) = delete;
-  const Dmn_Event_Manager &
-  operator=(const Dmn_Event_Manager &dmnEventMgr) = delete;
-  Dmn_Event_Manager(Dmn_Event_Manager &&dmnEventMgr) = delete;
-  Dmn_Event_Manager &operator=(Dmn_Event_Manager &&dmnEventManager) = delete;
+  Dmn_Event_Manager(const Dmn_Event_Manager &obj) = delete;
+  const Dmn_Event_Manager &operator=(const Dmn_Event_Manager &obj) = delete;
+  Dmn_Event_Manager(Dmn_Event_Manager &&obj) = delete;
+  Dmn_Event_Manager &operator=(Dmn_Event_Manager &&obj) = delete;
 
   void enterMainLoop();
   void exitMainLoop();
@@ -51,8 +50,8 @@ private:
    */
   Dmn_Proc m_signalWaitProc{"DmnEventManager_SignalWait"};
   sigset_t m_mask{};
-  std::map<int, SignalHandler> m_signal_handlers{};
-  std::map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
+  std::unordered_map<int, SignalHandler> m_signal_handlers{};
+  std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
   /**
    * static variables for the global singleton instance
@@ -76,7 +75,7 @@ Dmn_Event_Manager::createInstanceInternal(U &&...u) {
           // We can NOT sigmask the signals in Dmn_Event_Manager constructor
           // as its parent class Dmn_Async thread has been created by the time
           // the Dmn_Event_Manager constructor is run.
-          sigset_t oldmask{};
+          sigset_t old_mask{};
           int err{};
 
           sigemptyset(&Dmn_Event_Manager::s_mask);
@@ -86,7 +85,7 @@ Dmn_Event_Manager::createInstanceInternal(U &&...u) {
           sigaddset(&Dmn_Event_Manager::s_mask, SIGHUP);
 
           err =
-              pthread_sigmask(SIG_BLOCK, &Dmn_Event_Manager::s_mask, &oldmask);
+              pthread_sigmask(SIG_BLOCK, &Dmn_Event_Manager::s_mask, &old_mask);
           if (0 != err) {
             throw std::runtime_error("Error in pthread_sigmask: " +
                                      std::string(strerror(errno)));

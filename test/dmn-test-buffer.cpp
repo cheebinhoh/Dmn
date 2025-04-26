@@ -51,15 +51,15 @@ int main(int argc, char *argv[]) {
   buf = {};
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  dmn::Dmn_Buffer<int> intBuf{};
-  intBuf.push(2);
+  dmn::Dmn_Buffer<int> int_buf{};
+  int_buf.push(2);
 
-  EXPECT_TRUE(2 == intBuf.pop());
+  EXPECT_TRUE(2 == int_buf.pop());
 
-  dmn::Dmn_Buffer<std::string> stringNotMoveBuf{};
+  dmn::Dmn_Buffer<std::string> string_not_move_buf{};
   std::string stringToNotMoveBuf{"not move"};
-  stringNotMoveBuf.push(stringToNotMoveBuf, false);
-  std::string stringFromNotMoveBuf = stringNotMoveBuf.pop();
+  string_not_move_buf.push(stringToNotMoveBuf, false);
+  std::string stringFromNotMoveBuf = string_not_move_buf.pop();
 
   EXPECT_TRUE("not move" == stringFromNotMoveBuf);
   EXPECT_TRUE("not move" == stringToNotMoveBuf);

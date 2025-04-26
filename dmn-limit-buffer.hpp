@@ -29,11 +29,10 @@ public:
   Dmn_LimitBuffer(size_t capacity = 1);
   virtual ~Dmn_LimitBuffer();
 
-  Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &dmnLimitBuffer) = delete;
-  const Dmn_LimitBuffer<T> &
-  operator=(const Dmn_LimitBuffer<T> &dmnLimitBuffer) = delete;
-  Dmn_LimitBuffer(Dmn_LimitBuffer<T> &&dmnLimitBuffer) = delete;
-  Dmn_LimitBuffer<T> &&operator=(Dmn_LimitBuffer<T> &&dmnLimitBuffer) = delete;
+  Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &obj) = delete;
+  const Dmn_LimitBuffer<T> &operator=(const Dmn_LimitBuffer<T> &obj) = delete;
+  Dmn_LimitBuffer(Dmn_LimitBuffer<T> &&obj) = delete;
+  Dmn_LimitBuffer<T> &&operator=(Dmn_LimitBuffer<T> &&obj) = delete;
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -144,9 +143,9 @@ template <typename T> std::optional<T> Dmn_LimitBuffer<T>::popNoWait() {
 }
 
 template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
-  T movedItem = std::move_if_noexcept(item);
+  T moved_item = std::move_if_noexcept(item);
 
-  push(movedItem, true);
+  push(moved_item, true);
 }
 
 template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {

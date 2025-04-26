@@ -32,9 +32,9 @@ public:
   Dmn_Buffer();
   virtual ~Dmn_Buffer() noexcept;
 
-  Dmn_Buffer(const Dmn_Buffer<T> &dmnBuffer) = delete;
-  const Dmn_Buffer<T> &operator=(const Dmn_Buffer<T> &dmnBuffer) = delete;
-  Dmn_Buffer(const Dmn_Buffer<T> &&dmnBuffer) = delete;
+  Dmn_Buffer(const Dmn_Buffer<T> &obj) = delete;
+  const Dmn_Buffer<T> &operator=(const Dmn_Buffer<T> &obj) = delete;
+  Dmn_Buffer(const Dmn_Buffer<T> &&obj) = delete;
   Dmn_Buffer<T> &operator=(Dmn_Buffer<T> &&dmnBuffer) = delete;
 
   /**
@@ -142,9 +142,9 @@ template <typename T> std::optional<T> Dmn_Buffer<T>::popNoWait() {
 }
 
 template <typename T> void Dmn_Buffer<T>::push(T &&item) {
-  T movedItem = std::move_if_noexcept(item);
+  T moved_item = std::move_if_noexcept(item);
 
-  push(movedItem, true);
+  push(moved_item, true);
 }
 
 template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {

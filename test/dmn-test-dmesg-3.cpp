@@ -23,14 +23,14 @@ int main(int argc, char *argv[]) {
   std::string data2{};
 
   auto dmesgHandler1 =
-      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgPb) {
-        data1 = dmesgPb.body().message();
+      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgpb) {
+        data1 = dmesgpb.body().message();
       });
   EXPECT_TRUE(dmesgHandler1);
 
   auto dmesgHandler2 =
-      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgPb) {
-        data2 = dmesgPb.body().message();
+      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgpb) {
+        data2 = dmesgpb.body().message();
       });
 
   EXPECT_TRUE(dmesgHandler2);
@@ -38,15 +38,15 @@ int main(int argc, char *argv[]) {
   auto dmesgHandler3 = dmesg.openHandler("handler3", nullptr, nullptr);
   EXPECT_TRUE(dmesgHandler3);
 
-  dmn::DMesgPb dmesgPb{};
-  dmesgPb.set_topic("counter sync");
-  dmesgPb.set_type(dmn::DMesgTypePb::message);
+  dmn::DMesgPb dmesgpb{};
+  dmesgpb.set_topic("counter sync");
+  dmesgpb.set_type(dmn::DMesgTypePb::message);
 
   std::string data{"Hello dmesg async"};
-  dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
+  dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
   dmsgbodyPb->set_message(data);
 
-  dmesgHandler3->write(dmesgPb);
+  dmesgHandler3->write(dmesgpb);
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 

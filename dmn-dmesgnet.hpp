@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 #include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
@@ -136,7 +137,7 @@ protected:
    *
    * @param dmesgPbOther The other node DMesgPb
    */
-  void reconciliateDMesgPbSys(dmn::DMesgPb dmesgPbOther);
+  void reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other);
 
 private:
   /**
@@ -158,7 +159,7 @@ private:
   long long m_master_pending_counter{};
   long long m_master_sync_pending_counter{};
   struct timeval m_last_remote_master_timestamp {};
-  std::map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
+  std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 
   bool m_is_master{};
   long long m_number_of_neighbor{};

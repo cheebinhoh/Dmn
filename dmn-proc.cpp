@@ -70,13 +70,13 @@ void Dmn_Proc::setTask(Dmn_Proc::Task fn) {
 
 bool Dmn_Proc::wait() {
   int err{};
-  void *pRet{};
+  void *ret{};
 
   if (getState() != State::kRunning) {
     throw std::runtime_error("No task is exec");
   }
 
-  err = pthread_join(m_th, &pRet);
+  err = pthread_join(m_th, &ret);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
