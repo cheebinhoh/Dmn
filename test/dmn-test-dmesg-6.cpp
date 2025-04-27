@@ -22,58 +22,58 @@ int main(int argc, char *argv[]) {
   std::string data1{};
   std::string data2{};
 
-  auto dmesgHandler1 =
-      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgPb) {
-        data1 = dmesgPb.body().message();
+  auto dmesg_handle1 =
+      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgpb) {
+        data1 = dmesgpb.body().message();
       });
-  EXPECT_TRUE(dmesgHandler1);
+  EXPECT_TRUE(dmesg_handle1);
 
-  auto dmesgHandler2 =
-      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgPb) {
-        data2 = dmesgPb.body().message();
+  auto dmesg_handle2 =
+      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgpb) {
+        data2 = dmesgpb.body().message();
       });
 
-  EXPECT_TRUE(dmesgHandler2);
+  EXPECT_TRUE(dmesg_handle2);
 
-  auto dmesgHandler3 = dmesg.openHandler("handler3", nullptr, nullptr);
-  EXPECT_TRUE(dmesgHandler3);
+  auto dmesg_handle3 = dmesg.openHandler("handler3", nullptr, nullptr);
+  EXPECT_TRUE(dmesg_handle3);
 
-  dmn::DMesgPb dmesgPb{};
-  dmesgPb.set_topic("counter sync");
-  dmesgPb.set_type(dmn::DMesgTypePb::message);
+  dmn::DMesgPb dmesgpb{};
+  dmesgpb.set_topic("counter sync");
+  dmesgpb.set_type(dmn::DMesgTypePb::message);
 
   std::string data{"Hello dmesg async"};
-  dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
-  dmsgbodyPb->set_message(data);
+  dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+  dmesgpb_body->set_message(data);
 
-  dmesgHandler3->write(dmesgPb);
+  dmesg_handle3->write(dmesgpb);
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   std::cout << "after wait for data to sync\n";
 
   dmesg.waitForEmpty();
-  dmesgHandler1->waitForEmpty();
-  dmesgHandler2->waitForEmpty();
-  dmesgHandler3->waitForEmpty();
+  dmesg_handle1->waitForEmpty();
+  dmesg_handle2->waitForEmpty();
+  dmesg_handle3->waitForEmpty();
 
   EXPECT_TRUE(data == data1);
   EXPECT_TRUE(data == data2);
 
   std::string data3{};
 
-  auto dmesgHandler4 =
-      dmesg.openHandler("handler4", nullptr, [&data3](dmn::DMesgPb dmesgPb) {
-        data3 = dmesgPb.body().message();
+  auto dmesg_handle4 =
+      dmesg.openHandler("handler4", nullptr, [&data3](dmn::DMesgPb dmesgpb) {
+        data3 = dmesgpb.body().message();
       });
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
   EXPECT_TRUE(data == data3);
 
-  dmesg.closeHandler(dmesgHandler1);
-  dmesg.closeHandler(dmesgHandler2);
-  dmesg.closeHandler(dmesgHandler3);
-  dmesg.closeHandler(dmesgHandler4);
+  dmesg.closeHandler(dmesg_handle1);
+  dmesg.closeHandler(dmesg_handle2);
+  dmesg.closeHandler(dmesg_handle3);
+  dmesg.closeHandler(dmesg_handle4);
 
   return RUN_ALL_TESTS();
 }

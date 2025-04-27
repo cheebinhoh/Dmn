@@ -33,21 +33,21 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
-  readConfigs_other["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs_other{};
+  read_configs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs_other["sasl.password"] =
+  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs_other["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs_other["security.protocol"] = "SASL_SSL";
-  readConfigs_other["sasl.mechanisms"] = "PLAIN";
-  readConfigs_other["group.id"] = "dmesg_other";
-  readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  read_configs_other["security.protocol"] = "SASL_SSL";
+  read_configs_other["sasl.mechanisms"] = "PLAIN";
+  read_configs_other["group.id"] = "dmesg_other";
+  read_configs_other["auto.offset.reset"] = "earliest";
+  read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+                                read_configs_other};
 
   // dmesgnet1
   // writer for DMesgNet
@@ -68,32 +68,32 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // consume prior messages from topic.
-  dmn::DMesgPb dmesgPbRead{};
-  std::map<std::string, std::string> nodeList{};
-  std::map<std::string, std::string> masterList{};
+  dmn::DMesgPb dmesgpb_read{};
+  std::map<std::string, std::string> node_list{};
+  std::map<std::string, std::string> master_list{};
   int n{};
   while (n < 10000) {
-    auto dataRead = consumer_other.read();
-    if (dataRead) {
-      dmesgPbRead.ParseFromString(*dataRead);
+    auto data_read = consumer_other.read();
+    if (data_read) {
+      dmesgpb_read.ParseFromString(*data_read);
 
       int i = 0;
-      while (i < dmesgPbRead.body().sys().nodelist().size()) {
-        auto id = dmesgPbRead.body().sys().nodelist().Get(i).identifier();
-        nodeList[dmesgPbRead.body().sys().self().identifier()] = id;
+      while (i < dmesgpb_read.body().sys().nodelist().size()) {
+        auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+        node_list[dmesgpb_read.body().sys().self().identifier()] = id;
         i++;
       }
 
       EXPECT_TRUE(i <= 1);
 
-      masterList[dmesgPbRead.body().sys().self().identifier()] =
-          dmesgPbRead.body().sys().self().masteridentifier();
+      master_list[dmesgpb_read.body().sys().self().identifier()] =
+          dmesgpb_read.body().sys().self().masteridentifier();
 
-      if (nodeList.size() == 2) {
+      if (node_list.size() == 2) {
         std::string master{};
         bool ok{true};
 
-        for (auto &mp : masterList) {
+        for (auto &mp : master_list) {
           if (master != "") {
             if (master != mp.second) {
               ok = false;
@@ -117,38 +117,38 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(n < 10000);
 
   std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
-  std::vector<std::string> subscribedTopics{"counter sync 1"};
+  std::vector<std::string> subscribed_topics{"counter sync 1"};
 
   int cnt{0};
-  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
-      dmesgnet1.openHandler(subscribedTopics, "handler1", false, nullptr,
+  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
+      dmesgnet1.openHandler(subscribed_topics, "handler1", false, nullptr,
                             [&cnt](const dmn::DMesgPb &msg) mutable {
                               EXPECT_TRUE("counter sync 1" == msg.topic());
                               cnt++;
                             });
-  EXPECT_TRUE(dmesgHandler);
+  EXPECT_TRUE(dmesg_handle);
 
-  auto dmesgWriteHandler = dmesgnet2.openHandler("writeHandler");
-  EXPECT_TRUE(dmesgWriteHandler);
+  auto dmesg_write_handle = dmesgnet2.openHandler("writeHandler");
+  EXPECT_TRUE(dmesg_write_handle);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   for (int n = 0; n < 6; n++) {
-    dmn::DMesgPb dmesgPb{};
-    dmesgPb.set_topic(topics[n % 2]);
-    dmesgPb.set_type(dmn::DMesgTypePb::message);
+    dmn::DMesgPb dmesgpb{};
+    dmesgpb.set_topic(topics[n % 2]);
+    dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
-    dmn::DMesgBodyPb *dmsgbodyPb = dmesgPb.mutable_body();
-    dmsgbodyPb->set_message(data);
+    dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+    dmesgpb_body->set_message(data);
 
-    dmesgWriteHandler->write(dmesgPb);
+    dmesg_write_handle->write(dmesgpb);
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));
 
-  dmesgnet2.closeHandler(dmesgWriteHandler);
-  dmesgnet1.closeHandler(dmesgHandler);
+  dmesgnet2.closeHandler(dmesg_write_handle);
+  dmesgnet1.closeHandler(dmesg_handle);
   EXPECT_TRUE(3 == cnt);
 
   return RUN_ALL_TESTS();

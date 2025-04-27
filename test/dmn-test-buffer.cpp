@@ -57,12 +57,12 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(2 == int_buf.pop());
 
   dmn::Dmn_Buffer<std::string> string_not_move_buf{};
-  std::string stringToNotMoveBuf{"not move"};
-  string_not_move_buf.push(stringToNotMoveBuf, false);
-  std::string stringFromNotMoveBuf = string_not_move_buf.pop();
+  std::string string_to_mot_move_buf{"not move"};
+  string_not_move_buf.push(string_to_mot_move_buf, false);
+  std::string string_from_not_move_buf = string_not_move_buf.pop();
 
-  EXPECT_TRUE("not move" == stringFromNotMoveBuf);
-  EXPECT_TRUE("not move" == stringToNotMoveBuf);
+  EXPECT_TRUE("not move" == string_from_not_move_buf);
+  EXPECT_TRUE("not move" == string_to_mot_move_buf);
 
   return RUN_ALL_TESTS();
 }

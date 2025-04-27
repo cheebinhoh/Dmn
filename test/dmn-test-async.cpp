@@ -16,13 +16,13 @@ public:
   Counter() : dmn::Dmn_Async{"counter"} {}
 
   void increment() {
-    DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->count++; });
+    DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->m_count++; });
   }
 
-  operator long long() { return count; }
+  operator long long() { return m_count; }
 
 private:
-  long long count{};
+  long long m_count{};
 };
 
 int main(int argc, char *argv[]) {

@@ -26,25 +26,25 @@ int main(int argc, char *argv[]) {
 
   int cnt{1};
 
-  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
+  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
       dmesg.openHandler(
           "handler", false, [](const dmn::DMesgPb &msg) { return true; },
-          [&dmesgHandler, &cnt](const dmn::DMesgPb &msg) mutable {
+          [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) mutable {
             std::cout << msg.ShortDebugString() << "\n";
 
             dmn::DMesgPb ret{msg};
             try {
-              dmesgHandler->write(ret);
+              dmesg_handle->write(ret);
               cnt++;
             } catch (...) {
               std::cout << "except cnt: " << cnt << "\n";
-              dmesgHandler->resolveConflict();
+              dmesg_handle->resolveConflict();
             }
           });
-  EXPECT_TRUE(dmesgHandler);
+  EXPECT_TRUE(dmesg_handle);
 
-  auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
-  EXPECT_TRUE(dmesgWriteHandler);
+  auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+  EXPECT_TRUE(dmesg_write_handle);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -54,16 +54,16 @@ int main(int argc, char *argv[]) {
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
-    dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
-    dmsgbodyPb->set_message(data);
+    dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+    dmesgpb_body->set_message(data);
 
-    dmesgWriteHandler->write(dmesgpb);
+    dmesg_write_handle->write(dmesgpb);
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));
 
-  dmesg.closeHandler(dmesgWriteHandler);
-  dmesg.closeHandler(dmesgHandler);
+  dmesg.closeHandler(dmesg_write_handle);
+  dmesg.closeHandler(dmesg_handle);
   EXPECT_TRUE(2 == cnt);
 
   return RUN_ALL_TESTS();

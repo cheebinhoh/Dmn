@@ -12,15 +12,15 @@
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  bool timerRun{};
-  dmn::Dmn_Timer timer{std::chrono::seconds(5), [&timerRun]() {
-                         timerRun = true;
+  bool timer_run{};
+  dmn::Dmn_Timer timer{std::chrono::seconds(5), [&timer_run]() {
+                         timer_run = true;
                          std::cout << "timer is run\n";
                        }};
 
-  EXPECT_TRUE(!timerRun);
+  EXPECT_TRUE(!timer_run);
   std::this_thread::sleep_for(std::chrono::seconds(10));
-  EXPECT_TRUE(timerRun);
+  EXPECT_TRUE(timer_run);
 
   return RUN_ALL_TESTS();
 }

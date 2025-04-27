@@ -29,89 +29,89 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
-  readConfigs_other["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs_other{};
+  read_configs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs_other["sasl.password"] =
+  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs_other["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs_other["security.protocol"] = "SASL_SSL";
-  readConfigs_other["sasl.mechanisms"] = "PLAIN";
-  readConfigs_other["group.id"] = "dmesg_other";
-  readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  read_configs_other["security.protocol"] = "SASL_SSL";
+  read_configs_other["sasl.mechanisms"] = "PLAIN";
+  read_configs_other["group.id"] = "dmesg_other";
+  read_configs_other["auto.offset.reset"] = "earliest";
+  read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+                                read_configs_other};
 
   // dmesgnet1
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType writeConfigs1{};
-  writeConfigs1["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType write_configs_1{};
+  write_configs_1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  writeConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
-  writeConfigs1["sasl.password"] =
+  write_configs_1["sasl.username"] = "ICCN4A57TNKONPQ3";
+  write_configs_1["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  writeConfigs1["security.protocol"] = "SASL_SSL";
-  writeConfigs1["sasl.mechanisms"] = "PLAIN";
-  writeConfigs1["acks"] = "all";
-  writeConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  write_configs_1["security.protocol"] = "SASL_SSL";
+  write_configs_1["sasl.mechanisms"] = "PLAIN";
+  write_configs_1["acks"] = "all";
+  write_configs_1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  write_configs_1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> producer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs1);
+      dmn::Dmn_Kafka::Role::kProducer, write_configs_1);
 
   // reader for DMesgNet
-  dmn::Dmn_Kafka::ConfigType readConfigs1{};
-  readConfigs1["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs_1{};
+  read_configs_1["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs1["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs1["sasl.password"] =
+  read_configs_1["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs_1["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs1["security.protocol"] = "SASL_SSL";
-  readConfigs1["sasl.mechanisms"] = "PLAIN";
-  readConfigs1["group.id"] = "dmesg1";
-  readConfigs1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs1["auto.offset.reset"] = "earliest";
-  readConfigs1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  read_configs_1["security.protocol"] = "SASL_SSL";
+  read_configs_1["sasl.mechanisms"] = "PLAIN";
+  read_configs_1["group.id"] = "dmesg1";
+  read_configs_1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs_1["auto.offset.reset"] = "earliest";
+  read_configs_1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   std::unique_ptr<dmn::Dmn_Kafka> consumer1 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs1);
+      dmn::Dmn_Kafka::Role::kConsumer, read_configs_1);
 
   // dmesgnet2
   // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType writeConfigs2{};
-  writeConfigs2["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType write_configs_2{};
+  write_configs_2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  writeConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
-  writeConfigs2["sasl.password"] =
+  write_configs_2["sasl.username"] = "ICCN4A57TNKONPQ3";
+  write_configs_2["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  writeConfigs2["security.protocol"] = "SASL_SSL";
-  writeConfigs2["sasl.mechanisms"] = "PLAIN";
-  writeConfigs2["acks"] = "all";
-  writeConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  write_configs_2["security.protocol"] = "SASL_SSL";
+  write_configs_2["sasl.mechanisms"] = "PLAIN";
+  write_configs_2["acks"] = "all";
+  write_configs_2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  write_configs_2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> producer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs2);
+      dmn::Dmn_Kafka::Role::kProducer, write_configs_2);
 
   // reader for DMesgNet
-  dmn::Dmn_Kafka::ConfigType readConfigs2{};
-  readConfigs2["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs_2{};
+  read_configs_2["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs2["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs2["sasl.password"] =
+  read_configs_2["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs_2["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs2["security.protocol"] = "SASL_SSL";
-  readConfigs2["sasl.mechanisms"] = "PLAIN";
-  readConfigs2["group.id"] = "dmesg2";
-  readConfigs2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs2["auto.offset.reset"] = "earliest";
-  readConfigs2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  read_configs_2["security.protocol"] = "SASL_SSL";
+  read_configs_2["sasl.mechanisms"] = "PLAIN";
+  read_configs_2["group.id"] = "dmesg2";
+  read_configs_2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs_2["auto.offset.reset"] = "earliest";
+  read_configs_2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   std::unique_ptr<dmn::Dmn_Kafka> consumer2 = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs2);
+      dmn::Dmn_Kafka::Role::kConsumer, read_configs_2);
 
   // dmesgnet1
   dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
@@ -128,32 +128,32 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // consume prior messages from topic.
-  dmn::DMesgPb dmesgPbRead{};
-  std::map<std::string, std::string> nodeList{};
-  std::map<std::string, std::string> masterList{};
+  dmn::DMesgPb dmesgpb_read{};
+  std::map<std::string, std::string> node_list{};
+  std::map<std::string, std::string> master_list{};
   int n{};
   while (n < 10000) {
-    auto dataRead = consumer_other.read();
-    if (dataRead) {
-      dmesgPbRead.ParseFromString(*dataRead);
+    auto data_read = consumer_other.read();
+    if (data_read) {
+      dmesgpb_read.ParseFromString(*data_read);
 
       int i = 0;
-      while (i < dmesgPbRead.body().sys().nodelist().size()) {
-        auto id = dmesgPbRead.body().sys().nodelist().Get(i).identifier();
-        nodeList[dmesgPbRead.body().sys().self().identifier()] = id;
+      while (i < dmesgpb_read.body().sys().nodelist().size()) {
+        auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+        node_list[dmesgpb_read.body().sys().self().identifier()] = id;
         i++;
       }
 
       EXPECT_TRUE(i <= 1);
 
-      masterList[dmesgPbRead.body().sys().self().identifier()] =
-          dmesgPbRead.body().sys().self().masteridentifier();
+      master_list[dmesgpb_read.body().sys().self().identifier()] =
+          dmesgpb_read.body().sys().self().masteridentifier();
 
-      if (nodeList.size() == 2) {
+      if (node_list.size() == 2) {
         std::string master{};
         bool ok{true};
 
-        for (auto &mp : masterList) {
+        for (auto &mp : master_list) {
           if (master != "") {
             if (master != mp.second) {
               ok = false;

@@ -19,7 +19,7 @@ public:
   static std::shared_ptr<Dmn_A> createInstanceInternal(U &&...u) {
     if (!Dmn_A::s_instances) {
       std::call_once(
-          s_InitOnce,
+          s_init_once,
           [](U &&...arg) {
             Dmn_A::s_instances =
                 std::make_shared<Dmn_A>(std::forward<U>(arg)...);
@@ -32,13 +32,13 @@ public:
 
 private:
   static std::shared_ptr<Dmn_A> s_instances;
-  static std::once_flag s_InitOnce;
+  static std::once_flag s_init_once;
 
   int m_int1{};
   int m_int2{};
 };
 
-std::once_flag Dmn_A::s_InitOnce{};
+std::once_flag Dmn_A::s_init_once{};
 std::shared_ptr<Dmn_A> Dmn_A::s_instances{};
 
 int main(int argc, char *argv[]) {

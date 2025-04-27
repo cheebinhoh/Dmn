@@ -25,37 +25,37 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // writer
-  dmn::Dmn_Kafka::ConfigType writeConfigs{};
-  writeConfigs["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType write_configs{};
+  write_configs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  writeConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  writeConfigs["sasl.password"] =
+  write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+  write_configs["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  writeConfigs["security.protocol"] = "SASL_SSL";
-  writeConfigs["sasl.mechanisms"] = "PLAIN";
-  writeConfigs["acks"] = "all";
-  writeConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  writeConfigs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
+  write_configs["security.protocol"] = "SASL_SSL";
+  write_configs["sasl.mechanisms"] = "PLAIN";
+  write_configs["acks"] = "all";
+  write_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  write_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
   std::unique_ptr<dmn::Dmn_Kafka> producer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kProducer, writeConfigs);
+      dmn::Dmn_Kafka::Role::kProducer, write_configs);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs{};
-  readConfigs["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs{};
+  read_configs["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs["sasl.password"] =
+  read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs["security.protocol"] = "SASL_SSL";
-  readConfigs["sasl.mechanisms"] = "PLAIN";
-  readConfigs["group.id"] = "dmesg1";
-  readConfigs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs["auto.offset.reset"] = "latest";
-  readConfigs[dmn::Dmn_Kafka::PollTimeoutMs] = "1000";
+  read_configs["security.protocol"] = "SASL_SSL";
+  read_configs["sasl.mechanisms"] = "PLAIN";
+  read_configs["group.id"] = "dmesg1";
+  read_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs["auto.offset.reset"] = "latest";
+  read_configs[dmn::Dmn_Kafka::PollTimeoutMs] = "1000";
 
   std::unique_ptr<dmn::Dmn_Kafka> consumer = std::make_unique<dmn::Dmn_Kafka>(
-      dmn::Dmn_Kafka::Role::kConsumer, readConfigs);
+      dmn::Dmn_Kafka::Role::kConsumer, read_configs);
 
   dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
                               std::move(producer)};

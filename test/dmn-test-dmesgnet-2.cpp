@@ -22,42 +22,42 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::DMesgPb dmesgPbLast{};
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket2 =
+  dmn::DMesgPb dmesgpb_last{};
+  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-  dmn::Dmn_Proc readProc{
-      "readSocket2", [&readSocket2, &dmesgPbLast]() mutable {
+  dmn::Dmn_Proc read_proc{
+      "read_socket_1", [&read_socket_1, &dmesgpb_last]() mutable {
         while (true) {
-          auto data = readSocket2->read();
+          auto data = read_socket_1->read();
           if (data) {
-            dmn::DMesgPb dmesgPbRead{};
+            dmn::DMesgPb dmesgpb_read{};
 
-            dmesgPbRead.ParseFromString(*data);
-            dmesgPbLast = dmesgPbRead;
-            std::cout << "DMesgPb: " << dmesgPbRead.ShortDebugString() << "\n";
+            dmesgpb_read.ParseFromString(*data);
+            dmesgpb_last = dmesgpb_read;
+            std::cout << "DMesgPb: " << dmesgpb_read.ShortDebugString() << "\n";
           } else {
             break;
           }
         }
       }};
 
-  readProc.exec();
+  read_proc.exec();
   dmn::Dmn_Proc::yield();
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+  std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
+  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(readSocket1),
-                              std::move(writeSocket1)};
-  readSocket1.reset();
-  writeSocket1.reset();
+  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(read_socket_2),
+                              std::move(write_socket_1)};
+  read_socket_2.reset();
+  write_socket_1.reset();
 
   std::this_thread::sleep_for(std::chrono::seconds(10));
   dmesgnet1.waitForEmpty();
-  EXPECT_TRUE(dmesgPbLast.body().sys().self().masteridentifier() != "");
-  EXPECT_TRUE(dmesgPbLast.body().sys().self().state() ==
+  EXPECT_TRUE(dmesgpb_last.body().sys().self().masteridentifier() != "");
+  EXPECT_TRUE(dmesgpb_last.body().sys().self().state() ==
               dmn::DMesgStatePb::Ready);
 
   return RUN_ALL_TESTS();

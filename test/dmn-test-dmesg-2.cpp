@@ -19,18 +19,18 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_DMesg dmesg{"dmesg"};
 
-  auto dmesgHandler1 = dmesg.openHandler("handler1");
-  EXPECT_TRUE(dmesgHandler1);
+  auto dmesg_handle1 = dmesg.openHandler("handler1");
+  EXPECT_TRUE(dmesg_handle1);
 
-  auto dmesgHandler2 = dmesg.openHandler("handler2");
-  EXPECT_TRUE(dmesgHandler2);
+  auto dmesg_handle2 = dmesg.openHandler("handler2");
+  EXPECT_TRUE(dmesg_handle2);
 
   dmn::Dmn_Proc proc1{
-      "proc1", [&dmesgHandler1]() {
-        int valCheck{1};
+      "proc1", [&dmesg_handle1]() {
+        int val{1};
 
         while (true) {
-          auto dmesgpb = dmesgHandler1->read();
+          auto dmesgpb = dmesg_handle1->read();
           if (!dmesgpb) {
             break;
           }
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
           is >> val;
           EXPECT_TRUE(!is.fail());
-          EXPECT_TRUE(val == valCheck);
+          EXPECT_TRUE(val == val);
 
           val++;
 
@@ -58,17 +58,17 @@ int main(int argc, char *argv[]) {
           dmesgpb_ret.set_topic("counter sync");
           dmesgpb_ret.set_type(dmn::DMesgTypePb::message);
 
-          dmn::DMesgBodyPb *dmsgbodyPbRet = dmesgpb_ret.mutable_body();
-          dmsgbodyPbRet->set_message(os.str());
+          dmn::DMesgBodyPb *dmesgpb_body_ret = dmesgpb_ret.mutable_body();
+          dmesgpb_body_ret->set_message(os.str());
 
-          dmesgHandler1->write(dmesgpb_ret);
+          dmesg_handle1->write(dmesgpb_ret);
 
-          valCheck += 2;
+          val += 2;
         }
       }};
 
   dmn::Dmn_Proc proc2{
-      "proc2", [&dmesgHandler2]() {
+      "proc2", [&dmesg_handle2]() {
         int val{1};
 
         while (true) {
@@ -84,16 +84,16 @@ int main(int argc, char *argv[]) {
           dmesgpb.set_topic("counter sync");
           dmesgpb.set_type(dmn::DMesgTypePb::message);
 
-          dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
-          dmsgbodyPb->set_message(os.str());
+          dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+          dmesgpb_body->set_message(os.str());
 
-          dmesgHandler2->write(dmesgpb);
+          dmesg_handle2->write(dmesgpb);
 
           if (os.str() == "") {
             break;
           }
 
-          auto dmesgpb_ret = dmesgHandler2->read();
+          auto dmesgpb_ret = dmesg_handle2->read();
           if (!dmesgpb_ret) {
             break;
           }
@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
   proc2.wait();
   proc1.wait();
 
-  dmesg.closeHandler(dmesgHandler1);
-  dmesg.closeHandler(dmesgHandler2);
+  dmesg.closeHandler(dmesg_handle1);
+  dmesg.closeHandler(dmesg_handle2);
 
   return RUN_ALL_TESTS();
 }

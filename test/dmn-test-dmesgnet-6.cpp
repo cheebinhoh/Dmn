@@ -24,31 +24,32 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
+  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+  std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
-  dmn::DMesgPb sysPb_3{};
+  dmn::DMesgPb dmesgpb_sys_3{};
   std::unique_ptr<dmn::Dmn_DMesgNet> dmesgnet1 =
-      std::make_unique<dmn::Dmn_DMesgNet>("dmesg-3", std::move(readSocket1),
-                                          std::move(writeSocket1));
-  readSocket1.reset();
-  writeSocket1.reset();
+      std::make_unique<dmn::Dmn_DMesgNet>("dmesg-3", std::move(read_socket_1),
+                                          std::move(write_socket_1));
+  read_socket_1.reset();
+  write_socket_1.reset();
 
-  auto listenHandler3 = dmesgnet1->openHandler(
-      "dmesg-3-listen", true, nullptr, [&sysPb_3](dmn::DMesgPb data) mutable {
-        if (data.type() == dmn::DMesgTypePb::sys) {
-          sysPb_3 = data;
-        }
-      });
+  auto listen_handle_3 =
+      dmesgnet1->openHandler("dmesg-3-listen", true, nullptr,
+                             [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
+                               if (data.type() == dmn::DMesgTypePb::sys) {
+                                 dmesgpb_sys_3 = data;
+                               }
+                             });
 
-  dmn::DMesgPb sysPb_4{};
+  dmn::DMesgPb dmesgpb_sys_4{};
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  dmn::Dmn_Proc dmesg_4_Proc{
-      "dmesg_4_Proc", [&sysPb_4]() mutable {
-        std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+  dmn::Dmn_Proc dmesg_4_proc{
+      "dmesg_4_proc", [&dmesgpb_sys_4]() mutable {
+        std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
             std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
         dmn::DMesgPb sys{};
         struct timeval tv;
@@ -72,18 +73,19 @@ int main(int argc, char *argv[]) {
 
           sys.SerializeToString(&serialized_string);
 
-          writeSocket1->write(serialized_string);
+          write_socket_1->write(serialized_string);
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
           gettimeofday(&tv, NULL);
         }
       }};
 
-  dmesg_4_Proc.exec();
-  dmesg_4_Proc.wait();
+  dmesg_4_proc.exec();
+  dmesg_4_proc.wait();
 
   std::this_thread::sleep_for(std::chrono::seconds(10));
-  EXPECT_TRUE(sysPb_3.body().sys().self().masteridentifier() == "dmesg-3");
+  EXPECT_TRUE(dmesgpb_sys_3.body().sys().self().masteridentifier() ==
+              "dmesg-3");
 
   return RUN_ALL_TESTS();
 }

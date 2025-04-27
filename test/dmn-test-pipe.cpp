@@ -12,8 +12,8 @@
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  long cnt{};
 
+  long cnt{};
   dmn::Dmn_Pipe<long> pipe{"pipe", [&cnt](long val) {
                              std::this_thread::sleep_for(
                                  std::chrono::seconds(1));

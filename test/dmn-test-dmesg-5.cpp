@@ -20,19 +20,19 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_DMesg dmesg{"dmesg"};
 
   std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
-  std::vector<std::string> subscribedTopics{"counter sync 1"};
+  std::vector<std::string> subscribed_topics{"counter sync 1"};
 
   int cnt{0};
-  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesgHandler =
-      dmesg.openHandler(subscribedTopics, "handler", false, nullptr,
+  std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handler =
+      dmesg.openHandler(subscribed_topics, "handler", false, nullptr,
                         [&cnt](const dmn::DMesgPb &msg) mutable {
                           EXPECT_TRUE("counter sync 1" == msg.topic());
                           cnt++;
                         });
-  EXPECT_TRUE(dmesgHandler);
+  EXPECT_TRUE(dmesg_handler);
 
-  auto dmesgWriteHandler = dmesg.openHandler("writeHandler");
-  EXPECT_TRUE(dmesgWriteHandler);
+  auto dmesg_write_handler = dmesg.openHandler("writeHandler");
+  EXPECT_TRUE(dmesg_write_handler);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -42,16 +42,16 @@ int main(int argc, char *argv[]) {
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
-    dmn::DMesgBodyPb *dmsgbodyPb = dmesgpb.mutable_body();
-    dmsgbodyPb->set_message(data);
+    dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+    dmesgpb_body->set_message(data);
 
-    dmesgWriteHandler->write(dmesgpb);
+    dmesg_write_handler->write(dmesgpb);
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));
 
-  dmesg.closeHandler(dmesgWriteHandler);
-  dmesg.closeHandler(dmesgHandler);
+  dmesg.closeHandler(dmesg_write_handler);
+  dmesg.closeHandler(dmesg_handler);
   EXPECT_TRUE(3 == cnt);
 
   return RUN_ALL_TESTS();
