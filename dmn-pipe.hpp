@@ -38,10 +38,10 @@ public:
 
   virtual ~Dmn_Pipe() noexcept;
 
-  Dmn_Pipe(const Dmn_Pipe<T> &dmnPipe) = delete;
-  const Dmn_Pipe<T> &operator=(const Dmn_Pipe<T> &dmnPipe) = delete;
-  Dmn_Pipe(Dmn_Pipe<T> &&dmnPipe) = delete;
-  Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&dmnPipe) = delete;
+  Dmn_Pipe(const Dmn_Pipe<T> &obj) = delete;
+  const Dmn_Pipe<T> &operator=(const Dmn_Pipe<T> &obj) = delete;
+  Dmn_Pipe(Dmn_Pipe<T> &&obj) = delete;
+  Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
    * @brief The method will read and return an item from the pipe or

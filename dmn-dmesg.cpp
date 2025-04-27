@@ -48,11 +48,11 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
       m_owner->m_topic_running_counter[id] = dmesgpb.runningcounter();
 
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        m_owner->m_last_dmesgsyspb = dmesgpb;
+        m_owner->m_last_dmesgpb_sys = dmesgpb;
       }
 
       if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
-           m_owner->m_include_dmesgsys) &&
+           m_owner->m_include_dmesgpb_sys) &&
           (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
@@ -71,10 +71,10 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, false, filter_fn, async_process_fn} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
-                                              bool include_dmesgsys,
+                                              bool include_dmesgpb_sys,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
-    : m_name{name}, m_include_dmesgsys{include_dmesgsys},
+    : m_name{name}, m_include_dmesgpb_sys{include_dmesgpb_sys},
       m_filter_fn{filter_fn}, m_async_process_fn{async_process_fn} {
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
   m_sub.m_owner = this;
@@ -274,15 +274,15 @@ void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgpb) {
   }
 }
 
-void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgsyspb) {
-  assert(dmesgsyspb.topic() == kDMesgSysIdentifier);
-  assert(dmesgsyspb.type() == dmn::DMesgTypePb::sys);
+void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgpb_sys) {
+  assert(dmesgpb_sys.topic() == kDMesgSysIdentifier);
+  assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
 
-  std::string id = dmesgsyspb.topic();
+  std::string id = dmesgpb_sys.topic();
   long long next_running_counter = incrementByOne(m_topic_running_counter[id]);
 
-  DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgsyspb, next_running_counter);
-  Dmn_Pub::publishInternal(dmesgsyspb);
+  DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb_sys, next_running_counter);
+  Dmn_Pub::publishInternal(dmesgpb_sys);
   m_topic_running_counter[id] = next_running_counter;
 }
 

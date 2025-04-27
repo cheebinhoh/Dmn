@@ -99,7 +99,7 @@ public:
        *          counter of the topic the Dmn_DMesgHandlerSub has received.
        *        - store a copy of the message as last system message if it is.
        *        - if it is system message and the Dmn_DMesgHandler (owner of
-       *          the Dmn_DMesgHandlerSub) is opened with m_include_dmesgsys
+       *          the Dmn_DMesgHandlerSub) is opened with m_include_dmesgpb_sys
        *          as true, the Dmn_DMesgPB message will be either pushed into
        *          the buffer waiting to be read through Dmn_DMesgHandler' read
        *          or handling through m_async_process_fn callback.
@@ -141,17 +141,18 @@ public:
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
      *
-     * @param name            The name or unique identification to the handler
-     * @param includeDMesgSys True if the handler will be notified of DMesgPb
-     *                        sys message, default is false
-     * @param filterFn        The functor callback that returns false to filter
-     *                        out DMesgPB message, if no functor is provided,
-     *                        no filter is performed
-     * @param asyncProcessFn  The functor callback to process each notified
-     *                        DMesgPb message
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param include_dmesgpb_sys True if the handler will be notified of
+     *                            DMesgPb sys message, default is false
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     * @param async_process_fn    The functor callback to process each notified
+     *                            DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, bool includeDMesgSys,
-                     FilterTask filterFn, AsyncProcessTask asyncProcessFn);
+    Dmn_DMesgHandler(std::string_view name, bool include_dmesgpb_sys,
+                     FilterTask filter_fn, AsyncProcessTask async_process_fn);
 
     virtual ~Dmn_DMesgHandler() noexcept;
 
@@ -181,9 +182,9 @@ public:
     /**
      * @brief The method set the callback function for conflict.
      *
-     * @param cb The conflict callback function
+     * @param conflict_fn The conflict callback function
      */
-    void setConflictCallbackTask(ConflictCallbackTask conflictFn);
+    void setConflictCallbackTask(ConflictCallbackTask conflict_fn);
 
     /**
      * @brief The method writes and publishes the DMesgPb message through DMesg
@@ -252,7 +253,7 @@ public:
      * data member for constructor to instantiate the object.
      */
     std::string m_name{};
-    bool m_include_dmesgsys{};
+    bool m_include_dmesgpb_sys{};
     FilterTask m_filter_fn{};
     AsyncProcessTask m_async_process_fn{};
 
@@ -265,7 +266,7 @@ public:
     std::vector<std::string> m_subscribed_topics{};
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
-    dmn::DMesgPb m_last_dmesgsyspb{};
+    dmn::DMesgPb m_last_dmesgpb_sys{};
     std::unordered_map<std::string, long long> m_topic_running_counter{};
 
     ConflictCallbackTask m_conflict_callback_fn{};
@@ -293,14 +294,14 @@ public:
    *        receive published message and returns the handler to the caller. It
    *        takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
-   * @param name            The name or unique identification to the handler
-   * @param includeDMesgSys True if the handler will be notified of DMesgPb
-   *                        sys message, default is false
-   * @param filterFn        The functor callback that returns false to filter
-   *                        out DMesgPB message, if no functor is provided,
-   *                        no filter is performed
-   * @param asyncProcessFn  The functor callback to process each notified
-   *                        DMesgPb message
+   * @param name                The name or unique identification to the handler
+   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
+   *                            sys message, default is false
+   * @param filter_fn           The functor callback that returns false to
+   * filter out DMesgPB message, if no functor is provided, no filter is
+   * performed
+   * @param async_process_fn    The functor callback to process each notified
+   *                            DMesgPb message
    *
    * @return newly created Dmn_DMesgHandler
    */
@@ -312,16 +313,16 @@ public:
    *        certain published message (by topic) and returns the handler to the
    *        caller.
    *
-   * @param topics          The list of topics to be subscribed for the opened
-   *                        handler
-   * @param name            The name or unique identification to the handler
-   * @param includeDMesgSys True if the handler will be notified of DMesgPb
-   *                        sys message, default is false
-   * @param filterFn        The functor callback that returns false to filter
-   *                        out DMesgPB message, if no functor is provided,
-   *                        no filter is performed
-   * @param asyncProcessFn  The functor callback to process each notified
-   *                        DMesgPb message
+   * @param topics              The list of topics to be subscribed for the
+   * opened handler
+   * @param name                The name or unique identification to the handler
+   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
+   *                            sys message, default is false
+   * @param filter_fn           The functor callback that returns false to
+   * filter out DMesgPB message, if no functor is provided, no filter is
+   * performed
+   * @param async_process_fn    The functor callback to process each notified
+   *                            DMesgPb message
    *
    * @return newly created handler
    */

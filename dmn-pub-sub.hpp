@@ -77,7 +77,7 @@ public:
       std::function<bool(const Dmn_Sub *const, const T &t)>;
 
   Dmn_Pub(std::string_view name, ssize_t capacity = 10,
-          Dmn_Pub_Filter_Task filterFn = {});
+          Dmn_Pub_Filter_Task filter_fn = {});
   virtual ~Dmn_Pub() noexcept;
 
   Dmn_Pub(const Dmn_Pub &obj) = delete;
@@ -162,9 +162,9 @@ template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(T item) {
 // class Dmn_Pub
 template <typename T>
 Dmn_Pub<T>::Dmn_Pub(std::string_view name, ssize_t capacity,
-                    Dmn_Pub_Filter_Task filterFn)
+                    Dmn_Pub_Filter_Task filter_fn)
     : Dmn_Async(name), m_name{name}, m_capacity{capacity},
-      m_filter_fn{filterFn} {
+      m_filter_fn{filter_fn} {
 
   int err = pthread_mutex_init(&m_mutex, NULL);
   if (err) {
