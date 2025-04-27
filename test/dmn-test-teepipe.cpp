@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
   std::vector<std::unique_ptr<dmn::Dmn_Proc>> proclist{};
 
   for (auto &filename : files) {
-    auto tpipeSource = tpipe.addDmn_TeePipeSource();
+    auto tpipe_source = tpipe.addDmn_TeePipeSource();
     auto proc = std::make_unique<dmn::Dmn_Proc>(
-        filename, [&tpipe, tpipeSource, filename, prog = argv[0]]() {
+        filename, [&tpipe, tpipe_source, filename, prog = argv[0]]() {
           int fd{};
           FILE *file{};
           char buf[BUFSIZ]{};
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
             long val{};
             val = strtol(buf, NULL, 10);
 
-            tpipeSource->write(val);
+            tpipe_source->write(val);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
           }

@@ -28,21 +28,21 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // reader
-  dmn::Dmn_Kafka::ConfigType readConfigs_other{};
-  readConfigs_other["bootstrap.servers"] =
+  dmn::Dmn_Kafka::ConfigType read_configs_other{};
+  read_configs_other["bootstrap.servers"] =
       "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  readConfigs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
-  readConfigs_other["sasl.password"] =
+  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+  read_configs_other["sasl.password"] =
       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  readConfigs_other["security.protocol"] = "SASL_SSL";
-  readConfigs_other["sasl.mechanisms"] = "PLAIN";
-  readConfigs_other["group.id"] = "dmesg_other";
-  readConfigs_other["auto.offset.reset"] = "earliest";
-  readConfigs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  readConfigs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  read_configs_other["security.protocol"] = "SASL_SSL";
+  read_configs_other["sasl.mechanisms"] = "PLAIN";
+  read_configs_other["group.id"] = "dmesg_other";
+  read_configs_other["auto.offset.reset"] = "earliest";
+  read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+  read_configs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
   dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                readConfigs_other};
+                                read_configs_other};
 
   // dmesgnet1
   // writer for DMesgNet
@@ -63,32 +63,32 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   // consume prior messages from topic.
-  dmn::DMesgPb dmesgPbRead{};
-  std::map<std::string, std::string> nodeList{};
-  std::map<std::string, std::string> masterList{};
+  dmn::DMesgPb dmesgpb_read{};
+  std::map<std::string, std::string> node_list{};
+  std::map<std::string, std::string> master_list{};
   int n{};
   while (n < 10000) {
-    auto dataRead = consumer_other.read();
-    if (dataRead) {
-      dmesgPbRead.ParseFromString(*dataRead);
+    auto data_read = consumer_other.read();
+    if (data_read) {
+      dmesgpb_read.ParseFromString(*data_read);
 
       int i = 0;
-      while (i < dmesgPbRead.body().sys().nodelist().size()) {
-        auto id = dmesgPbRead.body().sys().nodelist().Get(i).identifier();
-        nodeList[dmesgPbRead.body().sys().self().identifier()] = id;
+      while (i < dmesgpb_read.body().sys().nodelist().size()) {
+        auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+        node_list[dmesgpb_read.body().sys().self().identifier()] = id;
         i++;
       }
 
       EXPECT_TRUE(i <= 1);
 
-      masterList[dmesgPbRead.body().sys().self().identifier()] =
-          dmesgPbRead.body().sys().self().masteridentifier();
+      master_list[dmesgpb_read.body().sys().self().identifier()] =
+          dmesgpb_read.body().sys().self().masteridentifier();
 
-      if (nodeList.size() == 2) {
+      if (node_list.size() == 2) {
         std::string master{};
         bool ok{true};
 
-        for (auto &mp : masterList) {
+        for (auto &mp : master_list) {
           if (master != "") {
             if (master != mp.second) {
               ok = false;
