@@ -90,10 +90,10 @@ public:
 
   virtual ~Dmn_TeePipe() noexcept;
 
-  Dmn_TeePipe(const Dmn_TeePipe<T> &dmnTeePipe) = delete;
-  const Dmn_TeePipe<T> &operator=(const Dmn_TeePipe<T> &dmnTeePipe) = delete;
-  Dmn_TeePipe(const Dmn_TeePipe<T> &&dmnTeePipe) = delete;
-  Dmn_TeePipe<T> &operator=(Dmn_TeePipe<T> &&dmnTeePipe) = delete;
+  Dmn_TeePipe(const Dmn_TeePipe<T> &obj) = delete;
+  const Dmn_TeePipe<T> &operator=(const Dmn_TeePipe<T> &obj) = delete;
+  Dmn_TeePipe(const Dmn_TeePipe<T> &&obj) = delete;
+  Dmn_TeePipe<T> &operator=(Dmn_TeePipe<T> &&obj) = delete;
 
   /**
    * @brief The method will create a teepipe source pipe and return it to
@@ -117,7 +117,7 @@ public:
   long long waitForEmpty() override;
 
 private:
-  long long wait(bool noOpenSource);
+  long long wait(bool no_open_source);
 
   /**
    * @brief The method moves and writes the data item through teepipe structure
@@ -333,7 +333,7 @@ template <typename T> long long Dmn_TeePipe<T>::waitForEmpty() {
   return wait(false);
 }
 
-template <typename T> long long Dmn_TeePipe<T>::wait(bool noOpenSource) {
+template <typename T> long long Dmn_TeePipe<T>::wait(bool no_open_source) {
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
     throw std::runtime_error(strerror(err));
@@ -345,7 +345,7 @@ template <typename T> long long Dmn_TeePipe<T>::wait(bool noOpenSource) {
 
   // only returns if no other object owns the Dmn_TeePipeSource than
   // Dmn_TeePipe
-  while (noOpenSource && m_buffers.size() > 0 &&
+  while (no_open_source && m_buffers.size() > 0 &&
          std::count_if(m_buffers.begin(), m_buffers.end(),
                        [](auto &item) { return item.use_count() > 1; }) > 0) {
     err = pthread_cond_wait(&m_cond, &m_mutex);
