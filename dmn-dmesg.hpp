@@ -298,8 +298,8 @@ public:
    * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
    *                            sys message, default is false
    * @param filter_fn           The functor callback that returns false to
-   * filter out DMesgPB message, if no functor is provided, no filter is
-   * performed
+   *                            filter out DMesgPB message, if no functor is
+   *                            provided, no filter is performed
    * @param async_process_fn    The functor callback to process each notified
    *                            DMesgPb message
    *
@@ -319,8 +319,8 @@ public:
    * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
    *                            sys message, default is false
    * @param filter_fn           The functor callback that returns false to
-   * filter out DMesgPB message, if no functor is provided, no filter is
-   * performed
+   *                            filter out DMesgPB message, if no functor is
+   *                            provided, no filter is performed
    * @param async_process_fn    The functor callback to process each notified
    *                            DMesgPb message
    *
@@ -432,16 +432,17 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
 
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
-  auto handler_ret = handler;
-
-  this->registerSubscriber(&(handler->m_sub));
-  handler->m_owner = this;
 
   /* The topic filter is executed within the DMesg singleton asynchronous
    * thread context, but the filter value is maintained per Dmn_DMesgHandler,
    * and this allow the DMesg to be mutex free while thread safe.
    */
-  handler_ret->m_subscribed_topics = topics;
+  handler->m_subscribed_topics = topics;
+  handler->m_owner = this;
+
+  this->registerSubscriber(&(handler->m_sub));
+
+  auto handler_ret = handler;
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
       {
