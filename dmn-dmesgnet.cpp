@@ -141,7 +141,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
     m_input_proc->exec();
 
     m_sys_handler = Dmn_DMesg::openHandler(
-        m_name + "_sys", [this](const dmn::DMesgPb &dmesgpb) { return false; },
+        m_name + "_sys",
+        [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) { return false; },
         nullptr);
   }
 

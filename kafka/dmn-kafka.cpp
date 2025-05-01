@@ -25,7 +25,7 @@ const std::string Dmn_Kafka::Topic = "Dmn_Kafka.Topic";
 const std::string Dmn_Kafka::Key = "Dmn_Kafka.Key";
 const std::string Dmn_Kafka::PollTimeoutMs = "Dmn_Kafka.PollTimeoutMs";
 
-void Dmn_Kafka::producerCallback(rd_kafka_t *kafka_handle,
+void Dmn_Kafka::producerCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
                                  const rd_kafka_message_t *rkmessage,
                                  void *opaque) {
   Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
@@ -35,8 +35,9 @@ void Dmn_Kafka::producerCallback(rd_kafka_t *kafka_handle,
   obj->m_write_atomic_flag.notify_all();
 }
 
-void Dmn_Kafka::errorCallback(rd_kafka_t *kafka_handle, int err,
-                              const char *reason, void *opaque) {
+void Dmn_Kafka::errorCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
+                              int err, [[maybe_unused]] const char *reason,
+                              void *opaque) {
   Dmn_Kafka *obj = static_cast<Dmn_Kafka *>(opaque);
 
   obj->m_kafka_err = static_cast<rd_kafka_resp_err_t>(err);
@@ -183,7 +184,7 @@ void Dmn_Kafka::write(std::string &item) { write(item, false); }
 
 void Dmn_Kafka::write(std::string &&item) { write(item, true); }
 
-void Dmn_Kafka::write(std::string &item, bool move) {
+void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
   assert(Role::kProducer == m_role);
 
   // this make sure only one thread is accessing the Dmn_Kafka write,
