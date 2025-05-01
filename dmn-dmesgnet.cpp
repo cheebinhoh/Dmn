@@ -201,8 +201,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 ((master != m_is_master) ||
                  (m_number_of_neighbor !=
                   this->m_sys.body().sys().nodelist().size()))) {
-              for (auto &topicDmesgPb : m_topic_last_dmesgpb) {
-                dmn::DMesgPb pb = topicDmesgPb.second;
+              for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
+                dmn::DMesgPb pb = topic_dmesgpb.second;
 
                 DMESG_PB_SET_MSG_PLAYBACK(pb, true);
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, this->m_name);

@@ -67,7 +67,7 @@ public:
    *        if move is true and noexcept in move.
    *
    * @param item The item to be pushed into queue
-   * @param move  True to move, else copy semantics
+   * @param move True to move, else copy semantics
    */
   virtual void push(T &item, bool move = true);
 

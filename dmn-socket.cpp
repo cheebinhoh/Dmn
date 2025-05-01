@@ -20,7 +20,7 @@ namespace dmn {
 Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
     : m_ip4{ip4}, m_port_no{port_no}, m_write_only{write_only} {
   constexpr int broadcast{1};
-  struct sockaddr_in servaddr;
+  struct sockaddr_in servaddr {};
   int type{SOCK_DGRAM};
 
   if ((m_fd = socket(AF_INET, type, 0)) < 0) {
@@ -98,9 +98,9 @@ void Dmn_Socket::write(std::string &item) {
 }
 
 void Dmn_Socket::write(std::string &&item) {
-  std::string moveString = std::move_if_noexcept(item);
+  std::string moved_item = std::move_if_noexcept(item);
 
-  write(moveString);
+  write(moved_item);
 }
 
 } // namespace dmn

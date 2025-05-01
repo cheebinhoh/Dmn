@@ -231,8 +231,8 @@ void Dmn_DMesg::closeHandler(
 }
 
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
-  for (auto &topicDmesgPb : m_topic_last_dmesgpb) {
-    dmn::DMesgPb pb = topicDmesgPb.second;
+  for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
+    dmn::DMesgPb pb = topic_dmesgpb.second;
 
     DMESG_PB_SET_MSG_PLAYBACK(pb, true);
 

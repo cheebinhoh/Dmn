@@ -21,6 +21,7 @@
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <string_view>
 
 #include "dmn-buffer.hpp"
 #include "dmn-debug.hpp"
@@ -58,7 +59,7 @@ public:
    *        to process item, the method is blocked waiting for next item
    *        from the pipe.
    *
-   * @param fn functor to process next item pop out of pipe
+   * @param fn The functor to process next item pop out of pipe
    */
   void readAndProcess(Dmn_Pipe::Task fn);
 
@@ -66,7 +67,7 @@ public:
    * @brief The method will write data into the pipe, the data is copied
    *        than move semantic.
    *
-   * @param rItem The data item to be copied into pipe
+   * @param item The data item to be copied into pipe
    */
   void write(T &item) override;
 
