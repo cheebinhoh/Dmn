@@ -159,9 +159,9 @@ template <typename T> void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item) {
 }
 
 template <typename T> void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &&item) {
-  T movedItem = std::move_if_noexcept(item);
+  T moved_item = std::move_if_noexcept(item);
 
-  write(movedItem, true);
+  write(moved_item, true);
 }
 
 template <typename T>

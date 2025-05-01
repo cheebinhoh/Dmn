@@ -5,13 +5,13 @@
  * asynchronous execution API.
  *
  * A client class can inherit from Dmn_Async or composes an Dmn_Async object,
- * and implement the client class API to pass a functor to the Dmn_Async object
- * for execution on behalf of the client API call' execution. This will help
+ * and implement the class API to pass a functor to the Dmn_Async object for
+ * execution on behalf of the client API call' execution. This will help
  * serialize multiple the API call executions, avoid any explicit mutex lock on
  * client API calls, and more important is that it can shorten the latency of
  * calling the client API and returns from the API call for functionalities that
- * does not need to be synchronized between caller and callee (see
- * dmn-pub-sub.hpp for an example usage of this class).
+ * does not need to be synchronized between caller and callee' API execution
+ * (see dmn-pub-sub.hpp for an example usage of this class).
  */
 
 #ifndef DMN_ASYNC_HPP_

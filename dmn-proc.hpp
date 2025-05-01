@@ -50,9 +50,25 @@ public:
   Dmn_Proc(Dmn_Proc &&obj) = delete;
   Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
 
+  /**
+   * @brief This method executes the fn passed in or to constructor to be
+   *        executed in an asynchronous thread.
+   *
+   * @param fn The functor to be executed in an asynchronous thread
+   */
   bool exec(Dmn_Proc::Task fn = {});
+
+  /**
+   * @brief This method puts the caller in pause and wait for return of the
+   *        asynchronous executed thread (aka join the thread).
+   *
+   * @return True if the thread is joined successfully
+   */
   bool wait();
 
+  /**
+   * @brief This method volunteerly yeild the execution of the current thread.
+   */
   static void yield();
 
 protected:

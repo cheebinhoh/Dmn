@@ -193,7 +193,7 @@ public:
      *
      * @param dMesgPb The DMesgPb message to be published
      */
-    void write(dmn::DMesgPb &&dmesgPb) override;
+    void write(dmn::DMesgPb &&dmesgpb) override;
 
     /**
      * @brief The method writes and publishes the DMesgPb message through DMesg
@@ -202,7 +202,7 @@ public:
      *
      * @param dMesgPb The DMesgPb message to be published
      */
-    void write(dmn::DMesgPb &dmesgPb) override;
+    void write(dmn::DMesgPb &dmesgpb) override;
 
     /**
      * @brief The method returns true if the handler has NO pending to be
@@ -223,7 +223,7 @@ public:
      * @param dmesgPb The DMesgPb messsgeto be published
      * @param move    True to move than copy the data
      */
-    void writeDMesgInternal(dmn::DMesgPb &dmesgPb, bool move);
+    void writeDMesgInternal(dmn::DMesgPb &dmesgpb, bool move);
 
   private:
     /**
@@ -247,7 +247,7 @@ public:
      *
      * @param mesgPb The dmesgPb data that results in conflict state
      */
-    void throwConflict(const dmn::DMesgPb dmesgPb);
+    void throwConflict(const dmn::DMesgPb dmesgpb);
 
     /**
      * data member for constructor to instantiate the object.
