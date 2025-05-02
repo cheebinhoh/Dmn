@@ -267,7 +267,7 @@ public:
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
     dmn::DMesgPb m_last_dmesgpb_sys{};
-    std::unordered_map<std::string, long long> m_topic_running_counter{};
+    std::unordered_map<std::string, unsigned long> m_topic_running_counter{};
 
     ConflictCallbackTask m_conflict_callback_fn{};
     std::atomic<bool> m_in_conflict{};
@@ -400,7 +400,7 @@ private:
    * data members for internal logic.
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
-  std::unordered_map<std::string, long long> m_topic_running_counter{};
+  std::unordered_map<std::string, unsigned long> m_topic_running_counter{};
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 

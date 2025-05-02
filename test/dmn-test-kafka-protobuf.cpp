@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
   // sleep and wait for data to sync to reader
   std::this_thread::sleep_for(std::chrono::seconds(7));
-  int index = 0;
+  size_t index = 0;
 
   while (true) {
     auto data_read = consumer.read();

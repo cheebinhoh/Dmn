@@ -11,6 +11,10 @@ macro(ADD_TEST_EXECUTABLE ...)
     add_executable(${arg}
                    ${arg}.cpp)
 
+    target_compile_options(${arg}
+                           PRIVATE
+                           -Wall -Wextra -Wpedantic)
+
     target_link_libraries(${arg}
                           PRIVATE
                           gtest_main

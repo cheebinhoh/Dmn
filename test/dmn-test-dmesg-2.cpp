@@ -27,8 +27,6 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Proc proc1{
       "proc1", [&dmesg_handle1]() {
-        int val{1};
-
         while (true) {
           auto dmesgpb = dmesg_handle1->read();
           if (!dmesgpb) {

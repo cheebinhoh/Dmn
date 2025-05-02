@@ -42,7 +42,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
   if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgpb.type() == dmn::DMesgTypePb::sys) {
     std::string id = dmesgpb.topic();
-    long long runningCounter = m_owner->m_topic_running_counter[id];
+    unsigned long runningCounter = m_owner->m_topic_running_counter[id];
 
     if (dmesgpb.runningcounter() > runningCounter) {
       m_owner->m_topic_running_counter[id] = dmesgpb.runningcounter();
@@ -143,7 +143,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   gettimeofday(&tv, NULL);
 
   std::string topic = dmesgpb.topic();
-  long long next_running_counter =
+  unsigned long next_running_counter =
       incrementByOne(m_topic_running_counter[topic]);
 
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tv);
@@ -248,7 +248,7 @@ void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgpb) {
   } else {
     std::string id = dmesgpb.topic();
 
-    long long next_running_counter =
+    unsigned long next_running_counter =
         incrementByOne(m_topic_running_counter[id]);
 
     std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
@@ -279,7 +279,8 @@ void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgpb_sys) {
   assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
 
   std::string id = dmesgpb_sys.topic();
-  long long next_running_counter = incrementByOne(m_topic_running_counter[id]);
+  unsigned long next_running_counter =
+      incrementByOne(m_topic_running_counter[id]);
 
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb_sys, next_running_counter);
   Dmn_Pub::publishInternal(dmesgpb_sys);

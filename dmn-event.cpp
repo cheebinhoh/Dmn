@@ -22,11 +22,11 @@ Dmn_Event_Manager::Dmn_Event_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Event_Manager"},
       m_mask{Dmn_Event_Manager::s_mask} {
   // default and to be overridden if needed
-  m_signal_handlers[SIGTERM] = [this](int signo) {
+  m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) {
     this->exitMainLoopInternal();
   };
 
-  m_signal_handlers[SIGINT] = [this](int signo) {
+  m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) {
     this->exitMainLoopInternal();
   };
 
