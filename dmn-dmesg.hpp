@@ -106,7 +106,7 @@ public:
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
-      void notify(dmn::DMesgPb dmesgpb) override;
+      void notify(const dmn::DMesgPb &dmesgpb) override;
 
       // WARNING: it is marked as public so that a closure function
       // to Dmn_DMesg can access and manipulate it, as there is no
@@ -347,7 +347,7 @@ protected:
    *
    * @param dmesgSysPb The system DMesgPb message
    */
-  void publishSysInternal(dmn::DMesgPb dmesgSysPb);
+  void publishSysInternal(const dmn::DMesgPb &dmesgSysPb);
 
   /**
    * @brief The method publishes dmesgPb to registered subscribers. If the to be
@@ -363,7 +363,7 @@ protected:
    *
    * @param dmesgPb The dmesgPb to be published
    */
-  void publishInternal(dmn::DMesgPb dmesgPb) override;
+  void publishInternal(const dmn::DMesgPb &dmesgPb) override;
 
   /**
    * @brief The method posts an asynchronous action in the publisher's singleton

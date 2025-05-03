@@ -38,7 +38,7 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
-    dmn::DMesgPb dmesgpb) {
+    const dmn::DMesgPb &dmesgpb) {
   if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgpb.type() == dmn::DMesgTypePb::sys) {
     std::string id = dmesgpb.topic();
@@ -57,7 +57,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
         } else {
-          m_owner->m_buffers.push(dmesgpb);
+          // FIXME
+          dmn::DMesgPb copied = dmesgpb;
+          m_owner->m_buffers.push(copied);
         }
       }
     }
@@ -181,7 +183,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflict(const dmn::DMesgPb dmesgpb) {
 // class Dmn_DMesg
 Dmn_DMesg::Dmn_DMesg(std::string_view name, KeyValueConfiguration config)
     : Dmn_Pub{name, 0, // Dmn_DMesg manages re-send per topic
-              [this](const Dmn_Sub *const sub, const dmn::DMesgPb &msg) {
+              [](const Dmn_Sub *const sub, const dmn::DMesgPb &msg) {
                 const Dmn_DMesgHandler::Dmn_DMesgHandlerSub *const handler_sub =
                     dynamic_cast<
                         const Dmn_DMesgHandler::Dmn_DMesgHandlerSub *const>(
@@ -240,7 +242,7 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   }
 }
 
-void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgpb) {
+void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   // for message that is playback, we skip the check if it is conflict as
   // only openHandler with lower running counter will read those message.
   if (dmesgpb.playback()) {
@@ -267,14 +269,16 @@ void Dmn_DMesg::publishInternal(dmn::DMesgPb dmesgpb) {
       }
     }
 
-    DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
-    Dmn_Pub::publishInternal(dmesgpb);
+    dmn::DMesgPb copied = dmesgpb;
+
+    DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
+    Dmn_Pub::publishInternal(copied);
     m_topic_running_counter[id] = next_running_counter;
-    m_topic_last_dmesgpb[id] = dmesgpb;
+    m_topic_last_dmesgpb[id] = copied;
   }
 }
 
-void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgpb_sys) {
+void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   assert(dmesgpb_sys.topic() == kDMesgSysIdentifier);
   assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
 
@@ -282,8 +286,10 @@ void Dmn_DMesg::publishSysInternal(dmn::DMesgPb dmesgpb_sys) {
   unsigned long next_running_counter =
       incrementByOne(m_topic_running_counter[id]);
 
-  DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb_sys, next_running_counter);
-  Dmn_Pub::publishInternal(dmesgpb_sys);
+  dmn::DMesgPb copied = dmesgpb_sys;
+
+  DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
+  Dmn_Pub::publishInternal(copied);
   m_topic_running_counter[id] = next_running_counter;
 }
 
