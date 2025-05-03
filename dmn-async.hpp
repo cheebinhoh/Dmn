@@ -19,7 +19,10 @@
 #define DMN_ASYNC_HPP_
 
 #include <chrono>
+#include <condition_variable>
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <string_view>
 
 #include "dmn-pipe.hpp"
@@ -43,6 +46,19 @@ namespace dmn {
 
 class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
 public:
+  class Dmn_Async_Wait {
+    friend class Dmn_Async;
+
+  public:
+    void wait();
+
+  private:
+    std::mutex m_mutex{};
+    std::condition_variable m_cond_var{};
+
+    bool m_done{};
+  };
+
   Dmn_Async(std::string_view name = "");
   virtual ~Dmn_Async() noexcept;
 
@@ -50,6 +66,8 @@ public:
   const Dmn_Async &operator=(const Dmn_Async &obj) = delete;
   Dmn_Async(Dmn_Async &&obj) = delete;
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
+
+  std::shared_ptr<Dmn_Async_Wait> addExecTaskWithWait(std::function<void()> fn);
 
   /**
    * @brief The method will execute the asynchronous task after duration
@@ -62,8 +80,8 @@ public:
    * @param fn       asynchronous task to be executed
    */
   template <class Rep, class Period>
-  void execAfter(const std::chrono::duration<Rep, Period> &duration,
-                 std::function<void()> fn);
+  void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
+                        std::function<void()> fn);
 
 private:
   /**
@@ -76,19 +94,21 @@ private:
    *                       task is executed
    * @param fn             asynchronous task to be executed
    */
-  void execAfterInternal(long long time_in_future, std::function<void()> fn);
+  void addExecTaskAfterInternal(long long time_in_future,
+                                std::function<void()> fn);
 }; // class Dmn_Async
 
 template <class Rep, class Period>
-void Dmn_Async::execAfter(const std::chrono::duration<Rep, Period> &duration,
-                          std::function<void()> fn) {
+void Dmn_Async::addExecTaskAfter(
+    const std::chrono::duration<Rep, Period> &duration,
+    std::function<void()> fn) {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
-  this->execAfterInternal(time_in_future, fn);
+  this->addExecTaskAfterInternal(time_in_future, fn);
 }
 
 } // namespace dmn

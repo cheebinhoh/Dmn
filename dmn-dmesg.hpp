@@ -33,7 +33,6 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -274,8 +273,6 @@ public:
     std::atomic<bool> m_in_conflict{};
 
     bool m_after_initial_playback{};
-
-    std::mutex m_mutex{};
   }; // class Dmn_DMesgHandler
 
   /**

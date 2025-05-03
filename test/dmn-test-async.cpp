@@ -51,12 +51,23 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Async async{"timer"};
   int val = 1;
-  async.execAfter(std::chrono::seconds(5), [&val]() { val = 2; });
+  async.addExecTaskAfter(std::chrono::seconds(5), [&val]() { val = 2; });
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(1 == val);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(2 == val);
+
+  bool done{};
+  dmn::Dmn_Async asyncWithWait{"async"};
+
+  auto waitHandler = asyncWithWait.addExecTaskWithWait([&done] {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    done = true;
+  });
+
+  waitHandler->wait();
+  EXPECT_TRUE(done);
 
   return RUN_ALL_TESTS();
 }

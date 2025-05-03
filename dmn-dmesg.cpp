@@ -41,7 +41,6 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
     const dmn::DMesgPb &dmesgpb) {
   if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgpb.type() == dmn::DMesgTypePb::sys) {
-    std::lock_guard<std::mutex> guard(m_owner->m_mutex);
 
     std::string id = dmesgpb.topic();
     unsigned long runningCounter = m_owner->m_topic_running_counter[id];
@@ -121,7 +120,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
 
   dmn::DMesgPb moved_dmesgpb = std::move_if_noexcept(dmesgpb);
 
-  writeDMesgInternal(moved_dmesgpb, true);
+  auto waitHandler = m_sub.addExecTaskWithWait(
+      [this, &moved_dmesgpb] { writeDMesgInternal(moved_dmesgpb, true); });
+  waitHandler->wait();
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
@@ -129,7 +130,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
     return;
   }
 
-  writeDMesgInternal(dmesgpb, false);
+  auto waitHandler = m_sub.addExecTaskWithWait(
+      [this, &dmesgpb] { writeDMesgInternal(dmesgpb, false); });
+  waitHandler->wait();
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
@@ -137,7 +140,6 @@ void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move) {
   assert(nullptr != m_owner);
-  std::lock_guard<std::mutex> guard(m_mutex);
 
   if (m_in_conflict) {
     throw std::runtime_error("last write results in conflicted, "
