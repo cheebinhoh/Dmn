@@ -33,6 +33,11 @@ public:
 
 template <typename T, class... U>
 std::shared_ptr<T> Dmn_Singleton::createInstance(U &&...arg) {
+  // NOTE that the template type class is supposed to handle
+  // thread-safety (example through std::once_flag) to make
+  // sure that multiple threads calling createInstance is
+  // thread safe and always the singleton instance is returned.
+
   std::shared_ptr<T> new_instance =
       T::createInstanceInternal(std::forward<U>(arg)...);
 

@@ -11,7 +11,6 @@
 #ifdef NDEBUG
 #define DMN_DEBUG_PRINT(print_stmt)                                            \
   do {                                                                         \
-    ;                                                                          \
   } while (false)
 #else
 #define DMN_DEBUG_PRINT(print_stmt)                                            \

@@ -1,5 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn.hpp
+ * @brief Main header file for the Distributed Messaging Network (DMN) project.
+ *
+ * This file aggregates all necessary header files for the DMN library.
  */
 
 #ifndef DMN_HPP_

@@ -16,6 +16,7 @@
 #include <functional>
 #include <thread>
 
+#include "dmn-debug.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
@@ -80,7 +81,11 @@ void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
       std::this_thread::sleep_for(this->m_reltime);
       Dmn_Proc::yield();
 
-      this->m_fn();
+      try {
+        this->m_fn();
+      } catch (const std::exception &e) {
+        DMN_DEBUG_PRINT(std::cerr << e.what() << "\n");
+      }
     }
   });
 }
