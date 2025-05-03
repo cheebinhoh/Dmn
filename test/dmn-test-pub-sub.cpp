@@ -19,7 +19,7 @@ public:
 
   ~Dmn_Msg_Receiver() {}
 
-  void notify(std::string item) override {
+  void notify(const std::string &item) override {
     std::cout << m_name << " is notified: " << item << "\n";
 
     m_notifiedList.push_back(item);

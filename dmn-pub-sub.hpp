@@ -55,7 +55,7 @@ public:
      *
      * @param item The data item notified by publisher
      */
-    virtual void notify(T item) = 0;
+    virtual void notify(const T &item) = 0;
 
     friend class Dmn_Pub;
 
@@ -68,7 +68,7 @@ public:
      *
      * @param item The data item notified by publisher
      */
-    void notifyInternal(T item);
+    void notifyInternal(const T &item);
 
     Dmn_Pub *m_pub{};
   }; // class Dmn_Sub
@@ -94,7 +94,7 @@ public:
    *
    * @param item The data item to be published to subscribers
    */
-  void publish(T item);
+  void publish(const T &item);
 
   /**
    * @brief The method registers a subscriber and send out prior published data
@@ -125,7 +125,7 @@ protected:
    *
    * @param item The data item to be published
    */
-  virtual void publishInternal(T item);
+  virtual void publishInternal(const T &item);
 
 private:
   /**
@@ -155,7 +155,7 @@ template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(T item) {
+template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(const T &item) {
   DMN_ASYNC_CALL_WITH_CAPTURE({ this->notify(item); }, this, item);
 }
 
@@ -191,11 +191,11 @@ template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::publish(T item) {
+template <typename T> void Dmn_Pub<T>::publish(const T &item) {
   this->write([this, item]() mutable { this->publishInternal(item); });
 }
 
-template <typename T> void Dmn_Pub<T>::publishInternal(T item) {
+template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
   /* Though through Dmn_Async (parent class), we have a mean to
    * guarantee that only one thread is executing the core logic
    * and manipulate the m_subscribers state in a singleton asynchronous
