@@ -192,7 +192,7 @@ template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
 }
 
 template <typename T> void Dmn_Pub<T>::publish(const T &item) {
-  this->write([this, item]() mutable { this->publishInternal(item); });
+  DMN_ASYNC_CALL_WITH_CAPTURE({ this->publishInternal(item); }, this, item);
 }
 
 template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
