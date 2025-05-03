@@ -243,39 +243,45 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
 }
 
 void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
-  // for message that is playback, we skip the check if it is conflict as
-  // only openHandler with lower running counter will read those message.
+  // if it is a playback, we do not check if it is in conflict.
   if (dmesgpb.playback()) {
     Dmn_Pub::publishInternal(dmesgpb);
-  } else {
-    std::string id = dmesgpb.topic();
 
-    unsigned long next_running_counter =
-        incrementByOne(m_topic_running_counter[id]);
+    return;
+  }
 
-    std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
-        m_handlers.begin(), m_handlers.end(), [&dmesgpb](auto handler) {
-          return handler->m_name == dmesgpb.sourcewritehandleridentifier();
-        });
+  std::vector<std::shared_ptr<Dmn_DMesgHandler>>::iterator it = std::find_if(
+      m_handlers.begin(), m_handlers.end(), [&dmesgpb](auto handler) {
+        return handler->m_name == dmesgpb.sourcewritehandleridentifier();
+      });
 
-    if (it != m_handlers.end() && (*it)->isInConflict()) {
-      // avoid throw conflict multiple times
-      return;
-    } else if (dmesgpb.runningcounter() < next_running_counter) {
-      if (it != m_handlers.end()) {
-        (*it)->throwConflict(dmesgpb);
+  // if source is still in conflict, we do not allow it to send any message
+  // until it resolves conflict state.
+  if (it != m_handlers.end() && (*it)->isInConflict()) {
+    // avoid throw conflict multiple times
+    return;
+  }
 
-        return;
-      }
+  std::string id = dmesgpb.topic();
+
+  unsigned long next_running_counter =
+      incrementByOne(m_topic_running_counter[id]);
+
+  // if this is a message is out of date and put the sender in conflict
+  if (dmesgpb.runningcounter() < next_running_counter) {
+    if (it != m_handlers.end()) {
+      (*it)->throwConflict(dmesgpb);
     }
 
-    dmn::DMesgPb copied = dmesgpb;
-
-    DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
-    Dmn_Pub::publishInternal(copied);
-    m_topic_running_counter[id] = next_running_counter;
-    m_topic_last_dmesgpb[id] = copied;
+    return;
   }
+
+  dmn::DMesgPb copied = dmesgpb;
+
+  DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
+  Dmn_Pub::publishInternal(copied);
+  m_topic_running_counter[id] = next_running_counter;
+  m_topic_last_dmesgpb[id] = copied;
 }
 
 void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
