@@ -17,7 +17,7 @@ commitMessage=""
 
 while [ "$1" != "" ]; do
   case "$1" in
-    -t) 
+    -t)
       buildTest="yes"
       shift
       ;;
@@ -26,7 +26,7 @@ while [ "$1" != "" ]; do
      shift
      commitMessage="$1"
      shift
-  esac 
+  esac
 done
 
 oldpwd=$PWD
@@ -47,7 +47,7 @@ if [ "${buildTest}" == "yes" ]; then
   cd ./Build
   cmake ../
 
-  make 
+  make
 
   echo "******** run ctest..."
   ctest -L dmn

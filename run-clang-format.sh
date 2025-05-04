@@ -52,6 +52,6 @@ if which clang-format &>/dev/null; then
 
     cd - &>/dev/null
   done
-fi 
+fi
 
 
