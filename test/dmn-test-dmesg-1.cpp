@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(dmesg_write_handle);
 
   auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
+
   auto dmesg_read_handle2 = dmesg.openHandler(
       "readHandler2", [](const dmn::DMesgPb &dmesgpb) -> bool {
         return dmesgpb.body().message() != "message string 1";

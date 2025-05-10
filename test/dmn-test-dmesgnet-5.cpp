@@ -33,13 +33,14 @@ int main(int argc, char *argv[]) {
   read_socket_1.reset();
   write_socket_1.reset();
 
-  auto listen_handle_3 =
-      dmesgnet1->openHandler("dmesg-3-listen", true, nullptr,
-                             [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
-                               if (data.type() == dmn::DMesgTypePb::sys) {
-                                 dmesgpb_sys_3 = data;
-                               }
-                             });
+  auto listen_handle_3 = dmesgnet1->openHandler(
+      "dmesg-3-listen", nullptr,
+      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
+        if (data.type() == dmn::DMesgTypePb::sys) {
+          dmesgpb_sys_3 = data;
+        }
+      },
+      true);
 
   dmn::DMesgPb dmesgpb_sys_4{};
 
@@ -56,13 +57,14 @@ int main(int argc, char *argv[]) {
         read_socket_1.reset();
         write_socket_1.reset();
 
-        auto listen_handle_4 =
-            dmesgnet1.openHandler("dmesg-4-listen", true, nullptr,
-                                  [&dmesgpb_sys_4](dmn::DMesgPb data) mutable {
-                                    if (data.type() == dmn::DMesgTypePb::sys) {
-                                      dmesgpb_sys_4 = data;
-                                    }
-                                  });
+        auto listen_handle_4 = dmesgnet1.openHandler(
+            "dmesg-4-listen", nullptr,
+            [&dmesgpb_sys_4](dmn::DMesgPb data) mutable {
+              if (data.type() == dmn::DMesgTypePb::sys) {
+                dmesgpb_sys_4 = data;
+              }
+            },
+            true);
 
         std::this_thread::sleep_for(std::chrono::seconds(10));
 

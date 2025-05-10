@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   writeSocket1.reset();
 
   auto readHandler =
-      dmesgnet1.openHandler("dmesg-1-handler", false, nullptr,
+      dmesgnet1.openHandler("dmesg-1-handler", nullptr,
                             [&msgPb, &readData](dmn::DMesgPb data) mutable {
                               readData = true;
                               msgPb = data;

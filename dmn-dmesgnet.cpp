@@ -44,7 +44,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
       m_name,
-      true, // include DMesgSys!
+      "", // subscribe any topic
       [this](const dmn::DMesgPb &dmesgPb) {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
@@ -73,7 +73,9 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
               },
               this, dmesgPbWrite);
         }
-      });
+      },
+      true // include DMesgSys!
+  );
 
   if (m_input_handler) {
     m_input_proc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
@@ -142,8 +144,9 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
     m_sys_handler = Dmn_DMesg::openHandler(
         m_name + "_sys",
+        "", // any topic
         [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) { return false; },
-        nullptr);
+        nullptr, false);
   }
 
   if (m_input_handler && m_output_handler) {

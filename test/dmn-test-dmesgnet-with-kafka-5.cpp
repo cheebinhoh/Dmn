@@ -117,11 +117,11 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(n < 10000);
 
   std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
-  std::vector<std::string> subscribed_topics{"counter sync 1"};
+  std::string subscribed_topic{"counter sync 1"};
 
   int cnt{0};
   std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
-      dmesgnet1.openHandler(subscribed_topics, "handler1", false, nullptr,
+      dmesgnet1.openHandler("handler1", subscribed_topic, nullptr,
                             [&cnt](const dmn::DMesgPb &msg) mutable {
                               EXPECT_TRUE("counter sync 1" == msg.topic());
                               cnt++;

@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   write_socket_1.reset();
 
   auto write_handle_1 = dmesgnet1.openHandler(
-      "dmesg-1-handler", false, nullptr,
+      "dmesg-1-handler", nullptr,
       [&dmesgpb_read, &read_data](dmn::DMesgPb data) mutable {
         read_data = true;
         dmesgpb_read = data;
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   dmn::DMesgPb dmesgpb_read_2{};
   auto read_handle_2 = dmesgnet2.openHandler(
-      "dmesg-2-handler", false, nullptr,
+      "dmesg-2-handler", nullptr,
       [&dmesgpb_read_2, &read_data](dmn::DMesgPb data) mutable {
         read_data = true;
         dmesgpb_read_2 = data;
