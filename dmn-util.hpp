@@ -11,7 +11,7 @@
 namespace dmn {
 
 /**
- * @brief The method increases the value by 1 and wrap it around to 1 if
+ * @brief The method increases the value by 1 and wraps it around to 1 if
  *        the increased number wraps around to zero or negative value.
  *
  * @param value The value to be plus 1 and returned

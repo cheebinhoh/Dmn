@@ -129,30 +129,89 @@ public:
      * @brief The delegating constructor for Dmn_DMesgHandler.
      *
      * @param name             The name or unique identification to the handler
-     * @param filter_fn        The functor callback that returns false to filter
-     *                         out DMesgPB message, if no functor is provided,
-     *                         no filter is performed
-     * @param async_process_fn The functor callback to process each notified
      *                         DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn = nullptr,
-                     AsyncProcessTask async_process_fn = nullptr);
+    Dmn_DMesgHandler(std::string_view name);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
      *
      * @param name                The name or unique identification to the
      *                            handler
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     * @param async_process_fn    The functor callback to process each notified
+     *                            DMesgPb message
      * @param include_dmesgpb_sys True if the handler will be notified of
      *                            DMesgPb sys message, default is false
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
+                     AsyncProcessTask async_process_fn = nullptr,
+                     bool include_dmesgpb_sys = false);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param topic               The topic (DMesgPb.topic) that the handler
+     *                            subscribes to for reading or set as topic
+     *                            for written message
+     */
+    Dmn_DMesgHandler(std::string_view name, std::string_view topic);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param topic               The topic (DMesgPb.topic) that the handler
+     *                            subscribes to for reading or set as topic
+     *                            for written message
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     */
+    Dmn_DMesgHandler(std::string_view name, std::string_view topic,
+                     FilterTask filter_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param topic               The topic (DMesgPb.topic) that the handler
+     *                            subscribes to for reading or set as topic
+     *                            for written message
      * @param filter_fn           The functor callback that returns false to
      *                            filter out DMesgPB message, if no functor
      *                            is provided, no filter is performed
      * @param async_process_fn    The functor callback to process each notified
      *                            DMesgPb message
      */
-    Dmn_DMesgHandler(std::string_view name, bool include_dmesgpb_sys,
+    Dmn_DMesgHandler(std::string_view name, std::string_view topic,
                      FilterTask filter_fn, AsyncProcessTask async_process_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param topic               The topic (DMesgPb.topic) that the handler
+     *                            subscribes to for reading or set as topic
+     *                            for written message
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     * @param async_process_fn    The functor callback to process each notified
+     *                            DMesgPb message
+     * @param include_dmesgpb_sys True if the handler will be notified of
+     *                            DMesgPb sys message, default is false
+     */
+    Dmn_DMesgHandler(std::string_view name, std::string_view topic,
+                     FilterTask filter_fn, AsyncProcessTask async_process_fn,
+                     bool include_dmesgpb_sys);
 
     virtual ~Dmn_DMesgHandler() noexcept;
 
@@ -253,17 +312,16 @@ public:
      * data member for constructor to instantiate the object.
      */
     std::string m_name{};
-    bool m_include_dmesgpb_sys{};
+    std::string m_topic{};
     FilterTask m_filter_fn{};
     AsyncProcessTask m_async_process_fn{};
+    bool m_include_dmesgpb_sys{};
 
     /**
      * data members for internal logic
      */
     Dmn_DMesg *m_owner{};
     Dmn_DMesgHandlerSub m_sub{};
-
-    std::vector<std::string> m_subscribed_topics{};
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
     dmn::DMesgPb m_last_dmesgpb_sys{};
@@ -295,13 +353,16 @@ public:
    *        takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
    * @param name                The name or unique identification to the handler
-   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
-   *                            sys message, default is false
+   * @param topic               The topic (DMesgPb.topic) that the handler
+   *                            subscribes to for reading or set as topic for
+   *                            written message
    * @param filter_fn           The functor callback that returns false to
    *                            filter out DMesgPB message, if no functor is
    *                            provided, no filter is performed
    * @param async_process_fn    The functor callback to process each notified
    *                            DMesgPb message
+   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
+   *                            sys message, default is false
    *
    * @return newly created Dmn_DMesgHandler
    */
@@ -309,31 +370,8 @@ public:
   std::shared_ptr<Dmn_DMesgHandler> openHandler(U &&...arg);
 
   /**
-   * @brief The method creates a new handler, registers the handler to receive
-   *        certain published message (by topic) and returns the handler to the
-   *        caller.
-   *
-   * @param topics              The list of topics to be subscribed for the
-   * opened handler
-   * @param name                The name or unique identification to the handler
-   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
-   *                            sys message, default is false
-   * @param filter_fn           The functor callback that returns false to
-   *                            filter out DMesgPB message, if no functor is
-   *                            provided, no filter is performed
-   * @param async_process_fn    The functor callback to process each notified
-   *                            DMesgPb message
-   *
-   * @return newly created handler
-   */
-  template <class... U>
-  std::shared_ptr<Dmn_DMesgHandler> openHandler(std::vector<std::string> topics,
-                                                U &&...arg);
-
-  /**
    * @brief The method unregisters and removes the handler from the DMesg and
-   *        then free the handler (if handlerToClose argument is the only
-   *        shared pointer than one owned by DMesg).
+   *        then free the handler.
    *
    * @param handlerToClose The handler to be closed
    */
@@ -407,14 +445,6 @@ private:
 template <class... U>
 std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
 Dmn_DMesg::openHandler(U &&...arg) {
-  auto handler_ret = this->openHandler({}, std::forward<U>(arg)...);
-
-  return handler_ret;
-}
-
-template <class... U>
-std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
-Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
   // this is primitive openHandler() method that will
   // - create the handler
   // - register the handler as subscriber
@@ -437,7 +467,6 @@ Dmn_DMesg::openHandler(std::vector<std::string> topics, U &&...arg) {
    * thread context, but the filter value is maintained per Dmn_DMesgHandler,
    * and this allow the DMesg to be mutex free while thread safe.
    */
-  handler->m_subscribed_topics = topics;
   handler->m_owner = this;
 
   this->registerSubscriber(&(handler->m_sub));

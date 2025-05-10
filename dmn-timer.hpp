@@ -1,11 +1,12 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This module a watchdog or timer that executes a callback function
- * repeatedly after certain duration has elapsed. Note that it is
- * guaranteed that the callback function will not be executed before
- * the specific duration is elapsed, but it is not guaranteed that it
- * will be executed at the first moment that the duration is elapsed.
+ * This module functions as a watchdog or timer, executing a
+ * callback function repeatedly after a specified duration has
+ * elapsed. Note that while it is guaranteed that the callback
+ * function will not be executed before the specified duration
+ * has elapsed, it is not guaranteed to be executed immediately
+ * upon duration's completion.
  */
 
 #ifndef DMN_TIMER_HPP_
@@ -82,7 +83,9 @@ void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
       Dmn_Proc::yield();
 
       try {
-        this->m_fn();
+        if (m_fn) {
+          this->m_fn();
+        }
       } catch (const std::exception &e) {
         DMN_DEBUG_PRINT(std::cerr << e.what() << "\n");
       }

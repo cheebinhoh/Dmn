@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_Proc::yield();
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  auto dmesg_handle = dmesgnet1.openHandler("writeHandler", nullptr, nullptr);
+  auto dmesg_handle = dmesgnet1.openHandler("writeHandler");
   EXPECT_TRUE(dmesg_handle);
 
   dmn::DMesgPb dmesgpb{};

@@ -54,6 +54,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
       if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
            m_owner->m_include_dmesgpb_sys) &&
+          ("" == m_owner->m_topic || dmesgpb.topic() == m_owner->m_topic) &&
           (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
@@ -68,17 +69,39 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 }
 
 // class Dmn_DMesg::Dmn_DMesgHandler
-Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
-                                              FilterTask filter_fn,
-                                              AsyncProcessTask async_process_fn)
-    : Dmn_DMesgHandler{name, false, filter_fn, async_process_fn} {}
+Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
+    : Dmn_DMesgHandler{name, "", nullptr, nullptr, false} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
-                                              bool include_dmesgpb_sys,
+                                              FilterTask filter_fn,
+                                              AsyncProcessTask async_process_fn,
+                                              bool include_dmesgpb_sys)
+    : Dmn_DMesgHandler{name, "", filter_fn, async_process_fn,
+                       include_dmesgpb_sys} {}
+
+Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
+                                              std::string_view topic)
+    : Dmn_DMesgHandler{name, topic, nullptr, nullptr, false} {}
+
+Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
+                                              std::string_view topic,
+                                              FilterTask filter_fn)
+    : Dmn_DMesgHandler{name, topic, filter_fn, nullptr, false} {}
+
+Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
+                                              std::string_view topic,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
-    : m_name{name}, m_include_dmesgpb_sys{include_dmesgpb_sys},
-      m_filter_fn{filter_fn}, m_async_process_fn{async_process_fn} {
+    : Dmn_DMesgHandler{name, topic, filter_fn, async_process_fn, false} {}
+
+Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
+                                              std::string_view topic,
+                                              FilterTask filter_fn,
+                                              AsyncProcessTask async_process_fn,
+                                              bool include_dmesgpb_sys)
+    : m_name{name}, m_topic{topic}, m_filter_fn{filter_fn},
+      m_async_process_fn{async_process_fn},
+      m_include_dmesgpb_sys{include_dmesgpb_sys} {
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
   m_sub.m_owner = this;
 }
@@ -200,11 +223,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name, KeyValueConfiguration config)
                 return nullptr != handler && nullptr != handler->m_owner &&
                        (true == msg.playback() ||
                         handler->m_after_initial_playback) &&
-                       (handler->m_subscribed_topics.size() == 0 ||
-                        std::find(handler->m_subscribed_topics.begin(),
-                                  handler->m_subscribed_topics.end(),
-                                  msg.topic()) !=
-                            handler->m_subscribed_topics.end());
+                       ("" == handler->m_topic ||
+                        msg.topic() == handler->m_topic);
               }},
       m_name{name}, m_config{config} {}
 

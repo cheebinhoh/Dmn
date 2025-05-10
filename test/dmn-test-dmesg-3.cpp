@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(dmesg_handle2);
 
-  auto dmesg_handle3 = dmesg.openHandler("handler3", nullptr, nullptr);
+  auto dmesg_handle3 = dmesg.openHandler("handler3");
   EXPECT_TRUE(dmesg_handle3);
 
   dmn::DMesgPb dmesgpb{};
