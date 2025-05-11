@@ -2,8 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * This test program asserts that two subscribers of the same
- * Dmn_DMesg object will receive the same DMesgPb message
- * published by publisher of the Dmn_DMesg object.
+ * Dmn_DMesg object will receive different message filtered by
+ * topic.
  */
 
 #include <gtest/gtest.h>
