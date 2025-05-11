@@ -180,6 +180,10 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
+  if ("" != m_topic && "" == dmesgpb.topic()) {
+    DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
+  }
+
   if ("" == dmesgpb.sourceidentifier()) {
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgpb, m_name);
   }
