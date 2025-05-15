@@ -36,6 +36,9 @@ int main(int argc, char *argv[]) {
   read_socket_1.reset();
   write_socket_1.reset();
 
+  auto configs = dmn::Dmn_DMesg::kHandlerConfig_Default;
+  configs[dmn::Dmn_DMesg::kHandlerConfig_IncludeSys] = "yes";
+
   auto listen_handle_3 = dmesgnet1->openHandler(
       "dmesg-3-listen", nullptr,
       [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
@@ -43,7 +46,7 @@ int main(int argc, char *argv[]) {
           dmesgpb_sys_3 = data;
         }
       },
-      true);
+      configs);
 
   dmn::DMesgPb dmesgpb_sys_4{};
 

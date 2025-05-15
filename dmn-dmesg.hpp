@@ -52,6 +52,11 @@ class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
+  using HandlerConfig = std::unordered_map<std::string, std::string>;
+
+  static const HandlerConfig kHandlerConfig_Default;
+  static const std::string kHandlerConfig_IncludeSys;
+  static const std::string kHandlerConfig_NoTopicFilter;
 
   /**
    * @brief The key (std::string) and value (std::string) for Dmn_DMesg
@@ -143,12 +148,10 @@ public:
      *                            is provided, no filter is performed
      * @param async_process_fn    The functor callback to process each notified
      *                            DMesgPb message
-     * @param include_dmesgpb_sys True if the handler will be notified of
-     *                            DMesgPb sys message, default is false
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
                      AsyncProcessTask async_process_fn = nullptr,
-                     bool include_dmesgpb_sys = false);
+                     HandlerConfig configs = {});
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
@@ -204,14 +207,11 @@ public:
      * @param filter_fn           The functor callback that returns false to
      *                            filter out DMesgPB message, if no functor
      *                            is provided, no filter is performed
-     * @param async_process_fn    The functor callback to process each notified
-     *                            DMesgPb message
-     * @param include_dmesgpb_sys True if the handler will be notified of
-     *                            DMesgPb sys message, default is false
+     * @param config              the HandlerConfig values
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
                      FilterTask filter_fn, AsyncProcessTask async_process_fn,
-                     bool include_dmesgpb_sys);
+                     HandlerConfig configs);
 
     virtual ~Dmn_DMesgHandler() noexcept;
 
@@ -316,6 +316,7 @@ public:
     FilterTask m_filter_fn{};
     AsyncProcessTask m_async_process_fn{};
     bool m_include_dmesgpb_sys{};
+    HandlerConfig m_configs{};
 
     /**
      * data members for internal logic
@@ -361,8 +362,7 @@ public:
    *                            provided, no filter is performed
    * @param async_process_fn    The functor callback to process each notified
    *                            DMesgPb message
-   * @param include_dmesgpb_sys True if the handler will be notified of DMesgPb
-   *                            sys message, default is false
+   * @param config              the HandlerConfig values
    *
    * @return newly created Dmn_DMesgHandler
    */

@@ -6,6 +6,7 @@
 
 #include <sys/time.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <iostream>
@@ -27,6 +28,11 @@
 namespace dmn {
 
 const char *kDMesgSysIdentifier = "sys.dmn-dmesg";
+
+const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
+const std::string Dmn_DMesg::kHandlerConfig_IncludeSys = "Handler_IncludeSys";
+const std::string Dmn_DMesg::kHandlerConfig_NoTopicFilter =
+    "Handler_NoTopicFilter";
 
 // class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
@@ -70,39 +76,43 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
 // class Dmn_DMesg::Dmn_DMesgHandler
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
-    : Dmn_DMesgHandler{name, "", nullptr, nullptr, false} {}
+    : Dmn_DMesgHandler{name, "", nullptr, nullptr, {}} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn,
-                                              bool include_dmesgpb_sys)
-    : Dmn_DMesgHandler{name, "", filter_fn, async_process_fn,
-                       include_dmesgpb_sys} {}
+                                              HandlerConfig configs)
+    : Dmn_DMesgHandler{name, "", filter_fn, async_process_fn, configs} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic)
-    : Dmn_DMesgHandler{name, topic, nullptr, nullptr, false} {}
+    : Dmn_DMesgHandler{name, topic, nullptr, nullptr, {}} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn)
-    : Dmn_DMesgHandler{name, topic, filter_fn, nullptr, false} {}
+    : Dmn_DMesgHandler{name, topic, filter_fn, nullptr, {}} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
-    : Dmn_DMesgHandler{name, topic, filter_fn, async_process_fn, false} {}
+    : Dmn_DMesgHandler{name, topic, filter_fn, async_process_fn, {}} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn,
-                                              bool include_dmesgpb_sys)
+                                              HandlerConfig configs)
     : m_name{name}, m_topic{topic}, m_filter_fn{filter_fn},
-      m_async_process_fn{async_process_fn},
-      m_include_dmesgpb_sys{include_dmesgpb_sys} {
+      m_async_process_fn{async_process_fn}, m_configs{configs} {
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
+  auto it = m_configs.find(kHandlerConfig_IncludeSys);
+  if (m_configs.end() != it) {
+    m_include_dmesgpb_sys =
+        stringCompare(it->second, "1") || stringCompare(it->second, "yes");
+  }
+
   m_sub.m_owner = this;
 }
 
