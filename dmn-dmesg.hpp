@@ -151,7 +151,7 @@ public:
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
                      AsyncProcessTask async_process_fn = nullptr,
-                     HandlerConfig configs = {});
+                     HandlerConfig configs = kHandlerConfig_Default);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
