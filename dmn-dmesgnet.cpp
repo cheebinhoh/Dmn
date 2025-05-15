@@ -41,6 +41,9 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::MasterPending);
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
+  auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
+  handlerConfig[Dmn_DMesg::kHandlerConfig_IncludeSys] = "yes";
+
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
       m_name,
@@ -74,8 +77,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
               this, dmesgPbWrite);
         }
       },
-      true // include DMesgSys!
-  );
+      handlerConfig);
 
   if (m_input_handler) {
     m_input_proc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
@@ -146,7 +148,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
         m_name + "_sys",
         "", // any topic
         [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) { return false; },
-        nullptr, false);
+        nullptr, Dmn_DMesg::kHandlerConfig_Default);
   }
 
   if (m_input_handler && m_output_handler) {
