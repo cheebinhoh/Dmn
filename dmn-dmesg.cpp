@@ -76,7 +76,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
 // class Dmn_DMesg::Dmn_DMesgHandler
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
-    : Dmn_DMesgHandler{name, "", nullptr, nullptr, {}} {}
+    : Dmn_DMesgHandler{name, ""} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
@@ -86,18 +86,19 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic)
-    : Dmn_DMesgHandler{name, topic, nullptr, nullptr, {}} {}
+    : Dmn_DMesgHandler{name, topic, nullptr} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn)
-    : Dmn_DMesgHandler{name, topic, filter_fn, nullptr, {}} {}
+    : Dmn_DMesgHandler{name, topic, filter_fn, nullptr} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
-    : Dmn_DMesgHandler{name, topic, filter_fn, async_process_fn, {}} {}
+    : Dmn_DMesgHandler{name, topic, filter_fn, async_process_fn,
+                       kHandlerConfig_Default} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
