@@ -139,7 +139,20 @@ public:
     Dmn_DMesgHandler(std::string_view name);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for Dmn_DMesgHandler that message with
+     *        no topic.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that message with
+     *        no topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -150,8 +163,23 @@ public:
      *                            DMesgPb message
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
-                     AsyncProcessTask async_process_fn = nullptr,
-                     HandlerConfig configs = {});
+                     AsyncProcessTask async_process_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that message with
+     *        no topic.
+     *
+     * @param name                The name or unique identification to the
+     *                            handler
+     * @param filter_fn           The functor callback that returns false to
+     *                            filter out DMesgPB message, if no functor
+     *                            is provided, no filter is performed
+     * @param async_process_fn    The functor callback to process each notified
+     *                            DMesgPb message
+     * @param config              the HandlerConfig values
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
+                     AsyncProcessTask async_process_fn, HandlerConfig configs);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler.
