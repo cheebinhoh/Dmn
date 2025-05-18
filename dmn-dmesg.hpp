@@ -131,7 +131,8 @@ public:
 
   public:
     /**
-     * @brief The delegating constructor for Dmn_DMesgHandler.
+     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
+     *        writes any topic.
      *
      * @param name             The name or unique identification to the handler
      *                         DMesgPb message
@@ -139,8 +140,8 @@ public:
     Dmn_DMesgHandler(std::string_view name);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler that message with
-     *        no topic.
+     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
+     *        writes any topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -151,8 +152,8 @@ public:
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler that message with
-     *        no topic.
+     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
+     *        writes any topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -166,8 +167,8 @@ public:
                      AsyncProcessTask async_process_fn);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler that message with
-     *        no topic.
+     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
+     *        writes any topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -182,7 +183,8 @@ public:
                      AsyncProcessTask async_process_fn, HandlerConfig configs);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -193,7 +195,8 @@ public:
     Dmn_DMesgHandler(std::string_view name, std::string_view topic);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -208,7 +211,8 @@ public:
                      FilterTask filter_fn);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic.
      *
      * @param name                The name or unique identification to the
      *                            handler
@@ -225,7 +229,9 @@ public:
                      FilterTask filter_fn, AsyncProcessTask async_process_fn);
 
     /**
-     * @brief The primitive constructor for Dmn_DMesgHandler.
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic if topic is NOT "", otherwise any topic
+     *        message.
      *
      * @param name                The name or unique identification to the
      *                            handler
