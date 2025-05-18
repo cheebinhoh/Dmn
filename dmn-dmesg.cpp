@@ -201,7 +201,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
-  if ("" != m_topic && "" == dmesgpb.topic()) {
+  if ("" != m_topic) {
     DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
   }
 
