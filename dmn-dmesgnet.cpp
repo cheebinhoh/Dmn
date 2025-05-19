@@ -47,7 +47,6 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
       m_name,
-      "", // subscribe any topic
       [this](const dmn::DMesgPb &dmesgPb) {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
@@ -146,7 +145,6 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
     m_sys_handler = Dmn_DMesg::openHandler(
         m_name + "_sys",
-        "", // any topic
         [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) { return false; },
         nullptr, Dmn_DMesg::kHandlerConfig_Default);
   }
