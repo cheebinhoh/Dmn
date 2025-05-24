@@ -84,7 +84,6 @@ int main(int argc, char *argv[]) {
 
           dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
           dmesgpb_body->set_message(os.str());
-
           dmesg_handle2->write(dmesgpb);
 
           if (os.str() == "") {

@@ -47,7 +47,6 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
     const dmn::DMesgPb &dmesgpb) {
   if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgpb.type() == dmn::DMesgTypePb::sys) {
-
     std::string id = dmesgpb.topic();
     unsigned long runningCounter = m_owner->m_topic_running_counter[id];
 
@@ -60,7 +59,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
       if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
            m_owner->m_include_dmesgpb_sys) &&
-          ("" == m_owner->m_topic || dmesgpb.topic() == m_owner->m_topic) &&
+          (m_owner->m_no_topic_filter || dmesgpb.topic() == m_owner->m_topic) &&
           (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
@@ -121,6 +120,12 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
   auto it = m_configs.find(kHandlerConfig_IncludeSys);
   if (m_configs.end() != it) {
     m_include_dmesgpb_sys =
+        stringCompare(it->second, "1") || stringCompare(it->second, "yes");
+  }
+
+  it = m_configs.find(kHandlerConfig_NoTopicFilter);
+  if (m_configs.end() != it) {
+    m_no_topic_filter =
         stringCompare(it->second, "1") || stringCompare(it->second, "yes");
   }
 
@@ -193,21 +198,24 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   struct timeval tv;
   gettimeofday(&tv, NULL);
 
-  std::string topic = dmesgpb.topic();
-  unsigned long next_running_counter =
-      incrementByOne(m_topic_running_counter[topic]);
-
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tv);
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
-  DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
-  if ("" != m_topic) {
+  if (m_no_topic_filter) {
+  } else {
     DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
   }
 
   if ("" == dmesgpb.sourceidentifier()) {
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgpb, m_name);
   }
+
+  std::string topic = dmesgpb.topic();
+
+  unsigned long next_running_counter =
+      incrementByOne(m_topic_running_counter[topic]);
+
+  DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
   if (move) {
     m_owner->publish(std::move_if_noexcept(dmesgpb));
@@ -248,7 +256,7 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name, KeyValueConfiguration config)
                 return nullptr != handler && nullptr != handler->m_owner &&
                        (true == msg.playback() ||
                         handler->m_after_initial_playback) &&
-                       ("" == handler->m_topic ||
+                       (handler->m_no_topic_filter ||
                         msg.topic() == handler->m_topic);
               }},
       m_name{name}, m_config{config} {}
