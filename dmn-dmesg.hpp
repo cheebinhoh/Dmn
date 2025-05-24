@@ -349,12 +349,14 @@ public:
     std::string m_topic{};
     FilterTask m_filter_fn{};
     AsyncProcessTask m_async_process_fn{};
-    bool m_include_dmesgpb_sys{};
     HandlerConfig m_configs{};
 
     /**
      * data members for internal logic
      */
+    bool m_include_dmesgpb_sys{};
+    bool m_no_topic_filter{};
+
     Dmn_DMesg *m_owner{};
     Dmn_DMesgHandlerSub m_sub{};
 

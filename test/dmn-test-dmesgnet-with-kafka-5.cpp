@@ -123,32 +123,41 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
       dmesgnet1.openHandler("handler1", subscribed_topic, nullptr,
                             [&cnt](const dmn::DMesgPb &msg) mutable {
+                              std::cout << "read\n";
                               EXPECT_TRUE("counter sync 1" == msg.topic());
                               cnt++;
                             });
   EXPECT_TRUE(dmesg_handle);
 
-  auto dmesg_write_handle = dmesgnet2.openHandler("writeHandler");
-  EXPECT_TRUE(dmesg_write_handle);
+  auto dmesg_write_handle1 = dmesgnet2.openHandler("writeHandler1", topics[0]);
+  EXPECT_TRUE(dmesg_write_handle1);
+
+  auto dmesg_write_handle2 = dmesgnet2.openHandler("writeHandler2", topics[1]);
+  EXPECT_TRUE(dmesg_write_handle2);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   for (int n = 0; n < 6; n++) {
     dmn::DMesgPb dmesgpb{};
-    dmesgpb.set_topic(topics[n % 2]);
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
     dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
     dmesgpb_body->set_message(data);
 
-    dmesg_write_handle->write(dmesgpb);
+    if ((n % 2) == 0) {
+      dmesg_write_handle1->write(dmesgpb);
+    } else {
+      dmesg_write_handle2->write(dmesgpb);
+    }
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));
 
-  dmesgnet2.closeHandler(dmesg_write_handle);
+  dmesgnet2.closeHandler(dmesg_write_handle2);
+  dmesgnet2.closeHandler(dmesg_write_handle1);
   dmesgnet1.closeHandler(dmesg_handle);
+
   EXPECT_TRUE(3 == cnt);
 
   return RUN_ALL_TESTS();

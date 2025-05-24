@@ -31,26 +31,33 @@ int main(int argc, char *argv[]) {
                         });
   EXPECT_TRUE(dmesg_handler);
 
-  auto dmesg_write_handler = dmesg.openHandler("writeHandler");
-  EXPECT_TRUE(dmesg_write_handler);
+  auto dmesg_write_handler1 = dmesg.openHandler("writeHandler", topics[0]);
+  EXPECT_TRUE(dmesg_write_handler1);
+
+  auto dmesg_write_handler2 = dmesg.openHandler("writeHandler", topics[1]);
+  EXPECT_TRUE(dmesg_write_handler2);
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   for (int n = 0; n < 6; n++) {
     dmn::DMesgPb dmesgpb{};
-    dmesgpb.set_topic(topics[n % 2]);
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
     std::string data{"Hello dmesg async"};
     dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
     dmesgpb_body->set_message(data);
 
-    dmesg_write_handler->write(dmesgpb);
+    if ((n % 2) == 0) {
+      dmesg_write_handler1->write(dmesgpb);
+    } else {
+      dmesg_write_handler2->write(dmesgpb);
+    }
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(8));
 
-  dmesg.closeHandler(dmesg_write_handler);
+  dmesg.closeHandler(dmesg_write_handler2);
+  dmesg.closeHandler(dmesg_write_handler1);
   dmesg.closeHandler(dmesg_handler);
   EXPECT_TRUE(3 == cnt);
 

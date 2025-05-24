@@ -43,6 +43,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
   auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
   handlerConfig[Dmn_DMesg::kHandlerConfig_IncludeSys] = "yes";
+  handlerConfig[Dmn_DMesg::kHandlerConfig_NoTopicFilter] = "yes";
 
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
