@@ -54,8 +54,23 @@ public:
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
   using HandlerConfig = std::unordered_map<std::string, std::string>;
 
+  /**
+   * @brief Default handler configuration where kHandlerConfig_IncludeSys
+   *        and kHandlerConfig_NoTopicFilter is not set.
+   */
   static const HandlerConfig kHandlerConfig_Default;
+
+  /**
+   * @brief If the config value is "yes" or "1", then the openHandler will
+   *        also return dmesgpb which message type is "sys".
+   */
   static const std::string kHandlerConfig_IncludeSys;
+
+  /**
+   * @brief If the config value is "yes" or "1", then the openHandler will not
+   *        set message topic upon sending write dmesgpb and will return
+   *        dmesgpb of any topic.
+   */
   static const std::string kHandlerConfig_NoTopicFilter;
 
   /**
@@ -98,16 +113,17 @@ public:
        *
        *        The Dmn_DMesgHandlerSub will follow the following to process
        *        the message:
-       *        - skip messages sent through the same Dmn_DMesgHandler handler,
-       *          unless it is a system message (of DMesgPb).
+       *        - skip messages sent through the same Dmn_DMesgHandler
+       *          handler, unless it is a system message (of DMesgPb).
        *        - skip message which running counter is lower than running
        *          counter of the topic the Dmn_DMesgHandlerSub has received.
        *        - store a copy of the message as last system message if it is.
        *        - if it is system message and the Dmn_DMesgHandler (owner of
-       *          the Dmn_DMesgHandlerSub) is opened with m_include_dmesgpb_sys
-       *          as true, the Dmn_DMesgPB message will be either pushed into
-       *          the buffer waiting to be read through Dmn_DMesgHandler' read
-       *          or handling through m_async_process_fn callback.
+       *          the Dmn_DMesgHandlerSub) is opened with
+       *          m_include_dmesgpb_sys as true, the Dmn_DMesgPB message will
+       *          be either pushed into the buffer waiting to be read through
+       *          Dmn_DMesgHandler' read or handling through
+       *          m_async_process_fn callback.
        *
        * @param dmesgPb The DMesgPb message notified by publisher object
        */
@@ -131,121 +147,128 @@ public:
 
   public:
     /**
-     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
-     *        writes any topic.
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic (include "" which is a valid topic).
      *
-     * @param name             The name or unique identification to the handler
+     * @param name             The name or unique identification to the
+     *                         handler
+     * @param topic            The topic (DMesgPb.topic) that the handler
+     *                         subscribes to for reading or set as topic for
+     *                         written message
+     * @param filter_fn        The functor callback that returns false to
+     *                         filter out DMesgPB message, if no functor is
+     *                         provided, no filter is performed
+     * @param async_process_fn The functor callback to process each notified
      *                         DMesgPb message
-     */
-    Dmn_DMesgHandler(std::string_view name);
-
-    /**
-     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
-     *        writes any topic.
-     *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
-     */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn);
-
-    /**
-     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
-     *        writes any topic.
-     *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
-     * @param async_process_fn    The functor callback to process each notified
-     *                            DMesgPb message
-     */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
-                     AsyncProcessTask async_process_fn);
-
-    /**
-     * @brief The delegating constructor for Dmn_DMesgHandler that reads or
-     *        writes any topic.
-     *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
-     * @param async_process_fn    The functor callback to process each notified
-     *                            DMesgPb message
-     * @param config              the HandlerConfig values
-     */
-    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
-                     AsyncProcessTask async_process_fn, HandlerConfig configs);
-
-    /**
-     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic.
-     *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param topic               The topic (DMesgPb.topic) that the handler
-     *                            subscribes to for reading or set as topic
-     *                            for written message
-     */
-    Dmn_DMesgHandler(std::string_view name, std::string_view topic);
-
-    /**
-     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic.
-     *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param topic               The topic (DMesgPb.topic) that the handler
-     *                            subscribes to for reading or set as topic
-     *                            for written message
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
+     * @param config           The Handler configuration values
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
-                     FilterTask filter_fn);
+                     FilterTask filter_fn, AsyncProcessTask async_process_fn,
+                     HandlerConfig configs);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic.
+     *        writes a specific topic (include "" which is a valid topic),
+     *        with default handler configuration values.
      *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param topic               The topic (DMesgPb.topic) that the handler
-     *                            subscribes to for reading or set as topic
-     *                            for written message
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
-     * @param async_process_fn    The functor callback to process each notified
-     *                            DMesgPb message
+     * @param name             The name or unique identification to the
+     *                         handler
+     * @param topic            The topic (DMesgPb.topic) that the handler
+     *                         subscribes to for reading or set as topic for
+     *                         written message
+     * @param filter_fn        The functor callback that returns false to
+     *                         filter out DMesgPB message, if no functor is
+     *                         provided, no filter is performed
+     * @param async_process_fn The functor callback to process each notified
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
                      FilterTask filter_fn, AsyncProcessTask async_process_fn);
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic if topic is NOT "", otherwise any topic
-     *        message.
+     *        writes a specific topic (include "" which is a valid topic),
+     *        without async_process_fn functor, and with default handler
+     *        configuration values.
      *
-     * @param name                The name or unique identification to the
-     *                            handler
-     * @param topic               The topic (DMesgPb.topic) that the handler
-     *                            subscribes to for reading or set as topic
-     *                            for written message
-     * @param filter_fn           The functor callback that returns false to
-     *                            filter out DMesgPB message, if no functor
-     *                            is provided, no filter is performed
-     * @param config              the HandlerConfig values
+     * @param name      The name or unique identification to the handler
+     * @param topic     The topic (DMesgPb.topic) that the handler subscribes
+     *                  to for reading or set as topic for written message
+     * @param filter_fn The functor callback that returns false to filter out
+     *                  DMesgPB message, if no functor is provided, no filter
+     *                  is performed
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
-                     FilterTask filter_fn, AsyncProcessTask async_process_fn,
-                     HandlerConfig configs);
+                     FilterTask filter_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes a specific topic (include "" which is a valid topic),
+     *        without filter_fn functor, without async_process_fn functor,
+     *        and with default handler configuration values.
+     *
+     * @param name  The name or unique identification to the handler
+     * @param topic The topic (DMesgPb.topic) that the handler subscribes
+     *              to for reading or set as topic for written message
+     */
+    Dmn_DMesgHandler(std::string_view name, std::string_view topic);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes message with topic set to "" with filter_fn and
+     *        async_process_fn functors and the customized handler
+     *        configuration values.
+     *
+     * @param name             The name or unique identification to the
+     *                         handler
+     * @param filter_fn        The functor callback that returns false to
+     *                         filter out DMesgPB message, if no functor is
+     *                         provided, no filter is performed
+     * @param async_process_fn The functor callback to process each notified
+     *                         DMesgPb message
+     * @param config           The handler configuration values
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
+                     AsyncProcessTask async_process_fn, HandlerConfig configs);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes message with topic set to "" with a filter_fn and
+     *        async_process_fn functors and the default open handler
+     *        configuration values.
+     *
+     * @param name             The name or unique identification to the
+     *                         handler
+     * @param filter_fn        The functor callback that returns false to
+     *                         filter out DMesgPB message, if no functor is
+     *                         provided, no filter is performed
+     * @param async_process_fn The functor callback to process each notified
+     *                         DMesgPb message
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
+                     AsyncProcessTask async_process_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes message with topic set to "" with a filter_fn functor,
+     *        but no async_process_fn functor, and the default open handler
+     *        configuration values.
+     *
+     * @param name      The name or unique identification to the handler
+     * @param filter_fn The functor callback that returns false to filter out
+     *                  DMesgPB message, if no functor is provided, no filter
+     *                  is performed
+     */
+    Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn);
+
+    /**
+     * @brief The primitive constructor for Dmn_DMesgHandler that reads or
+     *        writes message with topic set to "", no filter_fn functor, no
+     *        async_process_fn functor, and the default handler open
+     *        configuration values.
+     *
+     * @param name The name or unique identification to the handler
+     */
+    Dmn_DMesgHandler(std::string_view name);
 
     virtual ~Dmn_DMesgHandler() noexcept;
 
@@ -280,18 +303,18 @@ public:
     void setConflictCallbackTask(ConflictCallbackTask conflict_fn);
 
     /**
-     * @brief The method writes and publishes the DMesgPb message through DMesg
-     *        publisher queue to all subscribers. This method will move the
-     *        DMesg data.
+     * @brief The method writes and publishes the DMesgPb message through
+     *        DMesg publisher queue to all subscribers. This method will move
+     *        the DMesg data.
      *
      * @param dMesgPb The DMesgPb message to be published
      */
     void write(dmn::DMesgPb &&dmesgpb) override;
 
     /**
-     * @brief The method writes and publishes the DMesgPb message through DMesg
-     *        publisher queue to all subscribers. This method will copy the
-     *        DMesg data.
+     * @brief The method writes and publishes the DMesgPb message through
+     *        DMesg publisher queue to all subscribers. This method will copy
+     *        the DMesg data.
      *
      * @param dMesgPb The DMesgPb message to be published
      */
@@ -299,7 +322,7 @@ public:
 
     /**
      * @brief The method returns true if the handler has NO pending to be
-     * executed asynchronous jobs (example is notify methods).
+     *         executed asynchronous jobs (example is notify methods).
      */
     void waitForEmpty();
 
@@ -334,9 +357,9 @@ public:
     void resolveConflictInternal();
 
     /**
-     * @brief The method marks the handler as in conflict state and executes the
-     *        conflict callback function in the handler singleton asynchronous
-     *        thread context.
+     * @brief The method marks the handler as in conflict state and executes
+     *        the conflict callback function in the handler singleton
+     *        asynchronous thread context.
      *
      * @param mesgPb The dmesgPb data that results in conflict state
      */
@@ -385,11 +408,12 @@ public:
   Dmn_DMesg &operator=(Dmn_DMesg &&obj) = delete;
 
   /**
-   * @brief The method creates a new Dmn_DMesgHandler, registers the handler to
-   *        receive published message and returns the handler to the caller. It
-   *        takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
+   * @brief The method creates a new Dmn_DMesgHandler, registers the handler
+   *        to receive published message and returns the handler to the caller.
+   *        It takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
-   * @param name                The name or unique identification to the handler
+   * @param name                The name or unique identification to the
+   * handler
    * @param topic               The topic (DMesgPb.topic) that the handler
    *                            subscribes to for reading or set as topic for
    *                            written message
@@ -424,24 +448,25 @@ protected:
   void publishSysInternal(const dmn::DMesgPb &dmesgSysPb);
 
   /**
-   * @brief The method publishes dmesgPb to registered subscribers. If the to be
-   *        published dmesgPb' topic has smaller runningcounter than what is in
-   *        the m_topic_running_counter, it means that the writer is out of sync
-   *        and in race condition that its published dmn::DMesgPb' topic has a
-   *        runningcounter that is early in value than the same topic's running
-   *        counter published by the DMesg. In this case, we put the writer
-   *        handler to be in conflict state, and throws exception for future
-   *        write (of the writer) until the client of the handler manually marks
-   *        it as conflict resolved. We do not put all handlers in conflict, but
-   *        the particular writer' handler.
+   * @brief The method publishes dmesgPb to registered subscribers. If the to
+   *        be published dmesgPb' topic has smaller runningcounter than what is
+   *        in the m_topic_running_counter, it means that the writer is out of
+   *        sync and in race condition that its published dmn::DMesgPb' topic
+   *        has a runningcounter that is early in value than the same topic's
+   *        running counter published by the DMesg. In this case, we put the
+   *        writer handler to be in conflict state, and throws exception for
+   *        future write (of the writer) until the client of the handler
+   *        manually marks it as conflict resolved. We do not put all handlers
+   *        in conflict, but the particular writer' handler.
    *
    * @param dmesgPb The dmesgPb to be published
    */
   void publishInternal(const dmn::DMesgPb &dmesgPb) override;
 
   /**
-   * @brief The method posts an asynchronous action in the publisher's singleton
-   *        asynchronous thread context to reset the handler's conflict state.
+   * @brief The method posts an asynchronous action in the publisher's
+   *        singleton asynchronous thread context to reset the handler's
+   *        conflict state.
    *
    * @param handlerName the identification string for the open handler
    */
@@ -450,7 +475,8 @@ protected:
 private:
   /**
    * @brief The internal method is to be called in the publisher's singleton
-   *        asynchronous thread context to playback last message of each topic.
+   *        asynchronous thread context to playback last message of each
+   *        topic.
    */
   void playbackLastTopicDMesgPbInternal();
 
