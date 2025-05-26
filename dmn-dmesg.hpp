@@ -1,26 +1,30 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_DMesg implements a specific publisher subscriber model (inherit
- * from dmn-pub-sub module) where the difference is that:
- * - the data item is a Protobuf message (dmn::DMesgPb) defined in
- *   proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg, clients
- *   can extend the dmn::DMesgPb protobuf message to varying the
- *   message without reinvent the wheel through subclass of the dmn-pub-sub
- *   module.
- * - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
- *   subscriber, the client of the API asks Dmn_DMesg to return a handler that
- *   subscribes to a specific set of topic (optional, or all topics), and can
- *   use to handler to publish and subscribe dmn::DMesgPb message through the
- *   Dmn_Io like interface' read and write API methods, so instead of
- *   inherittence from Dmn_DMesg, clients can use object composition with it.
- * - it supports the concept that subscriber can subscribe to certain topic
- *   as defined in the dmn::DMesgPb message.
- * - it allows various clients of the Dmn_Dmesg to publish data of certain
- *   topic at the same time, and implements a simple conflict detection and
- *   resolution for participated clients of the same Dmn_Dmesg object, Dmn_DMesg
- *   object takes care of synchronizing message between publisher and all
- *   subscribers of the same Dmn_DMesg object.
+ * @file dmn-dmesg.hpp
+ * @brief The Dmn_DMesg implements a specific publisher subscriber model
+ *        (inherit from dmn-pub-sub module) where the difference is that:
+ *
+ *        - the data item is a Protobuf message (dmn::DMesgPb) defined in
+ *          proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg,
+ *          clients can extend the dmn::DMesgPb protobuf message to varying
+ *          the message without reinvent the wheel through subclass of the
+ *          dmn-pub-sub module.
+ *        - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
+ *          subscriber, the client of the API asks Dmn_DMesg to return a handler
+ *          that subscribes to a specific set of topic (optional, or all
+ *          topics), and can use to handler to publish and subscribe
+ *          dmn::DMesgPb message through the Dmn_Io like interface' read and
+ *          write API methods, so instead of inherittence from Dmn_DMesg,
+ *          clients can use object composition with it.
+ *        - it supports the concept that subscriber can subscribe to certain
+ *          topic as defined in the dmn::DMesgPb message.
+ *        - it allows various clients of the Dmn_Dmesg to publish data of
+ *          certain topic at the same time, and implements a simple conflict
+ *          detection and resolution for participated clients of the same
+ *          Dmn_Dmesg object, Dmn_DMesg object takes care of synchronizing
+ *          message between publisher and all subscribers of the same Dmn_DMesg
+ *          object.
  */
 
 #ifndef DMN_DMESG_HPP_
@@ -55,21 +59,22 @@ public:
   using HandlerConfig = std::unordered_map<std::string, std::string>;
 
   /**
-   * @brief Default handler configuration where kHandlerConfig_IncludeSys
-   *        and kHandlerConfig_NoTopicFilter is not set.
+   * @brief Default handler configuration values where
+   *        kHandlerConfig_IncludeSys is set to "no"
+   *        kHandlerConfig_NoTopicFilter is set to "no"
    */
   static const HandlerConfig kHandlerConfig_Default;
 
   /**
    * @brief If the config value is "yes" or "1", then the openHandler will
-   *        also return dmesgpb which message type is "sys".
+   *        also include dmesgpb which message type is "sys".
    */
   static const std::string kHandlerConfig_IncludeSys;
 
   /**
    * @brief If the config value is "yes" or "1", then the openHandler will not
    *        set message topic upon sending write dmesgpb and will return
-   *        dmesgpb of any topic.
+   *        dmesgpb regardless of topic value.
    */
   static const std::string kHandlerConfig_NoTopicFilter;
 
@@ -148,7 +153,7 @@ public:
   public:
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic (include "" which is a valid topic).
+     *        writes a specific topic ("" which is a valid topic).
      *
      * @param name             The name or unique identification to the
      *                         handler
@@ -168,8 +173,8 @@ public:
 
     /**
      * @brief The primitive constructor for Dmn_DMesgHandler that reads or
-     *        writes a specific topic (include "" which is a valid topic),
-     *        with default handler configuration values.
+     *        writes a specific topic ("" which is a valid topic), with default
+     *        handler configuration values.
      *
      * @param name             The name or unique identification to the
      *                         handler
@@ -397,9 +402,8 @@ public:
    * @brief The constructor for Dmn_DMesg.
    *
    * @param name   The identification name for the instantiated object
-   * @param config The configuration key value (reserved for future use)
    */
-  Dmn_DMesg(std::string_view name, KeyValueConfiguration config = {});
+  Dmn_DMesg(std::string_view name);
   virtual ~Dmn_DMesg() noexcept;
 
   Dmn_DMesg(const Dmn_DMesg &obj) = delete;
@@ -412,17 +416,17 @@ public:
    *        to receive published message and returns the handler to the caller.
    *        It takes forward arguments as in Dmn_DMesgHandler::openHandler(...).
    *
-   * @param name                The name or unique identification to the
-   * handler
-   * @param topic               The topic (DMesgPb.topic) that the handler
-   *                            subscribes to for reading or set as topic for
-   *                            written message
-   * @param filter_fn           The functor callback that returns false to
-   *                            filter out DMesgPB message, if no functor is
-   *                            provided, no filter is performed
-   * @param async_process_fn    The functor callback to process each notified
-   *                            DMesgPb message
-   * @param config              the HandlerConfig values
+   * @param name             The name or unique identification to the
+   *                         handler
+   * @param topic            The topic (DMesgPb.topic) that the handler
+   *                         subscribes to for reading or set as topic for
+   *                         written message
+   * @param filter_fn        The functor callback that returns false to
+   *                         filter out DMesgPB message, if no functor is
+   *                         provided, no filter is performed
+   * @param async_process_fn The functor callback to process each notified
+   *                         DMesgPb message
+   * @param config           The Handler configuration values
    *
    * @return newly created Dmn_DMesgHandler
    */
@@ -494,7 +498,6 @@ private:
    * data members for constructor to instantiate the object.
    */
   std::string m_name{};
-  KeyValueConfiguration m_config{};
 
   /**
    * data members for internal logic.

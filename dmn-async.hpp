@@ -99,6 +99,27 @@ public:
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
                         std::function<void()> fn);
 
+  /**
+   * @brief The method will execute the asynchronous task after duration
+   *        is elapsed, the task will NOT be executed before duration is
+   *        elapsed, but might not be guaranteed that it is executed in
+   *        exact moment that the duration is elapsed.
+   *
+   *        The method will return an Dmn_Async_Wait object for rendezvous point
+   *        where the wait method guarantees that the asynchronous task has been
+   *        executed.
+   *
+   * @param duration time in duraton that must be elapsed before task
+   *                 is executed
+   * @param fn       asynchronous task to be executed
+   *
+   * @return Dmn_Async_Wait object fo rendezvous point
+   */
+  template <class Rep, class Period>
+  std::shared_ptr<Dmn_Async_Wait>
+  addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
+                           std::function<void()> fn);
+
 private:
   /**
    * @brief The method will execute the asynchronous task after duration
@@ -125,6 +146,23 @@ void Dmn_Async::addExecTaskAfter(
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
   this->addExecTaskAfterInternal(time_in_future, fn);
+}
+
+template <class Rep, class Period>
+std::shared_ptr<Dmn_Async::Dmn_Async_Wait> Dmn_Async::addExecTaskAfterWithWait(
+    const std::chrono::duration<Rep, Period> &duration,
+    std::function<void()> fn) {
+  auto wait_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Wait>();
+
+  this->addExecTaskAfter(duration, [wait_shared_ptr, fn]() {
+    fn();
+
+    std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
+    wait_shared_ptr->m_done = true;
+    wait_shared_ptr->m_cond_var.notify_all();
+  });
+
+  return wait_shared_ptr;
 }
 
 } // namespace dmn
