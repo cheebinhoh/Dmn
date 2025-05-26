@@ -1,12 +1,12 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This module functions as a watchdog or timer, executing a
- * callback function repeatedly after a specified duration has
- * elapsed. Note that while it is guaranteed that the callback
- * function will not be executed before the specified duration
- * has elapsed, it is not guaranteed to be executed immediately
- * upon duration's completion.
+ * @file dmn-timer.hpp
+ * @brief The header implements watchdog or timer, executing a callback function
+ *        repeatedly after a specified duration has elapsed. Note that while it
+ *        is guaranteed that the callback function will not be executed before
+ *        the specified duration has elapsed, it is not guaranteed to be
+ *        executed immediately upon duration's completion.
  */
 
 #ifndef DMN_TIMER_HPP_

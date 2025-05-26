@@ -1,17 +1,19 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements base class for other class to adapt and implementing
- * asynchronous execution API.
+ * @file dmn-async.hpp
+ * @brief The header file for dmn-async which implements base class for other
+ *        class to adapt and implementing asynchronous execution API.
  *
- * A client class can inherit from Dmn_Async or composes an Dmn_Async object,
- * and implement the class API to pass a functor to the Dmn_Async object for
- * execution on behalf of the client API call' execution. This will help
- * serialize multiple the API call executions, avoid any explicit mutex lock on
- * client API calls, and more important is that it can shorten the latency of
- * calling the client API and returns from the API call for functionalities that
- * does not need to be synchronized between caller and callee' API execution
- * (see dmn-pub-sub.hpp for an example usage of this class).
+ *        A client class can inherit from Dmn_Async or composes an Dmn_Async
+ *        object, and implement the class API to pass a functor to the Dmn_Async
+ *        object for execution on behalf of the client API call' execution. This
+ *        will help serialize multiple the API call executions, avoid any
+ *        explicit mutex lock on client API calls, and more important is that it
+ *        can shorten the latency of calling the client API and returns from the
+ *        API call for functionalities that does not need to be synchronized
+ *        between caller and callee' API execution (see dmn-pub-sub.hpp for an
+ *        example usage of this class).
  */
 
 #ifndef DMN_ASYNC_HPP_
@@ -59,6 +61,11 @@ public:
     bool m_done{};
   };
 
+  /**
+   * @brief The contructor for Dmn_Async object
+   *
+   * @param name The object identification string name
+   */
   Dmn_Async(std::string_view name = "");
   virtual ~Dmn_Async() noexcept;
 
@@ -67,6 +74,15 @@ public:
   Dmn_Async(Dmn_Async &&obj) = delete;
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
 
+  /**
+   * @brief The method add an asynchronous task to be executed and then returns
+   *        an Dmn_Async_Wait object for rendezvous point where the wait method
+   *        guarantees that the asynchronous task has been executed.
+   *
+   * @param fn asynchronous task to be executed
+   *
+   * @return Dmn_Async_Wait object fo rendezvous point
+   */
   std::shared_ptr<Dmn_Async_Wait> addExecTaskWithWait(std::function<void()> fn);
 
   /**
@@ -82,6 +98,27 @@ public:
   template <class Rep, class Period>
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
                         std::function<void()> fn);
+
+  /**
+   * @brief The method will execute the asynchronous task after duration
+   *        is elapsed, the task will NOT be executed before duration is
+   *        elapsed, but might not be guaranteed that it is executed in
+   *        exact moment that the duration is elapsed.
+   *
+   *        The method will return an Dmn_Async_Wait object for rendezvous point
+   *        where the wait method guarantees that the asynchronous task has been
+   *        executed.
+   *
+   * @param duration time in duraton that must be elapsed before task
+   *                 is executed
+   * @param fn       asynchronous task to be executed
+   *
+   * @return Dmn_Async_Wait object fo rendezvous point
+   */
+  template <class Rep, class Period>
+  std::shared_ptr<Dmn_Async_Wait>
+  addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
+                           std::function<void()> fn);
 
 private:
   /**
@@ -109,6 +146,23 @@ void Dmn_Async::addExecTaskAfter(
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
   this->addExecTaskAfterInternal(time_in_future, fn);
+}
+
+template <class Rep, class Period>
+std::shared_ptr<Dmn_Async::Dmn_Async_Wait> Dmn_Async::addExecTaskAfterWithWait(
+    const std::chrono::duration<Rep, Period> &duration,
+    std::function<void()> fn) {
+  auto wait_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Wait>();
+
+  this->addExecTaskAfter(duration, [wait_shared_ptr, fn]() {
+    fn();
+
+    std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
+    wait_shared_ptr->m_done = true;
+    wait_shared_ptr->m_cond_var.notify_all();
+  });
+
+  return wait_shared_ptr;
 }
 
 } // namespace dmn

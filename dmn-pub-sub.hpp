@@ -1,8 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements a simple publisher subscriber model, the class
- * templatize the data to be published and subscribed of.
+ * @file dmn-pub-sub.hpp
+ * @brief The header implements a simple publisher subscriber model, the class
+ *        templatize the data to be published and subscribed of.
  */
 
 #ifndef DMN_PUB_SUB_HPP_

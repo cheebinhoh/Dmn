@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-util.hpp
+ * @brief Dmn generic utility module header files.
  */
 
 #ifndef DMN_UTIL_HPP_
@@ -30,7 +33,7 @@ template <typename T> inline T incrementByOne(T value) {
  * @param str1            The 1st string value
  * @param str2            The 2nd string value
  * @param caseInsensitive True if strings are compared in case insensitive,
- *                        or false otherwisea
+ *                        or false otherwise
  *
  * @return True if the string values are same, or false otherwise
  */
