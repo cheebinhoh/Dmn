@@ -1,9 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements a fifo queue with a limited capacity that:
- * - push is blocking if the limit of the capacity is reach
- * - pop is blocking if no data (optional) in the queue
+ * @file dmn-teepipe.hpp
+ * @brief The header file for dmn-teepipe which implements a fifo queue with
+ *        a limited capacity that:
+ *        - push is blocking if the limit of the capacity is reach
+ *        - pop is blocking if no data (optional) in the queue
  */
 
 #ifndef DMN_LIMITBUFFER_HPP_

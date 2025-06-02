@@ -1,7 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This is wrapper API to access DMesgPb protobuf message.
+ * @file dmn-dmesg-pb-util.hpp
+ * @brief The header file for dmn-dmesg-pb-util which implements setter
+ *        for Dmesg protobuf message.
  */
 
 #ifndef DMN_DMESG_PB_UTIL_HPP_

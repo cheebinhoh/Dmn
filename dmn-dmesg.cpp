@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-dmesg.cpp
+ * @brief The source implementation file for dmn-dmesg.
  */
 
 #include "dmn-dmesg.hpp"

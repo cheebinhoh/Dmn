@@ -2,8 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesg.hpp
- * @brief The Dmn_DMesg implements a specific publisher subscriber model
- *        (inherit from dmn-pub-sub module) where the difference is that:
+ * @brief The header file for dmn-dmesg which implements a specific publisher
+ *        subscriber model (inherit from dmn-pub-sub module) where the
+ *        difference is that:
  *
  *        - the data item is a Protobuf message (dmn::DMesgPb) defined in
  *          proto/dmn-dmesg.proto, so instead of subclassing the Dmn_DMesg,

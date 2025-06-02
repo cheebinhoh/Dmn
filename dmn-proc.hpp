@@ -1,11 +1,13 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This module wraps the native pthread behind an object-oriented class with
- * delegation protocol where variance of thread functionality is achieved
- * by passing a closure (functor) that the thread runs than using inherittance
- * to varying the different functionalities and which always results in
- * proliferation of subclass and hard to be maintained.
+ * @file dmn-proc.hpp
+ * @brief The header files for dmn-proc which wraps the native pthread behind an
+ *        object-oriented class with delegation protocol where variance of
+ *        thread functionality is achieved by passing a closure (functor) that
+ *        the thread runs than using inherittance to varying the different
+ *        functionalities and which always results in proliferation of subclass
+ *        and hard to be maintained.
  */
 
 #ifndef DMN_PROC_HPP_

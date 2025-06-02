@@ -1,15 +1,16 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements a fifo pipe that:
- * - write is not blocking
- * - a thread (via Dmn_Proc) can be setup to process each item pop out from
- *   the fifo pipe.
- * - client can call read() to read the next item pop out of the fifo pipe,
- *   or blocked waiting for one if the fifo pipe is empty.
- * - client can call readAndProcess() to read the next item pop out of the
- *   fifo pipe and invoke the Task to process the item or blocked waiting
- *   for one if the fifo pipe is empty.
+ * @file dmn-pipe.hpp
+ * @brief The header file for dmn-pipe which implements a fifo pipe that:
+ *        - write is not blocking
+ *        - a thread (via Dmn_Proc) can be setup to process each item pop out
+ *          from the fifo pipe.
+ *        - client can call read() to read the next item pop out of the fifo
+ *          pipe, or blocked waiting for one if the fifo pipe is empty.
+ *        - client can call readAndProcess() to read the next item pop out of
+ *          the fifo pipe and invoke the Task to process the item or blocked
+ *          waiting for one if the fifo pipe is empty.
  */
 
 #ifndef DMN_PIPE_HPP_

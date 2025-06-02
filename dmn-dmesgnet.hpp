@@ -1,11 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_DMesgNet stands for Distributed Messaging Network, it is an
- * extension to the Dmn_DMesg with support of serializing the DMesgPb
- * message and send to the output Dmn_Io and deserialize the data read
- * from input Dmn_Io and then publish it to the local Dmn_DMesg
- * subscribed handlers.
+ * @file dmn-dmesgnet.hpp
+ * @brief The header file for dmn-dmesgnet which implements an extension to the
+ *        Dmn_DMesg with support of serializing the DMesgPb message and
+ *        send to the output Dmn_Io and deserialize the data read from input
+ *        Dmn_Io and then publish it to the local Dmn_DMesg subscribed handlers.
  */
 
 #ifndef DMN_DMESGNET_HPP_

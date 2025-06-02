@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-socket.hpp
+ * @brief The header file for dmn-socket which implements ocket IO interface.
  */
 
 #ifndef DMN_SOCKET_HPP_

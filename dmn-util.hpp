@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-util.hpp
- * @brief Dmn generic utility module header files.
+ * @brief The header file for generic utilities.
  */
 
 #ifndef DMN_UTIL_HPP_

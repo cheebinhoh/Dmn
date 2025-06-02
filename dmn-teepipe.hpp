@@ -1,17 +1,19 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements a tee-pipe structure where multiple clients
- * can each write data to their dedicated pipe, and data from multiple
- * input pipes are channed and converged into an output pipe.
+ * @file dmn-teepipe.hpp
+ * @brief The header file for dmn-teepipe which implements a tee-pipe structure
+ *        where multiple clients can each write data to their dedicated pipe,
+ *        and data from multiple input pipes are channed and converged into an
+ *        output pipe.
  *
- * Data from input pipe are processed and feed to output pipe in the
- * order that it is written into input pipe. If there are two input
- * pipes, then output pipe will receive one data from each, and the
- * order of which data from which input file comes first can be
- * enforced through the PostProcessingTask functor which will see
- * one data from each input pipe in a vector prior to feeding to
- * output pipe.
+ *        Data from input pipe are processed and feed to output pipe in the
+ *        order that it is written into input pipe. If there are two input
+ *        pipes, then output pipe will receive one data from each, and the
+ *        order of which data from which input file comes first can be
+ *        enforced through the PostProcessingTask functor which will see
+ *        one data from each input pipe in a vector prior to feeding to
+ *        output pipe.
  */
 
 #ifndef DMN_TEEPIPE_HPP_

@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-async.cpp
- * @brief The source implementation file for dmn-async
+ * @brief The source implementation file for dmn-async.
  */
 
 #include "dmn-async.hpp"

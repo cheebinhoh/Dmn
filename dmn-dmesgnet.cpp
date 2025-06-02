@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-dmesgnet.cpp
+ * @brief The source implementation file for dmn-dmesgnet.
  */
 
 #include "dmn-dmesgnet.hpp"

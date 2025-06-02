@@ -1,9 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements a singleton class that subclass can inherit
- * from and used to create a singleton instance with arguments specific
- * to the subclass constructor.
+ * @file dmn-singleton.hpp
+ * @brief The header file for dmn-singleton which implements a singleton class
+ *        that subclass can inherit from and used to create a singleton instance
+ *        with arguments specific to the subclass constructor.
  */
 
 #ifndef DMN_SINGLETON_HPP_

@@ -1,8 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements singleton instance to manage POSIX signal, timer
- * and programatic events in general.
+ * @file dmn-event.hpp
+ * @brief The header file for dmn-event which implements singleton instance to
+ *        manage POSIX signal, timer and programatic events in general.
  */
 
 #ifndef DMN_EVENT_HPP_

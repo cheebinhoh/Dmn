@@ -1,13 +1,14 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This class implements an fifo queue that:
- * - push is not blocking
- * - pop is blocking (optional) if no data in the queue
+ * @file dmn-buffer.hpp
+ * @brief The header file for dmn-buffer which implements an fifo queue that:
+ *        - push is not blocking
+ *        - pop is blocking (optional) if no data in the queue
  *
- * There is no programmatic limit on the size of the queue,
- * but runtime memory limit or size type of the underlying
- * STL class it uses.
+ *        There is no programmatic limit on the size of the queue,
+ *        but runtime memory limit or size type of the underlying
+ *        STL class it uses.
  */
 
 #ifndef DMN_BUFFER_HPP_
