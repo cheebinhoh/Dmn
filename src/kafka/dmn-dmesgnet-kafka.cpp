@@ -2,14 +2,14 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-dmesgnet-kafka.hpp"
+#include "kafka/dmn-dmesgnet-kafka.hpp"
 
 #include <memory>
 #include <string_view>
 
 #include "dmn-dmesg.hpp"
-#include "dmn-kafka-util.hpp"
-#include "dmn-kafka.hpp"
+#include "kafka/dmn-kafka-util.hpp"
+#include "kafka/dmn-kafka.hpp"
 
 namespace dmn {
 

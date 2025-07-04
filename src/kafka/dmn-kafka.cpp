@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-kafka.hpp"
+#include "kafka/dmn-kafka.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -16,7 +16,7 @@
 
 #include "rdkafka.h"
 
-#include "dmn-kafka-util.hpp"
+#include "kafka/dmn-kafka-util.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {

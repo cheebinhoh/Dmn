@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include "dmn-kafka-util.hpp"
+#include "kafka/dmn-kafka-util.hpp"
 
 #include <cassert>
 #include <expected>

@@ -11,6 +11,10 @@ macro(ADD_TEST_EXECUTABLE ...)
     add_executable(${arg}
                    ${arg}.cpp)
 
+    target_include_directories(${arg}
+                               PRIVATE
+                               ${CMAKE_SOURCE_DIR}/include)
+
     target_compile_options(${arg}
                            PRIVATE
                            -Wall -Wextra -Wpedantic)
@@ -33,13 +37,13 @@ endmacro()
 macro(GENERATE_PROTOBUF ...)
   foreach(arg ${ARGN})
     target_include_directories(${ARGV0} PRIVATE
-                               ${CMAKE_CURRENT_SOURCE_DIR})
+                               ${CMAKE_SOURCE_DIR})
 
     protobuf_generate(TARGET ${ARGV0}
-                      PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/${arg}
+                      PROTOS ${CMAKE_SOURCE_DIR}/proto/${arg}
                       LANGUAGE cpp
                       OUT_VAR PROTOBUF_GENERATED_FILES
                       PROTOC_OPTIONS "-I${protobuf_SOURCE_DIR}/src"
-                      PROTOC_OUT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+                      PROTOC_OUT_DIR ${CMAKE_SOURCE_DIR})
   endforeach()
 endmacro()
