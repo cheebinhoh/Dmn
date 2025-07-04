@@ -11,6 +11,10 @@ macro(ADD_TEST_EXECUTABLE ...)
     add_executable(${arg}
                    ${arg}.cpp)
 
+    target_include_directories(${arg}
+                               PRIVATE
+                               ${CMAKE_SOURCE_DIR}/include)
+
     target_compile_options(${arg}
                            PRIVATE
                            -Wall -Wextra -Wpedantic)
