@@ -16,13 +16,13 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka.cpp
 
               # proto c++ sources
-              ${CMAKE_CURRENT_SOURCE_DIR}/proto/dmn-dmesg-body.pb.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/proto/dmn-dmesg-type.pb.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/proto/dmn-dmesg.pb.cc
+              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-body.pb.cc
+              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-type.pb.cc
+              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg.pb.cc
 )
 
-target_include_directories(dmn PUBLIC ${CMAKE_SOURCE_DIR}/include)
-
+target_include_directories(dmn PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(dmn INTERFACE ${CMAKE_SOURCE_DIR})
 target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -51,9 +51,9 @@ target_sources(dmn
                  ${CMAKE_SOURCE_DIR}/include/dmn-teepipe.hpp
 
                  # kafka
-                 ${CMAKE_SOURCE_DIR}/kafka/dmn-dmesgnet-kafka.hpp
-                 ${CMAKE_SOURCE_DIR}/kafka/dmn-kafka-util.hpp
-                 ${CMAKE_SOURCE_DIR}/kafka/dmn-kafka.hpp
+                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
+                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-kafka-util.hpp
+                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
 
                  # proto c++ sources
                  ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-body.pb.h
@@ -74,12 +74,6 @@ target_include_directories(dmn
                              ${rdkafka_INCLUDE}
 )
 
-GENERATE_PROTOBUF(dmn
-                    dmn-dmesg-type.proto
-                    dmn-dmesg-body.proto
-                    dmn-dmesg.proto
-)
-
 target_link_libraries(dmn
                         PRIVATE
                         protobuf::libprotobuf
@@ -93,7 +87,9 @@ add_executable(dmn-dmesg-daemon
                  dmn-dmesg-daemon.cpp
 )
 
-target_include_directories(dmn-dmesg-daemon PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(dmn-dmesg-daemon
+                             PRIVATE
+                             ${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(dmn-dmesg-daemon
                         PRIVATE
@@ -106,6 +102,10 @@ target_link_libraries(dmn-dmesg-daemon
 add_executable(dmn-kafka-receiver
                  dmn-kafka-receiver.cpp
 )
+
+target_include_directories(dmn-kafka-receiver
+                             PRIVATE
+                             ${CMAKE_SOURCE_DIR}/include)
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
@@ -122,6 +122,10 @@ target_link_libraries(dmn-kafka-receiver
 add_executable(dmn-kafka-sender
                  dmn-kafka-sender.cpp
 )
+
+target_include_directories(dmn-kafka-sender
+                             PRIVATE
+                             ${CMAKE_SOURCE_DIR}/include)
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE
