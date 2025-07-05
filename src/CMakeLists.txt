@@ -1,18 +1,5 @@
 # Copyright © 2025 Chee Bin HOH. All rights reserved.
 
-message(STATUS "find or fetching protobuf...")
-find_package(Protobuf QUIET)
-
-if (NOT Protobuf_FOUND)
-FetchContent_Declare(protobuf
-                       GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-                       GIT_TAG        v30.0-rc1
-)
-
-FetchContent_MakeAvailable(protobuf)
-endif()
-
-
 # build the dmn library
 message(STATUS "build dmn...")
 add_library(dmn
