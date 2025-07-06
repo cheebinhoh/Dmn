@@ -16,12 +16,19 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka.cpp
 
               # proto c++ sources
-              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-body.pb.cc
-              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-type.pb.cc
-              ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg.pb.cc
+              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.cc
+              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.cc
+              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.cc
+)
+
+GENERATE_PROTOBUF(dmn
+                    dmn-dmesg-type.proto
+                    dmn-dmesg-body.proto
+                    dmn-dmesg.proto
 )
 
 target_include_directories(dmn PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(dmn INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(dmn INTERFACE ${CMAKE_SOURCE_DIR})
 target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -56,9 +63,9 @@ target_sources(dmn
                  ${CMAKE_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
 
                  # proto c++ sources
-                 ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-body.pb.h
-                 ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg-type.pb.h
-                 ${CMAKE_SOURCE_DIR}/proto/dmn-dmesg.pb.h
+                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
+                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
+                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
 )
 
 target_include_directories(dmn

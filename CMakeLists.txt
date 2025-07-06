@@ -28,15 +28,6 @@ option(BUILD_KAFKA_TEST "build with kafka test" OFF)
 include(CMakeMacro.cmake)
 include(FetchContent)
 
-message(STATUS "find or fetching googletest...")
-
-FetchContent_Declare(googletest
-                       GIT_REPOSITORY https://github.com/google/googletest.git
-                       GIT_TAG        v1.14.0
-)
-
-FetchContent_MakeAvailable(googletest)
-
 message(STATUS "find or fetching protobuf...")
 find_package(Protobuf QUIET)
 
@@ -48,6 +39,15 @@ FetchContent_Declare(protobuf
 
 FetchContent_MakeAvailable(protobuf)
 endif()
+
+message(STATUS "find or fetching googletest...")
+
+FetchContent_Declare(googletest
+                       GIT_REPOSITORY https://github.com/google/googletest.git
+                       GIT_TAG        v1.14.0
+)
+
+FetchContent_MakeAvailable(googletest)
 
 message(STATUS "fetching rdkafka...")
 FetchContent_Declare(rdkafka
@@ -78,12 +78,6 @@ endif()
 
 # build DMN library and applications
 add_subdirectory(src)
-
-GENERATE_PROTOBUF(dmn
-                    dmn-dmesg-type.proto
-                    dmn-dmesg-body.proto
-                    dmn-dmesg.proto
-)
 
 # run unit test for DMN
 message(STATUS "build and run unit test...")
