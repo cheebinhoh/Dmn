@@ -20,6 +20,7 @@ enable_testing()
 
 
 # set build options
+option(FETCH_PROTOBUF "fetch protobuf from github" OFF)
 option(BUILD_NDEBUG "build without debug" OFF)
 option(BUILD_KAFKA_TEST "build with kafka test" OFF)
 
@@ -28,16 +29,27 @@ option(BUILD_KAFKA_TEST "build with kafka test" OFF)
 include(CMakeMacro.cmake)
 include(FetchContent)
 
-message(STATUS "find or fetching protobuf...")
-find_package(Protobuf QUIET)
-
-if (NOT Protobuf_FOUND)
-FetchContent_Declare(protobuf
+if (FETCH_PROTOBUF)
+  message(STATUS "fetching protobuf from github")
+  FetchContent_Declare(protobuf
                        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
                        GIT_TAG        v30.0-rc1
-)
+  )
 
-FetchContent_MakeAvailable(protobuf)
+  FetchContent_MakeAvailable(protobuf)
+else() 
+  message(STATUS "find or fetching protobuf...")
+  find_package(Protobuf QUIET)
+
+  if(NOT Protobuf_FOUND)
+    message(STATUS "fetching protobuf from github")
+    FetchContent_Declare(protobuf
+                         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+                         GIT_TAG        v30.0-rc1
+    )
+
+    FetchContent_MakeAvailable(protobuf)
+  endif()
 endif()
 
 message(STATUS "find or fetching googletest...")
