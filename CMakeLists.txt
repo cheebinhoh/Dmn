@@ -35,6 +35,7 @@ if (NOT Protobuf_FOUND)
 FetchContent_Declare(protobuf
                        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
                        GIT_TAG        v30.0-rc1
+                       EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(protobuf)
@@ -45,6 +46,7 @@ message(STATUS "find or fetching googletest...")
 FetchContent_Declare(googletest
                        GIT_REPOSITORY https://github.com/google/googletest.git
                        GIT_TAG        v1.14.0
+                       EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(googletest)
@@ -53,6 +55,7 @@ message(STATUS "fetching rdkafka...")
 FetchContent_Declare(rdkafka
                        GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
                        GIT_TAG        v2.8.0
+                       EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(rdkafka)
