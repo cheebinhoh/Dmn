@@ -87,6 +87,25 @@ target_link_libraries(dmn
                         ${rdkafka_LIB}
 )
 
+# Install the library binary
+install(TARGETS dmn
+#   EXPORT mylibTargets
+    ARCHIVE DESTINATION lib/dmn
+    LIBRARY DESTINATION lib/dmn
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include/dmn
+)
+
+# Install the public headers
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/dmn)
+
+# Export the targets for use with find_package()
+#install(EXPORT mylibTargets
+#    FILE mylibTargets.cmake
+#    NAMESPACE MyLib::
+#    DESTINATION lib/cmake/mylib
+#)
+
 
 # build executable that uses dmn
 message(STATUS "build dmn applications...")

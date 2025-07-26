@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   for (auto &filename : files) {
     auto tpipe_source = tpipe.addDmn_TeePipeSource();
     auto proc = std::make_unique<dmn::Dmn_Proc>(
-        filename, [&tpipe, tpipe_source, filename, prog = argv[0]]() {
+        filename, [tpipe_source, filename, prog = argv[0]]() {
           int fd{};
           FILE *file{};
           char buf[BUFSIZ]{};
