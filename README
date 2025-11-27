@@ -9,3 +9,8 @@ the protocol.
 The library is implemeneted in C++ and hopefully it is doing it right way through
 delegation design pattern and fully extensible and customizable without proliferation
 of Classes.
+
+Note about building within Dockerfile container:
+0. build container - "docker build -t dmn ."
+1. run container (interactive mode) - "docker run -it --rm dmn"
+2. remove built container - "docker rmi dmn"
