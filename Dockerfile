@@ -1,22 +1,24 @@
+# Copyright © 2025 Chee Bin HOH. All rights reserved.
+
 FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    git \
-    clang \
-    clang-format \
-    clang-tidy \
-    libgtest-dev \
-    libgmock-dev \
-    curl \
-    unzip \
-    autoconf \
-    automake \
-    libtool \
-    protobuf-compiler \
-    libprotobuf-dev \
-    && rm -rf /var/lib/apt/lists/*
+      build-essential \
+      cmake \
+      git \
+      clang \
+      clang-format \
+      clang-tidy \
+      libgtest-dev \
+      curl \
+      unzip \
+      autoconf \
+      automake \
+      libtool \
+      protobuf-compiler \
+      libprotobuf-dev \
+      vim \
+      && rm -rf /var/lib/apt/lists/*
 
 # Copy everything from the current directory (host) into /app (container)
 COPY . /app
@@ -28,4 +30,4 @@ WORKDIR /app
 RUN mkdir build && cmake -B build && cmake --build build/
 
 # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "echo \"enter entry point\"; exec /bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "cd /app/build; exec /bin/bash"]
