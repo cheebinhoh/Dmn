@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
       clang \
       clang-format \
       clang-tidy \
-      libgtest-dev \
+      libgtest-dev \ 
+      net-tools \
       curl \
       unzip \
       autoconf \
@@ -27,7 +28,7 @@ COPY . /app
 WORKDIR /app
 
 # Run build
-RUN mkdir build && cmake -B build && cmake --build build/
+RUN mkdir build && cmake -B build && cmake --build build/ && cd build && ctest -L dmn
 
 # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "cd /app/build; exec /bin/bash"]
