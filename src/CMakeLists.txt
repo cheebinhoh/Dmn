@@ -27,40 +27,40 @@ GENERATE_PROTOBUF(dmn
                     dmn-dmesg.proto
 )
 
-target_include_directories(dmn PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(dmn PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(dmn INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(dmn INTERFACE ${CMAKE_SOURCE_DIR})
+target_include_directories(dmn INTERFACE ${PROJECT_SOURCE_DIR})
 target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies(dmn rdkafka)
 target_sources(dmn
                  PRIVATE
-                 ${CMAKE_SOURCE_DIR}/include/dmn-debug.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
 )
 
 target_sources(dmn
                  INTERFACE
-                 ${CMAKE_SOURCE_DIR}/include/dmn.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-async.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-buffer.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-event.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-io.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-limit-buffer.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-dmesg.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-dmesgnet.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-pipe.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-proc.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-pub-sub.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-singleton.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-socket.hpp
-                 ${CMAKE_SOURCE_DIR}/include/dmn-teepipe.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-async.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-buffer.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-event.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-limit-buffer.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-pipe.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-teepipe.hpp
 
                  # kafka
-                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
-                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-kafka-util.hpp
-                 ${CMAKE_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
+                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
+                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
 
                  # proto c++ sources
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
@@ -97,7 +97,7 @@ install(TARGETS dmn
 )
 
 # Install the public headers
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/dmn)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include/dmn)
 
 # Export the targets for use with find_package()
 #install(EXPORT mylibTargets
@@ -115,7 +115,7 @@ add_executable(dmn-dmesg-daemon
 
 target_include_directories(dmn-dmesg-daemon
                              PRIVATE
-                             ${CMAKE_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(dmn-dmesg-daemon
                         PRIVATE
@@ -131,7 +131,7 @@ add_executable(dmn-kafka-receiver
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
-                             ${CMAKE_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include)
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
@@ -151,7 +151,7 @@ add_executable(dmn-kafka-sender
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE
-                             ${CMAKE_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include)
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE

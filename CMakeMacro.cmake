@@ -13,7 +13,7 @@ macro(ADD_TEST_EXECUTABLE ...)
 
     target_include_directories(${arg}
                                PRIVATE
-                               ${CMAKE_SOURCE_DIR}/include)
+                               ${PROJECT_SOURCE_DIR}/include)
 
     target_compile_options(${arg}
                            PRIVATE
