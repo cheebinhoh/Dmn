@@ -37,16 +37,22 @@ RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VE
     mv /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka && \
     rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 
-# Copy everything from the current directory (host) into /app (container)
-COPY . /app
+WORKDIR /opt/kafka
 
-# Set working directory inside the container
-WORKDIR /app
+# 3. Create a Startup Script
+# This script configures Kafka to use its own container ID/name as its network address
+RUN echo '#!/bin/bash \n\
+# Update listeners to allow external traffic on the docker network \n\
+sed -i "s|#listeners=PLAINTEXT://:9092|listeners=PLAINTEXT://0.0.0.0:9092|g" config/server.properties \n\
+# Set the advertised listener to the current container hostname \n\
+echo "advertised.listeners=PLAINTEXT://$HOSTNAME:9092" >> config/server.properties \n\
+\n\
+# Start Zookeeper in the background \n\
+bin/zookeeper-server-start.sh config/zookeeper.properties & \n\
+# Start Kafka \n\
+exec bin/kafka-server-start.sh config/server.properties' > /usr/bin/start-kafka.sh && \
+chmod +x /usr/bin/start-kafka.sh
 
 EXPOSE 9092 2181
 
-# Run build
-RUN mkdir build && cmake -B build && cmake --build build/ #&& cd build && ctest -L dmn
-
-# Entry point
-ENTRYPOINT ["/bin/bash", "-c", "cd /app/build; exec /bin/bash"]
+CMD ["/usr/bin/start-kafka.sh"]
