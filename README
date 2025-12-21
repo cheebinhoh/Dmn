@@ -10,12 +10,16 @@ The library is implemeneted in C++ and hopefully it is doing it right way throug
 delegation design pattern and fully extensible and customizable without proliferation
 of Classes.
 
-Note about building within Dockerfile container:
+The dmn Dockerfile container:
 0. build container - "docker build -t dmn ."
-1. run container (interactive mode) - "docker run -it --rm dmn"
-2. remove built container - "docker rmi dmn"
+1. run container (interactive mode) - "docker run -it --network dmn-kafka-net --rm dmn"
+2. run 'ctest -L dmn' (depends on local kafka network broker)
+3. remove built container - "docker rmi dmn"
 
-Kafka network setup:
+
+The Kafka network broker container:
+Step 3 and 4 are optional if we just want to run unit test of dmn that depends on the kafka network.
+
 0. docker build -t dmn-kafka -f DockerfileKafka .
 1. docker network create dmn-kafka-net
 2. docker run -d --name kafka-server --network dmn-kafka-net dmn-kafka

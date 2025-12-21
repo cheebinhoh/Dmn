@@ -46,7 +46,7 @@ WORKDIR /app
 EXPOSE 9092 2181
 
 # Run build
-RUN mkdir build && cmake -B build && cmake --build build/ #&& cd build && ctest -L dmn
+RUN mkdir build && cmake -B build && cmake --build build/
 
 # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "cd /app/build; exec /bin/bash"]
