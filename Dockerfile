@@ -2,11 +2,6 @@
 
 FROM ubuntu:24.04
 
-# Avoid prompts during installation
-ENV DEBIAN_FRONTEND=noninteractive
-ENV KAFKA_VERSION=3.6.1
-ENV SCALA_VERSION=2.13
-
 RUN apt-get update && apt-get install -y \
       automake \
       autoconf \
@@ -32,10 +27,16 @@ RUN apt-get update && apt-get install -y \
       && rm -rf /var/lib/apt/lists/*
 
 
+# Setup Kafka local network
+ENV DEBIAN_FRONTEND=noninteractive
+ENV KAFKA_VERSION=2.8.0
+ENV SCALA_VERSION=2.13
+
 RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz && \
     tar -xzf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt && \
     mv /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka && \
     rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
+
 
 # 3. Create a Startup Script
 # This script configures Kafka to use its own container ID/name as its network address
@@ -55,13 +56,16 @@ chmod +x /usr/bin/start-kafka.sh
 # Copy everything from the current directory (host) into /app (container)
 COPY . /app
 
+
 # Set working directory inside the container
 WORKDIR /app
 
 EXPOSE 9092 2181
 
+
 # Run build
 RUN mkdir build && cmake -B build && cmake --build build/
+
 
 # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; exec /bin/bash"]
