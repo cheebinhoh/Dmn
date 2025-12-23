@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   // writer
   dmn::Dmn_Kafka::ConfigType write_configs{};
   write_configs["bootstrap.servers"] =
-      "kafka-server:9092";
+      "localhost:9092";
 /* FIXME: for use of kafka-server in dmn-kafka-net
   write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
   write_configs["sasl.password"] =
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   // reader
   dmn::Dmn_Kafka::ConfigType read_configs{};
   read_configs["bootstrap.servers"] =
-      "kafka-server:9092";
+      "localhost:9092";
 /* FIXME: for use of kafka-server in dmn-kafka-net
   read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
   read_configs["sasl.password"] =
