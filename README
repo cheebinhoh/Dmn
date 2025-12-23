@@ -13,18 +13,5 @@ of Classes.
 The dmn Dockerfile container:
 0. build container - "docker build -t dmn ."
 1. run container (interactive mode) - "docker run -it --network dmn-kafka-net --rm dmn"
-2. run 'ctest -L dmn' (depends on local kafka network broker)
+2. run 'ctest -L dmn'
 3. remove built container - "docker rmi dmn"
-
-
-The Kafka network broker container:
-Step 3 and 4 are optional if we just want to run unit test of dmn that depends on the kafka network.
-
-0. docker build -t dmn-kafka -f DockerfileKafka .
-1. docker network create dmn-kafka-net
-2. docker run -d --name kafka-server --network dmn-kafka-net dmn-kafka
-3. docker run -it --network dmn-kafka-net dmn-kafka bash
-   - ./bin/kafka-topics.sh --create --topic timer_counter --bootstrap-server kafka-server:9092
-   - ./bin/kafka-console-producer.sh --topic timer_counter --bootstrap-server kafka-server:9092
-4. docker run -it --network dmn-kafka-net dmn-kafka bash
-   - ./bin/kafka-console-consumer.sh --topic timer_counter --bootstrap-server kafka-server:9092
