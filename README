@@ -12,6 +12,6 @@ of Classes.
 
 The dmn Dockerfile container:
 0. build container - "docker build -t dmn ."
-1. run container (interactive mode) - "docker run -it --network dmn-kafka-net --rm dmn"
+1. run container (interactive mode) - "docker run -it --rm dmn"
 2. run 'ctest -L dmn'
 3. remove built container - "docker rmi dmn"
