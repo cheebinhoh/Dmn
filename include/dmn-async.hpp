@@ -22,6 +22,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -59,6 +60,8 @@ public:
     std::condition_variable m_cond_var{};
 
     bool m_done{};
+
+    std::exception_ptr m_thrownException{};
   };
 
   /**
@@ -156,8 +159,9 @@ std::shared_ptr<Dmn_Async::Dmn_Async_Wait> Dmn_Async::addExecTaskAfterWithWait(
 
   this->addExecTaskAfter(duration, [wait_shared_ptr, fn]() {
     try {
-      fn(); 
+      fn();
     } catch (...) {
+      wait_shared_ptr->m_thrownException = std::current_exception();
     }
 
     std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);

@@ -102,7 +102,14 @@ int main(int argc, char *argv[]) {
     throw std::runtime_error("just exception");
   });
 
-  waitHandler->wait();
- 
+  bool exceptionCatch{};
+  try {
+    waitHandler->wait();
+  } catch (...) {
+    exceptionCatch = true;
+  }
+
+  EXPECT_TRUE(exceptionCatch);
+
   return RUN_ALL_TESTS();
 }
