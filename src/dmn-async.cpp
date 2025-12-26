@@ -21,6 +21,10 @@ namespace dmn {
 void Dmn_Async::Dmn_Async_Wait::wait() {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_cond_var.wait(lock, [this] { return m_done; });
+
+  if (m_thrownException) {
+    std::rethrow_exception(m_thrownException);
+  }
 }
 
 Dmn_Async::Dmn_Async(std::string_view name)
@@ -42,6 +46,7 @@ Dmn_Async::addExecTaskWithWait(std::function<void()> fn) {
     try {
       fn();
     } catch (...) {
+      wait_shared_ptr->m_thrownException = std::current_exception();
     }
 
     std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
