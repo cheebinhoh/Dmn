@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
   // Install timer_handler as the signal handler for SIGALRM
   sa.sa_handler = &timer_handler;
-  sigaction(SIGALRM, &sa, NULL);a
+  sigaction(SIGALRM, &sa, NULL);
 
   // Configure the timer to expire after 1 second...
   timer.it_value.tv_sec = 10;
