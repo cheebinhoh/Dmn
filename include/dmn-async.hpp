@@ -155,7 +155,10 @@ std::shared_ptr<Dmn_Async::Dmn_Async_Wait> Dmn_Async::addExecTaskAfterWithWait(
   auto wait_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Wait>();
 
   this->addExecTaskAfter(duration, [wait_shared_ptr, fn]() {
-    fn();
+    try {
+      fn(); 
+    } catch (...) {
+    }
 
     std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
     wait_shared_ptr->m_done = true;

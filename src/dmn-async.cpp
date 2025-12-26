@@ -39,7 +39,10 @@ Dmn_Async::addExecTaskWithWait(std::function<void()> fn) {
   auto wait_shared_ptr = std::make_shared<Dmn_Async_Wait>();
 
   this->write([wait_shared_ptr, fn]() {
-    fn();
+    try {
+      fn();
+    } catch (...) {
+    }
 
     std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
     wait_shared_ptr->m_done = true;
@@ -58,7 +61,10 @@ void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
 
     if (now >= time_in_future) {
       if (fn) {
-        fn();
+        try {
+          fn();
+        } catch (...) {
+        }
       }
     } else {
       this->addExecTaskAfterInternal(time_in_future, fn);

@@ -9,7 +9,11 @@
 
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <thread>
+
+#include <stdlib.h>
+#include <signal.h>
 
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
@@ -27,6 +31,10 @@ public:
 private:
   long long m_count{};
 };
+
+void timer_handler(int sig) {
+  EXPECT_TRUE(false);
+}
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -72,5 +80,29 @@ int main(int argc, char *argv[]) {
   waitHandler->wait();
   EXPECT_TRUE(done);
 
+  struct sigaction sa;
+  struct itimerval timer;
+
+  // Install timer_handler as the signal handler for SIGALRM
+  sa.sa_handler = &timer_handler;
+  sigaction(SIGALRM, &sa, NULL);a
+
+  // Configure the timer to expire after 1 second...
+  timer.it_value.tv_sec = 10;
+  timer.it_value.tv_usec = 0;
+
+  // ... and every 1 second after that
+  timer.it_interval.tv_sec = 1;
+  timer.it_interval.tv_usec = 0;
+
+  setitimer(ITIMER_REAL, &timer, NULL);
+
+  waitHandler = asyncWithWait.addExecTaskWithWait([&done] {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    throw std::runtime_error("just exception");
+  });
+
+  waitHandler->wait();
+ 
   return RUN_ALL_TESTS();
 }
