@@ -28,6 +28,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-8
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
+                      dmn-test-event
                       dmn-test-io
                       dmn-test-pipe
                       dmn-test-pub-sub

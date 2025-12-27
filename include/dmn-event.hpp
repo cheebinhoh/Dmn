@@ -49,7 +49,7 @@ private:
   /**
    * data members for internal logic.
    */
-  Dmn_Proc m_signalWaitProc{"DmnEventManager_SignalWait"};
+  std::unique_ptr<Dmn_Proc> m_signalWaitProc{}; //"DmnEventManager_SignalWait"};
   sigset_t m_mask{};
   std::unordered_map<int, SignalHandler> m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
@@ -80,6 +80,7 @@ Dmn_Event_Manager::createInstanceInternal(U &&...u) {
           int err{};
 
           sigemptyset(&Dmn_Event_Manager::s_mask);
+          sigaddset(&Dmn_Event_Manager::s_mask, SIGALRM);
           sigaddset(&Dmn_Event_Manager::s_mask, SIGINT);
           sigaddset(&Dmn_Event_Manager::s_mask, SIGTERM);
           sigaddset(&Dmn_Event_Manager::s_mask, SIGQUIT);
