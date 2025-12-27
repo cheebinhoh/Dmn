@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
@@ -32,7 +33,7 @@ private:
   long long m_count{};
 };
 
-void timer_handler(int sig) {
+void timer_handler([[maybe_unused]] int sig) {
   EXPECT_TRUE(false);
 }
 
