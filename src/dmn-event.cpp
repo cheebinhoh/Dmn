@@ -33,7 +33,9 @@ Dmn_Event_Manager::Dmn_Event_Manager()
     this->exitMainLoopInternal();
   };
 
-  m_signalWaitProc.exec([this]() {
+  m_signalWaitProc = std::make_unique<Dmn_Proc>("DmnEventManager_SignalWait");
+
+  m_signalWaitProc->exec([this]() {
     while (true) {
       int signo{};
       int err{};
@@ -51,7 +53,6 @@ Dmn_Event_Manager::Dmn_Event_Manager()
 }
 
 Dmn_Event_Manager::~Dmn_Event_Manager() noexcept try {
-  this->stopExec();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -71,7 +72,9 @@ void Dmn_Event_Manager::exitMainLoop() {
  *        This is private method to be called in the Dmn_Event_Manager instance
  *        asynchronous thread context.
  */
-void Dmn_Event_Manager::exitMainLoopInternal() { this->stopExec(); }
+void Dmn_Event_Manager::exitMainLoopInternal() {
+  m_signalWaitProc = {};
+}
 
 /**
  * @brief The method will enter the Dmn_Event_Manager mainloop, and wait
@@ -80,7 +83,8 @@ void Dmn_Event_Manager::exitMainLoopInternal() { this->stopExec(); }
  */
 void Dmn_Event_Manager::enterMainLoop() {
   Dmn_Proc::yield();
-  this->wait();
+
+  m_signalWaitProc->wait();
 }
 
 /**
