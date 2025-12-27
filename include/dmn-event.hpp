@@ -49,7 +49,7 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn_Proc> m_signalWaitProc{}; //"DmnEventManager_SignalWait"};
+  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
   sigset_t m_mask{};
   std::unordered_map<int, SignalHandler> m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
