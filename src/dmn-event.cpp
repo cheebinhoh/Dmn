@@ -74,6 +74,9 @@ void Dmn_Event_Manager::exitMainLoop() {
  */
 void Dmn_Event_Manager::exitMainLoopInternal() {
   m_signalWaitProc = {};
+
+  m_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_exit_atomic_flag.notify_all();
 }
 
 /**
@@ -84,7 +87,9 @@ void Dmn_Event_Manager::exitMainLoopInternal() {
 void Dmn_Event_Manager::enterMainLoop() {
   Dmn_Proc::yield();
 
-  m_signalWaitProc->wait();
+  while (!m_exit_atomic_flag.test()) {
+    m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
 }
 
 /**
