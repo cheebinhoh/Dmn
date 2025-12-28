@@ -10,6 +10,7 @@
 
 #define DMN_EVENT_HPP_
 
+#include <atomic>
 #include <csignal>
 #include <functional>
 #include <mutex>
@@ -53,6 +54,8 @@ private:
   sigset_t m_mask{};
   std::unordered_map<int, SignalHandler> m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
+
+  std::atomic_flag                                    m_exit_atomic_flag{};
 
   /**
    * static variables for the global singleton instance
