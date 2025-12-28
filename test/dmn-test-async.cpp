@@ -12,8 +12,8 @@
 #include <stdexcept>
 #include <thread>
 
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
@@ -33,9 +33,7 @@ private:
   long long m_count{};
 };
 
-void timer_handler([[maybe_unused]] int sig) {
-  EXPECT_TRUE(false);
-}
+void timer_handler([[maybe_unused]] int sig) { EXPECT_TRUE(false); }
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

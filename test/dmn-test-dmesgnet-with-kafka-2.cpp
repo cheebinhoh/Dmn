@@ -29,13 +29,12 @@ int main(int argc, char *argv[]) {
 
   // reader
   dmn::Dmn_Kafka::ConfigType read_configs_other{};
-  read_configs_other["bootstrap.servers"] =
-      "localhost:9092";
-//  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
-//  read_configs_other["sasl.password"] =
-//      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-//  read_configs_other["security.protocol"] = "SASL_SSL";
-//  read_configs_other["sasl.mechanisms"] = "PLAIN";
+  read_configs_other["bootstrap.servers"] = "localhost:9092";
+  //  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+  //  read_configs_other["sasl.password"] =
+  //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+  //  read_configs_other["security.protocol"] = "SASL_SSL";
+  //  read_configs_other["sasl.mechanisms"] = "PLAIN";
   read_configs_other["group.id"] = "dmesg_other";
   read_configs_other["auto.offset.reset"] = "latest";
   read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
@@ -46,13 +45,12 @@ int main(int argc, char *argv[]) {
 
   // writer for DMesgNet
   dmn::Dmn_Kafka::ConfigType write_configs{};
-  write_configs["bootstrap.servers"] =
-      "localhost:9092";
-//  write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
-//  write_configs["sasl.password"] =
-//      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-//  write_configs["security.protocol"] = "SASL_SSL";
-//  write_configs["sasl.mechanisms"] = "PLAIN";
+  write_configs["bootstrap.servers"] = "localhost:9092";
+  //  write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+  //  write_configs["sasl.password"] =
+  //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+  //  write_configs["security.protocol"] = "SASL_SSL";
+  //  write_configs["sasl.mechanisms"] = "PLAIN";
   write_configs["acks"] = "all";
   write_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   write_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
@@ -62,13 +60,12 @@ int main(int argc, char *argv[]) {
 
   // reader for DMesgNet
   dmn::Dmn_Kafka::ConfigType read_configs{};
-  read_configs["bootstrap.servers"] =
-      "localhost:9092";
-//  read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
-//  read_configs["sasl.password"] =
-//      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-//  read_configs["security.protocol"] = "SASL_SSL";
-//  read_configs["sasl.mechanisms"] = "PLAIN";
+  read_configs["bootstrap.servers"] = "localhost:9092";
+  //  read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+  //  read_configs["sasl.password"] =
+  //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+  //  read_configs["security.protocol"] = "SASL_SSL";
+  //  read_configs["sasl.mechanisms"] = "PLAIN";
   read_configs["group.id"] = "dmesg1";
   read_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   read_configs["auto.offset.reset"] = "latest";
