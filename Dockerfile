@@ -32,7 +32,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV KAFKA_VERSION=2.8.0
 ENV SCALA_VERSION=2.13
 
-RUN wget https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz && \
+RUN wget --retry-connrefused --waitretry=3 --read-timeout=20 --timeout=15 -t 5 \
+    https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz && \
     tar -xzf kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt && \
     mv /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} /opt/kafka && \
     rm kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
