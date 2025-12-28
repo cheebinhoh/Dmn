@@ -16,8 +16,8 @@
 
 #include "rdkafka.h"
 
-#include "kafka/dmn-kafka-util.hpp"
 #include "dmn-proc.hpp"
+#include "kafka/dmn-kafka-util.hpp"
 
 namespace dmn {
 

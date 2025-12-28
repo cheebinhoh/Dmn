@@ -3,7 +3,7 @@
 # Copyright © 2023 Chee Bin HOH. All rights reserved.
 #
 
-DIRS=". kafka test"
+DIRS=". src/kafka test"
 FILE_PATTERN='*.cpp *.hpp'
 
 # extra space following newline is never intended to be checked in, so we trim it.

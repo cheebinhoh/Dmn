@@ -17,15 +17,14 @@ int main(int argc, char *argv[]) {
 
   // writer
   dmn::Dmn_Kafka::ConfigType write_configs{};
-  write_configs["bootstrap.servers"] =
-      "localhost:9092";
-/* FIXME: for use of kafka-server in dmn-kafka-net
-  write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  write_configs["sasl.password"] =
-     "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  write_configs["security.protocol"] = "SASL_SSL";
-  write_configs["sasl.mechanisms"] = "PLAIN";
- */
+  write_configs["bootstrap.servers"] = "localhost:9092";
+  /* FIXME: for use of kafka-server in dmn-kafka-net
+    write_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+    write_configs["sasl.password"] =
+       "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+    write_configs["security.protocol"] = "SASL_SSL";
+    write_configs["sasl.mechanisms"] = "PLAIN";
+   */
   write_configs["acks"] = "all";
   write_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   write_configs[dmn::Dmn_Kafka::Key] = "tick";
@@ -34,15 +33,14 @@ int main(int argc, char *argv[]) {
 
   // reader
   dmn::Dmn_Kafka::ConfigType read_configs{};
-  read_configs["bootstrap.servers"] =
-      "localhost:9092";
-/* FIXME: for use of kafka-server in dmn-kafka-net
-  read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  read_configs["sasl.password"] =
-      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  read_configs["security.protocol"] = "SASL_SSL";
-  read_configs["sasl.mechanisms"] = "PLAIN";
- */
+  read_configs["bootstrap.servers"] = "localhost:9092";
+  /* FIXME: for use of kafka-server in dmn-kafka-net
+    read_configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+    read_configs["sasl.password"] =
+        "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+    read_configs["security.protocol"] = "SASL_SSL";
+    read_configs["sasl.mechanisms"] = "PLAIN";
+   */
   read_configs["group.id"] = "dmn-kafka-receiver";
   read_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   read_configs["auto.offset.reset"] = "earliest";
