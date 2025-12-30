@@ -47,10 +47,16 @@ public:
 
   friend class Dmn_Singleton;
 
+  void addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job);
+
 private:
   void exitMainLoopInternal();
   void registerSignalHandlerInternal(int signo, SignalHandler handler);
   void execSignalHandlerInternal(int signo);
+
+  void addHighJob(std::function<void()> job);
+  void addMediumJob(std::function<void()> job);
+  void addLowJob(std::function<void()> job);
 
   template <class... U>
   static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
@@ -58,12 +64,15 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
-  sigset_t m_mask{};
-  std::unordered_map<int, SignalHandler> m_signal_handlers{};
+  std::unique_ptr<Dmn_Proc>                           m_signalWaitProc{};
+  sigset_t                                            m_mask{};
+  std::unordered_map<int, SignalHandler>              m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
+  std::atomic_flag                                    m_enter_atomic_flag{};
   std::atomic_flag                                    m_exit_atomic_flag{};
+
+  std::unique_ptr<Dmn_Pipe<Dmn_Runtime_Job>>          m_pipe{};
 
   /**
    * static variables for the global singleton instance

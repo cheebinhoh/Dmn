@@ -13,6 +13,7 @@
 #include <stdexcept>
 
 #include "dmn-async.hpp"
+#include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
@@ -50,12 +51,54 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
                                   this, signo);
     }
   });
+
+
+  m_pipe = std::make_unique<Dmn_Pipe<Dmn_Runtime_Job>>("pipe", [this](Dmn_Runtime_Job job){
+    std::cout << "run job ...\n";
+
+    DMN_ASYNC_CALL_WITH_CAPTURE({ job.m_job(); }, this, job);
+  });
 }
 
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
+}
+
+void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job) {
+  while (!m_enter_atomic_flag.test()) {
+    m_enter_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
+  switch (priority) {
+    case Dmn_Runtime_Job::kHigh:
+      this->addHighJob(job);
+      break;
+
+    case Dmn_Runtime_Job::kMedium:
+      this->addMediumJob(job);
+      break;
+
+    case Dmn_Runtime_Job::kLow:
+      this->addHighJob(job);
+      break;
+  }
+}
+
+void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {  
+  Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kHigh, job};
+  m_pipe->write(rjob);
+}
+
+void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
+  Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kMedium, job};
+  m_pipe->write(rjob);
+}
+
+void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
+  Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kLow, job};
+  m_pipe->write(rjob);
 }
 
 /**
@@ -86,6 +129,9 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
   Dmn_Proc::yield();
+
+  m_enter_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_enter_atomic_flag.notify_all();
 
   while (!m_exit_atomic_flag.test()) {
     m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
