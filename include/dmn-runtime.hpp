@@ -16,6 +16,7 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "dmn-buffer.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-async.hpp"
 #include "dmn-singleton.hpp"
@@ -54,6 +55,10 @@ private:
   void registerSignalHandlerInternal(int signo, SignalHandler handler);
   void execSignalHandlerInternal(int signo);
 
+  template <class Rep, class Period>
+  void execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
+  void execRuntimeJobInternal(void);
+
   void addHighJob(std::function<void()> job);
   void addMediumJob(std::function<void()> job);
   void addLowJob(std::function<void()> job);
@@ -69,10 +74,14 @@ private:
   std::unordered_map<int, SignalHandler>              m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
-  std::atomic_flag                                    m_enter_atomic_flag{};
+  std::atomic_flag                                    m_enter_high_atomic_flag{};
+  std::atomic_flag                                    m_enter_medium_atomic_flag{};
+  std::atomic_flag                                    m_enter_low_atomic_flag{};
   std::atomic_flag                                    m_exit_atomic_flag{};
 
-  std::unique_ptr<Dmn_Pipe<Dmn_Runtime_Job>>          m_pipe{};
+  Dmn_Buffer<Dmn_Runtime_Job>                         m_highQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job>                         m_mediumQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job>                         m_lowQueue{};
 
   /**
    * static variables for the global singleton instance
