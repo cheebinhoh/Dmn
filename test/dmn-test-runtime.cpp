@@ -1,8 +1,8 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-event.cpp
- * @brief The unit test for dmn-event module.
+ * @file dmn-test-runtime.cpp
+ * @brief The unit test for dmn-runtime module.
  */
 
 #include <gtest/gtest.h>
@@ -17,12 +17,12 @@
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
-#include "dmn-event.hpp"
+#include "dmn-runtime.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Event_Manager>();
+  auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
   int count{};
 
   inst->registerSignalHandler(SIGALRM, [&inst, &count](int signno) {

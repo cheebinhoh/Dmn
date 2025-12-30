@@ -1,11 +1,11 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-event.cpp
- * @brief The source implementation file for dmn-event.
+ * @file dmn-runtime.cpp
+ * @brief The source implementation file for dmn-runtime.
  */
 
-#include "dmn-event.hpp"
+#include "dmn-runtime.hpp"
 
 #include <csignal>
 #include <iostream>
@@ -17,13 +17,13 @@
 
 namespace dmn {
 
-std::once_flag Dmn_Event_Manager::s_init_once{};
-std::shared_ptr<Dmn_Event_Manager> Dmn_Event_Manager::s_instance{};
-sigset_t Dmn_Event_Manager::s_mask{};
+std::once_flag Dmn_Runtime_Manager::s_init_once{};
+std::shared_ptr<Dmn_Runtime_Manager> Dmn_Runtime_Manager::s_instance{};
+sigset_t Dmn_Runtime_Manager::s_mask{};
 
-Dmn_Event_Manager::Dmn_Event_Manager()
-    : Dmn_Singleton{}, Dmn_Async{"Dmn_Event_Manager"},
-      m_mask{Dmn_Event_Manager::s_mask} {
+Dmn_Runtime_Manager::Dmn_Runtime_Manager()
+    : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
+      m_mask{Dmn_Runtime_Manager::s_mask} {
   // default and to be overridden if needed
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) {
     this->exitMainLoopInternal();
@@ -52,27 +52,27 @@ Dmn_Event_Manager::Dmn_Event_Manager()
   });
 }
 
-Dmn_Event_Manager::~Dmn_Event_Manager() noexcept try {
+Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
 /**
- * @brief The method will exit the Dmn_Event_Manager mainloop, returns control
+ * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
  *        (usually the mainthread) to the main() function to be continued.
  */
-void Dmn_Event_Manager::exitMainLoop() {
+void Dmn_Runtime_Manager::exitMainLoop() {
   DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->exitMainLoopInternal(); });
 }
 
 /**
- * @brief The method will exit the Dmn_Event_Manager mainloop, returns control
+ * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
  *        (usually the mainthread) to the main() function to be continued.
- *        This is private method to be called in the Dmn_Event_Manager instance
+ *        This is private method to be called in the Dmn_Runtime_Manager instance
  *        asynchronous thread context.
  */
-void Dmn_Event_Manager::exitMainLoopInternal() {
+void Dmn_Runtime_Manager::exitMainLoopInternal() {
   m_signalWaitProc = {};
 
   m_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
@@ -80,11 +80,11 @@ void Dmn_Event_Manager::exitMainLoopInternal() {
 }
 
 /**
- * @brief The method will enter the Dmn_Event_Manager mainloop, and wait
- *        for event loop to be exited. this is usually called by the main()
+ * @brief The method will enter the Dmn_Runtime_Manager mainloop, and wait
+ *        for runtime loop to be exited. this is usually called by the main()
  *        method.
  */
-void Dmn_Event_Manager::enterMainLoop() {
+void Dmn_Runtime_Manager::enterMainLoop() {
   Dmn_Proc::yield();
 
   while (!m_exit_atomic_flag.test()) {
@@ -97,7 +97,7 @@ void Dmn_Event_Manager::enterMainLoop() {
  *
  * @param signo signal number that is raised
  */
-void Dmn_Event_Manager::execSignalHandlerInternal(int signo) {
+void Dmn_Runtime_Manager::execSignalHandlerInternal(int signo) {
   auto extHandlers = m_ext_signal_handlers.find(signo);
   if (m_ext_signal_handlers.end() != extHandlers) {
     for (auto &handler : extHandlers->second) {
@@ -118,7 +118,7 @@ void Dmn_Event_Manager::execSignalHandlerInternal(int signo) {
  * @param signo   The POSIX signal number
  * @param handler The signal handler to be called when the signal is raised.
  */
-void Dmn_Event_Manager::registerSignalHandler(int signo,
+void Dmn_Runtime_Manager::registerSignalHandler(int signo,
                                               SignalHandler handler) {
   DMN_ASYNC_CALL_WITH_CAPTURE(
       { this->registerSignalHandlerInternal(signo, handler); }, this, signo,
@@ -128,14 +128,14 @@ void Dmn_Event_Manager::registerSignalHandler(int signo,
 /**
  * @brief The method registers external signal handler for the signal number.
  *        The external signal handlers are executed before default handler from
- *        Dmn_Event_Manager. Note that SIGKILL and SIGSTOP can NOT be handled.
- *        This is private method to be called in the Dmn_Event_Manager instance
+ *        Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP can NOT be handled.
+ *        This is private method to be called in the Dmn_Runtime_Manager instance
  *        asynchronous thread context.
  *
  * @param signo   The POSIX signal number
  * @param handler The signal handler to be called when the signal is raised.
  */
-void Dmn_Event_Manager::registerSignalHandlerInternal(int signo,
+void Dmn_Runtime_Manager::registerSignalHandlerInternal(int signo,
                                                       SignalHandler handler) {
   auto &extHandlers = m_ext_signal_handlers[signo];
   extHandlers.push_back(handler);

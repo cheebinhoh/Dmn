@@ -6,8 +6,8 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-async.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-event.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-socket.cpp
 
               # kafka
@@ -44,7 +44,6 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-async.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-buffer.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-event.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-limit-buffer.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
@@ -54,6 +53,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-teepipe.hpp
 

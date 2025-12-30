@@ -28,10 +28,10 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-8
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
-                      dmn-test-event
                       dmn-test-io
                       dmn-test-pipe
                       dmn-test-pub-sub
+                      dmn-test-runtime
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-teepipe
