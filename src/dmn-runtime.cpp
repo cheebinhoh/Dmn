@@ -51,13 +51,6 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
                                   this, signo);
     }
   });
-
-
-  m_pipe = std::make_unique<Dmn_Pipe<Dmn_Runtime_Job>>("pipe", [this](Dmn_Runtime_Job job){
-    std::cout << "run job ...\n";
-
-    DMN_ASYNC_CALL_WITH_CAPTURE({ job.m_job(); }, this, job);
-  });
 }
 
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
@@ -67,10 +60,6 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 }
 
 void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job) {
-  while (!m_enter_atomic_flag.test()) {
-    m_enter_atomic_flag.wait(false, std::memory_order_relaxed);
-  }
-
   switch (priority) {
     case Dmn_Runtime_Job::kHigh:
       this->addHighJob(job);
@@ -87,18 +76,55 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
 }
 
 void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {  
+  while (!m_enter_high_atomic_flag.test()) {
+    m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
   Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kHigh, job};
-  m_pipe->write(rjob);
+  m_highQueue.push(rjob);
 }
 
 void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
+  while (!m_enter_medium_atomic_flag.test()) {
+    m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
   Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kMedium, job};
-  m_pipe->write(rjob);
+  m_mediumQueue.push(rjob);
 }
 
 void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
+  while (!m_enter_low_atomic_flag.test()) {
+    m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
   Dmn_Runtime_Job rjob{Dmn_Runtime_Job::kLow, job};
-  m_pipe->write(rjob);
+  m_lowQueue.push(rjob);
+}
+
+/**
+ * @brief The method will add an asynchronous task to run the job.
+ */
+template <class Rep, class Period>
+void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration) {
+  this->addExecTaskAfter(duration, [this](){ this->execRuntimeJobInternal(); });
+}
+
+/**
+ * @brief The method will execute the job continously.
+ */
+void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
+  auto item = m_highQueue.popNoWait();
+  if (item) {
+  } else if ((item = m_mediumQueue.popNoWait())) {
+  } else if ((item = m_lowQueue.popNoWait())) {
+  }
+
+  if (item) {
+    (*item).m_job();
+  }
+
+  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
 }
 
 /**
@@ -128,10 +154,19 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
+  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
+
+  m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_enter_high_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
-  m_enter_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_enter_atomic_flag.notify_all();
+  m_enter_medium_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_enter_medium_atomic_flag.notify_all();
+  Dmn_Proc::yield();
+
+  m_enter_low_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_enter_low_atomic_flag.notify_all();
+  Dmn_Proc::yield();
 
   while (!m_exit_atomic_flag.test()) {
     m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
