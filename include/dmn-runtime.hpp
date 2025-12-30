@@ -1,14 +1,14 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-event.hpp
- * @brief The header file for dmn-event which implements singleton instance to
- *        manage POSIX signal, timer and programatic events in general.
+ * @file dmn-runtime.hpp
+ * @brief The header file for dmn-runtime which implements singleton instance to
+ *        manage POSIX signal and asynchronous tasks in general.
  */
 
-#ifndef DMN_EVENT_HPP_
+#ifndef DMN_RUNTIME_HPP_
 
-#define DMN_EVENT_HPP_
+#define DMN_RUNTIME_HPP_
 
 #include <atomic>
 #include <csignal>
@@ -21,17 +21,17 @@
 
 namespace dmn {
 
-class Dmn_Event_Manager : public Dmn_Singleton, private Dmn_Async {
+class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
   using SignalHandler = std::function<void(int signo)>;
 
 public:
-  Dmn_Event_Manager();
-  virtual ~Dmn_Event_Manager() noexcept;
+  Dmn_Runtime_Manager();
+  virtual ~Dmn_Runtime_Manager() noexcept;
 
-  Dmn_Event_Manager(const Dmn_Event_Manager &obj) = delete;
-  const Dmn_Event_Manager &operator=(const Dmn_Event_Manager &obj) = delete;
-  Dmn_Event_Manager(Dmn_Event_Manager &&obj) = delete;
-  Dmn_Event_Manager &operator=(Dmn_Event_Manager &&obj) = delete;
+  Dmn_Runtime_Manager(const Dmn_Runtime_Manager &obj) = delete;
+  const Dmn_Runtime_Manager &operator=(const Dmn_Runtime_Manager &obj) = delete;
+  Dmn_Runtime_Manager(Dmn_Runtime_Manager &&obj) = delete;
+  Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 
   void enterMainLoop();
   void exitMainLoop();
@@ -45,7 +45,7 @@ private:
   void execSignalHandlerInternal(int signo);
 
   template <class... U>
-  static std::shared_ptr<Dmn_Event_Manager> createInstanceInternal(U &&...u);
+  static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
 
   /**
    * data members for internal logic.
@@ -61,14 +61,14 @@ private:
    * static variables for the global singleton instance
    */
   static std::once_flag s_init_once;
-  static std::shared_ptr<Dmn_Event_Manager> s_instance;
+  static std::shared_ptr<Dmn_Runtime_Manager> s_instance;
   static sigset_t s_mask;
-}; // class Dmn_Event_Manager
+}; // class Dmn_Runtime_Manager
 
 template <class... U>
-std::shared_ptr<Dmn_Event_Manager>
-Dmn_Event_Manager::createInstanceInternal(U &&...u) {
-  if (!Dmn_Event_Manager::s_instance) {
+std::shared_ptr<Dmn_Runtime_Manager>
+Dmn_Runtime_Manager::createInstanceInternal(U &&...u) {
+  if (!Dmn_Runtime_Manager::s_instance) {
     std::call_once(
         s_init_once,
         [](U &&...arg) {
@@ -76,35 +76,35 @@ Dmn_Event_Manager::createInstanceInternal(U &&...u) {
           // all created threads will inherit the same signal mask, and block
           // the signals.
           //
-          // We can NOT sigmask the signals in Dmn_Event_Manager constructor
+          // We can NOT sigmask the signals in Dmn_Runtime_Manager constructor
           // as its parent class Dmn_Async thread has been created by the time
-          // the Dmn_Event_Manager constructor is run.
+          // the Dmn_Runtime_Manager constructor is run.
           sigset_t old_mask{};
           int err{};
 
-          sigemptyset(&Dmn_Event_Manager::s_mask);
-          sigaddset(&Dmn_Event_Manager::s_mask, SIGALRM);
-          sigaddset(&Dmn_Event_Manager::s_mask, SIGINT);
-          sigaddset(&Dmn_Event_Manager::s_mask, SIGTERM);
-          sigaddset(&Dmn_Event_Manager::s_mask, SIGQUIT);
-          sigaddset(&Dmn_Event_Manager::s_mask, SIGHUP);
+          sigemptyset(&Dmn_Runtime_Manager::s_mask);
+          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGALRM);
+          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGINT);
+          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGTERM);
+          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
+          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
 
           err =
-              pthread_sigmask(SIG_BLOCK, &Dmn_Event_Manager::s_mask, &old_mask);
+              pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
           if (0 != err) {
             throw std::runtime_error("Error in pthread_sigmask: " +
                                      std::string(strerror(errno)));
           }
 
-          Dmn_Event_Manager::s_instance =
-              std::make_shared<Dmn_Event_Manager>(std::forward<U>(arg)...);
+          Dmn_Runtime_Manager::s_instance =
+              std::make_shared<Dmn_Runtime_Manager>(std::forward<U>(arg)...);
         },
         std::forward<U>(u)...);
   }
 
-  return Dmn_Event_Manager::s_instance;
+  return Dmn_Runtime_Manager::s_instance;
 } // static method createInstanceInternal()
 
 } // namespace dmn
 
-#endif // DMN_EVENT_HPP_
+#endif // DMN_RUNTIME_HPP_
