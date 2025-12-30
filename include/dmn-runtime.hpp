@@ -16,10 +16,18 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "dmn-pipe.hpp"
 #include "dmn-async.hpp"
 #include "dmn-singleton.hpp"
 
 namespace dmn {
+
+struct Dmn_Runtime_Job {
+  enum Priority {kHigh, kMedium, kLow};
+
+  Priority              m_priority{kMedium};
+  std::function<void()> m_job{};
+};
 
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
   using SignalHandler = std::function<void(int signo)>;
