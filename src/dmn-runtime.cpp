@@ -76,7 +76,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
       break;
 
     case Dmn_Runtime_Job::kLow:
-      this->addHighJob(job);
+      this->addLowJob(job);
       break;
   }
 }
@@ -86,7 +86,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {  
+void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {
   while (!m_enter_high_atomic_flag.test()) {
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -137,6 +137,15 @@ void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<R
  * @brief The method will execute the job continously.
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
+  // This place allows us to implement stagnant avoidance logic,
+  // one is that:
+  // - if there is a high priority and medium job, we execute
+  //   the high priority job
+  // - but we then alevate the medium job to a buffer between hgh and medium
+  // - if next iteration, we have no high priority job, we execute the elevate medium job
+  // - if there is still high priority job, we add the elevated medium job into end of
+  //   of high priority queue.
+
   auto item = m_highQueue.popNoWait();
   if (item) {
   } else if ((item = m_mediumQueue.popNoWait())) {
