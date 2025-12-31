@@ -65,7 +65,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @param priority The priority of the asychronous job
  * @param job The asychronous job
  */
-void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job) {
+void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, const std::function<void()> & job) {
   switch (priority) {
     case Dmn_Runtime_Job::kHigh:
       this->addHighJob(job);
@@ -86,7 +86,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {
+void Dmn_Runtime_Manager::addHighJob(const std::function<void()> & job) {
   while (!m_enter_high_atomic_flag.test()) {
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -100,7 +100,7 @@ void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
+void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> & job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -114,7 +114,7 @@ void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
+void Dmn_Runtime_Manager::addLowJob(const std::function<void()> & job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -156,7 +156,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
     (*item).m_job();
   }
 
-  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
+  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
 }
 
 /**
@@ -186,7 +186,7 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
-  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
+  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
 
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();

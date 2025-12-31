@@ -48,7 +48,7 @@ public:
 
   friend class Dmn_Singleton;
 
-  void addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job);
+  void addJob(Dmn_Runtime_Job::Priority priority, const std::function<void()> & job);
 
 private:
   void exitMainLoopInternal();
@@ -59,9 +59,9 @@ private:
   void execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInternal(void);
 
-  void addHighJob(std::function<void()> job);
-  void addMediumJob(std::function<void()> job);
-  void addLowJob(std::function<void()> job);
+  void addHighJob(const std::function<void()> & job);
+  void addMediumJob(const std::function<void()> & job);
+  void addLowJob(const std::function<void()> & job);
 
   template <class... U>
   static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
