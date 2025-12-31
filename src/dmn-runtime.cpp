@@ -84,7 +84,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
 /**
  * @brief The method will add high priority asynchronous job.
  *
- * @param job the high priority asynchronous job
+ * @param job The high priority asynchronous job
  */
 void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {  
   while (!m_enter_high_atomic_flag.test()) {
@@ -98,7 +98,7 @@ void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {
 /**
  * @brief The method will add medium priority asynchronous job.
  *
- * @param job the medium priority asynchronous job
+ * @param job The medium priority asynchronous job
  */
 void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
   while (!m_enter_medium_atomic_flag.test()) {
@@ -112,7 +112,7 @@ void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
 /**
  * @brief The method will add low priority asynchronous job.
  *
- * @param job the low priority asynchronous job
+ * @param job The low priority asynchronous job
  */
 void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
   while (!m_enter_low_atomic_flag.test()) {
