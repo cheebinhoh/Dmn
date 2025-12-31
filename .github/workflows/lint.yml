@@ -1,0 +1,17 @@
+name: C++ Lint
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  cpp-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        with:
+          style: 'file' # Uses your .clang-format file
+          tidy-checks: '*' # Enables all clang-tidy checks
