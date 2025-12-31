@@ -30,3 +30,13 @@ jobs:
 
       - name: Run container tests
         run: docker run --rm dmn
+
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        with:
+          style: 'file'
+          tidy-checks: '*'
+          # Tell the linter where the compilation database is
+          database: 'build' 
+          files-changed-only: false
+          lines-changed-only: false
