@@ -15,3 +15,5 @@ jobs:
         with:
           style: 'file' # Uses your .clang-format file
           tidy-checks: '*' # Enables all clang-tidy checks
+          files-changed-only: false
+          lines-changed-only: false
