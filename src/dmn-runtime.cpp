@@ -7,13 +7,14 @@
 
 #include "dmn-runtime.hpp"
 
+#include <chrono>
+#include <thread>
 #include <csignal>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 
 #include "dmn-async.hpp"
-#include "dmn-pipe.hpp"
+#include "dmn-buffer.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
@@ -34,7 +35,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     this->exitMainLoopInternal();
   };
 
-  m_signalWaitProc = std::make_unique<Dmn_Proc>("DmnEventManager_SignalWait");
+  m_signalWaitProc = std::make_unique<Dmn_Proc>("DmnRuntimeManager_SignalWait");
 
   m_signalWaitProc->exec([this]() {
     while (true) {
@@ -60,12 +61,12 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 }
 
 /**
- * @brief The method will add an priority asynchronous job.
+ * @brief The method will add a priority asynchronous job to be run in runtime context.
  *
- * @param priority The priority of the asychronous job
  * @param job The asychronous job
+ * @param priority The priority of the asychronous job
  */
-void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, const std::function<void()> & job) {
+void Dmn_Runtime_Manager::addJob(const std::function<void()> & job, Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
     case Dmn_Runtime_Job::kHigh:
       this->addHighJob(job);
@@ -138,11 +139,12 @@ void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<R
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
   // This place allows us to implement stagnant avoidance logic,
-  // one is that:
+  // one potential example is that:
   // - if there is a high priority and medium job, we execute
   //   the high priority job
   // - but we then alevate the medium job to a buffer between hgh and medium
-  // - if next iteration, we have no high priority job, we execute the elevate medium job
+  // - if in next iteration, we have no high priority job, we execute the elevate medium job
+  //   before medium or low priority jobs.
   // - if there is still high priority job, we add the elevated medium job into end of
   //   of high priority queue.
 
@@ -232,7 +234,7 @@ void Dmn_Runtime_Manager::execSignalHandlerInternal(int signo) {
  * @param handler The signal handler to be called when the signal is raised.
  */
 void Dmn_Runtime_Manager::registerSignalHandler(int signo,
-                                              SignalHandler handler) {
+                                                SignalHandler handler) {
   DMN_ASYNC_CALL_WITH_CAPTURE(
       { this->registerSignalHandlerInternal(signo, handler); }, this, signo,
       handler);
@@ -249,7 +251,7 @@ void Dmn_Runtime_Manager::registerSignalHandler(int signo,
  * @param handler The signal handler to be called when the signal is raised.
  */
 void Dmn_Runtime_Manager::registerSignalHandlerInternal(int signo,
-                                                      SignalHandler handler) {
+                                                        SignalHandler handler) {
   auto &extHandlers = m_ext_signal_handlers[signo];
   extHandlers.push_back(handler);
 }

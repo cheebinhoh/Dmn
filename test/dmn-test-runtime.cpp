@@ -51,15 +51,16 @@ int main(int argc, char *argv[]) {
         std::cout << "procHigh to add job\n";
 
         for (int i = 0; i < 2; i++) {
-          inst->addJob(dmn::Dmn_Runtime_Job::kHigh,
-                       [&highRun, &mediumRun, &lowRun]() {
-                         EXPECT_TRUE(0 == lowRun);
-                         EXPECT_TRUE(0 == mediumRun);
+          inst->addJob(
+              [&highRun, &mediumRun, &lowRun]() {
+                EXPECT_TRUE(0 == lowRun);
+                EXPECT_TRUE(0 == mediumRun);
 
-                         std::cout << "** high job\n";
-                         highRun++;
-                         std::this_thread::sleep_for(std::chrono::seconds(1));
-                       });
+                std::cout << "** high job\n";
+                highRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+              },
+              dmn::Dmn_Runtime_Job::kHigh);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
@@ -74,14 +75,15 @@ int main(int argc, char *argv[]) {
         std::cout << "procLow to add job\n";
 
         for (int i = 0; i < 2; i++) {
-          inst->addJob(dmn::Dmn_Runtime_Job::kLow,
-                       [&lowRun, &highRun, &mediumRun]() {
-                         EXPECT_TRUE(2 == highRun);
-                         EXPECT_TRUE(2 == mediumRun);
-                         std::cout << "** low job\n";
-                         lowRun++;
-                         std::this_thread::sleep_for(std::chrono::seconds(3));
-                       });
+          inst->addJob(
+              [&lowRun, &highRun, &mediumRun]() {
+                EXPECT_TRUE(2 == highRun);
+                EXPECT_TRUE(2 == mediumRun);
+                std::cout << "** low job\n";
+                lowRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+              },
+              dmn::Dmn_Runtime_Job::kLow);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
@@ -96,14 +98,15 @@ int main(int argc, char *argv[]) {
         std::cout << "procMedium to add job\n";
 
         for (int i = 0; i < 2; i++) {
-          inst->addJob(dmn::Dmn_Runtime_Job::kMedium,
-                       [&mediumRun, &highRun, &lowRun]() {
-                         EXPECT_TRUE(2 == highRun);
-                         EXPECT_TRUE(0 == lowRun);
-                         std::cout << "** medium job\n";
-                         mediumRun++;
-                         std::this_thread::sleep_for(std::chrono::seconds(2));
-                       });
+          inst->addJob(
+              [&mediumRun, &highRun, &lowRun]() {
+                EXPECT_TRUE(2 == highRun);
+                EXPECT_TRUE(0 == lowRun);
+                std::cout << "** medium job\n";
+                mediumRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+              },
+              dmn::Dmn_Runtime_Job::kMedium);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
