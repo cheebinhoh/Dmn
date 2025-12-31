@@ -34,7 +34,7 @@ jobs:
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
         with:
-          style: 'file'
+          style: 'google'
           tidy-checks: '*'
           # Tell the linter where the compilation database is
           database: 'build' 
