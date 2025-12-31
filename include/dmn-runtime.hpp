@@ -3,7 +3,7 @@
  *
  * @file dmn-runtime.hpp
  * @brief The header file for dmn-runtime which implements singleton instance to
- *        manage POSIX signal and asynchronous tasks in general.
+ *        manage POSIX signal and asynchronous tasks in a single runtime context.
  */
 
 #ifndef DMN_RUNTIME_HPP_
@@ -16,9 +16,8 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "dmn-buffer.hpp"
-#include "dmn-pipe.hpp"
 #include "dmn-async.hpp"
+#include "dmn-buffer.hpp"
 #include "dmn-singleton.hpp"
 
 namespace dmn {
@@ -42,29 +41,30 @@ public:
   Dmn_Runtime_Manager(Dmn_Runtime_Manager &&obj) = delete;
   Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 
+  void addJob(const std::function<void()> & job, Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
+
   void enterMainLoop();
   void exitMainLoop();
   void registerSignalHandler(int signo, SignalHandler handler);
 
   friend class Dmn_Singleton;
 
-  void addJob(Dmn_Runtime_Job::Priority priority, const std::function<void()> & job);
-
 private:
-  void exitMainLoopInternal();
-  void registerSignalHandlerInternal(int signo, SignalHandler handler);
-  void execSignalHandlerInternal(int signo);
+  void addHighJob(const std::function<void()> & job);
+  void addLowJob(const std::function<void()> & job);
+  void addMediumJob(const std::function<void()> & job);
+
+  template <class... U>
+  static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
 
   template <class Rep, class Period>
   void execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInternal(void);
+  void execSignalHandlerInternal(int signo);
 
-  void addHighJob(const std::function<void()> & job);
-  void addMediumJob(const std::function<void()> & job);
-  void addLowJob(const std::function<void()> & job);
+  void exitMainLoopInternal();
 
-  template <class... U>
-  static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
+  void registerSignalHandlerInternal(int signo, SignalHandler handler);
 
   /**
    * data members for internal logic.
@@ -74,14 +74,14 @@ private:
   std::unordered_map<int, SignalHandler>              m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
-  std::atomic_flag                                    m_enter_high_atomic_flag{};
-  std::atomic_flag                                    m_enter_medium_atomic_flag{};
-  std::atomic_flag                                    m_enter_low_atomic_flag{};
-  std::atomic_flag                                    m_exit_atomic_flag{};
-
   Dmn_Buffer<Dmn_Runtime_Job>                         m_highQueue{};
-  Dmn_Buffer<Dmn_Runtime_Job>                         m_mediumQueue{};
   Dmn_Buffer<Dmn_Runtime_Job>                         m_lowQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job>                         m_mediumQueue{};
+
+  std::atomic_flag                                    m_enter_high_atomic_flag{};
+  std::atomic_flag                                    m_enter_low_atomic_flag{};
+  std::atomic_flag                                    m_enter_medium_atomic_flag{};
+  std::atomic_flag                                    m_exit_atomic_flag{};
 
   /**
    * static variables for the global singleton instance
