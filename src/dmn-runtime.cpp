@@ -59,6 +59,12 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   return;
 }
 
+/**
+ * @brief The method will add an priority asynchronous job.
+ *
+ * @param priority The priority of the asychronous job
+ * @param job The asychronous job
+ */
 void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::function<void()> job) {
   switch (priority) {
     case Dmn_Runtime_Job::kHigh:
@@ -75,6 +81,11 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::Priority priority, std::functi
   }
 }
 
+/**
+ * @brief The method will add high priority asynchronous job.
+ *
+ * @param job the high priority asynchronous job
+ */
 void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {  
   while (!m_enter_high_atomic_flag.test()) {
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
@@ -84,6 +95,11 @@ void Dmn_Runtime_Manager::addHighJob(std::function<void()> job) {
   m_highQueue.push(rjob);
 }
 
+/**
+ * @brief The method will add medium priority asynchronous job.
+ *
+ * @param job the medium priority asynchronous job
+ */
 void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
@@ -93,6 +109,11 @@ void Dmn_Runtime_Manager::addMediumJob(std::function<void()> job) {
   m_mediumQueue.push(rjob);
 }
 
+/**
+ * @brief The method will add low priority asynchronous job.
+ *
+ * @param job the low priority asynchronous job
+ */
 void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
@@ -104,6 +125,8 @@ void Dmn_Runtime_Manager::addLowJob(std::function<void()> job) {
 
 /**
  * @brief The method will add an asynchronous task to run the job.
+ *
+ * @param duration The duration after that to run execRuntimeJobInternal in interval
  */
 template <class Rep, class Period>
 void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration) {
@@ -120,7 +143,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
   } else if ((item = m_lowQueue.popNoWait())) {
   }
 
-  if (item) {
+  if (item && (*item).m_job != nullptr) {
     (*item).m_job();
   }
 
