@@ -3,7 +3,7 @@
 # Copyright © 2023 Chee Bin HOH. All rights reserved.
 #
 
-DIRS=". src/kafka test"
+DIRS=". include src include/kafka src/kafka test"
 FILE_PATTERN='*.cpp *.hpp'
 
 # extra space following newline is never intended to be checked in, so we trim it.
@@ -41,7 +41,7 @@ if which clang-format &>/dev/null; then
     cd ${d};
 
     for f in `ls ${FILE_PATTERN} 2>/dev/null`; do
-      clang-format ${f} > ${f}_tmp
+      clang-format --style=LLVM ${f} > ${f}_tmp
       if ! diff $f ${f}_tmp &>/dev/null; then
         echo "- formatting ${f}..."
         cp ${f}_tmp ${f}

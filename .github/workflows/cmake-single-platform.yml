@@ -18,6 +18,28 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Compilation Database
+        # Clang-tidy needs to know your header paths and macros. 
+        # This command tells CMake to generate that info without building the whole project.
+        run: cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run C++ Linter
+        uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        with:
+          style: 'google' # Options: 'google', 'llvm', 'mozilla', or 'file' (if you have a .clang-format)
+          tidy-checks: 'bugprone-*,performance-*,readability-*'
+          thread-comments: true # Posts results directly on your PR
+          database: 'build' # Points to the file generated in the previous step
+          files-changed-only: false
+          lines-changed-only: false
+          files-filter: '^(src|include)/.*\.(cpp|h|hpp)$'
+
   docker-test:
     runs-on: ubuntu-latest
 
