@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   inst->registerSignalHandler(SIGALRM, [&inst, &count](int signno) {
     std::cout << "handle signal " << signno << "\n";
-    if (count >= 2) {
+    if (count >= 5) {
       inst->exitMainLoop();
     } else {
       count++;
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(2 == lowRun);
   EXPECT_TRUE(2 == mediumRun);
   EXPECT_TRUE(2 == highRun);
-  EXPECT_TRUE(2 == count);
+  EXPECT_TRUE(5 == count);
 
   return RUN_ALL_TESTS();
 }
