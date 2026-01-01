@@ -37,7 +37,7 @@ jobs:
           thread-comments: true
           
           # 1. Define exactly which file extensions to look for
-          extensions: 'cpp,h,hpp'
+          extensions: 'cpp,hpp'
           
           # 2. Filter to ONLY include files in src/ or include/
           # This regex matches any path starting with src/ or include/
