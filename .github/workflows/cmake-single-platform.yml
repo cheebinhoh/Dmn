@@ -32,13 +32,13 @@ jobs:
         uses: cpp-linter/cpp-linter-action@v2
         id: linter
         with:
-          style: 'google' # Options: 'google', 'llvm', 'mozilla', or 'file' (if you have a .clang-format)
+          style: 'llvm' # Options: 'google', 'llvm', 'mozilla', or 'file' (if you have a .clang-format)
           tidy-checks: 'bugprone-*,performance-*,readability-*'
           thread-comments: true # Posts results directly on your PR
-          database: 'build' # Points to the file generated in the previous step
           files-changed-only: false
           lines-changed-only: false
           files-filter: '^(src|include)/.*\.(cpp|h|hpp)$'
+          database: 'build' # Points to the file generated in the previous step
 
   docker-test:
     runs-on: ubuntu-latest
