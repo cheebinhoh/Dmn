@@ -158,7 +158,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
     (*item).m_job();
   }
 
-  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
+  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
 }
 
 /**
@@ -188,8 +188,6 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
-  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
-
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();
   Dmn_Proc::yield();
@@ -201,6 +199,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
+
+  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
 
   while (!m_exit_atomic_flag.test()) {
     m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
