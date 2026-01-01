@@ -32,13 +32,22 @@ jobs:
         uses: cpp-linter/cpp-linter-action@v2
         id: linter
         with:
-          style: 'llvm' # Options: 'google', 'llvm', 'mozilla', or 'file' (if you have a .clang-format)
+          style: 'llvm'
           tidy-checks: 'bugprone-*,performance-*,readability-*'
-          thread-comments: true # Posts results directly on your PR
+          thread-comments: true
+          
+          # 1. Define exactly which file extensions to look for
+          extensions: 'cpp,h,hpp'
+          
+          # 2. Filter to ONLY include files in src/ or include/
+          # This regex matches any path starting with src/ or include/
+          files-filter: '^(src|include)/.*'
+          
+          # 3. Ensure it doesn't just look at PR changes
           files-changed-only: false
-          lines-changed-only: false
-          files-filter: '^(src|include)/.*\.(cpp|h|hpp)$'
-          database: 'build' # Points to the file generated in the previous step
+          
+          # 4. Point to your compile commands
+          database: 'build'
 
   docker-test:
     runs-on: ubuntu-latest
