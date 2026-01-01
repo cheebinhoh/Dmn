@@ -83,6 +83,8 @@ private:
   std::atomic_flag                                    m_enter_medium_atomic_flag{};
   std::atomic_flag                                    m_exit_atomic_flag{};
 
+  std::shared_ptr<Dmn_Async_Wait>                     m_async_job_wait{};
+
   /**
    * static variables for the global singleton instance
    */
