@@ -1,0 +1,4 @@
+# Ignore the entire build directory
+build/**
+# Or be more specific to FetchContent dependencies
+build/_deps/**
