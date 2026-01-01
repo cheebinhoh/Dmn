@@ -211,6 +211,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
   if (m_async_job_wait) {
     m_async_job_wait->wait();
+    m_async_job_wait = nullptr;
   }
 }
 
