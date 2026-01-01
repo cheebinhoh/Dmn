@@ -8,10 +8,10 @@
 #include "dmn-runtime.hpp"
 
 #include <chrono>
-#include <thread>
 #include <csignal>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
@@ -61,24 +61,26 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 }
 
 /**
- * @brief The method will add a priority asynchronous job to be run in runtime context.
+ * @brief The method will add a priority asynchronous job to be run in runtime
+ *        context.
  *
  * @param job The asychronous job
  * @param priority The priority of the asychronous job
  */
-void Dmn_Runtime_Manager::addJob(const std::function<void()> & job, Dmn_Runtime_Job::Priority priority) {
+void Dmn_Runtime_Manager::addJob(const std::function<void()> &job,
+                                 Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
-    case Dmn_Runtime_Job::kHigh:
-      this->addHighJob(job);
-      break;
+  case Dmn_Runtime_Job::kHigh:
+    this->addHighJob(job);
+    break;
 
-    case Dmn_Runtime_Job::kMedium:
-      this->addMediumJob(job);
-      break;
+  case Dmn_Runtime_Job::kMedium:
+    this->addMediumJob(job);
+    break;
 
-    case Dmn_Runtime_Job::kLow:
-      this->addLowJob(job);
-      break;
+  case Dmn_Runtime_Job::kLow:
+    this->addLowJob(job);
+    break;
   }
 }
 
@@ -87,7 +89,7 @@ void Dmn_Runtime_Manager::addJob(const std::function<void()> & job, Dmn_Runtime_
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(const std::function<void()> & job) {
+void Dmn_Runtime_Manager::addHighJob(const std::function<void()> &job) {
   while (!m_enter_high_atomic_flag.test()) {
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -101,7 +103,7 @@ void Dmn_Runtime_Manager::addHighJob(const std::function<void()> & job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> & job) {
+void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> &job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -115,7 +117,7 @@ void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> & job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(const std::function<void()> & job) {
+void Dmn_Runtime_Manager::addLowJob(const std::function<void()> &job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -127,12 +129,15 @@ void Dmn_Runtime_Manager::addLowJob(const std::function<void()> & job) {
 /**
  * @brief The method will add an asynchronous task to run the job.
  *
- * @param duration The duration after that to run execRuntimeJobInternal in interval
+ * @param duration The duration after that to run execRuntimeJobInternal in
+ *                 interval
  */
 template <class Rep, class Period>
-void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration) {
+void Dmn_Runtime_Manager::execRuntimeJobInInterval(
+    const std::chrono::duration<Rep, Period> &duration) {
   if (!m_exit_atomic_flag.test()) {
-    m_async_job_wait = this->addExecTaskAfterWithWait(duration, [this](){ this->execRuntimeJobInternal(); });
+    m_async_job_wait = this->addExecTaskAfterWithWait(
+        duration, [this]() { this->execRuntimeJobInternal(); });
   }
 }
 
@@ -145,10 +150,10 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
   // - if there is a high priority and medium job, we execute
   //   the high priority job
   // - but we then alevate the medium job to a buffer between hgh and medium
-  // - if in next iteration, we have no high priority job, we execute the elevate medium job
-  //   before medium or low priority jobs.
-  // - if there is still high priority job, we add the elevated medium job into end of
-  //   of high priority queue.
+  // - if in next iteration, we have no high priority job, we execute the
+  //   elevate medium job before medium or low priority jobs.
+  // - if there is still high priority job, we add the elevated medium job into
+  //   end of high priority queue.
 
   auto item = m_highQueue.popNoWait();
   if (item) {
@@ -174,8 +179,8 @@ void Dmn_Runtime_Manager::exitMainLoop() {
 /**
  * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
  *        (usually the mainthread) to the main() function to be continued.
- *        This is private method to be called in the Dmn_Runtime_Manager instance
- *        asynchronous thread context.
+ *        This is private method to be called in the Dmn_Runtime_Manager
+ *        instance asynchronous thread context.
  */
 void Dmn_Runtime_Manager::exitMainLoopInternal() {
   m_signalWaitProc = {};
@@ -252,8 +257,9 @@ void Dmn_Runtime_Manager::registerSignalHandler(int signo,
  * @brief The method registers external signal handler for the signal number.
  *        The external signal handlers are executed before default handler from
  *        Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP can NOT be handled.
- *        This is private method to be called in the Dmn_Runtime_Manager instance
- *        asynchronous thread context.
+ *
+ *        This is private method to be called in the Dmn_Runtime_Manager
+ *        instance asynchronous thread context.
  *
  * @param signo   The POSIX signal number
  * @param handler The signal handler to be called when the signal is raised.

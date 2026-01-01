@@ -3,7 +3,8 @@
  *
  * @file dmn-runtime.hpp
  * @brief The header file for dmn-runtime which implements singleton instance to
- *        manage POSIX signal and asynchronous tasks in a single runtime context.
+ *        manage POSIX signal and asynchronous tasks in a single runtime
+ * context.
  */
 
 #ifndef DMN_RUNTIME_HPP_
@@ -23,9 +24,9 @@
 namespace dmn {
 
 struct Dmn_Runtime_Job {
-  enum Priority {kHigh, kMedium, kLow};
+  enum Priority { kHigh, kMedium, kLow };
 
-  Priority              m_priority{kMedium};
+  Priority m_priority{kMedium};
   std::function<void()> m_job{};
 };
 
@@ -41,7 +42,9 @@ public:
   Dmn_Runtime_Manager(Dmn_Runtime_Manager &&obj) = delete;
   Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 
-  void addJob(const std::function<void()> & job, Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
+  void addJob(
+      const std::function<void()> &job,
+      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
 
   void enterMainLoop();
   void exitMainLoop();
@@ -50,15 +53,16 @@ public:
   friend class Dmn_Singleton;
 
 private:
-  void addHighJob(const std::function<void()> & job);
-  void addLowJob(const std::function<void()> & job);
-  void addMediumJob(const std::function<void()> & job);
+  void addHighJob(const std::function<void()> &job);
+  void addLowJob(const std::function<void()> &job);
+  void addMediumJob(const std::function<void()> &job);
 
   template <class... U>
   static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
 
   template <class Rep, class Period>
-  void execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
+  void
+  execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInternal(void);
   void execSignalHandlerInternal(int signo);
 
@@ -69,21 +73,21 @@ private:
   /**
    * data members for internal logic.
    */
-  std::unique_ptr<Dmn_Proc>                           m_signalWaitProc{};
-  sigset_t                                            m_mask{};
-  std::unordered_map<int, SignalHandler>              m_signal_handlers{};
+  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
+  sigset_t m_mask{};
+  std::unordered_map<int, SignalHandler> m_signal_handlers{};
   std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{};
 
-  Dmn_Buffer<Dmn_Runtime_Job>                         m_highQueue{};
-  Dmn_Buffer<Dmn_Runtime_Job>                         m_lowQueue{};
-  Dmn_Buffer<Dmn_Runtime_Job>                         m_mediumQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job> m_highQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job> m_lowQueue{};
+  Dmn_Buffer<Dmn_Runtime_Job> m_mediumQueue{};
 
-  std::atomic_flag                                    m_enter_high_atomic_flag{};
-  std::atomic_flag                                    m_enter_low_atomic_flag{};
-  std::atomic_flag                                    m_enter_medium_atomic_flag{};
-  std::atomic_flag                                    m_exit_atomic_flag{};
+  std::atomic_flag m_enter_high_atomic_flag{};
+  std::atomic_flag m_enter_low_atomic_flag{};
+  std::atomic_flag m_enter_medium_atomic_flag{};
+  std::atomic_flag m_exit_atomic_flag{};
 
-  std::shared_ptr<Dmn_Async_Wait>                     m_async_job_wait{};
+  std::shared_ptr<Dmn_Async_Wait> m_async_job_wait{};
 
   /**
    * static variables for the global singleton instance
@@ -117,8 +121,8 @@ Dmn_Runtime_Manager::createInstanceInternal(U &&...u) {
           sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
           sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
 
-          err =
-              pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
+          err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask,
+                                &old_mask);
           if (0 != err) {
             throw std::runtime_error("Error in pthread_sigmask: " +
                                      std::string(strerror(errno)));
