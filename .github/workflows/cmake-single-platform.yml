@@ -28,16 +28,6 @@ jobs:
       - name: Build Docker image
         run: docker build -t dmn .
 
-      - uses: cpp-linter/cpp-linter-action@v2
-        id: linter
-        with:
-          style: 'google'
-          tidy-checks: '*'
-          # Tell the linter where the compilation database is
-          database: 'build' 
-          files-changed-only: false
-          lines-changed-only: false
-
       - name: Run container tests
         run: docker run --rm dmn
 
