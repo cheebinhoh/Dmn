@@ -131,7 +131,9 @@ void Dmn_Runtime_Manager::addLowJob(const std::function<void()> & job) {
  */
 template <class Rep, class Period>
 void Dmn_Runtime_Manager::execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration) {
-  this->addExecTaskAfter(duration, [this](){ this->execRuntimeJobInternal(); });
+  if (!m_exit_atomic_flag.test()) {
+    m_async_job_wait = this->addExecTaskAfterWithWait(duration, [this](){ this->execRuntimeJobInternal(); });
+  }
 }
 
 /**
@@ -158,7 +160,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal(void) {
     (*item).m_job();
   }
 
-  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
+  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
 }
 
 /**
@@ -188,6 +190,9 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
+  // up to this point, all async jobs are paused.
+  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
+
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();
   Dmn_Proc::yield();
@@ -200,10 +205,12 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
-  this->execRuntimeJobInInterval(std::chrono::milliseconds(1));
-
   while (!m_exit_atomic_flag.test()) {
     m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
+  if (m_async_job_wait) {
+    m_async_job_wait->wait();
   }
 }
 
