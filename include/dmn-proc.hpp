@@ -27,7 +27,7 @@
 
 namespace dmn {
 
-void cleanupFuncToUnlockPthreadMutex(void *mutex);
+void cleanupFuncToUnlockPthreadMutex(void *arg);
 
 /**
  * Dmn_Proc thread cancellation via (StopExec) is synchronous, so if the functor
@@ -44,7 +44,7 @@ class Dmn_Proc {
   enum State { kInvalid, kNew, kReady, kRunning };
 
 public:
-  Dmn_Proc(std::string_view name, Dmn_Proc::Task fn = {});
+  Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc = {});
   virtual ~Dmn_Proc() noexcept;
 
   Dmn_Proc(const Dmn_Proc &obj) = delete;
@@ -53,12 +53,12 @@ public:
   Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
 
   /**
-   * @brief This method executes the fn passed in or to constructor to be
+   * @brief This method executes the fnc passed in or to constructor to be
    *        executed in an asynchronous thread.
    *
-   * @param fn The functor to be executed in an asynchronous thread
+   * @param fnc The functor to be executed in an asynchronous thread
    */
-  bool exec(Dmn_Proc::Task fn = {});
+  auto exec(const Dmn_Proc::Task &fnc = {}) -> bool;
 
   /**
    * @brief This method puts the caller in pause and wait for return of the
@@ -66,7 +66,7 @@ public:
    *
    * @return True if the thread is joined successfully
    */
-  bool wait();
+  auto wait() -> bool;
 
   /**
    * @brief This method volunteerly yeild the execution of the current thread.
@@ -74,15 +74,15 @@ public:
   static void yield();
 
 protected:
-  Dmn_Proc::State getState() const;
-  Dmn_Proc::State setState(Dmn_Proc::State state);
-  void setTask(Dmn_Proc::Task fn);
+  auto getState() const -> Dmn_Proc::State;
+  auto setState(Dmn_Proc::State state) -> Dmn_Proc::State;
+  void setTask(Dmn_Proc::Task fnc);
 
-  bool runExec();
-  bool stopExec();
+  auto runExec() -> bool;
+  auto stopExec() -> bool;
 
 private:
-  static void *runFnInThreadHelper(void *context);
+  static auto runFnInThreadHelper(void *context) -> void *;
 
   /**
    * data members for constructor to instantiate the object.
@@ -92,7 +92,7 @@ private:
   /**
    * data members for internal logic.
    */
-  Dmn_Proc::Task m_fn{};
+  Dmn_Proc::Task m_fnc{};
   Dmn_Proc::State m_state{};
   pthread_t m_th{};
 }; // class Dmn_Proc
