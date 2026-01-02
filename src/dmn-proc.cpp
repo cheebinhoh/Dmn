@@ -12,26 +12,27 @@
 
 #include <cassert>
 #include <cstring>
-#include <exception>
 #include <functional>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
 
 namespace dmn {
 
 void cleanupFuncToUnlockPthreadMutex(void *arg) {
-  pthread_mutex_t *mutex = (pthread_mutex_t *)arg;
+  auto *mutex = static_cast<pthread_mutex_t *>(arg);
 
   pthread_mutex_unlock(mutex);
 }
 
-Dmn_Proc::Dmn_Proc(std::string_view name, Dmn_Proc::Task fn) : m_name{name} {
+Dmn_Proc::Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc)
+    : m_name{name} {
   setState(State::kNew);
 
-  if (fn) {
-    setTask(fn);
+  if (fnc) {
+    setTask(fnc);
   }
 }
 
@@ -46,32 +47,32 @@ Dmn_Proc::~Dmn_Proc() noexcept try {
   return;
 }
 
-bool Dmn_Proc::exec(Dmn_Proc::Task fn) {
-  if (fn) {
-    setTask(fn);
+auto Dmn_Proc::exec(const Dmn_Proc::Task &fnc) -> bool {
+  if (fnc) {
+    setTask(fnc);
   }
 
   return runExec();
 }
 
-Dmn_Proc::State Dmn_Proc::getState() const { return m_state; }
+auto Dmn_Proc::getState() const -> Dmn_Proc::State { return m_state; }
 
-Dmn_Proc::State Dmn_Proc::setState(State state) {
-  State old_state = this->m_state;
+auto Dmn_Proc::setState(State state) -> Dmn_Proc::State {
+  const State old_state = this->m_state;
 
   this->m_state = state;
 
   return old_state;
 }
 
-void Dmn_Proc::setTask(Dmn_Proc::Task fn) {
+void Dmn_Proc::setTask(Dmn_Proc::Task fnc) {
   assert(getState() == State::kNew || getState() == State::kReady);
 
-  this->m_fn = fn;
+  this->m_fnc = std::move(fnc);
   setState(State::kReady);
 }
 
-bool Dmn_Proc::wait() {
+auto Dmn_Proc::wait() -> bool {
   int err{};
   void *ret{};
 
@@ -80,8 +81,8 @@ bool Dmn_Proc::wait() {
   }
 
   err = pthread_join(m_th, &ret);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (0 != err) {
+    throw std::runtime_error(std::system_category().message(err));
   }
 
   setState(State::kReady);
@@ -94,7 +95,7 @@ void Dmn_Proc::yield() {
   sched_yield();
 }
 
-bool Dmn_Proc::stopExec() {
+auto Dmn_Proc::stopExec() -> bool {
   int err{};
 
   if (getState() != State::kRunning) {
@@ -102,14 +103,14 @@ bool Dmn_Proc::stopExec() {
   }
 
   err = pthread_cancel(m_th);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (0 != err) {
+    throw std::runtime_error(std::system_category().message(err));
   }
 
   return wait();
 }
 
-bool Dmn_Proc::runExec() {
+auto Dmn_Proc::runExec() -> bool {
   int err{};
   State old_state{};
 
@@ -119,8 +120,8 @@ bool Dmn_Proc::runExec() {
   }
 
   old_state = setState(State::kRunning);
-  err = pthread_create(&m_th, NULL, &(Dmn_Proc::runFnInThreadHelper), this);
-  if (err) {
+  err = pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
+  if (0 != err) {
     setState(old_state);
     return false;
   }
@@ -128,25 +129,24 @@ bool Dmn_Proc::runExec() {
   return true;
 }
 
-void *Dmn_Proc::runFnInThreadHelper(void *context) {
-  Dmn_Proc *proc{};
+auto Dmn_Proc::runFnInThreadHelper(void *context) -> void * {
   int old_state{};
   int err{};
 
   err = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (0 != err) {
+    throw std::runtime_error(std::system_category().message(err));
   }
 
   err = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_state);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (0 != err) {
+    throw std::runtime_error(std::system_category().message(err));
   }
 
-  proc = (Dmn_Proc *)context;
-  proc->m_fn();
+  auto *proc = static_cast<Dmn_Proc *>(context);
+  proc->m_fnc();
 
-  return NULL;
+  return nullptr;
 }
 
 } // namespace dmn
