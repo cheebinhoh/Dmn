@@ -48,7 +48,7 @@ public:
 
   void enterMainLoop();
   void exitMainLoop();
-  void registerSignalHandler(int signo, SignalHandler handler);
+  void registerSignalHandler(int signo, const SignalHandler &handler);
 
   friend class Dmn_Singleton;
 
@@ -63,12 +63,12 @@ private:
   template <class Rep, class Period>
   void
   execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
-  void execRuntimeJobInternal(void);
+  void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 
   void exitMainLoopInternal();
 
-  void registerSignalHandlerInternal(int signo, SignalHandler handler);
+  void registerSignalHandlerInternal(int signo, const SignalHandler &handler);
 
   /**
    * data members for internal logic.

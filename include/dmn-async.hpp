@@ -32,17 +32,17 @@
 
 #define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \
   do {                                                                         \
-    this->write([=]() mutable { block; });                                     \
+    this->write([=]() mutable -> void { block; });                             \
   } while (false)
 
 #define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \
   do {                                                                         \
-    this->write([&]() mutable { block; });                                     \
+    this->write([&]() mutable -> void { block; });                             \
   } while (false)
 
 #define DMN_ASYNC_CALL_WITH_CAPTURE(block, ...)                                \
   do {                                                                         \
-    this->write([__VA_ARGS__]() mutable { block; });                           \
+    this->write([__VA_ARGS__]() mutable -> void { block; });                   \
   } while (false)
 
 namespace dmn {
@@ -82,11 +82,12 @@ public:
    *        an Dmn_Async_Wait object for rendezvous point where the wait method
    *        guarantees that the asynchronous task has been executed.
    *
-   * @param fn asynchronous task to be executed
+   * @param fnc The asynchronous task to be executed
    *
-   * @return Dmn_Async_Wait object fo rendezvous point
+   * @return Dmn_Async_Wait The object for rendezvous point
    */
-  std::shared_ptr<Dmn_Async_Wait> addExecTaskWithWait(std::function<void()> fn);
+  auto addExecTaskWithWait(std::function<void()> fnc)
+      -> std::shared_ptr<Dmn_Async_Wait>;
 
   /**
    * @brief The method will execute the asynchronous task after duration
@@ -96,11 +97,11 @@ public:
    *
    * @param duration time in duraton that must be elapsed before task
    *                 is executed
-   * @param fn       asynchronous task to be executed
+   * @param fnc      asynchronous task to be executed
    */
   template <class Rep, class Period>
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
-                        std::function<void()> fn);
+                        std::function<void()> fnc);
 
   /**
    * @brief The method will execute the asynchronous task after duration
@@ -114,14 +115,15 @@ public:
    *
    * @param duration time in duraton that must be elapsed before task
    *                 is executed
-   * @param fn       asynchronous task to be executed
+   * @param fnc      asynchronous task to be executed
    *
    * @return Dmn_Async_Wait object fo rendezvous point
    */
   template <class Rep, class Period>
-  std::shared_ptr<Dmn_Async_Wait>
+  auto
   addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
-                           std::function<void()> fn);
+                           std::function<void()> fnc)
+      -> std::shared_ptr<Dmn_Async_Wait>;
 
 private:
   /**
@@ -132,34 +134,36 @@ private:
    *
    * @param time_in_future nanoseconds that must be elapsed before the
    *                       task is executed
-   * @param fn             asynchronous task to be executed
+   * @param fnc            asynchronous task to be executed
    */
   void addExecTaskAfterInternal(long long time_in_future,
-                                std::function<void()> fn);
+                                std::function<void()> fnc);
+
+  std::exception_ptr m_thrownException{};
 }; // class Dmn_Async
 
 template <class Rep, class Period>
 void Dmn_Async::addExecTaskAfter(
     const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fn) {
+    std::function<void()> fnc) {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
-  this->addExecTaskAfterInternal(time_in_future, fn);
+  this->addExecTaskAfterInternal(time_in_future, fnc);
 }
 
 template <class Rep, class Period>
-std::shared_ptr<Dmn_Async::Dmn_Async_Wait> Dmn_Async::addExecTaskAfterWithWait(
+auto Dmn_Async::addExecTaskAfterWithWait(
     const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fn) {
+    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async::Dmn_Async_Wait> {
   auto wait_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Wait>();
 
-  this->addExecTaskAfter(duration, [wait_shared_ptr, fn]() {
+  this->addExecTaskAfter(duration, [wait_shared_ptr, fnc]() {
     try {
-      fn();
+      fnc();
     } catch (...) {
       wait_shared_ptr->m_thrownException = std::current_exception();
     }
