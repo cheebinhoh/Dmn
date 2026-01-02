@@ -33,19 +33,20 @@ jobs:
         id: linter
         with:
           style: 'llvm'
+          version: '18'
           tidy-checks: 'bugprone-*,performance-*,readability-*'
           thread-comments: true
-          
+
           # 1. Define exactly which file extensions to look for
           extensions: 'cpp,hpp'
-          
+
           # 2. Filter to ONLY include files in src/ or include/
           # This regex matches any path starting with src/ or include/
           files-filter: '^(src|include)/.*'
-          
+
           # 3. Ensure it doesn't just look at PR changes
           files-changed-only: false
-          
+
           # 4. Point to your compile commands
           database: 'build'
 
