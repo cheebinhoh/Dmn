@@ -27,7 +27,7 @@ public:
   Dmn_Socket(Dmn_Socket &&obj) = delete;
   Dmn_Socket &operator=(Dmn_Socket &&obj) = delete;
 
-  std::optional<std::string> read() override;
+  auto read() -> std::optional<std::string> override;
   void write(std::string &item) override;
   void write(std::string &&item) override;
 

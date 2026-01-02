@@ -71,7 +71,7 @@ Dmn_Socket::~Dmn_Socket() {
   }
 }
 
-std::optional<std::string> Dmn_Socket::read() {
+auto Dmn_Socket::read() -> std::optional<std::string> {
   std::array<char, BUFSIZ> buf{};
 
   const ssize_t n_read = recv(m_fd, buf.data(), sizeof(buf), MSG_WAITALL);
