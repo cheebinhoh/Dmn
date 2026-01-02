@@ -51,7 +51,7 @@
 
 namespace dmn {
 
-extern const char *kDMesgSysIdentifier;
+extern const char *const kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
@@ -292,7 +292,7 @@ public:
      * @return DMesgPb The next DMesgPb message or nullopt if exception
      *                 is thrown.
      */
-    std::optional<dmn::DMesgPb> read() override;
+    auto read() -> std::optional<dmn::DMesgPb> override;
 
     /**
      * @brief The method marks the handler as conflict resolved by posting an
@@ -353,7 +353,7 @@ public:
      *
      * @return True if the handler is in conflict state, false otherwise
      */
-    bool isInConflict() const;
+    auto isInConflict() const -> bool;
 
     /**
      * @brief The method marks the handler as conflict resolved, and to be
@@ -369,7 +369,7 @@ public:
      *
      * @param mesgPb The dmesgPb data that results in conflict state
      */
-    void throwConflict(const dmn::DMesgPb dmesgpb);
+    void throwConflict(const dmn::DMesgPb &dmesgpb);
 
     /**
      * data member for constructor to instantiate the object.
@@ -450,7 +450,7 @@ protected:
    *
    * @param dmesgSysPb The system DMesgPb message
    */
-  void publishSysInternal(const dmn::DMesgPb &dmesgSysPb);
+  void publishSysInternal(const dmn::DMesgPb &dmesgpb_sys);
 
   /**
    * @brief The method publishes dmesgPb to registered subscribers. If the to
@@ -475,7 +475,7 @@ protected:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictState(const Dmn_DMesgHandler *handlerPtr);
+  void resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr);
 
 private:
   /**
@@ -493,7 +493,7 @@ private:
    *
    * @param handlerName the identification string for the open handler
    */
-  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handlerPtr);
+  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr);
 
   /**
    * data members for constructor to instantiate the object.
