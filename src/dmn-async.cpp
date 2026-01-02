@@ -9,18 +9,21 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <string_view>
+#include <utility>
 
 #include "dmn-pipe.hpp"
+#include "dmn-proc.hpp"
 
 namespace dmn {
 
 void Dmn_Async::Dmn_Async_Wait::wait() {
   std::unique_lock<std::mutex> lock(m_mutex);
-  m_cond_var.wait(lock, [this] { return m_done; });
+  m_cond_var.wait(lock, [this]() -> bool { return m_done; });
 
   if (m_thrownException) {
     std::rethrow_exception(m_thrownException);
@@ -28,8 +31,8 @@ void Dmn_Async::Dmn_Async_Wait::wait() {
 }
 
 Dmn_Async::Dmn_Async(std::string_view name)
-    : Dmn_Pipe{name, [](std::function<void()> &&task) {
-                 task();
+    : Dmn_Pipe{name, [](std::function<void()> &&task) -> void {
+                 std::move(task)();
                  Dmn_Proc::yield();
                }} {}
 
@@ -38,18 +41,18 @@ Dmn_Async::~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
   return;
 }
 
-std::shared_ptr<Dmn_Async::Dmn_Async_Wait>
-Dmn_Async::addExecTaskWithWait(std::function<void()> fn) {
+auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
+    -> std::shared_ptr<Dmn_Async::Dmn_Async_Wait> {
   auto wait_shared_ptr = std::make_shared<Dmn_Async_Wait>();
 
-  this->write([wait_shared_ptr, fn]() {
+  this->write([wait_shared_ptr, fnc = std::move(fnc)]() -> void {
     try {
-      fn();
+      fnc();
     } catch (...) {
       wait_shared_ptr->m_thrownException = std::current_exception();
     }
 
-    std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
+    const std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
     wait_shared_ptr->m_done = true;
     wait_shared_ptr->m_cond_var.notify_all();
   });
@@ -58,21 +61,23 @@ Dmn_Async::addExecTaskWithWait(std::function<void()> fn) {
 }
 
 void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
-                                         std::function<void()> fn) {
-  this->write([this, time_in_future, fn]() {
-    long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                        std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                                         std::function<void()> fnc) {
+  this->write([this, time_in_future, fnc = std::move(fnc)]() -> void {
+    const long long now =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count();
 
     if (now >= time_in_future) {
-      if (fn) {
+      if (fnc) {
         try {
-          fn();
+          fnc();
         } catch (...) {
+          this->m_thrownException = std::current_exception();
         }
       }
     } else {
-      this->addExecTaskAfterInternal(time_in_future, fn);
+      this->addExecTaskAfterInternal(time_in_future, fnc);
     }
   });
 }
