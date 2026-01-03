@@ -137,7 +137,7 @@ protected:
    *
    * @param dmesgPbOther The other node DMesgPb
    */
-  void reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other);
+  void reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other);
 
 private:
   /**

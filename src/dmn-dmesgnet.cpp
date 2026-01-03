@@ -9,12 +9,11 @@
 
 #include <sys/time.h>
 
-#include <iostream>
+#include <cassert>
 #include <memory>
 #include <string>
 #include <string_view>
 
-#include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
 #include "dmn-io.hpp"
@@ -29,8 +28,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       m_output_handler{std::move(output_handler)} {
 
   // Initialize the DMesgNet state
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  struct timeval tv {};
+  gettimeofday(&tv, nullptr);
 
   DMESG_PB_SET_MSG_TOPIC(this->m_sys, kDMesgSysIdentifier);
   DMESG_PB_SET_MSG_TYPE(this->m_sys, dmn::DMesgTypePb::sys);
@@ -45,16 +44,16 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
 
   auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
-  handlerConfig[Dmn_DMesg::kHandlerConfig_IncludeSys] = "yes";
-  handlerConfig[Dmn_DMesg::kHandlerConfig_NoTopicFilter] = "yes";
+  handlerConfig[std::string(Dmn_DMesg::kHandlerConfig_IncludeSys)] = "yes";
+  handlerConfig[std::string(Dmn_DMesg::kHandlerConfig_NoTopicFilter)] = "yes";
 
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
       m_name,
-      [this](const dmn::DMesgPb &dmesgPb) {
+      [this](const dmn::DMesgPb &dmesgPb) -> bool {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
-      [this](dmn::DMesgPb dmesgPbWrite) mutable {
+      [this](dmn::DMesgPb dmesgPbWrite) mutable -> void {
         if (m_output_handler) {
           DMN_ASYNC_CALL_WITH_CAPTURE(
               {
@@ -83,81 +82,86 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       handlerConfig);
 
   if (m_input_handler) {
-    m_input_proc = std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() {
-      bool stop{};
+    m_input_proc =
+        std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() -> void {
+          bool stop{};
 
-      while ((!stop) && this->m_input_handler) {
-        dmn::DMesgPb dmesgpb_read{};
+          while ((!stop) && this->m_input_handler) {
+            dmn::DMesgPb dmesgpb_read{};
 
-        auto data = this->m_input_handler->read();
-        Dmn_Proc::yield();
+            auto data = this->m_input_handler->read();
+            Dmn_Proc::yield();
 
-        if (data) {
-          dmesgpb_read.ParseFromString(*data);
-          if (dmesgpb_read.sourcewritehandleridentifier() == this->m_name) {
-            continue;
+            if (data) {
+              dmesgpb_read.ParseFromString(*data);
+              if (dmesgpb_read.sourcewritehandleridentifier() == this->m_name) {
+                continue;
+              }
+
+              // this is important to prevent that the
+              // m_subscript_handler of this DMesgNet from
+              // reading this message again and send out.
+              //
+              // the Dmn_DMesgHandler->write will add the name
+              // of the Dmn_DMesgHandler from read it again,
+              // but it is good to be explicit.
+
+              if (dmesgpb_read.type() == dmn::DMesgTypePb::sys) {
+                DMN_ASYNC_CALL_WITH_CAPTURE(
+                    { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
+                    dmesgpb_read);
+              } else {
+                DMN_ASYNC_CALL_WITH_CAPTURE(
+                    {
+                      try {
+                        this->m_subscript_handler->write(dmesgpb_read);
+
+                        if (dmesgpb_read.type() != dmn::DMesgTypePb::sys) {
+                          m_topic_last_dmesgpb[dmesgpb_read.topic()] =
+                              dmesgpb_read;
+                        }
+                      } catch (...) {
+                        // The data from network is out of sync with data
+                        // in the Dmn_DMesg, and a few should happen:
+                        // - mark the topic as in conflict for local Dmn_DMesg
+                        // - the local Dmn_DMesg will mark all openHandler in
+                        //   conflict but waiting for resolution with
+                        //   Dmn_DMesgNet master, so they will not allow any
+                        //   message on the same topic band.
+                        // - the local Dmn_DMesgNet will broadcast a sys
+                        // conflict
+                        //   message.
+                        // - all networked DMesgNet(s) receives the sys conflict
+                        //   message will then put its local Dmn_DMesg in
+                        //   conflict state for the same topic.
+                        // - master node will then send its last message for the
+                        //   to all nodes, and all nodes receives the message
+                        //   will use new message as its last valid message for
+                        //   the topic and clear it conflict state.
+                      }
+                    },
+                    this, dmesgpb_read);
+              } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
+            }
           }
-
-          // this is important to prevent that the
-          // m_subscript_handler of this DMesgNet from
-          // reading this message again and send out.
-          //
-          // the Dmn_DMesgHandler->write will add the name
-          // of the Dmn_DMesgHandler from read it again,
-          // but it is good to be explicit.
-
-          if (dmesgpb_read.type() == dmn::DMesgTypePb::sys) {
-            DMN_ASYNC_CALL_WITH_CAPTURE(
-                { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
-                dmesgpb_read);
-          } else {
-            DMN_ASYNC_CALL_WITH_CAPTURE(
-                {
-                  try {
-                    this->m_subscript_handler->write(dmesgpb_read);
-
-                    if (dmesgpb_read.type() != dmn::DMesgTypePb::sys) {
-                      m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
-                    }
-                  } catch (...) {
-                    // The data from network is out of sync with data
-                    // in the Dmn_DMesg, and a few should happen:
-                    // - mark the topic as in conflict for local Dmn_DMesg
-                    // - the local Dmn_DMesg will mark all openHandler in
-                    //   conflict but waiting for resolution with
-                    //   Dmn_DMesgNet master, so they will not allow any
-                    //   message on the same topic band.
-                    // - the local Dmn_DMesgNet will broadcast a sys
-                    // conflict
-                    //   message.
-                    // - all networked DMesgNet(s) receives the sys conflict
-                    //   message will then put its local Dmn_DMesg in
-                    //   conflict state for the same topic.
-                    // - master node will then send its last message for the
-                    //   to all nodes, and all nodes receives the message
-                    //   will use new message as its last valid message for
-                    //   the topic and clear it conflict state.
-                  }
-                },
-                this, dmesgpb_read);
-          } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
-        }
-      }
-    });
+        });
 
     m_input_proc->exec();
 
     m_sys_handler = Dmn_DMesg::openHandler(
         m_name + "_sys",
-        [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) { return false; },
+        [this]([[maybe_unused]] const dmn::DMesgPb &dmesgpb) -> bool {
+          return false;
+        },
         nullptr, Dmn_DMesg::kHandlerConfig_Default);
   }
 
   if (m_input_handler && m_output_handler) {
     // into MasterPending
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
-        std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS), [this]() {
-          this->write([this]() mutable {
+        std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
+        [this]() -> void {
+          this->write([this]() mutable -> void {
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
               this->m_master_pending_counter++;
@@ -171,8 +175,8 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                 DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
                 DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
 
-                struct timeval tv;
-                gettimeofday(&tv, NULL);
+                struct timeval tv {};
+                gettimeofday(&tv, nullptr);
 
                 DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
               }
@@ -253,8 +257,8 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
     // we avoid use of m_sys_handler as we are to destroy it, so we
     // do not want to hold the object life up and have to wait for
     // asynchrononous action to send last heartbeat messge.
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    struct timeval tv {};
+    gettimeofday(&tv, nullptr);
 
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(this->m_sys, this->m_name);
     DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(this->m_sys, this->m_name);
@@ -285,17 +289,17 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
-void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
+void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
   auto other = dmesgpb_other.body().sys().self();
-  auto self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
+  auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  struct timeval tv {};
+  gettimeofday(&tv, nullptr);
 
   if (self->state() == dmn::DMesgStatePb::MasterPending &&
       other.state() == dmn::DMesgStatePb::Ready) {
-    assert(self->masteridentifier() == "");
-    assert(other.masteridentifier() != "");
+    assert(self->masteridentifier().empty());
+    assert(!other.masteridentifier().empty());
 
     DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, other.masteridentifier());
@@ -307,7 +311,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
     this->m_master_sync_pending_counter = 0;
     this->m_sys_handler->write(this->m_sys);
   } else if (self->state() == dmn::DMesgStatePb::Ready) {
-    assert("" != self->masteridentifier());
+    assert(!self->masteridentifier().empty());
     assert(0 == this->m_master_pending_counter);
 
     if (other.identifier() == self->masteridentifier()) {
@@ -318,7 +322,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
         /* other node relinquish its self-proclaim master state
          * so local node also reset the master state
          */
-        assert(other.masteridentifier() == "");
+        assert(other.masteridentifier().empty());
 
         DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::MasterPending);
         DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
@@ -332,8 +336,8 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
       }
     } else if (other.state() == dmn::DMesgStatePb::Ready &&
                other.masteridentifier() != self->masteridentifier()) {
-      assert("" != self->masteridentifier());
-      assert("" != other.masteridentifier());
+      assert(!self->masteridentifier().empty());
+      assert(!other.masteridentifier().empty());
 
       if (other.initializedtimestamp().seconds() <
               self->initializedtimestamp().seconds() ||
@@ -355,41 +359,41 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(dmn::DMesgPb dmesgpb_other) {
     }
   } // if (self->state() == dmn::DMesgStatePb::Ready)
 
-  int i = 0;
-  while (i < this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
+  int index = 0;
+  while (index < this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
     if (other.identifier() == this->m_sys.mutable_body()
                                   ->mutable_sys()
                                   ->nodelist()
-                                  .Get(i)
+                                  .Get(index)
                                   .identifier()) {
       break;
     }
 
-    i++;
+    index++;
   }
 
   if (other.state() == dmn::DMesgStatePb::Destroyed) {
-    if (i >= this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
+    if (index >= this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
       // do nothing
     } else {
       this->m_sys.mutable_body()
           ->mutable_sys()
           ->mutable_nodelist()
-          ->DeleteSubrange(i, 1);
+          ->DeleteSubrange(index, 1);
     }
   } else {
-    if (i >= this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
+    if (index >= this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
       this->m_sys.mutable_body()->mutable_sys()->add_nodelist();
     }
 
-    DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER(this->m_sys, i,
+    DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER(this->m_sys, index,
                                               other.identifier());
-    DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER(this->m_sys, i,
+    DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER(this->m_sys, index,
                                                     other.masteridentifier());
-    DMESG_PB_SYS_SET_NODELIST_ELEM_STATE(this->m_sys, i, other.state());
+    DMESG_PB_SYS_SET_NODELIST_ELEM_STATE(this->m_sys, index, other.state());
     DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP(
-        this->m_sys, i, other.initializedtimestamp());
-    DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP(this->m_sys, i,
+        this->m_sys, index, other.initializedtimestamp());
+    DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP(this->m_sys, index,
                                                     other.updatedtimestamp());
   }
 } // method reconciliateDmesgPbSys
