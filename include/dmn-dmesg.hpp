@@ -70,14 +70,16 @@ public:
    * @brief If the config value is "yes" or "1", then the openHandler will
    *        also include dmesgpb which message type is "sys".
    */
-  static const std::string kHandlerConfig_IncludeSys;
+  static constexpr std::string_view kHandlerConfig_IncludeSys =
+      "Handler_IncludeSys";
 
   /**
    * @brief If the config value is "yes" or "1", then the openHandler will not
    *        set message topic upon sending write dmesgpb and will return
    *        dmesgpb regardless of topic value.
    */
-  static const std::string kHandlerConfig_NoTopicFilter;
+  static constexpr std::string_view kHandlerConfig_NoTopicFilter =
+      "Handler_NoTopicFilter";
 
   /**
    * @brief The key (std::string) and value (std::string) for Dmn_DMesg

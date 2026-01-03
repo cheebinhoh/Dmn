@@ -33,9 +33,6 @@ namespace dmn {
 const char *const kDMesgSysIdentifier = "sys.dmn-dmesg";
 
 const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
-const std::string Dmn_DMesg::kHandlerConfig_IncludeSys = "Handler_IncludeSys";
-const std::string Dmn_DMesg::kHandlerConfig_NoTopicFilter =
-    "Handler_NoTopicFilter";
 
 // class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
@@ -87,13 +84,13 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
       m_async_process_fn{std::move(async_process_fn)},
       m_configs{std::move(configs)} {
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
-  auto iter = m_configs.find(kHandlerConfig_IncludeSys);
+  auto iter = m_configs.find(std::string(kHandlerConfig_IncludeSys));
   if (m_configs.end() != iter) {
     m_include_dmesgpb_sys =
         stringCompare(iter->second, "1") || stringCompare(iter->second, "yes");
   }
 
-  iter = m_configs.find(kHandlerConfig_NoTopicFilter);
+  iter = m_configs.find(std::string(kHandlerConfig_NoTopicFilter));
   if (m_configs.end() != iter) {
     m_no_topic_filter =
         stringCompare(iter->second, "1") || stringCompare(iter->second, "yes");
