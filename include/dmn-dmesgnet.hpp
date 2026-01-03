@@ -140,6 +140,10 @@ protected:
   void reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other);
 
 private:
+  void createInputHandlerProc();
+  void createSubscriptHandler();
+  void createTimerProc();
+
   /**
    * data members for constructor to instantiate the object.
    */
