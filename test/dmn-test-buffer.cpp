@@ -10,9 +10,11 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
-#include "dmn-pipe.hpp"
+#include "dmn-buffer.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
@@ -20,26 +22,26 @@ int main(int argc, char *argv[]) {
   using namespace std::string_literals;
 
   auto buf = std::make_unique<dmn::Dmn_Buffer<std::string>>();
-  auto proc = std::make_unique<dmn::Dmn_Proc>("proc", [&buf]() {
+  auto proc = std::make_unique<dmn::Dmn_Proc>("proc", [&buf]() -> void {
     static std::vector<std::string> result{"hello", "abc"};
     static int index{};
 
-    auto s = buf->pop();
-    EXPECT_TRUE(s == result[index++]);
-    std::cout << "value pop: " << s << "\n";
+    auto str = buf->pop();
+    EXPECT_TRUE(str == result[index++]);
+    std::cout << "value pop: " << str << "\n";
   });
 
   std::string value{"hello"};
 
   buf->push(value);
-  EXPECT_TRUE(value == "");
+  EXPECT_TRUE(value.empty());
 
   proc->exec();
 
   dmn::Dmn_Proc::yield();
   proc->wait();
 
-  buf->push("abc"s);
+  buf->push("abc");
 
   proc->exec();
   dmn::Dmn_Proc::yield();
@@ -62,7 +64,7 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_Buffer<std::string> string_not_move_buf{};
   std::string string_to_mot_move_buf{"not move"};
   string_not_move_buf.push(string_to_mot_move_buf, false);
-  std::string string_from_not_move_buf = string_not_move_buf.pop();
+  const std::string string_from_not_move_buf = string_not_move_buf.pop();
 
   EXPECT_TRUE("not move" == string_from_not_move_buf);
   EXPECT_TRUE("not move" == string_to_mot_move_buf);

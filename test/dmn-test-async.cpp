@@ -8,12 +8,11 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
+#include <csignal>
+#include <cstdlib>
 #include <stdexcept>
 #include <thread>
 
-#include <signal.h>
-#include <stdlib.h>
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
@@ -27,27 +26,27 @@ public:
     DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->m_count++; });
   }
 
-  operator long long() { return m_count; }
+  explicit operator long long() const { return m_count; }
 
 private:
   long long m_count{};
 };
 
-void timer_handler([[maybe_unused]] int sig) { EXPECT_TRUE(false); }
+static void timer_handler([[maybe_unused]] int sig) { EXPECT_TRUE(false); }
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   Counter cnt{};
-  dmn::Dmn_Proc proc1{"proc1", [&cnt]() {
-                        for (int n = 0; n < 100; n++) {
+  dmn::Dmn_Proc proc1{"proc1", [&cnt]() -> void {
+                        for (int ind = 0; ind < 100; ind++) {
                           cnt.increment();
                           dmn::Dmn_Proc::yield();
                         }
                       }};
 
-  dmn::Dmn_Proc proc2{"proc2", [&cnt]() {
-                        for (int n = 0; n < 100; n++) {
+  dmn::Dmn_Proc proc2{"proc2", [&cnt]() -> void {
+                        for (int ind = 0; ind < 100; ind++) {
                           cnt.increment();
                           dmn::Dmn_Proc::yield();
                         }
@@ -61,7 +60,8 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Async async{"timer"};
   int val = 1;
-  async.addExecTaskAfter(std::chrono::seconds(5), [&val]() { val = 2; });
+  async.addExecTaskAfter(std::chrono::seconds(5),
+                         [&val]() -> void { val = 2; });
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(1 == val);
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   bool done{};
   dmn::Dmn_Async asyncWithWait{"async"};
 
-  auto waitHandler = asyncWithWait.addExecTaskWithWait([&done] {
+  auto waitHandler = asyncWithWait.addExecTaskWithWait([&done]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     done = true;
   });
@@ -79,12 +79,12 @@ int main(int argc, char *argv[]) {
   waitHandler->wait();
   EXPECT_TRUE(done);
 
-  struct sigaction sa;
-  struct itimerval timer;
+  struct sigaction sact {};
+  struct itimerval timer {};
 
   // Install timer_handler as the signal handler for SIGALRM
-  sa.sa_handler = &timer_handler;
-  sigaction(SIGALRM, &sa, NULL);
+  sact.sa_handler = &timer_handler;
+  sigaction(SIGALRM, &sact, nullptr);
 
   // Configure the timer to expire after 1 second...
   timer.it_value.tv_sec = 10;
@@ -94,9 +94,9 @@ int main(int argc, char *argv[]) {
   timer.it_interval.tv_sec = 1;
   timer.it_interval.tv_usec = 0;
 
-  setitimer(ITIMER_REAL, &timer, NULL);
+  setitimer(ITIMER_REAL, &timer, nullptr);
 
-  waitHandler = asyncWithWait.addExecTaskWithWait([&done] {
+  waitHandler = asyncWithWait.addExecTaskWithWait([]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     throw std::runtime_error("just exception");
   });
