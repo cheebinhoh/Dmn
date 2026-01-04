@@ -12,6 +12,9 @@
 #include <iostream>
 #include <thread>
 
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
+
 #include "dmn-dmesg.hpp"
 
 int main(int argc, char *argv[]) {
@@ -48,7 +51,7 @@ int main(int argc, char *argv[]) {
   dmesgpb_body2->set_message("message string 2");
 
   dmn::Dmn_Proc proc_read1{
-      "read1", [&dmesg_read_handle1, &dmesgpb1]() {
+      "read1", [&dmesg_read_handle1, &dmesgpb1]() -> void {
         std::cout << "before read1\n";
         auto dmesgpb_read = dmesg_read_handle1->read();
         std::cout << "after read1, and proceed to validate read\n";
@@ -63,7 +66,7 @@ int main(int argc, char *argv[]) {
       }};
 
   dmn::Dmn_Proc proc_read2{
-      "read2", [&dmesg_read_handle2, &dmesgpb2]() {
+      "read2", [&dmesg_read_handle2, &dmesgpb2]() -> void {
         std::cout << "before read2\n";
         auto dmesgpb_read = dmesg_read_handle2->read();
         std::cout << "after read2, and proceed to validate read\n";
