@@ -12,12 +12,15 @@
 #include <chrono>
 #include <csignal>
 #include <cstring>
+#include <ctime>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
 #include <system_error>
+
+#include <sys/time.h>
 
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
@@ -106,20 +109,6 @@ void Dmn_Runtime_Manager::addHighJob(const std::function<void()> &job) {
 }
 
 /**
- * @brief The method will add medium priority asynchronous job.
- *
- * @param job The medium priority asynchronous job
- */
-void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> &job) {
-  while (!m_enter_medium_atomic_flag.test()) {
-    m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
-  }
-
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium, .m_job = job};
-  m_mediumQueue.push(rjob);
-}
-
-/**
  * @brief The method will add low priority asynchronous job.
  *
  * @param job The low priority asynchronous job
@@ -131,6 +120,20 @@ void Dmn_Runtime_Manager::addLowJob(const std::function<void()> &job) {
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow, .m_job = job};
   m_lowQueue.push(rjob);
+}
+
+/**
+ * @brief The method will add medium priority asynchronous job.
+ *
+ * @param job The medium priority asynchronous job
+ */
+void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> &job) {
+  while (!m_enter_medium_atomic_flag.test()) {
+    m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
+  }
+
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium, .m_job = job};
+  m_mediumQueue.push(rjob);
 }
 
 /**
@@ -224,6 +227,58 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
+
+  registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
+    if (m_timedQueue.empty()) {
+      return;
+    }
+
+    auto job = m_timedQueue.top();
+
+    struct timespec timesp {};
+    if (clock_gettime(CLOCK_REALTIME, &timesp) == 0) {
+      const long long microseconds =
+          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
+          (timesp.tv_nsec / 1000);
+
+      if (microseconds >= job.m_runtimeSinceEpoch) {
+        m_timedQueue.pop();
+
+        this->addJob(job.m_job, job.m_priority);
+      }
+    }
+  });
+
+#ifdef _POSIX_TIMERS
+  struct sigevent sev {};
+  timer_t timerid{};
+  struct itimerspec its {};
+
+  // 1. Setup signal delivery
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = SIGALRM;
+  timer_create(CLOCK_MONOTONIC, &sev, &timerid);
+
+  // 2. Set for 500 microseconds (0.5ms)
+  its.it_value.tv_sec = 0;
+  its.it_value.tv_nsec = 50000;    // 500,00 ns = 50 us
+  its.it_interval.tv_sec = 0;      // Periodic repeat
+  its.it_interval.tv_nsec = 50000; // Periodic repeat
+
+  timer_settime(timerid, 0, &its, NULL);
+#else /* _POSIX_TIMERS */
+  struct itimerval timer {};
+
+  // Set initial delay to 50 microseconds
+  timer.it_value.tv_sec = 0;
+  timer.it_value.tv_usec = 50;
+
+  // Set repeat interval to 50 microseconds
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 50;
+
+  setitimer(ITIMER_REAL, &timer, nullptr);
+#endif
 
   while (!m_exit_atomic_flag.test()) {
     m_exit_atomic_flag.wait(false, std::memory_order_relaxed);

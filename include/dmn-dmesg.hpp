@@ -14,25 +14,23 @@
  *        - instead of subclass Dmn_Pub::Dmn_Sub class to implement specific
  *          subscriber, the client of the API asks Dmn_DMesg to return a handler
  *          that subscribes to a specific set of topic (optional, or all
- *          topics), and can use to handler to publish and subscribe
+ *          topics), and can use the handler to publish and subscribe
  *          dmn::DMesgPb message through the Dmn_Io like interface' read and
  *          write API methods, so instead of inherittence from Dmn_DMesg,
- *          clients can use object composition with it.
+ *          clients can use object composition with it within.
  *        - it supports the concept that subscriber can subscribe to certain
  *          topic as defined in the dmn::DMesgPb message.
  *        - it allows various clients of the Dmn_Dmesg to publish data of
  *          certain topic at the same time, and implements a simple conflict
  *          detection and resolution for participated clients of the same
  *          Dmn_Dmesg object, Dmn_DMesg object takes care of synchronizing
- *          message between publisher and all subscribers of the same Dmn_DMesg
+ *          message between publishers and all subscribers of the same Dmn_DMesg
  *          object.
  */
 
 #ifndef DMN_DMESG_HPP_
 
 #define DMN_DMESG_HPP_
-
-#include <sys/time.h>
 
 #include <atomic>
 #include <cassert>
@@ -45,6 +43,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <sys/time.h>
+
 #include "dmn-pub-sub.hpp"
 
 #include "proto/dmn-dmesg.pb.h"
@@ -55,8 +55,8 @@ extern const char *const kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
-  using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
+  using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
   using HandlerConfig = std::unordered_map<std::string, std::string>;
 
   /**
@@ -96,7 +96,7 @@ public:
    *        which inherit Dmn_Io with template type specialized to functor,
    *        this is a diamond shape multiple inheritance where common parent
    *        has to have same instantiated template type. Instead the class
-   *        Dmn_DMesgHandler uses a wrapper class Dmn_DMesgHandlerSub which
+   *        Dmn_DMesgHandler composes a wrapper class Dmn_DMesgHandlerSub which
    *        inherits from Dmn_Pub<dmn::DMesgPb>::Dmn_Sub.
    */
   class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb> {
@@ -161,8 +161,8 @@ public:
      * @param name             The name or unique identification to the
      *                         handler
      * @param topic            The topic (DMesgPb.topic) that the handler
-     *                         subscribes to for reading or set as topic for
-     *                         written message
+     *                         subscribes to for reading or publish as a topic
+     *                         for written message
      * @param filter_fn        The functor callback that returns false to
      *                         filter out DMesgPB message, if no functor is
      *                         provided, no filter is performed
@@ -182,8 +182,8 @@ public:
      * @param name             The name or unique identification to the
      *                         handler
      * @param topic            The topic (DMesgPb.topic) that the handler
-     *                         subscribes to for reading or set as topic for
-     *                         written message
+     *                         subscribes to for reading or publish as a topic
+     *                         for written message
      * @param filter_fn        The functor callback that returns false to
      *                         filter out DMesgPB message, if no functor is
      *                         provided, no filter is performed
@@ -200,7 +200,7 @@ public:
      *
      * @param name      The name or unique identification to the handler
      * @param topic     The topic (DMesgPb.topic) that the handler subscribes
-     *                  to for reading or set as topic for written message
+     *                  to for reading or publish as a topic for written message
      * @param filter_fn The functor callback that returns false to filter out
      *                  DMesgPB message, if no functor is provided, no filter
      *                  is performed
@@ -216,7 +216,7 @@ public:
      *
      * @param name  The name or unique identification to the handler
      * @param topic The topic (DMesgPb.topic) that the handler subscribes
-     *              to for reading or set as topic for written message
+     *              to for reading or publish as a topic for written message
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic);
 
@@ -422,7 +422,7 @@ public:
    * @param name             The name or unique identification to the
    *                         handler
    * @param topic            The topic (DMesgPb.topic) that the handler
-   *                         subscribes to for reading or set as topic for
+   *                         subscribes to for reading or publish as a topic for
    *                         written message
    * @param filter_fn        The functor callback that returns false to
    *                         filter out DMesgPB message, if no functor is

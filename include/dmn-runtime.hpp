@@ -15,7 +15,9 @@
 #include <csignal>
 #include <functional>
 #include <mutex>
+#include <queue>
 #include <unordered_map>
+#include <vector>
 
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
@@ -28,6 +30,14 @@ struct Dmn_Runtime_Job {
 
   Priority m_priority{kMedium};
   std::function<void()> m_job{};
+  long long m_runtimeSinceEpoch{}; // 0 if immediate or > 0 if start later.
+};
+
+// Custom Comparator: We want the SMALLEST time to be at the top
+struct JobComparator {
+  bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) {
+    return a.m_runtimeSinceEpoch > b.m_runtimeSinceEpoch;
+  }
 };
 
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
@@ -45,6 +55,38 @@ public:
   void addJob(
       const std::function<void()> &job,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
+
+  /**
+   * @brief The method will schedule and add the specified job after duration in
+   * the specified priority.
+   *
+   * @param job The asychronous job
+   * @param duration The duration after that to schedule the job
+   * @param priority The priority of the asychronous job
+   */
+  template <class Rep, class Period>
+  void addTimedJob(
+      const std::function<void()> &job,
+      const std::chrono::duration<Rep, Period> &duration,
+      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
+    struct timespec ts {};
+
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+      auto usec =
+          std::chrono::duration_cast<std::chrono::microseconds>(duration);
+
+      long long microseconds =
+          ((long long)ts.tv_sec * 1000000LL + (ts.tv_nsec / 1000)) +
+          usec.count();
+
+      Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
+                           .m_job = job,
+                           .m_runtimeSinceEpoch = microseconds};
+      m_timedQueue.push(rjob);
+    } else {
+      addJob(job, priority);
+    }
+  }
 
   void enterMainLoop();
   void exitMainLoop();
@@ -81,6 +123,10 @@ private:
   Dmn_Buffer<Dmn_Runtime_Job> m_highQueue{};
   Dmn_Buffer<Dmn_Runtime_Job> m_lowQueue{};
   Dmn_Buffer<Dmn_Runtime_Job> m_mediumQueue{};
+
+  std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,
+                      JobComparator>
+      m_timedQueue{};
 
   std::atomic_flag m_enter_high_atomic_flag{};
   std::atomic_flag m_enter_low_atomic_flag{};
