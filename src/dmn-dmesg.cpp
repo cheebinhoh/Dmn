@@ -37,7 +37,6 @@ const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
 // class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
     ~Dmn_DMesgHandlerSub() noexcept try {
-
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -65,7 +64,6 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
         } else {
-          // FIXME
           dmn::DMesgPb copied = dmesgpb;
           m_owner->m_buffers.push(copied);
         }
@@ -109,11 +107,12 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn)
-    : Dmn_DMesgHandler{name, topic, std::move(filter_fn), nullptr} {}
+    : Dmn_DMesgHandler{name, topic, std::move(filter_fn),
+                       static_cast<AsyncProcessTask>(nullptr)} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic)
-    : Dmn_DMesgHandler{name, topic, nullptr} {}
+    : Dmn_DMesgHandler{name, topic, static_cast<FilterTask>(nullptr)} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
@@ -144,17 +143,11 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
-  if (nullptr != m_owner) {
-    try {
-      dmn::DMesgPb mesgPb = m_buffers.pop();
+  assert(nullptr != m_owner);
 
-      return mesgPb;
-    } catch (...) {
-      // do nothing
-    }
-  }
+  dmn::DMesgPb mesgPb = m_buffers.pop();
 
-  return {};
+  return mesgPb;
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict() {
@@ -167,9 +160,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
-  if (nullptr == m_owner) {
-    return;
-  }
+  assert(nullptr != m_owner);
 
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
 
@@ -181,9 +172,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
-  if (nullptr == m_owner) {
-    return;
-  }
+  assert(nullptr != m_owner);
 
   auto waitHandler = m_sub.addExecTaskWithWait(
       [this, &dmesgpb]() -> void { writeDMesgInternal(dmesgpb, false); });

@@ -32,15 +32,20 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
   int count{};
 
-  inst->registerSignalHandler(SIGALRM, [&inst, &count](int signno) {
-    std::cout << "handle signal " << signno << "\n";
+  std::function<void()> timedJob{};
+  timedJob = [&inst, &count, &timedJob]() -> void {
+    std::cout << "********* handle timerjob: " << count << "\n";
     if (count >= 5) {
       inst->exitMainLoop();
     } else {
       count++;
-      alarm(5);
+      inst->addTimedJob(timedJob, std::chrono::seconds(5),
+                        dmn::Dmn_Runtime_Job::kHigh);
     }
-  });
+  };
+
+  inst->addTimedJob(timedJob, std::chrono::seconds(5),
+                    dmn::Dmn_Runtime_Job::kHigh);
 
   int highRun{};
   int mediumRun{};
@@ -123,7 +128,7 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
   std::cout << "after for 5 seconds\n";
 
-  alarm(5);
+  // alarm(5);
   inst->enterMainLoop();
 
   EXPECT_TRUE(2 == lowRun);
