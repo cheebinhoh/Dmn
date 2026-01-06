@@ -13,6 +13,11 @@
 #include <thread>
 
 #include "dmn-dmesg.hpp"
+#include "dmn-proc.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

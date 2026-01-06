@@ -9,13 +9,12 @@
  * another object identifier as its neighbor.
  */
 
-#include <sys/time.h>
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
-#include <memory>
+#include <map>
+#include <string>
 #include <thread>
 
 #include "kafka/dmn-dmesgnet-kafka.hpp"
@@ -54,10 +53,10 @@ int main(int argc, char *argv[]) {
   //  configs["sasl.mechanisms"] = "PLAIN";
 
   // dmesgnet1
-  dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
+  const dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
 
   // dmesgnet2
-  dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
+  const dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
         bool ok{true};
 
         for (auto &mp : master_list) {
-          if (master != "") {
+          if (!master.empty()) {
             if (master != mp.second) {
               ok = false;
               break;

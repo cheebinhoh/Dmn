@@ -14,19 +14,22 @@
  * network.
  */
 
-#include <sys/time.h>
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <string>
 #include <thread>
+#include <vector>
+
+#include "dmn-dmesg.hpp"
 
 #include "kafka/dmn-dmesgnet-kafka.hpp"
-
 #include "kafka/dmn-kafka.hpp"
 
+#include "proto/dmn-dmesg-type.pb.h"
 #include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
@@ -93,7 +96,7 @@ int main(int argc, char *argv[]) {
         bool ok{true};
 
         for (auto &mp : master_list) {
-          if (master != "") {
+          if (!master.empty()) {
             if (master != mp.second) {
               ok = false;
               break;
@@ -116,12 +119,12 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(n < 10000);
 
   std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
-  std::string subscribed_topic{"counter sync 1"};
+  const std::string subscribed_topic{"counter sync 1"};
 
   int cnt{0};
   std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
       dmesgnet1.openHandler("handler1", subscribed_topic, nullptr,
-                            [&cnt](const dmn::DMesgPb &msg) mutable {
+                            [&cnt](const dmn::DMesgPb &msg) mutable -> void {
                               std::cout << "read\n";
                               EXPECT_TRUE("counter sync 1" == msg.topic());
                               cnt++;

@@ -11,10 +11,13 @@
 
 #include <chrono>
 #include <iostream>
-#include <sstream>
+#include <string>
 #include <thread>
 
 #include "dmn-dmesg.hpp"
+
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -23,14 +26,14 @@ int main(int argc, char *argv[]) {
   std::string data1{};
   std::string data2{};
 
-  auto dmesg_handle1 =
-      dmesg.openHandler("handler1", nullptr, [&data1](dmn::DMesgPb dmesgpb) {
+  auto dmesg_handle1 = dmesg.openHandler(
+      "handler1", nullptr, [&data1](const dmn::DMesgPb &dmesgpb) -> void {
         data1 = dmesgpb.body().message();
       });
   EXPECT_TRUE(dmesg_handle1);
 
-  auto dmesg_handle2 =
-      dmesg.openHandler("handler2", nullptr, [&data2](dmn::DMesgPb dmesgpb) {
+  auto dmesg_handle2 = dmesg.openHandler(
+      "handler2", nullptr, [&data2](const dmn::DMesgPb &dmesgpb) -> void {
         data2 = dmesgpb.body().message();
       });
 
@@ -63,8 +66,8 @@ int main(int argc, char *argv[]) {
 
   std::string data3{};
 
-  auto dmesg_handle4 =
-      dmesg.openHandler("handler4", nullptr, [&data3](dmn::DMesgPb dmesgpb) {
+  auto dmesg_handle4 = dmesg.openHandler(
+      "handler4", nullptr, [&data3](const dmn::DMesgPb &dmesgpb) -> void {
         data3 = dmesgpb.body().message();
       });
 
