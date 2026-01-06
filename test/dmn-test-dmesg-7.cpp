@@ -11,10 +11,15 @@
 
 #include <chrono>
 #include <iostream>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesg.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -28,17 +33,17 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb dmesgpb_topic1_read{};
   auto topic1_read_handler =
       dmesg.openHandler("topic1_read_handler", "topic1", nullptr,
-                        [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) {
+                        [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) -> void {
                           std::cout << "reat topic1\n";
-                          dmesgpb_topic1_read = dmesgpb;
+                          dmesgpb_topic1_read = std::move(dmesgpb);
                         });
 
   dmn::DMesgPb dmesgpb_topic2_read{};
   auto topic2_read_handler =
       dmesg.openHandler("topic2_read_handler", "topic2", nullptr,
-                        [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) {
+                        [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) -> void {
                           std::cout << "reat topic2\n";
-                          dmesgpb_topic2_read = dmesgpb;
+                          dmesgpb_topic2_read = std::move(dmesgpb);
                         });
   dmn::DMesgPb dmesgpb{};
   dmesgpb.set_type(dmn::DMesgTypePb::message);
@@ -52,7 +57,7 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
   EXPECT_TRUE("topic1" == dmesgpb_topic1_read.topic());
   EXPECT_TRUE("Hello topic1" == dmesgpb_topic1_read.body().message());
-  EXPECT_TRUE("" == dmesgpb_topic2_read.body().message());
+  EXPECT_TRUE(dmesgpb_topic2_read.body().message().empty());
 
   dmn::DMesgPb dmesgpb2{};
   dmesgpb2.set_type(dmn::DMesgTypePb::message);

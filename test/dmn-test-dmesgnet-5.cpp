@@ -12,11 +12,19 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
+#include "dmn-dmesg.hpp"
 #include "dmn-dmesgnet.hpp"
+#include "dmn-io.hpp"
+#include "dmn-proc.hpp"
 #include "dmn-socket.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -38,9 +46,9 @@ int main(int argc, char *argv[]) {
 
   auto listen_handle_3 = dmesgnet1->openHandler(
       "dmesg-3-listen", nullptr,
-      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
+      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable -> void {
         if (data.type() == dmn::DMesgTypePb::sys) {
-          dmesgpb_sys_3 = data;
+          dmesgpb_sys_3 = std::move(data);
         }
       },
       configs);
@@ -49,7 +57,7 @@ int main(int argc, char *argv[]) {
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
   dmn::Dmn_Proc dmesg_4_proc{
-      "dmesg_4_proc", [&dmesgpb_sys_4]() mutable {
+      "dmesg_4_proc", [&dmesgpb_sys_4]() mutable -> void {
         std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
             std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
         std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
@@ -65,9 +73,9 @@ int main(int argc, char *argv[]) {
 
         auto listen_handle_4 = dmesgnet1.openHandler(
             "dmesg-4-listen", nullptr,
-            [&dmesgpb_sys_4](dmn::DMesgPb data) mutable {
+            [&dmesgpb_sys_4](dmn::DMesgPb data) mutable -> void {
               if (data.type() == dmn::DMesgTypePb::sys) {
-                dmesgpb_sys_4 = data;
+                dmesgpb_sys_4 = std::move(data);
               }
             },
             configs);

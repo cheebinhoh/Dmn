@@ -6,20 +6,16 @@
  * perform object teardown without problem.
  */
 
-#include <sys/time.h>
-
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesgnet.hpp"
 
 #include "kafka/dmn-kafka.hpp"
-
-#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -55,8 +51,8 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<dmn::Dmn_Kafka> consumer = std::make_unique<dmn::Dmn_Kafka>(
       dmn::Dmn_Kafka::Role::kConsumer, read_configs);
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
-                              std::move(producer)};
+  const dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
+                                    std::move(producer)};
   consumer.reset();
   producer.reset();
 

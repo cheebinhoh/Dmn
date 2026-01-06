@@ -16,6 +16,7 @@
 #include "proto/dmn-dmesg.pb.h"
 
 #include "dmn-dmesg.hpp"
+#include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

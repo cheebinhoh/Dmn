@@ -11,13 +11,18 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesgnet.hpp"
+#include "dmn-io.hpp"
 #include "dmn-socket.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -34,12 +39,12 @@ int main(int argc, char *argv[]) {
   readSocket1.reset();
   writeSocket1.reset();
 
-  auto readHandler =
-      dmesgnet1.openHandler("dmesg-1-handler", nullptr,
-                            [&msgPb, &readData](dmn::DMesgPb data) mutable {
-                              readData = true;
-                              msgPb = data;
-                            });
+  auto readHandler = dmesgnet1.openHandler(
+      "dmesg-1-handler", nullptr,
+      [&msgPb, &readData](dmn::DMesgPb data) mutable -> void {
+        readData = true;
+        msgPb = std::move(data);
+      });
 
   dmn::DMesgPb dmesgpb{};
   dmesgpb.set_topic("counter sync");

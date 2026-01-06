@@ -11,13 +11,18 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesgnet.hpp"
+#include "dmn-io.hpp"
 #include "dmn-socket.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -36,9 +41,9 @@ int main(int argc, char *argv[]) {
 
   auto write_handle_1 = dmesgnet1.openHandler(
       "dmesg-1-handler", "counter sync", nullptr,
-      [&dmesgpb_read, &read_data](dmn::DMesgPb data) mutable {
+      [&dmesgpb_read, &read_data](dmn::DMesgPb data) mutable -> void {
         read_data = true;
-        dmesgpb_read = data;
+        dmesgpb_read = std::move(data);
       });
 
   dmn::DMesgPb dmesgpb{};
@@ -65,9 +70,9 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb dmesgpb_read_2{};
   auto read_handle_2 = dmesgnet2.openHandler(
       "dmesg-2-handler", "counter sync", nullptr,
-      [&dmesgpb_read_2, &read_data](dmn::DMesgPb data) mutable {
+      [&dmesgpb_read_2, &read_data](dmn::DMesgPb data) mutable -> void {
         read_data = true;
-        dmesgpb_read_2 = data;
+        dmesgpb_read_2 = std::move(data);
       });
 
   std::this_thread::sleep_for(std::chrono::seconds(10));

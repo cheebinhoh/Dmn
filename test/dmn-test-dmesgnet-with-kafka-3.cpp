@@ -10,14 +10,15 @@
  * another object identifier as its neighbor.
  */
 
-#include <sys/time.h>
-
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesgnet.hpp"
 
@@ -115,8 +116,8 @@ int main(int argc, char *argv[]) {
   consumer1.reset();
 
   // dmesgnet2
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
-                              std::move(producer2)};
+  const dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(consumer2),
+                                    std::move(producer2)};
   producer2.reset();
   consumer2.reset();
 
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
         bool ok{true};
 
         for (auto &mp : master_list) {
-          if (master != "") {
+          if (!master.empty()) {
             if (master != mp.second) {
               ok = false;
               break;

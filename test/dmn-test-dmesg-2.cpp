@@ -9,11 +9,15 @@
 
 #include <gtest/gtest.h>
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
-#include <thread>
+#include <string>
+
+#include "proto/dmn-dmesg-type.pb.h"
 
 #include "dmn-dmesg.hpp"
+#include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -27,7 +31,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(dmesg_handle2);
 
   dmn::Dmn_Proc proc1{
-      "proc1", [&dmesg_handle1]() {
+      "proc1", [&dmesg_handle1]() -> void {
         while (true) {
           auto dmesgpb = dmesg_handle1->read();
           if (!dmesgpb) {
@@ -35,30 +39,30 @@ int main(int argc, char *argv[]) {
           }
 
           assert(dmesgpb->type() == dmn::DMesgTypePb::message);
-          if (dmesgpb->body().message() == "") {
+          if (dmesgpb->body().message().empty()) {
             break;
           }
 
           std::cout << "proc1: message: " << dmesgpb->body().message() << "\n";
 
-          std::stringstream is{dmesgpb->body().message()};
+          std::stringstream istr{dmesgpb->body().message()};
           int val{};
 
-          is >> val;
-          EXPECT_TRUE(!is.fail());
+          istr >> val;
+          EXPECT_TRUE(!istr.fail());
           EXPECT_TRUE(val == val);
 
           val++;
 
-          std::stringstream os;
-          os << val;
+          std::stringstream outs;
+          outs << val;
 
           dmn::DMesgPb dmesgpb_ret{};
           dmesgpb_ret.set_topic("counter sync");
           dmesgpb_ret.set_type(dmn::DMesgTypePb::message);
 
           dmn::DMesgBodyPb *dmesgpb_body_ret = dmesgpb_ret.mutable_body();
-          dmesgpb_body_ret->set_message(os.str());
+          dmesgpb_body_ret->set_message(outs.str());
 
           dmesg_handle1->write(dmesgpb_ret);
 
@@ -67,16 +71,16 @@ int main(int argc, char *argv[]) {
       }};
 
   dmn::Dmn_Proc proc2{
-      "proc2", [&dmesg_handle2]() {
+      "proc2", [&dmesg_handle2]() -> void {
         int val{1};
 
         while (true) {
-          std::stringstream os{};
+          std::stringstream outs{};
 
           if (val <= 10) {
-            os << val;
+            outs << val;
           } else {
-            os << "";
+            outs << "";
           }
 
           dmn::DMesgPb dmesgpb{};
@@ -84,10 +88,10 @@ int main(int argc, char *argv[]) {
           dmesgpb.set_type(dmn::DMesgTypePb::message);
 
           dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
-          dmesgpb_body->set_message(os.str());
+          dmesgpb_body->set_message(outs.str());
           dmesg_handle2->write(dmesgpb);
 
-          if (os.str() == "") {
+          if (outs.str().empty()) {
             break;
           }
 
@@ -97,15 +101,15 @@ int main(int argc, char *argv[]) {
           }
 
           assert(dmesgpb_ret->type() == dmn::DMesgTypePb::message);
-          assert(dmesgpb_ret->body().message() != "");
+          assert(!dmesgpb_ret->body().message().empty());
 
           std::cout << "proc2: message: " << dmesgpb_ret->body().message()
                     << "\n";
 
           int val_ret{};
 
-          std::stringstream is{dmesgpb_ret->body().message()};
-          is >> val_ret;
+          std::stringstream ins{dmesgpb_ret->body().message()};
+          ins >> val_ret;
 
           EXPECT_TRUE(val_ret == (val + 1));
           val += 2;

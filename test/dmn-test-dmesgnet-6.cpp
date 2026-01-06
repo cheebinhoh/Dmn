@@ -13,13 +13,21 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
+#include "dmn-dmesg-pb-util.hpp"
+#include "dmn-dmesg.hpp"
 #include "dmn-dmesgnet.hpp"
+#include "dmn-io.hpp"
+#include "dmn-proc.hpp"
 #include "dmn-socket.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -41,24 +49,22 @@ int main(int argc, char *argv[]) {
 
   auto listen_handle_3 = dmesgnet1->openHandler(
       "dmesg-3-listen", nullptr,
-      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable {
+      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable -> void {
         if (data.type() == dmn::DMesgTypePb::sys) {
-          dmesgpb_sys_3 = data;
+          dmesgpb_sys_3 = std::move(data);
         }
       },
       configs);
 
-  dmn::DMesgPb dmesgpb_sys_4{};
-
   std::this_thread::sleep_for(std::chrono::seconds(1));
   dmn::Dmn_Proc dmesg_4_proc{
-      "dmesg_4_proc", [&dmesgpb_sys_4]() mutable {
+      "dmesg_4_proc", []() mutable -> void {
         std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
             std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
         dmn::DMesgPb sys{};
         struct timeval tv;
 
-        gettimeofday(&tv, NULL);
+        gettimeofday(&tv, nullptr);
 
         DMESG_PB_SET_MSG_TOPIC(sys, "sys.dmn-dmesg");
         DMESG_PB_SET_MSG_TYPE(sys, dmn::DMesgTypePb::sys);
@@ -80,7 +86,7 @@ int main(int argc, char *argv[]) {
           write_socket_1->write(serialized_string);
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-          gettimeofday(&tv, NULL);
+          gettimeofday(&tv, nullptr);
         }
       }};
 

@@ -9,11 +9,15 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "dmn-dmesg.hpp"
+
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -21,12 +25,12 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_DMesg dmesg{"dmesg"};
 
   std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
-  std::string subscribed_topic{"counter sync 1"};
+  const std::string subscribed_topic{"counter sync 1"};
 
   int cnt{0};
   std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handler =
       dmesg.openHandler("handler", subscribed_topic, nullptr,
-                        [&cnt](const dmn::DMesgPb &msg) mutable {
+                        [&cnt](const dmn::DMesgPb &msg) mutable -> void {
                           EXPECT_TRUE("counter sync 1" == msg.topic());
                           cnt++;
                         });

@@ -2,9 +2,6 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  */
 
-#include <pthread.h>
-#include <unistd.h>
-
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -14,16 +11,17 @@
 #include <iostream>
 #include <map>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 
-std::mutex log_mutex{};
+static std::mutex log_mutex{};
 
 #define safethread_log(stmt)                                                   \
   do {                                                                         \
-    std::lock_guard<std::mutex> lck(log_mutex);                                \
+    const std::scoped_lock<std::mutex> lck(log_mutex);                               \
     stmt;                                                                      \
   } while (0)
 
@@ -46,7 +44,7 @@ int main(int argc, char *argv[]) {
   int input_to_run_seconds = 5;
 
   dmn::Dmn_Pipe<std::string> out_pipe{
-      "out_pipe", [&input_cnt](std::string item) {
+      "out_pipe", [&input_cnt](std::string item) -> void {
         std::size_t found = item.find(": ");
         if (found != std::string::npos) {
           std::string source = item.substr(0, found);
@@ -68,7 +66,7 @@ int main(int argc, char *argv[]) {
   int sensor_input_i{0};
   sensor_input.exec([&staging_pipe, input_to_sleep_use_ns,
                      input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
-                     input_to_run_seconds, &sensor_input_i]() {
+                     input_to_run_seconds, &sensor_input_i]() -> void {
     system_clock::time_point start = system_clock::now();
 
     while (true) {
@@ -99,7 +97,7 @@ int main(int argc, char *argv[]) {
   int gps_input_i{0};
   gps_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
-                  input_to_run_seconds, &gps_input_i]() {
+                  input_to_run_seconds, &gps_input_i]() -> void {
     system_clock::time_point start = system_clock::now();
 
     while (true) {
@@ -129,7 +127,7 @@ int main(int argc, char *argv[]) {
   int imu_input_i{0};
   imu_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
-                  input_to_run_seconds, &imu_input_i]() {
+                  input_to_run_seconds, &imu_input_i]() -> void {
     system_clock::time_point start = system_clock::now();
 
     while (true) {
@@ -159,7 +157,7 @@ int main(int argc, char *argv[]) {
   int ext_input_i{0};
   ext_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
-                  input_to_run_seconds, &ext_input_i]() {
+                  input_to_run_seconds, &ext_input_i]() -> void {
     system_clock::time_point start = system_clock::now();
 
     while (true) {

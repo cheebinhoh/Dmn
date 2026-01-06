@@ -10,13 +10,18 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
-#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include "dmn-dmesgnet.hpp"
+#include "dmn-io.hpp"
+#include "dmn-proc.hpp"
 #include "dmn-socket.hpp"
+
+#include "proto/dmn-dmesg-body.pb.h"
+#include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -35,7 +40,7 @@ int main(int argc, char *argv[]) {
   auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
 
   dmn::DMesgPb dmesgpb_read{};
-  dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgpb_read]() {
+  dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgpb_read]() -> void {
                         auto data = readHandler2->read();
                         if (data) {
                           dmesgpb_read = *data;
@@ -62,7 +67,7 @@ int main(int argc, char *argv[]) {
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  std::string source = dmesgpb_read.sourceidentifier();
+  const std::string source = dmesgpb_read.sourceidentifier();
   EXPECT_TRUE(dmesgpb_read.type() == dmesgpb.type());
   EXPECT_TRUE(dmesgpb_read.sourceidentifier() ==
               dmesgpb.sourceidentifier()); // the source is the local DmesgNet
