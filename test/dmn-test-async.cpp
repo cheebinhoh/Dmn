@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
   waitHandler->wait();
   EXPECT_TRUE(done);
 
-  struct sigaction sact {};
-  struct itimerval timer {};
+  struct sigaction sact{};
+  struct itimerval timer{};
 
   // Install timer_handler as the signal handler for SIGALRM
   sact.sa_handler = &timer_handler;

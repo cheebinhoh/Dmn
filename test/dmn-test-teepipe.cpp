@@ -7,10 +7,10 @@
  * coordinate high level sorting between two stream of data.
  */
 
+#include <cstdio>
+#include <cstdlib>
 #include <fcntl.h>
 #include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <gtest/gtest.h>
 
@@ -26,19 +26,21 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  char *dirpath = dirname(argv[0]);
+  const char *dirpath = dirname(argv[0]);
   std::vector<std::string> files{
       std::string(dirpath) + "/teepipe-test-data-1.txt",
       std::string(dirpath) + "/teepipe-test-data-2.txt"};
   dmn::Dmn_TeePipe<long> tpipe{
-      "teepipe", [](long val) { std::cout << val << "\n"; },
-      [](std::vector<long> list) { std::sort(list.begin(), list.end()); }};
+      "teepipe", [](long val) -> void { std::cout << val << "\n"; },
+      [](std::vector<long> list) -> void {
+        std::sort(list.begin(), list.end());
+      }};
   std::vector<std::unique_ptr<dmn::Dmn_Proc>> proclist{};
 
   for (auto &filename : files) {
     auto tpipe_source = tpipe.addDmn_TeePipeSource();
     auto proc = std::make_unique<dmn::Dmn_Proc>(
-        filename, [tpipe_source, filename, prog = argv[0]]() {
+        filename, [tpipe_source, filename, prog = argv[0]]() -> void {
           int fd{};
           FILE *file{};
           char buf[BUFSIZ]{};
@@ -50,18 +52,18 @@ int main(int argc, char *argv[]) {
           }
 
           file = fdopen(fd, "r");
-          if (NULL == file) {
+          if (nullptr == file) {
             perror(prog);
             exit(1);
           }
 
-          while (fgets(buf, sizeof(buf), file) != NULL) {
+          while (fgets(buf, sizeof(buf), file) != nullptr) {
             if ('\n' == buf[strlen(buf) - 1]) {
               buf[strlen(buf) - 1] = '\0';
             }
 
             long val{};
-            val = strtol(buf, NULL, 10);
+            val = strtol(buf, nullptr, 10);
 
             tpipe_source->write(val);
 

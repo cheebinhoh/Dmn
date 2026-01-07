@@ -35,7 +35,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
       m_output_handler{std::move(output_handler)} {
 
   // Initialize the DMesgNet state
-  struct timeval tval {};
+  struct timeval tval{};
   gettimeofday(&tval, nullptr);
 
   DMESG_PB_SET_MSG_TOPIC(this->m_sys, kDMesgSysIdentifier);
@@ -76,7 +76,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
     // we avoid use of m_sys_handler as we are to destroy it, so we
     // do not want to hold the object life up and have to wait for
     // asynchrononous action to send last heartbeat messge.
-    struct timeval tval {};
+    struct timeval tval{};
     gettimeofday(&tval, nullptr);
 
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(this->m_sys, this->m_name);
@@ -244,7 +244,7 @@ void Dmn_DMesgNet::createTimerProc() {
                 DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
                 DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
 
-                struct timeval tval {};
+                struct timeval tval{};
                 gettimeofday(&tval, nullptr);
 
                 DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tval);
@@ -310,7 +310,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
   auto other = dmesgpb_other.body().sys().self();
   auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
-  struct timeval tval {};
+  struct timeval tval{};
   gettimeofday(&tval, nullptr);
 
   if (self->state() == dmn::DMesgStatePb::MasterPending &&

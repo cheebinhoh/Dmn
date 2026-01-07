@@ -13,7 +13,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   bool timer_run{};
-  dmn::Dmn_Timer timer{std::chrono::seconds(5), [&timer_run]() {
+  dmn::Dmn_Timer timer{std::chrono::seconds(5), [&timer_run]() -> void {
                          timer_run = true;
                          std::cout << "timer is run\n";
                        }};

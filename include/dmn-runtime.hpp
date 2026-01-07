@@ -69,7 +69,7 @@ public:
       const std::function<void()> &job,
       const std::chrono::duration<Rep, Period> &duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
-    struct timespec ts {};
+    struct timespec ts{};
 
     if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
       auto usec =
