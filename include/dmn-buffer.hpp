@@ -47,6 +47,17 @@ public:
   virtual T pop();
 
   /**
+   * @brief The method will pop and return the count number of front items from
+   *        the queue or the caller is blocked waiting if the queue contains the
+   *        minimum count of items.
+   *
+   * @param count The minimum number of items pop from front of the queue
+   *
+   * @return front item of the queue
+   */
+  virtual std::vector<T> pop(size_t count);
+
+  /**
    * @brief The method will pop and return front item from the queue or the
    *        std::nullopt if the queue is empty (and caller is not blocked
    *        waiting).
@@ -100,6 +111,7 @@ private:
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_cond{};
   pthread_cond_t m_empty_cond{};
+  pthread_cond_t m_none_empty_cond{};
   long long m_push_count{};
   long long m_pop_count{};
 }; // class Dmn_Buffer
@@ -118,6 +130,11 @@ template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
   }
 
   err = pthread_cond_init(&m_empty_cond, NULL);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  err = pthread_cond_init(&m_none_empty_cond, NULL);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
@@ -167,6 +184,13 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   }
 
   ++m_push_count;
+
+  err = pthread_cond_signal(&m_none_empty_cond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
+
+    throw std::runtime_error(strerror(err));
+  }
 
   err = pthread_cond_signal(&m_cond);
   if (err) {
@@ -218,6 +242,57 @@ template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
   return inbound_count;
 }
 
+template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
+  std::vector<T> ret{};
+  int err{};
+
+  assert(count > 0);
+
+  err = pthread_mutex_lock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+
+  pthread_testcancel();
+
+  while (m_queue.size() < count) {
+    err = pthread_cond_wait(&m_none_empty_cond, &m_mutex);
+    if (err) {
+      throw std::runtime_error(strerror(err));
+    }
+
+    pthread_testcancel();
+  }
+
+  while (count > 0) {
+    ret.push_back(std::move(m_queue.front()));
+    m_queue.pop_front();
+    ++m_pop_count;
+
+    count--;
+  }
+
+  if (m_queue.size() == 0) {
+    err = pthread_cond_signal(&m_empty_cond);
+    if (err) {
+      pthread_mutex_unlock(&m_mutex);
+
+      throw std::runtime_error(strerror(err));
+    }
+  }
+
+  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
+
+  err = pthread_mutex_unlock(&m_mutex);
+  if (err) {
+    throw std::runtime_error(strerror(err));
+  }
+
+  return ret;
+}
+
 template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
   int err{};
   T val{};
@@ -256,13 +331,11 @@ template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
 
   ++m_pop_count;
 
-  if (m_queue.empty()) {
-    err = pthread_cond_signal(&m_empty_cond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
+  err = pthread_cond_signal(&m_empty_cond);
+  if (err) {
+    pthread_mutex_unlock(&m_mutex);
 
-      throw std::runtime_error(strerror(err));
-    }
+    throw std::runtime_error(strerror(err));
   }
 
   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
