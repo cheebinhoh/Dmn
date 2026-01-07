@@ -190,7 +190,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                              "handler needs to be reset");
   }
 
-  struct timeval tval {};
+  struct timeval tval{};
   gettimeofday(&tval, nullptr);
 
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tval);

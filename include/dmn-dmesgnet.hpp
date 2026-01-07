@@ -162,7 +162,7 @@ private:
   dmn::DMesgPb m_sys{};
   long long m_master_pending_counter{};
   long long m_master_sync_pending_counter{};
-  struct timeval m_last_remote_master_timestamp {};
+  struct timeval m_last_remote_master_timestamp{};
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 
   bool m_is_master{};

@@ -21,7 +21,7 @@ static std::mutex log_mutex{};
 
 #define safethread_log(stmt)                                                   \
   do {                                                                         \
-    const std::scoped_lock<std::mutex> lck(log_mutex);                               \
+    const std::scoped_lock<std::mutex> lck(log_mutex);                         \
     stmt;                                                                      \
   } while (0)
 

@@ -58,8 +58,8 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
                                  std::system_category().message(errno));
       }
 
-      DMN_ASYNC_CALL_WITH_CAPTURE({ this->execSignalHandlerInternal(signo); },
-                                  this, signo);
+      DMN_ASYNC_CALL_WITH_CAPTURE(
+          { this->execSignalHandlerInternal(signo); }, this, signo);
     }
   });
 }
@@ -235,7 +235,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
     auto job = m_timedQueue.top();
 
-    struct timespec timesp {};
+    struct timespec timesp{};
     if (clock_gettime(CLOCK_REALTIME, &timesp) == 0) {
       const long long microseconds =
           (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
@@ -250,9 +250,9 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   });
 
 #ifdef _POSIX_TIMERS
-  struct sigevent sev {};
+  struct sigevent sev{};
   timer_t timerid{};
-  struct itimerspec its {};
+  struct itimerspec its{};
 
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
@@ -267,7 +267,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
   timer_settime(timerid, 0, &its, NULL);
 #else /* _POSIX_TIMERS */
-  struct itimerval timer {};
+  struct itimerval timer{};
 
   // Set initial delay to 50 microseconds
   timer.it_value.tv_sec = 0;
