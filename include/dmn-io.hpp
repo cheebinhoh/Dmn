@@ -2,17 +2,34 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-io.hpp
- * @brief The header file for dmn-io which implements an IO interface that
- *        - read is blocking call if no data available or std::nullopt_t if
- *          end of data stream is read (example when pipe is removed) or
- *          end of file, or no udp packet for next read, no data of specific
- *          topic in kafka broker for next read.
- *        - write (with rvalue) will move data if it is possible
- *        - write (with lvalue) will not move but copy data
+ * @brief Generic IO interface used by the Dmn library.
+ *
+ * Dmn_Io<T> declares a minimal, transport-agnostic interface for reading and
+ * writing values of type T. Implementations can represent files, pipes,
+ * network sockets, message queues, or other data sources/sinks.
+ *
+ * Semantics:
+ *  - read(): Returns the next available item wrapped in std::optional<T>.
+ *    The call is expected to block until data becomes available in the
+ *    normal case. If the underlying data source reaches end-of-stream
+ *    (for example EOF or a closed pipe) the function returns std::nullopt to
+ *    signal that no further data will be delivered. Concrete implementations
+ *    may use timeouts or non-blocking strategies when appropriate, but callers
+ *    should rely on std::nullopt to detect end-of-stream.
+ *
+ *  - write(T &item): Takes an lvalue reference. This overload does not take
+ *    ownership of the provided object; implementations SHOULD copy the value
+ *    if they need to retain it.
+ *
+ *  - write(T &&item): Takes an rvalue reference. Implementations SHOULD move
+ *    from the item when possible to avoid unnecessary copies.
+ *
+ * Thread-safety:
+ *  - The interface itself does not mandate any concurrency guarantees. If an
+ *    implementation is safe to call from multiple threads concurrently, it
+ *    MUST document those guarantees.
  */
-
 #ifndef DMN_IO_HPP_
-
 #define DMN_IO_HPP_
 
 #include <optional>

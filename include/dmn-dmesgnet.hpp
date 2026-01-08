@@ -2,14 +2,62 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesgnet.hpp
- * @brief The header file for dmn-dmesgnet which implements an extension to the
- *        Dmn_DMesg with support of serializing the DMesgPb message and
- *        send to the output Dmn_Io and deserialize the data read from input
- *        Dmn_Io and then publish it to the local Dmn_DMesg subscribed handlers.
+ * @brief Dmn_DMesgNet — network-aware DMesg extension.
+ *
+ * This header defines Dmn_DMesgNet, an extension of Dmn_DMesg that serializes
+ * DMesgPb messages for network I/O and deserializes inbound messages into the
+ * local DMesg publish/subscribe flow.
+ *
+ * Responsibilities:
+ * - Serialize and send DMesgPb objects to an output Dmn_Io<std::string>.
+ * - Read serialized DMesgPb strings from an input Dmn_Io<std::string> and
+ *   publish them locally to Dmn_DMesg subscribers.
+ * - Maintain light-weight cluster membership and a cooperative master election
+ *   protocol using periodic heartbeats.
+ *
+ * Design summary (master election and heartbeat):
+ * - Each node periodically broadcasts a heartbeat that includes:
+ *   - the node identifier (creation timestamp, process id, ip),
+ *   - the node's current master identifier (if any),
+ *   - the node's known neighbor list (including itself).
+ *
+ * - Node states (high-level):
+ *   1. Initialized: node starts, sends heartbeats and waits to learn of a
+ *      master from neighbors or time out and self-elect.
+ *   2. MasterPending: node expects a master's heartbeat; receiving one moves
+ *      the node to Ready; timeout may cause self-proclamation as master.
+ *   3. Ready: normal operation where a node follows the elected master. If it
+ *      receives a relinquish message from the master it may participate in a
+ *      re-election.
+ *   4. Destroyed: final state (optionally persist last state).
+ *
+ * - Election/co-election rules (summary):
+ *   - When a master relinquishes or is absent, nodes choose a master by
+ *     selecting the node with the earliest creation timestamp from their
+ *     current neighbor list (including themselves).
+ *   - If all nodes share the same neighbor list, they will elect the same
+ *     master and converge immediately.
+ *   - In race conditions where neighbor lists differ, nodes reconcile by
+ *     exchanging heartbeats and converging toward the node with the earliest
+ *     creation timestamp once they observe the same candidate.
+ *
+ * Examples (brief):
+ * - If nodes A and B boot and exchange heartbeats, each records the other as a
+ *   neighbor. After initialization timeouts, they will deterministically elect
+ *   the node with the earlier creation time as master.
+ * - When a new node C joins later, it learns the cluster through received
+ *   heartbeats and follows the elected master.
+ * - When the master shuts down, it sends a final heartbeat that relinquishes
+ *   leadership; remaining nodes remove it from neighbor lists and re-elect.
+ *
+ * Implementation notes:
+ * - Heartbeats are periodic (see DMN_DMESGNET_HEARTBEAT_IN_NS).
+ * - Nodes prune neighbors when heartbeats are absent for a configurable period.
+ * - The class reconciliates local DMesgPb state with remote DMesgPb messages
+ *   to maintain consistent view of master and membership.
  */
 
 #ifndef DMN_DMESGNET_HPP_
-
 #define DMN_DMESGNET_HPP_
 
 #include <sys/time.h>
@@ -35,88 +83,18 @@ namespace dmn {
 class Dmn_DMesgNet : public Dmn_DMesg {
 public:
   /**
-   * 1.    Initialized - [send heartbeat] -> MasterElectionPending
-   * 2[1]. MasterPending - [receive master heartbeat] -> Ready
-   * 2[2]. MasterPending - [timeout w/o master heartbeat, act as master]
-   *       -> Ready
-   * 3[1]. Ready - [receive master last heartbeat] -> MasterPending
-   * 3[2]. Ready - [send last heartbeat, optionally relinquish master role]
-   *       -> Destroyed
-   * 4.    Destroyed [cache last state in file?]
+   * @brief Dmn_DMesgNet constructor.
    *
-   * When a master is about to be destroyed, its last heartbeat message will
-   * relinquish its master role, that will trigger 3[1] for all other nodes,
-   * and instead of moving all other nodes into passive master election 2[1]
-   * or 2[2], all other nodes can do co-election of master by:
-   * - each node selects the earliest created timestamp node from the list of
-   *   neighbor nodes (including itself).
-   * - if all remaining nodes have same list of neighbor nodes, they will all
-   *   elect the same master, and all are in sync.
-   * - otherwise, different master will be elected by different nodes, but as
-   *   those nodes are syncing their heartbeat, they will all agree on node
-   *   with earliest created timestamp.
+   * Create a network-aware DMesg instance that can read/write serialized
+   * DMesgPb messages through Dmn_Io handlers.
    *
-   * for each heartbeat broadcast message from the node, it includes the
-   * following information:
-   * - the node identifier [timestamp_at_initialized.process_id.ip]
-   * - the node's master identifier which
-   * - the node's known list of networked node identifiers (include itself)
-   *
-   * If there are 3 nodes, A, B and C. And it boots up in the following orders:
-   *
-   * T1: A boot up, and send heartbeat [A, , []]
-   * T2: B boot up, and send heartbeat [B, , []]
-   * T3: A receives [B, , []], and add B to its neighbor list, but B is
-   *     not master, so A remains in initialized (as not yet timeout),
-   *     and its next pending heartbeat is [A, , [A, B]]
-   * T4: B receives [A, , []], and add A to its neighbor list, but A is
-   *     not master, so B remains in initialized (as not yet timeout),
-   *     and its next pending heartbeat is [B, , [A, B]]
-   * T5: A timeout at initialized state, and self-proclaim itself as
-   *     master based on its list of neighbor nodes [A, B] as A
-   *     has earliest timestamp at created.
-   * T6: B timeout at initialized state, and select A as the master based
-   *     on its list of neighbor nodes [A, B] and A has earliest timestamp
-   *     at created.
-   * T7: both A and B receives each other heartbeat, and then
-   *     both agree that A is master as A has early timestamp on created,
-   *     and so both will remain in ready state.
-   *     heartbeat A = [A, A, [A, B]] B = [B, A, [A, B]].
-   * T8: when C boots up, it is in initialized state, and send out
-   *     heartbeat C = [C, , ,]
-   * T9: A and B receives C heartbeat and both send out heartbeat
-   *     A = [A, A, [A, B, C]] and B = [B, A, [A, B, C]], and C receives
-   *     either of the message will declare A as master and into ready
-   *     state, also keep a list of neighbor nodes [A, B, C].
-   *
-   * Tn: A is shutting down, and manage to send its last heartbeat,
-   *     [A, ,[B, C]] to B and C, and both will notice that the message
-   *     is from A but it relinquishes master position, and remove itself
-   *     from the neighbor list, and B and C will elect new master
-   *     which is B as it has earliest timestamp.
-   *
-   * The node will maintain its list of neighbor nodes, but if there is no
-   * heartbeat from one of the neighbor for N seconds, it will remove it from
-   * the list, if the master is not sending heartbeat, then all nodes will
-   * participate in master selection by using it last known list of networed
-   * nodes (include itself) and elect one with early timestamp as master, and
-   * send out the next heartbeat, in good case, all active nodes will agree on
-   * the same new master right away.
-   *
-   * In very race case, two nodes elect different master as one node does not
-   * see one or few other nodes that are better candidate for master (early
-   * timestamp), then it will surrender its master election result and agree on
-   * one selected by its neighbor heartbeat message.
-   */
-
-  /**
-   * @brief The constructor method for DMesgNet.
-   *
-   * @param name           The identification name for the DMesgNet object
-   * @param input_handler  The dmn::Hal_Io object to receive inbound stringified
-   *                       DMesgPb message
-   * @param output_handler The dmn::Hal_Io object to send outbound stringified
-   *                       DMesgPb message
+   * @param name           Identification name for this DMesgNet instance.
+   * @param input_handler  Optional input handler to receive inbound serialized
+   *                       DMesgPb messages (std::string). If nullptr, no
+   *                       input processing is started.
+   * @param output_handler Optional output handler to send outbound serialized
+   *                       DMesgPb messages (std::string). If nullptr, no
+   *                       network sends are performed.
    */
   Dmn_DMesgNet(std::string_view name,
                std::unique_ptr<Dmn_Io<std::string>> input_handler = nullptr,
@@ -131,11 +109,15 @@ public:
 
 protected:
   /**
-   * @brief The method reconciliate other node's DMesgPb with local node
-   *        DMesgPb in regard about sys state, like master and list of neighbor
-   *        nodes.
+   * @brief Reconcile system-level information from a remote DMesgPb message.
    *
-   * @param dmesgPbOther The other node DMesgPb
+   * This method updates local view of the cluster (master id, neighbor list,
+   * timestamps, etc.) based on information contained in dmesgpb_other. It is
+   * responsible for applying election/co-election logic (for example, when a
+   * remote node declares itself master or relinquishes mastership) and for
+   * ensuring local state stays consistent with observed remote state.
+   *
+   * @param dmesgpb_other DMesgPb message received from a remote node.
    */
   void reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other);
 
@@ -145,14 +127,14 @@ private:
   void createTimerProc();
 
   /**
-   * data members for constructor to instantiate the object.
+   * Constructor-initialized members.
    */
   std::string m_name{};
   std::unique_ptr<Dmn_Io<std::string>> m_input_handler{};
   std::unique_ptr<Dmn_Io<std::string>> m_output_handler{};
 
   /**
-   * data members for internal logic.
+   * Internal runtime state and helper objects.
    */
   std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};
   std::shared_ptr<Dmn_DMesgHandler> m_subscript_handler{};

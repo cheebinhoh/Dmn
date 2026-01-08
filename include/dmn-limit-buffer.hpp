@@ -1,15 +1,39 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-teepipe.hpp
- * @brief The header file for dmn-teepipe which implements a fifo queue with
- *        a limited capacity that:
- *        - push is blocking if the limit of the capacity is reach
- *        - pop is blocking if no data (optional) in the queue
+ * @file dmn-limit-buffer.hpp
+ * @brief Bounded, thread-safe FIFO queue with blocking push/pop semantics.
+ *
+ * This header defines Dmn_LimitBuffer<T>, a thread-safe, limited-capacity
+ * FIFO queue built on top of Dmn_Buffer<T>. The buffer provides:
+ *  - A maximum capacity set at construction time. Attempts to push when the
+ *    buffer is full will block the caller until space becomes available.
+ *  - Blocking pop() that waits until an item is available and returns it.
+ *  - popNoWait() which returns std::nullopt immediately if the buffer is
+ *    empty (non-blocking).
+ *  - push overloads that prefer move semantics when available; push(T&&) will
+ *    use move-if-noexcept and forward to the internal push implementation.
+ *  - size() to return the current number of stored items (snapshot).
+ *  - waitForEmpty() delegates to Dmn_Buffer<T>::waitForEmpty().
+ *
+ * Threading and error behavior:
+ *  - Internal synchronization is implemented with a pthread mutex and two
+ *    condition variables (one each for push and pop).
+ *  - Most public methods are cancelation points and use the library's
+ *    mutex-cleanup macros (e.g. DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to
+ *    ensure safe cancellation while holding the mutex.
+ *  - System call errors from pthread functions are reported by throwing
+ *    std::runtime_error with the strerror message for the returned errno.
+ *
+ * Notes:
+ *  - Dmn_LimitBuffer<T> privately inherits from Dmn_Buffer<T> and reuses its
+ *    internal storage/semantics for push/pop operations.
+ *  - All operations aim for O(1) behavior with respect to queue operations.
+ *  - The size() method returns a snapshot and is protected by the mutex to
+ *    ensure a consistent view.
  */
 
 #ifndef DMN_LIMITBUFFER_HPP_
-
 #define DMN_LIMITBUFFER_HPP_
 
 #include <pthread.h>
