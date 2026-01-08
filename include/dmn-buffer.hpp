@@ -48,12 +48,12 @@ public:
 
   /**
    * @brief The method will pop and return the count number of front items from
-   *        the queue or the caller is blocked waiting if the queue contains the
-   *        minimum count of items.
+   *        the queue or the caller is blocked waiting until the queue contains
+   *        the minimum count of items.
    *
    * @param count The minimum number of items pop from front of the queue
    *
-   * @return front item of the queue
+   * @return the count number of items of the front of the queue
    */
   virtual std::vector<T> pop(size_t count);
 
