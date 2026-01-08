@@ -34,6 +34,31 @@
  * - readAndProcess(fn) blocks until the next item is available and invokes
  *   the provided task with the item (moved where possible).
  *
+ * - read(count, timeout) and readAndProcss(fn, count, timeout) function
+ *   behaves like it counterpart without count and timeout but with the
+ *   following blocking behevior
+ *     1. If the pipe already contains >= count items, it returns exactly
+ *        `count` items immediately.
+ *     2. If the pipe contains 0 items, it blocks:
+ *        - If timeout == 0: blocks indefinitely until at least `count` items
+ *          become available (returns exactly `count`).
+ *        - If timeout > 0: waits up to `timeout` microseconds for items.
+ *          * If enough items are available before timeout, returns exactly
+ *            `count` items.
+ *          * If the timeout expires and the pipe contains at least 1 item,
+ *            returns however many items are currently available (between 1
+ *            and `count`).
+ *          * If the timeout expires and the pipe is still empty, the wait
+ *            restarts (the implementation re-arms the absolute-time
+ *            deadline). This behavior avoids returning an empty result on
+ *            spurious timeouts; the function only returns due to timeout when
+ *            there is at least one item in the pipe at expiry.
+ *
+ *   Note: The timeout is interpreted as a maximum time to wait for the full
+ *   `count` items (measured from the first blocking wait inside the call).
+ *   A zero timeout value means "wait forever".
+
+ *
  * waitForEmpty()
  * - waitForEmpty() blocks until all items that were inbound at the time
  *   of the call have been popped and processed. It returns the number of
@@ -61,6 +86,7 @@
 #include <functional>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 #include "dmn-buffer.hpp"
 #include "dmn-debug.hpp"
@@ -74,7 +100,8 @@ class Dmn_Pipe : public Dmn_Buffer<T>, public Dmn_Io<T>, public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
-  Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {});
+  Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {}, size_t count = 1,
+           long timeout = 0);
 
   virtual ~Dmn_Pipe() noexcept;
 
@@ -84,7 +111,7 @@ public:
   Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
-   * @brief Read and return the next item from the pipe.
+   * @brief Read and return the next count of items from the pipe.
    *
    * Blocks until the next item is available. If the pipe has been closed and
    * no further items will arrive, returns std::nullopt.
@@ -92,6 +119,33 @@ public:
    * @return optional item if available, or std::nullopt if the pipe is closed
    */
   std::optional<T> read() override;
+
+  /**
+   * @brief Read and return the next item from the pipe.
+   *
+   * Detailed semantics:
+   * - count > 0 is required (asserted).
+   * - If the pipe has >= count items, this returns exactly count items.
+   * - If the pipe is empty or less than count:
+   *   - timeout == 0: wait indefinitely for count items (return exactly count).
+   *   - timeout > 0: wait up to timeout microseconds for items.
+   *     * If timeout expires and there is at least one item, return 1..count
+   *       items (the current pipe data size).
+   *     * If timeout expires and the pipe is still empty, the function keeps
+   *       waiting (re-arming the absolute deadline) until at least one item is
+   *       available.
+   *
+   * The returned vector contains moved items removed from the pipe.
+   *
+   * @param count   Number of desired items (must be > 0).
+   * @param timeout Timeout in microseconds for waiting for the full count.
+   *                A value of 0 means wait forever.
+   * @return Vector of items (size == count on success without timeout, or
+   *         between 1 and count if a timeout occurred after at least one item
+   *         was produced).
+   * @throws std::runtime_error on pthread errors.
+   */
+  std::vector<T> read(size_t count, long timeout = 0);
 
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
@@ -107,7 +161,7 @@ public:
    *
    * @param fn The functor to process the next item popped from the pipe
    */
-  void readAndProcess(Dmn_Pipe::Task fn);
+  void readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0);
 
   /**
    * @brief Write (copy) an item into the pipe.
@@ -153,7 +207,8 @@ private:
 }; // class Dmn_Pipe
 
 template <typename T>
-Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn)
+Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
+                      long timeout)
     : Dmn_Proc{name} {
   int err = pthread_mutex_init(&m_mutex, NULL);
   if (err) {
@@ -166,9 +221,9 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn)
   }
 
   if (fn) {
-    exec([this, fn]() {
+    exec([this, fn, count, timeout]() {
       while (true) {
-        readAndProcess(fn);
+        readAndProcess(fn, count, timeout);
       }
     });
   }
@@ -198,8 +253,20 @@ template <typename T> std::optional<T> Dmn_Pipe<T>::read() {
   return std::move_if_noexcept(data);
 }
 
-template <typename T> void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn) {
-  T &&item = this->pop();
+template <typename T>
+std::vector<T> Dmn_Pipe<T>::read(size_t count, long timeout) {
+  std::vector<T> dataList{};
+
+  readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },
+                 count, timeout);
+
+  return std::move(dataList);
+}
+
+template <typename T>
+void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
+                                 long timeout) {
+  auto dataList = this->pop(count, timeout);
 
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
@@ -210,9 +277,10 @@ template <typename T> void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn) {
 
   pthread_testcancel();
 
-  fn(std::move_if_noexcept(item));
-
-  ++m_count;
+  for (auto &item : dataList) {
+    fn(std::move_if_noexcept(item));
+    ++m_count;
+  }
 
   err = pthread_cond_signal(&m_empty_cond);
   if (err) {
