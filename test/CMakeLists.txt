@@ -34,6 +34,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb-util
                       dmn-test-io
                       dmn-test-pipe
+                      dmn-test-pipe-2
                       dmn-test-pub-sub
                       dmn-test-runtime
                       dmn-test-singleton
