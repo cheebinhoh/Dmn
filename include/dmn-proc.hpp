@@ -30,6 +30,12 @@
 #ifndef DMN_PROC_HPP_
 #define DMN_PROC_HPP_
 
+#include <pthread.h>
+
+#include <functional>
+#include <string>
+#include <string_view>
+
 /**
  * Macro to push a pthread cleanup handler that will unlock the given mutex
  * when the thread exits or is cancelled inside the protected region.
@@ -53,12 +59,6 @@
  * handler here (pop with 0).
  */
 #define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
-
-#include <pthread.h>
-
-#include <functional>
-#include <string>
-#include <string_view>
 
 namespace dmn {
 

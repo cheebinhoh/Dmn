@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-runtime.cpp
- * @brief The source implementation file for dmn-runtime.
+ * @brief Runtime manager for signal handling and asynchronous jobs.
  */
 
 #include "dmn-runtime.hpp"

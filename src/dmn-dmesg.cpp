@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesg.cpp
- * @brief The source implementation file for dmn-dmesg.
+ * @brief DMESG publisher/subscriber wrapper using Protobuf messages.
  */
 
 #include "dmn-dmesg.hpp"

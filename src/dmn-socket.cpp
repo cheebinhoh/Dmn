@@ -1,8 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-socket.cpp
- * @brief The source implementation file for dmn-socket.
+ * @file dmn-socket.hpp
+ * @brief Socket-based implementation of the Dmn_Io interface.
  */
 
 #include "dmn-socket.hpp"

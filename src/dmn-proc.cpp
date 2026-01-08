@@ -2,7 +2,7 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-proc.cpp
- * @brief The source implementation file for dmn-proc.
+ * @brief Lightweight RAII wrapper around native pthread functionality.
  */
 
 #include "dmn-proc.hpp"
