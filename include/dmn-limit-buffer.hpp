@@ -78,7 +78,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  long long waitForEmpty() override;
+  size_t waitForEmpty() override;
 
 private:
   /**
@@ -214,7 +214,7 @@ template <typename T> size_t Dmn_LimitBuffer<T>::size() {
   return size;
 }
 
-template <typename T> long long Dmn_LimitBuffer<T>::waitForEmpty() {
+template <typename T> size_t Dmn_LimitBuffer<T>::waitForEmpty() {
   return Dmn_Buffer<T>::waitForEmpty();
 }
 

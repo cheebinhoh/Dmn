@@ -89,7 +89,7 @@ public:
    * @return The number of items that were passed through the pipe
    *         in total
    */
-  long long waitForEmpty() override;
+  size_t waitForEmpty() override;
 
 private:
   using Dmn_Buffer<T>::pop;
@@ -98,7 +98,7 @@ private:
 
   pthread_mutex_t m_mutex{};
   pthread_cond_t m_empty_cond{};
-  long long m_count{};
+  size_t m_count{};
 }; // class Dmn_Pipe
 
 template <typename T>
@@ -188,8 +188,8 @@ template <typename T> void Dmn_Pipe<T>::write(T &&item) {
   Dmn_Buffer<T>::push(item, true);
 }
 
-template <typename T> long long Dmn_Pipe<T>::waitForEmpty() {
-  long long inbound_count{};
+template <typename T> size_t Dmn_Pipe<T>::waitForEmpty() {
+  size_t inbound_count{};
 
   inbound_count = Dmn_Buffer<T>::waitForEmpty();
 
