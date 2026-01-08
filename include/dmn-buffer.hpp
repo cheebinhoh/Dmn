@@ -266,13 +266,13 @@ template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
     pthread_testcancel();
   }
 
-  while (count > 0) {
+  do {
     ret.push_back(std::move(m_queue.front()));
     m_queue.pop_front();
     ++m_pop_count;
 
     count--;
-  }
+  } while (count > 0);
 
   if (m_queue.empty()) {
     err = pthread_cond_signal(&m_empty_cond);
