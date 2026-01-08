@@ -46,4 +46,4 @@
   } while (false)
 #endif
 
-#endif // DMN_DEBUG_HPP_G
+#endif // DMN_DEBUG_HPP_
