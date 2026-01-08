@@ -91,7 +91,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  virtual long long waitForEmpty();
+  virtual size_t waitForEmpty();
 
 protected:
   /**
@@ -112,8 +112,8 @@ private:
   pthread_cond_t m_cond{};
   pthread_cond_t m_empty_cond{};
   pthread_cond_t m_none_empty_cond{};
-  long long m_push_count{};
-  long long m_pop_count{};
+  size_t m_push_count{};
+  size_t m_pop_count{};
 }; // class Dmn_Buffer
 
 template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
@@ -207,9 +207,9 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   }
 }
 
-template <typename T> long long Dmn_Buffer<T>::waitForEmpty() {
+template <typename T> size_t Dmn_Buffer<T>::waitForEmpty() {
   int err{};
-  long long inbound_count{};
+  size_t inbound_count{};
 
   err = pthread_mutex_lock(&m_mutex);
   if (err) {

@@ -116,10 +116,10 @@ public:
 
   void wait();
 
-  long long waitForEmpty() override;
+  size_t waitForEmpty() override;
 
 private:
-  long long wait(bool no_open_source);
+  size_t wait(bool no_open_source);
 
   /**
    * @brief The method moves and writes the data item through teepipe structure
@@ -331,11 +331,11 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
 
 template <typename T> void Dmn_TeePipe<T>::wait() { wait(true); }
 
-template <typename T> long long Dmn_TeePipe<T>::waitForEmpty() {
+template <typename T> size_t Dmn_TeePipe<T>::waitForEmpty() {
   return wait(false);
 }
 
-template <typename T> long long Dmn_TeePipe<T>::wait(bool no_open_source) {
+template <typename T> size_t Dmn_TeePipe<T>::wait(bool no_open_source) {
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
     throw std::runtime_error(strerror(err));
