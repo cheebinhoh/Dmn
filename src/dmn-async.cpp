@@ -2,7 +2,9 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-async.cpp
- * @brief The source implementation file for dmn-async.
+ * @brief Header for Dmn_Async: a small helper that serializes asynchronous
+ *        execution of client-provided tasks and provides optional rendezvous
+ *        points for callers that need to wait for completion.
  */
 
 #include "dmn-async.hpp"
