@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>

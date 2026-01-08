@@ -2,13 +2,27 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn.hpp
- * @brief Main header file for the Distributed Messaging Network (DMN) project,
- *        and the file aggregates all necessary header files for the DMN
- *        library.
+ * @brief Convenience umbrella header for the Distributed Messaging Network
+ * (DMN).
+ *
+ * This header aggregates the public headers that make up the DMN library and is
+ * provided as a single include for convenience. Including this file will pull
+ * in the full public API surface of the DMN library; for faster compilation
+ * times and tighter dependency control prefer including only the specific
+ * headers that your translation unit requires.
+ *
+ * @details
+ * - Purpose: Provide a single, easy-to-use entry point to the DMN public API.
+ * - Behavior: This file only forwards includes and does not introduce new
+ *   symbols or definitions beyond those in the included headers.
+ * - Include guard: The guard below prevents multiple inclusion across the
+ * build.
+ *
+ * See the project README or the individual header documentation for more
+ * information about each component.
  */
 
 #ifndef DMN_HPP_
-
 #define DMN_HPP_
 
 #include "dmn-async.hpp"

@@ -2,15 +2,53 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-pipe.hpp
- * @brief The header file for dmn-pipe which implements a fifo pipe that:
- *        - write is not blocking
- *        - a thread (via Dmn_Proc) can be setup to process each item pop out
- *          from the fifo pipe.
- *        - client can call read() to read the next item pop out of the fifo
- *          pipe, or blocked waiting for one if the fifo pipe is empty.
- *        - client can call readAndProcess() to read the next item pop out of
- *          the fifo pipe and invoke the Task to process the item or blocked
- *          waiting for one if the fifo pipe is empty.
+ * @brief Dmn_Pipe: a FIFO pipe with non-blocking writers and optional
+ *        background processing.
+ *
+ * Overview
+ * - Dmn_Pipe<T> implements a FIFO buffer that:
+ *   - allows producers to write without blocking (write operations enqueue
+ *     items immediately),
+ *   - allows a consumer to read items either synchronously via `read()` or
+ *     by providing a processing task via `readAndProcess()` or by launching a
+ *     background processing thread (using Dmn_Proc::exec).
+ * - The class combines Dmn_Buffer<T> (storage), Dmn_Io<T> (I/O interface)
+ *   and Dmn_Proc (optional processing thread support).
+ *
+ * Threading and cancellation
+ * - push/pop and internal synchronization are handled by Dmn_Buffer<T>.
+ * - Dmn_Pipe adds a pthread_mutex and pthread_cond to:
+ *   - keep a count of processed items (`m_count`), and
+ *   - allow callers to wait until all currently inbound items have been
+ *     processed (waitForEmpty()).
+ * - readAndProcess() holds `m_mutex` while invoking the caller-provided task
+ *   and updates `m_count` under the mutex. It uses pthread cancellation
+ *   points and cleanup macros to remain cancellation-safe.
+ *
+ * Read / Write semantics
+ * - write(T&) copies `item` into the pipe.
+ * - write(T&&) moves `item` into the pipe; move will be used when the move
+ *   constructor is noexcept (via Dmn_Buffer<T>::push semantics).
+ * - read() blocks until the next item is available and returns it wrapped
+ *   in std::optional; when the pipe is closed it returns std::nullopt.
+ * - readAndProcess(fn) blocks until the next item is available and invokes
+ *   the provided task with the item (moved where possible).
+ *
+ * waitForEmpty()
+ * - waitForEmpty() blocks until all items that were inbound at the time
+ *   of the call have been popped and processed. It returns the number of
+ *   items that were passed through the pipe in total during that wait.
+ *
+ * Error handling
+ * - pthread API failures are converted to std::runtime_error with the
+ *   strerror message.
+ *
+ * Lifetime
+ * - If a Task is provided to the constructor, a background processing
+ *   thread is started via Dmn_Proc::exec which repeatedly calls
+ *   readAndProcess(fn).
+ * - The destructor stops the background processor (Dmn_Proc::stopExec()),
+ *   signals the condition variable, and destroys pthread primitives.
  */
 
 #ifndef DMN_PIPE_HPP_
@@ -46,48 +84,61 @@ public:
   Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
-   * @brief The method will read and return an item from the pipe or
-   *        std::nullopt if the pipe is closed. The read is blocked waiting
-   *        for next pop out of the pipe.
+   * @brief Read and return the next item from the pipe.
    *
-   * @return optional item if there is next item from pipe, or std::nullopt
-   *         if pipe is closed
+   * Blocks until the next item is available. If the pipe has been closed and
+   * no further items will arrive, returns std::nullopt.
+   *
+   * @return optional item if available, or std::nullopt if the pipe is closed
    */
   std::optional<T> read() override;
 
   /**
-   * @brief The method read the next item pop out of pipe and call fn functor
-   *        to process item, the method is blocked waiting for next item
-   *        from the pipe.
+   * @brief Read the next item from the pipe and invoke the provided task.
    *
-   * @param fn The functor to process next item pop out of pipe
+   * Blocks until the next item is available. The task is invoked while the
+   * internal mutex is held to update processing bookkeeping (`m_count`)
+   * and to signal waiting threads. The item is passed to `fn` using move
+   * semantics when possible.
+   *
+   * Note: this method participates in pthread cancellation points and uses
+   * the Dmn proc mutex cleanup macros to ensure the mutex is released on
+   * cancellation or exceptions.
+   *
+   * @param fn The functor to process the next item popped from the pipe
    */
   void readAndProcess(Dmn_Pipe::Task fn);
 
   /**
-   * @brief The method will write data into the pipe, the data is copied
-   *        than move semantic.
+   * @brief Write (copy) an item into the pipe.
    *
-   * @param item The data item to be copied into pipe
+   * This call enqueues a copy of `item` into the FIFO. Writing is non-blocking;
+   * any blocking behavior is determined by the underlying Dmn_Buffer
+   * implementation.
+   *
+   * @param item The data item to be copied into the pipe
    */
   void write(T &item) override;
 
   /**
-   * @brief The method will write data into the pipe, the data is moved
-   *        into pipe if noexcept.
+   * @brief Write (move) an item into the pipe.
    *
-   * @param item The data item to be moved into pipe
+   * This call attempts to move `item` into the FIFO. If move construction is
+   * noexcept it will move; otherwise behavior follows Dmn_Buffer push policy.
+   *
+   * @param item The data item to be moved into the pipe
    */
   void write(T &&item) override;
 
   /**
-   * @brief The method will put the client on blocking wait until
-   *        the pipe is empty and all items have been pop out and processed,
-   *        it returns number of items that were passed through the pipe in
-   *        total upon return.
+   * @brief Block until the pipe is empty and all inbound items are processed.
    *
-   * @return The number of items that were passed through the pipe
-   *         in total
+   * The function waits until all items that were reported inbound at the
+   * time of the call have been popped and processed (i.e., `m_count` has
+   * advanced to cover them). It returns the number of items that were
+   * passed through the pipe during the wait.
+   *
+   * @return The number of items that were passed through the pipe in total
    */
   size_t waitForEmpty() override;
 

@@ -2,22 +2,27 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-async.hpp
- * @brief The header file for dmn-async which implements base class for other
- *        class to adapt and implementing asynchronous execution API.
+ * @brief Header for Dmn_Async: a small helper that serializes asynchronous
+ *        execution of client-provided tasks and provides optional rendezvous
+ *        points for callers that need to wait for completion.
  *
- *        A client class can inherit from Dmn_Async or composes an Dmn_Async
- *        object, and implement the class API to pass a functor to the Dmn_Async
- *        object for execution on behalf of the client API call' execution. This
- *        will help serialize multiple the API call executions, avoid any
- *        explicit mutex lock on client API calls, and more important is that it
- *        can shorten the latency of calling the client API and returns from the
- *        API call for functionalities that does not need to be synchronized
- *        between caller and callee' API execution (see dmn-pub-sub.hpp for an
- *        example usage of this class).
+ *        Usage summary:
+ *        - A client can inherit from Dmn_Async or hold an instance of it.
+ *        - The client passes work as a std::function<void()> to Dmn_Async's
+ *          write()/addExecTask* APIs. Dmn_Async will schedule the work to be
+ *          executed asynchronously, serializing execution and avoiding the
+ *          need for explicit mutexes in the client API.
+ *        - For callers that need to block until a submitted task finishes,
+ *          use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return
+ *          a Dmn_Async_Wait object whose wait() method will only return after
+ *          the task has completed (and propagate exceptions thrown by the
+ *          task).
+ *
+ *        This class is useful for offloading work from fast API paths while
+ *        preserving ordering and providing optional synchronization points.
  */
 
 #ifndef DMN_ASYNC_HPP_
-
 #define DMN_ASYNC_HPP_
 
 #include <chrono>
@@ -30,6 +35,9 @@
 
 #include "dmn-pipe.hpp"
 
+// Helper macros to submit tasks with different capture styles. They call
+// write() with a small lambda that captures as requested and forwards the
+// captured code as the task body.
 #define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \
   do {                                                                         \
     this->write([=]() mutable -> void { block; });                             \
@@ -49,6 +57,10 @@ namespace dmn {
 
 class Dmn_Async : public Dmn_Pipe<std::function<void()>> {
 public:
+  // A simple rendezvous object returned to callers that want to wait for a
+  // previously submitted asynchronous task to finish. Calling wait() blocks
+  // until the task has completed. If the task threw, the stored exception
+  // will be rethrown to the waiter.
   class Dmn_Async_Wait {
     friend class Dmn_Async;
 
@@ -61,13 +73,14 @@ public:
 
     bool m_done{};
 
+    // Stores an exception thrown by the task so wait() can rethrow it.
     std::exception_ptr m_thrownException{};
   };
 
   /**
-   * @brief The contructor for Dmn_Async object
+   * @brief Construct a Dmn_Async helper.
    *
-   * @param name The object identification string name
+   * @param name Optional textual identifier for debugging/logging.
    */
   Dmn_Async(std::string_view name = "");
   virtual ~Dmn_Async() noexcept;
@@ -78,46 +91,40 @@ public:
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
 
   /**
-   * @brief The method add an asynchronous task to be executed and then returns
-   *        an Dmn_Async_Wait object for rendezvous point where the wait method
-   *        guarantees that the asynchronous task has been executed.
+   * @brief Submit a task for asynchronous execution and get a wait object.
    *
-   * @param fnc The asynchronous task to be executed
+   * The returned shared_ptr points to a Dmn_Async_Wait; calling wait() on it
+   * will block until the submitted task has finished. If the task throws an
+   * exception, wait() will rethrow it.
    *
-   * @return Dmn_Async_Wait The object for rendezvous point
+   * @param fnc The task to execute asynchronously.
+   * @return shared_ptr<Dmn_Async_Wait> A rendezvous object to wait for task
+   *         completion.
    */
   auto addExecTaskWithWait(std::function<void()> fnc)
       -> std::shared_ptr<Dmn_Async_Wait>;
 
   /**
-   * @brief The method will execute the asynchronous task after duration
-   *        is elapsed, the task will NOT be executed before duration is
-   *        elapsed, but might not be guaranteed that it is executed in
-   *        exact moment that the duration is elapsed.
+   * @brief Schedule a task to run after the given duration has elapsed.
    *
-   * @param duration time in duraton that must be elapsed before task
-   *                 is executed
-   * @param fnc      asynchronous task to be executed
+   * The task will not be executed before the duration has passed. It may not
+   * execute precisely at the moment the duration elapses (scheduling is not
+   * real-time), but execution will occur at or after the specified time.
+   *
+   * @param duration Time to wait before executing the task.
+   * @param fnc The task to execute.
    */
   template <class Rep, class Period>
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
                         std::function<void()> fnc);
 
   /**
-   * @brief The method will execute the asynchronous task after duration
-   *        is elapsed, the task will NOT be executed before duration is
-   *        elapsed, but might not be guaranteed that it is executed in
-   *        exact moment that the duration is elapsed.
+   * @brief Same as addExecTaskAfter(), but returns a wait object so the
+   * caller can block until the scheduled task finishes.
    *
-   *        The method will return an Dmn_Async_Wait object for rendezvous point
-   *        where the wait method guarantees that the asynchronous task has been
-   *        executed.
-   *
-   * @param duration time in duraton that must be elapsed before task
-   *                 is executed
-   * @param fnc      asynchronous task to be executed
-   *
-   * @return Dmn_Async_Wait object fo rendezvous point
+   * @param duration Time to wait before executing the task.
+   * @param fnc The task to execute.
+   * @return shared_ptr<Dmn_Async_Wait> Rendezvous object for task completion.
    */
   template <class Rep, class Period>
   auto
@@ -127,18 +134,18 @@ public:
 
 private:
   /**
-   * @brief The method will execute the asynchronous task after duration
-   *        is elapsed, the task will NOT be executed before duration is
-   *        elapsed, but might not be guaranteed that it is executed in
-   *        exact moment that the duration is elapsed.
+   * @brief Internal helper that schedules a task to run at a specific time in
+   * the future (expressed as nanoseconds since epoch).
    *
-   * @param time_in_future nanoseconds that must be elapsed before the
-   *                       task is executed
-   * @param fnc            asynchronous task to be executed
+   * @param time_in_future Target time (nanoseconds since epoch) when the
+   *                       task should be eligible to run.
+   * @param fnc The task to execute.
    */
   void addExecTaskAfterInternal(long long time_in_future,
                                 std::function<void()> fnc);
 
+  // If a submitted task throws, the exception can be captured here. This
+  // member is distinct from per-wait exceptions stored on Dmn_Async_Wait.
   std::exception_ptr m_thrownException{};
 }; // class Dmn_Async
 

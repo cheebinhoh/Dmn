@@ -2,12 +2,47 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesg-pb-util.hpp
- * @brief The header file for dmn-dmesg-pb-util which implements setter
- *        for Dmesg protobuf message.
+ * @brief Utility macros to populate fields of the DMesg protobuf messages.
+ *
+ * This header provides a collection of small, focused macros that make it
+ * convenient to set timestamps and other common fields in the generated
+ * protobuf types defined in proto/dmn-dmesg.pb.h.
+ *
+ * Key points:
+ *  - The macros are thin wrappers around the protobuf setters (e.g.
+ *    set_seconds, set_nanos, set_topic) and are intended to reduce
+ *    boilerplate when constructing DMesg messages.
+ *  - Timestamp helpers accept either explicit seconds/nanoseconds values or
+ *    struct timeval (from <sys/time.h>) via DMESG_PB_SET_TIMESTAMP_FROM_TV.
+ *  - Some macros assert expected message types before mutating variant fields
+ *    (see DMESG_PB_MSG_SET_MESSAGE).
+ *  - Macros use expression or do/while(false) forms to behave like statements;
+ *    pass lvalues where required.
+ *
+ * Usage notes:
+ *  - Include this header after including the generated protobuf header
+ *    "proto/dmn-dmesg.pb.h".
+ *  - Be careful with side effects in macro arguments (they may be evaluated
+ *    more than once).
+ *  - These macros do not perform extensive runtime validation beyond simple
+ *    asserts; callers are responsible for ensuring message structure and
+ *    semantic correctness.
+ *
+ * Thread-safety:
+ *  - The macros themselves are just expansions that call protobuf mutators.
+ *    Any thread-safety guarantees depend on the underlying protobuf objects
+ *    and how they are synchronized by the application.
+ *
+ * Example:
+ *  dmn::DMesgPb msg;
+ *  struct timeval tv;
+ *  gettimeofday(&tv, nullptr);
+ *  DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(msg, tv);
+ *  DMESG_PB_SET_MSG_TOPIC(msg, "my/topic");
+ *
  */
 
 #ifndef DMN_DMESG_PB_UTIL_HPP_
-
 #define DMN_DMESG_PB_UTIL_HPP_
 
 #include <sys/time.h>

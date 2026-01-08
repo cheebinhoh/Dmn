@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
@@ -30,7 +29,6 @@ int main(int argc, char *argv[]) {
   auto proc = std::make_unique<dmn::Dmn_Proc>(
       "proc", [&buf, &readDone, data1, data2, data3]() -> void {
         auto listOfData = buf->pop(3, 15000000L);
-        std::cout << "ok read\n";
         readDone = true;
       });
 

@@ -2,11 +2,36 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-timer.hpp
- * @brief The header for dmn-timer which implements watchdog or timer, executing
- *        a callback function repeatedly after a specified duration has elapsed.
- *        Note that while it is guaranteed that the callback function will not
- *        be executed before the specified duration has elapsed, it is not
- *        guaranteed to be executed immediately upon duration's completion.
+ * @brief A lightweight recurring timer (watchdog) class template.
+ *
+ * Dmn_Timer<T> runs a user-provided callback repeatedly at a fixed relative
+ * interval specified by a duration type T (for example,
+ * std::chrono::milliseconds or std::chrono::seconds). The timer guarantees the
+ * callback will not be invoked before the specified interval has elapsed.
+ * However, it does not guarantee immediate invocation at the exact moment the
+ * interval expires: callback execution may be delayed due to scheduling, the
+ * callback's own execution time, or other runtime factors.
+ *
+ * The implementation uses Dmn_Proc to run a background execution context for
+ * the timer loop. Exceptions derived from std::exception thrown by the callback
+ * are caught and reported via DMN_DEBUG_PRINT; other exception types are
+ * swallowed to ensure the timer's execution thread continues running.
+ *
+ * Public API summary:
+ *  - Dmn_Timer(const T &reltime, std::function<void()> fn):
+ *      Constructs the timer and starts it immediately with the given interval
+ *      and callback.
+ *  - void start(const T &reltime, std::function<void()> fn = {}):
+ *      Stops any existing timer and starts a new one with the provided interval
+ *      and optional callback (if fn is empty, the previously set callback is
+ *      retained).
+ *  - void stop():
+ *      Stops the running timer.
+ *
+ * Notes:
+ *  - Copy and move constructors/operators are deleted.
+ *  - The destructor is noexcept.
+ *  - Template parameter T should be a std::chrono::duration-like type.
  */
 
 #ifndef DMN_TIMER_HPP_
