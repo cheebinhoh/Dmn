@@ -274,7 +274,7 @@ template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
     count--;
   }
 
-  if (m_queue.size() == 0) {
+  if (m_queue.empty()) {
     err = pthread_cond_signal(&m_empty_cond);
     if (err) {
       pthread_mutex_unlock(&m_mutex);
@@ -331,11 +331,13 @@ template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
 
   ++m_pop_count;
 
-  err = pthread_cond_signal(&m_empty_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
+  if (m_queue.empty()) {
+    err = pthread_cond_signal(&m_empty_cond);
+    if (err) {
+      pthread_mutex_unlock(&m_mutex);
 
-    throw std::runtime_error(strerror(err));
+      throw std::runtime_error(strerror(err));
+    }
   }
 
   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
