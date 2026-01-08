@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <ctime>
 #include <deque>
 #include <optional>
 #include <stdexcept>
@@ -47,15 +48,29 @@ public:
   virtual T pop();
 
   /**
-   * @brief The method will pop and return the count number of front items from
-   *        the queue or the caller is blocked waiting until the queue contains
-   *        the minimum count of items.
+   * @brief Pops multiple items from the front of the queue, blocking if
+   *        necessary.
    *
-   * @param count The minimum number of items pop from front of the queue
+   *        This method attempts to retrieve 'count' items. It will block the
+   *        caller until:
+   *        1. The queue contains at least @p count items (returns exactly @p
+   *           count items).
+   *        2. The @p timeout expires AND the queue contains at least 1 item
+   *           (returns 1 to @p count items).
+   *        3. If the timeout expires but the queue is empty, the method
+   *           continues waiting.
    *
-   * @return the count number of items of the front of the queue
+   * @param count   The target number of items to retrieve. Must be > 0.
+   * @param timeout The maximum time to wait for the full 'count' in
+   *                microseconds. If 0, the method blocks indefinitely until
+   *                'count' items are available.
+   *
+   * @return A std::vector containing the popped items. The size will be equal
+   *         to @p count, unless a timeout occurred, in which case it will be
+   *         between 1 and @p count. @throw std::runtime_error If a pthread
+   *         mutex or condition variable error occurs.
    */
-  virtual std::vector<T> pop(size_t count);
+  virtual std::vector<T> pop(size_t count, long timeout = 0);
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -242,7 +257,9 @@ template <typename T> size_t Dmn_Buffer<T>::waitForEmpty() {
   return inbound_count;
 }
 
-template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
+template <typename T>
+std::vector<T> Dmn_Buffer<T>::pop(size_t count, long timeout) {
+  struct timespec timeoutTs{};
   std::vector<T> ret{};
   int err{};
 
@@ -258,9 +275,39 @@ template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
   pthread_testcancel();
 
   while (m_queue.size() < count) {
-    err = pthread_cond_wait(&m_none_empty_cond, &m_mutex);
+    if (timeout > 0) {
+      if (0 == timeoutTs.tv_sec) {
+        clock_gettime(CLOCK_REALTIME, &timeoutTs);
+
+        // 1. Add whole seconds from the timeout first
+        timeoutTs.tv_sec += (timeout / 1000000L);
+
+        // 2. Add the remaining microseconds (converted to nanoseconds)
+        timeoutTs.tv_nsec += (timeout % 1000000L) * 1000L;
+
+        // 3. Handle the fractional carry-over (always < 1 second now)
+        if (timeoutTs.tv_nsec >= 1000000000L) {
+          timeoutTs.tv_sec += 1;
+          timeoutTs.tv_nsec -= 1000000000L;
+        }
+      }
+
+      err = pthread_cond_timedwait(&m_none_empty_cond, &m_mutex, &timeoutTs);
+    } else {
+      err = pthread_cond_wait(&m_none_empty_cond, &m_mutex);
+    }
+
     if (err) {
-      throw std::runtime_error(strerror(err));
+      if (err == ETIMEDOUT) {
+        if (m_queue.size() > 0) {
+          break;
+        } else {
+          timeoutTs.tv_sec = 0;
+          timeoutTs.tv_nsec = 0;
+        }
+      } else {
+        throw std::runtime_error(strerror(err));
+      }
     }
 
     pthread_testcancel();
@@ -272,7 +319,7 @@ template <typename T> std::vector<T> Dmn_Buffer<T>::pop(size_t count) {
     ++m_pop_count;
 
     count--;
-  } while (count > 0);
+  } while (count > 0 && (!m_queue.empty()));
 
   if (m_queue.empty()) {
     err = pthread_cond_signal(&m_empty_cond);
