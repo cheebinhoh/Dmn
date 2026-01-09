@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
 
   dmn::Dmn_Runtime_Manager::RuntimeJobFncType timedJob{};
-  timedJob = [&inst](const auto &j) -> void {
+  timedJob = [&inst]() -> void {
     std::cout << "exit main loop after 25seconds\n";
     inst->exitMainLoop();
   };
@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_Proc proc{
       "run low priority job", [&inst, &lowCount, &midCount]() -> void {
         inst->addJob(
-            [&inst, &lowCount, &midCount](const auto &j) -> void {
+            [&inst, &lowCount, &midCount]() -> void {
               for (int count = 0; count < 15; count++) {
                 if (5 == count) {
                   inst->addJob(
-                      [&midCount](const auto &j) -> void {
+                      [&midCount]() -> void {
                         for (int count = 0; count < 5; count++) {
                           std::cout << "*** medium job: " << count
                                     << ", pt: " << (void *)pthread_self()
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
                       },
                       dmn::Dmn_Runtime_Job::kMedium);
                 } else if (8 == count) {
-                  inst->yield(j);
+                  inst->yield();
                 }
 
                 std::cout << "*** low job: " << count
