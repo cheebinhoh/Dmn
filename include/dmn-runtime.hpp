@@ -79,7 +79,7 @@ struct Dmn_Runtime_Job {
   enum Priority : int { kHigh = 1, kMedium, kLow };
 
   Priority m_priority{kMedium};
-  std::function<void(const Dmn_Runtime_Job &job)> m_job{};
+  std::function<void()> m_job{};
   long long m_runtimeSinceEpoch{}; // 0 if immediate or > 0 if start later.
 };
 
@@ -118,7 +118,7 @@ struct TimedJobComparator {
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
 public:
   using SignalHandler = std::function<void(int signo)>;
-  using RuntimeJobFncType = std::function<void(const Dmn_Runtime_Job &)>;
+  using RuntimeJobFncType = std::function<void()>;
 
   Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
@@ -168,7 +168,7 @@ public:
   void exitMainLoop();
   void registerSignalHandler(int signo, const SignalHandler &handler);
 
-  void yield(const Dmn_Runtime_Job &j);
+  void yield();
 
   friend class Dmn_Singleton;
 
@@ -219,6 +219,7 @@ private:
   static sigjmp_buf m_sched_context;
   static sigjmp_buf m_sched_medium_context;
   static sigjmp_buf m_sched_low_context;
+  static Dmn_Runtime_Job::Priority m_sched_priority;
 
   /**
    * static variables for the global singleton instance
