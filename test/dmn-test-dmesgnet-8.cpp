@@ -27,9 +27,9 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
   bool read_data{};
@@ -57,9 +57,9 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(!read_data);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_2 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_2 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
 
   dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", std::move(read_socket_2),

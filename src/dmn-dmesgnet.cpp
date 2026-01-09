@@ -29,8 +29,8 @@
 namespace dmn {
 
 Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
-                           std::unique_ptr<Dmn_Io<std::string>> input_handler,
-                           std::unique_ptr<Dmn_Io<std::string>> output_handler)
+                           std::shared_ptr<Dmn_Io<std::string>> input_handler,
+                           std::shared_ptr<Dmn_Io<std::string>> output_handler)
     : Dmn_DMesg{name}, m_name{name}, m_input_handler{std::move(input_handler)},
       m_output_handler{std::move(output_handler)} {
 

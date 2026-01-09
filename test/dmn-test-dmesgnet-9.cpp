@@ -17,6 +17,7 @@
 
 #include "dmn-dmesgnet.hpp"
 #include "dmn-io.hpp"
+#include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-socket.hpp"
 
@@ -26,16 +27,16 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
+  std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_2 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_2");
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(write_socket_1)};
-  write_socket_1.reset();
+  std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_1 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>(
+          "pipe_1", [pipe_2](std::string &&data) { pipe_2->write(data); });
 
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(read_socket_2)};
-  read_socket_2.reset();
+  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(pipe_1)};
+
+  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(pipe_2)};
 
   auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
 

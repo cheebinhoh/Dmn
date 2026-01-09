@@ -97,8 +97,8 @@ public:
    *                       network sends are performed.
    */
   Dmn_DMesgNet(std::string_view name,
-               std::unique_ptr<Dmn_Io<std::string>> input_handler = nullptr,
-               std::unique_ptr<Dmn_Io<std::string>> output_handler = nullptr);
+               std::shared_ptr<Dmn_Io<std::string>> input_handler = nullptr,
+               std::shared_ptr<Dmn_Io<std::string>> output_handler = nullptr);
 
   virtual ~Dmn_DMesgNet() noexcept;
 
@@ -130,8 +130,8 @@ private:
    * Constructor-initialized members.
    */
   std::string m_name{};
-  std::unique_ptr<Dmn_Io<std::string>> m_input_handler{};
-  std::unique_ptr<Dmn_Io<std::string>> m_output_handler{};
+  std::shared_ptr<Dmn_Io<std::string>> m_input_handler{};
+  std::shared_ptr<Dmn_Io<std::string>> m_output_handler{};
 
   /**
    * Internal runtime state and helper objects.
