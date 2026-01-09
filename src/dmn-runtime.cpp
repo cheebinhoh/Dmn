@@ -8,6 +8,7 @@
 #include "dmn-runtime.hpp"
 
 #include <atomic>
+#include <cassert>
 #include <cerrno>
 #include <chrono>
 #include <csignal>
@@ -31,11 +32,6 @@ namespace dmn {
 std::once_flag Dmn_Runtime_Manager::s_init_once{};
 std::shared_ptr<Dmn_Runtime_Manager> Dmn_Runtime_Manager::s_instance{};
 sigset_t Dmn_Runtime_Manager::s_mask{};
-
-sigjmp_buf Dmn_Runtime_Manager::m_sched_context{};
-sigjmp_buf Dmn_Runtime_Manager::m_sched_medium_context{};
-sigjmp_buf Dmn_Runtime_Manager::m_sched_low_context{};
-Dmn_Runtime_Job::Priority Dmn_Runtime_Manager::m_sched_priority{};
 
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
@@ -161,17 +157,12 @@ void Dmn_Runtime_Manager::execRuntimeJobForInterval(
  * @param job The job to be run in the runtime context
  */
 void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
-  m_schedQueue.push(std::move(job));
+  this->m_sched_stack.push(std::move(job));
 
-  const Dmn_Runtime_Job &topJob = m_schedQueue.top();
+  const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
+  runningJob.m_job(runningJob);
 
-  m_sched_priority = topJob.m_priority;
-
-  auto fnc = topJob.m_job;
-
-  m_schedQueue.pop();
-
-  fnc();
+  this->m_sched_stack.pop();
 }
 
 /**
@@ -188,7 +179,11 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // - if there is still high priority job, we add the elevated medium job into
   //   end of high priority queue.
 
-  volatile int state = sigsetjmp(Dmn_Runtime_Manager::m_sched_context, 1);
+  int state{0}; // not high, not medium, not low
+
+  if (!this->m_sched_stack.empty()) {
+    state = static_cast<int>(this->m_sched_stack.top().m_priority);
+  }
 
   if (state != static_cast<int>(Dmn_Runtime_Job::kHigh)) {
     auto item = m_highQueue.popNoWait();
@@ -209,24 +204,9 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     }
   }
 
-  if (state > 0) {
-    switch (static_cast<Dmn_Runtime_Job::Priority>(state)) {
-    case Dmn_Runtime_Job::kHigh:
-      break;
-
-    case Dmn_Runtime_Job::kMedium:
-      siglongjmp(m_sched_medium_context, 1);
-      break;
-
-    case Dmn_Runtime_Job::kLow:
-      siglongjmp(m_sched_low_context, 1);
-      break;
-    }
+  if (this->m_sched_stack.empty()) {
+    this->execRuntimeJobForInterval(std::chrono::microseconds(1));
   }
-
-  assert(m_schedQueue.empty());
-
-  this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 }
 
 /**
@@ -383,29 +363,20 @@ void Dmn_Runtime_Manager::registerSignalHandlerInternal(
   extHandlers.push_back(handler);
 }
 
-void Dmn_Runtime_Manager::yield() {
-  if (m_sched_priority > Dmn_Runtime_Job::kHigh) {
-    volatile int state{-1};
+void Dmn_Runtime_Manager::yield(const Dmn_Runtime_Job &job) {
+  assert(!this->m_sched_stack.empty());
+  assert(&job == &(this->m_sched_stack.top()));
 
-    switch (m_sched_priority) {
-    case Dmn_Runtime_Job::kHigh:
-      break;
+  switch (job.m_priority) {
+  case Dmn_Runtime_Job::kHigh:
+    // skip!
+    break;
 
-    case Dmn_Runtime_Job::kMedium:
-      state = sigsetjmp(Dmn_Runtime_Manager::m_sched_medium_context, 1);
-      break;
-
-    case Dmn_Runtime_Job::kLow:
-      state = sigsetjmp(Dmn_Runtime_Manager::m_sched_low_context, 1);
-      break;
-    }
-
-    if (0 == state) {
-      siglongjmp(Dmn_Runtime_Manager::m_sched_context,
-                 static_cast<int>(m_sched_priority));
-    } else {
-      std::cout << "resume\n";
-    }
+  case Dmn_Runtime_Job::kMedium:
+  case Dmn_Runtime_Job::kLow:
+  default:
+    this->execRuntimeJobInternal();
+    break;
   }
 }
 
