@@ -47,11 +47,14 @@
 #ifndef DMN_RUNTIME_HPP_
 #define DMN_RUNTIME_HPP_
 
+#include <setjmp.h>
+
 #include <atomic>
 #include <csignal>
 #include <functional>
 #include <mutex>
 #include <queue>
+#include <stack>
 #include <unordered_map>
 #include <vector>
 
@@ -71,17 +74,18 @@ namespace dmn {
  *   microsecond timestamp since epoch when the job should run (used for timed
  *   jobs).
  */
+
 struct Dmn_Runtime_Job {
-  enum Priority { kHigh, kMedium, kLow };
+  enum Priority : int { kHigh = 1, kMedium, kLow };
 
   Priority m_priority{kMedium};
-  std::function<void()> m_job{};
+  std::function<void(const Dmn_Runtime_Job &job)> m_job{};
   long long m_runtimeSinceEpoch{}; // 0 if immediate or > 0 if start later.
 };
 
 // Custom Comparator: We want the SMALLEST time to be at the top
 // (priority_queue in C++ places the largest element at top by default).
-struct JobComparator {
+struct TimedJobComparator {
   bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) {
     return a.m_runtimeSinceEpoch > b.m_runtimeSinceEpoch;
   }
@@ -112,9 +116,10 @@ struct JobComparator {
  *   std::call_once and createInstanceInternal.
  */
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
-  using SignalHandler = std::function<void(int signo)>;
-
 public:
+  using SignalHandler = std::function<void(int signo)>;
+  using RuntimeJobFncType = std::function<void(const Dmn_Runtime_Job &)>;
+
   Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
 
@@ -124,7 +129,7 @@ public:
   Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 
   void addJob(
-      const std::function<void()> &job,
+      const RuntimeJobFncType &job,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
 
   /**
@@ -137,7 +142,7 @@ public:
    */
   template <class Rep, class Period>
   void addTimedJob(
-      const std::function<void()> &job,
+      const RuntimeJobFncType &job,
       const std::chrono::duration<Rep, Period> &duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
@@ -163,19 +168,22 @@ public:
   void exitMainLoop();
   void registerSignalHandler(int signo, const SignalHandler &handler);
 
+  void yield(const Dmn_Runtime_Job &j);
+
   friend class Dmn_Singleton;
 
 private:
-  void addHighJob(const std::function<void()> &job);
-  void addLowJob(const std::function<void()> &job);
-  void addMediumJob(const std::function<void()> &job);
+  void addHighJob(const RuntimeJobFncType &job);
+  void addLowJob(const RuntimeJobFncType &job);
+  void addMediumJob(const RuntimeJobFncType &job);
 
   template <class... U>
   static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
 
   template <class Rep, class Period>
   void
-  execRuntimeJobInInterval(const std::chrono::duration<Rep, Period> &duration);
+  execRuntimeJobForInterval(const std::chrono::duration<Rep, Period> &duration);
+  void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 
@@ -196,8 +204,10 @@ private:
   Dmn_Buffer<Dmn_Runtime_Job> m_mediumQueue{};
 
   std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,
-                      JobComparator>
+                      TimedJobComparator>
       m_timedQueue{};
+
+  std::stack<Dmn_Runtime_Job> m_schedQueue{};
 
   std::atomic_flag m_enter_high_atomic_flag{};
   std::atomic_flag m_enter_low_atomic_flag{};
@@ -205,6 +215,10 @@ private:
   std::atomic_flag m_exit_atomic_flag{};
 
   std::shared_ptr<Dmn_Async_Wait> m_async_job_wait{};
+
+  static sigjmp_buf m_sched_context;
+  static sigjmp_buf m_sched_medium_context;
+  static sigjmp_buf m_sched_low_context;
 
   /**
    * static variables for the global singleton instance
