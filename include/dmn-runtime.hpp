@@ -42,7 +42,8 @@
  *
  * Usage sketch
  * ------------
- *  - Obtain/create the singleton via the Dmn_Singleton factory (createInstanceInternal).
+ *  - Obtain/create the singleton via the Dmn_Singleton factory
+ * (createInstanceInternal).
  *  - Register signal handlers with registerSignalHandler(signo, handler).
  *  - Enqueue work with addJob(...) or schedule with addTimedJob(...).
  *  - Start processing with enterMainLoop(); stop with exitMainLoop().
@@ -91,7 +92,8 @@ struct Dmn_Runtime_Job {
 
   Priority m_priority{kMedium};
   std::function<void(const Dmn_Runtime_Job &j)> m_job{};
-  long long m_runtimeSinceEpoch{}; // 0: immediate; >0: absolute microsecond epoch
+  long long
+      m_runtimeSinceEpoch{}; // 0: immediate; >0: absolute microsecond epoch
 };
 
 // TimedJobComparator
@@ -118,7 +120,8 @@ struct TimedJobComparator {
  *  - addTimedJob(job, duration, priority): schedule job to run after duration.
  *  - registerSignalHandler(signo, handler): register a handler to be invoked
  *    when the given signal is delivered.
- *  - enterMainLoop() / exitMainLoop(): control the runtime processing lifecycle.
+ *  - enterMainLoop() / exitMainLoop(): control the runtime processing
+ * lifecycle.
  *
  * Important behaviour:
  *  - Signals used by the runtime are blocked prior to creating the singleton
@@ -234,8 +237,10 @@ private:
    */
   std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
   sigset_t m_mask{};
-  std::unordered_map<int, SignalHandler> m_signal_handlers{};        // internal handlers
-  std::unordered_map<int, std::vector<SignalHandler>> m_ext_signal_handlers{}; // external hooks
+  std::unordered_map<int, SignalHandler>
+      m_signal_handlers{}; // internal handlers
+  std::unordered_map<int, std::vector<SignalHandler>>
+      m_ext_signal_handlers{}; // external hooks
 
   // Per-priority immediate job queues
   Dmn_Buffer<Dmn_Runtime_Job> m_highQueue{};
