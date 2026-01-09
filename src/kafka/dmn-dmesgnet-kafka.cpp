@@ -23,7 +23,7 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
   input_configs["auto.offset.reset"] = "earliest";
   input_configs[dmn::Dmn_Kafka::PollTimeoutMs] = "500";
 
-  std::unique_ptr<dmn::Dmn_Kafka> input = std::make_unique<dmn::Dmn_Kafka>(
+  std::shared_ptr<dmn::Dmn_Kafka> input = std::make_unique<dmn::Dmn_Kafka>(
       dmn::Dmn_Kafka::Role::kConsumer, input_configs);
 
   // output handle for DMesgNet
@@ -32,7 +32,7 @@ Dmn_DMesgNet_Kafka::Dmn_DMesgNet_Kafka(std::string_view name,
   output_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
   output_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-  std::unique_ptr<dmn::Dmn_Kafka> output = std::make_unique<dmn::Dmn_Kafka>(
+  std::shared_ptr<dmn::Dmn_Kafka> output = std::make_unique<dmn::Dmn_Kafka>(
       dmn::Dmn_Kafka::Role::kProducer, output_configs);
 
   // DMesgNet

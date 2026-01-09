@@ -27,9 +27,9 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::unique_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
   bool readData{};

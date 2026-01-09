@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   dmn::DMesgPb dmesgpb_last{};
-  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
   dmn::Dmn_Proc read_proc{
       "read_socket_1", [&read_socket_1, &dmesgpb_last]() mutable -> void {
@@ -50,10 +50,10 @@ int main(int argc, char *argv[]) {
   read_proc.exec();
   dmn::Dmn_Proc::yield();
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
 
-  std::unique_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
       std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
   dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(read_socket_2),
                               std::move(write_socket_1)};
