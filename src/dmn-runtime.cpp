@@ -18,9 +18,8 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
-#include <system_error>
-
 #include <sys/time.h>
+#include <system_error>
 
 #include "dmn-async.hpp"
 #include "dmn-buffer.hpp"
@@ -32,6 +31,10 @@ namespace dmn {
 std::once_flag Dmn_Runtime_Manager::s_init_once{};
 std::shared_ptr<Dmn_Runtime_Manager> Dmn_Runtime_Manager::s_instance{};
 sigset_t Dmn_Runtime_Manager::s_mask{};
+
+sigjmp_buf Dmn_Runtime_Manager::m_sched_context{};
+sigjmp_buf Dmn_Runtime_Manager::m_sched_medium_context{};
+sigjmp_buf Dmn_Runtime_Manager::m_sched_low_context{};
 
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
@@ -77,7 +80,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @param job The asychronous job
  * @param priority The priority of the asychronous job
  */
-void Dmn_Runtime_Manager::addJob(const std::function<void()> &job,
+void Dmn_Runtime_Manager::addJob(const RuntimeJobFncType &job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
@@ -99,7 +102,7 @@ void Dmn_Runtime_Manager::addJob(const std::function<void()> &job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(const std::function<void()> &job) {
+void Dmn_Runtime_Manager::addHighJob(const RuntimeJobFncType &job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -113,7 +116,7 @@ void Dmn_Runtime_Manager::addHighJob(const std::function<void()> &job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(const std::function<void()> &job) {
+void Dmn_Runtime_Manager::addLowJob(const RuntimeJobFncType &job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -127,7 +130,7 @@ void Dmn_Runtime_Manager::addLowJob(const std::function<void()> &job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> &job) {
+void Dmn_Runtime_Manager::addMediumJob(const RuntimeJobFncType &job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -143,12 +146,26 @@ void Dmn_Runtime_Manager::addMediumJob(const std::function<void()> &job) {
  *                 interval
  */
 template <class Rep, class Period>
-void Dmn_Runtime_Manager::execRuntimeJobInInterval(
+void Dmn_Runtime_Manager::execRuntimeJobForInterval(
     const std::chrono::duration<Rep, Period> &duration) {
   if (!m_exit_atomic_flag.test()) {
     m_async_job_wait = this->addExecTaskAfterWithWait(
         duration, [this]() -> void { this->execRuntimeJobInternal(); });
   }
+}
+
+/**
+ * @brief The method will execute the job in runtime context.
+ *
+ * @param job The job to be run in the runtime context
+ */
+void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
+  m_schedQueue.push(std::move(job));
+
+  const Dmn_Runtime_Job &topJob = m_schedQueue.top();
+  topJob.m_job(topJob);
+
+  m_schedQueue.pop();
 }
 
 /**
@@ -165,25 +182,47 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // - if there is still high priority job, we add the elevated medium job into
   //   end of high priority queue.
 
-  auto item = m_highQueue.popNoWait();
+  int state = sigsetjmp(Dmn_Runtime_Manager::m_sched_context, 1);
 
-  if (item) {
-    (*item).m_job();
-  } else {
-    item = m_mediumQueue.popNoWait();
-
+  if (state != static_cast<int>(Dmn_Runtime_Job::kHigh)) {
+    auto item = m_highQueue.popNoWait();
     if (item) {
-      (*item).m_job();
-    } else {
+      this->execRuntimeJobInContext(std::move(*item));
+    } else if (state != static_cast<int>(Dmn_Runtime_Job::kMedium)) {
+      item = m_mediumQueue.popNoWait();
 
-      item = m_lowQueue.popNoWait();
       if (item) {
-        (*item).m_job();
+        this->execRuntimeJobInContext(std::move(*item));
+      } else if (state != static_cast<int>(Dmn_Runtime_Job::kLow)) {
+
+        item = m_lowQueue.popNoWait();
+        if (item) {
+          this->execRuntimeJobInContext(std::move(*item));
+        }
       }
     }
   }
 
-  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
+  if (!m_schedQueue.empty()) {
+    const Dmn_Runtime_Job &topJob = m_schedQueue.top();
+
+    switch (topJob.m_priority) {
+    case Dmn_Runtime_Job::kHigh:
+      break;
+
+    case Dmn_Runtime_Job::kMedium:
+      siglongjmp(m_sched_medium_context, 1);
+      break;
+
+    case Dmn_Runtime_Job::kLow:
+      siglongjmp(m_sched_low_context, 1);
+      break;
+    }
+  }
+
+  assert(m_schedQueue.empty());
+
+  this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 }
 
 /**
@@ -214,7 +253,7 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
   // up to this point, all async jobs are paused.
-  this->execRuntimeJobInInterval(std::chrono::microseconds(1));
+  this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();
@@ -338,6 +377,35 @@ void Dmn_Runtime_Manager::registerSignalHandlerInternal(
     int signo, const SignalHandler &handler) {
   auto &extHandlers = m_ext_signal_handlers[signo];
   extHandlers.push_back(handler);
+}
+
+void Dmn_Runtime_Manager::yield(const Dmn_Runtime_Job &j) {
+  assert(!m_schedQueue.empty());
+  assert(&(m_schedQueue.top()) == &j);
+
+  const Dmn_Runtime_Job &topJob = m_schedQueue.top();
+  if (topJob.m_priority > Dmn_Runtime_Job::kHigh) {
+    int state{};
+
+    switch (topJob.m_priority) {
+    case Dmn_Runtime_Job::kHigh:
+      break;
+
+    case Dmn_Runtime_Job::kMedium:
+      state = sigsetjmp(Dmn_Runtime_Manager::m_sched_medium_context, 1);
+      break;
+
+    case Dmn_Runtime_Job::kLow:
+      state = sigsetjmp(Dmn_Runtime_Manager::m_sched_low_context, 1);
+      break;
+    }
+
+    if (0 == state) {
+      siglongjmp(Dmn_Runtime_Manager::m_sched_context,
+                 static_cast<int>(topJob.m_priority));
+    } else {
+    }
+  }
 }
 
 } // namespace dmn

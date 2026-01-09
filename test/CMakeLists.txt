@@ -37,6 +37,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-pipe-2
                       dmn-test-pub-sub
                       dmn-test-runtime
+                      # dmn-test-runtime-2
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-teepipe
