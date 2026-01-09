@@ -47,8 +47,6 @@
 #ifndef DMN_RUNTIME_HPP_
 #define DMN_RUNTIME_HPP_
 
-#include <setjmp.h>
-
 #include <atomic>
 #include <csignal>
 #include <functional>
@@ -79,7 +77,7 @@ struct Dmn_Runtime_Job {
   enum Priority : int { kHigh = 1, kMedium, kLow };
 
   Priority m_priority{kMedium};
-  std::function<void()> m_job{};
+  std::function<void(const Dmn_Runtime_Job &j)> m_job{};
   long long m_runtimeSinceEpoch{}; // 0 if immediate or > 0 if start later.
 };
 
@@ -118,7 +116,7 @@ struct TimedJobComparator {
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
 public:
   using SignalHandler = std::function<void(int signo)>;
-  using RuntimeJobFncType = std::function<void()>;
+  using RuntimeJobFncType = std::function<void(const Dmn_Runtime_Job &j)>;
 
   Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
@@ -168,7 +166,7 @@ public:
   void exitMainLoop();
   void registerSignalHandler(int signo, const SignalHandler &handler);
 
-  void yield();
+  void yield(const Dmn_Runtime_Job &j);
 
   friend class Dmn_Singleton;
 
@@ -207,8 +205,6 @@ private:
                       TimedJobComparator>
       m_timedQueue{};
 
-  std::stack<Dmn_Runtime_Job> m_schedQueue{};
-
   std::atomic_flag m_enter_high_atomic_flag{};
   std::atomic_flag m_enter_low_atomic_flag{};
   std::atomic_flag m_enter_medium_atomic_flag{};
@@ -216,10 +212,7 @@ private:
 
   std::shared_ptr<Dmn_Async_Wait> m_async_job_wait{};
 
-  static sigjmp_buf m_sched_context;
-  static sigjmp_buf m_sched_medium_context;
-  static sigjmp_buf m_sched_low_context;
-  static Dmn_Runtime_Job::Priority m_sched_priority;
+  std::stack<Dmn_Runtime_Job> m_sched_stack{};
 
   /**
    * static variables for the global singleton instance

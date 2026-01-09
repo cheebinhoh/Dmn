@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   int count{};
 
   dmn::Dmn_Runtime_Manager::RuntimeJobFncType timedJob{};
-  timedJob = [&inst, &count, &timedJob]() -> void {
+  timedJob = [&inst, &count, &timedJob](const auto &) -> void {
     std::cout << "********* handle timerjob: " << count << "\n";
     if (count >= 5) {
       inst->exitMainLoop();
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&highRun, &mediumRun, &lowRun]() {
+              [&highRun, &mediumRun, &lowRun](const auto &) {
                 EXPECT_TRUE(0 == lowRun);
                 EXPECT_TRUE(0 == mediumRun);
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&lowRun, &highRun, &mediumRun]() {
+              [&lowRun, &highRun, &mediumRun](const auto &) {
                 EXPECT_TRUE(2 == highRun);
                 EXPECT_TRUE(2 == mediumRun);
                 std::cout << "** low job\n";
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&mediumRun, &highRun, &lowRun]() {
+              [&mediumRun, &highRun, &lowRun](const auto &) {
                 EXPECT_TRUE(2 == highRun);
                 EXPECT_TRUE(0 == lowRun);
                 std::cout << "** medium job\n";
