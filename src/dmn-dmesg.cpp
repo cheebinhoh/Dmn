@@ -142,6 +142,57 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
   return;
 }
 
+auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict() -> bool {
+  bool inConflict{};
+
+  auto waitHandler = m_sub.addExecTaskWithWait([this, &inConflict]() -> void {
+    inConflict = this->isInConflictInternal();
+  });
+
+  waitHandler->wait();
+
+  return inConflict;
+}
+
+auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
+    -> unsigned long {
+  unsigned long runningCounter{};
+
+  auto waitHandler =
+      m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+        runningCounter = this->getTopicRunningCounterInternal(topic);
+      });
+
+  waitHandler->wait();
+
+  return runningCounter;
+}
+
+auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
+    std::string_view topic) -> unsigned long {
+  auto iter = m_topic_running_counter.find(std::string(topic));
+  if (m_topic_running_counter.end() == iter) {
+    return 0;
+  }
+
+  return iter->second;
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
+    std::string_view topic, unsigned long runningCounter) {
+  auto waitHandler =
+      m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+        this->setTopicRunningCounterInternal(topic, runningCounter);
+      });
+
+  waitHandler->wait();
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
+    std::string_view topic, unsigned long runningCounter) {
+  m_topic_running_counter[std::string(topic)] = runningCounter;
+}
+
 auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
   assert(nullptr != m_owner);
 
@@ -164,11 +215,11 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
 
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
 
-  auto waitHandler =
+  auto waithandler =
       m_sub.addExecTaskWithWait([this, &moved_dmesgpb]() -> void {
         writeDMesgInternal(moved_dmesgpb, true);
       });
-  waitHandler->wait();
+  waithandler->wait();
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
@@ -220,7 +271,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   m_topic_running_counter[topic] = next_running_counter;
 }
 
-auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict() const -> bool {
+auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal() const -> bool {
   return m_in_conflict;
 }
 
@@ -311,7 +362,7 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
 
   // if source is still in conflict, we do not allow it to send any message
   // until it resolves conflict state.
-  if (iter != m_handlers.end() && (*iter)->isInConflict()) {
+  if (iter != m_handlers.end() && (*iter)->isInConflictInternal()) {
     // avoid throw conflict multiple times
     return;
   }
