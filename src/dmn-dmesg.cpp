@@ -15,10 +15,9 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/time.h>
 #include <utility>
 #include <vector>
-
-#include <sys/time.h>
 
 #include "dmn-async.hpp"
 #include "dmn-dmesg-pb-util.hpp"
@@ -59,7 +58,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
       if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
            m_owner->m_include_dmesgpb_sys) &&
-          (m_owner->m_no_topic_filter || dmesgpb.topic() == m_owner->m_topic) &&
+          (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
+           dmesgpb.topic() == m_owner->m_topic) &&
           (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
         if (m_owner->m_async_process_fn) {
           m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
@@ -196,8 +196,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tval);
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
 
-  if (m_no_topic_filter) {
-  } else {
+  if (dmesgpb.topic().empty() && (!m_topic.empty())) {
     DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
   }
 
@@ -252,6 +251,7 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
                 return nullptr != handler && nullptr != handler->m_owner &&
                        (msg.playback() || handler->m_after_initial_playback) &&
                        (handler->m_no_topic_filter ||
+                        handler->m_topic.empty() ||
                         msg.topic() == handler->m_topic);
               }},
       m_name{name} {}

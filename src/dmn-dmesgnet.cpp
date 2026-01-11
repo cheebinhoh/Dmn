@@ -116,6 +116,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
             dmn::DMesgPb dmesgpb_read{};
 
             auto data = this->m_input_handler->read();
+
             Dmn_Proc::yield();
 
             if (data) {
