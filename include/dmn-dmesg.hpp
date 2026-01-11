@@ -242,6 +242,32 @@ public:
     Dmn_DMesgHandler &operator=(Dmn_DMesgHandler &&obj) = delete;
 
     /**
+     * @brief The method returns yes or not if the handler is in conflict
+     *
+     * @return True or False if the handler is in conflict state from last
+     *         written message
+     */
+    auto isInConflict() -> bool;
+
+    /**
+     * @brief The method returns running counter of the topic.
+     *
+     * @param topic The topic
+     *
+     * @return The running counter of the topic
+     */
+    auto getTopicRunningCounter(std::string_view topic) -> unsigned long;
+
+    /**
+     * @brief The method sets running counter of the topic.
+     *
+     * @param topic The topic
+     * @param runningCounter The running counter to be set for the topic
+     */
+    void setTopicRunningCounter(std::string_view topic,
+                                unsigned long runningCounter);
+
+    /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
      *        an exception occurs.
      */
@@ -290,6 +316,25 @@ public:
 
   protected:
     /**
+     * @brief The method returns running counter of the topic.
+     *
+     * @param topic The topic
+     *
+     * @return The running counter of the topic
+     */
+    auto getTopicRunningCounterInternal(std::string_view topic)
+        -> unsigned long;
+
+    /**
+     * @brief The method sets running counter of the topic.
+     *
+     * @param topic The topic
+     * @param runningCounter The running counter to be set for the topic
+     */
+    void setTopicRunningCounterInternal(std::string_view topic,
+                                        unsigned long runningCounter);
+
+    /**
      * @brief Internal write implementation used by public write(...) overloads.
      *
      * @param dmesgPb The message to publish.
@@ -302,7 +347,7 @@ public:
      * @brief Return true if the handler is currently marked in a conflict
      *        state (atomic check).
      */
-    auto isInConflict() const -> bool;
+    auto isInConflictInternal() const -> bool;
 
     /**
      * @brief Internal helper to mark the handler as resolved. Must be called
