@@ -244,11 +244,7 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
 template <typename T> std::optional<T> Dmn_Pipe<T>::read() {
   T data{};
 
-  try {
-    readAndProcess([&data](T &&item) { data = item; });
-  } catch (...) {
-    return {};
-  }
+  readAndProcess([&data](T &&item) { data = item; });
 
   return std::move_if_noexcept(data);
 }

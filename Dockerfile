@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
       clang-tidy \
       curl \
       git \
+      gdb \
       openjdk-17-jre-headless \
       libgtest-dev \
       libgtest-dev \
