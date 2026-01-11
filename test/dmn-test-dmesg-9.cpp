@@ -119,10 +119,9 @@ int main(int argc, char *argv[]) {
 
   auto inConflict = dmesg_write_handle->isInConflict();
   std::cout << "conflict: " << inConflict << "\n";
-  EXPECT_TRUE((inConflict))
-      :
+  EXPECT_TRUE((inConflict));
 
-        dmesg.closeHandler(dmesg_write_handle);
+  dmesg.closeHandler(dmesg_write_handle);
   dmesg.closeHandler(dmesg_read_handle1);
   dmesg.closeHandler(dmesg_read_handle2);
 
