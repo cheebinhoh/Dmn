@@ -70,4 +70,4 @@ RUN mkdir build && cmake -B build && cmake --build build/
 
 
 # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L dmn; exec /bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L dmn && exec /bin/bash"]
