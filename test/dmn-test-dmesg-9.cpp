@@ -113,13 +113,12 @@ int main(int argc, char *argv[]) {
   runningCounter = dmesg_write_handle->getTopicRunningCounter("id1");
   std::cout << "topic runningCounter: " << runningCounter << "\n";
 
-  dmesg_write_handle->write(dmesgpb3);
-
-  std::cout << "check if in conflict\n";
+  auto ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb3);
+  EXPECT_TRUE((!ok));
+  std::cout << "conflict: " << !ok << "\n";
 
   auto inConflict = dmesg_write_handle->isInConflict();
-  std::cout << "conflict: " << inConflict << "\n";
-  EXPECT_TRUE((inConflict));
+  EXPECT_TRUE((!inConflict));
 
   dmesg.closeHandler(dmesg_write_handle);
   dmesg.closeHandler(dmesg_read_handle1);

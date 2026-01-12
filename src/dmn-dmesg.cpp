@@ -230,6 +230,20 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
   waitHandler->wait();
 }
 
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
+    -> bool {
+  this->write(dmesgpb);
+
+  return !this->isInConflict();
+}
+
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb)
+    -> bool {
+  this->write(dmesgpb);
+
+  return !this->isInConflict();
+}
+
 void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
 
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
