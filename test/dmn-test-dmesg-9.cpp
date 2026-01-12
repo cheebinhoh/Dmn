@@ -115,10 +115,10 @@ int main(int argc, char *argv[]) {
 
   auto ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb3);
   EXPECT_TRUE((!ok));
-  std::cout << "conflict: " << !ok << "\n";
+  std::cout << "No conflict: " << ok << "\n";
 
   auto inConflict = dmesg_write_handle->isInConflict();
-  EXPECT_TRUE((!inConflict));
+  EXPECT_TRUE((inConflict));
 
   dmesg.closeHandler(dmesg_write_handle);
   dmesg.closeHandler(dmesg_read_handle1);
