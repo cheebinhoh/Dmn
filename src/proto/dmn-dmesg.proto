@@ -20,6 +20,7 @@ message DMesgPb
   string                    sourceWriteHandlerIdentifier = 5; // set by Dmn_DMesgHandler
   DMesgTypePb               type                         = 6;
   bool                      playback                     = 7; // set by Dmn_DMesg for playback
+  bool                      force                        = 8; // set by Dmn_DMesg for overwriting runningCounter
 
   /* The payload body is started at 10, so that we have room reserved
    * to add extra data member that are attributes specific to the library
