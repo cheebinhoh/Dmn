@@ -33,6 +33,7 @@
 #define DMN_IO_HPP_
 
 #include <optional>
+#include <vector>
 
 namespace dmn {
 
@@ -40,6 +41,7 @@ template <typename T> class Dmn_Io {
 public:
   virtual ~Dmn_Io() = default;
   virtual auto read() -> std::optional<T> = 0;
+  virtual std::vector<T> read(size_t count, long timeout = 0) { return {}; }
   virtual void write(T &item) = 0;
   virtual void write(T &&item) = 0;
 };

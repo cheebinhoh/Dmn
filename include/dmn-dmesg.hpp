@@ -306,6 +306,22 @@ public:
     void write(dmn::DMesgPb &dmesgpb) override;
 
     /**
+     * @brief Publish the message and return true if no conflict, or false
+     *        otherwise.
+     *
+     * @param dmesgpb message to be publish (moved).
+     */
+    auto writeAndCheckConflict(dmn::DMesgPb &&dmesgpb) -> bool;
+
+    /**
+     * @brief Publish the message and return true if no conflict, or false
+     *        otherwise.
+     *
+     * @param dmesgpb message to be publish (copied).
+     */
+    auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb) -> bool;
+
+    /**
      * @brief Block until there are no pending asynchronous tasks for this
      *        handler (for example, pending notify/async-process tasks).
      */
