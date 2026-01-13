@@ -46,8 +46,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
   if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
       dmesgpb.type() == dmn::DMesgTypePb::sys) {
     const std::string &topic = dmesgpb.topic();
-    const unsigned long runningCounter =
-        m_owner->m_topic_running_counter[topic];
+    const auto runningCounter = m_owner->m_topic_running_counter[topic];
 
     if (dmesgpb.runningcounter() > runningCounter) {
       m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
@@ -250,7 +249,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move) {
   assert(nullptr != m_owner);
 
-  if (m_in_conflict) {
+  if (m_in_conflict && !dmesgpb.force()) {
     throw std::runtime_error("last write results in conflicted, "
                              "handler needs to be reset");
   }
@@ -271,7 +270,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
 
   const std::string topic = dmesgpb.topic();
 
-  const unsigned long next_running_counter =
+  const auto next_running_counter =
       incrementByOne(m_topic_running_counter[topic]);
 
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
@@ -283,6 +282,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   }
 
   m_topic_running_counter[topic] = next_running_counter;
+  m_in_conflict = false;
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal() const -> bool {
@@ -383,16 +383,19 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
 
   const std::string &topic = dmesgpb.topic();
 
-  const unsigned long next_running_counter =
-      incrementByOne(m_topic_running_counter[topic]);
+  auto next_running_counter = incrementByOne(m_topic_running_counter[topic]);
 
   // if this is a message is out of date and put the sender in conflict
   if (dmesgpb.runningcounter() < next_running_counter) {
-    if (iter != m_handlers.end()) {
-      (*iter)->throwConflict(dmesgpb);
-    }
+    if (dmesgpb.force()) {
+      next_running_counter = dmesgpb.runningcounter();
+    } else {
+      if (iter != m_handlers.end()) {
+        (*iter)->throwConflict(dmesgpb);
+      }
 
-    return;
+      return;
+    }
   }
 
   dmn::DMesgPb copied = dmesgpb;
