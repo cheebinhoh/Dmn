@@ -103,7 +103,7 @@ public:
    */
   class Dmn_Sub : public Dmn_Async {
   public:
-    Dmn_Sub() = default;
+    Dmn_Sub(ssize_t replayQuantity = -1) : m_replayQuantity{replayQuantity} {}
     virtual ~Dmn_Sub() noexcept;
 
     Dmn_Sub(const Dmn_Sub &obj) = delete;
@@ -136,6 +136,8 @@ public:
      */
     void notifyInternal(const T &item);
 
+    ssize_t m_replayQuantity{
+        -1}; // -1 resend all, 0 no resend, resend up to number
     Dmn_Pub *m_pub{};
   }; // class Dmn_Sub
 
@@ -154,7 +156,7 @@ public:
    *                  each (subscriber, item) pair to decide whether that
    *                  subscriber should receive the item.
    */
-  Dmn_Pub(std::string_view name, ssize_t capacity = 10,
+  Dmn_Pub(std::string_view name, size_t capacity = 10,
           Dmn_Pub_Filter_Task filter_fn = {});
   virtual ~Dmn_Pub() noexcept;
 
@@ -223,7 +225,7 @@ private:
    * Configuration set at construction time.
    */
   std::string m_name{};
-  ssize_t m_capacity{};
+  size_t m_capacity{};
   Dmn_Pub_Filter_Task m_filter_fn{};
 
   /**
@@ -252,7 +254,7 @@ template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(const T &item) {
 
 // class Dmn_Pub
 template <typename T>
-Dmn_Pub<T>::Dmn_Pub(std::string_view name, ssize_t capacity,
+Dmn_Pub<T>::Dmn_Pub(std::string_view name, size_t capacity,
                     Dmn_Pub_Filter_Task filter_fn)
     : Dmn_Async(name), m_name{name}, m_capacity{capacity},
       m_filter_fn{filter_fn} {
@@ -314,8 +316,12 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
    */
 
   m_buffer.push_back(item);
-  std::size_t numOfElementToBeRemoved =
-      std::max(0ul, m_buffer.size() - m_capacity);
+
+  std::size_t numOfElementToBeRemoved = 0;
+  if (m_buffer.size() > m_capacity) {
+    numOfElementToBeRemoved = m_buffer.size() - m_capacity;
+  }
+
   while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
     m_buffer.erase(m_buffer.begin());
     numOfElementToBeRemoved--;
@@ -355,8 +361,19 @@ template <typename T> void Dmn_Pub<T>::registerSubscriber(Dmn_Sub *sub) {
 
   // resend the data items that the registered subscriber
   // miss.
+  size_t numberOfItemsToBeSkipped = 0;
+  if (sub->m_replayQuantity > 0 &&
+      m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
+    numberOfItemsToBeSkipped =
+        m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
+  }
+
   for (auto &item : m_buffer) {
-    sub->notifyInternal(item);
+    if (numberOfItemsToBeSkipped > 0) {
+      numberOfItemsToBeSkipped--;
+    } else {
+      sub->notifyInternal(item);
+    }
   }
 
   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
