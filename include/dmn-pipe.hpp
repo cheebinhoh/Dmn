@@ -145,7 +145,7 @@ public:
    *         was produced).
    * @throws std::runtime_error on pthread errors.
    */
-  std::vector<T> read(size_t count, long timeout = 0);
+  std::vector<T> read(size_t count, long timeout = 0) override;
 
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
