@@ -67,6 +67,16 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(rec2.m_notifiedList[0] == "hello world 3");
   EXPECT_TRUE(rec2.m_notifiedList[1] == "string 1");
 
+  Dmn_Msg_Receiver rec3{"receiver 3"};
+  pub.registerSubscriber(&rec3);
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  pub.unregisterSubscriber(&rec3);
+
+  EXPECT_TRUE(rec3.m_notifiedList.size() == 3);
+  EXPECT_TRUE(rec3.m_notifiedList[0] == "hello world");
+  EXPECT_TRUE(rec3.m_notifiedList[1] == "hello world 3");
+  EXPECT_TRUE(rec3.m_notifiedList[2] == "string 1");
+
   /*
       EXPECT_TRUE(rec1.m_notifiedList[0] == "hello pub sub");
       EXPECT_TRUE(rec1.m_notifiedList[1] == "hello world");
