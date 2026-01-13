@@ -52,6 +52,8 @@ int main(int argc, char *argv[]) {
   dmesgpb_body2->set_message("message string 2");
 
   dmn::DMesgPb dmesgpb3 = dmesgpb2;
+  dmn::DMesgPb dmesgpb4 = dmesgpb3;
+  dmesgpb4.set_force(true);
 
   dmn::Dmn_Proc proc_read1{
       "read1", [&dmesg_read_handle1, &dmesgpb1]() -> void {
@@ -115,10 +117,14 @@ int main(int argc, char *argv[]) {
 
   auto ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb3);
   EXPECT_TRUE((!ok));
-  std::cout << "No conflict: " << ok << "\n";
+  std::cout << "write without conflict: " << ok << "\n";
 
   auto inConflict = dmesg_write_handle->isInConflict();
   EXPECT_TRUE((inConflict));
+
+  ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb4);
+  EXPECT_TRUE((ok));
+  std::cout << "write without conflict: " << ok << "\n";
 
   dmesg.closeHandler(dmesg_write_handle);
   dmesg.closeHandler(dmesg_read_handle1);
