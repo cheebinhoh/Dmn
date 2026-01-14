@@ -126,7 +126,8 @@ int main(int argc, char *argv[]) {
   inConflict = dmesg_read_handle1->isInConflict();
   EXPECT_TRUE((inConflict));
 
-  ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb4, (1 << dmn::Dmn_DMesg::Dmn_DMesgHandler::WriteOptions::Force));
+  ok = dmesg_write_handle->writeAndCheckConflict(
+      dmesgpb4, (1 << dmn::Dmn_DMesg::Dmn_DMesgHandler::WriteOptions::Force));
   EXPECT_TRUE((ok));
   std::cout << "write without conflict: " << ok << "\n";
 
