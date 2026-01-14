@@ -306,6 +306,24 @@ public:
     void write(dmn::DMesgPb &dmesgpb) override;
 
     /**
+     * @brief Publish the provided DMesgPb by moving it into the publisher
+     *        queue (efficient path).
+     *
+     * @param dmesgpb Message to publish (moved).
+     * @param block   Block waiting for the publisher to process the message.
+     */
+    void write(dmn::DMesgPb &&dmesgpb, bool block);
+
+    /**
+     * @brief Publish the provided DMesgPb by copying it into the publisher
+     *        queue.
+     *
+     * @param dmesgpb Message to publish (copied).
+     * @param block   Block waiting for the publisher to process the message.
+     */
+    void write(dmn::DMesgPb &dmesgpb, bool block);
+
+    /**
      * @brief Publish the message and return true if no conflict, or false
      *        otherwise.
      *
@@ -355,8 +373,10 @@ public:
      *
      * @param dmesgPb The message to publish.
      * @param move    If true, move the message; otherwise copy.
+     * @param block   Block waiting for the publisher to process the message.
      */
-    void writeDMesgInternal(dmn::DMesgPb &dmesgpb, bool move);
+    void writeDMesgInternal(dmn::DMesgPb &dmesgpb, bool move,
+                            bool block = false);
 
   private:
     /**

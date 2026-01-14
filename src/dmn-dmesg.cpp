@@ -244,6 +244,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
+  this->write(dmesgpb, false);
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
+  this->write(dmesgpb, false);
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb, bool block) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
@@ -251,26 +259,28 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
 
   auto waithandler =
-      m_sub.addExecTaskWithWait([this, &moved_dmesgpb]() -> void {
-        writeDMesgInternal(moved_dmesgpb, true);
+      m_sub.addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
+        writeDMesgInternal(moved_dmesgpb, true, block);
       });
   waithandler->wait();
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
+void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb, bool block) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
 
-  auto waitHandler = m_sub.addExecTaskWithWait(
-      [this, &dmesgpb]() -> void { writeDMesgInternal(dmesgpb, false); });
+  auto waitHandler =
+      m_sub.addExecTaskWithWait([this, &dmesgpb, block]() -> void {
+        writeDMesgInternal(dmesgpb, false, block);
+      });
   waitHandler->wait();
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
     -> bool {
 
-  this->write(dmesgpb);
+  this->write(dmesgpb, true);
 
   return !this->isInConflict();
 }
@@ -278,7 +288,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb)
     -> bool {
 
-  this->write(dmesgpb);
+  this->write(dmesgpb, true);
 
   return !this->isInConflict();
 }
@@ -291,7 +301,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() {
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
-                                                     bool move) {
+                                                     bool move, bool block) {
   assert(nullptr != m_owner);
 
   if (m_in_conflict && !dmesgpb.force()) {
@@ -324,9 +334,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   m_in_conflict = false;
 
   if (move) {
-    m_owner->publish(std::move_if_noexcept(dmesgpb), true);
+    m_owner->publish(std::move_if_noexcept(dmesgpb), block);
   } else {
-    m_owner->publish(dmesgpb, true);
+    m_owner->publish(dmesgpb, block);
   }
 }
 
