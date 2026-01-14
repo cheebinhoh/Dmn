@@ -176,7 +176,7 @@ public:
    *
    * @param item The data item to publish.
    */
-  void publish(const T &item);
+  void publish(const T &item, bool block = false);
 
   /**
    * registerSubscriber
@@ -284,8 +284,15 @@ template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::publish(const T &item) {
-  DMN_ASYNC_CALL_WITH_CAPTURE({ this->publishInternal(item); }, this, item);
+template <typename T> void Dmn_Pub<T>::publish(const T &item, bool block) {
+  if (block) {
+    auto waitHandler = this->addExecTaskWithWait(
+        [this, &item]() -> void { this->publishInternal(item); });
+
+    waitHandler->wait();
+  } else {
+    DMN_ASYNC_CALL_WITH_CAPTURE({ this->publishInternal(item); }, this, item);
+  }
 }
 
 template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {

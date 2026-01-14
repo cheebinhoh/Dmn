@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
         return dmesgpb.body().message() != "message string 1";
       });
 
+  auto dmesg_read_handle_id2 = dmesg.openHandler("readHandler1", "id2");
+
   dmn::DMesgPb dmesgpb1{};
   dmesgpb1.set_topic("id1");
   dmesgpb1.set_runningcounter(99);
@@ -122,9 +124,20 @@ int main(int argc, char *argv[]) {
   auto inConflict = dmesg_write_handle->isInConflict();
   EXPECT_TRUE((inConflict));
 
+  inConflict = dmesg_read_handle1->isInConflict();
+  EXPECT_TRUE((inConflict));
+
   ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb4);
   EXPECT_TRUE((ok));
   std::cout << "write without conflict: " << ok << "\n";
+
+  inConflict = dmesg_write_handle->isInConflict();
+  EXPECT_TRUE((!inConflict));
+
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  inConflict = dmesg_read_handle1->isInConflict();
+  EXPECT_TRUE((!inConflict));
 
   auto dmesg_read_handle3 = dmesg.openHandler("readHandler3");
 
@@ -136,6 +149,7 @@ int main(int argc, char *argv[]) {
   dmesg.closeHandler(dmesg_read_handle1);
   dmesg.closeHandler(dmesg_read_handle2);
   dmesg.closeHandler(dmesg_read_handle3);
+  dmesg.closeHandler(dmesg_read_handle_id2);
 
   return RUN_ALL_TESTS();
 }

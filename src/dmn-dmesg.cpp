@@ -43,32 +43,42 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
 
 void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
     const dmn::DMesgPb &dmesgpb) {
-  if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
-      dmesgpb.type() == dmn::DMesgTypePb::sys) {
-    const std::string &topic = dmesgpb.topic();
-    const auto runningCounter = m_owner->m_topic_running_counter[topic];
+  if (dmesgpb.conflict()) {
+    if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name &&
+        (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
+         dmesgpb.topic() == m_owner->m_topic)) {
+      m_owner->throwConflict(dmesgpb);
+    }
+  } else {
+    if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
+        dmesgpb.type() == dmn::DMesgTypePb::sys) {
+      const std::string &topic = dmesgpb.topic();
+      const auto runningCounter = m_owner->m_topic_running_counter[topic];
 
-    if (dmesgpb.runningcounter() > runningCounter) {
-      m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+      if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
+        m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
 
-      if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        m_owner->m_last_dmesgpb_sys = dmesgpb;
-      }
+        if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
+          m_owner->m_last_dmesgpb_sys = dmesgpb;
+        }
 
-      if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
-           m_owner->m_include_dmesgpb_sys) &&
-          (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
-           dmesgpb.topic() == m_owner->m_topic) &&
-          (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
-        if (m_owner->m_async_process_fn) {
-          m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
-        } else {
-          dmn::DMesgPb copied = dmesgpb;
-          m_owner->m_buffers.push(copied);
+        if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
+             m_owner->m_include_dmesgpb_sys) &&
+            (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
+             dmesgpb.topic() == m_owner->m_topic) &&
+            (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
+          if (m_owner->m_async_process_fn) {
+            m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
+          } else {
+            m_owner->resolveConflictInternal();
+
+            dmn::DMesgPb copied = dmesgpb;
+            m_owner->m_buffers.push(copied);
+          }
         }
       }
     }
-  }
+  } /* if (dmesgpb.conflict()) */
 }
 
 // class Dmn_DMesg::Dmn_DMesgHandler
@@ -188,7 +198,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
-  [[unused_variable]] auto waitHandler = m_sub.addExecTaskWithWait(
+  [[maybe_unused]] auto waitHandler = m_sub.addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
@@ -310,14 +320,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
 
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
-  if (move) {
-    m_owner->publish(std::move_if_noexcept(dmesgpb));
-  } else {
-    m_owner->publish(dmesgpb);
-  }
-
   m_topic_running_counter[topic] = next_running_counter;
   m_in_conflict = false;
+
+  if (move) {
+    m_owner->publish(std::move_if_noexcept(dmesgpb), true);
+  } else {
+    m_owner->publish(dmesgpb, true);
+  }
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal() const -> bool {
@@ -417,29 +427,28 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
     return;
   }
 
-  const std::string &topic = dmesgpb.topic();
+  dmn::DMesgPb copied_dmesgpb = dmesgpb;
+  const std::string &topic = copied_dmesgpb.topic();
 
   auto next_running_counter = incrementByOne(m_topic_running_counter[topic]);
-
-  // if this is a message is out of date and put the sender in conflict
-  if (dmesgpb.runningcounter() < next_running_counter) {
-    if (dmesgpb.force()) {
-      next_running_counter = dmesgpb.runningcounter();
-    } else {
-      if (iter != m_handlers.end()) {
-        (*iter)->throwConflict(dmesgpb);
-      }
-
-      return;
-    }
+  if (copied_dmesgpb.force()) {
+    next_running_counter = copied_dmesgpb.runningcounter();
   }
 
-  dmn::DMesgPb copied = dmesgpb;
+  // if this is a message is out of date and put the sender in conflict
+  if (copied_dmesgpb.runningcounter() < next_running_counter) {
+    copied_dmesgpb.set_conflict(true);
 
-  DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
-  Dmn_Pub::publishInternal(copied);
-  m_topic_running_counter[topic] = next_running_counter;
-  m_topic_last_dmesgpb[topic] = copied;
+    if (iter != m_handlers.end()) {
+      (*iter)->throwConflict(copied_dmesgpb);
+    }
+  } else {
+    DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied_dmesgpb, next_running_counter);
+    m_topic_running_counter[topic] = next_running_counter;
+    m_topic_last_dmesgpb[topic] = copied_dmesgpb;
+  }
+
+  Dmn_Pub::publishInternal(copied_dmesgpb);
 }
 
 void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
