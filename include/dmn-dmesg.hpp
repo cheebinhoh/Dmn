@@ -53,8 +53,8 @@
 #define DMN_DMESG_HPP_
 
 #include <atomic>
+#include <bitset>
 #include <cassert>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -172,6 +172,9 @@ public:
     }; // class Dmn_DMesgHandlerSub
 
   public:
+    enum WriteOptions { Default, Block, Force, MaxWriteOptions };
+    using WriteFlags = std::bitset<MaxWriteOptions>;
+ 
     /**
      * @brief Construct a handler that subscribes to a specific topic and
      *        optionally provides filter and async-process callbacks.
@@ -310,34 +313,46 @@ public:
      *        queue (efficient path).
      *
      * @param dmesgpb Message to publish (moved).
-     * @param block   Block waiting for the publisher to process the message.
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
      */
-    void write(dmn::DMesgPb &&dmesgpb, bool block);
+    void write(dmn::DMesgPb &&dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
      *        queue.
      *
      * @param dmesgpb Message to publish (copied).
-     * @param block   Block waiting for the publisher to process the message.
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
      */
-    void write(dmn::DMesgPb &dmesgpb, bool block);
+    void write(dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the message and return true if no conflict, or false
      *        otherwise.
      *
      * @param dmesgpb message to be publish (moved).
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
+     *
+     * @return True if write success without conflict or false otherwise.
      */
-    auto writeAndCheckConflict(dmn::DMesgPb &&dmesgpb) -> bool;
+    auto writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
+                               WriteFlags flags = Default) -> bool;
 
     /**
      * @brief Publish the message and return true if no conflict, or false
      *        otherwise.
      *
      * @param dmesgpb message to be publish (copied).
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
+     *
+     * @return True if write success without conflict or false otherwise.
      */
-    auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb) -> bool;
+    auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
+                               WriteFlags flags = Default) -> bool;
 
     /**
      * @brief Block until there are no pending asynchronous tasks for this
