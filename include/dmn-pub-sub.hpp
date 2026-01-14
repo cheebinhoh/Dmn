@@ -169,12 +169,14 @@ public:
    * publish
    *
    * Publish an item to all registered subscribers. The publish() call is
-   * non-blocking with respect to subscriber handling: it schedules the
-   * delivery in the publisher's asynchronous thread context (so the caller
-   * returns quickly) while delivery to each subscriber is dispatched into the
-   * corresponding subscriber's asynchronous context.
+   * non-blocking (with blocking optional) with respect to subscriber handling:
+   * it schedules the delivery in the publisher's asynchronous thread context
+   * (so the caller returns quickly) while delivery to each subscriber is
+   * dispatched into the corresponding subscriber's asynchronous context.
    *
    * @param item The data item to publish.
+   * @param block The caller will be blocked waiting for item to be published,
+   * default is false.
    */
   void publish(const T &item, bool block = false);
 
