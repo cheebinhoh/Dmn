@@ -174,7 +174,7 @@ public:
   public:
     enum WriteOptions { Default, Block, Force, MaxWriteOptions };
     using WriteFlags = std::bitset<MaxWriteOptions>;
- 
+
     /**
      * @brief Construct a handler that subscribes to a specific topic and
      *        optionally provides filter and async-process callbacks.
