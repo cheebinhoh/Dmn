@@ -251,12 +251,18 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
   this->write(dmesgpb, false);
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb, bool block) {
+void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
+                                        WriteFlags flags) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
 
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
+
+  bool block = flags.test(Block);
+  if (flags.test(Force)) {
+    dmesgpb.set_force(true);
+  }
 
   auto waithandler =
       m_sub.addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
@@ -265,10 +271,16 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb, bool block) {
   waithandler->wait();
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb, bool block) {
+void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
+                                        WriteFlags flags) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
+
+  bool block = flags.test(Block);
+  if (flags.test(Force)) {
+    dmesgpb.set_force(true);
+  }
 
   auto waitHandler =
       m_sub.addExecTaskWithWait([this, &dmesgpb, block]() -> void {
@@ -277,18 +289,24 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb, bool block) {
   waitHandler->wait();
 }
 
-auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
+                                                        WriteFlags flags)
     -> bool {
 
-  this->write(dmesgpb, true);
+  flags.set(Block);
+
+  this->write(dmesgpb, flags);
 
   return !this->isInConflict();
 }
 
-auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb)
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
+                                                        WriteFlags flags)
     -> bool {
 
-  this->write(dmesgpb, true);
+  flags.set(Block);
+
+  this->write(dmesgpb, flags);
 
   return !this->isInConflict();
 }
