@@ -366,10 +366,28 @@ public:
     auto isInConflictInternal() const -> bool;
 
     /**
+     * @brief Pause and wait until m_is_after_initial_playback is set true
+     *        (playback has been completed).
+     */
+    void isAfterInitialPlayback();
+
+    /**
      * @brief Internal helper to mark the handler as resolved. Must be called
      *        in the publisher's async thread context.
      */
     void resolveConflictInternal();
+
+    /**
+     * @brief Set m_is_after_initial_playback to true and notify all blocking
+     * threads.
+     */
+    void setAfterInitialPlayback();
+
+    /**
+     * @brief Set m_is_after_initial_playback to true and notify all blocking
+     * threads, and this method called and run in internal asynchronous context.
+     */
+    void setAfterInitialPlaybackInternal();
 
     /**
      * @brief Put the handler into conflict state and schedule the conflict
@@ -406,7 +424,7 @@ public:
 
     // Set true after the handler has received the initial playback of
     // last-known messages for each topic.
-    bool m_after_initial_playback{};
+    std::atomic_flag m_after_initial_playback{};
   }; // class Dmn_DMesgHandler
 
   /**
@@ -540,7 +558,7 @@ Dmn_DMesg::openHandler(U &&...arg) {
       {
         this->m_handlers.push_back(handler);
         this->playbackLastTopicDMesgPbInternal();
-        handler->m_after_initial_playback = true;
+        handler->setAfterInitialPlayback();
       },
       this, handler);
 

@@ -144,6 +144,8 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict() -> bool {
   bool inConflict{};
 
+  this->isAfterInitialPlayback();
+
   auto waitHandler = m_sub.addExecTaskWithWait([this, &inConflict]() -> void {
     inConflict = this->isInConflictInternal();
   });
@@ -153,9 +155,17 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict() -> bool {
   return inConflict;
 }
 
+void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
+  while (!m_after_initial_playback.test()) {
+    m_after_initial_playback.wait(false, std::memory_order_relaxed);
+  }
+}
+
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
     -> unsigned long {
   unsigned long runningCounter{};
+
+  this->isAfterInitialPlayback();
 
   auto waitHandler =
       m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
@@ -177,6 +187,16 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
   return iter->second;
 }
 
+void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
+  [[unused_variable]] auto waitHandler = m_sub.addExecTaskWithWait(
+      [this]() -> void { this->setAfterInitialPlaybackInternal(); });
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
+  m_after_initial_playback.test_and_set(std::memory_order_relaxed);
+  m_after_initial_playback.notify_all();
+}
+
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
     std::string_view topic, unsigned long runningCounter) {
   auto waitHandler =
@@ -195,12 +215,16 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
 auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
   assert(nullptr != m_owner);
 
+  this->isAfterInitialPlayback();
+
   dmn::DMesgPb mesgPb = m_buffers.pop();
 
   return mesgPb;
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict() {
+  this->isAfterInitialPlayback();
+
   m_owner->resetHandlerConflictState(this);
 }
 
@@ -211,6 +235,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
   assert(nullptr != m_owner);
+
+  this->isAfterInitialPlayback();
 
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
 
@@ -224,6 +250,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
   assert(nullptr != m_owner);
 
+  this->isAfterInitialPlayback();
+
   auto waitHandler = m_sub.addExecTaskWithWait(
       [this, &dmesgpb]() -> void { writeDMesgInternal(dmesgpb, false); });
   waitHandler->wait();
@@ -231,6 +259,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
 
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
     -> bool {
+
   this->write(dmesgpb);
 
   return !this->isInConflict();
@@ -238,12 +267,18 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb)
 
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb)
     -> bool {
+
   this->write(dmesgpb);
 
   return !this->isInConflict();
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() { m_sub.waitForEmpty(); }
+void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() {
+
+  this->isAfterInitialPlayback();
+
+  m_sub.waitForEmpty();
+}
 
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move) {
@@ -314,7 +349,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
                 const Dmn_DMesgHandler *const handler = handler_sub->m_owner;
 
                 return nullptr != handler && nullptr != handler->m_owner &&
-                       (msg.playback() || handler->m_after_initial_playback) &&
+                       (msg.playback() ||
+                        handler->m_after_initial_playback.test()) &&
                        (handler->m_no_topic_filter ||
                         handler->m_topic.empty() ||
                         msg.topic() == handler->m_topic);
