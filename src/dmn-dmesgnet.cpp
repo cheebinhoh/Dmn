@@ -211,11 +211,25 @@ void Dmn_DMesgNet::createSubscriptHandler() {
                 // for the message stream with the identifier.
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite,
                                                               this->m_name);
-                dmesgPbWrite.SerializeToString(&serialized_string);
-                m_output_handler->write(serialized_string);
 
-                if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
-                  m_topic_last_dmesgpb[dmesgPbWrite.topic()] = dmesgPbWrite;
+                bool ready = m_ready.test(std::memory_order_relaxed);
+                if (ready || dmesgPbWrite.type() == dmn::DMesgTypePb::sys) {
+                  if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
+                    this->sendPendingOutboundQueueMessage();
+                  }
+
+                  dmesgPbWrite.SerializeToString(&serialized_string);
+                  m_output_handler->write(serialized_string);
+
+                  if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
+                    m_topic_last_dmesgpb[dmesgPbWrite.topic()] = dmesgPbWrite;
+                  } else if (ready) {
+                    this->sendPendingOutboundQueueMessage();
+                  }
+                } else {
+                  auto &pendingQueue =
+                      m_topic_outbound_pending_dmesgpb[dmesgPbWrite.topic()];
+                  pendingQueue.push_back(dmesgPbWrite);
                 }
               },
               this, dmesgPbWrite);
@@ -248,6 +262,9 @@ void Dmn_DMesgNet::createTimerProc() {
                 gettimeofday(&tval, nullptr);
 
                 DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tval);
+
+                m_ready.test_and_set(std::memory_order_relaxed);
+                m_ready.notify_all();
               }
             } else if (this->m_sys.body().sys().self().state() ==
                        dmn::DMesgStatePb::Ready) {
@@ -266,6 +283,8 @@ void Dmn_DMesgNet::createTimerProc() {
                   DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "");
                   DMESG_PB_SYS_NODE_SET_STATE(self,
                                               dmn::DMesgStatePb::MasterPending);
+
+                  m_ready.clear(std::memory_order_relaxed);
                 }
               }
             }
@@ -306,6 +325,27 @@ void Dmn_DMesgNet::createTimerProc() {
   }
 }
 
+void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
+  assert(m_ready.test());
+
+  if (m_output_handler) {
+    for (auto &p : m_topic_outbound_pending_dmesgpb) {
+      for (auto &dmesgPb : p.second) {
+        std::string serialized_string{};
+
+        dmesgPb.SerializeToString(&serialized_string);
+        m_output_handler->write(serialized_string);
+
+        if (dmesgPb.type() != dmn::DMesgTypePb::sys) {
+          m_topic_last_dmesgpb[dmesgPb.topic()] = dmesgPb;
+        }
+      }
+
+      p.second.clear();
+    }
+  }
+}
+
 void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
   auto other = dmesgpb_other.body().sys().self();
   auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
@@ -327,6 +367,11 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
     this->m_master_pending_counter = 0;
     this->m_master_sync_pending_counter = 0;
     this->m_sys_handler->write(this->m_sys);
+
+    m_ready.test_and_set(std::memory_order_relaxed);
+    m_ready.notify_all();
+
+    this->sendPendingOutboundQueueMessage();
   } else if (self->state() == dmn::DMesgStatePb::Ready) {
     assert(!self->masteridentifier().empty());
     assert(0 == this->m_master_pending_counter);
@@ -350,6 +395,8 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
         this->m_master_pending_counter = 0;
         this->m_master_sync_pending_counter = 0;
         this->m_sys_handler->write(this->m_sys);
+
+        m_ready.clear(std::memory_order_relaxed);
       }
     } else if (other.state() == dmn::DMesgStatePb::Ready &&
                other.masteridentifier() != self->masteridentifier()) {
