@@ -62,7 +62,7 @@
 
 #include <sys/time.h>
 
-#include <iostream>
+#include <atomic>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -125,6 +125,7 @@ private:
   void createInputHandlerProc();
   void createSubscriptHandler();
   void createTimerProc();
+  void sendPendingOutboundQueueMessage();
 
   /**
    * Constructor-initialized members.
@@ -146,6 +147,10 @@ private:
   long long m_master_sync_pending_counter{};
   struct timeval m_last_remote_master_timestamp{};
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
+  std::unordered_map<std::string, std::vector<dmn::DMesgPb>>
+      m_topic_outbound_pending_dmesgpb{};
+
+  std::atomic_flag m_ready{}; // the DmesgNet is ready (master selection)
 
   bool m_is_master{};
   long long m_number_of_neighbor{};
