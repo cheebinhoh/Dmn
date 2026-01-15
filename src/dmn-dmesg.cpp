@@ -61,17 +61,19 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
         m_owner->m_last_dmesgpb_sys = dmesgpb;
       }
 
-      if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name &&
-          (dmn::DMesgTypePb::sys != dmesgpb.type() ||
-           m_owner->m_include_dmesgpb_sys) &&
-          (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
-           dmesgpb.topic() == m_owner->m_topic) &&
-          (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
-        if (m_owner->m_async_process_fn) {
-          m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
-        } else {
-          dmn::DMesgPb copied = dmesgpb;
-          m_owner->m_buffers.push(copied);
+      if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
+          dmesgpb.type() == dmn::DMesgTypePb::sys) {
+        if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
+             m_owner->m_include_dmesgpb_sys) &&
+            (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
+             dmesgpb.topic() == m_owner->m_topic) &&
+            (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
+          if (m_owner->m_async_process_fn) {
+            m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
+          } else {
+            dmn::DMesgPb copied = dmesgpb;
+            m_owner->m_buffers.push(copied);
+          }
         }
       }
     }
