@@ -50,31 +50,28 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
       m_owner->throwConflict(dmesgpb);
     }
   } else {
-    if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
-        dmesgpb.type() == dmn::DMesgTypePb::sys) {
-      const std::string &topic = dmesgpb.topic();
-      const auto runningCounter = m_owner->m_topic_running_counter[topic];
+    const std::string &topic = dmesgpb.topic();
+    const auto runningCounter = m_owner->m_topic_running_counter[topic];
 
-      if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
-        m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+    if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
+      m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+      m_owner->resolveConflictInternal();
 
-        if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-          m_owner->m_last_dmesgpb_sys = dmesgpb;
-        }
+      if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
+        m_owner->m_last_dmesgpb_sys = dmesgpb;
+      }
 
-        if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
-             m_owner->m_include_dmesgpb_sys) &&
-            (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
-             dmesgpb.topic() == m_owner->m_topic) &&
-            (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
-          if (m_owner->m_async_process_fn) {
-            m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
-          } else {
-            m_owner->resolveConflictInternal();
-
-            dmn::DMesgPb copied = dmesgpb;
-            m_owner->m_buffers.push(copied);
-          }
+      if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name &&
+          (dmn::DMesgTypePb::sys != dmesgpb.type() ||
+           m_owner->m_include_dmesgpb_sys) &&
+          (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
+           dmesgpb.topic() == m_owner->m_topic) &&
+          (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
+        if (m_owner->m_async_process_fn) {
+          m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
+        } else {
+          dmn::DMesgPb copied = dmesgpb;
+          m_owner->m_buffers.push(copied);
         }
       }
     }
@@ -261,7 +258,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
 
   bool block = flags.test(Block);
   if (flags.test(Force)) {
-    dmesgpb.set_force(true);
+    DMESG_PB_SET_MSG_FORCE(dmesgpb, true);
   }
 
   auto waithandler =
@@ -450,7 +447,8 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
 
   // if source is still in conflict, we do not allow it to send any message
   // until it resolves conflict state.
-  if (iter != m_handlers.end() && (*iter)->isInConflictInternal()) {
+  if (iter != m_handlers.end() && (*iter)->isInConflictInternal() &&
+      !dmesgpb.force()) {
     // avoid throw conflict multiple times
     return;
   }
@@ -492,6 +490,26 @@ void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied, next_running_counter);
   Dmn_Pub::publishInternal(copied);
   m_topic_running_counter[topic] = next_running_counter;
+}
+
+void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
+
+  auto waitHandler = this->addExecTaskWithWait([this, topic]() -> void {
+    this->resetConflictStateWithLastTopicMessageInternal(topic);
+  });
+
+  waitHandler->wait();
+}
+
+void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
+    std::string_view topic) {
+  auto iter = m_topic_last_dmesgpb.find(std::string(topic));
+  if (m_topic_last_dmesgpb.end() != iter) {
+    dmn::DMesgPb dmesgpb = iter->second;
+
+    DMESG_PB_SET_MSG_FORCE(dmesgpb, true);
+    this->publishInternal(dmesgpb);
+  }
 }
 
 void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr) {
