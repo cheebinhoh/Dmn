@@ -82,6 +82,8 @@
 
 #define DMESG_PB_SET_MSG_PLAYBACK(pb, val) ((pb).set_playback((val)))
 
+#define DMESG_PB_SET_MSG_FORCE(pb, val) ((pb).set_force((val)))
+
 /**
  * DMesgPb message body message setters
  */

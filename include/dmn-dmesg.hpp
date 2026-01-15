@@ -4,49 +4,78 @@
  * @file dmn-dmesg.hpp
  * @brief DMESG publisher/subscriber wrapper using Protobuf messages.
  *
- * This header defines Dmn_DMesg, a publisher that uses a Protobuf message
- * (dmn::DMesgPb) as the message payload, and Dmn_DMesg::Dmn_DMesgHandler,
- * a light-weight IO-style handler for clients to read and write DMesgPb
- * messages.
+ * Overview
+ * --------
+ * This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that
+ * exchanges messages using the generated Protobuf type `dmn::DMesgPb`
+ * (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a
+ * light-weight, IO-style handler that client code holds (via std::shared_ptr)
+ * to publish and consume DMesgPb messages.
  *
- * Key ideas and behaviour:
- *  - Messages are represented by the generated Protobuf type dmn::DMesgPb
- *    (proto/dmn-dmesg.proto). Clients extend the Protobuf message when they
- *    need extra fields, rather than subclassing a C++ base class.
+ * Key responsibilities
+ * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
+ *   the proto when extra fields are needed (no C++ subclassing required).
+ * - Provide an ergonomic handler API (Dmn_Io-like) for reading and writing
+ *   DMesgPb messages without requiring clients to subclass publisher-specific
+ *   subscriber interfaces.
+ * - Maintain per-topic running counters and last-known messages so new
+ *   handlers can receive the most recent state for every topic (playback).
+ * - Detect simple publish conflicts based on per-topic running counters and
+ *   mark only the offending handler as "in conflict" (blocking its subsequent
+ *   writes until the conflict is resolved by the client).
  *
- *  - Instead of requiring clients to subclass Dmn_Pub::Dmn_Sub for subscribing,
- *    the Dmn_DMesg provides handlers (Dmn_DMesgHandler) which compose a small
- *    internal subscriber object. Clients hold a shared_ptr to a handler that
- *    implements a Dmn_Io-like read/write API for DMesgPb messages.
+ * Handler model and behaviour
+ * - Handlers (Dmn_DMesgHandler) compose a tiny nested subscriber
+ *   implementation (Dmn_DMesgHandlerSub) which connects the handler to the
+ *   underlying Dmn_Pub notification system. This avoids multiple inheritance
+ *   and simplifies lifetime handling.
+ * - Handlers can:
+ *     * subscribe to a specific topic (empty topic is permitted),
+ *     * provide an optional filter functor to drop unwanted messages,
+ *     * provide an optional async-process functor to process messages as they
+ *       arrive, and
+ *     * be configured via HandlerConfig options to control behaviour.
+ * - System messages (where DMesgPb.message_type == "sys") may be delivered
+ *   selectively based on handler configuration.
+ * - The handler API offers blocking reads, non-blocking/asynchronous delivery,
+ *   write variants (move/copy), and helpers to check and resolve conflict
+ *   state.
  *
- *  - Handlers may subscribe to a specific topic (dmn::DMesgPb::topic). They
- *    can optionally provide a filter functor to drop unwanted messages and an
- *    async-processing functor to process messages as they arrive.
+ * Concurrency and async model
+ * - To keep hot paths lock-free, certain operations are executed in the
+ *   publisher's singleton asynchronous thread context (for example: handler
+ *   registration, playback of last-known messages, and conflict-state resets).
+ * - Publishing and notification follow Dmn_Pub semantics; the DMESG wrapper
+ *   implements additional topic/counter logic and schedules async tasks where
+ *   appropriate.
  *
- *  - DMesg supports concurrent publishers (handlers) publishing to the same
- *    Dmn_DMesg instance. A simple running-counter based conflict detection is
- *    implemented: if an incoming message's topic running counter is older than
- *    the publisher's current running counter for that topic, only the writer's
- *    handler is marked in a conflict state; further writes from that handler
- *    will be rejected until the client resolves the conflict.
+ * Conflict detection summary
+ * - Each topic has an associated running counter tracked by the publisher.
+ * - If a handler publishes a message with a topic counter older than the
+ *   publisher's current counter for that topic, that handler is placed into a
+ *   conflict state. Only that handler is affected; other handlers continue to
+ *   operate normally.
+ * - While in conflict, a handler's writes may be rejected until the client
+ *   resolves the conflict (resolveConflict()). Conflict callbacks can be
+ *   installed to notify clients when a conflict occurs.
  *
- *  - To avoid locking in the hot path, some operations (for example handler
- *    registration, playback of last-known messages per topic, and conflict
- *    state resets) are performed as asynchronous tasks in the publisher's
- *    singleton async thread context.
+ * Configuration and constants
+ * - HandlerConfig keys (Handler_IncludeSys, Handler_NoTopicFilter) are used
+ *   to control handler behaviour; defaults are provided in
+ *   kHandlerConfig_Default.
  *
- * Design notes:
- *  - A Dmn_DMesgHandler composes a nested Dmn_DMesgHandlerSub which is a
- *    concrete implementation of Dmn_Pub<dmn::DMesgPb>::Dmn_Sub. This avoids
- *    complex multiple inheritance and keeps handler lifetime management simple.
+ * Design notes
+ * - Dmn_DMesgHandler keeps per-handler buffers, last-seen system message,
+ *   per-topic running counters and a small internal subscriber object, while
+ *   Dmn_DMesg stores the global per-topic counters and the last published
+ *   DMesgPb per topic.
+ * - This separation keeps Dmn_DMesg mostly mutex-free for the common publish
+ *   and notify paths, relying on the publisher's async context to perform
+ *   infrequent, potentially blocking operations.
  *
- *  - Handler configuration options (HandlerConfig) control behaviour such as
- *    whether system messages are delivered to handlers and whether topic-based
- *    filtering is enforced on read.
- *
- *  - The Dmn_DMesg class itself stores per-topic running counters and the
- *    last published message for each topic so that newly opened handlers can
- *    receive the most recent message for each topic (playback).
+ * See also
+ * - proto/dmn-dmesg.proto : Protobuf definition for dmn::DMesgPb.
+ * - dmn-pub-sub.hpp       : Base publisher/subscriber primitives used here.
  */
 
 #ifndef DMN_DMESG_HPP_
@@ -497,6 +526,13 @@ public:
    */
   void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose);
 
+  /**
+   * @brief Reset conflict state by posting last message of the topic.
+   *
+   * @param topic Topic to reset
+   */
+  void resetConflictStateWithLastTopicMessage(std::string_view topic);
+
 protected:
   using Dmn_Pub::publish;
 
@@ -536,6 +572,13 @@ private:
    *        message for each topic to newly registered handlers.
    */
   void playbackLastTopicDMesgPbInternal();
+
+  /**
+   * @brief Reset conflict state by posting last message of the topic.
+   *
+   * @param topic Topic to reset
+   */
+  void resetConflictStateWithLastTopicMessageInternal(std::string_view topic);
 
   /**
    * @brief Internal helper that resets handler conflict state. Must be
