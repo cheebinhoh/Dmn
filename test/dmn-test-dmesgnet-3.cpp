@@ -48,13 +48,19 @@ int main(int argc, char *argv[]) {
   dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
   dmesgpb_body->set_message(data);
 
+  auto dmesgpb2 = dmesgpb;
+
+  auto dmesgpb3 = dmesgpb;
+
   dmesg_handle->write(dmesgpb);
+  dmesg_handle->write(dmesgpb2);
 
   std::this_thread::sleep_for(std::chrono::seconds(10));
 
   bool masterpending{};
   bool ready{};
   bool hasData{};
+  size_t dataCount{};
 
   auto dataList = read_from_write_1->read(500, 10000000L);
   for (auto &data : dataList) {
@@ -74,11 +80,40 @@ int main(int argc, char *argv[]) {
       }
     } else {
       EXPECT_TRUE(ready);
+      dataCount++;
       hasData = true;
+
+      if (1 == dataCount) {
+        dmesg_handle->write(dmesgpb3);
+      }
     }
   }
 
   EXPECT_TRUE(hasData);
+  EXPECT_TRUE(2 == dataCount);
+
+  hasData = false;
+  dataCount = 0;
+
+  dataList = read_from_write_1->read(100, 5000000L);
+  for (auto &data : dataList) {
+    dmn::DMesgPb dmesgpb{};
+
+    dmesgpb.ParseFromString(data);
+
+    if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
+      auto sys = dmesgpb.body().sys().self();
+
+      EXPECT_TRUE((sys.state() == dmn::DMesgStatePb::Ready));
+    } else {
+      dataCount++;
+      hasData = true;
+    }
+  }
+
+  EXPECT_TRUE((hasData));
+  EXPECT_TRUE((1 == dataCount));
+
   dmesgnet1->closeHandler(dmesg_handle);
 
   dmesgnet1 = {};
