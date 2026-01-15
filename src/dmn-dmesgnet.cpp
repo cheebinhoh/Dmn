@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -143,10 +144,8 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                       try {
                         this->m_subscript_handler->write(dmesgpb_read);
 
-                        if (dmesgpb_read.type() != dmn::DMesgTypePb::sys) {
-                          m_topic_last_dmesgpb[dmesgpb_read.topic()] =
-                              dmesgpb_read;
-                        }
+                        m_topic_last_dmesgpb[dmesgpb_read.topic()] =
+                            dmesgpb_read;
                       } catch (...) {
                         // The data from network is out of sync with data
                         // in the Dmn_DMesg, and a few should happen:
