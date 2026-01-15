@@ -17,8 +17,8 @@
 
 #include "dmn-dmesgnet.hpp"
 #include "dmn-io.hpp"
+#include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
-#include "dmn-socket.hpp"
 
 #include "proto/dmn-dmesg-body.pb.h"
 #include "proto/dmn-dmesg.pb.h"
@@ -26,55 +26,55 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
 
-  dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(write_socket_1)};
-  write_socket_1.reset();
+  auto read_from_write_1 = write_1;
 
-  dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(read_socket_2)};
-  read_socket_2.reset();
+  auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
+      "dmesg1", std::move(read_1), std::move(write_1));
 
-  auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  dmn::DMesgPb dmesgpb_read{};
-  dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgpb_read]() -> void {
-                        auto data = readHandler2->read();
-                        if (data) {
-                          dmesgpb_read = *data;
-                        }
-                      }};
+  bool masterpending{};
+  bool ready{};
 
-  proc2.exec();
-  dmn::Dmn_Proc::yield();
-  std::this_thread::sleep_for(std::chrono::seconds(3));
+  auto dataList = read_from_write_1->read(50, 10000000L);
+  for (auto &data : dataList) {
+    dmn::DMesgPb dmesgpb{};
 
-  auto dmesg_handle = dmesgnet1.openHandler("writeHandler");
-  EXPECT_TRUE(dmesg_handle);
+    dmesgpb.ParseFromString(data);
 
-  dmn::DMesgPb dmesgpb{};
-  dmesgpb.set_topic("counter sync");
-  dmesgpb.set_type(dmn::DMesgTypePb::message);
-  dmesgpb.set_sourceidentifier("writehandler");
+    EXPECT_TRUE((dmesgpb.type() == dmn::DMesgTypePb::sys));
 
-  std::string data{"Hello dmesg async"};
-  dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
-  dmesgpb_body->set_message(data);
+    auto sys = dmesgpb.body().sys().self();
+    if (sys.state() == dmn::DMesgStatePb::MasterPending) {
+      EXPECT_TRUE((!ready));
+      masterpending = true;
+    } else if (sys.state() == dmn::DMesgStatePb::Ready) {
+      EXPECT_TRUE((masterpending));
+      EXPECT_TRUE(("dmesg1" == sys.masteridentifier()));
+      ready = true;
+    }
+  }
 
-  dmesg_handle->write(dmesgpb);
+  dmesgnet1 = {};
+  size_t count{};
+  dataList = read_from_write_1->read(100, 20000000L);
+  for (auto &data : dataList) {
+    dmn::DMesgPb dmesgpb{};
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+    dmesgpb.ParseFromString(data);
+    if (count == (dataList.size() - 1)) {
+      auto sys = dmesgpb.body().sys().self();
 
-  const std::string source = dmesgpb_read.sourceidentifier();
-  EXPECT_TRUE(dmesgpb_read.type() == dmesgpb.type());
-  EXPECT_TRUE(dmesgpb_read.sourceidentifier() ==
-              dmesgpb.sourceidentifier()); // the source is the local DmesgNet
-                                           // agent that read
-  EXPECT_TRUE(dmesgpb_read.body().message() == dmesgpb.body().message());
+      EXPECT_TRUE((dmn::DMesgStatePb::Destroyed == sys.state()));
+    }
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+    count++;
+  }
 
   return RUN_ALL_TESTS();
 }
