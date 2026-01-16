@@ -210,12 +210,12 @@ template <typename T>
 Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
                       long timeout)
     : Dmn_Proc{name} {
-  int err = pthread_mutex_init(&m_mutex, NULL);
+  int err = pthread_mutex_init(&m_mutex, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_empty_cond, NULL);
+  err = pthread_cond_init(&m_empty_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }

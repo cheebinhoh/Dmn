@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   dmn::DMesgSysPb *dmesgpb_sys_body_sys = dmesgpb_sys_body->mutable_sys();
 
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, nullptr);
   dmesgpb_sys_body_sys->mutable_timestamp()->set_seconds(tv.tv_sec);
   dmesgpb_sys_body_sys->mutable_timestamp()->set_nanos(tv.tv_usec * 1000);
 

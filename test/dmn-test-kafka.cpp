@@ -74,11 +74,11 @@ int main(int argc, char *argv[]) {
 
   std::cout << "read without data\n";
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, nullptr);
 
   auto data_read = consumer2.read();
   struct timeval tv_after;
-  gettimeofday(&tv_after, NULL);
+  gettimeofday(&tv_after, nullptr);
 
   EXPECT_TRUE((tv_after.tv_sec - tv.tv_sec) >= 5);
 

@@ -137,17 +137,17 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
     : m_max_capacity(capacity) {
   int err{};
 
-  err = pthread_mutex_init(&m_mutex, NULL);
+  err = pthread_mutex_init(&m_mutex, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_push_cond, NULL);
+  err = pthread_cond_init(&m_push_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_pop_cond, NULL);
+  err = pthread_cond_init(&m_pop_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }

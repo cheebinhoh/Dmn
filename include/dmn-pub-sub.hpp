@@ -283,7 +283,7 @@ Dmn_Pub<T>::Dmn_Pub(std::string_view name, size_t capacity,
     : Dmn_Async(name), m_name{name}, m_capacity{capacity},
       m_filter_fn{filter_fn} {
 
-  int err = pthread_mutex_init(&m_mutex, NULL);
+  int err = pthread_mutex_init(&m_mutex, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }

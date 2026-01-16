@@ -237,22 +237,22 @@ private:
 template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
   int err{};
 
-  err = pthread_mutex_init(&m_mutex, NULL);
+  err = pthread_mutex_init(&m_mutex, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_cond, NULL);
+  err = pthread_cond_init(&m_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_empty_cond, NULL);
+  err = pthread_cond_init(&m_empty_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
 
-  err = pthread_cond_init(&m_none_empty_cond, NULL);
+  err = pthread_cond_init(&m_none_empty_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
   }
