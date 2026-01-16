@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-socket.cpp
- * @brief Socket-based implementation of the Dmn_Io interface using UDP (SOCK_DGRAM).
+ * @brief Socket-based implementation of the Dmn_Io interface using UDP
+ * (SOCK_DGRAM).
  */
 
 #include "dmn-socket.hpp"
