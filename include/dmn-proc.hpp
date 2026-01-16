@@ -113,7 +113,7 @@ public:
    * @param fnc Optional task to run when exec() is called. If not provided,
    *            a task must be provided to exec().
    */
-  Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc = {});
+  explicit Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc = {});
   virtual ~Dmn_Proc() noexcept;
 
   Dmn_Proc(const Dmn_Proc &obj) = delete;

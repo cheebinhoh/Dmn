@@ -96,9 +96,10 @@ public:
    *                       DMesgPb messages (std::string). If nullptr, no
    *                       network sends are performed.
    */
-  Dmn_DMesgNet(std::string_view name,
-               std::shared_ptr<Dmn_Io<std::string>> input_handler = nullptr,
-               std::shared_ptr<Dmn_Io<std::string>> output_handler = nullptr);
+  explicit Dmn_DMesgNet(
+      std::string_view name,
+      std::shared_ptr<Dmn_Io<std::string>> input_handler = nullptr,
+      std::shared_ptr<Dmn_Io<std::string>> output_handler = nullptr);
 
   virtual ~Dmn_DMesgNet() noexcept;
 

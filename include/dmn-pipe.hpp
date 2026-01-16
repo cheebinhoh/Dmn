@@ -100,8 +100,8 @@ class Dmn_Pipe : public Dmn_Buffer<T>, public Dmn_Io<T>, public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
-  Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {}, size_t count = 1,
-           long timeout = 0);
+  explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
+                    size_t count = 1, long timeout = 0);
 
   virtual ~Dmn_Pipe() noexcept;
 
