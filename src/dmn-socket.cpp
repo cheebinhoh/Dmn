@@ -1,8 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-socket.hpp
- * @brief Socket-based implementation of the Dmn_Io interface.
+ * @file dmn-socket.cpp
+ * @brief Socket-based implementation of the Dmn_Io interface using UDP (SOCK_DGRAM).
  */
 
 #include "dmn-socket.hpp"
@@ -34,7 +34,7 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
 
   m_fd = socket(AF_INET, type, 0);
   if (m_fd < 0) {
-    throw std::runtime_error("Error in read socket: " +
+    throw std::runtime_error("Error creating socket: " +
                              std::system_category().message(errno));
   }
 
@@ -50,7 +50,7 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
 
   if (setsockopt(m_fd, SOL_SOCKET, SO_BROADCAST, &broadcast,
                  sizeof(broadcast)) < 0) {
-    throw std::runtime_error("Error in setsockopt: SO_SOCKET, SO_BROADCAST: " +
+    throw std::runtime_error("Error in setsockopt: SOL_SOCKET, SO_BROADCAST: " +
                              std::system_category().message(errno));
   }
 
@@ -61,7 +61,7 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
               &servaddr), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
           sizeof(servaddr)) < 0) {
     throw std::runtime_error("Error in bind(" + std::to_string(m_port_no) +
-                             "): " + std::system_category().message(errno));
+                             ") : " + std::system_category().message(errno));
   }
 }
 
@@ -89,7 +89,9 @@ void Dmn_Socket::write(std::string &item) {
   const size_t n_read{item.size()};
   size_t n_write{};
 
-  /* FIXME: it might be effectiveto store socket_addr as member value per object
+  /* FIXME: it might be effective to store the socket address (sockaddr_in)
+   *        as a member value per object to avoid reconstructing it on every
+   *        write call.
    */
   struct sockaddr_in servaddr{};
   memset(&servaddr, 0, sizeof(servaddr));
