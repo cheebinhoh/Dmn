@@ -496,7 +496,7 @@ public:
    *
    * @param name Identification name for this DMesg instance.
    */
-  Dmn_DMesg(std::string_view name);
+  explicit Dmn_DMesg(std::string_view name);
   virtual ~Dmn_DMesg() noexcept;
 
   Dmn_DMesg(const Dmn_DMesg &obj) = delete;

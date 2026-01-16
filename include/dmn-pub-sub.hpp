@@ -178,8 +178,8 @@ public:
    *                  each (subscriber, item) pair to decide whether that
    *                  subscriber should receive the item.
    */
-  Dmn_Pub(std::string_view name, size_t capacity = 10,
-          Dmn_Pub_Filter_Task filter_fn = {});
+  explicit Dmn_Pub(std::string_view name, size_t capacity = 10,
+                   Dmn_Pub_Filter_Task filter_fn = {});
   virtual ~Dmn_Pub() noexcept;
 
   Dmn_Pub(const Dmn_Pub &obj) = delete;

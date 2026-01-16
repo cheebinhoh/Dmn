@@ -52,7 +52,7 @@ namespace dmn {
 
 template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
 public:
-  Dmn_LimitBuffer(size_t capacity = 1);
+  explicit Dmn_LimitBuffer(size_t capacity = 1);
   virtual ~Dmn_LimitBuffer();
 
   Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &obj) = delete;

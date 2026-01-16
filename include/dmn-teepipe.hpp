@@ -153,8 +153,8 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
   }; // class Dmn_TeePipeSource
 
 public:
-  Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
-              Dmn_TeePipe::PostProcessingTask pfn = {});
+  explicit Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
+                       Dmn_TeePipe::PostProcessingTask pfn = {});
 
   virtual ~Dmn_TeePipe() noexcept;
 
