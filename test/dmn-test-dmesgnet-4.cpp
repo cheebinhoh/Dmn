@@ -140,6 +140,8 @@ int main(int argc, char *argv[]) {
   std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
   EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
 
+  EXPECT_TRUE((dmesgpb2_body.topic() == ""));
+
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
   dmesgnet1 = {};
