@@ -288,7 +288,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   its.it_interval.tv_sec = 0;      // Periodic repeat
   its.it_interval.tv_nsec = 50000; // Periodic repeat
 
-  timer_settime(timerid, 0, &its, NULL);
+  timer_settime(timerid, 0, &its, nullptr);
 #else /* _POSIX_TIMERS */
   struct itimerval timer{};
 
