@@ -91,7 +91,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
-    kafka_config = NULL;
+    kafka_config = nullptr;
   } else {
     assert(Role::kConsumer == m_role);
 
@@ -105,7 +105,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
-    kafka_config = NULL;
+    kafka_config = nullptr;
 
     rd_kafka_poll_set_consumer(m_kafka);
 
@@ -208,7 +208,7 @@ void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
       m_kafka, RD_KAFKA_V_TOPIC(topic),
       RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY), // maybe RD_KAFKA_MSG_F_FREE?
       RD_KAFKA_V_KEY((void *)key, key_len),
-      RD_KAFKA_V_VALUE((void *)value, value_len), RD_KAFKA_V_OPAQUE(NULL),
+      RD_KAFKA_V_VALUE((void *)value, value_len), RD_KAFKA_V_OPAQUE(nullptr),
       RD_KAFKA_V_END);
 
   Dmn_Proc::yield();
