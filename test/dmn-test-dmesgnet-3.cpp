@@ -1,10 +1,33 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
- * at the same ip and port.
+ * Unit test for Dmn_DMesgNet message sending/receiving and lifecycle events.
+ *
+ * This test verifies that a single Dmn_DMesgNet instance can:
+ * - Open a handler and send DMesg application messages.
+ * - Emit the expected system (sys) state messages in order:
+ *     MasterPending -> Ready -> Destroyed.
+ * - Deliver application messages through an in-process transport (Dmn_Pipe)
+ *   and accept a subsequent message sent in response to the first one.
+ * - Properly close a handler and signal destruction when the Dmn_DMesgNet
+ *   object is destroyed.
+ *
+ * Test approach:
+ * 1. Create a pair of Dmn_Pipe objects (used here as an in-process socket
+ * loopback) and construct a Dmn_DMesgNet using them.
+ * 2. Open a write handler and send two application messages, with the second
+ *    one triggered after the first application message is received.
+ * 3. Read from the pipe and assert the sequence and contents of messages:
+ *    - Observe a MasterPending sys state before Ready.
+ *    - Confirm Ready reports the expected master identifier ("dmesg1").
+ *    - Confirm two application messages are received in total.
+ * 4. Close the handler, destroy the Dmn_DMesgNet instance, then confirm a final
+ *    sys message with state Destroyed is emitted.
+ *
+ * Notes:
+ * - The test uses sleeps and blocking reads with timeouts to allow asynchronous
+ *   operations to complete. These values may be adjusted if timing variability
+ *   causes intermittent failures.
  */
 
 #include <gtest/gtest.h>

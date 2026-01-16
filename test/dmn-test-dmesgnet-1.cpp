@@ -1,10 +1,58 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
- * at the same ip and port.
+ * dmn-test-dmesgnet-1.cpp
+ *
+ * Purpose
+ * -------
+ * This unit test verifies the lifecycle and system-message behavior of a
+ * single Dmn_DMesgNet instance when connected to in-process I/O endpoints
+ * (Dmn_Pipe). Concretely, it checks that:
+ *   - The Dmn_DMesgNet emits system messages of type `sys`.
+ *   - The instance announces the expected state transitions in order:
+ *       MasterPending -> Ready
+ *   - When Ready is observed, the message identifies this instance as the
+ *     master using the configured identifier ("dmesg1").
+ *   - After the Dmn_DMesgNet object is destroyed, a final `Destroyed`
+ *     system state is emitted.
+ *
+ * Test strategy
+ * -------------
+ * - Construct two Dmn_Pipe<std::string> objects and use them as the read
+ *   and write endpoints for Dmn_DMesgNet. These pipes simulate a local
+ *   socket-like transport, allowing the test to observe messages emitted
+ *   by the Dmn_DMesgNet.
+ * - Create a Dmn_DMesgNet named "dmesg1" with the pipe endpoints.
+ * - Sleep briefly to allow asynchronous startup and message emission.
+ * - Read messages from the pipe, parse them as dmn::DMesgPb protobuf
+ *   messages and assert:
+ *     - Each observed message is of type `sys`.
+ *     - A `MasterPending` system state appears before a `Ready` state.
+ *     - The `Ready` state's masteridentifier equals "dmesg1".
+ * - Destroy the Dmn_DMesgNet instance, read remaining messages, and assert
+ *   that the final system state observed is `Destroyed`.
+ *
+ * Important notes and suggestions
+ * ------------------------------
+ * - Timing sensitivity: this test relies on sleeps and read timeouts. On
+ *   slower or heavily-loaded CI runners these timings may need to be
+ *   increased to reduce flakiness. If flaky, increase the initial
+ *   sleep (currently 10s) or the read timeouts passed to read().
+ * - Determinism: for more deterministic behavior consider replacing sleeps
+ *   with explicit synchronization primitives or hooks in Dmn_DMesgNet to
+ *   report readiness in tests.
+ * - Message ordering: the test assumes messages are delivered in the order
+ *   emitted by Dmn_DMesgNet. If the transport or implementation buffers
+ *   messages differently, adjust assertions accordingly.
+ * - Protobuf enums: the test uses dmn::DMesgTypePb and dmn::DMesgStatePb
+ *   defined in proto/dmn-dmesg*.pb.h. The expected states are:
+ *     MasterPending, Ready, Destroyed
+ *
+ * Expected outcome
+ * ----------------
+ * The reader should observe the system-state sequence:
+ *   MasterPending -> Ready (masteridentifier == "dmesg1") -> Destroyed
+ *
  */
 
 #include <gtest/gtest.h>

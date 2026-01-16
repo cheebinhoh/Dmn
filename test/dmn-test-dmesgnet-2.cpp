@@ -1,10 +1,34 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
- * at the same ip and port.
+ * Integration-style unit test for Dmn_DMesgNet.
+ *
+ * This test verifies a small peer-discovery / messaging scenario between two
+ * Dmn_DMesgNet instances using in-memory pipes instead of real network sockets.
+ *
+ * Scenario and intent:
+ *  - Two in-memory Dmn_Pipe<string> channels are created to simulate two ends
+ *    of a network link.
+ *  - Two forwarding Dmn_Proc tasks shuttle protobuf-encoded DMesg messages
+ *    between the pipes so that the two Dmn_DMesgNet objects can communicate.
+ *  - dmesgnet1 is created first, then dmesgnet2 is created after a short delay.
+ *  - After allowing time for discovery and handshakes, the test asserts:
+ *      * both nodes reach the Ready state
+ *      * both nodes see the other in their nodelist
+ *      * the masteridentifier fields are set appropriately
+ *  - dmesgnet1 is destroyed and, after a delay, the test asserts:
+ *      * dmesgnet2 remains Ready and becomes the master (its masteridentifier)
+ *      * dmesgnet2's nodelist no longer contains dmesg1
+ *  - dmesgnet2 is destroyed and, after a final delay, the test asserts:
+ *      * the last-known state becomes Destroyed and masteridentifier is cleared
+ *
+ * Notes:
+ *  - Timing in this test is driven by std::this_thread::sleep_for to allow
+ *    background threads and message propagation time; these values are
+ *    intentionally generous to reduce flakiness in CI.
+ *  - The test operates on protobuf DMesg messages (DMesgPb). It inspects
+ *    the parsed message bodies for state, masteridentifier, and nodelist
+ *    contents to validate behavior.
  */
 
 #include <gtest/gtest.h>
