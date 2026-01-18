@@ -202,8 +202,8 @@ public:
     }; // class Dmn_DMesgHandlerSub
 
   public:
-    enum WriteOptions { Default, Block, Force, MaxWriteOptions };
-    using WriteFlags = std::bitset<MaxWriteOptions>;
+    enum WriteOptions { kDefault, kBlock, kForce, kMaxWriteOptions };
+    using WriteFlags = std::bitset<kMaxWriteOptions>;
 
     /**
      * @brief Construct a handler that subscribes to a specific topic and
@@ -369,7 +369,7 @@ public:
      * @return True if write success without conflict or false otherwise.
      */
     auto writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
-                               WriteFlags flags = Default) -> bool;
+                               WriteFlags flags = kDefault) -> bool;
 
     /**
      * @brief Publish the message and return true if no conflict, or false
@@ -382,7 +382,7 @@ public:
      * @return True if write success without conflict or false otherwise.
      */
     auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
-                               WriteFlags flags = Default) -> bool;
+                               WriteFlags flags = kDefault) -> bool;
 
     /**
      * @brief Block until there are no pending asynchronous tasks for this

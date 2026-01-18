@@ -91,6 +91,10 @@ void Dmn_Runtime_Manager::addJob(const RuntimeJobFncType &job,
   case Dmn_Runtime_Job::kLow:
     this->addLowJob(job);
     break;
+
+  default:
+    assert("Unsupported priority type" == nullptr);
+    break;
   }
 }
 
@@ -179,22 +183,22 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // - if there is still high priority job, we add the elevated medium job into
   //   end of high priority queue.
 
-  int state{0}; // not high, not medium, not low
+  Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
 
   if (!this->m_sched_stack.empty()) {
-    state = static_cast<int>(this->m_sched_stack.top().m_priority);
+    state = this->m_sched_stack.top().m_priority;
   }
 
-  if (state != static_cast<int>(Dmn_Runtime_Job::kHigh)) {
+  if (state != Dmn_Runtime_Job::kHigh) {
     auto item = m_highQueue.popNoWait();
     if (item) {
       this->execRuntimeJobInContext(std::move(*item));
-    } else if (state != static_cast<int>(Dmn_Runtime_Job::kMedium)) {
+    } else if (state != Dmn_Runtime_Job::kMedium) {
       item = m_mediumQueue.popNoWait();
 
       if (item) {
         this->execRuntimeJobInContext(std::move(*item));
-      } else if (state != static_cast<int>(Dmn_Runtime_Job::kLow)) {
+      } else if (state != Dmn_Runtime_Job::kLow) {
 
         item = m_lowQueue.popNoWait();
         if (item) {

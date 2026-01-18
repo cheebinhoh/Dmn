@@ -103,7 +103,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
 class Dmn_Proc {
   using Task = std::function<void()>;
 
-  enum State { kInvalid, kNew, kReady, kRunning };
+  enum class State { kInvalid, kNew, kReady, kRunning };
 
 public:
   /**

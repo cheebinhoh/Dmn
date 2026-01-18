@@ -88,7 +88,7 @@ namespace dmn {
  *               job should be executed (used by the timed job queue).
  */
 struct Dmn_Runtime_Job {
-  enum Priority : int { kHigh = 1, kMedium, kLow };
+  enum Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
   Priority m_priority{kMedium};
   std::function<void(const Dmn_Runtime_Job &j)> m_job{};
