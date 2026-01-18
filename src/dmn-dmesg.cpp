@@ -259,8 +259,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
 
   dmn::DMesgPb moved_dmesgpb = std::move(dmesgpb);
 
-  bool block = flags.test(Block);
-  if (flags.test(Force)) {
+  bool block = flags.test(kBlock);
+  if (flags.test(kForce)) {
     DMESG_PB_SET_MSG_FORCE(dmesgpb, true);
   }
 
@@ -277,8 +277,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
 
   this->isAfterInitialPlayback();
 
-  bool block = flags.test(Block);
-  if (flags.test(Force)) {
+  bool block = flags.test(kBlock);
+  if (flags.test(kForce)) {
     dmesgpb.set_force(true);
   }
 
@@ -293,7 +293,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
                                                         WriteFlags flags)
     -> bool {
 
-  flags.set(Block);
+  flags.set(kBlock);
 
   this->write(dmesgpb, flags);
 
@@ -304,7 +304,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
                                                         WriteFlags flags)
     -> bool {
 
-  flags.set(Block);
+  flags.set(kBlock);
 
   this->write(dmesgpb, flags);
 
