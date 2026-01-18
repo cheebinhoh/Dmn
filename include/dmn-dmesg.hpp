@@ -84,6 +84,7 @@
 #include <atomic>
 #include <bitset>
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -288,7 +289,7 @@ public:
      *
      * @return The running counter of the topic
      */
-    auto getTopicRunningCounter(std::string_view topic) -> unsigned long;
+    auto getTopicRunningCounter(std::string_view topic) -> uint64_t;
 
     /**
      * @brief The method sets running counter of the topic.
@@ -297,7 +298,7 @@ public:
      * @param runningCounter The running counter to be set for the topic
      */
     void setTopicRunningCounter(std::string_view topic,
-                                unsigned long runningCounter);
+                                uint64_t runningCounter);
 
     /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
@@ -400,8 +401,7 @@ public:
      *
      * @return The running counter of the topic
      */
-    auto getTopicRunningCounterInternal(std::string_view topic)
-        -> unsigned long;
+    auto getTopicRunningCounterInternal(std::string_view topic) -> uint64_t;
 
     /**
      * @brief The method sets running counter of the topic.
@@ -410,7 +410,7 @@ public:
      * @param runningCounter The running counter to be set for the topic
      */
     void setTopicRunningCounterInternal(std::string_view topic,
-                                        unsigned long runningCounter);
+                                        uint64_t runningCounter);
 
     /**
      * @brief Internal write implementation used by public write(...) overloads.

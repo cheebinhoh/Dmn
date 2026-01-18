@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -171,8 +172,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
-    -> unsigned long {
-  unsigned long runningCounter{};
+    -> uint64_t {
+  uint64_t runningCounter{};
 
   this->isAfterInitialPlayback();
 
@@ -187,7 +188,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
-    std::string_view topic) -> unsigned long {
+    std::string_view topic) -> uint64_t {
   auto iter = m_topic_running_counter.find(std::string(topic));
   if (m_topic_running_counter.end() == iter) {
     return 0;
@@ -207,7 +208,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
-    std::string_view topic, unsigned long runningCounter) {
+    std::string_view topic, uint64_t runningCounter) {
   auto waitHandler =
       m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
         this->setTopicRunningCounterInternal(topic, runningCounter);
@@ -217,7 +218,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
-    std::string_view topic, unsigned long runningCounter) {
+    std::string_view topic, uint64_t runningCounter) {
   m_topic_running_counter[std::string(topic)] = runningCounter;
 }
 
@@ -484,7 +485,7 @@ void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
 
   const std::string &topic = dmesgpb_sys.topic();
-  const unsigned long next_running_counter =
+  const uint64_t next_running_counter =
       incrementByOne(m_topic_running_counter[topic]);
 
   dmn::DMesgPb copied = dmesgpb_sys;

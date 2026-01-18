@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
       libtool \
       net-tools \
       iputils-ping \
+      python3 \
       protobuf-compiler \
       tar \
       unzip \
