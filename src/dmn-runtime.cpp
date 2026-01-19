@@ -161,12 +161,23 @@ void Dmn_Runtime_Manager::execRuntimeJobForInterval(
  * @param job The job to be run in the runtime context
  */
 void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
+  auto task = this->execRuntimeJobInTask(std::move(job));
+
+  while (!task.handle.done()) {
+    task.handle.resume();
+  }
+}
+
+Dmn_Runtime_Task
+Dmn_Runtime_Manager::execRuntimeJobInTask(Dmn_Runtime_Job &&job) {
   this->m_sched_stack.push(std::move(job));
 
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
   runningJob.m_job(runningJob);
 
   this->m_sched_stack.pop();
+
+  co_return;
 }
 
 /**

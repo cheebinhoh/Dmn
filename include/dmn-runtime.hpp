@@ -59,6 +59,7 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <coroutine>
 #include <csignal>
 #include <functional>
 #include <mutex>
@@ -72,6 +73,51 @@
 #include "dmn-singleton.hpp"
 
 namespace dmn {
+
+struct Dmn_Runtime_Task {
+  struct promise_type {
+    Dmn_Runtime_Task get_return_object() {
+      return Dmn_Runtime_Task{
+          std::coroutine_handle<promise_type>::from_promise(*this)};
+    }
+    std::suspend_always initial_suspend() { return {}; }
+    // When the task finishes, resume the "waiter"
+    struct FinalAwaiter {
+      bool await_ready() noexcept { return false; }
+      void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+        if (h.promise().continuation) {
+          h.promise().continuation.resume();
+        }
+      }
+      void await_resume() noexcept {}
+    };
+    FinalAwaiter final_suspend() noexcept { return {}; }
+    void unhandled_exception() { std::terminate(); }
+    void return_void() {}
+
+    std::coroutine_handle<> continuation; // The handle of the caller
+  };
+
+  std::coroutine_handle<promise_type> handle;
+
+  // This makes the Dmn_Runtime_Task "Awaitable"
+  bool await_ready() { return false; }
+  void await_suspend(std::coroutine_handle<> caller_handle) {
+    handle.promise().continuation = caller_handle;
+    handle.resume(); // Start the child coroutine
+  }
+  void await_resume() {}
+
+  ~Dmn_Runtime_Task() {
+    if (handle)
+      handle.destroy();
+  }
+
+  bool isValid() const {
+    // Returns true if the handle points to a coroutine frame
+    return handle ? true : false;
+  }
+};
 
 /**
  * Dmn_Runtime_Job
@@ -225,6 +271,7 @@ private:
   void
   execRuntimeJobForInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
+  Dmn_Runtime_Task execRuntimeJobInTask(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 
@@ -263,6 +310,10 @@ private:
 
   // Small LIFO stack used by the scheduler to reorder or delay execution
   std::stack<Dmn_Runtime_Job> m_sched_stack{};
+
+  Dmn_Runtime_Task m_running_high_priority_task{};
+  Dmn_Runtime_Task m_running_low_priority_task{};
+  Dmn_Runtime_Task m_running_medium_priority_task{};
 
   /**
    * Static members for singleton management
