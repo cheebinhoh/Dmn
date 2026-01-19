@@ -77,7 +77,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @param job The asychronous job
  * @param priority The priority of the asychronous job
  */
-void Dmn_Runtime_Manager::addJob(const RuntimeJobFncType &job,
+void Dmn_Runtime_Manager::addJob(const Dmn_Runtime_Job::FncType &job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
@@ -103,7 +103,7 @@ void Dmn_Runtime_Manager::addJob(const RuntimeJobFncType &job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(const RuntimeJobFncType &job) {
+void Dmn_Runtime_Manager::addHighJob(const Dmn_Runtime_Job::FncType &job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -117,7 +117,7 @@ void Dmn_Runtime_Manager::addHighJob(const RuntimeJobFncType &job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(const RuntimeJobFncType &job) {
+void Dmn_Runtime_Manager::addLowJob(const Dmn_Runtime_Job::FncType &job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -131,7 +131,7 @@ void Dmn_Runtime_Manager::addLowJob(const RuntimeJobFncType &job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(const RuntimeJobFncType &job) {
+void Dmn_Runtime_Manager::addMediumJob(const Dmn_Runtime_Job::FncType &job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -156,28 +156,41 @@ void Dmn_Runtime_Manager::execRuntimeJobForInterval(
 }
 
 /**
- * @brief The method will execute the job in runtime context.
+ * @brief The method will execute the job in runtime' co-routine context.
  *
  * @param job The job to be run in the runtime context
  */
 void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
-  auto task = this->execRuntimeJobInTask(std::move(job));
+  auto priority = job.m_priority;
 
-  while (!task.handle.done()) {
-    task.handle.resume();
-  }
-}
-
-Dmn_Runtime_Task
-Dmn_Runtime_Manager::execRuntimeJobInTask(Dmn_Runtime_Job &&job) {
   this->m_sched_stack.push(std::move(job));
 
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
-  runningJob.m_job(runningJob);
+  auto task = runningJob.m_job(runningJob);
+
+  do {
+    task.handle.resume();
+
+    if (task.handle.done()) {
+      break;
+    } else {
+      assert(!this->m_sched_stack.empty());
+
+      switch (priority) {
+      case Dmn_Runtime_Job::kHigh:
+        // skip!
+        break;
+
+      case Dmn_Runtime_Job::kMedium:
+      case Dmn_Runtime_Job::kLow:
+      default:
+        this->execRuntimeJobInternal();
+        break;
+      }
+    }
+  } while (true);
 
   this->m_sched_stack.pop();
-
-  co_return;
 }
 
 /**
@@ -376,23 +389,6 @@ void Dmn_Runtime_Manager::registerSignalHandlerInternal(
     int signo, const SignalHandler &handler) {
   auto &extHandlers = m_ext_signal_handlers[signo];
   extHandlers.push_back(handler);
-}
-
-void Dmn_Runtime_Manager::yield(const Dmn_Runtime_Job &job) {
-  assert(!this->m_sched_stack.empty());
-  assert(&job == &(this->m_sched_stack.top()));
-
-  switch (job.m_priority) {
-  case Dmn_Runtime_Job::kHigh:
-    // skip!
-    break;
-
-  case Dmn_Runtime_Job::kMedium:
-  case Dmn_Runtime_Job::kLow:
-  default:
-    this->execRuntimeJobInternal();
-    break;
-  }
 }
 
 } // namespace dmn

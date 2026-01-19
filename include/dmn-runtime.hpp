@@ -13,6 +13,9 @@
  *    supports timed (delayed) execution.
  *  - Runs an internal runtime thread (via Dmn_Async) that processes job
  *    queues and dispatches registered signal handlers in a safe context.
+ *  - Job scheduled through addJob() and addTimedJob() are running
+ *    asynchronously sequentially accordingly to priority in c++ co-routine
+ *    context.
  *
  * Key responsibilities
  * --------------------
@@ -134,10 +137,12 @@ struct Dmn_Runtime_Task {
  *               job should be executed (used by the timed job queue).
  */
 struct Dmn_Runtime_Job {
+  using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
+
   enum Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
   Priority m_priority{kMedium};
-  std::function<void(const Dmn_Runtime_Job &j)> m_job{};
+  FncType m_job{};
   long long
       m_runtimeSinceEpoch{}; // 0: immediate; >0: absolute microsecond epoch
 };
@@ -180,7 +185,6 @@ struct TimedJobComparator {
 class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
 public:
   using SignalHandler = std::function<void(int signo)>;
-  using RuntimeJobFncType = std::function<void(const Dmn_Runtime_Job &j)>;
 
   Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
@@ -195,7 +199,7 @@ public:
    * The runtime will schedule the job onto the appropriate internal buffer.
    */
   void addJob(
-      const RuntimeJobFncType &job,
+      const Dmn_Runtime_Job::FncType &job,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
 
   /**
@@ -211,7 +215,7 @@ public:
    */
   template <class Rep, class Period>
   void addTimedJob(
-      const RuntimeJobFncType &job,
+      const Dmn_Runtime_Job::FncType &job,
       const std::chrono::duration<Rep, Period> &duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
@@ -250,19 +254,13 @@ public:
    */
   void registerSignalHandler(int signo, const SignalHandler &handler);
 
-  /**
-   * Yield control for the current job: scheduling callback invoked by job
-   * implementations to re-enqueue or otherwise cooperate with the runtime.
-   */
-  void yield(const Dmn_Runtime_Job &j);
-
   friend class Dmn_Singleton;
 
 private:
   // Helpers for pushing jobs to the appropriate priority buffer.
-  void addHighJob(const RuntimeJobFncType &job);
-  void addLowJob(const RuntimeJobFncType &job);
-  void addMediumJob(const RuntimeJobFncType &job);
+  void addHighJob(const Dmn_Runtime_Job::FncType &job);
+  void addLowJob(const Dmn_Runtime_Job::FncType &job);
+  void addMediumJob(const Dmn_Runtime_Job::FncType &job);
 
   template <class... U>
   static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
@@ -271,7 +269,6 @@ private:
   void
   execRuntimeJobForInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
-  Dmn_Runtime_Task execRuntimeJobInTask(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 

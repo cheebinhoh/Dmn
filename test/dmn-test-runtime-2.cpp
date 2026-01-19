@@ -26,10 +26,12 @@ int main(int argc, char *argv[]) {
 
   auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
 
-  dmn::Dmn_Runtime_Manager::RuntimeJobFncType timedJob{};
-  timedJob = [&inst](const auto &) -> void {
+  dmn::Dmn_Runtime_Job::FncType timedJob{};
+  timedJob = [&inst](const auto &) -> dmn::Dmn_Runtime_Task {
     std::cout << "exit main loop after 25seconds\n";
     inst->exitMainLoop();
+
+    co_return;
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(30),
@@ -43,19 +45,21 @@ int main(int argc, char *argv[]) {
       "run low priority job",
       [&inst, &lowCount, &midCount, &highCount]() -> void {
         inst->addJob(
-            [&inst, &lowCount, &midCount, &highCount](const auto &j) -> void {
+            [&inst, &lowCount, &midCount, &highCount](
+                [[maybe_unused]] const auto &j) -> dmn::Dmn_Runtime_Task {
               for (int count = 0; count < 15; count++) {
                 if (5 == count) {
                   inst->addJob(
                       [&inst, &lowCount, &midCount,
-                       &highCount](const auto &j) -> void {
+                       &highCount]([[maybe_unused]] const auto &j)
+                          -> dmn::Dmn_Runtime_Task {
                         EXPECT_TRUE((8 == lowCount));
 
                         for (int count = 0; count < 5; count++) {
                           if (1 == count) {
                             inst->addJob(
-                                [&lowCount, &midCount,
-                                 &highCount](const auto &) -> void {
+                                [&lowCount, &midCount, &highCount](
+                                    const auto &) -> dmn::Dmn_Runtime_Task {
                                   EXPECT_TRUE((8 == lowCount));
                                   EXPECT_TRUE((3 == midCount));
 
@@ -68,11 +72,13 @@ int main(int argc, char *argv[]) {
                                     std::this_thread::sleep_for(
                                         std::chrono::seconds(1));
                                   }
+
+                                  co_return;
                                 },
                                 dmn::Dmn_Runtime_Job::kHigh);
                           } else if (3 == count) {
                             EXPECT_TRUE((0 == highCount));
-                            inst->yield(j);
+                            co_await std::suspend_always{};
                             EXPECT_TRUE((3 == highCount));
                           }
 
@@ -83,11 +89,13 @@ int main(int argc, char *argv[]) {
                           midCount++;
                           std::this_thread::sleep_for(std::chrono::seconds(1));
                         }
+
+                        co_return;
                       },
                       dmn::Dmn_Runtime_Job::kMedium);
                 } else if (8 == count) {
                   EXPECT_TRUE((0 == midCount));
-                  inst->yield(j);
+                  co_await std::suspend_always{};
                   EXPECT_TRUE((5 == midCount));
                 }
 
@@ -97,6 +105,8 @@ int main(int argc, char *argv[]) {
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));
               }
+
+              co_return;
             },
             dmn::Dmn_Runtime_Job::kLow);
       }};
