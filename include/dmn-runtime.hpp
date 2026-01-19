@@ -84,19 +84,26 @@ struct Dmn_Runtime_Task {
       return Dmn_Runtime_Task{
           std::coroutine_handle<promise_type>::from_promise(*this)};
     }
+
     std::suspend_always initial_suspend() { return {}; }
+
     // When the task finishes, resume the "waiter"
     struct FinalAwaiter {
       bool await_ready() noexcept { return false; }
+
       void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
         if (h.promise().continuation) {
           h.promise().continuation.resume();
         }
       }
+
       void await_resume() noexcept {}
     };
+
     FinalAwaiter final_suspend() noexcept { return {}; }
+
     void unhandled_exception() { std::terminate(); }
+
     void return_void() {}
 
     std::coroutine_handle<> continuation; // The handle of the caller
@@ -106,10 +113,12 @@ struct Dmn_Runtime_Task {
 
   // This makes the Dmn_Runtime_Task "Awaitable"
   bool await_ready() { return false; }
+
   void await_suspend(std::coroutine_handle<> caller_handle) {
     handle.promise().continuation = caller_handle;
     handle.resume(); // Start the child coroutine
   }
+
   void await_resume() {}
 
   ~Dmn_Runtime_Task() {
@@ -308,10 +317,6 @@ private:
 
   // Small LIFO stack used by the scheduler to reorder or delay execution
   std::stack<Dmn_Runtime_Job> m_sched_stack{};
-
-  Dmn_Runtime_Task m_running_high_priority_task{};
-  Dmn_Runtime_Task m_running_low_priority_task{};
-  Dmn_Runtime_Task m_running_medium_priority_task{};
 
   /**
    * Static members for singleton management
