@@ -6,56 +6,57 @@
  *
  * Overview
  * --------
- * Dmn_Runtime_Manager provides a single, process-wide runtime that:
- *  - Centralizes POSIX signal management so worker threads inherit a
- *    consistent signal mask.
- *  - Schedules and executes asynchronous jobs with priority levels and
- *    supports timed (delayed) execution.
- *  - Runs an internal runtime thread (via Dmn_Async) that processes job
- *    queues and dispatches registered signal handlers in a safe context.
- *  - Job scheduled through addJob() and addTimedJob() are running
- *    asynchronously sequentially accordingly to priority in c++ co-routine
- *    context.
+ * Dmn_Runtime_Manager provides a single, process‑wide runtime responsible for:
+ * - Managing POSIX signal masking and dispatching so all worker threads inherit
+ *   a consistent signal configuration.
+ * - Scheduling and executing asynchronous jobs with priority levels
+ *   (high/medium/low) as well as delayed (timed) jobs.
+ * - Running an internal runtime thread (via Dmn_Async) that processes job
+ *   queues and invokes registered signal handlers in a safe, non–signal‑handler
+ *   context.
+ * - Executing jobs scheduled through addJob() and addTimedJob() sequentially
+ *   according to priority within a C++ coroutine execution model.
  *
- * Key responsibilities
+ * Key Responsibilities
  * --------------------
- *  - Singleton semantics: a single instance is created and initialized once
- *    (std::call_once). Signal masking is applied before any threads are
- *    created so descendant threads inherit the same mask.
- *  - Signal handling: the runtime blocks signals of interest (SIGALRM,
- *    SIGINT, SIGTERM, SIGQUIT, SIGHUP) during initialization and provides
- *    facilities to register internal and external handlers. Signals are
- *    dispatched in a controlled context (not from an async-signal handler).
- *  - Job scheduling: provides immediate (high/medium/low) and timed jobs.
- *    Timed jobs are stored in a min-heap ordered by absolute microsecond
- *    epoch timestamp so the earliest job executes first.
- *  - Efficient waiting: integrates with Dmn_Async/Dmn_Async_Wait to avoid
- *    busy-waiting when awaiting job execution or signals.
+ * - **Singleton lifecycle**: The runtime is created once using std::call_once.
+ *   Signal masking is applied before any threads are spawned so all descendant
+ *   threads inherit the same mask.
+ * - **Signal handling**: The runtime blocks SIGALRM, SIGINT, SIGTERM, SIGQUIT,
+ *   and SIGHUP during initialization. Internal and external handlers can be
+ *   registered and are invoked from a controlled context rather than directly
+ *   inside an async‑signal handler.
+ * - **Job scheduling**:
+ *   - Immediate jobs are placed into priority queues.
+ *   - Timed jobs are stored in a min‑heap ordered by absolute microsecond
+ *     timestamps to guarantee earliest‑first execution.
+ * - **Efficient waiting**: Integrates with Dmn_Async and Dmn_Async_Wait to
+ *   avoid busy‑waiting when waiting for new jobs or signals.
  *
- * Thread-safety and signal-safety notes
- * -------------------------------------
- *  - Signals are masked by createInstanceInternal() before the runtime and
- *    its worker thread(s) are created. Masking in the constructor would be
- *    too late because the parent Dmn_Async thread may already exist.
- *  - The singleton initialization is protected with std::call_once and a
- *    static std::once_flag to avoid race conditions.
- *  - Atomic flags and thread-safe queues/buffers coordinate producers and the
- *    runtime thread. Signal handler registration and invocation avoid
- *    performing non-async-signal-safe work inside the signal handler itself.
+ * Thread‑Safety & Signal‑Safety Notes
+ * -----------------------------------
+ * - Signals are masked in createInstanceInternal() before the runtime thread is
+ *   created. Masking inside the constructor would be too late because the
+ *   parent Dmn_Async thread may already exist.
+ * - Singleton initialization is protected by std::call_once and a static
+ *   std::once_flag to prevent race conditions.
+ * - Atomic flags and thread‑safe buffers coordinate producers and the runtime
+ *   thread. Signal handlers avoid performing non‑async‑signal‑safe operations
+ *   inside the raw signal handler.
  *
- * Usage sketch
- * ------------
- *  - Obtain/create the singleton via the Dmn_Singleton factory
- * (createInstanceInternal).
- *  - Register signal handlers with registerSignalHandler(signo, handler).
- *  - Enqueue work with addJob(...) or schedule with addTimedJob(...).
- *  - Start processing with enterMainLoop(); stop with exitMainLoop().
+ * Usage Summary
+ * -------------
+ * - Create or obtain the singleton via Dmn_Singleton::createInstanceInternal().
+ * - Register signal handlers using registerSignalHandler(signo, handler).
+ * - Enqueue immediate work with addJob() or schedule delayed work with
+ *   addTimedJob().
+ * - Start processing with enterMainLoop() and stop with exitMainLoop().
  *
- * Implementation
- * --------------
- *  - This header contains the public API, supporting types, and inline
- *    templates. Implementation details for member functions are provided
- *    in the corresponding source file(s).
+ * Implementation Notes
+ * --------------------
+ * - This header defines the public API, supporting types, and inline templates.
+ *   The implementation of member functions is provided in the corresponding
+ *   source file(s).
  */
 
 #ifndef DMN_RUNTIME_HPP_
