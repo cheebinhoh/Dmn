@@ -32,8 +32,8 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
   int count{};
 
-  dmn::Dmn_Runtime_Manager::RuntimeJobFncType timedJob{};
-  timedJob = [&inst, &count, &timedJob](const auto &) -> void {
+  dmn::Dmn_Runtime_Job::FncType timedJob{};
+  timedJob = [&inst, &count, &timedJob](const auto &) -> dmn::Dmn_Runtime_Task {
     std::cout << "********* handle timerjob: " << count << "\n";
     if (count >= 5) {
       inst->exitMainLoop();
@@ -42,6 +42,8 @@ int main(int argc, char *argv[]) {
       inst->addTimedJob(timedJob, std::chrono::seconds(5),
                         dmn::Dmn_Runtime_Job::kHigh);
     }
+
+    co_return;
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(5),
@@ -57,13 +59,16 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&highRun, &mediumRun, &lowRun](const auto &) {
+              [&highRun, &mediumRun,
+               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
                 EXPECT_TRUE(0 == lowRun);
                 EXPECT_TRUE(0 == mediumRun);
 
                 std::cout << "** high job\n";
                 highRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                co_return;
               },
               dmn::Dmn_Runtime_Job::kHigh);
 
@@ -81,12 +86,15 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&lowRun, &highRun, &mediumRun](const auto &) {
+              [&lowRun, &highRun,
+               &mediumRun](const auto &) -> dmn::Dmn_Runtime_Task {
                 EXPECT_TRUE(2 == highRun);
                 EXPECT_TRUE(2 == mediumRun);
                 std::cout << "** low job\n";
                 lowRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(3));
+
+                co_return;
               },
               dmn::Dmn_Runtime_Job::kLow);
 
@@ -104,12 +112,15 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&mediumRun, &highRun, &lowRun](const auto &) {
+              [&mediumRun, &highRun,
+               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
                 EXPECT_TRUE(2 == highRun);
                 EXPECT_TRUE(0 == lowRun);
                 std::cout << "** medium job\n";
                 mediumRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(2));
+
+                co_return;
               },
               dmn::Dmn_Runtime_Job::kMedium);
 
