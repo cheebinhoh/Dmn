@@ -1,15 +1,23 @@
-This repository contains a distributed messaging and synchronization protocol in c/c++.
+# Dmn: Distributed Messaging & Synchronization
 
-The ultimate goal is to implement a simple distributed messaging and synchronization
-protocol that can be integrated with Application and free the application from deading
-with networking, messaging format, synchronization of concurrent read & write of the
-same dataset with support of conflict detection and resolution in multiple levels of
-the protocol.
+Dmn is a C++ library providing a lightweight protocol for distributed messaging and data synchronization. 
 
-The library is implemeneted in C++ and hopefully it is doing it right way through
-delegation design pattern and fully extensible and customizable without proliferation
-of Classes.
+## Overview
+The goal of Dmn is to abstract away the complexities of networking and concurrency. It allows developers to focus on application logic by handling:
+* **Networking & Transport:** Low-level socket and protocol management.
+* **Message Formatting:** Standardized data exchange.
+* **Concurrency Control:** Distributed synchronization of read/write operations on shared datasets.
+* **Conflict Resolution:** Multi-level conflict detection and resolution strategies.
 
+## Key Features
+* **Delegation-Based Design:** Implemented using the delegation pattern to ensure the library is extensible and customizable without "class proliferation."
+* **Lightweight C++:** Modern C++ implementation focused on performance and simplicity.
+* **Integrated Logic:** Designed to be easily integrated directly into existing applications.
+
+## Architecture
+Dmn avoids deep inheritance hierarchies. By utilizing delegation, you can inject custom behavior into the protocol stack without modifying the core library, keeping your codebase clean and maintainable.
+
+## Build steps
 The dmn Dockerfile container:
 0. build container - "docker build -t dmn ."
 1. run container (interactive mode) - "docker run -it --rm dmn"
