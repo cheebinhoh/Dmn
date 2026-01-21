@@ -29,6 +29,7 @@
  *    implementation is safe to call from multiple threads concurrently, it
  *    MUST document those guarantees.
  */
+
 #ifndef DMN_IO_HPP_
 #define DMN_IO_HPP_
 
