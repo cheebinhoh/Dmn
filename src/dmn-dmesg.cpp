@@ -341,7 +341,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgpb, m_name);
   }
 
-  const std::string topic = dmesgpb.topic();
+  const std::string &topic = dmesgpb.topic();
 
   const auto next_running_counter =
       incrementByOne(m_topic_running_counter[topic]);
