@@ -412,7 +412,7 @@ std::vector<T> Dmn_Buffer<T>::pop(size_t count, long timeout) {
         // If timed out but there is at least one item, we accept a partial
         // result and break to collect available items. If still empty, we
         // re-arm the timeout (timeoutTs reset) and continue waiting.
-        if (m_queue.size() > 0) {
+        if (!m_queue.empty()) {
           break;
         } else {
           timeoutTs.tv_sec = 0;
