@@ -388,7 +388,7 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
                    });
 
   if (iter != m_buffers.end()) {
-    while (tps->size() > 0) {
+    while (!tps->empty()) {
       err = pthread_cond_wait(&m_empty_cond, &m_mutex);
       if (err) {
         throw std::runtime_error(strerror(err));
@@ -434,7 +434,7 @@ template <typename T> size_t Dmn_TeePipe<T>::wait(bool no_open_source) {
 
   // only returns if no other object owns the Dmn_TeePipeSource than
   // Dmn_TeePipe
-  while (no_open_source && m_buffers.size() > 0 &&
+  while (no_open_source && (!m_buffers.empty()) &&
          std::count_if(m_buffers.begin(), m_buffers.end(),
                        [](auto &item) { return item.use_count() > 1; }) > 0) {
     err = pthread_cond_wait(&m_cond, &m_mutex);
@@ -494,7 +494,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
 
       std::vector<T> post_processing_buffers{};
 
-      for (auto tps : m_buffers) {
+      for (auto &tps : m_buffers) {
         m_fill_buffer_count--;
 
         auto data = tps->read();

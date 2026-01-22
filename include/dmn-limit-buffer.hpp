@@ -69,6 +69,13 @@ public:
   T pop() override;
 
   /**
+   * @brief Return true or false if the m_size is zero.
+   *
+   * @return True if m_size is 0 or false otherwise.
+   */
+  auto empty() -> bool;
+
+  /**
    * @brief The method will pop and return front item from the queue or the
    *        std::nullopt if the queue is empty.
    *
@@ -163,6 +170,10 @@ template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
 }
 
 template <typename T> T Dmn_LimitBuffer<T>::pop() { return *popOptional(true); }
+
+template <typename T> auto Dmn_LimitBuffer<T>::empty() -> bool {
+  return this->size() <= 0;
+}
 
 template <typename T> std::optional<T> Dmn_LimitBuffer<T>::popNoWait() {
   return popOptional(false);
