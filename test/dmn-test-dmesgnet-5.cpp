@@ -95,8 +95,8 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb dmesgpb1_body{};
   dmn::DMesgPb dmesgpb1_sys{};
   dmn::Dmn_Proc dmesg1_to_dmesg2{
-      "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, &dmesgpb1,
-                           &dmesgpb1_body, &dmesgpb1_sys]() {
+      "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, write_to_read_1,
+                           &dmesgpb1, &dmesgpb1_body, &dmesgpb1_sys]() {
         while (true) {
           auto data = read_from_write_1->read();
           if (!data) {
@@ -108,6 +108,18 @@ int main(int argc, char *argv[]) {
             dmesgpb1_sys = dmesgpb1;
           } else {
             dmesgpb1_body = dmesgpb1;
+
+            dmn::DMesgPb dmesgpbWritten = dmesgpb1;
+            dmesgpbWritten.set_topic("counter sync");
+            dmesgpbWritten.set_runningcounter(1);
+            dmesgpbWritten.set_type(dmn::DMesgTypePb::message);
+            dmesgpbWritten.set_sourceidentifier("writehandler2");
+            dmesgpbWritten.set_sourcewritehandleridentifier("writehandler2");
+
+            std::string serialized_string{};
+            dmesgpbWritten.SerializeToString(&serialized_string);
+
+            write_to_read_1->write(serialized_string);
           }
 
           write_to_read_2->write(*data);
@@ -120,9 +132,6 @@ int main(int argc, char *argv[]) {
       "dmesg1", std::move(read_1), std::move(write_1));
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
-      "dmesg2", std::move(read_2), std::move(write_2));
 
   auto dmesg_handleRead =
       dmesgnet1->openHandler("readHandler1", "counter sync");
@@ -138,6 +147,7 @@ int main(int argc, char *argv[]) {
   dmesgpb.set_type(dmn::DMesgTypePb::message);
   dmesgpb.set_sourceidentifier("writehandler");
 
+  std::cout << "before write\n";
   auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
   EXPECT_TRUE(dmesg_handle);
   dmesg_handle->write(dmesgpb);
@@ -150,7 +160,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE((dmesgpbRead));
   EXPECT_TRUE(("counter sync" == dmesgpbRead->topic()));
 
-  std::cout << "after read\n";
+  std::cout << "after read: " << dmesgpbRead->ShortDebugString() << "\n";
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
   auto inConflict = dmesg_handleRead->isInConflict();
