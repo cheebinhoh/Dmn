@@ -240,7 +240,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict() {
 
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
-  m_conflict_callback_fn = std::move(conflict_fn);
+
+  auto waitHandler = m_sub.addExecTaskWithWait([this, &conflict_fn]() -> void {
+    m_conflict_callback_fn = std::move(conflict_fn);
+  });
+
+  waitHandler->wait();
+
+  return;
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {

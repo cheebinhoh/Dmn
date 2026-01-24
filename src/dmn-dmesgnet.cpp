@@ -236,6 +236,9 @@ void Dmn_DMesgNet::createSubscriptHandler() {
         }
       },
       handlerConfig);
+
+  m_subscript_handler->setConflictCallbackTask(
+      [this](Dmn_DMesgHandler &handler, const dmn::DMesgPb) -> void {});
 }
 
 void Dmn_DMesgNet::createTimerProc() {
