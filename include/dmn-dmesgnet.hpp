@@ -140,6 +140,7 @@ private:
    */
   std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};
   std::shared_ptr<Dmn_DMesgHandler> m_subscript_handler{};
+  std::shared_ptr<Dmn_DMesgHandler> m_write_handler{};
   std::shared_ptr<Dmn_DMesgHandler> m_sys_handler{};
   std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timer_proc{};
 
