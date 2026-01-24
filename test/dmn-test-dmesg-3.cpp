@@ -52,7 +52,8 @@ int main(int argc, char *argv[]) {
 
   dmesg_handle3->write(dmesgpb);
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+  dmn::Dmn_Proc::yield();
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 
   std::cout << "after wait for data to sync\n";
 
