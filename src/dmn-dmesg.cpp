@@ -44,20 +44,21 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
 
 void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
     const dmn::DMesgPb &dmesgpb) {
+  const std::string &topic = dmesgpb.topic();
+  auto iter = m_owner->m_topic_running_counter.find(topic);
+
   if (dmesgpb.conflict()) {
     if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name &&
         (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
          dmesgpb.topic() == m_owner->m_topic)) {
-      m_owner->throwConflict(dmesgpb);
+      if (m_owner->m_topic_running_counter.end() != iter) {
+        m_owner->throwConflict(dmesgpb);
+      }
     }
   } else {
-    const std::string &topic = dmesgpb.topic();
-    const auto runningCounter = m_owner->m_topic_running_counter[topic];
+    const auto runningCounter = (m_owner->m_topic_running_counter.end() != iter ? iter->second : 0);
 
     if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
-      m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-      m_owner->resolveConflictInternal();
-
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
         m_owner->m_last_dmesgpb_sys = dmesgpb;
       }
@@ -69,6 +70,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
             (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
              dmesgpb.topic() == m_owner->m_topic) &&
             (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
+          m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+          m_owner->resolveConflictInternal();
+
           if (m_owner->m_async_process_fn) {
             m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
           } else {

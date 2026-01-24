@@ -148,6 +148,8 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     {
                       try {
+                        DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read, this->m_name);
+
                         this->m_write_handler->write(dmesgpb_read);
 
                         m_topic_last_dmesgpb[dmesgpb_read.topic()] =
@@ -197,7 +199,7 @@ void Dmn_DMesgNet::createSubscriptHandler() {
 
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(
-      m_name,
+      m_name + "_sub",
       [this](const dmn::DMesgPb &dmesgPb) -> bool {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
