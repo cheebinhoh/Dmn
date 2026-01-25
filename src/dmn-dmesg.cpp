@@ -56,15 +56,19 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
       }
     }
   } else {
-    const auto runningCounter = (m_owner->m_topic_running_counter.end() != iter ? iter->second : 0);
+    const auto runningCounter =
+        (m_owner->m_topic_running_counter.end() != iter ? iter->second : 0);
 
     if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
         m_owner->m_last_dmesgpb_sys = dmesgpb;
       }
 
-      if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
-          dmesgpb.type() == dmn::DMesgTypePb::sys) {
+      if (dmesgpb.force()) {
+        m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+        m_owner->resolveConflictInternal();
+      } else if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
+                 dmesgpb.type() == dmn::DMesgTypePb::sys) {
         if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
              m_owner->m_include_dmesgpb_sys) &&
             (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||

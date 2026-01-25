@@ -163,8 +163,8 @@ int main(int argc, char *argv[]) {
   std::cout << "after read: " << dmesgpbRead->ShortDebugString() << "\n";
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
-  auto inConflict = dmesg_handleRead->isInConflict();
-  EXPECT_TRUE((!inConflict));
+  auto inConflict = dmesg_handle->isInConflict();
+  EXPECT_TRUE((inConflict));
 
   dmesgnet1 = {};
   std::cout << "after destroying 1\n";

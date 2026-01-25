@@ -125,10 +125,11 @@ int main(int argc, char *argv[]) {
 
   inConflict = dmesg_read_handle1->isInConflict();
   EXPECT_TRUE((inConflict));
-
+  std::cout << "****** reset\n";
   dmesg.resetConflictStateWithLastTopicMessage("id1");
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::cout << "****** after reset\n";
 
   inConflict = dmesg_write_handle->isInConflict();
   EXPECT_TRUE((!inConflict));

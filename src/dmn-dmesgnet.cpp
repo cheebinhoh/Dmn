@@ -148,7 +148,8 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     {
                       try {
-                        DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read, this->m_name);
+                        DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(
+                            dmesgpb_read, this->m_name);
 
                         this->m_write_handler->write(dmesgpb_read);
 
