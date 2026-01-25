@@ -1,58 +1,31 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * Unit test: dmn-test-dmesgnet-4.cpp
+ * Unit test: dmn-test-dmesgnet-5.cpp
  *
  * Purpose
  * -------
- * This test verifies that two Dmn_DMesgNet instances can communicate over a
- * simulated network (using Dmn_Pipe and Dmn_Proc to forward serialized
- * messages). It checks:
- *  - discovery and system message exchange (node join, Ready state),
- *  - master selection (which node becomes master),
- *  - application-level message delivery via handlers, and
- *  - correct behavior when nodes are destroyed (node leaves and final
- *    destruction).
+ * This test verifies that Dmn_DMesgNet instance that receives a DMesgPb
+ * message that the topic counter is out of sync will put all local write
+ * handlers of the Dmn_DmesgNet in conflict mode.
  *
  * Test setup and components
  * ------------------------
- * - Four Dmn_Pipe<std::string> objects emulate bidirectional socket pairs
- *   (read/write for each node).
- * - Two forwarding Dmn_Proc threads (dmesg1_to_dmesg2, dmesg2_to_dmesg1)
+ * - One Dmn_Pipe<std::string> objects emulate bidirectional pipe
+ *   (read/write for single node).
+ * - One forwarding Dmn_Proc thread (dmesg1_to_dmesg2)
  *   continuously read serialized DMesgPb strings from one pipe, parse a copy
  *   into DMesgPb variables for assertions, and write the same serialized data
- *   into the opposite pipe. These act like simple network links between the
- *   two Dmn_DMesgNet instances.
- * - Two Dmn_DMesgNet instances ("dmesg1" then "dmesg2") are created and wired
- *   to the pipes; the test waits for discovery/handshake messages to be
- *   exchanged.
+ *   into the opposite pipe.
+ * - If the DMesgPb message read is not a sys message, it will then feeds
+ *   a message with same running counter backward to the inbound pipe to the
+ *   Dmn_DMesgNet object.
  *
  * Assertions and sequence
  * -----------------------
- * 1) After an initial discovery period, both nodes should reach the Ready
- *    state. "dmesg1" is expected to be the master; each node's system message
- *    should list the other node in its nodelist.
- *
- * 2) Application message delivery:
- *    - dmesg1 opens a handler and writes a DMesgPb with topic "counter sync".
- *    - dmesg2 opens a handler for the same topic and should receive the
- *      message via the simulated network.
- *
- * 3) Node teardown behavior:
- *    - Destroying dmesgnet1 should cause dmesg2 to be the remaining master and
- *      have an empty nodelist.
- *    - Destroying dmesgnet2 should result in the final sys state being
- *      Destroyed and the masteridentifier cleared.
- *
- * Notes and caveats
- * -----------------
- * - This test relies on sleeps to allow asynchronous discovery, message
- *   propagation and state transitions. That makes it timing-sensitive and it
- *   can be flaky on heavily loaded or slow CI hosts. If flakiness is observed,
- *   consider replacing sleeps with explicit synchronization (condition
- *   variables, polling with timeouts, or explicit handshakes).
- * - The forwarding procs capture the last-seen system and body messages into
- *   local DMesgPb variables that are later used for assertions.
+ * - the local write handler is able to send out 1st DMesgPb message, and then
+ *   put into conflict mode after the inbound DMesgPb feeding into DMesgNet
+ *   put all handlers writing the same topic into conflict mode.
  */
 
 #include <gtest/gtest.h>
