@@ -66,7 +66,7 @@ public:
    *
    * @return front item of the queue
    */
-  T pop() override;
+  auto pop() -> T override;
 
   /**
    * @brief Return true or false if the m_size is zero.
@@ -81,7 +81,7 @@ public:
    *
    * @return optional item from the front of the queue
    */
-  std::optional<T> popNoWait() override;
+  auto popNoWait() -> std::optional<T> override;
 
   /**
    * @brief The method will push the item into queue using move semantics
@@ -99,7 +99,7 @@ public:
    *
    * @return The number of items held in the queue now
    */
-  size_t size();
+  auto size() -> size_t;
 
   /**
    * @brief The method will put the client on blocking wait until
@@ -109,7 +109,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  size_t waitForEmpty() override;
+  auto waitForEmpty() -> size_t override;
 
 private:
   /**
@@ -122,7 +122,7 @@ private:
    *
    * @return optional value from front item of the queue
    */
-  std::optional<T> popOptional(bool wait) override;
+  auto popOptional(bool wait) -> std::optional<T> override;
 
 private:
   /**
@@ -175,7 +175,7 @@ template <typename T> auto Dmn_LimitBuffer<T>::empty() -> bool {
   return this->size() <= 0;
 }
 
-template <typename T> std::optional<T> Dmn_LimitBuffer<T>::popNoWait() {
+template <typename T> auto Dmn_LimitBuffer<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
 }
 
@@ -224,7 +224,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
   }
 }
 
-template <typename T> size_t Dmn_LimitBuffer<T>::size() {
+template <typename T> auto Dmn_LimitBuffer<T>::size() -> size_t {
   int err{};
   size_t size{};
 
@@ -249,12 +249,12 @@ template <typename T> size_t Dmn_LimitBuffer<T>::size() {
   return size;
 }
 
-template <typename T> size_t Dmn_LimitBuffer<T>::waitForEmpty() {
+template <typename T> auto Dmn_LimitBuffer<T>::waitForEmpty() -> size_t {
   return Dmn_Buffer<T>::waitForEmpty();
 }
 
 template <typename T>
-std::optional<T> Dmn_LimitBuffer<T>::popOptional(bool wait) {
+auto Dmn_LimitBuffer<T>::popOptional(bool wait) -> std::optional<T> {
   int err{};
   std::optional<T> val{};
 

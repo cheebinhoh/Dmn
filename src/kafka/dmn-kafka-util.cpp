@@ -13,9 +13,9 @@
 
 namespace dmn {
 
-std::expected<rd_kafka_conf_res_t, std::string>
-set_config(rd_kafka_conf_t *config, std::string_view key,
-           std::string_view value) {
+auto set_config(rd_kafka_conf_t *config, std::string_view key,
+                std::string_view value)
+    -> std::expected<rd_kafka_conf_res_t, std::string> {
   char err_str[kKafkaErrorStringLength]{};
   rd_kafka_conf_res_t res{};
 

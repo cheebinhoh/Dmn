@@ -56,7 +56,7 @@ public:
    * @return newly created handler
    */
   template <class... U>
-  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> openHandler(U &&...arg) {
+  auto openHandler(U &&...arg) -> std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> {
     return m_dmesgnet->openHandler(std::forward<U>(arg)...);
   }
 

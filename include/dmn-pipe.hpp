@@ -118,7 +118,7 @@ public:
    *
    * @return optional item if available, or std::nullopt if the pipe is closed
    */
-  std::optional<T> read() override;
+  auto read() -> std::optional<T> override;
 
   /**
    * @brief Read and return the next item from the pipe.
@@ -145,7 +145,7 @@ public:
    *         was produced).
    * @throws std::runtime_error on pthread errors.
    */
-  std::vector<T> read(size_t count, long timeout = 0) override;
+  auto read(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
@@ -194,7 +194,7 @@ public:
    *
    * @return The number of items that were passed through the pipe in total
    */
-  size_t waitForEmpty() override;
+  auto waitForEmpty() -> size_t override;
 
 private:
   using Dmn_Buffer<T>::pop;
@@ -241,7 +241,7 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   return;
 }
 
-template <typename T> std::optional<T> Dmn_Pipe<T>::read() {
+template <typename T> auto Dmn_Pipe<T>::read() -> std::optional<T> {
   T data{};
 
   readAndProcess([&data](T &&item) { data = item; });
@@ -250,7 +250,7 @@ template <typename T> std::optional<T> Dmn_Pipe<T>::read() {
 }
 
 template <typename T>
-std::vector<T> Dmn_Pipe<T>::read(size_t count, long timeout) {
+auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
   std::vector<T> dataList{};
 
   readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },
@@ -303,7 +303,7 @@ template <typename T> void Dmn_Pipe<T>::write(T &&item) {
   Dmn_Buffer<T>::push(item, true);
 }
 
-template <typename T> size_t Dmn_Pipe<T>::waitForEmpty() {
+template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
   size_t inbound_count{};
 
   inbound_count = Dmn_Buffer<T>::waitForEmpty();

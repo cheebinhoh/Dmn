@@ -147,7 +147,7 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
   return;
 }
 
-std::optional<std::string> Dmn_Kafka::read() {
+auto Dmn_Kafka::read() -> std::optional<std::string> {
   rd_kafka_message_t *consumer_message{};
 
   consumer_message = rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms);
