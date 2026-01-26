@@ -87,6 +87,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -277,10 +278,12 @@ public:
     /**
      * @brief The method returns yes or not if the handler is in conflict
      *
+     * @param topic the topic to check if it is in conflict, or "" any topic.
+     *
      * @return True or False if the handler is in conflict state from last
      *         written message
      */
-    auto isInConflict() -> bool;
+    auto isInConflict(std::string_view topic = "") -> bool;
 
     /**
      * @brief The method returns running counter of the topic.
@@ -311,7 +314,7 @@ public:
      *        to the publisher's singleton async thread to clear the handler's
      *        conflict state (so the handler need not manage mutexes itself).
      */
-    void resolveConflict();
+    void resolveConflict(std::string_view topic = "");
 
     /**
      * @brief Set a callback to be invoked when the handler enters a conflict
@@ -425,9 +428,11 @@ public:
   private:
     /**
      * @brief Return true if the handler is currently marked in a conflict
-     *        state (atomic check).
+     *        state (atomic check) for the topic or any topic if "".
+     *
+     * @param topic the topic to check if it is in conflict, or "" any topic.
      */
-    auto isInConflictInternal() const -> bool;
+    auto isInConflictInternal(std::string_view topic) const -> bool;
 
     /**
      * @brief Pause and wait until m_is_after_initial_playback is set true
@@ -439,7 +444,7 @@ public:
      * @brief Internal helper to mark the handler as resolved. Must be called
      *        in the publisher's async thread context.
      */
-    void resolveConflictInternal();
+    void resolveConflictInternal(std::string_view topic);
 
     /**
      * @brief Set m_is_after_initial_playback to true and notify all blocking
@@ -459,7 +464,7 @@ public:
      *
      * @param dmesgpb The message that caused the conflict.
      */
-    void throwConflict(const dmn::DMesgPb &dmesgpb);
+    void throwConflictInternal(const dmn::DMesgPb &dmesgpb);
 
     /**
      * Data members set during construction.
@@ -484,7 +489,7 @@ public:
     std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
 
     ConflictCallbackTask m_conflict_callback_fn{};
-    std::atomic<bool> m_in_conflict{};
+    std::set<std::string> m_topic_in_conflict{};
 
     // Set true after the handler has received the initial playback of
     // last-known messages for each topic.
@@ -564,7 +569,8 @@ protected:
    * @param handler_ptr Pointer to the handler whose conflict state should be
    *                    reset.
    */
-  void resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr);
+  void resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
+                                 std::string_view = "");
 
 private:
   /**
@@ -586,7 +592,8 @@ private:
    *
    * @param handler_ptr Pointer to the handler.
    */
-  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr);
+  void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr,
+                                         std::string_view = "");
 
   /**
    * Data members provided at construction.

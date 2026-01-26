@@ -52,7 +52,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
         (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
          dmesgpb.topic() == m_owner->m_topic)) {
       if (m_owner->m_topic_running_counter.end() != iter) {
-        m_owner->throwConflict(dmesgpb);
+        m_owner->throwConflictInternal(dmesgpb);
       }
     }
   } else {
@@ -66,7 +66,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 
       if (dmesgpb.force()) {
         m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-        m_owner->resolveConflictInternal();
+        m_owner->resolveConflictInternal(dmesgpb.topic());
       } else if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
                  dmesgpb.type() == dmn::DMesgTypePb::sys) {
         if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
@@ -75,7 +75,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
              dmesgpb.topic() == m_owner->m_topic) &&
             (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
           m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-          m_owner->resolveConflictInternal();
+          m_owner->resolveConflictInternal(dmesgpb.topic());
 
           if (m_owner->m_async_process_fn) {
             m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
@@ -159,14 +159,15 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
   return;
 }
 
-auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict() -> bool {
+auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   bool inConflict{};
 
   this->isAfterInitialPlayback();
 
-  auto waitHandler = m_sub.addExecTaskWithWait([this, &inConflict]() -> void {
-    inConflict = this->isInConflictInternal();
-  });
+  auto waitHandler =
+      m_sub.addExecTaskWithWait([this, topic, &inConflict]() -> void {
+        inConflict = this->isInConflictInternal(topic);
+      });
 
   waitHandler->wait();
 
@@ -240,10 +241,10 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
   return mesgPb;
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict() {
+void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
   this->isAfterInitialPlayback();
 
-  m_owner->resetHandlerConflictState(this);
+  m_owner->resetHandlerConflictState(this, topic);
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
@@ -307,23 +308,25 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
                                                         WriteFlags flags)
     -> bool {
+  std::string topic = dmesgpb.topic();
 
   flags.set(kBlock);
 
   this->write(dmesgpb, flags);
 
-  return !this->isInConflict();
+  return !this->isInConflict(topic);
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
                                                         WriteFlags flags)
     -> bool {
+  std::string topic = dmesgpb.topic();
 
   flags.set(kBlock);
 
   this->write(dmesgpb, flags);
 
-  return !this->isInConflict();
+  return !this->isInConflict(topic);
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() {
@@ -337,7 +340,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
 
-  if (m_in_conflict && !dmesgpb.force()) {
+  if (m_topic_in_conflict.contains(dmesgpb.topic()) && !dmesgpb.force()) {
     throw std::runtime_error("last write results in conflicted, "
                              "handler needs to be reset");
   }
@@ -364,7 +367,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
 
   m_topic_running_counter[topic] = next_running_counter;
-  m_in_conflict = false;
+  m_topic_in_conflict.erase(topic);
 
   if (move) {
     m_owner->publish(std::move_if_noexcept(dmesgpb), block);
@@ -373,16 +376,24 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   }
 }
 
-auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal() const -> bool {
-  return m_in_conflict;
+auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
+    std::string_view topic) const -> bool {
+  return "" == topic ? (!m_topic_in_conflict.empty())
+                     : m_topic_in_conflict.contains(std::string(topic));
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal() {
-  m_in_conflict = false;
+void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
+    std::string_view topic) {
+  if ("" == topic) {
+    m_topic_in_conflict.clear();
+  } else {
+    m_topic_in_conflict.erase(std::string(topic));
+  }
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::throwConflict(const dmn::DMesgPb &dmesgpb) {
-  m_in_conflict = true;
+void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
+    const dmn::DMesgPb &dmesgpb) {
+  m_topic_in_conflict.insert(dmesgpb.topic());
 
   if (m_conflict_callback_fn) {
     m_sub.write([this, dmesgpb]() -> void {
@@ -465,8 +476,8 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
 
   // if source is still in conflict, we do not allow it to send any message
   // until it resolves conflict state.
-  if (iter != m_handlers.end() && (*iter)->isInConflictInternal() &&
-      !dmesgpb.force()) {
+  if (iter != m_handlers.end() &&
+      (*iter)->isInConflictInternal(dmesgpb.topic()) && !dmesgpb.force()) {
     // avoid throw conflict multiple times
     return;
   }
@@ -484,7 +495,7 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
     copied_dmesgpb.set_conflict(true);
 
     if (iter != m_handlers.end()) {
-      (*iter)->throwConflict(copied_dmesgpb);
+      (*iter)->throwConflictInternal(copied_dmesgpb);
     }
   } else {
     DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied_dmesgpb, next_running_counter);
@@ -530,21 +541,24 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
   }
 }
 
-void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr) {
+void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
+                                          std::string_view topic) {
+  std::string topicToBeReset = std::string(topic);
+
   DMN_ASYNC_CALL_WITH_CAPTURE(
       { this->resetHandlerConflictStateInternal(handler_ptr); }, this,
-      handler_ptr);
+      handler_ptr, topicToBeReset);
 }
 
 void Dmn_DMesg::resetHandlerConflictStateInternal(
-    const Dmn_DMesgHandler *handler_ptr) {
+    const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
   auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
                                    [handler_ptr](const auto &handler) -> bool {
                                      return handler.get() == handler_ptr;
                                    });
 
   if (iter != m_handlers.end()) {
-    (*iter)->resolveConflictInternal();
+    (*iter)->resolveConflictInternal(topic);
   }
 }
 
