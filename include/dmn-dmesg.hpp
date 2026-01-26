@@ -520,7 +520,7 @@ public:
    * @return shared_ptr to the newly created handler.
    */
   template <class... U>
-  std::shared_ptr<Dmn_DMesgHandler> openHandler(U &&...arg);
+  auto openHandler(U &&...arg) -> std::shared_ptr<Dmn_DMesgHandler>;
 
   /**
    * @brief Unregister and free the provided handler.
@@ -612,8 +612,8 @@ private:
 }; // class Dmn_DMesg
 
 template <class... U>
-std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler>
-Dmn_DMesg::openHandler(U &&...arg) {
+auto Dmn_DMesg::openHandler(U &&...arg)
+    -> std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> {
   // This function:
   //  - constructs a handler
   //  - registers the handler as a subscriber

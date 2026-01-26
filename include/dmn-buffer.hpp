@@ -144,7 +144,7 @@ public:
    *
    * @return The front item.
    */
-  virtual T pop();
+  virtual auto pop() -> T;
 
   /**
    * @brief Pop multiple items from the queue with optional timeout semantics.
@@ -171,14 +171,14 @@ public:
    *         was produced).
    * @throws std::runtime_error on pthread errors.
    */
-  virtual std::vector<T> pop(size_t count, long timeout = 0);
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
   /**
    * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
    *
    * @return optional item, or std::nullopt if the queue was empty.
    */
-  virtual std::optional<T> popNoWait();
+  virtual auto popNoWait() -> std::optional<T>;
 
   /**
    * @brief Push an rvalue into the queue (attempts move, with
@@ -211,7 +211,7 @@ public:
    *
    * @return The total number of items that have been passed through the queue.
    */
-  virtual size_t waitForEmpty();
+  virtual auto waitForEmpty() -> size_t;
 
 protected:
   /**
@@ -221,7 +221,7 @@ protected:
    *             std::nullopt immediately if empty.
    * @return optional value popped from the front of the queue.
    */
-  virtual std::optional<T> popOptional(bool wait);
+  virtual auto popOptional(bool wait) -> std::optional<T>;
 
 private:
   std::deque<T> m_queue{};
@@ -273,9 +273,11 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   return;
 }
 
-template <typename T> T Dmn_Buffer<T>::pop() { return *popOptional(true); }
+template <typename T> auto Dmn_Buffer<T>::pop() -> T {
+  return *popOptional(true);
+}
 
-template <typename T> std::optional<T> Dmn_Buffer<T>::popNoWait() {
+template <typename T> auto Dmn_Buffer<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
 }
 
@@ -330,7 +332,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   }
 }
 
-template <typename T> size_t Dmn_Buffer<T>::waitForEmpty() {
+template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
   int err{};
   size_t inbound_count{};
 
@@ -366,7 +368,7 @@ template <typename T> size_t Dmn_Buffer<T>::waitForEmpty() {
 }
 
 template <typename T>
-std::vector<T> Dmn_Buffer<T>::pop(size_t count, long timeout) {
+auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
   struct timespec timeoutTs{};
   std::vector<T> ret{};
   int err{};
@@ -456,7 +458,8 @@ std::vector<T> Dmn_Buffer<T>::pop(size_t count, long timeout) {
   return ret;
 }
 
-template <typename T> std::optional<T> Dmn_Buffer<T>::popOptional(bool wait) {
+template <typename T>
+auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
   int err{};
   T val{};
 

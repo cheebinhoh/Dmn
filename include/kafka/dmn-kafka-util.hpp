@@ -26,8 +26,9 @@ constexpr size_t kKafkaErrorStringLength = 512;
  * @return It returns the RD_KAFKA_CONF_OK if everything is ok, else a string
  *         describing the kafka error
  */
-std::expected<rd_kafka_conf_res_t, std::string>
-set_config(rd_kafka_conf_t *conf, std::string_view key, std::string_view value);
+auto set_config(rd_kafka_conf_t *conf, std::string_view key,
+                std::string_view value)
+    -> std::expected<rd_kafka_conf_res_t, std::string>;
 
 } // namespace dmn
 

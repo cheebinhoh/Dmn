@@ -64,7 +64,7 @@ public:
    * @return nullptr if no message before PollTimeoutMs is elapsed, or next
    *         message.
    */
-  std::optional<std::string> read() override;
+  auto read() -> std::optional<std::string> override;
 
   /**
    * @brief The method writes the message (of the topic) to Kafka broker.
