@@ -123,7 +123,10 @@ int main(int argc, char *argv[]) {
   auto inConflict = dmesg_write_handle->isInConflict();
   EXPECT_TRUE((inConflict));
 
-  inConflict = dmesg_read_handle1->isInConflict();
+  inConflict = dmesg_read_handle1->isInConflict("id2");
+  EXPECT_TRUE((!inConflict));
+
+  inConflict = dmesg_read_handle1->isInConflict("id1");
   EXPECT_TRUE((inConflict));
   std::cout << "****** reset\n";
   dmesg.resetConflictStateWithLastTopicMessage("id1");
@@ -143,7 +146,7 @@ int main(int argc, char *argv[]) {
 
   runningCounter = dmesg_read_handle3->getTopicRunningCounter("id1");
   std::cout << "Running counter for read_handle3: " << runningCounter << "\n";
-  // EXPECT_TRUE((3 == runningCounter));
+  EXPECT_TRUE((2 == runningCounter));
 
   dmesg.closeHandler(dmesg_write_handle);
   dmesg.closeHandler(dmesg_read_handle1);
