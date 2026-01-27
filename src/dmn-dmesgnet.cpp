@@ -195,8 +195,8 @@ void Dmn_DMesgNet::createInputHandlerProc() {
 
 void Dmn_DMesgNet::createSubscriptHandler() {
   auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
-  handlerConfig[std::string(Dmn_DMesg::kHandlerConfig_IncludeSys)] = "yes";
-  handlerConfig[std::string(Dmn_DMesg::kHandlerConfig_NoTopicFilter)] = "yes";
+  handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_IncludeSys}] = "yes";
+  handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_NoTopicFilter}] = "yes";
 
   // subscriptHandler to read and write with local DMesg
   m_subscript_handler = Dmn_DMesg::openHandler(

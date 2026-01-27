@@ -99,13 +99,13 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
       m_async_process_fn{std::move(async_process_fn)},
       m_configs{std::move(configs)} {
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
-  auto iter = m_configs.find(std::string(kHandlerConfig_IncludeSys));
+  auto iter = m_configs.find(std::string{kHandlerConfig_IncludeSys});
   if (m_configs.end() != iter) {
     m_include_dmesgpb_sys =
         stringCompare(iter->second, "1") || stringCompare(iter->second, "yes");
   }
 
-  iter = m_configs.find(std::string(kHandlerConfig_NoTopicFilter));
+  iter = m_configs.find(std::string{kHandlerConfig_NoTopicFilter});
   if (m_configs.end() != iter) {
     m_no_topic_filter =
         stringCompare(iter->second, "1") || stringCompare(iter->second, "yes");
@@ -198,7 +198,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
 
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
     std::string_view topic) -> uint64_t {
-  auto iter = m_topic_running_counter.find(std::string(topic));
+  auto iter = m_topic_running_counter.find(std::string{topic});
   if (m_topic_running_counter.end() == iter) {
     return 0;
   }
@@ -228,7 +228,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
 
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
     std::string_view topic, uint64_t runningCounter) {
-  m_topic_running_counter[std::string(topic)] = runningCounter;
+  m_topic_running_counter[std::string{topic}] = runningCounter;
 }
 
 auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
@@ -379,7 +379,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
     std::string_view topic) const -> bool {
   return "" == topic ? (!m_topic_in_conflict.empty())
-                     : m_topic_in_conflict.contains(std::string(topic));
+                     : m_topic_in_conflict.contains(std::string{topic});
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
@@ -387,7 +387,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
   if ("" == topic) {
     m_topic_in_conflict.clear();
   } else {
-    m_topic_in_conflict.erase(std::string(topic));
+    m_topic_in_conflict.erase(std::string{topic});
   }
 }
 
@@ -532,7 +532,7 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
 
 void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
     std::string_view topic) {
-  auto iter = m_topic_last_dmesgpb.find(std::string(topic));
+  auto iter = m_topic_last_dmesgpb.find(std::string{topic});
   if (m_topic_last_dmesgpb.end() != iter) {
     dmn::DMesgPb dmesgpb = iter->second;
 
@@ -543,7 +543,7 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
 
 void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                           std::string_view topic) {
-  std::string topicToBeReset = std::string(topic);
+  std::string topicToBeReset{topic};
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
       { this->resetHandlerConflictStateInternal(handler_ptr); }, this,

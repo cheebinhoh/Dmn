@@ -294,7 +294,7 @@ template <typename T>
 Dmn_TeePipe<T>::Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn,
                             Dmn_TeePipe::PostProcessingTask pfn)
     : Dmn_Pipe<T>{name, fn},
-      m_conveyor{std::make_unique<Dmn_Proc>(std::string(name) + "-conveyor")},
+      m_conveyor{std::make_unique<Dmn_Proc>(std::string{name} + "-conveyor")},
       m_post_processing_task_fn{pfn} {
   int err{};
 

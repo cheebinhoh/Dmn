@@ -352,7 +352,7 @@ Dmn_Runtime_Manager::createInstanceInternal(U &&...u) {
                                 &old_mask);
           if (0 != err) {
             throw std::runtime_error("Error in pthread_sigmask: " +
-                                     std::string(strerror(errno)));
+                                     std::string{strerror(errno)});
           }
 
           Dmn_Runtime_Manager::s_instance =
