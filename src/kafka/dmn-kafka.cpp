@@ -87,7 +87,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
       rd_kafka_conf_destroy(kafka_config);
 
       throw std::runtime_error("Failed to create new producer: " +
-                               std::string(err_str));
+                               std::string{err_str});
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
@@ -101,7 +101,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
       rd_kafka_conf_destroy(kafka_config);
 
       throw std::runtime_error("Failed to create new consumer: " +
-                               std::string(err_str));
+                               std::string{err_str});
     }
 
     // Configuration object is now owned, and freed, by the rd_kafka_t instance.
@@ -124,7 +124,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
 
       throw std::runtime_error(
           "Failed to subscribe to " + std::to_string(subscription->cnt) +
-          +" topics, error: " + std::string(rd_kafka_err2str(err)));
+          +" topics, error: " + std::string{rd_kafka_err2str(err)});
     }
 
     rd_kafka_topic_partition_list_destroy(subscription);
@@ -217,7 +217,7 @@ void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
     m_write_atomic_flag.clear();
 
     throw std::runtime_error("Failed to produce to topic: " + m_topic +
-                             ", error: " + std::string(rd_kafka_err2str(err)));
+                             ", error: " + std::string{rd_kafka_err2str(err)});
   }
 
   // we loop until message is delivered or pronounced fail, and the poll is

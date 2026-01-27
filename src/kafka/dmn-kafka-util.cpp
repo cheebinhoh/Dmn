@@ -25,7 +25,7 @@ auto set_config(rd_kafka_conf_t *config, std::string_view key,
   res = rd_kafka_conf_set(config, key.data(), value.data(), err_str,
                           sizeof(err_str));
   if (RD_KAFKA_CONF_OK != res) {
-    std::string unexpected_err_str = std::string(err_str);
+    std::string unexpected_err_str{err_str};
 
     return std::unexpected(unexpected_err_str);
   }
