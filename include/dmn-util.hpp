@@ -100,19 +100,19 @@ template <typename T> inline T incrementByOne(T value) {
 inline bool stringCompare(const std::string_view str1,
                           const std::string_view str2,
                           bool caseInsensitive = true) {
-  std::string strValue1 {str1);
-    std::string strValue2 {str2);
+  std::string strValue1{str1};
+  std::string strValue2{str2};
 
-      if (caseInsensitive) {
-        std::transform(strValue1.begin(), strValue1.end(), strValue1.begin(),
-                       ::tolower);
-        std::transform(strValue2.begin(), strValue2.end(), strValue2.begin(),
-                       ::tolower);
-      }
+  if (caseInsensitive) {
+    std::transform(strValue1.begin(), strValue1.end(), strValue1.begin(),
+                   ::tolower);
+    std::transform(strValue2.begin(), strValue2.end(), strValue2.begin(),
+                   ::tolower);
+  }
 
-      return strValue1 == strValue2;
-    }
+  return strValue1 == strValue2;
+}
 
-  } // namespace dmn
+} // namespace dmn
 
 #endif // DMN_UTIL_HPP_
