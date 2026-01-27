@@ -82,7 +82,7 @@ public:
    *
    * @param name Optional textual identifier for debugging/logging.
    */
-  Dmn_Async(std::string_view name = "");
+  explicit Dmn_Async(std::string_view name = "");
   virtual ~Dmn_Async() noexcept;
 
   Dmn_Async(const Dmn_Async &obj) = delete;

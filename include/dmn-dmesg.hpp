@@ -266,7 +266,7 @@ public:
      * @brief Construct a handler with only a name; subscribes to the empty
      *        topic with default behaviour.
      */
-    Dmn_DMesgHandler(std::string_view name);
+    explicit Dmn_DMesgHandler(std::string_view name);
 
     virtual ~Dmn_DMesgHandler() noexcept;
 

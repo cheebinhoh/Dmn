@@ -125,7 +125,8 @@ public:
    */
   class Dmn_Sub : public Dmn_Async {
   public:
-    Dmn_Sub(ssize_t replayQuantity = -1) : m_replayQuantity{replayQuantity} {}
+    explicit Dmn_Sub(ssize_t replayQuantity = -1)
+        : m_replayQuantity{replayQuantity} {}
     virtual ~Dmn_Sub() noexcept;
 
     Dmn_Sub(const Dmn_Sub &obj) = delete;
