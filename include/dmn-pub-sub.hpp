@@ -107,7 +107,7 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Pub : public Dmn_Async {
+template <typename T = std::string> class Dmn_Pub : public Dmn_Async {
 public:
   /**
    * Subscriber interface for receiving items published by Dmn_Pub<T>.

@@ -101,11 +101,11 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
  *   are cancellation points).
  */
 class Dmn_Proc {
-  using Task = std::function<void()>;
-
   enum class State { kInvalid, kNew, kReady, kRunning };
 
 public:
+  using Task = std::function<void()>;
+
   /**
    * Construct a Dmn_Proc.
    *
