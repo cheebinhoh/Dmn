@@ -41,7 +41,7 @@ Dmn_Proc::~Dmn_Proc() noexcept try {
     stopExec();
   }
 
-  setState(State::kInvalid);
+  setState(State::kUnknown);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;

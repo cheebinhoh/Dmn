@@ -126,7 +126,7 @@ namespace dmn {
  * Template parameter T is the stored item type. All operations that can fail
  * due to pthread errors will throw std::runtime_error describing the error.
  */
-template <typename T> class Dmn_Buffer {
+template <typename T = std::string> class Dmn_Buffer {
 public:
   Dmn_Buffer();
   virtual ~Dmn_Buffer() noexcept;
