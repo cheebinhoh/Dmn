@@ -106,6 +106,8 @@
 #ifndef DMN_BUFFER_HPP_
 #define DMN_BUFFER_HPP_
 
+#include <pthread.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -113,7 +115,6 @@
 #include <deque>
 #include <initializer_list>
 #include <optional>
-#include <pthread.h>
 #include <stdexcept>
 
 #include "dmn-proc.hpp"
