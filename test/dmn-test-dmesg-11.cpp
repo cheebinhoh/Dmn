@@ -128,6 +128,10 @@ int main(int argc, char *argv[]) {
 
   inConflict = dmesg_read_handle1->isInConflict("id1");
   EXPECT_TRUE((inConflict));
+
+  inConflict = dmesg_read_handle1->isInConflict("id2");
+  EXPECT_TRUE((!inConflict));
+
   std::cout << "****** reset\n";
   dmesg.resetConflictStateWithLastTopicMessage("id1");
 
