@@ -69,5 +69,10 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE("not move" == string_from_not_move_buf);
   EXPECT_TRUE("not move" == string_to_mot_move_buf);
 
+  dmn::Dmn_Buffer<int> int_buf_2{1, 2, 3};
+  EXPECT_TRUE(1 == int_buf_2.pop());
+  EXPECT_TRUE(2 == int_buf_2.pop());
+  EXPECT_TRUE(3 == int_buf_2.pop());
+
   return RUN_ALL_TESTS();
 }
