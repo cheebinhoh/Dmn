@@ -203,7 +203,7 @@ public:
     }; // class Dmn_DMesgHandlerSub
 
   public:
-    enum WriteOptions { kDefault, kBlock, kForce, kMaxWriteOptions };
+    enum WriteOptions { kDefault = 0, kBlock, kForce, kMaxWriteOptions };
     using WriteFlags = std::bitset<kMaxWriteOptions>;
 
     /**
