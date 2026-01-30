@@ -113,6 +113,7 @@
 #include <cstring>
 #include <ctime>
 #include <deque>
+#include <initializer_list>
 #include <optional>
 #include <stdexcept>
 
@@ -129,6 +130,7 @@ namespace dmn {
 template <typename T = std::string> class Dmn_Buffer {
 public:
   Dmn_Buffer();
+  Dmn_Buffer(std::initializer_list<T> list);
   virtual ~Dmn_Buffer() noexcept;
 
   Dmn_Buffer(const Dmn_Buffer<T> &obj) = delete;
@@ -182,7 +184,7 @@ public:
 
   /**
    * @brief Push an rvalue into the queue (attempts move, with
-   * move_if_noexcept).
+   *        move_if_noexcept).
    *
    * Non-blocking and signals waiting consumers.
    *
@@ -255,6 +257,13 @@ template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
   err = pthread_cond_init(&m_none_empty_cond, nullptr);
   if (err) {
     throw std::runtime_error(strerror(err));
+  }
+}
+
+template <typename T>
+Dmn_Buffer<T>::Dmn_Buffer(std::initializer_list<T> list) : Dmn_Buffer{} {
+  for (auto data : list) {
+    this->push(data);
   }
 }
 
