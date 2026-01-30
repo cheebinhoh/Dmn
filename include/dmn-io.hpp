@@ -41,12 +41,16 @@ namespace dmn {
 template <typename T> class Dmn_Io {
 public:
   virtual ~Dmn_Io() = default;
+
   virtual auto read() -> std::optional<T> = 0;
+
   virtual auto read([[maybe_unused]] size_t count,
                     [[maybe_unused]] long timeout = 0) -> std::vector<T> {
     return {};
   }
+
   virtual void write(T &item) = 0;
+
   virtual void write(T &&item) = 0;
 };
 

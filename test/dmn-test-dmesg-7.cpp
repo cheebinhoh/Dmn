@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   auto topic1_read_handler =
       dmesg.openHandler("topic1_read_handler", "topic1", nullptr,
                         [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) -> void {
-                          std::cout << "reat topic1\n";
+                          std::cout << "read topic1\n";
                           dmesgpb_topic1_read = std::move(dmesgpb);
                         });
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   auto topic2_read_handler =
       dmesg.openHandler("topic2_read_handler", "topic2", nullptr,
                         [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) -> void {
-                          std::cout << "reat topic2\n";
+                          std::cout << "read topic2\n";
                           dmesgpb_topic2_read = std::move(dmesgpb);
                         });
   dmn::DMesgPb dmesgpb{};
