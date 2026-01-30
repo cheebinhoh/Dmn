@@ -101,6 +101,7 @@
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
@@ -206,17 +207,41 @@ public:
   /**
    * registerSubscriber
    *
-   * Register a subscriber with this publisher. This method acquires an
-   * internal mutex and returns only after the subscriber has been added to
-   * the publisher's subscriber list. After registration, items in the
-   * publisher's buffer are replayed to the subscriber (via notifyInternal).
+   * Template parameters:
+   *  - U : Dmn_Sub or class type that inherits from Dmn_Sub.
+   *  - X... : parameter pack of argument types to be forwarded to constructor
+   *           of class U.
+   *
+   * Register a subscriber of class interface/subclass from Dmn_Sub with
+   * this publisher. This method acquires an internal mutex and returns
+   * only after the subscriber has been added to the publisher's subscriber
+   * list. After registration, items in the publisher's buffer are replayed
+   * to the subscriber (via notifyInternal).
    *
    * The immediate semantics (synchronous registration) allow callers to rely
    * on the subscriber being registered when the call returns.
    *
-   * @param sub A pointer to a Dmn_Sub instance to register.
+   * @param arg Arguments forwarded to U::U() constructor.
+   * @return std::shared_ptr<U> pointing to the instance of class U.
    */
-  void registerSubscriber(Dmn_Sub *sub);
+  template <typename U, class... X>
+  auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
+
+  /**
+   * registerSubscriber
+   *
+   * Register a subscriber of class interface/subclass from Dmn_Sub with
+   * this publisher. This method acquires an internal mutex and returns
+   * only after the subscriber has been added to the publisher's subscriber
+   * list. After registration, items in the publisher's buffer are replayed
+   * to the subscriber (via notifyInternal).
+   *
+   * The immediate semantics (synchronous registration) allow callers to rely
+   * on the subscriber being registered when the call returns.
+   *
+   * @param sub shared pointer of object to be claimed by Dmn_Pub.
+   */
+  void registerSubscriber(std::shared_ptr<Dmn_Sub> sub);
 
   /**
    * unregisterSubscriber
@@ -258,7 +283,7 @@ private:
    */
   std::deque<T> m_buffer{};  // bounded historical buffer for replay
   pthread_mutex_t m_mutex{}; // protects subscriber list & buffer
-  std::vector<Dmn_Sub *> m_subscribers{};
+  std::vector<std::shared_ptr<Dmn_Sub>> m_subscribers{};
 }; // class Dmn_Pub
 
 // class Dmn_Pub::Dmn_Sub
@@ -360,7 +385,7 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
   }
 
   for (auto &sub : m_subscribers) {
-    if (!m_filter_fn || m_filter_fn(sub, item)) {
+    if (!m_filter_fn || m_filter_fn(sub.get(), item)) {
       sub->notifyInternal(item);
     }
   }
@@ -373,7 +398,18 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
   }
 } // method publishInternal()
 
-template <typename T> void Dmn_Pub<T>::registerSubscriber(Dmn_Sub *sub) {
+template <typename T>
+template <typename U, class... X>
+auto Dmn_Pub<T>::registerSubscriber(X &&...arg) -> std::shared_ptr<U> {
+  auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
+
+  registerSubscriber(subSp);
+
+  return subSp;
+}
+
+template <typename T>
+void Dmn_Pub<T>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
   int err = pthread_mutex_lock(&m_mutex);
   if (err) {
     throw std::runtime_error(strerror(err));
@@ -431,7 +467,8 @@ template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
     sub->m_pub = nullptr;
 
     m_subscribers.erase(
-        std::remove(m_subscribers.begin(), m_subscribers.end(), sub),
+        std::remove_if(m_subscribers.begin(), m_subscribers.end(),
+                       [sub](auto &sp) { return sp.get() == sub; }),
         m_subscribers.end());
   }
 

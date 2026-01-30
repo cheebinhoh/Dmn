@@ -482,7 +482,7 @@ public:
     bool m_no_topic_filter{};
 
     Dmn_DMesg *m_owner{};
-    Dmn_DMesgHandlerSub m_sub{};
+    std::shared_ptr<Dmn_DMesgHandlerSub> m_sub{};
 
     Dmn_Buffer<dmn::DMesgPb> m_buffers{};
     dmn::DMesgPb m_last_dmesgpb_sys{};
@@ -634,8 +634,9 @@ auto Dmn_DMesg::openHandler(U &&...arg)
    * This design keeps DMesg itself mutex-free while remaining thread safe.
    */
   handler->m_owner = this;
-
-  this->registerSubscriber(&(handler->m_sub));
+  handler->m_sub =
+      this->registerSubscriber<Dmn_DMesgHandler::Dmn_DMesgHandlerSub>();
+  handler->m_sub->m_owner = handler.get();
 
   auto handler_ret = handler;
 

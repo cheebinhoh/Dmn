@@ -110,8 +110,6 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     m_no_topic_filter =
         stringCompare(iter->second, "1") || stringCompare(iter->second, "yes");
   }
-
-  m_sub.m_owner = this;
 }
 
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
@@ -153,7 +151,7 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
     : Dmn_DMesgHandler{name, static_cast<FilterTask>(nullptr)} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
-  m_sub.waitForEmpty();
+  m_sub->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -165,7 +163,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   this->isAfterInitialPlayback();
 
   auto waitHandler =
-      m_sub.addExecTaskWithWait([this, topic, &inConflict]() -> void {
+      m_sub->addExecTaskWithWait([this, topic, &inConflict]() -> void {
         inConflict = this->isInConflictInternal(topic);
       });
 
@@ -187,7 +185,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
   this->isAfterInitialPlayback();
 
   auto waitHandler =
-      m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+      m_sub->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
         runningCounter = this->getTopicRunningCounterInternal(topic);
       });
 
@@ -207,7 +205,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
-  [[maybe_unused]] auto waitHandler = m_sub.addExecTaskWithWait(
+  [[maybe_unused]] auto waitHandler = m_sub->addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
@@ -219,7 +217,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
     std::string_view topic, uint64_t runningCounter) {
   auto waitHandler =
-      m_sub.addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+      m_sub->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
         this->setTopicRunningCounterInternal(topic, runningCounter);
       });
 
@@ -250,7 +248,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
 
-  auto waitHandler = m_sub.addExecTaskWithWait([this, &conflict_fn]() -> void {
+  auto waitHandler = m_sub->addExecTaskWithWait([this, &conflict_fn]() -> void {
     m_conflict_callback_fn = std::move(conflict_fn);
   });
 
@@ -281,7 +279,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
   }
 
   auto waithandler =
-      m_sub.addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
+      m_sub->addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
         writeDMesgInternal(moved_dmesgpb, true, block);
       });
   waithandler->wait();
@@ -299,7 +297,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
   }
 
   auto waitHandler =
-      m_sub.addExecTaskWithWait([this, &dmesgpb, block]() -> void {
+      m_sub->addExecTaskWithWait([this, &dmesgpb, block]() -> void {
         writeDMesgInternal(dmesgpb, false, block);
       });
   waitHandler->wait();
@@ -333,7 +331,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() {
 
   this->isAfterInitialPlayback();
 
-  m_sub.waitForEmpty();
+  m_sub->waitForEmpty();
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
@@ -396,7 +394,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
   m_topic_in_conflict.insert(dmesgpb.topic());
 
   if (m_conflict_callback_fn) {
-    m_sub.write([this, dmesgpb]() -> void {
+    m_sub->write([this, dmesgpb]() -> void {
       this->m_conflict_callback_fn(*this, dmesgpb);
     });
   }
@@ -428,7 +426,7 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
 
 void Dmn_DMesg::closeHandler(
     std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> &handler) {
-  this->unregisterSubscriber(&(handler->m_sub));
+  this->unregisterSubscriber(handler->m_sub.get());
   handler->waitForEmpty();
   handler->m_owner = nullptr;
 
