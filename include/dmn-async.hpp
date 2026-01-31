@@ -40,17 +40,17 @@
 // captured code as the task body.
 #define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \
   do {                                                                         \
-    this->write([=]() mutable -> void { block; });                             \
+    this->addExecTask([=]() mutable -> void { block; });                       \
   } while (false)
 
 #define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \
   do {                                                                         \
-    this->write([&]() mutable -> void { block; });                             \
+    this->addExecTask([&]() mutable -> void { block; });                       \
   } while (false)
 
 #define DMN_ASYNC_CALL_WITH_CAPTURE(block, ...)                                \
   do {                                                                         \
-    this->write([__VA_ARGS__]() mutable -> void { block; });                   \
+    this->addExecTask([__VA_ARGS__]() mutable -> void { block; });             \
   } while (false)
 
 namespace dmn {
@@ -89,6 +89,13 @@ public:
   const Dmn_Async &operator=(const Dmn_Async &obj) = delete;
   Dmn_Async(Dmn_Async &&obj) = delete;
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
+
+  /**
+   * @brief Submit a task for asynchronous execution.
+   *
+   * @param fnc The task to execute asynchronously.
+   */
+  void addExecTask(std::function<void()> fnc);
 
   /**
    * @brief Submit a task for asynchronous execution and get a wait object.
