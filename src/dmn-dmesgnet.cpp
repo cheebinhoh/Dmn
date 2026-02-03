@@ -256,7 +256,7 @@ void Dmn_DMesgNet::createTimerProc() {
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
         [this]() -> void {
-          this->write([this]() mutable -> void {
+          this->addExecTask([this]() mutable -> void {
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
               this->m_master_pending_counter++;
