@@ -394,7 +394,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
   m_topic_in_conflict.insert(dmesgpb.topic());
 
   if (m_conflict_callback_fn) {
-    m_sub->write([this, dmesgpb]() -> void {
+    m_sub->addExecTask([this, dmesgpb]() -> void {
       this->m_conflict_callback_fn(*this, dmesgpb);
     });
   }

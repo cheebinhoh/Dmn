@@ -43,6 +43,16 @@ Dmn_Async::~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
   return;
 }
 
+void Dmn_Async::addExecTask(std::function<void()> fnc) {
+  this->write([fnc = std::move(fnc)]() -> void {
+    try {
+      fnc();
+    } catch (...) {
+      // ...
+    }
+  });
+}
+
 auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
     -> std::shared_ptr<Dmn_Async::Dmn_Async_Wait> {
   auto wait_shared_ptr = std::make_shared<Dmn_Async_Wait>();
