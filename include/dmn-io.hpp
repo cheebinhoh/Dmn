@@ -40,7 +40,7 @@ namespace dmn {
 
 template <typename T> class Dmn_Io {
 public:
-  virtual ~Dmn_Io() = default;
+  virtual ~Dmn_Io() noexcept = default;
 
   virtual auto read() -> std::optional<T> = 0;
 

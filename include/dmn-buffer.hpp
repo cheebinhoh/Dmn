@@ -439,7 +439,7 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   // Collect up to 'count' items (moved out).
   do {
-    ret.push_back(std::move(m_queue.front()));
+    ret.push_back(std::move_if_noexcept(m_queue.front()));
     m_queue.pop_front();
     ++m_pop_count;
 
@@ -502,7 +502,7 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
     } while (m_queue.empty());
   }
 
-  val = std::move(m_queue.front());
+  val = std::move_if_noexcept(m_queue.front());
   m_queue.pop_front();
 
   ++m_pop_count;
