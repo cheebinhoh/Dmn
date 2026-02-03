@@ -121,7 +121,7 @@ struct Dmn_Runtime_Task {
 
   void await_resume() {}
 
-  ~Dmn_Runtime_Task() {
+  ~Dmn_Runtime_Task() noexcept {
     if (handle)
       handle.destroy();
   }

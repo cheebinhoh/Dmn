@@ -74,7 +74,7 @@ public:
    *
    * Gracefully closes the connection and releases resources.
    */
-  virtual ~Dmn_Socket();
+  virtual ~Dmn_Socket() noexcept;
 
   /* Non-copyable and non-movable: owning the socket FD prohibits copying. */
   Dmn_Socket(const Dmn_Socket &obj) = delete;
