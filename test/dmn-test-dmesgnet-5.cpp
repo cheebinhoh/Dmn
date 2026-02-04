@@ -67,9 +67,11 @@ int main(int argc, char *argv[]) {
   dmn::DMesgPb dmesgpb1{};
   dmn::DMesgPb dmesgpb1_body{};
   dmn::DMesgPb dmesgpb1_sys{};
+  dmn::DMesgPb dmesgpb1_body_conflict{};
   dmn::Dmn_Proc dmesg1_to_dmesg2{
-      "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, write_to_read_1,
-                           &dmesgpb1, &dmesgpb1_body, &dmesgpb1_sys]() {
+      "dmesg1_to_dmesg2",
+      [read_from_write_1, write_to_read_2, write_to_read_1, &dmesgpb1,
+       &dmesgpb1_body, &dmesgpb1_body_conflict, &dmesgpb1_sys]() {
         while (true) {
           auto data = read_from_write_1->read();
           if (!data) {
@@ -79,6 +81,10 @@ int main(int argc, char *argv[]) {
           dmesgpb1.ParseFromString(*data);
           if (dmesgpb1.type() == dmn::DMesgTypePb::sys) {
             dmesgpb1_sys = dmesgpb1;
+          } else if (dmesgpb1.conflict()) {
+            std::cout << "********* conflict: " << dmesgpb1.ShortDebugString()
+                      << "\n";
+            dmesgpb1_body_conflict = dmesgpb1;
           } else {
             dmesgpb1_body = dmesgpb1;
 
@@ -142,6 +148,10 @@ int main(int argc, char *argv[]) {
   dmesgnet1 = {};
   std::cout << "after destroying 1\n";
   std::this_thread::sleep_for(std::chrono::seconds(10));
+
+  EXPECT_TRUE((dmesgpb1_body_conflict.conflict()));
+  EXPECT_TRUE((dmesgpb1_body_conflict.topic() == "counter sync"));
+  EXPECT_TRUE((dmesgpb1_body_conflict.runningcounter() == 1));
 
   return RUN_ALL_TESTS();
 }
