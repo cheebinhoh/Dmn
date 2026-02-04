@@ -11,7 +11,6 @@
 
 #include <cassert>
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -113,7 +112,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 void Dmn_DMesgNet::createInputHandlerProc() {
   if (m_input_handler) {
     m_write_handler = Dmn_DMesg::openHandler(
-        m_name, [this](const dmn::DMesgPb &dmesgPb) -> bool { return false; },
+        m_name, [this](const dmn::DMesgPb &) -> bool { return false; },
         [](dmn::DMesgPb dmesgPbWrite) mutable -> void {});
 
     m_input_proc =
@@ -143,40 +142,24 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                     { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
                     dmesgpb_read);
               } else {
-                std::cout << "none sys data: "
-                          << dmesgpb_read.ShortDebugString() << "\n";
-                DMN_ASYNC_CALL_WITH_CAPTURE(
-                    {
-                      try {
-                        DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(
-                            dmesgpb_read, this->m_name);
+                DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read,
+                                                              this->m_name);
 
-                        this->m_write_handler->write(dmesgpb_read);
+                bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
 
-                        m_topic_last_dmesgpb[dmesgpb_read.topic()] =
-                            dmesgpb_read;
-                      } catch (...) {
-                        // The data from network is out of sync with data
-                        // in the Dmn_DMesg, and a few should happen:
-                        // - mark the topic as in conflict for local Dmn_DMesg
-                        // - the local Dmn_DMesg will mark all openHandler in
-                        //   conflict but waiting for resolution with
-                        //   Dmn_DMesgNet master, so they will not allow any
-                        //   message on the same topic band.
-                        // - the local Dmn_DMesgNet will broadcast a sys
-                        //   conflict message.
-                        // - all networked DMesgNet(s) receives the sys conflict
-                        //   message will then put its local Dmn_DMesg in
-                        //   conflict state for the same topic.
-                        // - master node will then send its last message for the
-                        //   to all nodes, and all nodes receives the message
-                        //   will use new message as its last valid message for
-                        //   the topic and clear it conflict state.
+                if (ok) {
+                  m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
+                } else {
+                  DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
 
-                        this->m_subscript_handler->resolveConflict();
-                      }
-                    },
-                    this, dmesgpb_read);
+                  DMN_ASYNC_CALL_WITH_CAPTURE(
+                      {
+                        std::string serialized_string{};
+                        dmesgpb_read.SerializeToString(&serialized_string);
+                        m_output_handler->write(serialized_string);
+                      },
+                      this, dmesgpb_read);
+                }
               } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
             }
           }
@@ -256,7 +239,7 @@ void Dmn_DMesgNet::createTimerProc() {
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
         [this]() -> void {
-          this->write([this]() mutable -> void {
+          this->addExecTask([this]() mutable -> void {
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
               this->m_master_pending_counter++;

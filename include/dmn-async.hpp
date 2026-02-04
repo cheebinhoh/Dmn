@@ -140,6 +140,10 @@ public:
       -> std::shared_ptr<Dmn_Async_Wait>;
 
 private:
+  using Dmn_Pipe::read;
+  using Dmn_Pipe::readAndProcess;
+  using Dmn_Pipe::write;
+
   /**
    * @brief Internal helper that schedules a task to run at a specific time in
    * the future (expressed as nanoseconds since epoch).

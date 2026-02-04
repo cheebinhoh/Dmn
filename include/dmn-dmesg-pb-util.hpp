@@ -69,6 +69,8 @@
 
 #define DMESG_PB_SET_MSG_TOPIC(pb, val) ((pb).set_topic((val)))
 
+#define DMESG_PB_SET_MSG_CONFLICT(pb, val) ((pb).set_conflict((val)))
+
 #define DMESG_PB_SET_MSG_RUNNINGCOUNTER(pb, val)                               \
   ((pb).set_runningcounter((val)))
 
