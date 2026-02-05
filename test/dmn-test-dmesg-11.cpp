@@ -94,7 +94,17 @@ int main(int argc, char *argv[]) {
   std::cout << "after sleep 3 seconds\n";
 
   dmesg_write_handle->write(dmesgpb1);
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+
+  auto lastDMesg = dmesg.getTopicLastMessage("id1");
+  EXPECT_TRUE((lastDMesg));
+  EXPECT_TRUE((lastDMesg->body().message() == "message string 1"));
+
   dmesg_write_handle->write(dmesgpb2);
+
+  lastDMesg = dmesg.getTopicLastMessage("id1");
+  EXPECT_TRUE((lastDMesg));
+  EXPECT_TRUE((lastDMesg->body().message() == "message string 2"));
 
   dmesg.waitForEmpty();
   dmesg_read_handle1->waitForEmpty();

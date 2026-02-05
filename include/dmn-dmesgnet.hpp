@@ -122,6 +122,9 @@ protected:
    */
   void reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other);
 
+  auto getLastTopicCacheInternal()
+      -> std::unordered_map<std::string, dmn::DMesgPb> & override;
+
 private:
   void createInputHandlerProc();
   void createSubscriptHandler();

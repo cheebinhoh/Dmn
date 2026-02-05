@@ -449,6 +449,29 @@ void Dmn_DMesg::closeHandler(
       this, handler_ptr);
 }
 
+auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
+    -> std::optional<dmn::DMesgPb> {
+  std::optional<dmn::DMesgPb> ret{};
+
+  auto waitHandler = this->addExecTaskWithWait([this, topic, &ret]() -> void {
+    auto cache = this->getLastTopicCacheInternal();
+
+    auto iter = cache.find(std::string(topic));
+    if (cache.end() != iter) {
+      ret = iter->second;
+    }
+  });
+
+  waitHandler->wait();
+
+  return ret;
+}
+
+auto Dmn_DMesg::getLastTopicCacheInternal()
+    -> std::unordered_map<std::string, dmn::DMesgPb> & {
+  return m_topic_last_dmesgpb;
+}
+
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
     dmn::DMesgPb msgpb = topic_dmesgpb.second;

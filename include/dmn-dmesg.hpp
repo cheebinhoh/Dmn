@@ -532,6 +532,16 @@ public:
   void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose);
 
   /**
+   * @brief Get the topic last message or nullptr if no message for the topic.
+   *
+   * @param topic the topic that last message to be returned.
+   *
+   * @return last message of topic or nullptr if no message for such topic.
+   */
+  auto getTopicLastMessage(std::string_view topic)
+      -> std::optional<dmn::DMesgPb>;
+
+  /**
    * @brief Reset conflict state by posting last message of the topic.
    *
    * @param topic Topic to reset
@@ -561,6 +571,14 @@ protected:
    * @param dmesgPb The message to be published.
    */
   void publishInternal(const dmn::DMesgPb &dmesgPb) override;
+
+  /**
+   * @brief Return the cache of last topic message.
+   *
+   * @return The cache of last topic messages.
+   */
+  virtual auto getLastTopicCacheInternal()
+      -> std::unordered_map<std::string, dmn::DMesgPb> &;
 
   /**
    * @brief Post an async action that resets a handler's conflict state in the

@@ -131,6 +131,17 @@ int main(int argc, char *argv[]) {
               std::cout << "****** send dup\n";
               std::this_thread::sleep_for(std::chrono::seconds(3));
               std::cout << "****** after send dup\n";
+
+              dmn::DMesgPb dmesgpb2{};
+              dmesgpb2.ParseFromString(*data);
+
+              std::string str{"Hello dmesg async dup"};
+              dmn::DMesgBodyPb *dmesgpb_body = dmesgpb2.mutable_body();
+              dmesgpb_body->set_message(str);
+
+              std::string dupString{};
+              dmesgpb2.SerializeToString(&dupString);
+              *data = dupString;
             }
           }
 
@@ -233,6 +244,7 @@ int main(int argc, char *argv[]) {
   auto dmesgdata = dmesg2_read_handle->read();
   std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
   EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
+  EXPECT_TRUE(((*dmesgdata).body().message() == "Hello dmesg async"));
 
   EXPECT_TRUE((dmesgpb2_body.topic() == ""));
 
