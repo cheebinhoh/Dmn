@@ -490,9 +490,9 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   }
 
   // if this is a message is out of date and put the sender in conflict
-  if (copied_dmesgpb.runningcounter() < next_running_counter) {
+  if (copied_dmesgpb.runningcounter() < next_running_counter ||
+      copied_dmesgpb.conflict()) {
     copied_dmesgpb.set_conflict(true);
-
     if (iter != m_handlers.end()) {
       (*iter)->throwConflictInternal(copied_dmesgpb);
     }

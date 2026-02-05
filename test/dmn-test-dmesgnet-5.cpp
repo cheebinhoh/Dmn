@@ -72,6 +72,8 @@ int main(int argc, char *argv[]) {
       "dmesg1_to_dmesg2",
       [read_from_write_1, write_to_read_2, write_to_read_1, &dmesgpb1,
        &dmesgpb1_body, &dmesgpb1_body_conflict, &dmesgpb1_sys]() {
+        bool sendConflict{};
+
         while (true) {
           auto data = read_from_write_1->read();
           if (!data) {
@@ -85,7 +87,7 @@ int main(int argc, char *argv[]) {
             std::cout << "********* conflict: " << dmesgpb1.ShortDebugString()
                       << "\n";
             dmesgpb1_body_conflict = dmesgpb1;
-          } else {
+          } else if (!sendConflict) {
             dmesgpb1_body = dmesgpb1;
 
             dmn::DMesgPb dmesgpbWritten = dmesgpb1;
@@ -98,7 +100,11 @@ int main(int argc, char *argv[]) {
             std::string serialized_string{};
             dmesgpbWritten.SerializeToString(&serialized_string);
 
+            std::cout << "**** write to conflict 1: "
+                      << dmesgpb1.ShortDebugString() << "\n";
             write_to_read_1->write(serialized_string);
+            std::cout << "**** write to conflict 2\n";
+            sendConflict = true;
           }
 
           write_to_read_2->write(*data);

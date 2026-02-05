@@ -170,13 +170,13 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                                                               this->m_name);
 
                 auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
-                bool ok = (iter == m_topic_last_dmesgpb.end() ||
-                           iter->second.runningcounter() <
-                               dmesgpb_read.runningcounter());
-
-                if (ok) {
-                  ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
+                if (iter != m_topic_last_dmesgpb.end() &&
+                    iter->second.runningcounter() >=
+                        dmesgpb_read.runningcounter()) {
+                  DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
                 }
+
+                bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
 
                 if (ok) {
                   m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
