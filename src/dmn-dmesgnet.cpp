@@ -142,8 +142,9 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                     { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
                     dmesgpb_read);
               } else if (dmesgpb_read.conflict()) {
-                auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
-                assert(iter != m_topic_last_dmesgpb.end());
+                auto lastMesgPb =
+                    this->getTopicLastMessage(dmesgpb_read.topic());
+                assert(lastMesgPb);
 
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     {
@@ -157,11 +158,16 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                         m_output_handler->write(serialized_string);
                       }
                     },
-                    this, dmesgpbForce = iter->second);
+                    this, dmesgpbForce = *lastMesgPb);
               } else if (dmesgpb_read.force() && dmesgpb_read.playback()) {
                 bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
                 if (ok) {
-                  m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
+                  DMN_ASYNC_CALL_WITH_CAPTURE(
+                      {
+                        m_topic_last_dmesgpb[dmesgpb_read.topic()] =
+                            dmesgpb_read;
+                      },
+                      this, dmesgpb_read);
                 } else {
                   assert("force and playback write fail" == nullptr);
                 }
@@ -169,22 +175,24 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read,
                                                               this->m_name);
 
-                auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
-                if (iter != m_topic_last_dmesgpb.end() &&
-                    iter->second.runningcounter() >=
-                        dmesgpb_read.runningcounter()) {
+                auto lastMesgPb =
+                    this->getTopicLastMessage(dmesgpb_read.topic());
+                if (lastMesgPb && lastMesgPb->runningcounter() >=
+                                      dmesgpb_read.runningcounter()) {
                   DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
                 }
 
                 bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
 
                 if (ok) {
-                  m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
+                  DMN_ASYNC_CALL_WITH_CAPTURE(
+                      {
+                        m_topic_last_dmesgpb[dmesgpb_read.topic()] =
+                            dmesgpb_read;
+                      },
+                      this, dmesgpb_read);
                 } else {
                   DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
-
-                  auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
-                  assert(iter != m_topic_last_dmesgpb.end());
 
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
@@ -198,7 +206,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                         dmesgpbForce.SerializeToString(&serialized_string);
                         m_output_handler->write(serialized_string);
                       },
-                      this, dmesgpb_read, dmesgpbForce = iter->second);
+                      this, dmesgpb_read, dmesgpbForce = *lastMesgPb);
                 }
               } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
             }
@@ -358,6 +366,11 @@ void Dmn_DMesgNet::createTimerProc() {
     DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
     DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, this->m_name);
   }
+}
+
+auto Dmn_DMesgNet::getLastTopicCacheInternal()
+    -> std::unordered_map<std::string, dmn::DMesgPb> & {
+  return this->m_topic_last_dmesgpb;
 }
 
 void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
