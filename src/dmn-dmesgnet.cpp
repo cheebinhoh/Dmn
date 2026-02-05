@@ -141,9 +141,40 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
                     dmesgpb_read);
+              } else if (dmesgpb_read.conflict()) {
+                auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
+                assert(iter != m_topic_last_dmesgpb.end());
+
+                DMN_ASYNC_CALL_WITH_CAPTURE(
+                    {
+                      if (m_is_master) {
+                        std::string serialized_string{};
+
+                        DMESG_PB_SET_MSG_PLAYBACK(dmesgpbForce, true);
+                        DMESG_PB_SET_MSG_FORCE(dmesgpbForce, true);
+
+                        dmesgpbForce.SerializeToString(&serialized_string);
+                        m_output_handler->write(serialized_string);
+                      }
+                    },
+                    this, dmesgpbForce = iter->second);
+              } else if (dmesgpb_read.force() && dmesgpb_read.playback()) {
+                bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
+                if (ok) {
+                  m_topic_last_dmesgpb[dmesgpb_read.topic()] = dmesgpb_read;
+                } else {
+                  assert("force and playback write fail" == nullptr);
+                }
               } else {
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read,
                                                               this->m_name);
+
+                auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
+                if (iter != m_topic_last_dmesgpb.end() &&
+                    iter->second.runningcounter() >=
+                        dmesgpb_read.runningcounter()) {
+                  DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
+                }
 
                 bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
 
@@ -152,13 +183,22 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 } else {
                   DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
 
+                  auto iter = m_topic_last_dmesgpb.find(dmesgpb_read.topic());
+                  assert(iter != m_topic_last_dmesgpb.end());
+
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
                         std::string serialized_string{};
                         dmesgpb_read.SerializeToString(&serialized_string);
                         m_output_handler->write(serialized_string);
+
+                        DMESG_PB_SET_MSG_PLAYBACK(dmesgpbForce, true);
+                        DMESG_PB_SET_MSG_FORCE(dmesgpbForce, true);
+
+                        dmesgpbForce.SerializeToString(&serialized_string);
+                        m_output_handler->write(serialized_string);
                       },
-                      this, dmesgpb_read);
+                      this, dmesgpb_read, dmesgpbForce = iter->second);
                 }
               } /* else (dmesgpb_read.type() == dmn::DMesgTypePb::sys) */
             }

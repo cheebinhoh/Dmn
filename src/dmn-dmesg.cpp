@@ -411,7 +411,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
                 const Dmn_DMesgHandler *const handler = handler_sub->m_owner;
 
                 return nullptr != handler && nullptr != handler->m_owner &&
-                       (msg.playback() ||
+                       ((msg.playback() &&
+                         !handler->m_after_initial_playback.test()) ||
                         handler->m_after_initial_playback.test()) &&
                        (handler->m_no_topic_filter ||
                         handler->m_topic.empty() ||
@@ -489,9 +490,9 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   }
 
   // if this is a message is out of date and put the sender in conflict
-  if (copied_dmesgpb.runningcounter() < next_running_counter) {
+  if (copied_dmesgpb.runningcounter() < next_running_counter ||
+      copied_dmesgpb.conflict()) {
     copied_dmesgpb.set_conflict(true);
-
     if (iter != m_handlers.end()) {
       (*iter)->throwConflictInternal(copied_dmesgpb);
     }
