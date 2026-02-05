@@ -192,10 +192,10 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                       },
                       this, dmesgpb_read);
                 } else {
-                  DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
-
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
+                        DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
+
                         std::string serialized_string{};
                         dmesgpb_read.SerializeToString(&serialized_string);
                         m_output_handler->write(serialized_string);
