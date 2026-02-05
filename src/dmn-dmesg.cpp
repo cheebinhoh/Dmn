@@ -411,7 +411,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
                 const Dmn_DMesgHandler *const handler = handler_sub->m_owner;
 
                 return nullptr != handler && nullptr != handler->m_owner &&
-                       (msg.playback() ||
+                       ((msg.playback() &&
+                         !handler->m_after_initial_playback.test()) ||
                         handler->m_after_initial_playback.test()) &&
                        (handler->m_no_topic_filter ||
                         handler->m_topic.empty() ||

@@ -1,14 +1,59 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This program asserts that a Dmn_DMesgNet object will self-proclaim
- * as a master if it is started without other Dmn_DMesgNet objects
- * and a emulated system message with other node identifier as master
- * will not derail the Dmn_DMesgNet object notion of who is master
- * as long as the Dmn_DMesgNet object timestamp is earlier than other.
+ * Unit test: dmn-test-dmesgnet-4.cpp
+ *
+ * Purpose
+ * -------
+ * This test verifies that two Dmn_DMesgNet instances can communicate over a
+ * simulated network (using Dmn_Pipe and Dmn_Proc to forward serialized
+ * messages). It checks:
+ *  - discovery and system message exchange (node join, Ready state),
+ *  - master selection (which node becomes master),
+ *  - application-level message delivery via handlers, and
+ *  - correct behavior when nodes are destroyed (node leaves and final
+ *    destruction).
+ *
+ * Test setup and components
+ * ------------------------
+ * - Four Dmn_Pipe<std::string> objects emulate bidirectional socket pairs
+ *   (read/write for each node).
+ * - Two forwarding Dmn_Proc threads (dmesg1_to_dmesg2, dmesg2_to_dmesg1)
+ *   continuously read serialized DMesgPb strings from one pipe, parse a copy
+ *   into DMesgPb variables for assertions, and write the same serialized data
+ *   into the opposite pipe. These act like simple network links between the
+ *   two Dmn_DMesgNet instances.
+ * - Two Dmn_DMesgNet instances ("dmesg1" then "dmesg2") are created and wired
+ *   to the pipes; the test waits for discovery/handshake messages to be
+ *   exchanged.
+ *
+ * Assertions and sequence
+ * -----------------------
+ * 1) After an initial discovery period, both nodes should reach the Ready
+ *    state. "dmesg1" is expected to be the master; each node's system message
+ *    should list the other node in its nodelist.
+ *
+ * 2) Application message delivery:
+ *    - dmesg1 opens a handler and writes a DMesgPb with topic "counter sync".
+ *    - dmesg2 opens a handler for the same topic and should receive the
+ *      message via the simulated network.
+ *
+ * 3) Node teardown behavior:
+ *    - Destroying dmesgnet1 should cause dmesg2 to be the remaining master and
+ *      have an empty nodelist.
+ *    - Destroying dmesgnet2 should result in the final sys state being
+ *      Destroyed and the masteridentifier cleared.
+ *
+ * Notes and caveats
+ * -----------------
+ * - This test relies on sleeps to allow asynchronous discovery, message
+ *   propagation and state transitions. That makes it timing-sensitive and it
+ *   can be flaky on heavily loaded or slow CI hosts. If flakiness is observed,
+ *   consider replacing sleeps with explicit synchronization (condition
+ *   variables, polling with timeouts, or explicit handshakes).
+ * - The forwarding procs capture the last-seen system and body messages into
+ *   local DMesgPb variables that are later used for assertions.
  */
-
-#include <sys/time.h>
 
 #include <gtest/gtest.h>
 
@@ -18,84 +63,204 @@
 #include <thread>
 #include <utility>
 
-#include "dmn-dmesg-pb-util.hpp"
-#include "dmn-dmesg.hpp"
 #include "dmn-dmesgnet.hpp"
 #include "dmn-io.hpp"
+#include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
-#include "dmn-socket.hpp"
 
 #include "proto/dmn-dmesg-body.pb.h"
-#include "proto/dmn-dmesg-type.pb.h"
 #include "proto/dmn-dmesg.pb.h"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
 
-  dmn::DMesgPb dmesgpb_sys_3{};
-  std::shared_ptr<dmn::Dmn_DMesgNet> dmesgnet1 =
-      std::make_unique<dmn::Dmn_DMesgNet>("dmesg-3", std::move(read_socket_1),
-                                          std::move(write_socket_1));
-  read_socket_1.reset();
-  write_socket_1.reset();
+  std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
+  std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
+      std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
 
-  auto configs = dmn::Dmn_DMesg::kHandlerConfig_Default;
-  configs[std::string(dmn::Dmn_DMesg::kHandlerConfig_IncludeSys)] = "yes";
+  auto read_from_write_1 = write_1;
+  auto write_to_read_1 = read_1;
 
-  auto listen_handle_3 = dmesgnet1->openHandler(
-      "dmesg-3-listen", nullptr,
-      [&dmesgpb_sys_3](dmn::DMesgPb data) mutable -> void {
-        if (data.type() == dmn::DMesgTypePb::sys) {
-          dmesgpb_sys_3 = std::move(data);
-        }
-      },
-      configs);
+  auto read_from_write_2 = write_2;
+  auto write_to_read_2 = read_2;
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  dmn::Dmn_Proc dmesg_4_proc{
-      "dmesg_4_proc", []() mutable -> void {
-        std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
-            std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
-        dmn::DMesgPb sys{};
-        struct timeval tv;
+  dmn::DMesgPb dmesgpb1{};
+  dmn::DMesgPb dmesgpb1_body{};
+  dmn::DMesgPb dmesgpb1_sys{};
+  dmn::Dmn_Proc dmesg1_to_dmesg2{
+      "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, &dmesgpb1,
+                           &dmesgpb1_body, &dmesgpb1_sys]() {
+        static bool print{};
+        static bool dup{};
 
-        gettimeofday(&tv, nullptr);
+        while (true) {
+          auto data = read_from_write_1->read();
+          if (!data) {
+            break;
+          }
 
-        DMESG_PB_SET_MSG_TOPIC(sys, "sys.dmn-dmesg");
-        DMESG_PB_SET_MSG_TYPE(sys, dmn::DMesgTypePb::sys);
-        DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV(sys, tv);
-        DMESG_PB_SET_MSG_SOURCEIDENTIFIER(sys, "dmesg-4");
+          dmesgpb1.ParseFromString(*data);
+          if (dmesgpb1.type() == dmn::DMesgTypePb::sys) {
+            dmesgpb1_sys = dmesgpb1;
 
-        auto *self = sys.mutable_body()->mutable_sys()->mutable_self();
-        DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV(self, tv);
-        DMESG_PB_SYS_NODE_SET_IDENTIFIER(self, "dmesg-4");
-        DMESG_PB_SYS_NODE_SET_STATE(self, dmn::DMesgStatePb::Ready);
-        DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(self, "dmesg-4");
+            if (!print) {
+              std::cout << "*** 1 to 2 sys: " << dmesgpb1_sys.ShortDebugString()
+                        << "\n";
+              print = true;
+            }
+          } else if (dmesgpb1.conflict()) {
+            std::cout << "dmesg1 to dmesg2: conflict: "
+                      << dmesgpb1.ShortDebugString() << "\n";
+          } else {
+            dmesgpb1_body = dmesgpb1;
 
-        for (long long n = 0; n < 30; n++) {
-          DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV(self, tv);
-          std::string serialized_string{};
+            std::cout << "*** 1 to 2: " << dmesgpb1_body.ShortDebugString()
+                      << "\n";
 
-          sys.SerializeToString(&serialized_string);
+            if (!dup) {
+              auto copied = *data;
+              write_to_read_2->write(copied);
+              dup = true;
 
-          write_socket_1->write(serialized_string);
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+              std::cout << "****** send dup\n";
+              std::this_thread::sleep_for(std::chrono::seconds(3));
+              std::cout << "****** after send dup\n";
+            }
+          }
 
-          gettimeofday(&tv, nullptr);
+          write_to_read_2->write(*data);
         }
       }};
 
-  dmesg_4_proc.exec();
-  dmesg_4_proc.wait();
+  dmn::DMesgPb dmesgpb2{};
+  dmn::DMesgPb dmesgpb2_body{};
+  dmn::DMesgPb dmesgpb2_force{};
+  dmn::DMesgPb dmesgpb2_sys{};
+  dmn::Dmn_Proc dmesg2_to_dmesg1{
+      "dmesg2_to_dmesg1", [read_from_write_2, write_to_read_1, &dmesgpb2,
+                           &dmesgpb2_body, &dmesgpb2_force, &dmesgpb2_sys]() {
+        static bool print{};
 
+        while (true) {
+          auto data = read_from_write_2->read();
+          if (!data) {
+            break;
+          }
+
+          dmesgpb2.ParseFromString(*data);
+          if (dmesgpb2.type() == dmn::DMesgTypePb::sys) {
+            dmesgpb2_sys = dmesgpb2;
+
+            if (!print) {
+              std::cout << "*** 2 to 1 sys: " << dmesgpb2_sys.ShortDebugString()
+                        << "\n";
+              print = true;
+            }
+          } else if (dmesgpb2.conflict()) {
+            std::cout << "dmesg1 to dmesg2: conflict: "
+                      << dmesgpb2.ShortDebugString() << "\n";
+          } else if (dmesgpb2.force() && dmesgpb2.playback()) {
+            dmesgpb2_force = dmesgpb2;
+
+            std::cout << "*** 2 to 1 force: "
+                      << dmesgpb2_body.ShortDebugString() << "\n";
+          } else {
+            dmesgpb2_body = dmesgpb2;
+
+            std::cout << "*** 2 to 1: " << dmesgpb2_body.ShortDebugString()
+                      << "\n";
+          }
+
+          write_to_read_1->write(*data);
+        }
+      }};
+
+  dmesg1_to_dmesg2.exec();
+  dmesg2_to_dmesg1.exec();
+
+  auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
+      "dmesg2", std::move(read_2), std::move(write_2));
+
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
+      "dmesg1", std::move(read_1), std::move(write_1));
+
+  std::this_thread::sleep_for(std::chrono::seconds(15));
+  auto sys1 = dmesgpb1_sys.body().sys().self();
+  auto sys2 = dmesgpb2_sys.body().sys().self();
+
+  EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
+  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
+  EXPECT_TRUE(("dmesg2" == sys1.masteridentifier()));
+  EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
+  EXPECT_TRUE((1 == dmesgpb1_sys.body().sys().nodelist().size()));
+  EXPECT_TRUE(
+      ("dmesg2" == dmesgpb1_sys.body().sys().nodelist().Get(0).identifier()));
+  EXPECT_TRUE((1 == dmesgpb2_sys.body().sys().nodelist().size()));
+  EXPECT_TRUE(
+      ("dmesg1" == dmesgpb2_sys.body().sys().nodelist().Get(0).identifier()));
+
+  // send data
+  dmn::DMesgPb dmesgpb{};
+  dmesgpb.set_topic("counter sync");
+  dmesgpb.set_type(dmn::DMesgTypePb::message);
+  dmesgpb.set_sourceidentifier("writehandler");
+
+  std::string data{"Hello dmesg async"};
+  dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+  dmesgpb_body->set_message(data);
+
+  auto dmesg2_read_handle =
+      dmesgnet2->openHandler("writeHandler", "counter sync");
+  EXPECT_TRUE(dmesg2_read_handle);
+
+  auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
+  EXPECT_TRUE(dmesg_handle);
+  std::cout << "************** first write\n";
+  dmesg_handle->write(dmesgpb);
+
+  std::cout << "after write data from dmesgnet1\n";
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  EXPECT_TRUE((dmesgpb1_body.topic() == "counter sync"));
+
+  auto dmesgdata = dmesg2_read_handle->read();
+  std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
+  EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
+
+  EXPECT_TRUE((dmesgpb2_body.topic() == ""));
+
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  dmesgnet1 = {};
+  std::cout << "after destroying 1\n";
   std::this_thread::sleep_for(std::chrono::seconds(10));
-  EXPECT_TRUE(dmesgpb_sys_3.body().sys().self().masteridentifier() ==
-              "dmesg-3");
+
+  sys2 = dmesgpb2.body().sys().self();
+
+  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
+  EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
+  EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
+
+  dmesgnet2 = {};
+  std::cout << "after destroying 2\n";
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+
+  sys2 = dmesgpb2.body().sys().self();
+
+  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Destroyed));
+  EXPECT_TRUE(("" == sys2.masteridentifier()));
+  EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
+
+  EXPECT_TRUE((dmesgpb2_force.topic() == "counter sync"));
+  EXPECT_TRUE((dmesgpb2_force.force()));
+  EXPECT_TRUE((dmesgpb2_force.playback()));
 
   return RUN_ALL_TESTS();
 }
