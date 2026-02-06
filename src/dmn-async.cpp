@@ -64,8 +64,10 @@ auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
       wait_shared_ptr->m_thrownException = std::current_exception();
     }
 
-    const std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
+    std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
     wait_shared_ptr->m_done = true;
+    lock.unlock();
+
     wait_shared_ptr->m_cond_var.notify_all();
   });
 
