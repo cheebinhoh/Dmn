@@ -271,8 +271,6 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   // Wake up any threads waiting on condition variables before destroying them.
   // This does not guarantee safe concurrent use; the destructor should be
   // called only when no other threads will access this object.
-  pthread_cond_signal(&m_cond);
-  pthread_cond_signal(&m_empty_cond);
 
   pthread_cond_destroy(&m_empty_cond);
   pthread_cond_destroy(&m_cond);
