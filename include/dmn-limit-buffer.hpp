@@ -161,9 +161,6 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
 }
 
 template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
-  pthread_cond_signal(&m_pop_cond);
-  pthread_cond_signal(&m_push_cond);
-
   pthread_cond_destroy(&m_push_cond);
   pthread_cond_destroy(&m_pop_cond);
   pthread_mutex_destroy(&m_mutex);

@@ -233,7 +233,6 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
   Dmn_Proc::stopExec();
 
-  pthread_cond_signal(&m_empty_cond);
   pthread_cond_destroy(&m_empty_cond);
   pthread_mutex_destroy(&m_mutex);
 } catch (...) {

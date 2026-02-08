@@ -38,7 +38,9 @@ Dmn_Async::Dmn_Async(std::string_view name)
                  Dmn_Proc::yield();
                }} {}
 
-Dmn_Async::~Dmn_Async() noexcept try { this->waitForEmpty(); } catch (...) {
+Dmn_Async::~Dmn_Async() noexcept try {
+  stop();
+} catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
@@ -92,6 +94,10 @@ void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
       this->addExecTaskAfterInternal(time_in_future, fnc);
     }
   });
+}
+
+void Dmn_Async::stop() {
+  Dmn_Proc::stopExec();
 }
 
 } // namespace dmn
