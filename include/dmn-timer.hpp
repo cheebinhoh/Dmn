@@ -87,6 +87,7 @@ Dmn_Timer<T>::Dmn_Timer(const T &reltime, std::function<void()> fn)
 }
 
 template <typename T> Dmn_Timer<T>::~Dmn_Timer() noexcept try {
+  this->stop();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;

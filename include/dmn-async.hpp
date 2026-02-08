@@ -144,8 +144,6 @@ private:
   using Dmn_Pipe::readAndProcess;
   using Dmn_Pipe::write;
 
-  void stop();
-
   /**
    * @brief Internal helper that schedules a task to run at a specific time in
    * the future (expressed as nanoseconds since epoch).
