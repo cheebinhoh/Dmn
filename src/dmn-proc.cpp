@@ -98,16 +98,17 @@ void Dmn_Proc::yield() {
 auto Dmn_Proc::stopExec() -> bool {
   int err{};
 
-  if (getState() != State::kRunning) {
-    throw std::runtime_error("No task is exec");
-  }
+  if (getState() == State::kRunning) {
 
-  err = pthread_cancel(m_th);
-  if (0 != err) {
-    throw std::runtime_error(std::system_category().message(err));
-  }
+    err = pthread_cancel(m_th);
+    if (0 != err) {
+      throw std::runtime_error(std::system_category().message(err));
+    }
 
-  return wait();
+    return wait();
+  } else {
+    return true;
+  }
 }
 
 auto Dmn_Proc::runExec() -> bool {
