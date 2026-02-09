@@ -57,9 +57,6 @@ int main(int argc, char *argv[]) {
   std::cout << "after wait for data to sync\n";
 
   dmesg.waitForEmpty();
-  dmesg_handle1->waitForEmpty();
-  dmesg_handle2->waitForEmpty();
-  dmesg_handle3->waitForEmpty();
 
   EXPECT_TRUE(data == data1);
   EXPECT_TRUE(data == data2);
@@ -78,6 +75,8 @@ int main(int argc, char *argv[]) {
   dmesg.closeHandler(dmesg_handle2);
   dmesg.closeHandler(dmesg_handle3);
   dmesg.closeHandler(dmesg_handle4);
+
+  dmesg.waitForEmpty();
 
   return RUN_ALL_TESTS();
 }

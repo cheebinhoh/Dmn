@@ -387,12 +387,6 @@ public:
     auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
                                WriteFlags flags = kDefault) -> bool;
 
-    /**
-     * @brief Block until there are no pending asynchronous tasks for this
-     *        handler (for example, pending notify/async-process tasks).
-     */
-    void waitForEmpty();
-
     friend class Dmn_DMesg;
     friend class Dmn_DMesgHandlerSub;
 

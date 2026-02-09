@@ -151,7 +151,6 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
     : Dmn_DMesgHandler{name, static_cast<FilterTask>(nullptr)} {}
 
 Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
-  m_sub->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -327,13 +326,6 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
   return !this->isInConflict(topic);
 }
 
-void Dmn_DMesg::Dmn_DMesgHandler::waitForEmpty() {
-
-  this->isAfterInitialPlayback();
-
-  m_sub->waitForEmpty();
-}
-
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
@@ -420,7 +412,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
               }},
       m_name{name} {}
 
-Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
+Dmn_DMesg::~Dmn_DMesg() noexcept try {
+} catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
@@ -428,7 +421,6 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
 void Dmn_DMesg::closeHandler(
     std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> &handler) {
   this->unregisterSubscriber(handler->m_sub.get());
-  handler->waitForEmpty();
   handler->m_owner = nullptr;
 
   const Dmn_DMesgHandler *const handler_ptr = handler.get();

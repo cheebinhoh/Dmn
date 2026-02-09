@@ -107,8 +107,6 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE((lastDMesg->body().message() == "message string 2"));
 
   dmesg.waitForEmpty();
-  dmesg_read_handle1->waitForEmpty();
-  dmesg_read_handle2->waitForEmpty();
 
   std::cout << "after sleep 5 seconds\n";
   std::this_thread::sleep_for(std::chrono::seconds(5));

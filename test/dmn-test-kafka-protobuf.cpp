@@ -116,5 +116,7 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE((tv_after.tv_sec - tv.tv_sec) >= 5);
 
+  std::this_thread::sleep_for(std::chrono::seconds(7));
+
   return RUN_ALL_TESTS();
 }

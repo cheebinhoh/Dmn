@@ -102,8 +102,6 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   if (m_subscript_handler) {
     Dmn_DMesg::closeHandler(m_subscript_handler);
   }
-
-  this->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
