@@ -215,6 +215,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
   if (fn) {
     exec([this, fn, count, timeout]() {
       while (true) {
+        Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
       }
     });
