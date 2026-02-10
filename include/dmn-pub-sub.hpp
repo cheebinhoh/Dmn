@@ -27,7 +27,7 @@
  *   subclasses and is always invoked inside the subscriber's async context.
  *
  * Synchronization
- * - A pthread mutex (m_mutex) protects the publisher's internal state:
+ * - A mutex (m_mutex) protects the publisher's internal state:
  *   - the subscriber list (m_subscribers) and the replay buffer (m_buffer).
  * - The mutex provides synchronous semantics for registerSubscriber() and
  *   unregisterSubscriber(): callers return only after registration state is
@@ -62,7 +62,6 @@
  *     scheduled to subscribers from this publisher after destruction starts.
  *
  * Error handling and exception safety
- * - Constructors will throw on pthread mutex initialization failure.
  * - Destructors are noexcept; exceptions thrown during cleanup are swallowed to
  *   guarantee noexcept finalization.
  *
@@ -77,7 +76,7 @@
  * Limitations and notes
  * - Capacity <= 0 is not validated beyond construction; callers should pass a
  *   sensible positive capacity.
- * - The implementation uses pthread mutexes and expects the Dmn_Async
+ * - The implementation uses mutexes and expects the Dmn_Async
  *   primitives/macros (e.g., DMN_ASYNC_CALL_WITH_CAPTURE and
  *   DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to integrate with thread/task
  *   cleanup correctly.

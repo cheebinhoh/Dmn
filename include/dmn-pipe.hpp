@@ -17,13 +17,12 @@
  *
  * Threading and cancellation
  * - push/pop and internal synchronization are handled by Dmn_Buffer<T>.
- * - Dmn_Pipe adds a pthread_mutex and pthread_cond to:
+ * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
  * - readAndProcess() holds `m_mutex` while invoking the caller-provided task
- *   and updates `m_count` under the mutex. It uses pthread cancellation
- *   points and cleanup macros to remain cancellation-safe.
+ *   and updates `m_count` under the mutex.
  *
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
@@ -64,16 +63,12 @@
  *   of the call have been popped and processed. It returns the number of
  *   items that were passed through the pipe in total during that wait.
  *
- * Error handling
- * - pthread API failures are converted to std::runtime_error with the
- *   strerror message.
- *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
  *   thread is started via Dmn_Proc::exec which repeatedly calls
  *   readAndProcess(fn).
  * - The destructor stops the background processor (Dmn_Proc::stopExec()),
- *   signals the condition variable, and destroys pthread primitives.
+ *   signals the condition variable.
  */
 
 #ifndef DMN_PIPE_HPP_

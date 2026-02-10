@@ -14,10 +14,10 @@
  *
  * Synchronization and semantics
  * -----------------------------
- * - A pthread mutex (m_mutex) protects the internal std::deque<T> m_queue and
+ * - A mutex (m_mutex) protects the internal std::deque<T> m_queue and
  *   associated counters (m_push_count, m_pop_count).
  *
- * - Three pthread condition variables are used:
+ * - Three condition variables are used:
  *   - m_none_empty_cond: signalled on push; used by the multi-item timed pop
  *     pop(count, timeout) to wait until the queue has at least one item or the
  *     target number of items.
@@ -61,19 +61,6 @@
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
- *
- * Cancellation and error handling
- * -------------------------------
- * - The implementation calls pthread_testcancel() at strategic points and the
- *   pthread_cond_wait/timedwait functions are cancellation points. If a thread
- *   performing a blocking pop is cancelled, the mutex is released by the
- *   pthread cleanup handler (DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP /
- *   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP macros) to avoid deadlocks.
- *
- * - Errors from pthread functions (mutex/cond init, lock, unlock, wait,
- *   signal, etc.) are reported by throwing std::runtime_error with the
- *   strerror() message for the returned errno. Destructors are noexcept and
- *   swallow exceptions if necessary.
  *
  * Move and copy behavior
  * ----------------------
@@ -124,8 +111,7 @@ namespace dmn {
 /**
  * @brief Thread-safe FIFO buffer.
  *
- * Template parameter T is the stored item type. All operations that can fail
- * due to pthread errors will throw std::runtime_error describing the error.
+ * Template parameter T is the stored item type.
  */
 template <typename T = std::string> class Dmn_Buffer {
 public:
@@ -142,7 +128,6 @@ public:
    * @brief Remove and return the front item from the queue, blocking if empty.
    *
    * This call blocks until an item becomes available. It throws
-   * std::runtime_error on pthread errors.
    *
    * @return The front item.
    */
@@ -171,7 +156,6 @@ public:
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
-   * @throws std::runtime_error on pthread errors.
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
