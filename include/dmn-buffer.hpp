@@ -225,6 +225,10 @@ protected:
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
+  /**
+   */
+  void stop();
+
 private:
   std::deque<T> m_queue{};
   std::mutex m_mutex{};
@@ -233,6 +237,8 @@ private:
       m_none_empty_cond{}; // signalled on push (multi-pop timed wait)
   size_t m_push_count{};
   size_t m_pop_count{};
+
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_Buffer
 
 template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {}
@@ -285,6 +291,14 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   m_none_empty_cond.notify_all();
 
   // Notify single-item waiters.
+  m_empty_cond.notify_all();
+}
+
+template <typename T> void Dmn_Buffer<T>::stop() {
+  m_shutdown = true;
+
+  m_empty_cond.notify_all();
+  m_none_empty_cond.notify_all();
 }
 
 template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
@@ -294,11 +308,7 @@ template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
 
   pthread_testcancel();
 
-  while (!m_queue.empty()) {
-    m_empty_cond.wait(lock, [] { return true; });
-
-    pthread_testcancel();
-  }
+  m_empty_cond.wait(lock, [this] { return m_queue.empty() || m_shutdown; });
 
   assert(m_pop_count == m_push_count);
   inbound_count = m_pop_count;
@@ -318,22 +328,23 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   // Wait until there are at least 'count' items OR a timeout occurs with at
   // least one available item.
-  while (m_queue.size() < count) {
-    if (timeout > 0) {
-      if (m_none_empty_cond.wait_for(
-              lock, std::chrono::microseconds(timeout),
-              [this, count] { return m_queue.size() >= count; })) {
-        break;
-      } else if (m_queue.empty()) {
-        return {};
-      } else {
-        break;
-      }
+  if (timeout > 0) {
+    if (m_none_empty_cond.wait_for(
+            lock, std::chrono::microseconds(timeout),
+            [this, count] { return m_queue.size() >= count || m_shutdown; })) {
+      // do nothing and we have what we want
+    } else if (m_queue.empty()) {
+      return {};
     } else {
-      m_none_empty_cond.wait(lock, [] { return true; });
+      // do nothing and fetch whatever we have
     }
+  } else {
+    m_none_empty_cond.wait(
+        lock, [this, count] { return m_queue.size() >= count || m_shutdown; });
+  }
 
-    pthread_testcancel();
+  if (m_shutdown) {
+    return ret;
   }
 
   // Collect up to 'count' items (moved out).
@@ -347,7 +358,10 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   // If queue became empty as a result of this pop, notify waitForEmpty()
   // waiters.
-  if (m_queue.empty()) {
+  bool empty = m_queue.empty();
+  lock.unlock();
+
+  if (empty) {
     m_empty_cond.notify_all();
   }
 
@@ -368,11 +382,12 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
     }
 
     // Block until an item is available. This wait is a cancellation point.
-    do {
-      m_none_empty_cond.wait(lock, [] { return true; });
+    m_none_empty_cond.wait(lock,
+                           [this] { return !m_queue.empty() || m_shutdown; });
+  }
 
-      pthread_testcancel();
-    } while (m_queue.empty());
+  if (m_shutdown) {
+    return {};
   }
 
   val = std::move_if_noexcept(m_queue.front());

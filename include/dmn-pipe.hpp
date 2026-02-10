@@ -206,6 +206,7 @@ private:
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
   size_t m_count{};
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_Pipe
 
 template <typename T>
@@ -217,6 +218,10 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
       while (true) {
         Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
+
+        if (m_shutdown) {
+          break;
+        }
       }
     });
   }
@@ -224,7 +229,13 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
 
 template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
-  Dmn_Proc::stopExec();
+  std::unique_lock<std::mutex> lock(m_mutex);
+  m_shutdown = true;
+  lock.unlock();
+  Dmn_Buffer<T>::stop();
+  Dmn_Proc::wait();
+
+  // Dmn_Proc::stopExec();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -252,6 +263,10 @@ template <typename T>
 void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
                                  long timeout) {
   auto dataList = this->pop(count, timeout);
+
+  if (m_shutdown) {
+    return;
+  }
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -284,11 +299,8 @@ template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
 
   pthread_testcancel();
 
-  while (m_count < inbound_count) {
-    m_empty_cond.wait(lock, [] { return true; });
-
-    pthread_testcancel();
-  }
+  m_empty_cond.wait(lock,
+                    [this, inbound_count] { return m_count >= inbound_count; });
 
   return inbound_count;
 }
