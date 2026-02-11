@@ -82,6 +82,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <condition_variable>
 #include <functional>
 #include <iostream>
 #include <map>
@@ -230,9 +231,9 @@ private:
    * Synchronization primitives and state for coordinating writers and the
    * conveyor thread.
    */
-  pthread_mutex_t m_mutex{};
-  pthread_cond_t m_cond{};
-  pthread_cond_t m_empty_cond{};
+  std::mutex m_mutex{};
+  std::condition_variable m_cond{};
+  std::condition_variable m_empty_cond{};
   size_t m_fill_buffer_count{}; // number of items written to sources but not
                                 // yet consumed
   std::vector<std::shared_ptr<Dmn_TeePipeSource>> m_buffers{};
@@ -259,30 +260,13 @@ void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
 
   Dmn_LimitBuffer<T>::push(item, move);
 
-  int err = pthread_mutex_lock(&(m_teepipe->m_mutex));
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&(m_teepipe->m_mutex));
+  std::unique_lock<std::mutex> lock(m_teepipe->m_mutex);
 
   pthread_testcancel();
 
   m_teepipe->m_fill_buffer_count++;
 
-  err = pthread_cond_signal(&(m_teepipe->m_cond));
-  if (err) {
-    pthread_mutex_unlock(&(m_teepipe->m_mutex));
-
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&(m_teepipe->m_mutex));
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_teepipe->m_cond.notify_all();
 }
 
 template <typename T>
@@ -296,22 +280,7 @@ Dmn_TeePipe<T>::Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn,
     : Dmn_Pipe<T>{name, fn},
       m_conveyor{std::make_unique<Dmn_Proc>(std::string{name} + "-conveyor")},
       m_post_processing_task_fn{pfn} {
-  int err{};
-
-  err = pthread_mutex_init(&m_mutex, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_empty_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   runConveyorExec();
 }
@@ -323,10 +292,6 @@ template <typename T> Dmn_TeePipe<T>::~Dmn_TeePipe() noexcept try {
   // will fail to be awaken from the conditional variable state, and leak to
   // system wide leak of available thread resource.
   m_conveyor = {};
-
-  pthread_cond_destroy(&m_cond);
-  pthread_cond_destroy(&m_empty_cond);
-  pthread_mutex_destroy(&m_mutex);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -338,30 +303,13 @@ Dmn_TeePipe<T>::addDmn_TeePipeSource() {
   std::shared_ptr<Dmn_TeePipeSource> sp_tpSource{
       std::make_shared<Dmn_TeePipeSource>(1, this)};
 
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
   m_buffers.push_back(sp_tpSource);
 
-  err = pthread_cond_signal(&m_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_cond.notify_all();
 
   return sp_tpSource;
 }
@@ -372,12 +320,7 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
   assert(nullptr != tps);
   assert(this == tps->m_teepipe);
 
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
@@ -388,32 +331,12 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
                    });
 
   if (iter != m_buffers.end()) {
-    while (!tps->empty()) {
-      err = pthread_cond_wait(&m_empty_cond, &m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
-      pthread_testcancel();
-    }
-
+    m_empty_cond.wait(lock, [this, &tps] { return tps->empty(); });
     m_buffers.erase(iter);
     tps = {};
   }
 
-  err = pthread_cond_signal(&m_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_cond.notify_all();
 }
 
 template <typename T> void Dmn_TeePipe<T>::wait() { wait(true); }
@@ -423,44 +346,21 @@ template <typename T> size_t Dmn_TeePipe<T>::waitForEmpty() {
 }
 
 template <typename T> size_t Dmn_TeePipe<T>::wait(bool no_open_source) {
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
   // only returns if no other object owns the Dmn_TeePipeSource than
   // Dmn_TeePipe
-  while (no_open_source && (!m_buffers.empty()) &&
-         std::count_if(m_buffers.begin(), m_buffers.end(),
-                       [](auto &item) { return item.use_count() > 1; }) > 0) {
-    err = pthread_cond_wait(&m_cond, &m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-  }
+  m_cond.wait(lock, [no_open_source, this] {
+    return !(no_open_source && (!m_buffers.empty()) &&
+             std::count_if(m_buffers.begin(), m_buffers.end(), [](auto &item) {
+               return item.use_count() > 1;
+             }) > 0);
+  });
 
   // only returns if no data in buffer from Dmn_TeePipeSource to conveyor
-  while (m_fill_buffer_count > 0) {
-    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_empty_cond.wait(lock, [this] { return m_fill_buffer_count <= 0; });
 
   return Dmn_Pipe<T>::waitForEmpty();
 }
@@ -472,25 +372,13 @@ template <typename T> void Dmn_TeePipe<T>::write(T &item) {
 template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
   m_conveyor->exec([this]() {
     while (true) {
-      int err{};
-
-      err = pthread_mutex_lock(&m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
-      DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
 
       pthread_testcancel();
 
-      while (m_buffers.empty() || m_fill_buffer_count < m_buffers.size()) {
-        err = pthread_cond_wait(&m_cond, &m_mutex);
-        if (err) {
-          throw std::runtime_error(strerror(err));
-        }
-
-        pthread_testcancel();
-      }
+      m_cond.wait(lock, [this] {
+        return !(m_buffers.empty() || m_fill_buffer_count < m_buffers.size());
+      });
 
       std::vector<T> post_processing_buffers{};
 
@@ -513,19 +401,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
 
       post_processing_buffers.clear();
 
-      err = pthread_cond_signal(&m_empty_cond);
-      if (err) {
-        pthread_mutex_unlock(&m_mutex);
-
-        throw std::runtime_error(strerror(err));
-      }
-
-      DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-      err = pthread_mutex_unlock(&m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
+      m_empty_cond.notify_all();
     }
   });
 }

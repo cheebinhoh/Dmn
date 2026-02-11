@@ -16,15 +16,6 @@
  *  - size() to return the current number of stored items (snapshot).
  *  - waitForEmpty() delegates to Dmn_Buffer<T>::waitForEmpty().
  *
- * Threading and error behavior:
- *  - Internal synchronization is implemented with a pthread mutex and two
- *    condition variables (one each for push and pop).
- *  - Most public methods are cancelation points and use the library's
- *    mutex-cleanup macros (e.g. DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to
- *    ensure safe cancellation while holding the mutex.
- *  - System call errors from pthread functions are reported by throwing
- *    std::runtime_error with the strerror message for the returned errno.
- *
  * Notes:
  *  - Dmn_LimitBuffer<T> privately inherits from Dmn_Buffer<T> and reuses its
  *    internal storage/semantics for push/pop operations.
@@ -40,9 +31,11 @@
 
 #include <algorithm>
 #include <cassert>
+#include <condition_variable>
 #include <cstddef>
 #include <cstring>
 #include <deque>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 
@@ -92,6 +85,13 @@ public:
    */
   void push(T &&item) override;
 
+  /**
+   * @brief The method will push the item into queue using move semantics if
+   *        move is t true. The caller is blocked waiting if the queue is full.
+   *
+   * @param item The item to be pushed into queue
+   * @param move True if use move semantic or false otherwise
+   */
   void push(T &item, bool move = true) override;
 
   /**
@@ -134,37 +134,16 @@ private:
    * data members for internal logic.
    */
   size_t m_size{0};
-  pthread_mutex_t m_mutex{};
-  pthread_cond_t m_pop_cond{};
-  pthread_cond_t m_push_cond{};
+  std::mutex m_mutex{};
+  std::condition_variable m_pop_cond{};
+  std::condition_variable m_push_cond{};
 }; // class Dmn_LimitBuffer
 
 template <typename T>
 Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
-    : m_max_capacity(capacity) {
-  int err{};
+    : m_max_capacity(capacity) {}
 
-  err = pthread_mutex_init(&m_mutex, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_push_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_pop_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-}
-
-template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {
-  pthread_cond_destroy(&m_push_cond);
-  pthread_cond_destroy(&m_pop_cond);
-  pthread_mutex_destroy(&m_mutex);
-}
+template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {}
 
 template <typename T> T Dmn_LimitBuffer<T>::pop() { return *popOptional(true); }
 
@@ -183,67 +162,24 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
 }
 
 template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
-  int err{};
-
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
-  while (m_size >= m_max_capacity) {
-    err = pthread_cond_wait(&m_push_cond, &m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-  }
+  m_push_cond.wait(lock, [this] { return m_size < m_max_capacity; });
 
   Dmn_Buffer<T>::push(item, move);
   ++m_size;
 
-  err = pthread_cond_signal(&m_pop_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_pop_cond.notify_all();
 }
 
 template <typename T> auto Dmn_LimitBuffer<T>::size() -> size_t {
-  int err{};
-  size_t size{};
-
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
-  size = m_size;
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  return size;
+  return m_size;
 }
 
 template <typename T> auto Dmn_LimitBuffer<T>::waitForEmpty() -> size_t {
@@ -252,34 +188,16 @@ template <typename T> auto Dmn_LimitBuffer<T>::waitForEmpty() -> size_t {
 
 template <typename T>
 auto Dmn_LimitBuffer<T>::popOptional(bool wait) -> std::optional<T> {
-  int err{};
   std::optional<T> val{};
 
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
   val = Dmn_Buffer<T>::popOptional(wait);
   m_size--;
 
-  err = pthread_cond_signal(&m_push_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_push_cond.notify_all();
 
   return val; // val is local variable, hence rvalue and hence move semantic
               // by default for efficient copy.
