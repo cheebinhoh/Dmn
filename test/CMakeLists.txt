@@ -54,11 +54,11 @@ ADD_TEST_EXECUTABLE(dmn
 if (BUILD_KAFKA_TEST)
 ADD_TEST_EXECUTABLE(dmn-kafka
                       dmn-test-dmesgnet-with-kafka-1
-            #          dmn-test-dmesgnet-with-kafka-2
-            #          dmn-test-dmesgnet-with-kafka-3
-            #          dmn-test-dmesgnet-with-kafka-4
-            #          dmn-test-dmesgnet-with-kafka-5
-            #          dmn-test-kafka
-            #          dmn-test-kafka-protobuf
+                      dmn-test-dmesgnet-with-kafka-2
+                      dmn-test-dmesgnet-with-kafka-3
+                      dmn-test-dmesgnet-with-kafka-4
+                      dmn-test-dmesgnet-with-kafka-5
+                      dmn-test-kafka
+                      dmn-test-kafka-protobuf
                     )
 endif()
