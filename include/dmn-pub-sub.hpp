@@ -27,7 +27,7 @@
  *   subclasses and is always invoked inside the subscriber's async context.
  *
  * Synchronization
- * - A pthread mutex (m_mutex) protects the publisher's internal state:
+ * - A mutex (m_mutex) protects the publisher's internal state:
  *   - the subscriber list (m_subscribers) and the replay buffer (m_buffer).
  * - The mutex provides synchronous semantics for registerSubscriber() and
  *   unregisterSubscriber(): callers return only after registration state is
@@ -62,7 +62,6 @@
  *     scheduled to subscribers from this publisher after destruction starts.
  *
  * Error handling and exception safety
- * - Constructors will throw on pthread mutex initialization failure.
  * - Destructors are noexcept; exceptions thrown during cleanup are swallowed to
  *   guarantee noexcept finalization.
  *
@@ -77,7 +76,7 @@
  * Limitations and notes
  * - Capacity <= 0 is not validated beyond construction; callers should pass a
  *   sensible positive capacity.
- * - The implementation uses pthread mutexes and expects the Dmn_Async
+ * - The implementation uses mutexes and expects the Dmn_Async
  *   primitives/macros (e.g., DMN_ASYNC_CALL_WITH_CAPTURE and
  *   DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to integrate with thread/task
  *   cleanup correctly.
@@ -281,8 +280,8 @@ private:
   /**
    * Internal state protected by m_mutex.
    */
-  std::deque<T> m_buffer{};  // bounded historical buffer for replay
-  pthread_mutex_t m_mutex{}; // protects subscriber list & buffer
+  std::deque<T> m_buffer{}; // bounded historical buffer for replay
+  std::mutex m_mutex{};     // protects subscriber list & buffer
   std::vector<std::shared_ptr<Dmn_Sub>> m_subscribers{};
 }; // class Dmn_Pub
 
@@ -291,8 +290,6 @@ template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
   if (m_pub) {
     m_pub->unregisterSubscriber(this);
   }
-
-  this->waitForEmpty(); // make sure that no asynchronoous task pending.
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -307,28 +304,16 @@ template <typename T>
 Dmn_Pub<T>::Dmn_Pub(std::string_view name, size_t capacity,
                     Dmn_Pub_Filter_Task filter_fn)
     : Dmn_Async(name), m_name{name}, m_capacity{capacity},
-      m_filter_fn{filter_fn} {
-
-  int err = pthread_mutex_init(&m_mutex, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-}
+      m_filter_fn{filter_fn} {}
 
 template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
-  pthread_mutex_lock(&m_mutex);
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   for (auto &sub : m_subscribers) {
     sub->m_pub = nullptr;
   }
 
   this->waitForEmpty();
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  pthread_mutex_unlock(&m_mutex);
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -360,12 +345,8 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
    * as most clients are registered upon application brought up, and only
    * deregister upon application shutdown.
    */
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
 
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   /* Keep the published item in circular ring buffer for
    * efficient access to playback to new subscribers whose misses the
@@ -389,13 +370,6 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
       sub->notifyInternal(item);
     }
   }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
 } // method publishInternal()
 
 template <typename T>
@@ -410,12 +384,7 @@ auto Dmn_Pub<T>::registerSubscriber(X &&...arg) -> std::shared_ptr<U> {
 
 template <typename T>
 void Dmn_Pub<T>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   if (this == sub->m_pub) {
     return;
@@ -443,22 +412,10 @@ void Dmn_Pub<T>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
       sub->notifyInternal(item);
     }
   }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
 }
 
 template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   if (nullptr != sub->m_pub) {
     assert(this == sub->m_pub ||
@@ -470,13 +427,6 @@ template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
         std::remove_if(m_subscribers.begin(), m_subscribers.end(),
                        [sub](auto &sp) { return sp.get() == sub; }),
         m_subscribers.end());
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
   }
 }
 

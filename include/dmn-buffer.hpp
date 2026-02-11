@@ -14,12 +14,10 @@
  *
  * Synchronization and semantics
  * -----------------------------
- * - A pthread mutex (m_mutex) protects the internal std::deque<T> m_queue and
+ * - A mutex (m_mutex) protects the internal std::deque<T> m_queue and
  *   associated counters (m_push_count, m_pop_count).
  *
- * - Three pthread condition variables are used:
- *   - m_cond: signalled on push; used by single-item blocking pop (pop()) and
- *     popOptional(true).
+ * - Three condition variables are used:
  *   - m_none_empty_cond: signalled on push; used by the multi-item timed pop
  *     pop(count, timeout) to wait until the queue has at least one item or the
  *     target number of items.
@@ -64,19 +62,6 @@
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
  *
- * Cancellation and error handling
- * -------------------------------
- * - The implementation calls pthread_testcancel() at strategic points and the
- *   pthread_cond_wait/timedwait functions are cancellation points. If a thread
- *   performing a blocking pop is cancelled, the mutex is released by the
- *   pthread cleanup handler (DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP /
- *   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP macros) to avoid deadlocks.
- *
- * - Errors from pthread functions (mutex/cond init, lock, unlock, wait,
- *   signal, etc.) are reported by throwing std::runtime_error with the
- *   strerror() message for the returned errno. Destructors are noexcept and
- *   swallow exceptions if necessary.
- *
  * Move and copy behavior
  * ----------------------
  * - push(T&&): Attempts to move the provided rvalue into the queue. It uses
@@ -110,10 +95,12 @@
 
 #include <algorithm>
 #include <cassert>
+#include <condition_variable>
 #include <cstring>
 #include <ctime>
 #include <deque>
 #include <initializer_list>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 
@@ -124,8 +111,7 @@ namespace dmn {
 /**
  * @brief Thread-safe FIFO buffer.
  *
- * Template parameter T is the stored item type. All operations that can fail
- * due to pthread errors will throw std::runtime_error describing the error.
+ * Template parameter T is the stored item type.
  */
 template <typename T = std::string> class Dmn_Buffer {
 public:
@@ -142,7 +128,6 @@ public:
    * @brief Remove and return the front item from the queue, blocking if empty.
    *
    * This call blocks until an item becomes available. It throws
-   * std::runtime_error on pthread errors.
    *
    * @return The front item.
    */
@@ -171,7 +156,6 @@ public:
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
-   * @throws std::runtime_error on pthread errors.
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
@@ -225,40 +209,23 @@ protected:
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
+  /**
+   */
+  void stop();
+
 private:
   std::deque<T> m_queue{};
-  pthread_mutex_t m_mutex{};
-  pthread_cond_t m_cond{};       // signalled on every push (single-item pop)
-  pthread_cond_t m_empty_cond{}; // signalled when queue becomes empty
-  pthread_cond_t
+  std::mutex m_mutex{};
+  std::condition_variable m_empty_cond{}; // signalled when queue becomes empty
+  std::condition_variable
       m_none_empty_cond{}; // signalled on push (multi-pop timed wait)
   size_t m_push_count{};
   size_t m_pop_count{};
+
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_Buffer
 
-template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {
-  int err{};
-
-  err = pthread_mutex_init(&m_mutex, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_empty_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_none_empty_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-}
+template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {}
 
 template <typename T>
 Dmn_Buffer<T>::Dmn_Buffer(std::initializer_list<T> list) : Dmn_Buffer{} {
@@ -271,10 +238,6 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   // Wake up any threads waiting on condition variables before destroying them.
   // This does not guarantee safe concurrent use; the destructor should be
   // called only when no other threads will access this object.
-
-  pthread_cond_destroy(&m_empty_cond);
-  pthread_cond_destroy(&m_cond);
-  pthread_mutex_destroy(&m_mutex);
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
@@ -295,14 +258,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &&item) {
 }
 
 template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
-  int err{};
-
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   // Cancellation point check to allow thread cancellation in a controlled way.
   pthread_testcancel();
@@ -316,123 +272,63 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   ++m_push_count;
 
   // Notify multi-pop waiters first (they use m_none_empty_cond).
-  err = pthread_cond_signal(&m_none_empty_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
+  m_none_empty_cond.notify_all();
 
   // Notify single-item waiters.
-  err = pthread_cond_signal(&m_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
+  m_empty_cond.notify_all();
+}
 
-    throw std::runtime_error(strerror(err));
-  }
+template <typename T> void Dmn_Buffer<T>::stop() {
+  m_shutdown = true;
 
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_empty_cond.notify_all();
+  m_none_empty_cond.notify_all();
 }
 
 template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
-  int err{};
   size_t inbound_count{};
 
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
-  while (!m_queue.empty()) {
-    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-  }
+  m_empty_cond.wait(lock, [this] { return m_queue.empty() || m_shutdown; });
 
   assert(m_pop_count == m_push_count);
   inbound_count = m_pop_count;
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
 
   return inbound_count;
 }
 
 template <typename T>
 auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
-  struct timespec timeoutTs{};
   std::vector<T> ret{};
-  int err{};
 
   assert(count > 0);
 
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
   // Wait until there are at least 'count' items OR a timeout occurs with at
   // least one available item.
-  while (m_queue.size() < count) {
-    if (timeout > 0) {
-      if (0 == timeoutTs.tv_sec) {
-        clock_gettime(CLOCK_REALTIME, &timeoutTs);
-
-        // 1. Add whole seconds from the timeout first
-        timeoutTs.tv_sec += (timeout / 1000000L);
-
-        // 2. Add the remaining microseconds (converted to nanoseconds)
-        timeoutTs.tv_nsec += (timeout % 1000000L) * 1000L;
-
-        // 3. Handle the fractional carry-over (always < 1 second now)
-        if (timeoutTs.tv_nsec >= 1000000000L) {
-          timeoutTs.tv_sec += 1;
-          timeoutTs.tv_nsec -= 1000000000L;
-        }
-      }
-
-      err = pthread_cond_timedwait(&m_none_empty_cond, &m_mutex, &timeoutTs);
+  if (timeout > 0) {
+    if (m_none_empty_cond.wait_for(
+            lock, std::chrono::microseconds(timeout),
+            [this, count] { return m_queue.size() >= count || m_shutdown; })) {
+      // do nothing and we have what we want
+    } else if (m_queue.empty()) {
+      return {};
     } else {
-      err = pthread_cond_wait(&m_none_empty_cond, &m_mutex);
+      // do nothing and fetch whatever we have
     }
+  } else {
+    m_none_empty_cond.wait(
+        lock, [this, count] { return m_queue.size() >= count || m_shutdown; });
+  }
 
-    if (err) {
-      if (err == ETIMEDOUT) {
-        // If timed out but there is at least one item, we accept a partial
-        // result and break to collect available items. If still empty, we
-        // re-arm the timeout (timeoutTs reset) and continue waiting.
-        if (!m_queue.empty()) {
-          break;
-        } else {
-          timeoutTs.tv_sec = 0;
-          timeoutTs.tv_nsec = 0;
-        }
-      } else {
-        throw std::runtime_error(strerror(err));
-      }
-    }
-
-    pthread_testcancel();
+  if (m_shutdown) {
+    return ret;
   }
 
   // Collect up to 'count' items (moved out).
@@ -446,20 +342,11 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   // If queue became empty as a result of this pop, notify waitForEmpty()
   // waiters.
-  if (m_queue.empty()) {
-    err = pthread_cond_signal(&m_empty_cond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
+  bool empty = m_queue.empty();
+  lock.unlock();
 
-      throw std::runtime_error(strerror(err));
-    }
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (empty) {
+    m_empty_cond.notify_all();
   }
 
   return ret;
@@ -467,37 +354,24 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
 template <typename T>
 auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
-  int err{};
   T val{};
 
-  err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
   if (m_queue.empty()) {
     if (!wait) {
-      err = pthread_mutex_unlock(&m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
-
       return {};
     }
 
     // Block until an item is available. This wait is a cancellation point.
-    do {
-      err = pthread_cond_wait(&m_cond, &m_mutex);
-      if (err) {
-        throw std::runtime_error(strerror(err));
-      }
+    m_none_empty_cond.wait(lock,
+                           [this] { return !m_queue.empty() || m_shutdown; });
+  }
 
-      pthread_testcancel();
-    } while (m_queue.empty());
+  if (m_shutdown) {
+    return {};
   }
 
   val = std::move_if_noexcept(m_queue.front());
@@ -507,19 +381,7 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
 
   // Notify waiters waiting for the queue to become empty.
   if (m_queue.empty()) {
-    err = pthread_cond_signal(&m_empty_cond);
-    if (err) {
-      pthread_mutex_unlock(&m_mutex);
-
-      throw std::runtime_error(strerror(err));
-    }
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+    m_empty_cond.notify_all();
   }
 
   return std::move_if_noexcept(val);

@@ -17,13 +17,12 @@
  *
  * Threading and cancellation
  * - push/pop and internal synchronization are handled by Dmn_Buffer<T>.
- * - Dmn_Pipe adds a pthread_mutex and pthread_cond to:
+ * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
  * - readAndProcess() holds `m_mutex` while invoking the caller-provided task
- *   and updates `m_count` under the mutex. It uses pthread cancellation
- *   points and cleanup macros to remain cancellation-safe.
+ *   and updates `m_count` under the mutex.
  *
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
@@ -64,16 +63,12 @@
  *   of the call have been popped and processed. It returns the number of
  *   items that were passed through the pipe in total during that wait.
  *
- * Error handling
- * - pthread API failures are converted to std::runtime_error with the
- *   strerror message.
- *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
  *   thread is started via Dmn_Proc::exec which repeatedly calls
  *   readAndProcess(fn).
  * - The destructor stops the background processor (Dmn_Proc::stopExec()),
- *   signals the condition variable, and destroys pthread primitives.
+ *   signals the condition variable.
  */
 
 #ifndef DMN_PIPE_HPP_
@@ -82,8 +77,10 @@
 
 #include <pthread.h>
 
+#include <condition_variable>
 #include <cstring>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -143,7 +140,6 @@ public:
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
-   * @throws std::runtime_error on pthread errors.
    */
   auto read(size_t count, long timeout = 0) -> std::vector<T> override;
 
@@ -154,10 +150,6 @@ public:
    * internal mutex is held to update processing bookkeeping (`m_count`)
    * and to signal waiting threads. The item is passed to `fn` using move
    * semantics when possible.
-   *
-   * Note: this method participates in pthread cancellation points and uses
-   * the Dmn proc mutex cleanup macros to ensure the mutex is released on
-   * cancellation or exceptions.
    *
    * @param fn The functor to process the next item popped from the pipe
    */
@@ -201,29 +193,25 @@ private:
   using Dmn_Buffer<T>::popNoWait;
   using Dmn_Buffer<T>::push;
 
-  pthread_mutex_t m_mutex{};
-  pthread_cond_t m_empty_cond{};
+  std::mutex m_mutex{};
+  std::condition_variable m_empty_cond{};
   size_t m_count{};
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_Pipe
 
 template <typename T>
 Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
                       long timeout)
     : Dmn_Proc{name} {
-  int err = pthread_mutex_init(&m_mutex, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  err = pthread_cond_init(&m_empty_cond, nullptr);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
   if (fn) {
     exec([this, fn, count, timeout]() {
       while (true) {
+        Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
+
+        if (m_shutdown) {
+          break;
+        }
       }
     });
   }
@@ -231,10 +219,13 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
 
 template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
-  Dmn_Proc::stopExec();
+  std::unique_lock<std::mutex> lock(m_mutex);
+  m_shutdown = true;
+  lock.unlock();
+  Dmn_Buffer<T>::stop();
+  Dmn_Proc::wait();
 
-  pthread_cond_destroy(&m_empty_cond);
-  pthread_mutex_destroy(&m_mutex);
+  // Dmn_Proc::stopExec();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -263,12 +254,11 @@ void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
                                  long timeout) {
   auto dataList = this->pop(count, timeout);
 
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
+  if (m_shutdown) {
+    return;
   }
 
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
@@ -277,21 +267,9 @@ void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
     ++m_count;
   }
 
-  err = pthread_cond_signal(&m_empty_cond);
-  if (err) {
-    pthread_mutex_unlock(&m_mutex);
-
-    throw std::runtime_error(strerror(err));
-  }
+  m_empty_cond.notify_all();
 
   pthread_testcancel();
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &item) {
@@ -307,30 +285,12 @@ template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
 
   inbound_count = Dmn_Buffer<T>::waitForEmpty();
 
-  int err = pthread_mutex_lock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
-
-  DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   pthread_testcancel();
 
-  while (m_count < inbound_count) {
-    err = pthread_cond_wait(&m_empty_cond, &m_mutex);
-    if (err) {
-      throw std::runtime_error(strerror(err));
-    }
-
-    pthread_testcancel();
-  }
-
-  DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
-
-  err = pthread_mutex_unlock(&m_mutex);
-  if (err) {
-    throw std::runtime_error(strerror(err));
-  }
+  m_empty_cond.wait(lock,
+                    [this, inbound_count] { return m_count >= inbound_count; });
 
   return inbound_count;
 }
