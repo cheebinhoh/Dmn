@@ -140,7 +140,6 @@ public:
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
-   * @throws std::runtime_error on pthread errors.
    */
   auto read(size_t count, long timeout = 0) -> std::vector<T> override;
 
@@ -151,10 +150,6 @@ public:
    * internal mutex is held to update processing bookkeeping (`m_count`)
    * and to signal waiting threads. The item is passed to `fn` using move
    * semantics when possible.
-   *
-   * Note: this method participates in pthread cancellation points and uses
-   * the Dmn proc mutex cleanup macros to ensure the mutex is released on
-   * cancellation or exceptions.
    *
    * @param fn The functor to process the next item popped from the pipe
    */
