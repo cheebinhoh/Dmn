@@ -159,6 +159,8 @@ private:
 
   bool m_is_master{};
   long long m_number_of_neighbor{};
+
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_DMesgNet
 
 } // namespace dmn
