@@ -58,7 +58,7 @@ public:
    *
    * @return front item of the queue
    */
-  auto pop() -> T && override;
+  auto pop() -> T override;
 
   /**
    * @brief Return true or false if the m_size is zero.
@@ -144,7 +144,7 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
 
 template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {}
 
-template <typename T> auto Dmn_LimitBuffer<T>::pop() -> T && {
+template <typename T> auto Dmn_LimitBuffer<T>::pop() -> T {
   return *popOptional(true);
 }
 

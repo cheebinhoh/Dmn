@@ -129,7 +129,7 @@ public:
    *
    * @return The front item.
    */
-  virtual auto pop() -> T &&;
+  virtual auto pop() -> T;
 
   /**
    * @brief Pop multiple items from the queue with optional timeout semantics.
@@ -241,7 +241,7 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
   return;
 }
 
-template <typename T> auto Dmn_Buffer<T>::pop() -> T && {
+template <typename T> auto Dmn_Buffer<T>::pop() -> T {
   return std::move(*popOptional(true));
 }
 
