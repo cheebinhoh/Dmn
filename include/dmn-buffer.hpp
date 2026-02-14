@@ -91,8 +91,6 @@
 #ifndef DMN_BUFFER_HPP_
 #define DMN_BUFFER_HPP_
 
-#include <pthread.h>
-
 #include <algorithm>
 #include <cassert>
 #include <condition_variable>
@@ -261,7 +259,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   // Cancellation point check to allow thread cancellation in a controlled way.
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   if (move) {
     m_queue.push_back(std::move_if_noexcept(item));
@@ -290,7 +288,7 @@ template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   m_empty_cond.wait(lock, [this] { return m_queue.empty() || m_shutdown; });
 
@@ -308,7 +306,7 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   // Wait until there are at least 'count' items OR a timeout occurs with at
   // least one available item.
@@ -358,7 +356,7 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   if (m_queue.empty()) {
     if (!wait) {

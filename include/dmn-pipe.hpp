@@ -75,8 +75,6 @@
 
 #define DMN_PIPE_HPP_
 
-#include <pthread.h>
-
 #include <condition_variable>
 #include <cstring>
 #include <functional>
@@ -260,7 +258,7 @@ void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   for (auto &item : dataList) {
     fn(std::move_if_noexcept(item));
@@ -269,7 +267,7 @@ void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 
   m_empty_cond.notify_all();
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &item) {
@@ -287,7 +285,7 @@ template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   m_empty_cond.wait(lock,
                     [this, inbound_count] { return m_count >= inbound_count; });

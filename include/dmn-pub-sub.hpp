@@ -89,8 +89,6 @@
 #ifndef DMN_PUB_SUB_HPP_
 #define DMN_PUB_SUB_HPP_
 
-#include "pthread.h"
-
 #include <algorithm>
 #include <array>
 #include <deque>

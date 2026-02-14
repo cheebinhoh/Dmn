@@ -27,8 +27,6 @@
 #ifndef DMN_LIMITBUFFER_HPP_
 #define DMN_LIMITBUFFER_HPP_
 
-#include <pthread.h>
-
 #include <algorithm>
 #include <cassert>
 #include <condition_variable>
@@ -40,6 +38,7 @@
 #include <stdexcept>
 
 #include "dmn-buffer.hpp"
+#include "dmn-proc.hpp"
 
 namespace dmn {
 
@@ -145,7 +144,9 @@ Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
 
 template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {}
 
-template <typename T> T Dmn_LimitBuffer<T>::pop() { return *popOptional(true); }
+template <typename T> auto Dmn_LimitBuffer<T>::pop() -> T {
+  return *popOptional(true);
+}
 
 template <typename T> auto Dmn_LimitBuffer<T>::empty() -> bool {
   return this->size() <= 0;
@@ -164,7 +165,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
 template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   m_push_cond.wait(lock, [this] { return m_size < m_max_capacity; });
 
@@ -177,7 +178,7 @@ template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
 template <typename T> auto Dmn_LimitBuffer<T>::size() -> size_t {
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   return m_size;
 }
@@ -192,7 +193,7 @@ auto Dmn_LimitBuffer<T>::popOptional(bool wait) -> std::optional<T> {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   val = Dmn_Buffer<T>::popOptional(wait);
   m_size--;
