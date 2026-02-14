@@ -114,8 +114,9 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 void Dmn_DMesgNet::createInputHandlerProc() {
   if (m_input_handler) {
     m_write_handler = Dmn_DMesg::openHandler(
-        m_name, [this](const dmn::DMesgPb &) -> bool { return false; },
-        [](dmn::DMesgPb dmesgPbWrite) mutable -> void {});
+        m_name,
+        []([[maybe_unused]] const dmn::DMesgPb &) -> bool { return false; },
+        []([[maybe_unused]] dmn::DMesgPb dmesgPbWrite) mutable -> void {});
 
     m_input_proc =
         std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() -> void {

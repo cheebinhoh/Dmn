@@ -90,8 +90,11 @@ auto Dmn_Proc::wait() -> bool {
   return 0 == err;
 }
 
+void Dmn_Proc::testcancel() { pthread_testcancel(); }
+
 void Dmn_Proc::yield() {
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
+
   sched_yield();
 }
 

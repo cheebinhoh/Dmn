@@ -146,6 +146,11 @@ public:
    */
   static void yield();
 
+  /**
+   * Voluntarily test if the thread is to be cancelled.
+   */
+  static void testcancel();
+
 protected:
   auto getState() const -> Dmn_Proc::State;
   auto setState(Dmn_Proc::State state) -> Dmn_Proc::State;

@@ -33,7 +33,7 @@
  * Threading and synchronization
  * -----------------------------
  * - Synchronization between writers, source management, and the conveyor is
- *   implemented with a pthread mutex and condition variables:
+ *   implemented with a mutex and condition variables:
  *     * m_mutex protects shared state (m_buffers and m_fill_buffer_count).
  *     * m_cond is signalled whenever a source becomes available or data is
  *       pushed into a source.
@@ -262,7 +262,7 @@ void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
 
   std::unique_lock<std::mutex> lock(m_teepipe->m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   m_teepipe->m_fill_buffer_count++;
 
@@ -305,7 +305,7 @@ Dmn_TeePipe<T>::addDmn_TeePipeSource() {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   m_buffers.push_back(sp_tpSource);
 
@@ -322,7 +322,7 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   auto iter =
       std::find_if(m_buffers.begin(), m_buffers.end(),
@@ -348,7 +348,7 @@ template <typename T> size_t Dmn_TeePipe<T>::waitForEmpty() {
 template <typename T> size_t Dmn_TeePipe<T>::wait(bool no_open_source) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  pthread_testcancel();
+  Dmn_Proc::testcancel();
 
   // only returns if no other object owns the Dmn_TeePipeSource than
   // Dmn_TeePipe
@@ -374,7 +374,7 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
     while (true) {
       std::unique_lock<std::mutex> lock(m_mutex);
 
-      pthread_testcancel();
+      Dmn_Proc::testcancel();
 
       m_cond.wait(lock, [this] {
         return !(m_buffers.empty() || m_fill_buffer_count < m_buffers.size());
