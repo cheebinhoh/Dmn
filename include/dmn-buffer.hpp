@@ -242,7 +242,7 @@ template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
 }
 
 template <typename T> auto Dmn_Buffer<T>::pop() -> T {
-  return std::move(*popOptional(true));
+  return *popOptional(true);
 }
 
 template <typename T> auto Dmn_Buffer<T>::popNoWait() -> std::optional<T> {
