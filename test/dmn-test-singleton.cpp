@@ -9,7 +9,7 @@
 
 #include "dmn-singleton.hpp"
 
-class Dmn_A : public dmn::Dmn_Singleton {
+class Dmn_A : public dmn::Dmn_Singleton<Dmn_A> {
 public:
   Dmn_A(int int1, int int2) : m_int1{int1}, m_int2{int2} {}
 
@@ -44,10 +44,10 @@ std::shared_ptr<Dmn_A> Dmn_A::s_instances{};
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto inst1 = Dmn_A::createInstance<Dmn_A>(1, 2);
+  auto inst1 = Dmn_A::createInstance(1, 2);
   std::cout << "Value: " << inst1->getValue() << ", :" << inst1 << "\n";
 
-  auto inst2 = Dmn_A::createInstance<Dmn_A>(1, 2);
+  auto inst2 = Dmn_A::createInstance(1, 2);
   std::cout << "Value: " << inst2->getValue() << ", :" << inst2 << "\n";
 
   EXPECT_TRUE(inst1 == inst2);

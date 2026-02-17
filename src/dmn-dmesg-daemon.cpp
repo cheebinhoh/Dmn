@@ -14,7 +14,7 @@
 #include "dmn.hpp"
 
 int main(int argc, char *argv[]) {
-  auto inst = dmn::Dmn_Singleton::createInstance<dmn::Dmn_Runtime_Manager>();
+  auto inst = dmn::Dmn_Runtime_Manager::createInstance();
 
   // for TESTING
   dmn::Dmn_Proc proc{

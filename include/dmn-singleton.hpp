@@ -62,7 +62,7 @@
 
 namespace dmn {
 
-class Dmn_Singleton {
+template <typename T> class Dmn_Singleton {
 public:
   /**
    * @brief Forwarding helper to create or retrieve a singleton instance for T.
@@ -84,12 +84,12 @@ public:
    * @param arg Arguments forwarded to T::createInstanceInternal().
    * @return std::shared_ptr<T> pointing to the singleton instance managed by T.
    */
-  template <typename T, class... U>
-  static std::shared_ptr<T> createInstance(U &&...arg);
+  template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
 };
 
-template <typename T, class... U>
-std::shared_ptr<T> Dmn_Singleton::createInstance(U &&...arg) {
+template <typename T>
+template <class... U>
+std::shared_ptr<T> Dmn_Singleton<T>::createInstance(U &&...arg) {
   // NOTE that the template type class is supposed to handle
   // thread-safety (example through std::once_flag) to make
   // sure that multiple threads calling createInstance is

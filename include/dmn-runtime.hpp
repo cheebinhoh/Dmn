@@ -192,7 +192,8 @@ struct TimedJobComparator {
  *  - Timed jobs use absolute microsecond timestamps to avoid cumulative drift
  *    from repeated short-duration sleeps.
  */
-class Dmn_Runtime_Manager : public Dmn_Singleton, private Dmn_Async {
+class Dmn_Runtime_Manager : public Dmn_Singleton<Dmn_Runtime_Manager>,
+                            private Dmn_Async {
 public:
   using SignalHandler = std::function<void(int signo)>;
 
