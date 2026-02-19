@@ -35,8 +35,8 @@
  *
  * Thread‑Safety & Signal‑Safety Notes
  * -----------------------------------
- * - Signals are masked in createInstanceInternal() before the runtime thread is
- *   created. Masking inside the constructor would be too late because the
+ * - Signals are masked in runPriorToCreateInstance() before the runtime thread
+ * is created. Masking inside the constructor would be too late because the
  *   parent Dmn_Async thread may already exist.
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions.
@@ -46,7 +46,7 @@
  *
  * Usage Summary
  * -------------
- * - Create or obtain the singleton via Dmn_Singleton::createInstanceInternal().
+ * - Create or obtain the singleton via Dmn_Singleton::createInstance().
  * - Register signal handlers using registerSignalHandler(signo, handler).
  * - Enqueue immediate work with addJob() or schedule delayed work with
  *   addTimedJob().
@@ -272,9 +272,6 @@ private:
   void addHighJob(const Dmn_Runtime_Job::FncType &job);
   void addLowJob(const Dmn_Runtime_Job::FncType &job);
   void addMediumJob(const Dmn_Runtime_Job::FncType &job);
-
-  template <class... U>
-  static std::shared_ptr<Dmn_Runtime_Manager> createInstanceInternal(U &&...u);
 
   template <class Rep, class Period>
   void

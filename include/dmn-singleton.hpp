@@ -24,9 +24,7 @@
  *
  * Notes:
  * - The returned type is std::shared_ptr<T>; ownership and lifetime semantics
- *   are therefore shared. If a different ownership model is desired, have T's
- *   createInstanceInternal return the appropriate smart pointer and adjust this
- *   helper accordingly.
+ *   are therefore shared.
  * - The subclass of Singleton can implement static method that is called before
  *   the singleton instance is created to run some setup, the signature of the
  *   method is "static void T::runPriorToCreateInstance()" and must be public.
@@ -52,21 +50,21 @@ public:
   /**
    * @brief Forwarding helper to create or retrieve a singleton instance for T.
    *
-   * This method forwards the provided arguments to T::createInstanceInternal()
+   * This method forwards the provided arguments to T type' constructor
    * and returns the resulting std::shared_ptr<T>.
    *
    * Template parameters:
-   *  - T : concrete singleton type that provides createInstanceInternal().
+   *  - T : concrete singleton type that is created by createInstance().
    *  - U... : parameter pack of argument types to be forwarded.
    *
    * Requirements on T:
-   *  - Must provide a static method:
-   *      static std::shared_ptr<T> createInstanceInternal(U...);
+   *  - Optionally provide a static method that is run before T instance is
+   * created static void runPriorToCreateInstance();
    *  - That method must guarantee singleton semantics (return the same
    *    instance on subsequent calls) and perform any required synchronization
    *    to be thread-safe.
    *
-   * @param arg Arguments forwarded to T::createInstanceInternal().
+   * @param arg Arguments forwarded to T type constructor
    * @return std::shared_ptr<T> pointing to the singleton instance managed by T.
    */
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
