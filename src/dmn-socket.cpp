@@ -2,8 +2,24 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-socket.cpp
- * @brief Socket-based implementation of the Dmn_Io interface using UDP
- * (SOCK_DGRAM).
+ * @brief Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket
+ *        that implements the Dmn_Io<std::string> interface.
+ *
+ * The constructor creates an AF_INET/SOCK_DGRAM socket, enables the
+ * SO_BROADCAST socket option, and optionally binds to the supplied
+ * port (read mode). When write_only is true the bind step is skipped.
+ *
+ * read() calls recv() with MSG_WAITALL and returns std::nullopt on
+ * error or when the peer closes the connection (n_read <= 0).
+ *
+ * write() reconstructs the destination sockaddr_in from the stored
+ * address/port on every call and uses sendto() to transmit the
+ * string. The rvalue overload simply moves the string into a local
+ * variable and delegates to the lvalue overload.
+ *
+ * Note: The destination address is rebuilt on every write() call.
+ * For write-heavy workloads, caching the sockaddr_in as a member
+ * would reduce per-call overhead (see FIXME in write()).
  */
 
 #include "dmn-socket.hpp"
@@ -75,8 +91,10 @@ Dmn_Socket::~Dmn_Socket() {
 auto Dmn_Socket::read() -> std::optional<std::string> {
   std::array<char, BUFSIZ> buf{};
 
+  // Block until data arrives or the socket is closed/errored.
   const ssize_t n_read = recv(m_fd, buf.data(), sizeof(buf), MSG_WAITALL);
   if (n_read < 0 || n_read == 0) {
+    // EOF or error — signal end-of-stream to the caller.
     return {};
   }
 
@@ -116,6 +134,7 @@ void Dmn_Socket::write(std::string &item) {
 }
 
 void Dmn_Socket::write(std::string &&item) {
+  // Move into a named local so the lvalue overload can be reused.
   std::string moved_item = std::move(item);
 
   write(moved_item);

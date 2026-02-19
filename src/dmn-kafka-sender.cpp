@@ -1,5 +1,18 @@
-// For study purpose, and copy from
-// https://developer.confluent.io/get-started/c/
+/**
+ * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-kafka-sender.cpp
+ * @brief Minimal stand-alone Kafka producer example using Dmn_Kafka.
+ *
+ * This program creates a Dmn_Kafka producer with hard-coded Confluent
+ * Cloud credentials and publishes ten numbered "heartbeat" messages to
+ * the "timer_counter" topic.  It is intended as a quick integration
+ * smoke-test / study example and should not be used in production
+ * (credentials must not be hard-coded in real deployments).
+ *
+ * Original reference:
+ *   https://developer.confluent.io/get-started/c/
+ */
 
 #include <iostream>
 #include <sstream>

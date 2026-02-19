@@ -1,5 +1,18 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-kafka-util.hpp
+ * @brief Utility helpers for configuring librdkafka instances.
+ *
+ * This header provides a thin, type-safe wrapper around
+ * rd_kafka_conf_set() that returns a std::expected value instead of
+ * relying on an output error-string buffer. Use set_config() wherever
+ * you need to apply a single key/value pair to an rd_kafka_conf_t
+ * object and want idiomatic C++ error handling.
+ *
+ * The constant kKafkaErrorStringLength defines the size of the
+ * temporary error string buffer required by rd_kafka_conf_set() and
+ * should be used whenever that buffer is allocated on the stack.
  */
 
 #ifndef DMN_KAFKA_UTIL_HPP_
