@@ -10,39 +10,16 @@
  *   template <typename T, class... U>
  *   static std::shared_ptr<T> createInstance(U &&...arg);
  *
- * Dmn_Singleton itself does not implement singleton storage or thread-safety.
- * Instead it forwards the provided arguments to the concrete type T's
- * responsibility: T must implement a static method with the signature
- *
- *   static std::shared_ptr<T> createInstanceInternal(Args...);
- *
- * The concrete type's createInstanceInternal() is where the actual singleton
- * instance should be created/returned and where any necessary synchronization
- * (for example using std::call_once or a function-local static) must be done
- * to ensure exactly-one construction in multithreaded contexts.
- *
- * Rationale:
- * - Different singleton types may require different construction arguments.
- * - This helper centralizes the forwarding call while leaving lifetime and
- *   synchronization policies to the concrete type (T).
- *
  * Usage example:
  * ```
- * struct MySingleton : public dmn::Dmn_Singleton {
- *   static std::shared_ptr<MySingleton> createInstanceInternal(int x,
- * std::string s) { static std::shared_ptr<MySingleton> instance; static
- * std::once_flag flag; std::call_once(flag, [&]{ instance =
- * std::make_shared<MySingleton>(x, std::move(s));
- *     });
- *     return instance;
- *   }
+ * struct MySingleton : public dmn::Dmn_Singleton<MySingleton> {
  *
  *  private:
  *   MySingleton(int x, std::string s) { ... }
  * };
  *
  * // Create / retrieve the singleton:
- * auto p = dmn::Dmn_Singleton::createInstance<MySingleton>(42, "hello");
+ * auto p = dmn::MySingleton::createInstance(42, "hello");
  * ```
  *
  * Notes:
@@ -50,17 +27,25 @@
  *   are therefore shared. If a different ownership model is desired, have T's
  *   createInstanceInternal return the appropriate smart pointer and adjust this
  *   helper accordingly.
- * - Dmn_Singleton contains only static helpers and is not intended to be
- *   instantiated.
+ * - The subclass of Singleton can implement static method that is called before
+ *   the singleton instance is created to run some setup, the signature of the
+ *   method is "static void T::runPriorToCreateInstance()" and must be public.
  */
 
 #ifndef DMN_SINGLETON_HPP_
 #define DMN_SINGLETON_HPP_
 
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <utility>
 
 namespace dmn {
+
+template <typename T>
+concept HasStaticRunPriorToCreateInstance = requires {
+  { T::runPriorToCreateInstance() } -> std::same_as<void>;
+};
 
 template <typename T> class Dmn_Singleton {
 public:
@@ -85,7 +70,18 @@ public:
    * @return std::shared_ptr<T> pointing to the singleton instance managed by T.
    */
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
+
+private:
+  static std::atomic<bool> s_allocated;
+  static std::shared_ptr<T> s_instance;
+  static std::once_flag s_init_once;
 };
+
+template <typename T> std::atomic<bool> Dmn_Singleton<T>::s_allocated{false};
+
+template <typename T> std::once_flag Dmn_Singleton<T>::s_init_once{};
+
+template <typename T> std::shared_ptr<T> Dmn_Singleton<T>::s_instance{};
 
 template <typename T>
 template <class... U>
@@ -95,10 +91,20 @@ std::shared_ptr<T> Dmn_Singleton<T>::createInstance(U &&...arg) {
   // sure that multiple threads calling createInstance is
   // thread safe and always the singleton instance is returned.
 
-  std::shared_ptr<T> new_instance =
-      T::createInstanceInternal(std::forward<U>(arg)...);
+  if (!s_allocated.load()) {
+    std::call_once(
+        s_init_once,
+        [](U &&...arg) {
+          if constexpr (HasStaticRunPriorToCreateInstance<T>) {
+            T::runPriorToCreateInstance();
+          }
 
-  return new_instance;
+          s_instance = std::make_shared<T>(std::forward<U>(arg)...);
+        },
+        std::forward<U>(arg)...);
+  }
+
+  return s_instance;
 }
 
 } // namespace dmn
