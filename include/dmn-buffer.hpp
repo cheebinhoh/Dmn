@@ -208,6 +208,13 @@ protected:
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
   /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and notifies all condition variables so
+   * that threads blocked in pop(), pop(count, timeout), or
+   * waitForEmpty() can observe the shutdown flag and return cleanly.
+   * This method is called by Dmn_Pipe's destructor via the protected
+   * interface.
    */
   void stop();
 

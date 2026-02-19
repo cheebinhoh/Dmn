@@ -1,5 +1,19 @@
-// For study purpose, and copy from
-// https://developer.confluent.io/get-started/c/
+/**
+ * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-kafka-receiver.cpp
+ * @brief Minimal stand-alone Kafka consumer example using Dmn_Kafka.
+ *
+ * This program creates a Dmn_Kafka consumer with hard-coded Confluent
+ * Cloud credentials and polls the "timer_counter" topic until a
+ * SIGINT is received, printing each consumed message to stdout. It is
+ * intended as a quick integration smoke-test / study example and
+ * should not be used in production (credentials must not be
+ * hard-coded in real deployments).
+ *
+ * Original reference:
+ *   https://developer.confluent.io/get-started/c/
+ */
 
 #include <signal.h>
 #include <stdlib.h>

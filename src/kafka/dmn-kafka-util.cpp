@@ -1,5 +1,12 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-kafka-util.cpp
+ * @brief Implementation of the librdkafka configuration helper.
+ *
+ * Provides set_config(), a thin wrapper around rd_kafka_conf_set()
+ * that converts the C-style output-parameter error string into a
+ * std::expected return value for idiomatic C++ error handling.
  */
 
 #include "kafka/dmn-kafka-util.hpp"

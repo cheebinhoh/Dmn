@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_log_internal_check_impl
+Description: Abseil log_internal_check_impl library
+URL: https://abseil.io/
+Version: 20240722
+Requires: absl_core_headers = 20240722, absl_log_internal_check_op = 20240722, absl_log_internal_conditions = 20240722, absl_log_internal_message = 20240722, absl_log_internal_strip = 20240722
+Libs: -L${libdir}  
+Cflags: -I${includedir} -Wnon-virtual-dtor -DNOMINMAX

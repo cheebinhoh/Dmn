@@ -1,9 +1,18 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This is the dmn daemon that runs as after a system bootup,
- * and receive and read, write and process message from network
- * of distributed dmn nodes.
+ * @file dmn-dmesg-daemon.cpp
+ * @brief Entry point for the DMesg daemon process.
+ *
+ * This daemon is intended to run after system boot and provides a
+ * Dmn_Runtime_Manager main loop that can receive, process and forward
+ * messages across a network of distributed DMesg nodes.
+ *
+ * The current implementation contains a minimal test harness that
+ * sleeps for 10 seconds and then overrides the SIGTERM handler to
+ * demonstrate dynamic signal handler registration. In a production
+ * deployment this stub would be replaced with the full DMesgNet
+ * initialisation and I/O handler wiring.
  */
 
 #include <chrono>

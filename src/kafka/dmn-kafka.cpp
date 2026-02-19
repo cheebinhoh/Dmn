@@ -1,5 +1,26 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-kafka.cpp
+ * @brief Implementation of Dmn_Kafka — a Dmn_Io adapter for Apache Kafka.
+ *
+ * This file implements the Dmn_Kafka class which wraps the librdkafka
+ * C library (rdkafka) to provide a Dmn_Io<std::string> interface for
+ * both producing and consuming Kafka messages.
+ *
+ * Key implementation notes:
+ * - Construction creates either a producer or consumer handle
+ *   (rd_kafka_t) based on the Role argument, then subscribes the
+ *   consumer to the configured topic.
+ * - write() is synchronous from the caller's perspective: it uses an
+ *   atomic flag (m_write_atomic_flag) to serialize concurrent writers
+ *   and blocks until the delivery report callback (producerCallback)
+ *   signals completion.
+ * - read() delegates to rd_kafka_consumer_poll() with the configured
+ *   timeout and returns std::nullopt on timeout or non-fatal errors
+ *   (e.g. RD_KAFKA_RESP_ERR__PARTITION_EOF).
+ * - The destructor closes the consumer session or flushes pending
+ *   producer messages before destroying the rd_kafka_t handle.
  */
 
 #include "kafka/dmn-kafka.hpp"

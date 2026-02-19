@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_hash_testing
+Description: Abseil hash_testing library
+URL: https://abseil.io/
+Version: 20240722
+Requires: absl_spy_hash_state = 20240722, absl_meta = 20240722, absl_strings = 20240722, absl_variant = 20240722
+Libs: -L${libdir}  
+Cflags: -I${includedir} -Wnon-virtual-dtor -DNOMINMAX -Wno-deprecated-declarations -Wno-missing-declarations -Wno-self-move -Wno-sign-compare -Wno-unused-function -Wno-unused-parameter -Wno-unused-private-field

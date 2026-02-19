@@ -2,7 +2,24 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesg.cpp
- * @brief DMESG publisher/subscriber wrapper using Protobuf messages.
+ * @brief Implementation of Dmn_DMesg and its nested Dmn_DMesgHandler.
+ *
+ * This file provides the concrete implementation of the DMesg
+ * publisher/subscriber system, which exchanges messages using the
+ * generated Protobuf type dmn::DMesgPb.
+ *
+ * Key implementation areas:
+ * - Dmn_DMesgHandlerSub::notify(): the hot-path subscriber callback
+ *   that filters, routes, and buffers or async-delivers arriving
+ *   DMesgPb messages.
+ * - Dmn_DMesgHandler: manages per-topic running counters, conflict
+ *   detection, conflict callbacks, and the writeDMesgInternal() path
+ *   that stamps and publishes outbound messages.
+ * - Dmn_DMesg: the publisher side, including publishInternal() which
+ *   applies global conflict detection and advances per-topic running
+ *   counters, and openHandler()/closeHandler() lifecycle management.
+ * - Playback: newly registered handlers receive the last published
+ *   message for each topic via playbackLastTopicDMesgPbInternal().
  */
 
 #include "dmn-dmesg.hpp"

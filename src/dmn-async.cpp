@@ -2,9 +2,23 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-async.cpp
- * @brief Header for Dmn_Async: a small helper that serializes asynchronous
- *        execution of client-provided tasks and provides optional rendezvous
- *        points for callers that need to wait for completion.
+ * @brief Implementation of Dmn_Async: a small helper that serializes
+ *        asynchronous execution of client-provided tasks and provides
+ *        optional rendezvous points for callers that need to wait for
+ *        completion.
+ *
+ * Dmn_Async_Wait::wait() blocks the calling thread until the
+ * associated task finishes (or propagates its exception).
+ *
+ * Dmn_Async::addExecTask() wraps the user function in a try/catch so
+ * that exceptions thrown by tasks do not terminate the background
+ * thread.
+ *
+ * addExecTaskWithWait() additionally captures any thrown exception in
+ * the Dmn_Async_Wait object so the waiter can observe it via wait().
+ *
+ * addExecTaskAfterInternal() re-enqueues itself until the target wall-
+ * clock time has been reached, then executes the user function.
  */
 
 #include "dmn-async.hpp"
