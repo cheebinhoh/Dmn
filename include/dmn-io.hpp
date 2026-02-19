@@ -42,15 +42,56 @@ template <typename T> class Dmn_Io {
 public:
   virtual ~Dmn_Io() noexcept = default;
 
+  /**
+   * @brief Read and return the next available item.
+   *
+   * The call blocks until data is available. Returns std::nullopt to
+   * signal end-of-stream (e.g. EOF, closed pipe, or unrecoverable
+   * error); callers should treat std::nullopt as a permanent stop
+   * condition and cease further reads.
+   *
+   * @return optional<T> containing the next item, or std::nullopt on
+   *         end-of-stream.
+   */
   virtual auto read() -> std::optional<T> = 0;
 
+  /**
+   * @brief Read up to @p count items, optionally waiting up to
+   *        @p timeout microseconds.
+   *
+   * The default implementation returns an empty vector. Concrete
+   * subclasses may override this to provide bulk-read semantics
+   * consistent with Dmn_Buffer::pop(count, timeout).
+   *
+   * @param count   Maximum number of items to return (must be > 0).
+   * @param timeout Maximum wait time in microseconds; 0 means wait
+   *                indefinitely.
+   * @return Vector of up to @p count items (possibly fewer on
+   *         timeout).
+   */
   virtual auto read([[maybe_unused]] size_t count,
                     [[maybe_unused]] long timeout = 0) -> std::vector<T> {
     return {};
   }
 
+  /**
+   * @brief Write (copy) an item to the sink.
+   *
+   * The lvalue overload; implementations SHOULD copy @p item if they
+   * need to retain it beyond the call.
+   *
+   * @param item The item to write.
+   */
   virtual void write(T &item) = 0;
 
+  /**
+   * @brief Write (move) an item to the sink.
+   *
+   * The rvalue overload; implementations SHOULD move from @p item to
+   * avoid an unnecessary copy.
+   *
+   * @param item The item to write (may be moved from).
+   */
   virtual void write(T &&item) = 0;
 };
 

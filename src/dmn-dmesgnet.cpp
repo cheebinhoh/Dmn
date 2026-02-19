@@ -2,7 +2,33 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesgnet.cpp
- * @brief Dmn_DMesgNet — network-aware DMesg extension.
+ * @brief Implementation of Dmn_DMesgNet — network-aware DMesg extension.
+ *
+ * This file provides the concrete implementation of the networked
+ * DMesg layer. Key responsibilities handled here:
+ *
+ * - Constructor: initialises the local system DMesgPb (m_sys) with a
+ *   creation timestamp and node identity, then wires up the subscriber
+ *   handler, the optional input-reader thread, and the heartbeat timer.
+ *
+ * - createInputHandlerProc(): starts a background Dmn_Proc thread that
+ *   reads serialised DMesgPb strings from the input Dmn_Io, parses
+ *   them, and dispatches them as either sys (reconciliation), conflict,
+ *   force-playback, or ordinary messages.
+ *
+ * - createSubscriptHandler(): registers a Dmn_DMesgHandler that
+ *   intercepts every locally published DMesgPb and serialises it to
+ *   the output Dmn_Io (subject to the m_ready flag and the outbound
+ *   pending queue).
+ *
+ * - createTimerProc(): installs a periodic heartbeat timer that drives
+ *   the master-election state machine (MasterPending → Ready) and
+ *   re-sends last-known topic messages when the node becomes master or
+ *   its neighbour count changes.
+ *
+ * - reconciliateDMesgPbSys(): applies the remote node's system message
+ *   to local state; updates master identity, resets election counters,
+ *   and maintains the neighbour list.
  */
 
 #include "dmn-dmesgnet.hpp"
@@ -236,7 +262,10 @@ void Dmn_DMesgNet::createSubscriptHandler() {
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_IncludeSys}] = "yes";
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_NoTopicFilter}] = "yes";
 
-  // subscriptHandler to read and write with local DMesg
+  // Subscribe to all local DMesg topics (including sys messages) and
+  // forward each message to the network output handler. Messages that
+  // originated from this node's own write handler are skipped to avoid
+  // echoing inbound network messages back to the network.
   m_subscript_handler = Dmn_DMesg::openHandler(
       m_name + "_sub",
       [this](const dmn::DMesgPb &dmesgPb) -> bool {
@@ -290,7 +319,13 @@ void Dmn_DMesgNet::createSubscriptHandler() {
 
 void Dmn_DMesgNet::createTimerProc() {
   if (m_input_handler && m_output_handler) {
-    // into MasterPending
+    // Periodic heartbeat timer that drives master election.
+    // When in MasterPending state the counter increments each tick; once it
+    // reaches DMN_DMESGNET_MASTERPENDING_MAX_COUNTER the node self-elects as
+    // master (transitions to Ready and sets its own identifier as master).
+    // When in Ready state but following a remote master, a separate sync
+    // counter tracks how long the master has been silent; if it exceeds
+    // DMN_DMESGNET_MASTERSYNC_MAX_COUNTER the node reverts to MasterPending.
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
         [this]() -> void {

@@ -2,7 +2,31 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-runtime.cpp
- * @brief Runtime manager for signal handling and asynchronous jobs.
+ * @brief Implementation of Dmn_Runtime_Manager — centralized signal
+ *        handling and asynchronous job scheduling.
+ *
+ * Key implementation areas:
+ * - Constructor: registers default SIGTERM/SIGINT handlers that call
+ *   exitMainLoopInternal(), then starts the signal-wait thread which
+ *   calls sigwait() and dispatches to registered handlers via the
+ *   async context.
+ * - addJob() / addHighJob() / addMediumJob() / addLowJob(): enqueue
+ *   Dmn_Runtime_Job objects into the appropriate priority buffer.
+ *   Each method spins on its own atomic flag to prevent jobs from
+ *   being submitted before enterMainLoop() enables the queue.
+ * - execRuntimeJobInternal(): dequeues and executes one job per
+ *   priority level in order (high → medium → low), then schedules
+ *   itself again after a 1 µs delay to create a yield point.
+ * - execRuntimeJobInContext(): executes a single coroutine-based job,
+ *   resuming it until it either completes or suspends, interleaving
+ *   lower-priority jobs between suspension points.
+ * - enterMainLoop(): enables all priority queues, installs a SIGALRM
+ *   handler and a POSIX/ITIMER timer to fire every 50 µs for timed
+ *   job dispatch, then blocks until exitMainLoop() is called.
+ * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
+ *   SIGQUIT and SIGHUP before any threads are created so that all
+ *   descendant threads inherit the same signal mask and signals are
+ *   delivered only to the dedicated signal-wait thread.
  */
 
 #include "dmn-runtime.hpp"

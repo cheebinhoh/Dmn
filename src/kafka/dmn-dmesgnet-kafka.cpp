@@ -1,5 +1,13 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-dmesgnet-kafka.cpp
+ * @brief Implementation of Dmn_DMesgNet_Kafka.
+ *
+ * Constructs a Dmn_Kafka consumer and producer from the supplied
+ * configuration and uses them as the input/output handlers of a
+ * Dmn_DMesgNet instance. All DMesgNet cluster traffic is routed
+ * through the fixed Kafka topic "Dmn_dmesgnet".
  */
 
 #include "kafka/dmn-dmesgnet-kafka.hpp"

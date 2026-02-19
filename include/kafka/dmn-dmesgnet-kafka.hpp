@@ -1,5 +1,29 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-dmesgnet-kafka.hpp
+ * @brief Convenience wrapper that wires Dmn_DMesgNet to Apache Kafka I/O.
+ *
+ * Dmn_DMesgNet_Kafka is a thin composition class that instantiates a
+ * Dmn_Kafka consumer (input) and a Dmn_Kafka producer (output) and
+ * passes them to a Dmn_DMesgNet instance. The result is a
+ * network-aware DMesg node whose transport layer is backed by a Kafka
+ * broker instead of a raw socket.
+ *
+ * The class handles all Kafka-specific configuration detail
+ * (consumer group id, topic name, auto.offset.reset, acks, etc.) so
+ * callers only need to supply the common broker connection parameters
+ * (bootstrap.servers, SASL credentials, etc.) via a Dmn_Kafka::ConfigType
+ * map. The fixed Kafka topic used for cluster communication is
+ * "Dmn_dmesgnet".
+ *
+ * Handler management (openHandler / closeHandler) is forwarded
+ * directly to the underlying Dmn_DMesgNet instance so callers work
+ * with the standard Dmn_DMesgHandler API.
+ *
+ * See also:
+ *  - dmn-dmesgnet.hpp : Dmn_DMesgNet — the network-aware DMesg base.
+ *  - kafka/dmn-kafka.hpp : Dmn_Kafka — the Kafka Dmn_Io adapter.
  */
 
 #ifndef DMN_DMESGNET_KAFKA_HPP_

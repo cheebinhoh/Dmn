@@ -4,8 +4,9 @@
  * @file dmn-proc.cpp
  * @brief Lightweight RAII wrapper around native pthread functionality.
  *
- * This module provides a C++ wrapper around POSIX threads (pthread) with RAII 
- * semantics. It manages thread lifecycle and ensures proper cleanup on destruction.
+ * This module provides a C++ wrapper around POSIX threads (pthread) with RAII
+ * semantics. It manages thread lifecycle and ensures proper cleanup on
+ * destruction.
  */
 
 #include "dmn-proc.hpp"
@@ -45,7 +46,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg) {
  * it is set and the state transitions to "Ready".
  *
  * @param name Descriptive name for the process (for debugging/logging)
- * @param fnc Optional task function to be executed. Can be nullptr if task 
+ * @param fnc Optional task function to be executed. Can be nullptr if task
  *            is to be set later via setTask() or exec()
  */
 Dmn_Proc::Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc)
@@ -103,7 +104,7 @@ auto Dmn_Proc::getState() const -> Dmn_Proc::State { return m_state; }
 /**
  * @brief Sets a new state and returns the previous state.
  *
- * This is an atomic state transition operation. Useful for comparing and 
+ * This is an atomic state transition operation. Useful for comparing and
  * swapping states.
  *
  * @param state The new state to set
@@ -121,7 +122,8 @@ auto Dmn_Proc::setState(State state) -> Dmn_Proc::State {
  * @brief Assigns a task function to be executed by the thread.
  *
  * The process must be in either New or Ready state. After assignment,
- * the state transitions to Ready, indicating the task is prepared for execution.
+ * the state transitions to Ready, indicating the task is prepared for
+ * execution.
  *
  * @param fnc The task function to assign. Must not be nullptr.
  * @throws std::runtime_error if process is not in New or Ready state
@@ -136,8 +138,8 @@ void Dmn_Proc::setTask(Dmn_Proc::Task fnc) {
 /**
  * @brief Waits for the running thread to complete execution.
  *
- * This method performs a pthread_join to synchronously wait for thread termination.
- * After successful join, the state transitions back to Ready.
+ * This method performs a pthread_join to synchronously wait for thread
+ * termination. After successful join, the state transitions back to Ready.
  *
  * @return true if the join succeeded (err == 0)
  * @throws std::runtime_error if thread is not running or pthread_join fails
@@ -209,7 +211,8 @@ auto Dmn_Proc::stopExec() -> bool {
  * @brief Initiates thread execution with the assigned task.
  *
  * Creates a new pthread and sets its state to Running. The thread is configured
- * to accept deferred cancellations. On failure, state is reverted to previous value.
+ * to accept deferred cancellations. On failure, state is reverted to previous
+ * value.
  *
  * @return true if pthread_create succeeded, false otherwise
  * @throws std::runtime_error if process is not in Ready state
