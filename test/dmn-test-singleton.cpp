@@ -15,20 +15,8 @@ public:
 
   int getValue() { return m_int1 + m_int2; }
 
-  template <class... U>
-  static std::shared_ptr<Dmn_A> createInstanceInternal(U &&...u) {
-    if (!Dmn_A::s_instances) {
-      std::call_once(
-          s_init_once,
-          [](U &&...arg) {
-            Dmn_A::s_instances =
-                std::make_shared<Dmn_A>(std::forward<U>(arg)...);
-          },
-          std::forward<U>(u)...);
-    }
-
-    return Dmn_A::s_instances;
-  }
+  static int s_priorCreateInstance;
+  static void runPriorToCreateInstance();
 
 private:
   static std::shared_ptr<Dmn_A> s_instances;
@@ -38,6 +26,13 @@ private:
   int m_int2{};
 };
 
+void Dmn_A::runPriorToCreateInstance() {
+  std::cout << "run priorToCreateInstance()\n";
+
+  s_priorCreateInstance++;
+}
+
+int Dmn_A::s_priorCreateInstance{};
 std::once_flag Dmn_A::s_init_once{};
 std::shared_ptr<Dmn_A> Dmn_A::s_instances{};
 
@@ -47,9 +42,12 @@ int main(int argc, char *argv[]) {
   auto inst1 = Dmn_A::createInstance(1, 2);
   std::cout << "Value: " << inst1->getValue() << ", :" << inst1 << "\n";
 
+  EXPECT_TRUE(1 == Dmn_A::s_priorCreateInstance);
+
   auto inst2 = Dmn_A::createInstance(1, 2);
   std::cout << "Value: " << inst2->getValue() << ", :" << inst2 << "\n";
 
+  EXPECT_TRUE(1 == Dmn_A::s_priorCreateInstance);
   EXPECT_TRUE(inst1 == inst2);
 
   return RUN_ALL_TESTS();

@@ -391,4 +391,24 @@ void Dmn_Runtime_Manager::registerSignalHandlerInternal(
   extHandlers.push_back(handler);
 }
 
+void Dmn_Runtime_Manager::runPriorToCreateInstance() {
+  // Mask signals before creating any threads so they are blocked
+  // in all subsequently created threads (avoids races).
+  sigset_t old_mask{};
+  int err{};
+
+  sigemptyset(&Dmn_Runtime_Manager::s_mask);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGALRM);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGINT);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGTERM);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
+
+  err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
+  if (0 != err) {
+    throw std::runtime_error("Error in pthread_sigmask: " +
+                             std::string{strerror(errno)});
+  }
+}
+
 } // namespace dmn

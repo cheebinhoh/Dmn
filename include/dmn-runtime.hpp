@@ -265,7 +265,7 @@ public:
    */
   void registerSignalHandler(int signo, const SignalHandler &handler);
 
-  friend class Dmn_Singleton;
+  static void runPriorToCreateInstance();
 
 private:
   // Helpers for pushing jobs to the appropriate priority buffer.
@@ -329,41 +329,6 @@ private:
   static std::shared_ptr<Dmn_Runtime_Manager> s_instance;
   static sigset_t s_mask;
 }; // class Dmn_Runtime_Manager
-
-template <class... U>
-std::shared_ptr<Dmn_Runtime_Manager>
-Dmn_Runtime_Manager::createInstanceInternal(U &&...u) {
-  if (!Dmn_Runtime_Manager::s_instance) {
-    std::call_once(
-        s_init_once,
-        [](U &&...arg) {
-          // Mask signals before creating any threads so they are blocked
-          // in all subsequently created threads (avoids races).
-          sigset_t old_mask{};
-          int err{};
-
-          sigemptyset(&Dmn_Runtime_Manager::s_mask);
-          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGALRM);
-          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGINT);
-          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGTERM);
-          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
-          sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
-
-          err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask,
-                                &old_mask);
-          if (0 != err) {
-            throw std::runtime_error("Error in pthread_sigmask: " +
-                                     std::string{strerror(errno)});
-          }
-
-          Dmn_Runtime_Manager::s_instance =
-              std::make_shared<Dmn_Runtime_Manager>(std::forward<U>(arg)...);
-        },
-        std::forward<U>(u)...);
-  }
-
-  return Dmn_Runtime_Manager::s_instance;
-} // static method createInstanceInternal()
 
 } // namespace dmn
 
