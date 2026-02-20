@@ -54,9 +54,8 @@
 
  *
  * waitForEmpty()
- * - waitForEmpty() blocks until all items that were inbound at the time
- *   of the call have been popped and processed. It returns the number of
- *   items that were passed through the pipe in total during that wait.
+ * - waitForEmpty() blocks until all items that were inbound into the pipe
+ *   has been processed (or pop out).
  *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
