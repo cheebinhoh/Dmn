@@ -12,11 +12,12 @@
  *   - allows a consumer to read items either synchronously via `read()` or
  *     by providing a processing task via `readAndProcess()` or by launching a
  *     background processing thread (using Dmn_Proc::exec).
- * - The class combines Dmn_Buffer<T> (storage), Dmn_Io<T> (I/O interface)
+ * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O
+ interface)
  *   and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
- * - push/pop and internal synchronization are handled by Dmn_Buffer<T>.
+ * - push/pop and internal synchronization are handled by Dmn_BlockingQueue<T>.
  * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
@@ -27,7 +28,7 @@
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
  * - write(T&&) moves `item` into the pipe; move will be used when the move
- *   constructor is noexcept (via Dmn_Buffer<T>::push semantics).
+ *   constructor is noexcept (via Dmn_BlockingQueue<T>::push semantics).
  * - read() blocks until the next item is available and returns it wrapped
  *   in std::optional; when the pipe is closed it returns std::nullopt.
  * - readAndProcess(fn) blocks until the next item is available and invokes
@@ -83,7 +84,7 @@
 #include <string_view>
 #include <vector>
 
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-io.hpp"
 #include "dmn-proc.hpp"
@@ -91,7 +92,9 @@
 namespace dmn {
 
 template <typename T>
-class Dmn_Pipe : public Dmn_Buffer<T>, public Dmn_Io<T>, public Dmn_Proc {
+class Dmn_Pipe : public Dmn_BlockingQueue<T>,
+                 public Dmn_Io<T>,
+                 public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
@@ -157,7 +160,7 @@ public:
    * @brief Write (copy) an item into the pipe.
    *
    * This call enqueues a copy of `item` into the FIFO. Writing is non-blocking;
-   * any blocking behavior is determined by the underlying Dmn_Buffer
+   * any blocking behavior is determined by the underlying Dmn_BlockingQueue
    * implementation.
    *
    * @param item The data item to be copied into the pipe
@@ -168,7 +171,8 @@ public:
    * @brief Write (move) an item into the pipe.
    *
    * This call attempts to move `item` into the FIFO. If move construction is
-   * noexcept it will move; otherwise behavior follows Dmn_Buffer push policy.
+   * noexcept it will move; otherwise behavior follows Dmn_BlockingQueue push
+   * policy.
    *
    * @param item The data item to be moved into the pipe
    */
@@ -187,9 +191,9 @@ public:
   auto waitForEmpty() -> size_t override;
 
 private:
-  using Dmn_Buffer<T>::pop;
-  using Dmn_Buffer<T>::popNoWait;
-  using Dmn_Buffer<T>::push;
+  using Dmn_BlockingQueue<T>::pop;
+  using Dmn_BlockingQueue<T>::popNoWait;
+  using Dmn_BlockingQueue<T>::push;
 
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
@@ -220,7 +224,7 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown = true;
   lock.unlock();
-  Dmn_Buffer<T>::stop();
+  Dmn_BlockingQueue<T>::stop();
   Dmn_Proc::wait();
 
   // Dmn_Proc::stopExec();
@@ -271,17 +275,17 @@ void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &item) {
-  Dmn_Buffer<T>::push(item, false);
+  Dmn_BlockingQueue<T>::push(item, false);
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &&item) {
-  Dmn_Buffer<T>::push(item, true);
+  Dmn_BlockingQueue<T>::push(item, true);
 }
 
 template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
   size_t inbound_count{};
 
-  inbound_count = Dmn_Buffer<T>::waitForEmpty();
+  inbound_count = Dmn_BlockingQueue<T>::waitForEmpty();
 
   std::unique_lock<std::mutex> lock(m_mutex);
 

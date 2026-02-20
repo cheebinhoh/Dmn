@@ -13,7 +13,7 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
@@ -24,15 +24,17 @@ int main(int argc, char *argv[]) {
   std::string data2{"xyz"};
   std::string data3{"mno"};
 
-  auto buf = std::make_unique<dmn::Dmn_Buffer<std::string>>();
+  auto buf = std::make_unique<dmn::Dmn_BlockingQueue<std::string>>();
   bool readDone{};
   auto proc = std::make_unique<dmn::Dmn_Proc>(
       "proc", [&buf, &readDone, data1, data2, data3]() -> void {
-        auto listOfData = buf->pop(3, 15000000L);
+        auto listOfData = buf->pop(3);
+
+        EXPECT_TRUE(listOfData.size() == 3);
         readDone = true;
-        EXPECT_TRUE(listOfData.size() == 2);
         EXPECT_TRUE(data1 == listOfData[0]);
         EXPECT_TRUE(data2 == listOfData[1]);
+        EXPECT_TRUE(data3 == listOfData[2]);
       });
 
   proc->exec();
@@ -42,9 +44,12 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   buf->push(data2);
-  std::this_thread::sleep_for(std::chrono::seconds(20));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  proc->wait();
+  buf->push(data3);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  std::this_thread::sleep_for(std::chrono::seconds(3));
   EXPECT_TRUE(readDone);
 
   return RUN_ALL_TESTS();
