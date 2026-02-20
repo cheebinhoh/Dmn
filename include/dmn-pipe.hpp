@@ -144,16 +144,15 @@ public:
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
    *
-   * Blocks until the next item is available. The task is invoked while the
-   * internal mutex is held to update processing bookkeeping (`m_count`)
-   * and to signal waiting threads. The item is passed to `fn` using move
-   * semantics when possible.
+   * Blocks until the next item is available. The task is invoked without
+   * holding m_mutex which is only held after items are processed and update the
+   * m_count.
    *
    * @param fn The functor to process the next item popped from the pipe
    * @return The number of items read and processed.
    */
-  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0)
-      -> size_t;
+  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1,
+                      long timeout = 0) noexcept -> size_t;
 
   /**
    * @brief Write (copy) an item into the pipe.
@@ -253,8 +252,8 @@ auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
 }
 
 template <typename T>
-auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
-    -> size_t {
+auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
+                                 long timeout) noexcept -> size_t {
   auto dataList = this->pop(count, timeout);
 
   size_t processedCount = dataList.size();
