@@ -220,8 +220,6 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
 
-  m_empty_cond.notify_all();
-
   Dmn_BlockingQueue<T>::stop();
   Dmn_Proc::wait();
 } catch (...) {
