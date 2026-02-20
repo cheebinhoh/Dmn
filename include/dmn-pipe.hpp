@@ -213,7 +213,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
         Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown.load(std::memory_order_release)) {
+        if (m_shutdown.load()) {
           break;
         }
       }
