@@ -31,8 +31,8 @@
  *   constructor is noexcept (via Dmn_BlockingQueue<T>::push semantics).
  * - read() blocks until the next item is available and returns it wrapped
  *   in std::optional; when the pipe is closed it returns std::nullopt.
- * - readAndProcess(fn) blocks until the next item is available and invokes
- *   the provided task with the item (moved where possible).
+ * - readAndProcess(fn) blocks until the next item is available or timeout
+ *   and invokes the provided task with the item (moved where possible).
  *
  * - read(count, timeout) and readAndProcss(fn, count, timeout) function
  *   behaves like it counterpart without count and timeout but with the
@@ -153,8 +153,10 @@ public:
    * semantics when possible.
    *
    * @param fn The functor to process the next item popped from the pipe
+   * @return The number of items read and processed.
    */
-  void readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0);
+  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0)
+      -> size_t;
 
   /**
    * @brief Write (copy) an item into the pipe.
@@ -211,7 +213,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
         Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown) {
+        if (m_shutdown.load()) {
           break;
         }
       }
@@ -222,23 +224,21 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
 template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
   std::unique_lock<std::mutex> lock(m_mutex);
-  m_shutdown = true;
+  m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
   Dmn_BlockingQueue<T>::stop();
   Dmn_Proc::wait();
-
-  // Dmn_Proc::stopExec();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
 template <typename T> auto Dmn_Pipe<T>::read() -> std::optional<T> {
-  T data{};
+  std::optional<T> data{};
 
-  readAndProcess([&data](T &&item) { data = item; });
+  readAndProcess([&data](T &&item) { data = std::move_if_noexcept(item); });
 
-  return std::move_if_noexcept(data);
+  return data;
 }
 
 template <typename T>
@@ -252,34 +252,33 @@ auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
 }
 
 template <typename T>
-void Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
-                                 long timeout) {
+auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
+    -> size_t {
   auto dataList = this->pop(count, timeout);
 
-  if (m_shutdown) {
-    return;
+  size_t processedCount = dataList.size();
+
+  for (auto &item : dataList) {
+    Dmn_Proc::testcancel();
+
+    fn(std::move_if_noexcept(item));
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  Dmn_Proc::testcancel();
-
-  for (auto &item : dataList) {
-    fn(std::move_if_noexcept(item));
-    ++m_count;
-  }
+  m_count += processedCount;
 
   m_empty_cond.notify_all();
 
-  Dmn_Proc::testcancel();
+  return processedCount;
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &item) {
-  Dmn_BlockingQueue<T>::push(item, false);
+  Dmn_BlockingQueue<T>::push(item);
 }
 
 template <typename T> void Dmn_Pipe<T>::write(T &&item) {
-  Dmn_BlockingQueue<T>::push(item, true);
+  Dmn_BlockingQueue<T>::push(std::move_if_noexcept(item));
 }
 
 template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
