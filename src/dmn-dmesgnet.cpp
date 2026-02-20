@@ -380,13 +380,11 @@ void Dmn_DMesgNet::createTimerProc() {
                 this->m_sys.body().sys().self().masteridentifier() ==
                 this->m_sys.body().sys().self().identifier();
 
-            // if self is a master, and it is becoming master or # of neighbor
-            // increase, let resend prior last message per topic.
-            // FIXME: maybe it is good that master resend them prioritically?
+            // if self is a master, # of neighbor is increase,
+            // let resend prior last message per topic.
             if (m_output_handler && master &&
-                ((master != m_is_master) ||
-                 (m_number_of_neighbor !=
-                  this->m_sys.body().sys().nodelist().size()))) {
+                (m_number_of_neighbor <
+                 this->m_sys.body().sys().nodelist().size())) {
               for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
                 dmn::DMesgPb pb = topic_dmesgpb.second;
 
