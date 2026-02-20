@@ -18,7 +18,7 @@
  *   associated counters (m_push_count, m_pop_count).
  *
  * - Three condition variables are used:
- *   - m_none_empty_cond: signalled on push; used by the multi-item timed pop
+ *   - m_not_empty_cond: signalled on push; used by the multi-item timed pop
  *     pop(count, timeout) to wait until the queue has at least one item or the
  *     target number of items.
  *   - m_empty_cond: signalled when the queue becomes empty; used by
@@ -52,11 +52,8 @@
  *          * If the timeout expires and the queue contains at least 1 item,
  *            returns however many items are currently available (between 1
  *            and `count`).
- *          * If the timeout expires and the queue is still empty, the wait
- *            restarts (the implementation re-arms the absolute-time
- *            deadline). This behavior avoids returning an empty result on
- *            spurious timeouts; the function only returns due to timeout when
- *            there is at least one item in the queue at expiry.
+ *          * If the timeout expires and the queue is still empty, returns
+ *            no item.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
@@ -93,6 +90,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <condition_variable>
 #include <cstring>
 #include <ctime>
@@ -101,6 +99,8 @@
 #include <mutex>
 #include <optional>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "dmn-proc.hpp"
 
@@ -219,15 +219,16 @@ protected:
   void stop();
 
 private:
+  template <class U> void pushImpl(U &&item);
+
   std::deque<T> m_queue{};
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{}; // signalled when queue becomes empty
   std::condition_variable
-      m_none_empty_cond{}; // signalled on push (multi-pop timed wait)
+      m_not_empty_cond{}; // signalled on push (multi-pop timed wait)
   size_t m_push_count{};
   size_t m_pop_count{};
-
-  std::atomic<bool> m_shutdown{};
+  bool m_shutdown{};
 }; // class Dmn_Buffer
 
 template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {}
@@ -240,9 +241,6 @@ Dmn_Buffer<T>::Dmn_Buffer(std::initializer_list<T> list) : Dmn_Buffer{} {
 }
 
 template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
-  // Wake up any threads waiting on condition variables before destroying them.
-  // This does not guarantee safe concurrent use; the destructor should be
-  // called only when no other threads will access this object.
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
@@ -257,37 +255,53 @@ template <typename T> auto Dmn_Buffer<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_Buffer<T>::push(T &&item) {
-  T moved_item = std::move_if_noexcept(item);
-
-  push(moved_item, true);
+  pushImpl(std::move(item));
 }
 
+/**
+ * @brief Push an lvalue into the queue, optionally moving-from it.
+ *
+ * Keeps the original semantics:
+ * - move=true  -> move_if_noexcept(item)
+ * - move=false -> copy item
+ */
 template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
+  if (move) {
+    // Preserve the original preference for noexcept-move (otherwise copy).
+    pushImpl(std::move_if_noexcept(item));
+  } else {
+    pushImpl(item); // copy
+  }
+}
+
+/**
+ * @brief Internal enqueue helper with perfect forwarding.
+ *
+ * - For rvalues: moves into the deque (one construction)
+ * - For lvalues: copies into the deque
+ *
+ * If you still want the old “move_if_noexcept” behavior for lvalues, keep that
+ * logic at the public overload level (see push(T&, bool)).
+ */
+template <typename T>
+template <class U>
+void Dmn_Buffer<T>::pushImpl(U &&item) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  // Cancellation point check to allow thread cancellation in a controlled way.
   Dmn_Proc::testcancel();
 
-  if (move) {
-    m_queue.push_back(std::move_if_noexcept(item));
-  } else {
-    m_queue.push_back(item);
-  }
-
+  m_queue.emplace_back(std::forward<U>(item));
   ++m_push_count;
 
   // Notify multi-pop waiters first (they use m_none_empty_cond).
-  m_none_empty_cond.notify_all();
-
-  // Notify single-item waiters.
-  m_empty_cond.notify_all();
+  m_not_empty_cond.notify_all();
 }
 
 template <typename T> void Dmn_Buffer<T>::stop() {
   m_shutdown = true;
 
   m_empty_cond.notify_all();
-  m_none_empty_cond.notify_all();
+  m_not_empty_cond.notify_all();
 }
 
 template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
@@ -318,7 +332,7 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
   // Wait until there are at least 'count' items OR a timeout occurs with at
   // least one available item.
   if (timeout > 0) {
-    if (m_none_empty_cond.wait_for(
+    if (m_not_empty_cond.wait_for(
             lock, std::chrono::microseconds(timeout),
             [this, count] { return m_queue.size() >= count || m_shutdown; })) {
       // do nothing and we have what we want
@@ -328,7 +342,7 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
       // do nothing and fetch whatever we have
     }
   } else {
-    m_none_empty_cond.wait(
+    m_not_empty_cond.wait(
         lock, [this, count] { return m_queue.size() >= count || m_shutdown; });
   }
 
@@ -371,8 +385,8 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
     }
 
     // Block until an item is available. This wait is a cancellation point.
-    m_none_empty_cond.wait(lock,
-                           [this] { return !m_queue.empty() || m_shutdown; });
+    m_not_empty_cond.wait(lock,
+                          [this] { return !m_queue.empty() || m_shutdown; });
   }
 
   if (m_shutdown) {
