@@ -45,11 +45,8 @@
  *        - If timeout > 0: waits up to `timeout` microseconds for items.
  *          * If enough items are available before timeout, returns exactly
  *            `count` items.
- *          * If the timeout expires and the pipe contains at least 1 item,
- *            returns however many items are currently available (between 1
- *            and `count`).
- *          * If the timeout expires and it returns whatever it has and up
- *            to count items in max.
+ *          * If the timeout expires and it returns whatever items available
+ *            up to `count` items or no item.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
