@@ -234,11 +234,11 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
 }
 
 template <typename T> auto Dmn_Pipe<T>::read() -> std::optional<T> {
-  T data{};
+  std::optional<T> data{};
 
   readAndProcess([&data](T &&item) { data = std::move_if_noexcept(item); });
 
-  return std::move_if_noexcept(data);
+  return data;
 }
 
 template <typename T>
