@@ -15,9 +15,9 @@
  *
  * Behavior and semantics
  * ----------------------
- * - Each Dmn_TeePipeSource contains a small, bounded buffer (Dmn_LimitBuffer)
- *   and exposes the Dmn_Io<T> interface (write methods). Clients push items
- *   into their dedicated source instances.
+ * - Each Dmn_TeePipeSource contains a small, bounded buffer
+ * (Dmn_Limit_BlockingQueue) and exposes the Dmn_Io<T> interface (write
+ * methods). Clients push items into their dedicated source instances.
  * - The tee-pipe runs a dedicated conveyor thread (via Dmn_Proc) that waits
  *   until at least one item is available from every source in the current
  *   set of sources (m_buffers). When that condition is met it:
@@ -95,7 +95,7 @@
 #include <vector>
 
 #include "dmn-io.hpp"
-#include "dmn-limit-buffer.hpp"
+#include "dmn-limit-blockingqueue.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 
@@ -113,7 +113,8 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
    * conveyor thread reads from each active Dmn_TeePipeSource via the private
    * read() method.
    */
-  class Dmn_TeePipeSource : private Dmn_LimitBuffer<T>, public Dmn_Io<T> {
+  class Dmn_TeePipeSource : private Dmn_Limit_BlockingQueue<T>,
+                            public Dmn_Io<T> {
     friend class Dmn_TeePipe<T>;
 
   public:
@@ -145,8 +146,8 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
 
   private:
     /**
-     * Pop one element from the underlying Dmn_LimitBuffer. Returns empty
-     * optional if buffer is empty.
+     * Pop one element from the underlying Dmn_Limit_BlockingQueue. Returns
+     * empty optional if buffer is empty.
      */
     std::optional<T> read() override;
 
@@ -242,7 +243,7 @@ private:
 template <typename T>
 Dmn_TeePipe<T>::Dmn_TeePipeSource::Dmn_TeePipeSource(size_t capacity,
                                                      Dmn_TeePipe *tp)
-    : Dmn_LimitBuffer<T>{capacity}, m_teepipe(tp) {}
+    : Dmn_Limit_BlockingQueue<T>{capacity}, m_teepipe(tp) {}
 
 template <typename T> void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item) {
   write(item, false);
@@ -258,7 +259,7 @@ template <typename T>
 void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
   assert(m_teepipe);
 
-  Dmn_LimitBuffer<T>::push(item, move);
+  Dmn_Limit_BlockingQueue<T>::push(item, move);
 
   std::unique_lock<std::mutex> lock(m_teepipe->m_mutex);
 
@@ -271,7 +272,7 @@ void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
 
 template <typename T>
 std::optional<T> Dmn_TeePipe<T>::Dmn_TeePipeSource::read() {
-  return Dmn_LimitBuffer<T>::pop();
+  return Dmn_Limit_BlockingQueue<T>::pop();
 }
 
 template <typename T>

@@ -47,7 +47,7 @@
 #include <system_error>
 
 #include "dmn-async.hpp"
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-singleton.hpp"
 

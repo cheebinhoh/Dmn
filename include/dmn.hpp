@@ -26,12 +26,12 @@
 #define DMN_HPP_
 
 #include "dmn-async.hpp"
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
 #include "dmn-io.hpp"
-#include "dmn-limit-buffer.hpp"
+#include "dmn-limit-blockingqueue.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-pub-sub.hpp"

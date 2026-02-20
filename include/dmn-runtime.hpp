@@ -73,7 +73,7 @@
 #include <vector>
 
 #include "dmn-async.hpp"
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-singleton.hpp"
 
 namespace dmn {
@@ -295,9 +295,9 @@ private:
       m_ext_signal_handlers{}; // external hooks
 
   // Per-priority immediate job queues
-  Dmn_Buffer<Dmn_Runtime_Job> m_highQueue{};
-  Dmn_Buffer<Dmn_Runtime_Job> m_lowQueue{};
-  Dmn_Buffer<Dmn_Runtime_Job> m_mediumQueue{};
+  Dmn_BlockingQueue<Dmn_Runtime_Job> m_highQueue{};
+  Dmn_BlockingQueue<Dmn_Runtime_Job> m_lowQueue{};
+  Dmn_BlockingQueue<Dmn_Runtime_Job> m_mediumQueue{};
 
   // Min-heap of timed jobs (earliest timestamp at top)
   std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,

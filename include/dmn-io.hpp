@@ -61,7 +61,7 @@ public:
    *
    * The default implementation returns an empty vector. Concrete
    * subclasses may override this to provide bulk-read semantics
-   * consistent with Dmn_Buffer::pop(count, timeout).
+   * consistent with Dmn_BlockingQueue::pop(count, timeout).
    *
    * @param count   Maximum number of items to return (must be > 0).
    * @param timeout Maximum wait time in microseconds; 0 means wait

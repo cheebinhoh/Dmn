@@ -4,8 +4,9 @@
  * @file dmn-limit-buffer.hpp
  * @brief Bounded, thread-safe FIFO queue with blocking push/pop semantics.
  *
- * This header defines Dmn_LimitBuffer<T>, a thread-safe, limited-capacity
- * FIFO queue built on top of Dmn_Buffer<T>. The buffer provides:
+ * This header defines Dmn_Limit_BlockingQueue<T>, a thread-safe,
+ * limited-capacity FIFO queue built on top of Dmn_BlockingQueue<T>. The buffer
+ * provides:
  *  - A maximum capacity set at construction time. Attempts to push when the
  *    buffer is full will block the caller until space becomes available.
  *  - Blocking pop() that waits until an item is available and returns it.
@@ -14,11 +15,11 @@
  *  - push overloads that prefer move semantics when available; push(T&&) will
  *    use move-if-noexcept and forward to the internal push implementation.
  *  - size() to return the current number of stored items (snapshot).
- *  - waitForEmpty() delegates to Dmn_Buffer<T>::waitForEmpty().
+ *  - waitForEmpty() delegates to Dmn_BlockingQueue<T>::waitForEmpty().
  *
  * Notes:
- *  - Dmn_LimitBuffer<T> privately inherits from Dmn_Buffer<T> and reuses its
- *    internal storage/semantics for push/pop operations.
+ *  - Dmn_Limit_BlockingQueue<T> privately inherits from Dmn_BlockingQueue<T>
+ * and reuses its internal storage/semantics for push/pop operations.
  *  - All operations aim for O(1) behavior with respect to queue operations.
  *  - The size() method returns a snapshot and is protected by the mutex to
  *    ensure a consistent view.
@@ -37,20 +38,23 @@
 #include <optional>
 #include <stdexcept>
 
-#include "dmn-buffer.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
 
-template <typename T> class Dmn_LimitBuffer : private Dmn_Buffer<T> {
+template <typename T>
+class Dmn_Limit_BlockingQueue : private Dmn_BlockingQueue<T> {
 public:
-  explicit Dmn_LimitBuffer(size_t capacity = 1);
-  virtual ~Dmn_LimitBuffer();
+  explicit Dmn_Limit_BlockingQueue(size_t capacity = 1);
+  virtual ~Dmn_Limit_BlockingQueue();
 
-  Dmn_LimitBuffer(const Dmn_LimitBuffer<T> &obj) = delete;
-  const Dmn_LimitBuffer<T> &operator=(const Dmn_LimitBuffer<T> &obj) = delete;
-  Dmn_LimitBuffer(Dmn_LimitBuffer<T> &&obj) = delete;
-  Dmn_LimitBuffer<T> &&operator=(Dmn_LimitBuffer<T> &&obj) = delete;
+  Dmn_Limit_BlockingQueue(const Dmn_Limit_BlockingQueue<T> &obj) = delete;
+  const Dmn_Limit_BlockingQueue<T> &
+  operator=(const Dmn_Limit_BlockingQueue<T> &obj) = delete;
+  Dmn_Limit_BlockingQueue(Dmn_Limit_BlockingQueue<T> &&obj) = delete;
+  Dmn_Limit_BlockingQueue<T> &&
+  operator=(Dmn_Limit_BlockingQueue<T> &&obj) = delete;
 
   /**
    * @brief The method will pop and return front item from the queue or the
@@ -136,46 +140,48 @@ private:
   std::mutex m_mutex{};
   std::condition_variable m_pop_cond{};
   std::condition_variable m_push_cond{};
-}; // class Dmn_LimitBuffer
+}; // class Dmn_Limit_BlockingQueue
 
 template <typename T>
-Dmn_LimitBuffer<T>::Dmn_LimitBuffer(size_t capacity)
+Dmn_Limit_BlockingQueue<T>::Dmn_Limit_BlockingQueue(size_t capacity)
     : m_max_capacity(capacity) {}
 
-template <typename T> Dmn_LimitBuffer<T>::~Dmn_LimitBuffer() {}
+template <typename T> Dmn_Limit_BlockingQueue<T>::~Dmn_Limit_BlockingQueue() {}
 
-template <typename T> auto Dmn_LimitBuffer<T>::pop() -> T {
+template <typename T> auto Dmn_Limit_BlockingQueue<T>::pop() -> T {
   return *popOptional(true);
 }
 
-template <typename T> auto Dmn_LimitBuffer<T>::empty() -> bool {
+template <typename T> auto Dmn_Limit_BlockingQueue<T>::empty() -> bool {
   return this->size() <= 0;
 }
 
-template <typename T> auto Dmn_LimitBuffer<T>::popNoWait() -> std::optional<T> {
+template <typename T>
+auto Dmn_Limit_BlockingQueue<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
 }
 
-template <typename T> void Dmn_LimitBuffer<T>::push(T &&item) {
+template <typename T> void Dmn_Limit_BlockingQueue<T>::push(T &&item) {
   T moved_item = std::move_if_noexcept(item);
 
   push(moved_item, true);
 }
 
-template <typename T> void Dmn_LimitBuffer<T>::push(T &item, bool move) {
+template <typename T>
+void Dmn_Limit_BlockingQueue<T>::push(T &item, bool move) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
 
   m_push_cond.wait(lock, [this] { return m_size < m_max_capacity; });
 
-  Dmn_Buffer<T>::push(item, move);
+  Dmn_BlockingQueue<T>::push(item, move);
   ++m_size;
 
   m_pop_cond.notify_all();
 }
 
-template <typename T> auto Dmn_LimitBuffer<T>::size() -> size_t {
+template <typename T> auto Dmn_Limit_BlockingQueue<T>::size() -> size_t {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
@@ -183,19 +189,20 @@ template <typename T> auto Dmn_LimitBuffer<T>::size() -> size_t {
   return m_size;
 }
 
-template <typename T> auto Dmn_LimitBuffer<T>::waitForEmpty() -> size_t {
-  return Dmn_Buffer<T>::waitForEmpty();
+template <typename T>
+auto Dmn_Limit_BlockingQueue<T>::waitForEmpty() -> size_t {
+  return Dmn_BlockingQueue<T>::waitForEmpty();
 }
 
 template <typename T>
-auto Dmn_LimitBuffer<T>::popOptional(bool wait) -> std::optional<T> {
+auto Dmn_Limit_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> val{};
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
 
-  val = Dmn_Buffer<T>::popOptional(wait);
+  val = Dmn_BlockingQueue<T>::popOptional(wait);
   m_size--;
 
   m_push_cond.notify_all();

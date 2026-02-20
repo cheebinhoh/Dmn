@@ -1,13 +1,13 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-buffer.hpp
- * @brief Thread-safe FIFO buffer (queue) for passing items between threads.
+ * @file dmn-blockingqueue.hpp
+ * @brief Thread-safe FIFO blocking queue for passing items between threads.
  *
  * Overview
  * --------
- * Dmn_Buffer<T> is a thread-safe FIFO queue implementation intended for use
- * by producer and consumer threads. Key behavioral properties:
+ * Dmn_BlockingQueue<T> is a thread-safe FIFO queue implementation intended for
+ * use by producer and consumer threads. Key behavioral properties:
  *  - push operations are non-blocking (they will not wait for consumers).
  *  - pop operations may block waiting for data (either indefinitely or with a
  *    timeout, depending on the API used).
@@ -105,16 +105,17 @@ namespace dmn {
  *
  * Template parameter T is the stored item type.
  */
-template <typename T = std::string> class Dmn_Buffer {
+template <typename T = std::string> class Dmn_BlockingQueue {
 public:
-  Dmn_Buffer();
-  Dmn_Buffer(std::initializer_list<T> list);
-  virtual ~Dmn_Buffer() noexcept;
+  Dmn_BlockingQueue();
+  Dmn_BlockingQueue(std::initializer_list<T> list);
+  virtual ~Dmn_BlockingQueue() noexcept;
 
-  Dmn_Buffer(const Dmn_Buffer<T> &obj) = delete;
-  const Dmn_Buffer<T> &operator=(const Dmn_Buffer<T> &obj) = delete;
-  Dmn_Buffer(const Dmn_Buffer<T> &&obj) = delete;
-  Dmn_Buffer<T> &operator=(Dmn_Buffer<T> &&dmnBuffer) = delete;
+  Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &obj) = delete;
+  const Dmn_BlockingQueue<T> &
+  operator=(const Dmn_BlockingQueue<T> &obj) = delete;
+  Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &&obj) = delete;
+  Dmn_BlockingQueue<T> &operator=(Dmn_BlockingQueue<T> &&obj) = delete;
 
   /**
    * @brief Remove and return the front item from the queue, blocking if empty.
@@ -222,32 +223,34 @@ private:
   size_t m_push_count{};
   size_t m_pop_count{};
   bool m_shutdown{};
-}; // class Dmn_Buffer
+}; // class Dmn_BlockingQueue
 
-template <typename T> Dmn_Buffer<T>::Dmn_Buffer() {}
+template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
 
 template <typename T>
-Dmn_Buffer<T>::Dmn_Buffer(std::initializer_list<T> list) : Dmn_Buffer{} {
+Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
+    : Dmn_BlockingQueue{} {
   for (auto data : list) {
     this->push(data);
   }
 }
 
-template <typename T> Dmn_Buffer<T>::~Dmn_Buffer() noexcept try {
+template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
 }
 
-template <typename T> auto Dmn_Buffer<T>::pop() -> T {
+template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
   return *popOptional(true);
 }
 
-template <typename T> auto Dmn_Buffer<T>::popNoWait() -> std::optional<T> {
+template <typename T>
+auto Dmn_BlockingQueue<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
 }
 
-template <typename T> void Dmn_Buffer<T>::push(T &&item) {
+template <typename T> void Dmn_BlockingQueue<T>::push(T &&item) {
   pushImpl(std::move(item));
 }
 
@@ -258,7 +261,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &&item) {
  * - move=true  -> move_if_noexcept(item)
  * - move=false -> copy item
  */
-template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
+template <typename T> void Dmn_BlockingQueue<T>::push(T &item, bool move) {
   if (move) {
     // Preserve the original preference for noexcept-move (otherwise copy).
     pushImpl(std::move_if_noexcept(item));
@@ -278,7 +281,7 @@ template <typename T> void Dmn_Buffer<T>::push(T &item, bool move) {
  */
 template <typename T>
 template <class U>
-void Dmn_Buffer<T>::pushImpl(U &&item) {
+void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
@@ -290,7 +293,7 @@ void Dmn_Buffer<T>::pushImpl(U &&item) {
   m_not_empty_cond.notify_one();
 }
 
-template <typename T> void Dmn_Buffer<T>::stop() {
+template <typename T> void Dmn_BlockingQueue<T>::stop() {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown = true;
 
@@ -298,7 +301,7 @@ template <typename T> void Dmn_Buffer<T>::stop() {
   m_not_empty_cond.notify_all();
 }
 
-template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
+template <typename T> auto Dmn_BlockingQueue<T>::waitForEmpty() -> size_t {
   size_t inbound_count{};
 
   std::unique_lock<std::mutex> lock(m_mutex);
@@ -314,7 +317,7 @@ template <typename T> auto Dmn_Buffer<T>::waitForEmpty() -> size_t {
 }
 
 template <typename T>
-auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
+auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
   std::vector<T> ret{};
 
   assert(count > 0);
@@ -368,7 +371,7 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 }
 
 template <typename T>
-auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
+auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
