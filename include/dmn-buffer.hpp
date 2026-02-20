@@ -77,12 +77,6 @@
  * - The class deletes copy and move constructors / assignment operators to
  *   ensure unique ownership of the synchronization primitives and avoid
  *   incidental sharing between objects.
- *
- * - The destructor signals waiting threads (m_cond and m_empty_cond) before
- *   destroying the condition variables and mutex to attempt to wake any
- *   blocked waiters. Destruction of synchronization primitives should be done
- *   only when it is guaranteed no other thread will attempt to use the
- *   Dmn_Buffer.
  */
 
 #ifndef DMN_BUFFER_HPP_
@@ -142,9 +136,8 @@ public:
    *   - timeout > 0: wait up to timeout microseconds for items.
    *     * If timeout expires and there is at least one item, return 1..count
    *       items (the current queue size).
-   *     * If timeout expires and the queue is still empty, the function keeps
-   *       waiting (re-arming the absolute deadline) until at least one item is
-   *       available.
+   *     * If timeout expires and the queue is still empty, the function returns
+   *       no item.
    *
    * The returned vector contains moved items removed from the queue.
    *
@@ -294,10 +287,11 @@ void Dmn_Buffer<T>::pushImpl(U &&item) {
   ++m_push_count;
 
   // Notify multi-pop waiters first (they use m_none_empty_cond).
-  m_not_empty_cond.notify_all();
+  m_not_empty_cond.notify_one();
 }
 
 template <typename T> void Dmn_Buffer<T>::stop() {
+  std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown = true;
 
   m_empty_cond.notify_all();
@@ -366,6 +360,8 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   if (empty) {
     m_empty_cond.notify_all();
+  } else {
+    m_not_empty_cond.notify_one();
   }
 
   return ret;
@@ -373,8 +369,6 @@ auto Dmn_Buffer<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
 template <typename T>
 auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
-  T val{};
-
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();
@@ -393,7 +387,7 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
     return {};
   }
 
-  val = std::move_if_noexcept(m_queue.front());
+  T val = std::move_if_noexcept(m_queue.front());
   m_queue.pop_front();
 
   ++m_pop_count;
@@ -401,6 +395,8 @@ auto Dmn_Buffer<T>::popOptional(bool wait) -> std::optional<T> {
   // Notify waiters waiting for the queue to become empty.
   if (m_queue.empty()) {
     m_empty_cond.notify_all();
+  } else {
+    m_not_empty_cond.notify_one();
   }
 
   return std::move_if_noexcept(val);
