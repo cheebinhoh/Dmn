@@ -22,8 +22,8 @@
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
- * - readAndProcess() holds `m_mutex` while invoking the caller-provided task
- *   and updates `m_count` under the mutex.
+ * - readAndProcess() invokes the caller-provided task and updates `m_count`
+ *   under the mutex.
  *
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
@@ -48,11 +48,8 @@
  *          * If the timeout expires and the pipe contains at least 1 item,
  *            returns however many items are currently available (between 1
  *            and `count`).
- *          * If the timeout expires and the pipe is still empty, the wait
- *            restarts (the implementation re-arms the absolute-time
- *            deadline). This behavior avoids returning an empty result on
- *            spurious timeouts; the function only returns due to timeout when
- *            there is at least one item in the pipe at expiry.
+ *          * If the timeout expires and it returns whatever it has and up
+ *            to count items in max.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
@@ -76,8 +73,8 @@
 
 #define DMN_PIPE_HPP_
 
+#include <atomic>
 #include <condition_variable>
-#include <cstring>
 #include <functional>
 #include <mutex>
 #include <optional>
@@ -200,7 +197,7 @@ private:
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
   size_t m_count{};
-  std::atomic<bool> m_shutdown{};
+  std::atomic<bool> m_shutdown{false};
 }; // class Dmn_Pipe
 
 template <typename T>
@@ -213,7 +210,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
         Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown.load()) {
+        if (m_shutdown.load(std::memory_order_acquire)) {
           break;
         }
       }
@@ -248,7 +245,7 @@ auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
   readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },
                  count, timeout);
 
-  return std::move(dataList);
+  return dataList;
 }
 
 template <typename T>
@@ -259,8 +256,6 @@ auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
   size_t processedCount = dataList.size();
 
   for (auto &item : dataList) {
-    Dmn_Proc::testcancel();
-
     fn(std::move_if_noexcept(item));
   }
 
