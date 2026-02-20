@@ -258,12 +258,14 @@ auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 
   size_t processedCount = dataList.size();
 
-  try {
-    for (auto &item : dataList) {
-      fn(std::move_if_noexcept(item));
+  if (fn) {
+    try {
+      for (auto &item : dataList) {
+        fn(std::move_if_noexcept(item));
+      }
+    } catch (...) {
+      //
     }
-  } catch (...) {
-    //
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
