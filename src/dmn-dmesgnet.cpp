@@ -384,9 +384,9 @@ void Dmn_DMesgNet::createTimerProc() {
             // increase, let resend prior last message per topic.
             // FIXME: maybe it is good that master resend them prioritically?
             if (m_output_handler && master &&
-                ((master != m_is_master) ||
-                 (m_number_of_neighbor !=
-                      this->m_sys.body().sys().nodelist().size()))) {
+                (this->m_sys.body().sys().nodelist().size() > 0) &&
+                (m_number_of_neighbor !=
+                 this->m_sys.body().sys().nodelist().size())) {
               for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
                 dmn::DMesgPb pb = topic_dmesgpb.second;
 
