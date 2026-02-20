@@ -106,7 +106,7 @@ public:
   Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
-   * @brief Read and return the next count of items from the pipe.
+   * @brief Read and return the next item from the pipe.
    *
    * Blocks until the next item is available. If the pipe has been closed and
    * no further items will arrive, returns std::nullopt.
@@ -207,12 +207,13 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
   if (fn) {
     exec([this, fn, count, timeout]() {
       while (true) {
-        Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
         if (m_shutdown.load(std::memory_order_acquire)) {
           break;
         }
+
+        Dmn_Proc::yield();
       }
     });
   }
@@ -223,6 +224,9 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
+
+  m_empty_cond.notify_all();
+
   Dmn_BlockingQueue<T>::stop();
   Dmn_Proc::wait();
 } catch (...) {
@@ -255,8 +259,12 @@ auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
 
   size_t processedCount = dataList.size();
 
-  for (auto &item : dataList) {
-    fn(std::move_if_noexcept(item));
+  try {
+    for (auto &item : dataList) {
+      fn(std::move_if_noexcept(item));
+    }
+  } catch (...) {
+    //
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
