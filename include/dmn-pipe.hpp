@@ -12,9 +12,8 @@
  *   - allows a consumer to read items either synchronously via `read()` or
  *     by providing a processing task via `readAndProcess()` or by launching a
  *     background processing thread (using Dmn_Proc::exec).
- * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O
- interface)
- *   and Dmn_Proc (optional processing thread support).
+ * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O 
+ *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
  * - push/pop and internal synchronization are handled by Dmn_BlockingQueue<T>.
@@ -22,8 +21,8 @@
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
- * - readAndProcess() holds `m_mutex` while invoking the caller-provided task
- *   and updates `m_count` under the mutex.
+ * - readAndProcess() involves the caller-provided task and updates `m_count`
+ *   under the mutex.
  *
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
@@ -45,24 +44,16 @@
  *        - If timeout > 0: waits up to `timeout` microseconds for items.
  *          * If enough items are available before timeout, returns exactly
  *            `count` items.
- *          * If the timeout expires and the pipe contains at least 1 item,
- *            returns however many items are currently available (between 1
- *            and `count`).
- *          * If the timeout expires and the pipe is still empty, the wait
- *            restarts (the implementation re-arms the absolute-time
- *            deadline). This behavior avoids returning an empty result on
- *            spurious timeouts; the function only returns due to timeout when
- *            there is at least one item in the pipe at expiry.
+ *          * If the timeout expires and it returns whatever items available
+ *            up to `count` items or no item.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
 
  *
- * waitForEmpty()
- * - waitForEmpty() blocks until all items that were inbound at the time
- *   of the call have been popped and processed. It returns the number of
- *   items that were passed through the pipe in total during that wait.
+ * waitForEmpty() blocks until all items that were inbound into the pipe
+ * has been processed (or pop out).
  *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
@@ -76,8 +67,8 @@
 
 #define DMN_PIPE_HPP_
 
+#include <atomic>
 #include <condition_variable>
-#include <cstring>
 #include <functional>
 #include <mutex>
 #include <optional>
@@ -109,7 +100,7 @@ public:
   Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
-   * @brief Read and return the next count of items from the pipe.
+   * @brief Read and return the item from the pipe.
    *
    * Blocks until the next item is available. If the pipe has been closed and
    * no further items will arrive, returns std::nullopt.
@@ -213,7 +204,7 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
         Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown.load()) {
+        if (m_shutdown.load(std::memory_order_release)) {
           break;
         }
       }
@@ -226,6 +217,7 @@ template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
+
   Dmn_BlockingQueue<T>::stop();
   Dmn_Proc::wait();
 } catch (...) {
@@ -258,10 +250,12 @@ auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
 
   size_t processedCount = dataList.size();
 
-  for (auto &item : dataList) {
-    Dmn_Proc::testcancel();
+  if (fn) {
+    for (auto &item : dataList) {
+      Dmn_Proc::testcancel();
 
-    fn(std::move_if_noexcept(item));
+      fn(std::move_if_noexcept(item));
+    }
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
