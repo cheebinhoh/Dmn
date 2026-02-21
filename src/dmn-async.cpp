@@ -7,7 +7,7 @@
  *        optional rendezvous points for callers that need to wait for
  *        completion.
  *
- * Dmn_Async_Task::wait() blocks the calling thread until the
+ * Dmn_Async_Handle::wait() blocks the calling thread until the
  * associated task finishes (or propagates its exception).
  *
  * Dmn_Async::addExecTask() wraps the user function in a try/catch so
@@ -21,9 +21,9 @@
 #include "dmn-async.hpp"
 
 #include <chrono>
-#include <condition_variable>
 #include <exception>
 #include <functional>
+#include <future>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -33,20 +33,23 @@
 
 namespace dmn {
 
-void Dmn_Async_Task::wait() { m_fut.get(); }
+void Dmn_Async_Handle::wait() { m_fut.get(); }
 
 Dmn_Async::Dmn_Async(std::string_view name)
     : Dmn_Pipe{
-          name, [this](std::shared_ptr<Dmn_Async_Task> task) -> void {
+          name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
             try {
-              if (task->m_future > 0) {
+              if (task->m_due_in_future > 0) {
                 const long long now =
                     std::chrono::duration_cast<std::chrono::nanoseconds>(
                         std::chrono::steady_clock::now().time_since_epoch())
                         .count();
 
-                if (now >= task->m_future) {
-                  task->m_fnc();
+                if (now >= task->m_due_in_future) {
+                  if (task->m_fnc) {
+                    task->m_fnc();
+                  }
+
                   task->m_p.set_value();
                 } else {
                   this->write(task);
@@ -76,8 +79,8 @@ void Dmn_Async::addExecTask(std::function<void()> fnc) {
 }
 
 auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
-    -> std::shared_ptr<Dmn_Async_Task> {
-  auto task_shared_ptr = std::make_shared<Dmn_Async_Task>(fnc);
+    -> std::shared_ptr<Dmn_Async_Handle> {
+  auto task_shared_ptr = std::make_shared<Dmn_Async_Handle>(fnc);
   auto task_ret = task_shared_ptr;
 
   this->write(task_shared_ptr);

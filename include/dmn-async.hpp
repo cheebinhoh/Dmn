@@ -14,7 +14,7 @@
  *          need for explicit mutexes in the client API.
  *        - For callers that need to block until a submitted task finishes,
  *          use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return
- *          a Dmn_Async_Task object whose wait() method will only return after
+ *          a Dmn_Async_Handle object whose wait() method will only return after
  *          the task has completed (and propagate exceptions thrown by the
  *          task).
  *
@@ -26,7 +26,6 @@
 #define DMN_ASYNC_HPP_
 
 #include <chrono>
-#include <condition_variable>
 #include <exception>
 #include <functional>
 #include <future>
@@ -58,33 +57,33 @@ namespace dmn {
 // previously submitted asynchronous task to finish. Calling wait() blocks
 // until the task has completed. If the task threw, the stored exception
 // will be rethrown to the waiter.
-class Dmn_Async_Task {
+class Dmn_Async_Handle {
   friend class Dmn_Async;
 
 public:
-  Dmn_Async_Task(std::function<void()> fnc, long long future = 0)
-      : m_fnc{fnc}, m_future{future} {
+  Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
+      : m_fnc{fnc}, m_due_in_future{due_in_future} {
     m_fut = m_p.get_future();
   }
 
-  virtual ~Dmn_Async_Task() {}
+  ~Dmn_Async_Handle() = default;
 
-  Dmn_Async_Task(const Dmn_Async_Task &obj) = delete;
-  const Dmn_Async_Task &operator=(const Dmn_Async_Task &obj) = delete;
-  Dmn_Async_Task(Dmn_Async_Task &&obj) = delete;
-  Dmn_Async_Task &operator=(Dmn_Async_Task &&obj) = delete;
+  Dmn_Async_Handle(const Dmn_Async_Handle &obj) = delete;
+  const Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;
+  Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
+  Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
   void wait();
 
 private:
   std::function<void()> m_fnc{};
-  long long m_future{};
+  long long m_due_in_future{};
 
   std::promise<void> m_p{};
   std::future<void> m_fut{};
 };
 
-class Dmn_Async : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Task>> {
+class Dmn_Async : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>> {
 public:
   /**
    * @brief Construct a Dmn_Async helper.
@@ -109,16 +108,16 @@ public:
   /**
    * @brief Submit a task for asynchronous execution and get a task wait object.
    *
-   * The returned shared_ptr points to a Dmn_Async_Task; calling wait() on it
+   * The returned shared_ptr points to a Dmn_Async_Handle; calling wait() on it
    * will block until the submitted task has finished. If the task throws an
    * exception, wait() will rethrow it.
    *
    * @param fnc The task to execute asynchronously.
-   * @return shared_ptr<Dmn_Async_Task> A rendezvous object to wait for task
+   * @return shared_ptr<Dmn_Async_Handle> A rendezvous object to wait for task
    *         completion.
    */
   auto addExecTaskWithWait(std::function<void()> fnc)
-      -> std::shared_ptr<Dmn_Async_Task>;
+      -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
    * @brief Schedule a task to run after the given duration has elapsed.
@@ -140,29 +139,18 @@ public:
    *
    * @param duration Time to wait before executing the task.
    * @param fnc The task to execute.
-   * @return shared_ptr<Dmn_Async_Task> Rendezvous object for task completion.
+   * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
   template <class Rep, class Period>
   auto
   addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
                            std::function<void()> fnc)
-      -> std::shared_ptr<Dmn_Async_Task>;
+      -> std::shared_ptr<Dmn_Async_Handle>;
 
 private:
   using Dmn_Pipe::read;
   using Dmn_Pipe::readAndProcess;
   using Dmn_Pipe::write;
-
-  /**
-   * @brief Internal helper that schedules a task to run at a specific time in
-   * the future (expressed as nanoseconds since epoch).
-   *
-   * @param time_in_future Target time (nanoseconds since epoch) when the
-   *                       task should be eligible to run.
-   * @param fnc The task to execute.
-   */
-  void addExecTaskAfterInternal(long long time_in_future,
-                                std::function<void()> fnc);
 }; // class Dmn_Async
 
 template <class Rep, class Period>
@@ -175,14 +163,15 @@ void Dmn_Async::addExecTaskAfter(
 template <class Rep, class Period>
 auto Dmn_Async::addExecTaskAfterWithWait(
     const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async_Task> {
+    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async_Handle> {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
-  auto task_shared_ptr = std::make_shared<Dmn_Async_Task>(fnc, time_in_future);
+  auto task_shared_ptr =
+      std::make_shared<Dmn_Async_Handle>(fnc, time_in_future);
   auto task_ret = task_shared_ptr;
 
   this->write(task_shared_ptr);
