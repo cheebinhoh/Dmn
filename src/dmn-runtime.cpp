@@ -374,8 +374,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 void Dmn_Runtime_Manager::execSignalHandlerInternal(int signo) {
   auto extHandlers = m_ext_signal_handlers.find(signo);
   if (m_ext_signal_handlers.end() != extHandlers) {
-    for (auto &handler : extHandlers->second) {
-      handler(signo);
+    for (auto handler : extHandlers->second) {
+      DMN_ASYNC_CALL_WITH_CAPTURE({ handler(signo); }, handler, signo);
     }
   }
 
