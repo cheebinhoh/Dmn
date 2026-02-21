@@ -63,9 +63,13 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <chrono>
 #include <coroutine>
 #include <csignal>
+#include <ctime>
+#include <exception>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <stack>
@@ -126,6 +130,13 @@ struct Dmn_Runtime_Task {
       handle.destroy();
   }
 
+  /*
+    Dmn_Runtime_Task(Dmn_Runtime_Task &&) noexcept;
+    Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&) noexcept;
+    Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
+    Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
+  */
+
   bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
@@ -163,7 +174,7 @@ struct Dmn_Runtime_Job {
 // job with the smallest (earliest) m_runtimeSinceEpoch at the top of the
 // container so it can be popped and executed first.
 struct TimedJobComparator {
-  bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) {
+  bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) const {
     return a.m_runtimeSinceEpoch > b.m_runtimeSinceEpoch;
   }
 };
@@ -210,7 +221,7 @@ public:
    * The runtime will schedule the job onto the appropriate internal buffer.
    */
   void addJob(
-      const Dmn_Runtime_Job::FncType &job,
+      Dmn_Runtime_Job::FncType job,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
 
   /**
@@ -226,8 +237,7 @@ public:
    */
   template <class Rep, class Period>
   void addTimedJob(
-      const Dmn_Runtime_Job::FncType &job,
-      const std::chrono::duration<Rep, Period> &duration,
+      Dmn_Runtime_Job::FncType job, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
 
@@ -239,10 +249,12 @@ public:
           ((long long)ts.tv_sec * 1000000LL + (ts.tv_nsec / 1000)) +
           usec.count();
 
-      Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
+      Dmn_Runtime_Job rjob{.m_priority = priority,
                            .m_job = job,
                            .m_runtimeSinceEpoch = microseconds};
-      m_timedQueue.push(rjob);
+
+      DMN_ASYNC_CALL_WITH_CAPTURE(
+          { this->m_timedQueue.push(rjob); }, this, rjob);
     } else {
       addJob(job, priority);
     }
@@ -269,9 +281,9 @@ public:
 
 private:
   // Helpers for pushing jobs to the appropriate priority buffer.
-  void addHighJob(const Dmn_Runtime_Job::FncType &job);
-  void addLowJob(const Dmn_Runtime_Job::FncType &job);
-  void addMediumJob(const Dmn_Runtime_Job::FncType &job);
+  void addHighJob(Dmn_Runtime_Job::FncType job);
+  void addLowJob(Dmn_Runtime_Job::FncType job);
+  void addMediumJob(Dmn_Runtime_Job::FncType job);
 
   template <class Rep, class Period>
   void

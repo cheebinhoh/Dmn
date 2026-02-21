@@ -38,6 +38,7 @@
 #include <csignal>
 #include <cstring>
 #include <ctime>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -101,7 +102,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @param job The asychronous job
  * @param priority The priority of the asychronous job
  */
-void Dmn_Runtime_Manager::addJob(const Dmn_Runtime_Job::FncType &job,
+void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
@@ -127,7 +128,7 @@ void Dmn_Runtime_Manager::addJob(const Dmn_Runtime_Job::FncType &job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -141,7 +142,7 @@ void Dmn_Runtime_Manager::addHighJob(const Dmn_Runtime_Job::FncType &job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -155,7 +156,7 @@ void Dmn_Runtime_Manager::addLowJob(const Dmn_Runtime_Job::FncType &job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
