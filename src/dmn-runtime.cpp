@@ -99,8 +99,8 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @brief The method will add a priority asynchronous job to be run in runtime
  *        context.
  *
- * @param job The asychronous job
- * @param priority The priority of the asychronous job
+ * @param job The asynchronous job
+ * @param priority The priority of the asynchronous job
  */
 void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
