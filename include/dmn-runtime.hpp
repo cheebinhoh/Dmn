@@ -130,6 +130,13 @@ struct Dmn_Runtime_Task {
       handle.destroy();
   }
 
+  // **Add this**
+  explicit Dmn_Runtime_Task(std::coroutine_handle<promise_type> h) noexcept
+      : handle(h) {}
+
+  Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
+  Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
+
   bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
