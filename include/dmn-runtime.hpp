@@ -130,13 +130,6 @@ struct Dmn_Runtime_Task {
       handle.destroy();
   }
 
-  /*
-    Dmn_Runtime_Task(Dmn_Runtime_Task &&) noexcept;
-    Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&) noexcept;
-    Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
-    Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
-  */
-
   bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
