@@ -255,7 +255,7 @@ public:
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
 
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
       auto usec =
           std::chrono::duration_cast<std::chrono::microseconds>(duration);
 
