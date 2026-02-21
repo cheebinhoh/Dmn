@@ -38,6 +38,7 @@
 #include <csignal>
 #include <cstring>
 #include <ctime>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -79,7 +80,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       err = sigwait(&m_mask, &signo);
       if (err) {
         throw std::runtime_error("Error in sigwait: " +
-                                 std::system_category().message(errno));
+                                 std::system_category().message(err));
       }
 
       DMN_ASYNC_CALL_WITH_CAPTURE(
@@ -98,10 +99,10 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @brief The method will add a priority asynchronous job to be run in runtime
  *        context.
  *
- * @param job The asychronous job
- * @param priority The priority of the asychronous job
+ * @param job The asynchronous job
+ * @param priority The priority of the asynchronous job
  */
-void Dmn_Runtime_Manager::addJob(const Dmn_Runtime_Job::FncType &job,
+void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
@@ -127,7 +128,7 @@ void Dmn_Runtime_Manager::addJob(const Dmn_Runtime_Job::FncType &job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -141,7 +142,7 @@ void Dmn_Runtime_Manager::addHighJob(const Dmn_Runtime_Job::FncType &job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -155,7 +156,7 @@ void Dmn_Runtime_Manager::addLowJob(const Dmn_Runtime_Job::FncType &job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(const Dmn_Runtime_Job::FncType &job) {
+void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
   while (!m_enter_medium_atomic_flag.test()) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
@@ -303,6 +304,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
+  // SIGALRM handler is executed in main asynchronous thread
   registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
     if (m_timedQueue.empty()) {
       return;
@@ -311,7 +313,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     auto job = m_timedQueue.top();
 
     struct timespec timesp{};
-    if (clock_gettime(CLOCK_REALTIME, &timesp) == 0) {
+    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
       const long long microseconds =
           (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
           (timesp.tv_nsec / 1000);

@@ -63,13 +63,18 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <chrono>
 #include <coroutine>
 #include <csignal>
+#include <ctime>
+#include <exception>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <stack>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "dmn-async.hpp"
@@ -126,6 +131,27 @@ struct Dmn_Runtime_Task {
       handle.destroy();
   }
 
+  // Construct a task that takes ownership of the given coroutine handle.
+  explicit Dmn_Runtime_Task(std::coroutine_handle<promise_type> h) noexcept
+      : handle(h) {}
+
+  Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
+  Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
+
+  // Move: transfer ownership
+  Dmn_Runtime_Task(Dmn_Runtime_Task &&other) noexcept
+      : handle(std::exchange(other.handle, nullptr)) {}
+
+  Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&other) noexcept {
+    if (this != &other) {
+      if (handle) {
+        handle.destroy();
+      }
+      handle = std::exchange(other.handle, nullptr);
+    }
+    return *this;
+  }
+
   bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
@@ -143,8 +169,8 @@ struct Dmn_Runtime_Task {
  *           metadata so the callable can inspect runtime fields if needed.
  *  - m_runtimeSinceEpoch:
  *      * 0 => immediate execution (push into appropriate immediate queue).
- *      * >0 => absolute timestamp in microseconds since the epoch when the
- *               job should be executed (used by the timed job queue).
+ *      * >0 => absolute timestamp in microseconds since boot/monotonic start
+ *               when the job should be executed (used by the timed job queue).
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
@@ -163,7 +189,7 @@ struct Dmn_Runtime_Job {
 // job with the smallest (earliest) m_runtimeSinceEpoch at the top of the
 // container so it can be popped and executed first.
 struct TimedJobComparator {
-  bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) {
+  bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) const {
     return a.m_runtimeSinceEpoch > b.m_runtimeSinceEpoch;
   }
 };
@@ -210,7 +236,7 @@ public:
    * The runtime will schedule the job onto the appropriate internal buffer.
    */
   void addJob(
-      const Dmn_Runtime_Job::FncType &job,
+      Dmn_Runtime_Job::FncType job,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
 
   /**
@@ -221,17 +247,16 @@ public:
    * Template parameters:
    *  - Rep, Period: std::chrono::duration parameterization (e.g. milliseconds).
    *
-   * Note: timed jobs are converted to an absolute microsecond epoch value and
+   * Note: timed jobs are converted to a microseconds since boot/monotonic start
    * stored in a min-heap to guarantee earliest-first execution.
    */
   template <class Rep, class Period>
   void addTimedJob(
-      const Dmn_Runtime_Job::FncType &job,
-      const std::chrono::duration<Rep, Period> &duration,
+      Dmn_Runtime_Job::FncType job, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
 
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
       auto usec =
           std::chrono::duration_cast<std::chrono::microseconds>(duration);
 
@@ -239,10 +264,14 @@ public:
           ((long long)ts.tv_sec * 1000000LL + (ts.tv_nsec / 1000)) +
           usec.count();
 
-      Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
-                           .m_job = job,
+      Dmn_Runtime_Job rjob{.m_priority = priority,
+                           .m_job = std::move(job),
                            .m_runtimeSinceEpoch = microseconds};
-      m_timedQueue.push(rjob);
+
+      // add rjob to m_timedQueue via main asynchronous thread
+      DMN_ASYNC_CALL_WITH_CAPTURE(
+          { this->m_timedQueue.push(std::move(rjob)); }, this,
+          rjob = std::move(rjob));
     } else {
       addJob(job, priority);
     }
@@ -269,9 +298,9 @@ public:
 
 private:
   // Helpers for pushing jobs to the appropriate priority buffer.
-  void addHighJob(const Dmn_Runtime_Job::FncType &job);
-  void addLowJob(const Dmn_Runtime_Job::FncType &job);
-  void addMediumJob(const Dmn_Runtime_Job::FncType &job);
+  void addHighJob(Dmn_Runtime_Job::FncType job);
+  void addLowJob(Dmn_Runtime_Job::FncType job);
+  void addMediumJob(Dmn_Runtime_Job::FncType job);
 
   template <class Rep, class Period>
   void
