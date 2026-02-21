@@ -163,10 +163,6 @@ private:
    */
   void addExecTaskAfterInternal(long long time_in_future,
                                 std::function<void()> fnc);
-
-  // If a submitted task throws, the exception can be captured here. This
-  // member is distinct from per-wait exceptions stored on Dmn_Async_Task.
-  std::exception_ptr m_thrownException{};
 }; // class Dmn_Async
 
 template <class Rep, class Period>
@@ -182,7 +178,7 @@ auto Dmn_Async::addExecTaskAfterWithWait(
     std::function<void()> fnc) -> std::shared_ptr<Dmn_Async_Task> {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::system_clock::now().time_since_epoch())
+          std::chrono::steady_clock::now().time_since_epoch())
           .count() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 

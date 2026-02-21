@@ -42,7 +42,7 @@ Dmn_Async::Dmn_Async(std::string_view name)
               if (task->m_future > 0) {
                 const long long now =
                     std::chrono::duration_cast<std::chrono::nanoseconds>(
-                        std::chrono::system_clock::now().time_since_epoch())
+                        std::chrono::steady_clock::now().time_since_epoch())
                         .count();
 
                 if (now >= task->m_future) {

@@ -82,7 +82,7 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
   }
 }
 
-Dmn_Socket::~Dmn_Socket() {
+Dmn_Socket::~Dmn_Socket() noexcept {
   if (-1 != m_fd) {
     close(m_fd);
   }
