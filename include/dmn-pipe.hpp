@@ -12,7 +12,7 @@
  *   - allows a consumer to read items either synchronously via `read()` or
  *     by providing a processing task via `readAndProcess()` or by launching a
  *     background processing thread (using Dmn_Proc::exec).
- * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O 
+ * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O
  *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation

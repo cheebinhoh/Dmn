@@ -29,8 +29,8 @@
 #include <condition_variable>
 #include <exception>
 #include <functional>
+#include <future>
 #include <memory>
-#include <mutex>
 #include <string_view>
 
 #include "dmn-pipe.hpp"
@@ -65,16 +65,20 @@ public:
     friend class Dmn_Async;
 
   public:
+    Dmn_Async_Wait() { fut = p.get_future(); }
+
+    virtual ~Dmn_Async_Wait() {}
+
+    Dmn_Async_Wait(const Dmn_Async_Wait &obj) = delete;
+    const Dmn_Async_Wait &operator=(const Dmn_Async_Wait &obj) = delete;
+    Dmn_Async_Wait(Dmn_Async_Wait &&obj) = delete;
+    Dmn_Async_Wait &operator=(Dmn_Async_Wait &&obj) = delete;
+
     void wait();
 
   private:
-    std::mutex m_mutex{};
-    std::condition_variable m_cond_var{};
-
-    bool m_done{};
-
-    // Stores an exception thrown by the task so wait() can rethrow it.
-    std::exception_ptr m_thrownException{};
+    std::promise<void> p{};
+    std::future<void> fut{};
   };
 
   /**
@@ -182,13 +186,11 @@ auto Dmn_Async::addExecTaskAfterWithWait(
   this->addExecTaskAfter(duration, [wait_shared_ptr, fnc]() {
     try {
       fnc();
-    } catch (...) {
-      wait_shared_ptr->m_thrownException = std::current_exception();
-    }
 
-    std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
-    wait_shared_ptr->m_done = true;
-    wait_shared_ptr->m_cond_var.notify_all();
+      wait_shared_ptr->p.set_value();
+    } catch (...) {
+      wait_shared_ptr->p.set_exception(std::current_exception());
+    }
   });
 
   return wait_shared_ptr;

@@ -28,7 +28,6 @@
 #include <exception>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <string_view>
 #include <utility>
 
@@ -37,14 +36,7 @@
 
 namespace dmn {
 
-void Dmn_Async::Dmn_Async_Wait::wait() {
-  std::unique_lock<std::mutex> lock(m_mutex);
-  m_cond_var.wait(lock, [this]() -> bool { return m_done; });
-
-  if (m_thrownException) {
-    std::rethrow_exception(m_thrownException);
-  }
-}
+void Dmn_Async::Dmn_Async_Wait::wait() { fut.get(); }
 
 Dmn_Async::Dmn_Async(std::string_view name)
     : Dmn_Pipe{name, [](std::function<void()> &&task) -> void {
@@ -70,21 +62,8 @@ void Dmn_Async::addExecTask(std::function<void()> fnc) {
 
 auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
     -> std::shared_ptr<Dmn_Async::Dmn_Async_Wait> {
-  auto wait_shared_ptr = std::make_shared<Dmn_Async_Wait>();
 
-  this->write([wait_shared_ptr, fnc = std::move(fnc)]() -> void {
-    try {
-      fnc();
-    } catch (...) {
-      wait_shared_ptr->m_thrownException = std::current_exception();
-    }
-
-    const std::unique_lock<std::mutex> lock(wait_shared_ptr->m_mutex);
-    wait_shared_ptr->m_done = true;
-    wait_shared_ptr->m_cond_var.notify_all();
-  });
-
-  return wait_shared_ptr;
+  return addExecTaskAfterWithWait(std::chrono::seconds(0), fnc);
 }
 
 void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
