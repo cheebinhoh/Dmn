@@ -7,7 +7,7 @@
  *        optional rendezvous points for callers that need to wait for
  *        completion.
  *
- * Dmn_Async_Wait::wait() blocks the calling thread until the
+ * Dmn_Async_Task::wait() blocks the calling thread until the
  * associated task finishes (or propagates its exception).
  *
  * Dmn_Async::addExecTask() wraps the user function in a try/catch so
@@ -15,10 +15,7 @@
  * thread.
  *
  * addExecTaskWithWait() additionally captures any thrown exception in
- * the Dmn_Async_Wait object so the waiter can observe it via wait().
- *
- * addExecTaskAfterInternal() re-enqueues itself until the target wall-
- * clock time has been reached, then executes the user function.
+ * the Dmn_Async_Wait object so the task waiter can observe it via wait().
  */
 
 #include "dmn-async.hpp"
@@ -36,13 +33,37 @@
 
 namespace dmn {
 
-void Dmn_Async::Dmn_Async_Wait::wait() { fut.get(); }
+void Dmn_Async_Task::wait() { m_fut.get(); }
 
 Dmn_Async::Dmn_Async(std::string_view name)
-    : Dmn_Pipe{name, [](std::function<void()> &&task) -> void {
-                 std::move(task)();
-                 Dmn_Proc::yield();
-               }} {}
+    : Dmn_Pipe{
+          name, [this](std::shared_ptr<Dmn_Async_Task> task) -> void {
+            try {
+              if (task->m_future > 0) {
+                const long long now =
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+
+                if (now >= task->m_future) {
+                  task->m_fnc();
+                  task->m_p.set_value();
+                } else {
+                  this->write(task);
+                }
+              } else {
+                if (task->m_fnc) {
+                  task->m_fnc();
+                }
+
+                task->m_p.set_value();
+              }
+            } catch (...) {
+              task->m_p.set_exception(std::current_exception());
+            }
+
+            Dmn_Proc::yield();
+          }} {}
 
 Dmn_Async::~Dmn_Async() noexcept try {
 } catch (...) {
@@ -51,35 +72,17 @@ Dmn_Async::~Dmn_Async() noexcept try {
 }
 
 void Dmn_Async::addExecTask(std::function<void()> fnc) {
-  this->write([fnc = std::move(fnc)]() -> void {
-    if (fnc) {
-      fnc();
-    }
-  });
+  addExecTaskWithWait(fnc);
 }
 
 auto Dmn_Async::addExecTaskWithWait(std::function<void()> fnc)
-    -> std::shared_ptr<Dmn_Async::Dmn_Async_Wait> {
+    -> std::shared_ptr<Dmn_Async_Task> {
+  auto task_shared_ptr = std::make_shared<Dmn_Async_Task>(fnc);
+  auto task_ret = task_shared_ptr;
 
-  return addExecTaskAfterWithWait(std::chrono::seconds(0), fnc);
-}
+  this->write(task_shared_ptr);
 
-void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
-                                         std::function<void()> fnc) {
-  this->write([this, time_in_future, fnc = std::move(fnc)]() -> void {
-    const long long now =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
-
-    if (now >= time_in_future) {
-      if (fnc) {
-        fnc();
-      }
-    } else {
-      this->addExecTaskAfterInternal(time_in_future, fnc);
-    }
-  });
+  return task_ret;
 }
 
 } // namespace dmn
