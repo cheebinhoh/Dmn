@@ -52,10 +52,8 @@ Dmn_Async::~Dmn_Async() noexcept try {
 
 void Dmn_Async::addExecTask(std::function<void()> fnc) {
   this->write([fnc = std::move(fnc)]() -> void {
-    try {
+    if (fnc) {
       fnc();
-    } catch (...) {
-      // ...
     }
   });
 }
@@ -76,11 +74,7 @@ void Dmn_Async::addExecTaskAfterInternal(long long time_in_future,
 
     if (now >= time_in_future) {
       if (fnc) {
-        try {
-          fnc();
-        } catch (...) {
-          this->m_thrownException = std::current_exception();
-        }
+        fnc();
       }
     } else {
       this->addExecTaskAfterInternal(time_in_future, fnc);
