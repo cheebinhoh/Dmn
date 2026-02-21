@@ -12,9 +12,8 @@
  *   - allows a consumer to read items either synchronously via `read()` or
  *     by providing a processing task via `readAndProcess()` or by launching a
  *     background processing thread (using Dmn_Proc::exec).
- * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O
- interface)
- *   and Dmn_Proc (optional processing thread support).
+ * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O 
+ *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
  * - push/pop and internal synchronization are handled by Dmn_BlockingQueue<T>.
@@ -22,7 +21,7 @@
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
- * - readAndProcess() invokes the caller-provided task and updates `m_count`
+ * - readAndProcess() involves the caller-provided task and updates `m_count`
  *   under the mutex.
  *
  * Read / Write semantics
@@ -53,9 +52,8 @@
  *   A zero timeout value means "wait forever".
 
  *
- * waitForEmpty()
- * - waitForEmpty() blocks until all items that were inbound into the pipe
- *   has been processed (or pop out).
+ * waitForEmpty() blocks until all items that were inbound into the pipe
+ * has been processed (or pop out).
  *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
@@ -102,7 +100,7 @@ public:
   Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
 
   /**
-   * @brief Read and return the next item from the pipe.
+   * @brief Read and return the item from the pipe.
    *
    * Blocks until the next item is available. If the pipe has been closed and
    * no further items will arrive, returns std::nullopt.
@@ -140,15 +138,16 @@ public:
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
    *
-   * Blocks until the next item is available. The task is invoked without
-   * holding m_mutex which is only held after items are processed and update the
-   * m_count.
+   * Blocks until the next item is available. The task is invoked while the
+   * internal mutex is held to update processing bookkeeping (`m_count`)
+   * and to signal waiting threads. The item is passed to `fn` using move
+   * semantics when possible.
    *
    * @param fn The functor to process the next item popped from the pipe
    * @return The number of items read and processed.
    */
-  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1,
-                      long timeout = 0) noexcept -> size_t;
+  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0)
+      -> size_t;
 
   /**
    * @brief Write (copy) an item into the pipe.
@@ -192,7 +191,7 @@ private:
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
   size_t m_count{};
-  std::atomic<bool> m_shutdown{false};
+  std::atomic<bool> m_shutdown{};
 }; // class Dmn_Pipe
 
 template <typename T>
@@ -202,13 +201,12 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
   if (fn) {
     exec([this, fn, count, timeout]() {
       while (true) {
+        Dmn_Proc::yield();
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown.load(std::memory_order_acquire)) {
+        if (m_shutdown.load(std::memory_order_release)) {
           break;
         }
-
-        Dmn_Proc::yield();
       }
     });
   }
@@ -242,23 +240,21 @@ auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
   readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },
                  count, timeout);
 
-  return dataList;
+  return std::move(dataList);
 }
 
 template <typename T>
-auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
-                                 long timeout) noexcept -> size_t {
+auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
+    -> size_t {
   auto dataList = this->pop(count, timeout);
 
   size_t processedCount = dataList.size();
 
   if (fn) {
-    try {
-      for (auto &item : dataList) {
-        fn(std::move_if_noexcept(item));
-      }
-    } catch (...) {
-      //
+    for (auto &item : dataList) {
+      Dmn_Proc::testcancel();
+
+      fn(std::move_if_noexcept(item));
     }
   }
 
