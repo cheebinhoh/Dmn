@@ -304,6 +304,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
+  // SIGALRM handler is executed in main asynchronous thread
   registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
     if (m_timedQueue.empty()) {
       return;
@@ -374,8 +375,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 void Dmn_Runtime_Manager::execSignalHandlerInternal(int signo) {
   auto extHandlers = m_ext_signal_handlers.find(signo);
   if (m_ext_signal_handlers.end() != extHandlers) {
-    for (auto handler : extHandlers->second) {
-      DMN_ASYNC_CALL_WITH_CAPTURE({ handler(signo); }, handler, signo);
+    for (auto &handler : extHandlers->second) {
+      handler(signo);
     }
   }
 

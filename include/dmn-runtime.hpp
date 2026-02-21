@@ -253,6 +253,7 @@ public:
                            .m_job = job,
                            .m_runtimeSinceEpoch = microseconds};
 
+      // add rjob to m_timedQueue via main asynchronous thread
       DMN_ASYNC_CALL_WITH_CAPTURE(
           { this->m_timedQueue.push(rjob); }, this, rjob);
     } else {
