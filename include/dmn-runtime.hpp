@@ -130,7 +130,7 @@ struct Dmn_Runtime_Task {
       handle.destroy();
   }
 
-  // **Add this**
+  // Construct a task that takes ownership of the given coroutine handle.
   explicit Dmn_Runtime_Task(std::coroutine_handle<promise_type> h) noexcept
       : handle(h) {}
 
