@@ -169,8 +169,8 @@ struct Dmn_Runtime_Task {
  *           metadata so the callable can inspect runtime fields if needed.
  *  - m_runtimeSinceEpoch:
  *      * 0 => immediate execution (push into appropriate immediate queue).
- *      * >0 => absolute timestamp in microseconds since the epoch when the
- *               job should be executed (used by the timed job queue).
+ *      * >0 => absolute timestamp in microseconds since boot/monotonic start
+ *               when the job should be executed (used by the timed job queue).
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
@@ -247,7 +247,7 @@ public:
    * Template parameters:
    *  - Rep, Period: std::chrono::duration parameterization (e.g. milliseconds).
    *
-   * Note: timed jobs are converted to an absolute microsecond epoch value and
+   * Note: timed jobs are converted to a microseconds since boot/monotonic start
    * stored in a min-heap to guarantee earliest-first execution.
    */
   template <class Rep, class Period>
@@ -265,12 +265,13 @@ public:
           usec.count();
 
       Dmn_Runtime_Job rjob{.m_priority = priority,
-                           .m_job = job,
+                           .m_job = std::move(job),
                            .m_runtimeSinceEpoch = microseconds};
 
       // add rjob to m_timedQueue via main asynchronous thread
       DMN_ASYNC_CALL_WITH_CAPTURE(
-          { this->m_timedQueue.push(rjob); }, this, rjob);
+          { this->m_timedQueue.push(std::move(rjob)); }, this,
+          rjob = std::move(rjob));
     } else {
       addJob(job, priority);
     }
