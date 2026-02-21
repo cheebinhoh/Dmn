@@ -80,7 +80,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       err = sigwait(&m_mask, &signo);
       if (err) {
         throw std::runtime_error("Error in sigwait: " +
-                                 std::system_category().message(errno));
+                                 std::system_category().message(err));
       }
 
       DMN_ASYNC_CALL_WITH_CAPTURE(
@@ -313,7 +313,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     auto job = m_timedQueue.top();
 
     struct timespec timesp{};
-    if (clock_gettime(CLOCK_REALTIME, &timesp) == 0) {
+    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
       const long long microseconds =
           (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
           (timesp.tv_nsec / 1000);

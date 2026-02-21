@@ -137,6 +137,20 @@ struct Dmn_Runtime_Task {
   Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
   Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
 
+  // Move: transfer ownership
+  Dmn_Runtime_Task(Dmn_Runtime_Task &&other) noexcept
+      : handle(std::exchange(other.handle, nullptr)) {}
+
+  Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&other) noexcept {
+    if (this != &other) {
+      if (handle) {
+        handle.destroy();
+      }
+      handle = std::exchange(other.handle, nullptr);
+    }
+    return *this;
+  }
+
   bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
