@@ -277,9 +277,9 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
-  assert(!m_main_enter_atomic_flag.test());
+  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_relaxed)) {
+    assert("Error: enter main loop twice without exit" == nullptr);
 
-  if (m_main_enter_atomic_flag.test()) {
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
