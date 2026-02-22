@@ -36,7 +36,7 @@
  * Thread‑Safety & Signal‑Safety Notes
  * -----------------------------------
  * - Signals are masked in runPriorToCreateInstance() before the runtime thread
- * is created. Masking inside the constructor would be too late because the
+ *   is created. Masking inside the constructor would be too late because the
  *   parent Dmn_Async thread may already exist.
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions.

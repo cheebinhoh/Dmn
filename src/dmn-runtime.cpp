@@ -21,8 +21,8 @@
  * - enterMainLoop(): enables all priority queues, installs a SIGALRM
  *   handler and a POSIX/ITIMER timer to fire every 50 µs for timed
  *   job dispatch, starts the signal-wait thread which calls sigwait()
- *   dispatches to registered handlers via async context, then blocks
- *   until exitMainLoop() is called.
+ *   and dispatches to registered handlers via async context, then
+ *   blocks until exitMainLoop() is called.
  * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
  *   SIGQUIT and SIGHUP before any threads are created so that all
  *   descendant threads inherit the same signal mask and signals are
