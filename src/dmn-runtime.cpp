@@ -283,6 +283,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
+  m_main_exit_atomic_flag.clear(std::memory_order_release);
+
   // up to this point, all async jobs are paused.
   this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 
@@ -350,9 +352,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
   setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
-
-  m_main_enter_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_main_exit_atomic_flag.clear(std::memory_order_release);
 
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
