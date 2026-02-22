@@ -7,7 +7,7 @@
  *
  * Key implementation areas:
  * - Constructor: registers default SIGTERM/SIGINT handlers that call
- *   exitMainLoopInternal().
+ *   exitMainLoop().
  * - addJob() / addHighJob() / addMediumJob() / addLowJob(): enqueue
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
  *   Each method spins on its own atomic flag to prevent jobs from
@@ -61,15 +61,16 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   // default and to be overridden if needed
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
-    this->exitMainLoopInternal();
+    this->exitMainLoop();
   };
 
   m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
-    this->exitMainLoopInternal();
+    this->exitMainLoop();
   };
 }
 
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
+  exitMainLoop();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -137,7 +138,7 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
  * @param job The medium priority asynchronous job
  */
 void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
-  while (!m_enter_medium_atomic_flag.test()) {
+  while (!m_enter_medium_atomic_flag.test(std::memory_order_relaxed)) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
@@ -154,7 +155,7 @@ void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
 template <class Rep, class Period>
 void Dmn_Runtime_Manager::execRuntimeJobForInterval(
     const std::chrono::duration<Rep, Period> &duration) {
-  if (!m_main_exit_atomic_flag.test()) {
+  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
     m_async_job_wait = this->addExecTaskAfterWithWait(
         duration, [this]() -> void { this->execRuntimeJobInternal(); });
   }
@@ -247,29 +248,13 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  *        (usually the mainthread) to the main() function to be continued.
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
-  assert(m_main_enter_atomic_flag.test(std::memory_order_relaxed));
+  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_exit_atomic_flag.notify_all();
 
-  if (!m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
-    throw std::runtime_error("Error: exit main loop without entering it first");
+    m_signalWaitProc->wait();
+    m_signalWaitProc = {};
   }
-
-  DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->exitMainLoopInternal(); });
-}
-
-/**
- * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
- *        (usually the mainthread) to the main() function to be continued.
- *        This is private method to be called in the Dmn_Runtime_Manager
- *        instance asynchronous thread context.
- */
-void Dmn_Runtime_Manager::exitMainLoopInternal() {
-  m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
-
-  m_main_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_main_exit_atomic_flag.notify_all();
-
-  m_signalWaitProc->wait();
-  m_signalWaitProc = {};
 }
 
 /**
@@ -278,13 +263,13 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
-  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_relaxed)) {
+  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
     assert("Error: enter main loop twice without exit" == nullptr);
 
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
-  m_main_exit_atomic_flag.clear(std::memory_order_release);
+  m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
 
   // up to this point, all async jobs are paused.
   this->execRuntimeJobForInterval(std::chrono::microseconds(1));
@@ -377,7 +362,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
   m_signalWaitProc->exec();
 
-  while (!m_main_exit_atomic_flag.test()) {
+  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
     m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
