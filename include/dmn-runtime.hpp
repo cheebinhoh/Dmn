@@ -309,8 +309,6 @@ private:
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 
-  void exitMainLoopInternal();
-
   void registerSignalHandlerInternal(int signo, const SignalHandler &handler);
 
   /**
