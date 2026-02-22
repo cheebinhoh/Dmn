@@ -268,7 +268,7 @@ public:
                            .m_job = std::move(job),
                            .m_runtimeSinceEpoch = microseconds};
 
-      // add rjob to m_timedQueue via main asynchronous thread
+      // add rjob to m_timedQueue via singleton main asynchronous thread
       DMN_ASYNC_CALL_WITH_CAPTURE(
           { this->m_timedQueue.push(std::move(rjob)); }, this,
           rjob = std::move(rjob));
@@ -347,12 +347,8 @@ private:
 
   /**
    * Static members for singleton management
-   * - s_init_once: ensures the singleton is initialized once.
-   * - s_instance: shared_ptr holding the singleton instance.
    * - s_mask: signal mask applied during singleton creation.
    */
-  static std::once_flag s_init_once;
-  static std::shared_ptr<Dmn_Runtime_Manager> s_instance;
   static sigset_t s_mask;
 }; // class Dmn_Runtime_Manager
 

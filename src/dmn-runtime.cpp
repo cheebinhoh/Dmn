@@ -54,8 +54,6 @@
 
 namespace dmn {
 
-std::once_flag Dmn_Runtime_Manager::s_init_once{};
-std::shared_ptr<Dmn_Runtime_Manager> Dmn_Runtime_Manager::s_instance{};
 sigset_t Dmn_Runtime_Manager::s_mask{};
 
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
@@ -304,7 +302,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
-  // SIGALRM handler is executed in main asynchronous thread
+  // SIGALRM handler is executed in singleton main asynchronous thread
   registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
     if (m_timedQueue.empty()) {
       return;
@@ -433,7 +431,7 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
   err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
   if (0 != err) {
     throw std::runtime_error("Error in pthread_sigmask: " +
-                             std::string{strerror(errno)});
+                             std::string{strerror(err)});
   }
 }
 
