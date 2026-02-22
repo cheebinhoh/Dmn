@@ -263,12 +263,13 @@ void Dmn_Runtime_Manager::exitMainLoop() {
  *        instance asynchronous thread context.
  */
 void Dmn_Runtime_Manager::exitMainLoopInternal() {
-  m_signalWaitProc = {};
-
   m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
 
   m_main_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_main_exit_atomic_flag.notify_all();
+
+  m_signalWaitProc->wait();
+  m_signalWaitProc = {};
 }
 
 /**
@@ -365,8 +366,12 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                                      std::system_category().message(err));
           }
 
-          DMN_ASYNC_CALL_WITH_CAPTURE(
-              { this->execSignalHandlerInternal(signo); }, this, signo);
+          if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+            break;
+          } else {
+            DMN_ASYNC_CALL_WITH_CAPTURE(
+                { this->execSignalHandlerInternal(signo); }, this, signo);
+          }
         }
       });
 
