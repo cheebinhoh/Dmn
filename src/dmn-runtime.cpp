@@ -252,8 +252,10 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
     m_main_exit_atomic_flag.notify_all();
 
-    m_signalWaitProc->wait();
-    m_signalWaitProc = {};
+    if (m_signalWaitProc) {
+      m_signalWaitProc->wait();
+      m_signalWaitProc = {};
+    }
   }
 }
 
@@ -360,7 +362,10 @@ void Dmn_Runtime_Manager::enterMainLoop() {
         }
       });
 
-  m_signalWaitProc->exec();
+  if (!m_signalWaitProc->exec()) {
+    throw std::runtime_error(
+        "Failed to start DmnRuntimeManager_SignalWait task");
+  }
 
   while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
     m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
