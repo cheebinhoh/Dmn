@@ -7,9 +7,7 @@
  *
  * Key implementation areas:
  * - Constructor: registers default SIGTERM/SIGINT handlers that call
- *   exitMainLoopInternal(), then starts the signal-wait thread which
- *   calls sigwait() and dispatches to registered handlers via the
- *   async context.
+ *   exitMainLoop().
  * - addJob() / addHighJob() / addMediumJob() / addLowJob(): enqueue
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
  *   Each method spins on its own atomic flag to prevent jobs from
@@ -22,7 +20,9 @@
  *   lower-priority jobs between suspension points.
  * - enterMainLoop(): enables all priority queues, installs a SIGALRM
  *   handler and a POSIX/ITIMER timer to fire every 50 µs for timed
- *   job dispatch, then blocks until exitMainLoop() is called.
+ *   job dispatch, starts the signal-wait thread which calls sigwait()
+ *   and dispatches to registered handlers via async context, then
+ *   blocks until exitMainLoop() is called.
  * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
  *   SIGQUIT and SIGHUP before any threads are created so that all
  *   descendant threads inherit the same signal mask and signals are
@@ -61,33 +61,16 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   // default and to be overridden if needed
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
-    this->exitMainLoopInternal();
+    this->exitMainLoop();
   };
 
   m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
-    this->exitMainLoopInternal();
+    this->exitMainLoop();
   };
-
-  m_signalWaitProc = std::make_unique<Dmn_Proc>("DmnRuntimeManager_SignalWait");
-
-  m_signalWaitProc->exec([this]() -> void {
-    while (true) {
-      int signo{};
-      int err{};
-
-      err = sigwait(&m_mask, &signo);
-      if (err) {
-        throw std::runtime_error("Error in sigwait: " +
-                                 std::system_category().message(err));
-      }
-
-      DMN_ASYNC_CALL_WITH_CAPTURE(
-          { this->execSignalHandlerInternal(signo); }, this, signo);
-    }
-  });
 }
 
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
+  exitMainLoop();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -155,7 +138,7 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
  * @param job The medium priority asynchronous job
  */
 void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
-  while (!m_enter_medium_atomic_flag.test()) {
+  while (!m_enter_medium_atomic_flag.test(std::memory_order_relaxed)) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
@@ -172,7 +155,7 @@ void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
 template <class Rep, class Period>
 void Dmn_Runtime_Manager::execRuntimeJobForInterval(
     const std::chrono::duration<Rep, Period> &duration) {
-  if (!m_exit_atomic_flag.test()) {
+  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
     m_async_job_wait = this->addExecTaskAfterWithWait(
         duration, [this]() -> void { this->execRuntimeJobInternal(); });
   }
@@ -265,20 +248,15 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  *        (usually the mainthread) to the main() function to be continued.
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
-  DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->exitMainLoopInternal(); });
-}
+  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_exit_atomic_flag.notify_all();
 
-/**
- * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
- *        (usually the mainthread) to the main() function to be continued.
- *        This is private method to be called in the Dmn_Runtime_Manager
- *        instance asynchronous thread context.
- */
-void Dmn_Runtime_Manager::exitMainLoopInternal() {
-  m_signalWaitProc = {};
-
-  m_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_exit_atomic_flag.notify_all();
+    if (m_signalWaitProc) {
+      m_signalWaitProc->wait();
+      m_signalWaitProc = {};
+    }
+  }
 }
 
 /**
@@ -287,6 +265,14 @@ void Dmn_Runtime_Manager::exitMainLoopInternal() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
+  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
+    assert("Error: enter main loop twice without exit" == nullptr);
+
+    throw std::runtime_error("Error: enter main loop twice without exit");
+  }
+
+  m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
+
   // up to this point, all async jobs are paused.
   this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 
@@ -355,8 +341,34 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
 
-  while (!m_exit_atomic_flag.test()) {
-    m_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  m_signalWaitProc = std::make_unique<Dmn_Proc>(
+      "DmnRuntimeManager_SignalWait", [this]() -> void {
+        while (true) {
+          int signo{};
+          int err{};
+
+          err = sigwait(&m_mask, &signo);
+          if (err) {
+            throw std::runtime_error("Error in sigwait: " +
+                                     std::system_category().message(err));
+          }
+
+          if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+            break;
+          } else {
+            DMN_ASYNC_CALL_WITH_CAPTURE(
+                { this->execSignalHandlerInternal(signo); }, this, signo);
+          }
+        }
+      });
+
+  if (!m_signalWaitProc->exec()) {
+    throw std::runtime_error(
+        "Failed to start DmnRuntimeManager_SignalWait task");
+  }
+
+  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+    m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
   if (m_async_job_wait) {

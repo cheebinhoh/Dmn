@@ -36,7 +36,7 @@
  * Thread‑Safety & Signal‑Safety Notes
  * -----------------------------------
  * - Signals are masked in runPriorToCreateInstance() before the runtime thread
- * is created. Masking inside the constructor would be too late because the
+ *   is created. Masking inside the constructor would be too late because the
  *   parent Dmn_Async thread may already exist.
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions.
@@ -309,8 +309,6 @@ private:
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
 
-  void exitMainLoopInternal();
-
   void registerSignalHandlerInternal(int signo, const SignalHandler &handler);
 
   /**
@@ -337,7 +335,8 @@ private:
   std::atomic_flag m_enter_high_atomic_flag{};
   std::atomic_flag m_enter_low_atomic_flag{};
   std::atomic_flag m_enter_medium_atomic_flag{};
-  std::atomic_flag m_exit_atomic_flag{};
+  std::atomic_flag m_main_enter_atomic_flag{};
+  std::atomic_flag m_main_exit_atomic_flag{};
 
   // Wait object used to efficiently block until there is work
   std::shared_ptr<Dmn_Async_Handle> m_async_job_wait{};
