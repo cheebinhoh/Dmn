@@ -247,9 +247,9 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  *        (usually the mainthread) to the main() function to be continued.
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
-  assert(m_main_enter_atomic_flag.test());
+  assert(m_main_enter_atomic_flag.test(std::memory_order_relaxed));
 
-  if (!m_main_enter_atomic_flag.test()) {
+  if (!m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
     throw std::runtime_error("Error: exit main loop without entering it first");
   }
 
@@ -265,7 +265,7 @@ void Dmn_Runtime_Manager::exitMainLoop() {
 void Dmn_Runtime_Manager::exitMainLoopInternal() {
   m_signalWaitProc = {};
 
-  m_main_enter_atomic_flag.clear(std::memory_order_release);
+  m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
 
   m_main_exit_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_main_exit_atomic_flag.notify_all();
