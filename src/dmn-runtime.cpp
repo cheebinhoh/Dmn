@@ -347,6 +347,9 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
 
+  m_main_enter_atomic_flag.test_and_set(std::memory_order_relaxed);
+  m_main_exit_atomic_flag.clear(std::memory_order_release);
+
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
         while (true) {
@@ -365,10 +368,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
       });
 
   m_signalWaitProc->exec();
-
-  m_main_enter_atomic_flag.test_and_set(std::memory_order_relaxed);
-
-  m_main_exit_atomic_flag.clear(std::memory_order_release);
 
   while (!m_main_exit_atomic_flag.test()) {
     m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
