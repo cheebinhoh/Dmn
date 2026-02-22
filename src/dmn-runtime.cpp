@@ -7,9 +7,7 @@
  *
  * Key implementation areas:
  * - Constructor: registers default SIGTERM/SIGINT handlers that call
- *   exitMainLoopInternal(), then starts the signal-wait thread which
- *   calls sigwait() and dispatches to registered handlers via the
- *   async context.
+ *   exitMainLoopInternal().
  * - addJob() / addHighJob() / addMediumJob() / addLowJob(): enqueue
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
  *   Each method spins on its own atomic flag to prevent jobs from
@@ -22,7 +20,9 @@
  *   lower-priority jobs between suspension points.
  * - enterMainLoop(): enables all priority queues, installs a SIGALRM
  *   handler and a POSIX/ITIMER timer to fire every 50 µs for timed
- *   job dispatch, then blocks until exitMainLoop() is called.
+ *   job dispatch, starts the signal-wait thread which calls sigwait()
+ *   dispatches to registered handlers via async context, then blocks
+ *   until exitMainLoop() is called.
  * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
  *   SIGQUIT and SIGHUP before any threads are created so that all
  *   descendant threads inherit the same signal mask and signals are
