@@ -73,6 +73,7 @@
 #include <mutex>
 #include <queue>
 #include <stack>
+#include <sys/time.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -337,7 +338,8 @@ private:
   std::atomic_flag m_enter_high_atomic_flag{};
   std::atomic_flag m_enter_low_atomic_flag{};
   std::atomic_flag m_enter_medium_atomic_flag{};
-  std::atomic_flag m_exit_atomic_flag{};
+  std::atomic_flag m_main_enter_atomic_flag{};
+  std::atomic_flag m_main_exit_atomic_flag{};
 
   // Wait object used to efficiently block until there is work
   std::shared_ptr<Dmn_Async_Handle> m_async_job_wait{};
