@@ -249,6 +249,11 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
 void Dmn_Runtime_Manager::exitMainLoop() {
   assert(m_main_enter_atomic_flag.test());
 
+  if (!m_main_enter_atomic_flag.test()) {
+    throw std::runtime_error("Error: exit main loop without entering it first")
+        :
+  }
+
   DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->exitMainLoopInternal(); });
 }
 
