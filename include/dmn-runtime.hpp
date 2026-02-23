@@ -194,6 +194,9 @@ struct TimedJobComparator {
   }
 };
 
+// Platform specific implementation
+struct Dmn_Runtime_Manager_Impl;
+
 /**
  * Dmn_Runtime_Manager
  *
@@ -298,9 +301,9 @@ public:
 
 private:
   // Helpers for pushing jobs to the appropriate priority buffer.
-  void addHighJob(Dmn_Runtime_Job::FncType job);
-  void addLowJob(Dmn_Runtime_Job::FncType job);
-  void addMediumJob(Dmn_Runtime_Job::FncType job);
+  void addHighJob(Dmn_Runtime_Job::FncType &&job);
+  void addLowJob(Dmn_Runtime_Job::FncType &&job);
+  void addMediumJob(Dmn_Runtime_Job::FncType &&job);
 
   template <class Rep, class Period>
   void
@@ -343,6 +346,10 @@ private:
 
   // Small LIFO stack used by the scheduler to reorder or delay execution
   std::stack<Dmn_Runtime_Job> m_sched_stack{};
+
+  // Wrap platform specific implementation behind this unique ptr object
+  // So that specific part of it is within Dmn_Runtime_Manager.cpp
+  std::unique_ptr<Dmn_Runtime_Manager_Impl> m_pimpl{};
 
   /**
    * Static members for singleton management

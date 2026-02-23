@@ -46,6 +46,7 @@
 #include <string>
 #include <sys/time.h>
 #include <system_error>
+#include <vector>
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue.hpp"
@@ -55,6 +56,15 @@
 namespace dmn {
 
 sigset_t Dmn_Runtime_Manager::s_mask{};
+
+// Platform specific implementation
+struct Dmn_Runtime_Manager_Impl {
+#ifdef _POSIX_TIMERS
+  timer_t m_timerid{};
+#endif
+
+  bool m_timer_created{};
+};
 
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
@@ -87,15 +97,15 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
-    this->addHighJob(job);
+    this->addHighJob(std::move(job));
     break;
 
   case Dmn_Runtime_Job::kMedium:
-    this->addMediumJob(job);
+    this->addMediumJob(std::move(job));
     break;
 
   case Dmn_Runtime_Job::kLow:
-    this->addLowJob(job);
+    this->addLowJob(std::move(job));
     break;
 
   default:
@@ -109,12 +119,13 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh, .m_job = job};
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
+                       .m_job = std::move(job)};
   m_highQueue.push(rjob);
 }
 
@@ -123,12 +134,13 @@ void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow, .m_job = job};
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow,
+                       .m_job = std::move(job)};
   m_lowQueue.push(rjob);
 }
 
@@ -137,12 +149,13 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_medium_atomic_flag.test(std::memory_order_relaxed)) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium, .m_job = job};
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
+                       .m_job = std::move(job)};
   m_mediumQueue.push(rjob);
 }
 
@@ -257,6 +270,30 @@ void Dmn_Runtime_Manager::exitMainLoop() {
       m_signalWaitProc = {};
     }
   }
+
+  if (m_pimpl) {
+#ifdef _POSIX_TIMERS
+    struct itimerspec stop_its{};
+
+    // Apply the change to your specific timerid
+    timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
+
+#else /* _POSIX_TIMERS */
+    struct itimerval timer{};
+
+    // Set initial delay to 50 microseconds
+    timer.it_value.tv_sec = 0;
+    timer.it_value.tv_usec = 0;
+
+    // Set repeat interval to 50 microseconds
+    timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 0;
+
+    setitimer(ITIMER_REAL, &timer, nullptr);
+#endif
+
+    m_pimpl = {};
+  }
 }
 
 /**
@@ -310,15 +347,16 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     }
   });
 
+  m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
+
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
-  timer_t timerid{};
   struct itimerspec its{};
 
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = SIGALRM;
-  timer_create(CLOCK_MONOTONIC, &sev, &timerid);
+  timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
 
   // 2. Set for 500 microseconds (0.5ms)
   its.it_value.tv_sec = 0;
@@ -326,7 +364,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   its.it_interval.tv_sec = 0;      // Periodic repeat
   its.it_interval.tv_nsec = 50000; // Periodic repeat
 
-  timer_settime(timerid, 0, &its, nullptr);
+  timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
 #else /* _POSIX_TIMERS */
   struct itimerval timer{};
 
@@ -340,6 +378,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 
   setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
+
+  m_pimpl->m_timer_created = true;
 
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
