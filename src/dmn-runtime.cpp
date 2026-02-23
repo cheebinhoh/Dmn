@@ -85,7 +85,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    auto & job = m_timedQueue.top();
+    auto &job = m_timedQueue.top();
 
     struct timespec timesp{};
     if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
@@ -295,23 +295,25 @@ void Dmn_Runtime_Manager::exitMainLoop() {
   }
 
   if (m_pimpl) {
+    if (m_pimpl->m_timer_created) {
 #ifdef _POSIX_TIMERS
-    struct itimerspec stop_its{};
+      struct itimerspec stop_its{};
 
-    timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
+      timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
 
-    timer_delete(m_pimpl->m_timerid);
+      timer_delete(m_pimpl->m_timerid);
 #else /* _POSIX_TIMERS */
-    struct itimerval timer{};
+      struct itimerval timer{};
 
-    timer.it_value.tv_sec = 0;
-    timer.it_value.tv_usec = 0;
+      timer.it_value.tv_sec = 0;
+      timer.it_value.tv_usec = 0;
 
-    timer.it_interval.tv_sec = 0;
-    timer.it_interval.tv_usec = 0;
+      timer.it_interval.tv_sec = 0;
+      timer.it_interval.tv_usec = 0;
 
-    setitimer(ITIMER_REAL, &timer, nullptr);
+      setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
+    }
 
     m_pimpl->m_timer_created = false;
 
