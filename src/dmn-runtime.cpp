@@ -365,9 +365,9 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                              std::system_category().message(errno));
   }
 
-  // 2. Set for 500 microseconds (0.5ms)
+  // 2. Set for 50 microseconds (0.5ms)
   its.it_value.tv_sec = 0;
-  its.it_value.tv_nsec = 50000;    // 500,00 ns = 50 us
+  its.it_value.tv_nsec = 50000;    // 50,000 ns = 50 us
   its.it_interval.tv_sec = 0;      // Periodic repeat
   its.it_interval.tv_nsec = 50000; // Periodic repeat
 
