@@ -486,9 +486,7 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
 }
 
 void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
-  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
-  }
+  this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
 }
 
 } // namespace dmn
