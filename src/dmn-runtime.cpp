@@ -93,9 +93,9 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
           (timesp.tv_nsec / 1000);
 
       if (microseconds >= job.m_runtimeSinceEpoch) {
-        m_timedQueue.pop();
+        this->addJob(std::move(job.m_job), job.m_priority);
 
-        this->addJob(job.m_job, job.m_priority);
+        m_timedQueue.pop();
       }
     }
   };
