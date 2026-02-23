@@ -238,6 +238,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // - if there is still high priority job, we add the elevated medium job into
   //   end of high priority queue.
 
+  bool jobIsRun{};
   Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
 
   if (!this->m_sched_stack.empty()) {
@@ -248,22 +249,25 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     auto item = m_highQueue.popNoWait();
     if (item) {
       this->execRuntimeJobInContext(std::move(*item));
+      jobIsRun = true;
     } else if (state != Dmn_Runtime_Job::kMedium) {
       item = m_mediumQueue.popNoWait();
 
       if (item) {
         this->execRuntimeJobInContext(std::move(*item));
+        jobIsRun = true;
       } else if (state != Dmn_Runtime_Job::kLow) {
 
         item = m_lowQueue.popNoWait();
         if (item) {
           this->execRuntimeJobInContext(std::move(*item));
+          jobIsRun = true;
         }
       }
     }
   }
 
-  if (this->m_jobs_count.fetch_sub(1) > 1) {
+  if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1) {
     this->runRuntimeJobExecutor();
   }
 }
