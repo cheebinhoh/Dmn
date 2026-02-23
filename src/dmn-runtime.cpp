@@ -297,7 +297,6 @@ void Dmn_Runtime_Manager::exitMainLoop() {
 #ifdef _POSIX_TIMERS
     struct itimerspec stop_its{};
 
-    // Apply the change to your specific timerid
     timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
 
     timer_delete(m_pimpl->m_timerid);
@@ -360,7 +359,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   int err = timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
   if (-1 == err) {
     throw std::runtime_error("Error in timer_create: " +
-                             std::system_category().message(err));
+                             std::system_category().message(errno));
   }
 
   // 2. Set for 500 microseconds (0.5ms)
@@ -372,7 +371,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
   if (-1 == err) {
     throw std::runtime_error("Error in timer_settime: " +
-                             std::system_category().message(err));
+                             std::system_category().message(errno));
   }
 #else /* _POSIX_TIMERS */
   struct itimerval timer{};
@@ -388,7 +387,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   int err = setitimer(ITIMER_REAL, &timer, nullptr);
   if (-1 == err) {
     throw std::runtime_error("Error in setitimer: " +
-                             std::system_category().message(err));
+                             std::system_category().message(errno));
   }
 #endif
 
