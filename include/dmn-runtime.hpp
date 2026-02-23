@@ -305,9 +305,6 @@ private:
   void addLowJob(Dmn_Runtime_Job::FncType &&job);
   void addMediumJob(Dmn_Runtime_Job::FncType &&job);
 
-  template <class Rep, class Period>
-  void
-  execRuntimeJobForInterval(const std::chrono::duration<Rep, Period> &duration);
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerInternal(int signo);
@@ -340,6 +337,8 @@ private:
   std::atomic_flag m_enter_medium_atomic_flag{};
   std::atomic_flag m_main_enter_atomic_flag{};
   std::atomic_flag m_main_exit_atomic_flag{};
+
+  std::atomic<std::size_t> m_jobs_count{};
 
   // Wait object used to efficiently block until there is work
   std::shared_ptr<Dmn_Async_Handle> m_async_job_wait{};

@@ -135,6 +135,10 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
     assert("Unsupported priority type" == nullptr);
     break;
   }
+
+  if (m_jobs_count.fetch_add(1) == 0) {
+    this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+  }
 }
 
 /**
@@ -180,21 +184,6 @@ void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
                        .m_job = std::move(job)};
   m_mediumQueue.push(std::move(rjob));
-}
-
-/**
- * @brief The method will add an asynchronous task to run the job.
- *
- * @param duration The duration after that to run execRuntimeJobInternal in
- *                 interval
- */
-template <class Rep, class Period>
-void Dmn_Runtime_Manager::execRuntimeJobForInterval(
-    const std::chrono::duration<Rep, Period> &duration) {
-  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    m_async_job_wait = this->addExecTaskAfterWithWait(
-        duration, [this]() -> void { this->execRuntimeJobInternal(); });
-  }
 }
 
 /**
@@ -275,7 +264,9 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   }
 
   if (this->m_sched_stack.empty()) {
-    this->execRuntimeJobForInterval(std::chrono::microseconds(1));
+    if (this->m_jobs_count.fetch_sub(1) > 1) {
+      this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+    }
   }
 }
 
@@ -334,9 +325,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   }
 
   m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
-
-  // up to this point, all async jobs are paused.
-  this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();
