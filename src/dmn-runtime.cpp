@@ -291,6 +291,8 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     setitimer(ITIMER_REAL, &timer, nullptr);
 #endif
 
+    m_pimpl->m_timer_created = false;
+
     m_pimpl = {};
   }
 }
