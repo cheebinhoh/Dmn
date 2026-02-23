@@ -357,7 +357,11 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = SIGALRM;
-  timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
+  int err = timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_create: " +
+                             std::system_category().message(err));
+  }
 
   // 2. Set for 500 microseconds (0.5ms)
   its.it_value.tv_sec = 0;
@@ -365,7 +369,11 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   its.it_interval.tv_sec = 0;      // Periodic repeat
   its.it_interval.tv_nsec = 50000; // Periodic repeat
 
-  timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
+  err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_settime: " +
+                             std::system_category().message(err));
+  }
 #else /* _POSIX_TIMERS */
   struct itimerval timer{};
 
@@ -377,7 +385,11 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 50;
 
-  setitimer(ITIMER_REAL, &timer, nullptr);
+  int err = setitimer(ITIMER_REAL, &timer, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in setitimer: " +
+                             std::system_category().message(err));
+  }
 #endif
 
   m_pimpl->m_timer_created = true;
