@@ -12,9 +12,9 @@
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
  *   Each method spins on its own atomic flag to prevent jobs from
  *   being submitted before enterMainLoop() enables the queue.
- * - execRuntimeJobInternal(): dequeues and executes one job per
+ * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
- *   itself again after a 1 µs delay to create a yield point.
+ *   itself again if there is more job to be executed
  * - execRuntimeJobInContext(): executes a single coroutine-based job,
  *   resuming it until it either completes or suspends, interleaving
  *   lower-priority jobs between suspension points.
@@ -263,10 +263,8 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     }
   }
 
-  if (this->m_sched_stack.empty()) {
-    if (this->m_jobs_count.fetch_sub(1) > 1) {
-      this->runRuntimeJobExecutor();
-    }
+  if (this->m_jobs_count.fetch_sub(1) > 1) {
+    this->runRuntimeJobExecutor();
   }
 }
 
@@ -318,6 +316,8 @@ void Dmn_Runtime_Manager::exitMainLoop() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
+  size_t jobCountValue = m_jobs_count.load();
+
   if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
     assert("Error: enter main loop twice without exit" == nullptr);
 
@@ -408,6 +408,10 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   if (!m_signalWaitProc->exec()) {
     throw std::runtime_error(
         "Failed to start DmnRuntimeManager_SignalWait task");
+  }
+
+  if (jobCountValue > 0) {
+    this->runRuntimeJobExecutor();
   }
 
   while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
