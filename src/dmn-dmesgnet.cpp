@@ -131,7 +131,6 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   if (m_subscript_handler) {
     Dmn_DMesg::closeHandler(m_subscript_handler);
   }
-  std::cout << "net destroy 10\n";
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
