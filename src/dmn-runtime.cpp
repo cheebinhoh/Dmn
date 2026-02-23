@@ -413,11 +413,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
     m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
   }
-
-  if (m_async_job_wait) {
-    m_async_job_wait->wait();
-    m_async_job_wait = nullptr;
-  }
 }
 
 /**

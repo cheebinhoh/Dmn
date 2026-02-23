@@ -340,9 +340,6 @@ private:
 
   std::atomic<std::size_t> m_jobs_count{};
 
-  // Wait object used to efficiently block until there is work
-  std::shared_ptr<Dmn_Async_Handle> m_async_job_wait{};
-
   // Small LIFO stack used by the scheduler to reorder or delay execution
   std::stack<Dmn_Runtime_Job> m_sched_stack{};
 
