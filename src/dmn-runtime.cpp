@@ -278,6 +278,7 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     // Apply the change to your specific timerid
     timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
 
+    timer_delete(m_pimpl->m_timerid);
 #else /* _POSIX_TIMERS */
     struct itimerval timer{};
 
