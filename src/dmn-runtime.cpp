@@ -46,7 +46,6 @@
 #include <string>
 #include <sys/time.h>
 #include <system_error>
-#include <vector>
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue.hpp"
@@ -126,7 +125,7 @@ void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
                        .m_job = std::move(job)};
-  m_highQueue.push(rjob);
+  m_highQueue.push(std::move(rjob));
 }
 
 /**
@@ -141,7 +140,7 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow,
                        .m_job = std::move(job)};
-  m_lowQueue.push(rjob);
+  m_lowQueue.push(std::move(rjob));
 }
 
 /**
@@ -156,7 +155,7 @@ void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
                        .m_job = std::move(job)};
-  m_mediumQueue.push(rjob);
+  m_mediumQueue.push(std::move(rjob));
 }
 
 /**
