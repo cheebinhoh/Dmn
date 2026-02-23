@@ -316,7 +316,9 @@ void Dmn_Runtime_Manager::exitMainLoop() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
-  size_t jobCountValue = m_jobs_count.load();
+  // If there are already pending jobs (e.g., from a prior run), ensure the
+  // runtime job executor is started so the system does not remain idle.
+  bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
 
   if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
     assert("Error: enter main loop twice without exit" == nullptr);
@@ -410,7 +412,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
         "Failed to start DmnRuntimeManager_SignalWait task");
   }
 
-  if (jobCountValue > 0) {
+  if (startJobExecutor) {
     this->runRuntimeJobExecutor();
   }
 
