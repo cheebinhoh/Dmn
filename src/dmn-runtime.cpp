@@ -69,13 +69,35 @@ struct Dmn_Runtime_Manager_Impl {
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
-  // default and to be overridden if needed
+  // default and to be overridden if needed, these signal handler hooks will
+  // be executed when main thread calls enterMainLoop()
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
 
   m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
+  };
+
+  m_signal_handlers[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
+    if (m_timedQueue.empty()) {
+      return;
+    }
+
+    auto job = m_timedQueue.top();
+
+    struct timespec timesp{};
+    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
+      const long long microseconds =
+          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
+          (timesp.tv_nsec / 1000);
+
+      if (microseconds >= job.m_runtimeSinceEpoch) {
+        m_timedQueue.pop();
+
+        this->addJob(job.m_job, job.m_priority);
+      }
+    }
   };
 }
 
@@ -325,28 +347,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
-
-  // SIGALRM handler is executed in singleton main asynchronous thread
-  registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
-    if (m_timedQueue.empty()) {
-      return;
-    }
-
-    auto job = m_timedQueue.top();
-
-    struct timespec timesp{};
-    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
-      const long long microseconds =
-          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
-          (timesp.tv_nsec / 1000);
-
-      if (microseconds >= job.m_runtimeSinceEpoch) {
-        m_timedQueue.pop();
-
-        this->addJob(job.m_job, job.m_priority);
-      }
-    }
-  });
 
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
 
