@@ -63,6 +63,7 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <cerrno>
 #include <chrono>
 #include <coroutine>
 #include <csignal>
@@ -341,6 +342,8 @@ private:
   std::atomic_flag m_main_enter_atomic_flag{};
   std::atomic_flag m_main_exit_atomic_flag{};
 
+  // Number of high, medium and low priority jobs scheduled and add to
+  // pending queue waiting for scheduler.
   std::atomic<std::size_t> m_jobs_count{};
 
   // Small LIFO stack used by the scheduler to reorder or delay execution
