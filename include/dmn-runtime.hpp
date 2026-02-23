@@ -348,7 +348,7 @@ private:
   std::stack<Dmn_Runtime_Job> m_sched_stack{};
 
   // Wrap platform specific implementation behind this unique ptr object
-  // So that specific part of it is within Dmn_Runtime_Manager.cpp
+  // So that specific part of it is within dmn-runtime.cpp
   std::unique_ptr<Dmn_Runtime_Manager_Impl> m_pimpl{};
 
   /**
