@@ -311,6 +311,8 @@ private:
 
   void registerSignalHandlerInternal(int signo, const SignalHandler &handler);
 
+  void runRuntimeJobExecutor();
+
   /**
    * Internal state
    */

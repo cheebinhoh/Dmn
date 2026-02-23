@@ -137,7 +137,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
   }
 
   if (m_jobs_count.fetch_add(1) == 0) {
-    this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+    this->runRuntimeJobExecutor();
   }
 }
 
@@ -265,7 +265,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
 
   if (this->m_sched_stack.empty()) {
     if (this->m_jobs_count.fetch_sub(1) > 1) {
-      this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+      this->runRuntimeJobExecutor();
     }
   }
 }
@@ -482,6 +482,12 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
   if (0 != err) {
     throw std::runtime_error("Error in pthread_sigmask: " +
                              std::string{strerror(err)});
+  }
+}
+
+void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
+  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+    this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
   }
 }
 
