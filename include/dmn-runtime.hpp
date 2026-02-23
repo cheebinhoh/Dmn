@@ -276,7 +276,8 @@ public:
           { this->m_timedQueue.push(std::move(rjob)); }, this,
           rjob = std::move(rjob));
     } else {
-      addJob(job, priority);
+      throw std::runtime_error("Error in clock_gettime: " +
+                               std::system_category().message(errno));
     }
   }
 
