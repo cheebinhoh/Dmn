@@ -12,9 +12,9 @@
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
  *   Each method spins on its own atomic flag to prevent jobs from
  *   being submitted before enterMainLoop() enables the queue.
- * - execRuntimeJobInternal(): dequeues and executes one job per
+ * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
- *   itself again after a 1 µs delay to create a yield point.
+ *   itself again if there is more job to be executed
  * - execRuntimeJobInContext(): executes a single coroutine-based job,
  *   resuming it until it either completes or suspends, interleaving
  *   lower-priority jobs between suspension points.
@@ -135,6 +135,10 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
     assert("Unsupported priority type" == nullptr);
     break;
   }
+
+  if (m_jobs_count.fetch_add(1) == 0) {
+    this->runRuntimeJobExecutor();
+  }
 }
 
 /**
@@ -180,21 +184,6 @@ void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
                        .m_job = std::move(job)};
   m_mediumQueue.push(std::move(rjob));
-}
-
-/**
- * @brief The method will add an asynchronous task to run the job.
- *
- * @param duration The duration after that to run execRuntimeJobInternal in
- *                 interval
- */
-template <class Rep, class Period>
-void Dmn_Runtime_Manager::execRuntimeJobForInterval(
-    const std::chrono::duration<Rep, Period> &duration) {
-  if (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    m_async_job_wait = this->addExecTaskAfterWithWait(
-        duration, [this]() -> void { this->execRuntimeJobInternal(); });
-  }
 }
 
 /**
@@ -274,8 +263,8 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     }
   }
 
-  if (this->m_sched_stack.empty()) {
-    this->execRuntimeJobForInterval(std::chrono::microseconds(1));
+  if (this->m_jobs_count.fetch_sub(1) > 1) {
+    this->runRuntimeJobExecutor();
   }
 }
 
@@ -327,6 +316,10 @@ void Dmn_Runtime_Manager::exitMainLoop() {
  *        method.
  */
 void Dmn_Runtime_Manager::enterMainLoop() {
+  // If there are already pending jobs (e.g., from a prior run), ensure the
+  // runtime job executor is started so the system does not remain idle.
+  bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
+
   if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
     assert("Error: enter main loop twice without exit" == nullptr);
 
@@ -334,9 +327,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   }
 
   m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
-
-  // up to this point, all async jobs are paused.
-  this->execRuntimeJobForInterval(std::chrono::microseconds(1));
 
   m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
   m_enter_high_atomic_flag.notify_all();
@@ -422,13 +412,12 @@ void Dmn_Runtime_Manager::enterMainLoop() {
         "Failed to start DmnRuntimeManager_SignalWait task");
   }
 
-  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  if (startJobExecutor) {
+    this->runRuntimeJobExecutor();
   }
 
-  if (m_async_job_wait) {
-    m_async_job_wait->wait();
-    m_async_job_wait = nullptr;
+  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+    m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 }
 
@@ -500,6 +489,10 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
     throw std::runtime_error("Error in pthread_sigmask: " +
                              std::string{strerror(err)});
   }
+}
+
+void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
+  this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
 }
 
 } // namespace dmn
