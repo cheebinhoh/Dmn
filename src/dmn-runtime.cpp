@@ -60,9 +60,10 @@ sigset_t Dmn_Runtime_Manager::s_mask{};
 struct Dmn_Runtime_Manager_Impl {
 #ifdef _POSIX_TIMERS
   timer_t m_timerid{};
-#endif
-
   bool m_timer_created{};
+#else
+  bool m_timer_created{};
+#endif
 };
 
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
@@ -280,11 +281,9 @@ void Dmn_Runtime_Manager::exitMainLoop() {
 #else /* _POSIX_TIMERS */
     struct itimerval timer{};
 
-    // Set initial delay to 50 microseconds
     timer.it_value.tv_sec = 0;
     timer.it_value.tv_usec = 0;
 
-    // Set repeat interval to 50 microseconds
     timer.it_interval.tv_sec = 0;
     timer.it_interval.tv_usec = 0;
 
