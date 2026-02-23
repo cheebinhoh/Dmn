@@ -56,16 +56,49 @@ namespace dmn {
 
 sigset_t Dmn_Runtime_Manager::s_mask{};
 
+// Platform specific implementation
+struct Dmn_Runtime_Manager_Impl {
+#ifdef _POSIX_TIMERS
+  timer_t m_timerid{};
+  bool m_timer_created{};
+#else
+  bool m_timer_created{};
+#endif
+};
+
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
-  // default and to be overridden if needed
+  // default and to be overridden if needed, these signal handler hooks will
+  // be executed in the singleton asynchronous context after enterMainLoop()
+  // is called.
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
 
   m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
+  };
+
+  m_signal_handlers[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
+    if (m_timedQueue.empty()) {
+      return;
+    }
+
+    auto &job = m_timedQueue.top();
+
+    struct timespec timesp{};
+    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
+      const long long microseconds =
+          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
+          (timesp.tv_nsec / 1000);
+
+      if (microseconds >= job.m_runtimeSinceEpoch) {
+        this->addJob(std::move(job.m_job), job.m_priority);
+
+        m_timedQueue.pop();
+      }
+    }
   };
 }
 
@@ -87,15 +120,15 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
   switch (priority) {
   case Dmn_Runtime_Job::kHigh:
-    this->addHighJob(job);
+    this->addHighJob(std::move(job));
     break;
 
   case Dmn_Runtime_Job::kMedium:
-    this->addMediumJob(job);
+    this->addMediumJob(std::move(job));
     break;
 
   case Dmn_Runtime_Job::kLow:
-    this->addLowJob(job);
+    this->addLowJob(std::move(job));
     break;
 
   default:
@@ -109,13 +142,14 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
  *
  * @param job The high priority asynchronous job
  */
-void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh, .m_job = job};
-  m_highQueue.push(rjob);
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
+                       .m_job = std::move(job)};
+  m_highQueue.push(std::move(rjob));
 }
 
 /**
@@ -123,13 +157,14 @@ void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType job) {
  *
  * @param job The low priority asynchronous job
  */
-void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_low_atomic_flag.test()) {
     m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow, .m_job = job};
-  m_lowQueue.push(rjob);
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow,
+                       .m_job = std::move(job)};
+  m_lowQueue.push(std::move(rjob));
 }
 
 /**
@@ -137,13 +172,14 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType job) {
  *
  * @param job The medium priority asynchronous job
  */
-void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType job) {
+void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_enter_medium_atomic_flag.test(std::memory_order_relaxed)) {
     m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium, .m_job = job};
-  m_mediumQueue.push(rjob);
+  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
+                       .m_job = std::move(job)};
+  m_mediumQueue.push(std::move(rjob));
 }
 
 /**
@@ -257,6 +293,32 @@ void Dmn_Runtime_Manager::exitMainLoop() {
       m_signalWaitProc = {};
     }
   }
+
+  if (m_pimpl) {
+    if (m_pimpl->m_timer_created) {
+#ifdef _POSIX_TIMERS
+      struct itimerspec stop_its{};
+
+      timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
+
+      timer_delete(m_pimpl->m_timerid);
+#else /* _POSIX_TIMERS */
+      struct itimerval timer{};
+
+      timer.it_value.tv_sec = 0;
+      timer.it_value.tv_usec = 0;
+
+      timer.it_interval.tv_sec = 0;
+      timer.it_interval.tv_usec = 0;
+
+      setitimer(ITIMER_REAL, &timer, nullptr);
+#endif
+    }
+
+    m_pimpl->m_timer_created = false;
+
+    m_pimpl = {};
+  }
 }
 
 /**
@@ -288,45 +350,32 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_enter_low_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
-  // SIGALRM handler is executed in singleton main asynchronous thread
-  registerSignalHandler(SIGALRM, [this]([[maybe_unused]] int signo) -> void {
-    if (m_timedQueue.empty()) {
-      return;
-    }
-
-    auto job = m_timedQueue.top();
-
-    struct timespec timesp{};
-    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
-      const long long microseconds =
-          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
-          (timesp.tv_nsec / 1000);
-
-      if (microseconds >= job.m_runtimeSinceEpoch) {
-        m_timedQueue.pop();
-
-        this->addJob(job.m_job, job.m_priority);
-      }
-    }
-  });
+  m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
 
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
-  timer_t timerid{};
   struct itimerspec its{};
 
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = SIGALRM;
-  timer_create(CLOCK_MONOTONIC, &sev, &timerid);
+  int err = timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_create: " +
+                             std::system_category().message(errno));
+  }
 
-  // 2. Set for 500 microseconds (0.5ms)
+  // 2. Set for 50 microseconds (0.5ms)
   its.it_value.tv_sec = 0;
-  its.it_value.tv_nsec = 50000;    // 500,00 ns = 50 us
+  its.it_value.tv_nsec = 50000;    // 50,000 ns = 50 us
   its.it_interval.tv_sec = 0;      // Periodic repeat
   its.it_interval.tv_nsec = 50000; // Periodic repeat
 
-  timer_settime(timerid, 0, &its, nullptr);
+  err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_settime: " +
+                             std::system_category().message(errno));
+  }
 #else /* _POSIX_TIMERS */
   struct itimerval timer{};
 
@@ -338,8 +387,14 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 50;
 
-  setitimer(ITIMER_REAL, &timer, nullptr);
+  int err = setitimer(ITIMER_REAL, &timer, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in setitimer: " +
+                             std::system_category().message(errno));
+  }
 #endif
+
+  m_pimpl->m_timer_created = true;
 
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
