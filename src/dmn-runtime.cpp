@@ -70,7 +70,8 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
   // default and to be overridden if needed, these signal handler hooks will
-  // be executed when main thread calls enterMainLoop()
+  // be executed in the singleton asynchronous context after enterMainLoop()
+  // is called.
   m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
@@ -84,7 +85,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    auto job = m_timedQueue.top();
+    auto & job = m_timedQueue.top();
 
     struct timespec timesp{};
     if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
