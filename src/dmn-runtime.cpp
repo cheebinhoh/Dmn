@@ -132,7 +132,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
     break;
 
   default:
-    assert("Unsupported priority type" == nullptr);
+    assert(false && "Unsupported priority type");
     break;
   }
 
@@ -281,6 +281,9 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
     m_main_exit_atomic_flag.notify_all();
 
+    // after set the main loop enter (false) and exit (true) flag, we just
+    // have to wait for signalWaitProc to gradefully exit as it is triggered
+    // at fixed interval before we clear the timer.
     if (m_signalWaitProc) {
       m_signalWaitProc->wait();
       m_signalWaitProc = {};
@@ -359,7 +362,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                              std::system_category().message(errno));
   }
 
-  // 2. Set for 50 microseconds (0.5ms)
+  // 2. Set for 50 microseconds (0.05ms)
   its.it_value.tv_sec = 0;
   its.it_value.tv_nsec = 50000;    // 50,000 ns = 50 us
   its.it_interval.tv_sec = 0;      // Periodic repeat
@@ -445,10 +448,10 @@ void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
   }
 }
 
-void Dmn_Runtime_Manager::registerSignalHandlerHook(
-    int signo, const SignalHandlerHook &hook) {
-  this->addExecTask([this, signo, hook]() {
-    this->registerSignalHandlerHookInternal(signo, hook);
+void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
+                                                    SignalHandlerHook &&hook) {
+  this->addExecTask([this, signo, &hook]() {
+    this->registerSignalHandlerHookInternal(signo, std::move(hook));
   });
 }
 
@@ -466,9 +469,9 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(
  *              raised.
  */
 void Dmn_Runtime_Manager::registerSignalHandlerHookInternal(
-    int signo, const SignalHandlerHook &hook) {
+    int signo, SignalHandlerHook &&hook) {
   auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
-  extHandlerHooks.push_back(hook);
+  extHandlerHooks.push_back(std::move(hook));
 }
 
 void Dmn_Runtime_Manager::runPriorToCreateInstance() {
