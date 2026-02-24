@@ -87,13 +87,14 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
     auto &job = m_timedQueue.top();
 
-    struct timespec timesp{};
-    if (clock_gettime(CLOCK_MONOTONIC, &timesp) == 0) {
-      const long long microseconds =
-          (static_cast<long long>(timesp.tv_sec) * 1000000LL) +
-          (timesp.tv_nsec / 1000);
+    struct timespec ts{};
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+      auto d = std::chrono::seconds{ts.tv_sec} +
+               std::chrono::nanoseconds{ts.tv_nsec};
 
-      if (microseconds >= job.m_runtimeSinceEpoch) {
+      TimePoint tp{std::chrono::duration_cast<Clock::duration>(d)};
+
+      if (tp >= job.m_due) {
         this->addJob(std::move(job.m_job), job.m_priority);
 
         m_timedQueue.pop();
