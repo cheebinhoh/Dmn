@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
   std::cout << "after for 5 seconds\n";
 
-  bool sigAlrmCalled{};
+  std::atomic_bool sigAlrmCalled{};
   inst->registerSignalHandlerHook(
       SIGALRM, [&sigAlrmCalled]([[maybe_unused]] int signo) -> void {
         sigAlrmCalled = true;
