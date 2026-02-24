@@ -8,8 +8,8 @@
  * --------
  * Dmn_Runtime_Manager provides a single, process‑wide runtime responsible for:
  * - Managing POSIX signal masking, all worker threads inherit a consistent
- *   signal configuration and provide interface to add signal handler' hook
- *   functions that are executed safely in a singleton asynchronous thread
+ *   signal configuration and provide interface to add signal handler hook
+ *   function(s) that are executed safely in a singleton asynchronous thread
  *   context.
  * - Scheduling and executing asynchronous jobs with priority levels
  *   (high/medium/low) as well as delayed (timed) jobs.
@@ -20,12 +20,12 @@
  *
  * Key Responsibilities
  * --------------------
- * - **Singleton lifecycle**: The runtime is inheritting from Dmn_Singleton, and
+ * - **Singleton lifecycle**: The runtime is inheriting from Dmn_Singleton, and
  *   Signal masking is applied before any threads are spawned so all descendant
  *   threads inherit the same mask.
  * - **Signal handling**: The runtime blocks SIGALRM, SIGINT, SIGTERM, SIGQUIT,
- *   and SIGHUP during initialization. Internal and external handler' hook
- *   functions can be registered and are invoked from a singleton asynchronous
+ *   and SIGHUP during initialization. Internal and external handler hook
+ *   function(s) can be registered and are invoked from a singleton asynchronous
  *   thread context rather than directly inside an async‑signal handler.
  * - **Job scheduling**:
  *   - Immediate jobs are placed into priority queues.
@@ -39,12 +39,12 @@
  * - Signals are masked in runPriorToCreateInstance() before the runtime
  *   singleton asynchronous thread context is created. Masking inside the
  *   constructor would be too late because the parent class Dmn_Async singleton
- *   asynchronous thread context may already exist without any singla mask.
+ *   asynchronous thread context may already exist without any signal mask.
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions in Dmn_Singleton.
  * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
  *   the raw signal handler but handled through a dedicated Dmn_Proc thread and
- *   then the attached signal handler' hook functions are executed in the
+ *   then the attached signal handler hook function(s) are executed in the
  *   singleton asynchronous thread context.
  *
  * Usage Summary
