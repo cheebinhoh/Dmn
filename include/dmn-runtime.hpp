@@ -43,8 +43,8 @@
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions in Dmn_Singleton.
  * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
- *   the raw signal handler but are handled through a dedicated Dmn_Proc thread and
- *   then the attached signal handler hook function(s) are executed in the
+ *   the raw signal handler but are handled through a dedicated Dmn_Proc thread
+ * and then the attached signal handler hook function(s) are executed in the
  *   singleton asynchronous thread context.
  *
  * Usage Summary
@@ -106,7 +106,7 @@ struct Dmn_Runtime_Task {
       bool await_ready() noexcept { return false; }
 
       void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
-        if (h.promise().continuation) {
+        if (h && h.promise().continuation) {
           h.promise().continuation.resume();
         }
       }
@@ -306,7 +306,7 @@ public:
    * @param hook  The signal handler hook function to be called when the
    *              signal is raised.
    */
-  void registerSignalHandlerHook(int signo, const SignalHandlerHook &hook);
+  void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
   static void runPriorToCreateInstance();
 
@@ -320,8 +320,7 @@ private:
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);
 
-  void registerSignalHandlerHookInternal(int signo,
-                                         const SignalHandlerHook &hook);
+  void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
   void runRuntimeJobExecutor();
 
