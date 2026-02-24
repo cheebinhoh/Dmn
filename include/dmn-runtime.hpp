@@ -20,7 +20,7 @@
  *
  * Key Responsibilities
  * --------------------
- * - **Singleton lifecycle**: The runtime is inheriting from Dmn_Singleton, and
+ * - **Singleton lifecycle**: The runtime inherits from Dmn_Singleton, and
  *   Signal masking is applied before any threads are spawned so all descendant
  *   threads inherit the same mask.
  * - **Signal handling**: The runtime blocks SIGALRM, SIGINT, SIGTERM, SIGQUIT,
@@ -43,7 +43,7 @@
  * - Singleton initialization is protected by std::call_once and a static
  *   std::once_flag to prevent race conditions in Dmn_Singleton.
  * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
- *   the raw signal handler but handled through a dedicated Dmn_Proc thread and
+ *   the raw signal handler but are handled through a dedicated Dmn_Proc thread and
  *   then the attached signal handler hook function(s) are executed in the
  *   singleton asynchronous thread context.
  *
