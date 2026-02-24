@@ -7,25 +7,26 @@
  * Overview
  * --------
  * Dmn_Runtime_Manager provides a single, process‑wide runtime responsible for:
- * - Managing POSIX signal masking and dispatching so all worker threads inherit
- *   a consistent signal configuration.
+ * - Managing POSIX signal masking, all worker threads inherit a consistent
+ *   signal configuration and provide interface to add signal handler' hook
+ *   functions that are executed safely in a singleton asynchronous thread
+ *   context.
  * - Scheduling and executing asynchronous jobs with priority levels
  *   (high/medium/low) as well as delayed (timed) jobs.
- * - Running an internal runtime thread (via Dmn_Async) that processes job
- *   queues and invokes registered signal handlers in a safe, non–signal‑handler
- *   context.
+ * - All jobs are scheduled (if via addTimedJob()), serialized and executed in
+ *   a singleton asynchronous thread context.
  * - Executing jobs scheduled through addJob() and addTimedJob() sequentially
  *   according to priority within a C++ coroutine execution model.
  *
  * Key Responsibilities
  * --------------------
- * - **Singleton lifecycle**: The runtime is created once using std::call_once.
+ * - **Singleton lifecycle**: The runtime is inheritting from Dmn_Singleton, and
  *   Signal masking is applied before any threads are spawned so all descendant
  *   threads inherit the same mask.
  * - **Signal handling**: The runtime blocks SIGALRM, SIGINT, SIGTERM, SIGQUIT,
- *   and SIGHUP during initialization. Internal and external handlers can be
- *   registered and are invoked from a controlled context rather than directly
- *   inside an async‑signal handler.
+ *   and SIGHUP during initialization. Internal and external handler' hook
+ *   functions can be registered and are invoked from a singleton asynchronous
+ *   thread context rather than directly inside an async‑signal handler.
  * - **Job scheduling**:
  *   - Immediate jobs are placed into priority queues.
  *   - Timed jobs are stored in a min‑heap ordered by absolute microsecond
@@ -35,19 +36,22 @@
  *
  * Thread‑Safety & Signal‑Safety Notes
  * -----------------------------------
- * - Signals are masked in runPriorToCreateInstance() before the runtime thread
- *   is created. Masking inside the constructor would be too late because the
- *   parent Dmn_Async thread may already exist.
+ * - Signals are masked in runPriorToCreateInstance() before the runtime
+ *   singleton asynchronous thread context is created. Masking inside the
+ *   constructor would be too late because the parent class Dmn_Async singleton
+ *   asynchronous thread context may already exist without any singla mask.
  * - Singleton initialization is protected by std::call_once and a static
- *   std::once_flag to prevent race conditions.
- * - Atomic flags and thread‑safe buffers coordinate producers and the runtime
- *   thread. Signal handlers avoid performing non‑async‑signal‑safe operations
- *   inside the raw signal handler.
+ *   std::once_flag to prevent race conditions in Dmn_Singleton.
+ * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
+ *   the raw signal handler but handled through a dedicated Dmn_Proc thread and
+ *   then the attached signal handler' hook functions are executed in the
+ *   singleton asynchronous thread context.
  *
  * Usage Summary
  * -------------
  * - Create or obtain the singleton via Dmn_Singleton::createInstance().
- * - Register signal handlers using registerSignalHandler(signo, handler).
+ * - Register signal handler hook function using
+ *   registerSignalHandlerHook(signo, hook).
  * - Enqueue immediate work with addJob() or schedule delayed work with
  *   addTimedJob().
  * - Start processing with enterMainLoop() and stop with exitMainLoop().
@@ -210,7 +214,7 @@ struct Dmn_Runtime_Manager_Impl;
  * Public API highlights:
  *  - addJob(job, priority): enqueue a job for (near-)immediate execution.
  *  - addTimedJob(job, duration, priority): schedule job to run after duration.
- *  - registerSignalHandler(signo, handler): register a handler to be invoked
+ *  - registerSignalHandlerHook(signo, hook): register a handler to be invoked
  *    when the given signal is delivered.
  *  - enterMainLoop() / exitMainLoop(): control the runtime processing
  * lifecycle.
@@ -226,7 +230,7 @@ struct Dmn_Runtime_Manager_Impl;
 class Dmn_Runtime_Manager : public Dmn_Singleton<Dmn_Runtime_Manager>,
                             private Dmn_Async {
 public:
-  using SignalHandler = std::function<void(int signo)>;
+  using SignalHandlerHook = std::function<void(int signo)>;
 
   Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
@@ -282,8 +286,9 @@ public:
   }
 
   /**
-   * Start processing runtime events / jobs. Blocks until exitMainLoop() is
-   * called or the runtime decides to stop.
+   * @brief Start processing runtime events / jobs. Blocks until exitMainLoop()
+   * is called or the runtime decides to stop (a signal handler hook calls
+   *        exitMainLoop).
    */
   void enterMainLoop();
 
@@ -293,10 +298,15 @@ public:
   void exitMainLoop();
 
   /**
-   * Register a signal handler for a particular signal number. Handlers are
-   * invoked by the runtime in a safe context (not from the raw signal handler).
+   * @brief Register a signal handler for a particular signal number. Handlers
+   *        are invoked by the runtime in a safe context (not from the raw
+   * signal handler) in a singleton asynchronous thread context.
+   *
+   * @param signo The POSIX signal number
+   * @param hook  The signal handler hook function to be called when the
+   *              signal is raised.
    */
-  void registerSignalHandler(int signo, const SignalHandler &handler);
+  void registerSignalHandlerHook(int signo, const SignalHandlerHook &hook);
 
   static void runPriorToCreateInstance();
 
@@ -308,9 +318,10 @@ private:
 
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
-  void execSignalHandlerInternal(int signo);
+  void execSignalHandlerHookInternal(int signo);
 
-  void registerSignalHandlerInternal(int signo, const SignalHandler &handler);
+  void registerSignalHandlerHookInternal(int signo,
+                                         const SignalHandlerHook &hook);
 
   void runRuntimeJobExecutor();
 
@@ -319,10 +330,10 @@ private:
    */
   std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
   sigset_t m_mask{};
-  std::unordered_map<int, SignalHandler>
-      m_signal_handlers{}; // internal handlers
-  std::unordered_map<int, std::vector<SignalHandler>>
-      m_ext_signal_handlers{}; // external hooks
+  std::unordered_map<int, SignalHandlerHook>
+      m_signal_handler_hooks{}; // internal handler hooks
+  std::unordered_map<int, std::vector<SignalHandlerHook>>
+      m_signal_handler_hooks_external{}; // external handler hooks
 
   // Per-priority immediate job queues
   Dmn_BlockingQueue<Dmn_Runtime_Job> m_highQueue{};

@@ -72,15 +72,15 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   // default and to be overridden if needed, these signal handler hooks will
   // be executed in the singleton asynchronous context after enterMainLoop()
   // is called.
-  m_signal_handlers[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
+  m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
 
-  m_signal_handlers[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
+  m_signal_handler_hooks[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
 
-  m_signal_handlers[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
+  m_signal_handler_hooks[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
     if (m_timedQueue.empty()) {
       return;
     }
@@ -278,16 +278,6 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  *        (usually the mainthread) to the main() function to be continued.
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
-  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
-    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
-    m_main_exit_atomic_flag.notify_all();
-
-    if (m_signalWaitProc) {
-      m_signalWaitProc->wait();
-      m_signalWaitProc = {};
-    }
-  }
-
   if (m_pimpl) {
     if (m_pimpl->m_timer_created) {
 #ifdef _POSIX_TIMERS
@@ -312,6 +302,18 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_pimpl->m_timer_created = false;
 
     m_pimpl = {};
+  }
+
+  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_exit_atomic_flag.notify_all();
+
+    if (m_signalWaitProc) {
+      raise(SIGALRM);
+
+      m_signalWaitProc->wait();
+      m_signalWaitProc = {};
+    }
   }
 }
 
@@ -407,7 +409,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
             break;
           } else {
             DMN_ASYNC_CALL_WITH_CAPTURE(
-                { this->execSignalHandlerInternal(signo); }, this, signo);
+                { this->execSignalHandlerHookInternal(signo); }, this, signo);
           }
         }
       });
@@ -427,53 +429,51 @@ void Dmn_Runtime_Manager::enterMainLoop() {
 }
 
 /**
- * @brief The method executes the signal handlers in asynchronous thread context
+ * @brief The method executes the signal handlers in the singleton
+ *        asynchronous thread context.
  *
  * @param signo signal number that is raised
  */
-void Dmn_Runtime_Manager::execSignalHandlerInternal(int signo) {
-  auto extHandlers = m_ext_signal_handlers.find(signo);
-  if (m_ext_signal_handlers.end() != extHandlers) {
-    for (auto &handler : extHandlers->second) {
-      handler(signo);
+void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
+  auto ext_hooks = m_signal_handler_hooks_external.find(signo);
+  if (m_signal_handler_hooks_external.end() != ext_hooks) {
+    for (auto &fnc : ext_hooks->second) {
+      fnc(signo);
     }
   }
 
-  auto handler = m_signal_handlers.find(signo);
-  if (m_signal_handlers.end() != handler) {
-    handler->second(signo);
+  auto hook = m_signal_handler_hooks.find(signo);
+  if (m_signal_handler_hooks.end() != hook) {
+    hook->second(signo);
   }
 }
 
-/**
- * @brief The method registers signal handler for the signal number. Note that
- *        SIGKILL and SIGSTOP can NOT be handled.
- *
- * @param signo   The POSIX signal number
- * @param handler The signal handler to be called when the signal is raised.
- */
-void Dmn_Runtime_Manager::registerSignalHandler(int signo,
-                                                const SignalHandler &handler) {
-  DMN_ASYNC_CALL_WITH_CAPTURE(
-      { this->registerSignalHandlerInternal(signo, handler); }, this, signo,
-      handler);
+void Dmn_Runtime_Manager::registerSignalHandlerHook(
+    int signo, const SignalHandlerHook &hook) {
+  auto task = this->addExecTaskWithWait([this, signo, hook]() {
+    this->registerSignalHandlerHookInternal(signo, hook);
+  });
+
+  task->wait();
 }
 
 /**
- * @brief The method registers external signal handler for the signal number.
- *        The external signal handlers are executed before default handler from
- *        Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP can NOT be handled.
+ * @brief The method registers external signal handler hook function for the
+ * signal number. The hook functions are executed before default internal
+ * handler hook setup by the Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP
+ * can NOT be handled.
  *
  *        This is private method to be called in the Dmn_Runtime_Manager
  *        instance asynchronous thread context.
  *
- * @param signo   The POSIX signal number
- * @param handler The signal handler to be called when the signal is raised.
+ * @param signo The POSIX signal number
+ * @param hook  The signal handler hook function to be called when the signal is
+ *              raised.
  */
-void Dmn_Runtime_Manager::registerSignalHandlerInternal(
-    int signo, const SignalHandler &handler) {
-  auto &extHandlers = m_ext_signal_handlers[signo];
-  extHandlers.push_back(handler);
+void Dmn_Runtime_Manager::registerSignalHandlerHookInternal(
+    int signo, const SignalHandlerHook &hook) {
+  auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
+  extHandlerHooks.push_back(hook);
 }
 
 void Dmn_Runtime_Manager::runPriorToCreateInstance() {

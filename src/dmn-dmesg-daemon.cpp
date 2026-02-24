@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         DMN_DEBUG_PRINT(std::cout << "set signal handler to respond to "
                                   << SIGTERM << "\n");
 
-        inst->registerSignalHandler(
+        inst->registerSignalHandlerHook(
             SIGTERM, [&inst](int signo) { std::cout << "handling SIGTERM\n"; });
       }};
 
