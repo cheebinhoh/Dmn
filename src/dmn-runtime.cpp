@@ -450,11 +450,9 @@ void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
 
 void Dmn_Runtime_Manager::registerSignalHandlerHook(
     int signo, const SignalHandlerHook &hook) {
-  auto task = this->addExecTaskWithWait([this, signo, hook]() {
+  this->addExecTask([this, signo, hook]() {
     this->registerSignalHandlerHookInternal(signo, hook);
   });
-
-  task->wait();
 }
 
 /**
