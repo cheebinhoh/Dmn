@@ -70,7 +70,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
   // default, these signal handler hooks will be executed in the singleton
-  // asynchronous context right after extra registered signal handler
+  // asynchronous context right after externally registered signal handler hooks
   m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
@@ -455,10 +455,10 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(
 /**
  * @brief The method registers external signal handler hook function for the
  * signal number. The hook functions are executed before default internal
- * handler hook setup by the Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP
+ * handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP
  * can NOT be handled.
  *
- *        This is private method to be called in the Dmn_Runtime_Manager
+ *        This is a private method to be called in the Dmn_Runtime_Manager
  *        instance asynchronous thread context.
  *
  * @param signo The POSIX signal number
