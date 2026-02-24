@@ -283,8 +283,6 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_exit_atomic_flag.notify_all();
 
     if (m_signalWaitProc) {
-      raise(SIGALRM);
-
       m_signalWaitProc->wait();
       m_signalWaitProc = {};
     }
