@@ -278,6 +278,18 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  *        (usually the mainthread) to the main() function to be continued.
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
+  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_exit_atomic_flag.notify_all();
+
+    if (m_signalWaitProc) {
+      raise(SIGALRM);
+
+      m_signalWaitProc->wait();
+      m_signalWaitProc = {};
+    }
+  }
+
   if (m_pimpl) {
     if (m_pimpl->m_timer_created) {
 #ifdef _POSIX_TIMERS
@@ -302,18 +314,6 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_pimpl->m_timer_created = false;
 
     m_pimpl = {};
-  }
-
-  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
-    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
-    m_main_exit_atomic_flag.notify_all();
-
-    if (m_signalWaitProc) {
-      raise(SIGALRM);
-
-      m_signalWaitProc->wait();
-      m_signalWaitProc = {};
-    }
   }
 }
 
