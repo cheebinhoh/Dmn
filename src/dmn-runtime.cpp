@@ -85,7 +85,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    auto &job = m_timedQueue.top();
+    auto job = m_timedQueue.top();
 
     struct timespec ts{};
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
@@ -95,9 +95,9 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       TimePoint tp{std::chrono::duration_cast<Clock::duration>(d)};
 
       if (tp >= job.m_due) {
-        this->addJob(std::move(job.m_job), job.m_priority);
-
         m_timedQueue.pop();
+
+        this->addJob(std::move(job.m_job), job.m_priority);
       }
     }
   };
