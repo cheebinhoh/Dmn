@@ -69,9 +69,8 @@ struct Dmn_Runtime_Manager_Impl {
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
-  // default and to be overridden if needed, these signal handler hooks will
-  // be executed in the singleton asynchronous context after enterMainLoop()
-  // is called.
+  // default, these signal handler hooks will be executed in the singleton
+  // asynchronous context right after extra registered signal handler
   m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
     this->exitMainLoop();
   };
