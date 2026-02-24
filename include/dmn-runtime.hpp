@@ -44,7 +44,7 @@
  *   std::once_flag to prevent race conditions in Dmn_Singleton.
  * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
  *   the raw signal handler but are handled through a dedicated Dmn_Proc thread
- * and then the attached signal handler hook function(s) are executed in the
+ *   and then the attached signal handler hook function(s) are executed in the
  *   singleton asynchronous thread context.
  *
  * Usage Summary
