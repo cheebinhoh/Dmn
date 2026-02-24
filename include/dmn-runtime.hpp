@@ -66,14 +66,13 @@
 #include <cerrno>
 #include <chrono>
 #include <coroutine>
-#include <csignal>
-#include <ctime>
 #include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <stack>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -83,6 +82,9 @@
 #include "dmn-singleton.hpp"
 
 namespace dmn {
+
+using Clock = std::chrono::steady_clock;
+using TimePoint = Clock::time_point;
 
 struct Dmn_Runtime_Task {
   struct promise_type {
@@ -168,10 +170,7 @@ struct Dmn_Runtime_Task {
  *  - m_priority: Priority level for scheduling (kHigh, kMedium, kLow).
  *  - m_job: Callable that performs the work. It is invoked with the job
  *           metadata so the callable can inspect runtime fields if needed.
- *  - m_runtimeSinceEpoch:
- *      * 0 => immediate execution (push into appropriate immediate queue).
- *      * >0 => absolute timestamp in microseconds since boot/monotonic start
- *               when the job should be executed (used by the timed job queue).
+ *  - m_due: due since boot/monoonic start that the job is to be executed
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
@@ -180,18 +179,17 @@ struct Dmn_Runtime_Job {
 
   Priority m_priority{kMedium};
   FncType m_job{};
-  long long
-      m_runtimeSinceEpoch{}; // 0: immediate; >0: absolute microsecond epoch
+  TimePoint m_due{};
 };
 
 // TimedJobComparator
 // ------------------
 // The runtime keeps timed jobs in a priority_queue. The comparator places the
-// job with the smallest (earliest) m_runtimeSinceEpoch at the top of the
-// container so it can be popped and executed first.
+// job with the smallest (earliest) m_due at the top of the container so it
+// can be popped and executed first.
 struct TimedJobComparator {
   bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) const {
-    return a.m_runtimeSinceEpoch > b.m_runtimeSinceEpoch;
+    return a.m_due > b.m_due;
   }
 };
 
@@ -261,16 +259,14 @@ public:
     struct timespec ts{};
 
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-      auto usec =
-          std::chrono::duration_cast<std::chrono::microseconds>(duration);
+      auto d = std::chrono::seconds{ts.tv_sec} +
+               std::chrono::nanoseconds{ts.tv_nsec};
 
-      long long microseconds =
-          ((long long)ts.tv_sec * 1000000LL + (ts.tv_nsec / 1000)) +
-          usec.count();
+      TimePoint tp =
+          TimePoint{std::chrono::duration_cast<Clock::duration>(d)} + duration;
 
-      Dmn_Runtime_Job rjob{.m_priority = priority,
-                           .m_job = std::move(job),
-                           .m_runtimeSinceEpoch = microseconds};
+      Dmn_Runtime_Job rjob{
+          .m_priority = priority, .m_job = std::move(job), .m_due = tp};
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
       DMN_ASYNC_CALL_WITH_CAPTURE(
