@@ -306,7 +306,7 @@ public:
    * @param hook  The signal handler hook function to be called when the
    *              signal is raised.
    */
-  void registerSignalHandlerHook(int signo, const SignalHandlerHook && hook);
+  void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
   static void runPriorToCreateInstance();
 
@@ -320,7 +320,7 @@ private:
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);
 
-  void registerSignalHandlerHookInternal(int signo, const SignalHandlerHook && hook);
+  void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
   void runRuntimeJobExecutor();
 
