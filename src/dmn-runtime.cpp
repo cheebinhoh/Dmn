@@ -199,27 +199,29 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
   auto task = runningJob.m_job(runningJob);
 
-  do {
-    task.handle.resume();
+  if (task.IsValid) {
+    do {
+      task.handle.resume();
 
-    if (task.handle.done()) {
-      break;
-    } else {
-      assert(!this->m_sched_stack.empty());
-
-      switch (priority) {
-      case Dmn_Runtime_Job::kHigh:
-        // skip!
+      if (task.handle.done()) {
         break;
+      } else {
+        assert(!this->m_sched_stack.empty());
 
-      case Dmn_Runtime_Job::kMedium:
-      case Dmn_Runtime_Job::kLow:
-      default:
-        this->execRuntimeJobInternal();
-        break;
+        switch (priority) {
+        case Dmn_Runtime_Job::kHigh:
+          // skip!
+          break;
+
+        case Dmn_Runtime_Job::kMedium:
+        case Dmn_Runtime_Job::kLow:
+        default:
+          this->execRuntimeJobInternal();
+          break;
+        }
       }
-    }
-  } while (true);
+    } while (true);
+  }
 
   this->m_sched_stack.pop();
 }
@@ -228,16 +230,6 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
  * @brief The method will execute the job continously.
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal() {
-  // This place allows us to implement stagnant avoidance logic,
-  // one potential example is that:
-  // - if there is a high priority and medium job, we execute
-  //   the high priority job
-  // - but we then alevate the medium job to a buffer between high and medium
-  // - if in next iteration, we have no high priority job, we execute the
-  //   elevate medium job before medium or low priority jobs.
-  // - if there is still high priority job, we add the elevated medium job into
-  //   end of high priority queue.
-
   bool jobIsRun{};
   Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
 
