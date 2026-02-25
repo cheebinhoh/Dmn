@@ -449,8 +449,8 @@ void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
 }
 
 void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
-                                                    const SignalHandlerHook && hook) {
-  this->addExecTask([this, signo, hook = std::move(hook)]() {
+                                                    SignalHandlerHook &&hook) {
+  this->addExecTask([this, signo, hook = std::move(hook)]() mutable {
     this->registerSignalHandlerHookInternal(signo, std::move(hook));
   });
 }
@@ -469,7 +469,7 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
  *              raised.
  */
 void Dmn_Runtime_Manager::registerSignalHandlerHookInternal(
-    int signo, const SignalHandlerHook && hook) {
+    int signo, SignalHandlerHook &&hook) {
   auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
   extHandlerHooks.push_back(std::move(hook));
 }
