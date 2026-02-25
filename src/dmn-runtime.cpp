@@ -199,7 +199,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
   auto task = runningJob.m_job(runningJob);
 
-  if (task.IsValid) {
+  if (task.isValid()) {
     do {
       task.handle.resume();
 
