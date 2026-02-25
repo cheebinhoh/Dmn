@@ -84,8 +84,6 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    auto job = m_timedQueue.top();
-
     struct timespec ts{};
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
       auto d = std::chrono::seconds{ts.tv_sec} +
@@ -93,10 +91,15 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
       TimePoint tp{std::chrono::duration_cast<Clock::duration>(d)};
 
-      if (tp >= job.m_due) {
-        m_timedQueue.pop();
+      while (!m_timedQueue.empty()) {
+        auto job = m_timedQueue.top();
+        if (tp >= job.m_due) {
+          m_timedQueue.pop();
 
-        this->addJob(std::move(job.m_job), job.m_priority);
+          this->addJob(std::move(job.m_job), job.m_priority);
+        } else {
+          break;
+        }
       }
     }
   };
@@ -259,7 +262,12 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     }
   }
 
-  if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1) {
+  // this will make sure that:
+  // - we decrement the m_jobs_count if a job is run and
+  // - we call runRuntimeJobExecutor() if sched_stack is empty (it means that
+  //   sched does not run any job now, and we should repost it again.
+  if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1 &&
+      this->m_sched_stack.empty()) {
     this->runRuntimeJobExecutor();
   }
 }
@@ -400,8 +408,9 @@ void Dmn_Runtime_Manager::enterMainLoop() {
           if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
             break;
           } else {
-            DMN_ASYNC_CALL_WITH_CAPTURE(
-                { this->execSignalHandlerHookInternal(signo); }, this, signo);
+            this->addExecTask([this, signo]() {
+              this->execSignalHandlerHookInternal(signo);
+            });
           }
         }
       });
