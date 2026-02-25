@@ -129,15 +129,18 @@ struct Dmn_Runtime_Task {
   bool await_ready() { return false; }
 
   void await_suspend(std::coroutine_handle<> caller_handle) {
-    handle.promise().continuation = caller_handle;
-    handle.resume(); // Start the child coroutine
+    if (handle) {
+      handle.promise().continuation = caller_handle;
+      handle.resume(); // Start the child coroutine
+    }
   }
 
   void await_resume() {}
 
   ~Dmn_Runtime_Task() noexcept {
-    if (handle)
+    if (handle) {
       handle.destroy();
+    }
   }
 
   // Construct a task that takes ownership of the given coroutine handle.
@@ -250,8 +253,7 @@ public:
 
   /**
    * Schedule a job to run after the specified duration.
-   * If the kernel clock read fails, the job falls back to being enqueued
-   * for immediate execution.
+   * If the kernel clock read fails, an exception is thrown.
    *
    * Template parameters:
    *  - Rep, Period: std::chrono::duration parameterization (e.g. milliseconds).
