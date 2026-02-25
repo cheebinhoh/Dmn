@@ -232,7 +232,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // one potential example is that:
   // - if there is a high priority and medium job, we execute
   //   the high priority job
-  // - but we then alevate the medium job to a buffer between hgh and medium
+  // - but we then alevate the medium job to a buffer between high and medium
   // - if in next iteration, we have no high priority job, we execute the
   //   elevate medium job before medium or low priority jobs.
   // - if there is still high priority job, we add the elevated medium job into
@@ -328,7 +328,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
 
   if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
-    assert("Error: enter main loop twice without exit" == nullptr);
+    assert(false && "Error: enter main loop twice without exit");
 
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
