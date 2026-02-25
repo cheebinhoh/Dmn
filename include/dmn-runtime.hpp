@@ -278,9 +278,9 @@ public:
           .m_priority = priority, .m_job = std::move(job), .m_due = tp};
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
-      DMN_ASYNC_CALL_WITH_CAPTURE(
-          { this->m_timedQueue.push(std::move(rjob)); }, this,
-          rjob = std::move(rjob));
+      this->addExecTask([this, rjob = std::move(rjob)]() {
+        this->m_timedQueue.push(std::move(rjob));
+      });
     } else {
       throw std::runtime_error("Error in clock_gettime: " +
                                std::system_category().message(errno));
@@ -347,9 +347,6 @@ private:
       m_timedQueue{};
 
   // Atomic flags used for coordination (lightweight spin semantics)
-  std::atomic_flag m_enter_high_atomic_flag{};
-  std::atomic_flag m_enter_low_atomic_flag{};
-  std::atomic_flag m_enter_medium_atomic_flag{};
   std::atomic_flag m_main_enter_atomic_flag{};
   std::atomic_flag m_main_exit_atomic_flag{};
 

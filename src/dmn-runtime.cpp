@@ -42,6 +42,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <pthread.h>
 #include <stdexcept>
 #include <string>
 #include <sys/time.h>
@@ -136,6 +137,8 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
 
   default:
     assert(false && "Unsupported priority type");
+    throw std::runtime_error("Unsupported priority type");
+
     break;
   }
 
@@ -150,8 +153,8 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
  * @param job The high priority asynchronous job
  */
 void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
-  while (!m_enter_high_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
-    m_enter_high_atomic_flag.wait(false, std::memory_order_relaxed);
+  while (!m_main_enter_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
+    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
@@ -165,8 +168,8 @@ void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
  * @param job The low priority asynchronous job
  */
 void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
-  while (!m_enter_low_atomic_flag.test()) {
-    m_enter_low_atomic_flag.wait(false, std::memory_order_relaxed);
+  while (!m_main_enter_atomic_flag.test()) {
+    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow,
@@ -180,8 +183,8 @@ void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
  * @param job The medium priority asynchronous job
  */
 void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
-  while (!m_enter_medium_atomic_flag.test(std::memory_order_relaxed)) {
-    m_enter_medium_atomic_flag.wait(false, std::memory_order_relaxed);
+  while (!m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
+    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
   Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
@@ -203,6 +206,8 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
   auto task = runningJob.m_job(runningJob);
 
   if (task.isValid()) {
+    // runtime jobs must complete before returning to scheduler; suspension is
+    // only used for intra-job yielding and will be resumed immediately.
     do {
       task.handle.resume();
 
@@ -334,17 +339,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   }
 
   m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
-
-  m_enter_high_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_enter_high_atomic_flag.notify_all();
-  Dmn_Proc::yield();
-
-  m_enter_medium_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_enter_medium_atomic_flag.notify_all();
-  Dmn_Proc::yield();
-
-  m_enter_low_atomic_flag.test_and_set(std::memory_order_relaxed);
-  m_enter_low_atomic_flag.notify_all();
+  m_main_enter_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
