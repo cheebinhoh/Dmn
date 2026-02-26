@@ -481,7 +481,11 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
 
   struct timespec ts{};
 
+#ifdef _POSIX_TIMERS
   if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+#else
+  if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+#endif /* _POSIX_TIMERS */
     auto d =
         std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec};
 
