@@ -212,6 +212,8 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
         task.m_handle.resume();
 
         if (task.m_handle.done()) {
+          task.await_resume(); // rethrow exception captured by
+                               // promise_type::unhandled_exception()
           break;
         } else {
           assert(!this->m_sched_stack.empty());
