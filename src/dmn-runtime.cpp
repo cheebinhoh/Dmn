@@ -88,11 +88,11 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   }
 
   m_pimpl->m_timer_created = true;
-  this->setNextTimer(0, 50000);
+  this->setNextTimer(0, 10000);
 #else /* _POSIX_TIMERS */
   m_pimpl->m_timer_created = true;
 
-  this->setNextTimer(0, 50000);
+  this->setNextTimer(0, 10000);
 #endif
 
   // default, these signal handler hooks will be executed in the singleton
@@ -135,6 +135,16 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
+
+  if (m_pimpl) {
+#ifdef _POSIX_TIMERS
+    timer_delete(m_pimpl->m_timerid);
+#endif
+
+    m_pimpl->m_timer_created = false;
+
+    m_pimpl = {};
+  }
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -314,7 +324,7 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_exit_atomic_flag.notify_all();
 
     // set the last timer, so that signalWaitProc gradefully exit.
-    this->setNextTimer(0, 50000);
+    this->setNextTimer(0, 10000);
 
     // after set the main loop enter (false) and exit (true) flag, we just
     // have to wait for signalWaitProc to gradefully exit as it is triggered
@@ -329,10 +339,6 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     this->setNextTimer(
         0, 0); // disable timer though m_signalWaitProc shall already done so
                // but if it is crashed, we still disable timer.
-
-    m_pimpl->m_timer_created = false;
-
-    m_pimpl = {};
   }
 }
 
@@ -499,7 +505,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
       this->setNextTimer(secs.count(), nsecs.count());
     }
   } else {
-    this->setNextTimer(0, 50000); // run it in next 50 microseconds
+    this->setNextTimer(0, 10000); // run it in next 50 microseconds
   }
 }
 
