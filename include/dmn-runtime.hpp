@@ -290,6 +290,8 @@ public:
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
       this->addExecTask([this, rjob = std::move(rjob)]() {
+        assert(isRunInAsyncThread());
+
         this->m_timedQueue.push(std::move(rjob));
         this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
       });
@@ -328,6 +330,8 @@ private:
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);
+
+  auto isRunInAsyncThread() -> bool;
 
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
@@ -370,6 +374,9 @@ private:
   // Wrap platform specific implementation behind this unique ptr object
   // So that specific part of it is within dmn-runtime.cpp
   std::unique_ptr<Dmn_Runtime_Manager_Impl> m_pimpl{};
+
+  // the id of the singleton asynchronous thread context.
+  std::thread::id m_asyncThreadId{};
 
   /**
    * Static members for singleton management
