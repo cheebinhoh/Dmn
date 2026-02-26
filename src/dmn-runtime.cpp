@@ -59,7 +59,7 @@ sigset_t Dmn_Runtime_Manager::s_mask{};
 
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl {
-#ifdef _POSIX_TIMERS
+#ifdef _POSIX_TIMERS> 0
   timer_t m_timerid{};
   bool m_timer_created{};
 #else
@@ -75,7 +75,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 // set first timer (SIGALRM), so that all prior-queued timed jobs
 // are queued to be processed without accessing m_timedQueue to avoid
 // data race condition
-#ifdef _POSIX_TIMERS
+#ifdef _POSIX_TIMERS> 0
   struct sigevent sev{};
 
   // 1. Setup signal delivery
@@ -88,11 +88,11 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   }
 
   m_pimpl->m_timer_created = true;
-  this->setNextTimer(0, 10000);
+  this->setNextTimer(0, 0);
 #else /* _POSIX_TIMERS */
   m_pimpl->m_timer_created = true;
 
-  this->setNextTimer(0, 10000);
+  this->setNextTimer(0, 0);
 #endif
 
   // default, these signal handler hooks will be executed in the singleton
@@ -137,7 +137,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
-#ifdef _POSIX_TIMERS
+#ifdef _POSIX_TIMERS> 0
     timer_delete(m_pimpl->m_timerid);
 #endif
 
@@ -159,11 +159,6 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  */
 void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
-
-  while (!m_main_enter_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
-    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
-  }
-
   Dmn_Runtime_Job rjob{.m_priority = priority, .m_job = std::move(job)};
 
   switch (priority) {
@@ -184,7 +179,8 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
         "Error: invalid priority, only kHigh, kMedium and kLow is allowed");
   }
 
-  if (m_jobs_count.fetch_add(1) == 0) {
+  if (m_jobs_count.fetch_add(1) == 0 &&
+      m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
     this->runRuntimeJobExecutor();
   }
 }
@@ -266,8 +262,9 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
 
   // this will make sure that:
   // - we decrement the m_jobs_count if a job is run and
-  // - we call runRuntimeJobExecutor() if sched_stack is empty (it means that
-  //   sched does not run any job now, and we should repost it again.
+  // - we call runRuntimeJobExecutor() only if sched_stack is empty (it means
+  // that
+  //   sched does not run any running job on stack.
   if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1 &&
       this->m_sched_stack.empty()) {
     this->runRuntimeJobExecutor();
@@ -437,7 +434,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
 
   struct timespec ts{};
 
-#ifdef _POSIX_TIMERS
+#ifdef _POSIX_TIMERS> 0
   if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
 #else
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
@@ -473,7 +470,7 @@ void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
   assert(m_pimpl);
   assert(m_pimpl->m_timer_created);
 
-#ifdef _POSIX_TIMERS
+#ifdef _POSIX_TIMERS> 0
   struct itimerspec its{};
 
   its.it_value.tv_sec = sec;
