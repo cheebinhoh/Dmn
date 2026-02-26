@@ -270,7 +270,11 @@ public:
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
     struct timespec ts{};
 
+#ifdef _POSIX_TIMERS
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+#else
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+#endif /* _POSIX_TIMERS */
       auto d = std::chrono::seconds{ts.tv_sec} +
                std::chrono::nanoseconds{ts.tv_nsec};
 
