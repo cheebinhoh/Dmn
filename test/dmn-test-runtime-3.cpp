@@ -1,0 +1,182 @@
+/**
+ * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-runtime.cpp
+ * @brief The unit test for dmn-runtime module.
+ */
+
+#include <gtest/gtest.h>
+
+#include <atomic>
+#include <chrono>
+#include <iostream>
+#include <random>
+#include <stdexcept>
+#include <thread>
+
+#include <signal.h>
+#include <stdlib.h>
+#include <sys/time.h>
+
+#include "dmn-async.hpp"
+#include "dmn-runtime.hpp"
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  // 2. Define the range [100, 500]
+  std::uniform_int_distribution<> distr(100, 500);
+
+  auto inst = dmn::Dmn_Runtime_Manager::createInstance();
+  int count{};
+
+  dmn::Dmn_Runtime_Job::FncType timedJob{};
+  timedJob = [&inst, &count, &timedJob](const auto &) -> dmn::Dmn_Runtime_Task {
+    std::cout << "********* handle timerjob: " << count << "\n";
+    if (count >= 7) {
+      inst->exitMainLoop();
+    } else {
+      count++;
+      inst->addTimedJob(timedJob, std::chrono::seconds(5),
+                        dmn::Dmn_Runtime_Job::Priority::kHigh);
+    }
+
+    co_return;
+  };
+
+  inst->addTimedJob(timedJob, std::chrono::seconds(5),
+                    dmn::Dmn_Runtime_Job::Priority::kHigh);
+
+  int highRun{};
+  int mediumRun{};
+  int lowRun{};
+
+  dmn::Dmn_Proc procHigh{
+      "highjob", [&inst, &highRun, &distr, &gen, &mediumRun, &lowRun]() {
+        std::cout << "procHigh to add job\n";
+
+        for (int i = 0; i < 2; i++) {
+          inst->addJob(
+              [&highRun, &mediumRun,
+               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
+                EXPECT_TRUE(0 == lowRun);
+                EXPECT_TRUE(0 == mediumRun);
+
+                std::cout << "** high job\n";
+                highRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                co_return;
+              },
+              dmn::Dmn_Runtime_Job::Priority::kHigh);
+
+          int random_ms = distr(gen);
+          dmn::Dmn_Proc::yield();
+          std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
+        }
+
+        std::cout << "after procHigh to add job\n";
+      }};
+
+  bool hasExcept{};
+  dmn::Dmn_Proc procLow{
+      "lowjob",
+      [&inst, &lowRun, &distr, &gen, &highRun, &mediumRun, &hasExcept]() {
+        std::cout << "procLow to add job\n";
+
+        for (int i = 0; i < 3; i++) {
+          inst->addJob(
+              [&lowRun, &highRun,
+               &mediumRun](const auto &) -> dmn::Dmn_Runtime_Task {
+                EXPECT_TRUE(2 == highRun);
+                EXPECT_TRUE(2 == mediumRun);
+                std::cout << "** low job\n";
+                lowRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+
+                if (3 == lowRun) {
+                  std::cout << "********* throw\n";
+                  throw std::runtime_error("Error in lowRun to 3");
+                }
+
+                co_return;
+              },
+              dmn::Dmn_Runtime_Job::Priority::kLow,
+              [&hasExcept](std::exception_ptr &p) {
+                if (!p) {
+
+                } else {
+                  try {
+                    std::rethrow_exception(p);
+                  } catch (const std::exception &e) {
+                    hasExcept = true;
+                    std::cout << "******* exception: " << e.what() << "\n";
+                  } catch (...) {
+                    hasExcept = true;
+                    throw;
+                  }
+                }
+              });
+
+          int random_ms = distr(gen);
+          dmn::Dmn_Proc::yield();
+          std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
+        }
+
+        std::cout << "after procLow to add job\n";
+      }};
+
+  dmn::Dmn_Proc procMedium{
+      "mediumjob", [&inst, &mediumRun, &distr, &gen, &highRun, &lowRun]() {
+        std::cout << "procMedium to add job\n";
+
+        for (int i = 0; i < 2; i++) {
+          inst->addJob(
+              [&mediumRun, &highRun,
+               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
+                EXPECT_TRUE(2 == highRun);
+                EXPECT_TRUE(0 == lowRun);
+                std::cout << "** medium job\n";
+                mediumRun++;
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+
+                co_return;
+              },
+              dmn::Dmn_Runtime_Job::Priority::kMedium);
+
+          int random_ms = distr(gen);
+          dmn::Dmn_Proc::yield();
+          std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
+        }
+
+        std::cout << "after procMedium to add job\n";
+      }};
+  procHigh.exec();
+  procLow.exec();
+  procMedium.exec();
+
+  std::cout << "wait for 5 seconds\n";
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+  std::cout << "after for 5 seconds\n";
+
+  std::atomic_bool sigAlrmCalled{};
+  inst->registerSignalHandlerHook(
+      SIGALRM, [&sigAlrmCalled]([[maybe_unused]] int signo) -> void {
+        sigAlrmCalled = true;
+      });
+
+  // alarm(5);
+  inst->enterMainLoop();
+
+  EXPECT_TRUE((sigAlrmCalled));
+  EXPECT_TRUE((3 == lowRun));
+  EXPECT_TRUE((2 == mediumRun));
+  EXPECT_TRUE((2 == highRun));
+  EXPECT_TRUE((7 == count));
+  EXPECT_TRUE((hasExcept));
+
+  return RUN_ALL_TESTS();
+}
