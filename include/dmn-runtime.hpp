@@ -109,8 +109,8 @@ struct Dmn_Runtime_Task {
       bool await_ready() const noexcept { return false; }
 
       void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
-        if (h && h.promise().continuation) {
-          h.promise().continuation.resume();
+        if (h && h.promise().m_continuation) {
+          h.promise().m_continuation.resume();
         }
       }
 
@@ -119,11 +119,12 @@ struct Dmn_Runtime_Task {
 
     FinalAwaiter final_suspend() noexcept { return {}; }
 
-    void unhandled_exception() { std::terminate(); }
+    void unhandled_exception() { m_except = std::current_exception(); }
 
     void return_void() {}
 
-    std::coroutine_handle<> continuation; // The handle of the caller
+    std::coroutine_handle<> m_continuation; // The handle of the caller
+    std::exception_ptr m_except{};
   };
 
   // This makes the Dmn_Runtime_Task "Awaitable"
@@ -131,12 +132,18 @@ struct Dmn_Runtime_Task {
 
   void await_suspend(std::coroutine_handle<> caller_handle) {
     if (m_handle) {
-      m_handle.promise().continuation = caller_handle;
+      m_handle.promise().m_continuation = caller_handle;
       m_handle.resume(); // Start the child coroutine
     }
   }
 
-  void await_resume() {}
+  void await_resume() {
+    if (m_handle) {
+      if (auto &ep = m_handle.promise().m_except) {
+        std::rethrow_exception(ep);
+      }
+    }
+  }
 
   ~Dmn_Runtime_Task() noexcept {
     if (m_handle) {
