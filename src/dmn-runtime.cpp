@@ -18,15 +18,15 @@
  * - execRuntimeJobInContext(): executes a single coroutine-based job,
  *   resuming it until it either completes or suspends, interleaving
  *   lower-priority jobs between suspension points.
- * - enterMainLoop(): enables all priority queues, installs a SIGALRM
- *   handler and a POSIX/ITIMER timer to fire every 50 µs for timed
- *   job dispatch, starts the signal-wait thread which calls sigwait()
- *   and dispatches to registered handlers via async context, then
- *   blocks until exitMainLoop() is called.
+ * - enterMainLoop(): enables all priority queues, starts the signal-wait thread
+ *   which calls sigwait() and dispatches to registered handlers via async
+ *   context, then blocks until exitMainLoop() is called.
  * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
  *   SIGQUIT and SIGHUP before any threads are created so that all
  *   descendant threads inherit the same signal mask and signals are
  *   delivered only to the dedicated signal-wait thread.
+ * - SIGALRM timer is set to the next due TimedJob and rearm whenever change
+ *   is needed.
  */
 
 #include "dmn-runtime.hpp"
