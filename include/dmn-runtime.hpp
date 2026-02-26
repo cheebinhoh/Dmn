@@ -91,6 +91,8 @@ namespace dmn {
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = Clock::time_point;
+using SecInt = int64_t;
+using NSecInt = std::chrono::nanoseconds::rep;
 
 struct Dmn_Runtime_Task {
   struct promise_type {
@@ -279,7 +281,10 @@ public:
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
       this->addExecTask([this, rjob = std::move(rjob)]() {
+        auto tp = rjob.m_due;
+
         this->m_timedQueue.push(std::move(rjob));
+        this->setNextTimerSinceEpoch(tp);
       });
     } else {
       throw std::runtime_error("Error in clock_gettime: " +
@@ -325,6 +330,9 @@ private:
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
   void runRuntimeJobExecutor();
+
+  void setNextTimer(SecInt sec, NSecInt nsec);
+  void setNextTimerSinceEpoch(TimePoint tp);
 
   /**
    * Internal state
