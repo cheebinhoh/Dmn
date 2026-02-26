@@ -164,9 +164,25 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
     m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = priority,
-                       .m_job = std::move(job)};
-  m_highQueue.push(std::move(rjob));
+  Dmn_Runtime_Job rjob{.m_priority = priority, .m_job = std::move(job)};
+
+  switch (priority) {
+  case Dmn_Runtime_Job::Priority::kHigh:
+    m_highQueue.push(std::move(rjob));
+    break;
+
+  case Dmn_Runtime_Job::Priority::kMedium:
+    m_mediumQueue.push(std::move(rjob));
+    break;
+
+  case Dmn_Runtime_Job::Priority::kLow:
+    m_lowQueue.push(std::move(rjob));
+    break;
+
+  default:
+    throw std::runtime_error(
+        "Error: invalid priority, only kHigh, kMedium and kLow is allowed");
+  }
 
   if (m_jobs_count.fetch_add(1) == 0) {
     this->runRuntimeJobExecutor();

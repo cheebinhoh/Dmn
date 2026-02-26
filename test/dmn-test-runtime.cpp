@@ -41,14 +41,14 @@ int main(int argc, char *argv[]) {
     } else {
       count++;
       inst->addTimedJob(timedJob, std::chrono::seconds(5),
-                        dmn::Dmn_Runtime_Job::kHigh);
+                        dmn::Dmn_Runtime_Job::Priority::kHigh);
     }
 
     co_return;
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(5),
-                    dmn::Dmn_Runtime_Job::kHigh);
+                    dmn::Dmn_Runtime_Job::Priority::kHigh);
 
   int highRun{};
   int mediumRun{};
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
                 co_return;
               },
-              dmn::Dmn_Runtime_Job::kHigh);
+              dmn::Dmn_Runtime_Job::Priority::kHigh);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
                 co_return;
               },
-              dmn::Dmn_Runtime_Job::kLow);
+              dmn::Dmn_Runtime_Job::Priority::kLow);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 
                 co_return;
               },
-              dmn::Dmn_Runtime_Job::kMedium);
+              dmn::Dmn_Runtime_Job::Priority::kMedium);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();

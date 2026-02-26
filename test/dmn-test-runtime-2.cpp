@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(30),
-                    dmn::Dmn_Runtime_Job::kHigh);
+                    dmn::Dmn_Runtime_Job::Priority::kHigh);
 
   int lowCount{};
   int midCount{};
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
                                   co_return;
                                 },
-                                dmn::Dmn_Runtime_Job::kHigh);
+                                dmn::Dmn_Runtime_Job::Priority::kHigh);
                           } else if (3 == count) {
                             EXPECT_TRUE((0 == highCount));
                             co_await std::suspend_always{};
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
                         co_return;
                       },
-                      dmn::Dmn_Runtime_Job::kMedium);
+                      dmn::Dmn_Runtime_Job::Priority::kMedium);
                 } else if (8 == count) {
                   EXPECT_TRUE((0 == midCount));
                   co_await std::suspend_always{};
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 
               co_return;
             },
-            dmn::Dmn_Runtime_Job::kLow);
+            dmn::Dmn_Runtime_Job::Priority::kLow);
       }};
 
   proc.exec();
