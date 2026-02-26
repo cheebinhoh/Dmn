@@ -92,8 +92,6 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   this->setNextTimer(0, 50000);
 #endif
 
-
-
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
   m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
