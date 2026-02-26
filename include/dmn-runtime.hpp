@@ -106,7 +106,7 @@ struct Dmn_Runtime_Task {
 
     // When the task finishes, resume the "waiter"
     struct FinalAwaiter {
-      bool await_ready() noexcept { return false; }
+      bool await_ready() const noexcept { return false; }
 
       void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
         if (h && h.promise().continuation) {
@@ -114,7 +114,7 @@ struct Dmn_Runtime_Task {
         }
       }
 
-      void await_resume() noexcept {}
+      void await_resume() const noexcept {}
     };
 
     FinalAwaiter final_suspend() noexcept { return {}; }
@@ -126,51 +126,52 @@ struct Dmn_Runtime_Task {
     std::coroutine_handle<> continuation; // The handle of the caller
   };
 
-  std::coroutine_handle<promise_type> handle;
-
   // This makes the Dmn_Runtime_Task "Awaitable"
   bool await_ready() { return false; }
 
   void await_suspend(std::coroutine_handle<> caller_handle) {
-    if (handle) {
-      handle.promise().continuation = caller_handle;
-      handle.resume(); // Start the child coroutine
+    if (m_handle) {
+      m_handle.promise().continuation = caller_handle;
+      m_handle.resume(); // Start the child coroutine
     }
   }
 
   void await_resume() {}
 
   ~Dmn_Runtime_Task() noexcept {
-    if (handle) {
-      handle.destroy();
+    if (m_handle) {
+      m_handle.destroy();
     }
   }
 
   // Construct a task that takes ownership of the given coroutine handle.
   explicit Dmn_Runtime_Task(std::coroutine_handle<promise_type> h) noexcept
-      : handle(h) {}
+      : m_handle(h) {}
 
   Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
   Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
 
   // Move: transfer ownership
   Dmn_Runtime_Task(Dmn_Runtime_Task &&other) noexcept
-      : handle(std::exchange(other.handle, nullptr)) {}
+      : m_handle(std::exchange(other.m_handle, nullptr)) {}
 
   Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&other) noexcept {
     if (this != &other) {
-      if (handle) {
-        handle.destroy();
+      if (m_handle) {
+        m_handle.destroy();
       }
-      handle = std::exchange(other.handle, nullptr);
+      m_handle = std::exchange(other.m_handle, nullptr);
     }
     return *this;
   }
 
   [[nodiscard]] bool isValid() const {
     // Returns true if the handle points to a coroutine frame
-    return handle ? true : false;
+    return m_handle ? true : false;
   }
+
+  std::coroutine_handle<promise_type> m_handle;
+  std::exception_ptr m_except{};
 };
 
 /**

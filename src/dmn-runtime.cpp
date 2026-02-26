@@ -204,30 +204,34 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
   auto task = runningJob.m_job(runningJob);
 
-  if (task.isValid()) {
-    // runtime jobs must complete before returning to scheduler; suspension is
-    // only used for intra-job yielding and will be resumed immediately.
-    do {
-      task.handle.resume();
+  try {
+    if (task.isValid()) {
+      // runtime jobs must complete before returning to scheduler; suspension is
+      // only used for intra-job yielding and will be resumed immediately.
+      do {
+        task.m_handle.resume();
 
-      if (task.handle.done()) {
-        break;
-      } else {
-        assert(!this->m_sched_stack.empty());
-
-        switch (priority) {
-        case Dmn_Runtime_Job::Priority::kHigh:
-          // skip!
+        if (task.m_handle.done()) {
           break;
+        } else {
+          assert(!this->m_sched_stack.empty());
 
-        case Dmn_Runtime_Job::Priority::kMedium:
-        case Dmn_Runtime_Job::Priority::kLow:
-        default:
-          this->execRuntimeJobInternal();
-          break;
+          switch (priority) {
+          case Dmn_Runtime_Job::Priority::kHigh:
+            // skip!
+            break;
+
+          case Dmn_Runtime_Job::Priority::kMedium:
+          case Dmn_Runtime_Job::Priority::kLow:
+          default:
+            this->execRuntimeJobInternal();
+            break;
+          }
         }
-      }
-    } while (true);
+      } while (true);
+    }
+  } catch (...) {
+    task.m_except = std::current_exception();
   }
 
   this->m_sched_stack.pop();
@@ -369,6 +373,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
  * @param signo signal number that is raised
  */
 void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
+  assert(isRunInAsyncThread());
+
   auto ext_hooks = m_signal_handler_hooks_external.find(signo);
   if (m_signal_handler_hooks_external.end() != ext_hooks) {
     for (auto &fnc : ext_hooks->second) {
@@ -414,6 +420,8 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
  */
 void Dmn_Runtime_Manager::registerSignalHandlerHookInternal(
     int signo, SignalHandlerHook &&hook) {
+  assert(isRunInAsyncThread());
+
   auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
   extHandlerHooks.push_back(std::move(hook));
 }
