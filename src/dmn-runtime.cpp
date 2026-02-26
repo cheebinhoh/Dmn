@@ -10,8 +10,8 @@
  *   exitMainLoop().
  * - addJob() / addHighJob() / addMediumJob() / addLowJob(): enqueue
  *   Dmn_Runtime_Job objects into the appropriate priority buffer.
- *   Each method spins on its own atomic flag to prevent jobs from
- *   being submitted before enterMainLoop() enables the queue.
+ *   Each method spins on its enter main loop atomic flag to prevent
+ *   jobs from being submitted before enterMainLoop() enables the queue.
  * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
  *   itself again if there is more job to be executed
