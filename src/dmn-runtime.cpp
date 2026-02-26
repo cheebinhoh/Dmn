@@ -59,7 +59,7 @@ sigset_t Dmn_Runtime_Manager::s_mask{};
 
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl {
-#ifdef _POSIX_TIMERS> 0
+#ifdef _POSIX_TIMERS
   timer_t m_timerid{};
   bool m_timer_created{};
 #else
@@ -70,12 +70,14 @@ struct Dmn_Runtime_Manager_Impl {
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
+  this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
+
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
 
 // set first timer (SIGALRM), so that all prior-queued timed jobs
 // are queued to be processed without accessing m_timedQueue to avoid
 // data race condition
-#ifdef _POSIX_TIMERS> 0
+#ifdef _POSIX_TIMERS
   struct sigevent sev{};
 
   // 1. Setup signal delivery
@@ -106,6 +108,8 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   };
 
   m_signal_handler_hooks[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
+    assert(isRunInAsyncThread());
+
     if (m_timedQueue.empty()) {
       return;
     }
@@ -137,7 +141,7 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
-#ifdef _POSIX_TIMERS> 0
+#ifdef _POSIX_TIMERS
     timer_delete(m_pimpl->m_timerid);
 #endif
 
@@ -191,6 +195,8 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
  * @param job The job to be run in the runtime context
  */
 void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
+  assert(isRunInAsyncThread());
+
   auto priority = job.m_priority;
 
   this->m_sched_stack.push(std::move(job));
@@ -376,6 +382,16 @@ void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
   }
 }
 
+/**
+ * @brief The method returns true or false if it is called within the runtime
+ * singleton asychronous thread context.
+ *
+ * @return True or false
+ */
+auto Dmn_Runtime_Manager::isRunInAsyncThread() -> bool {
+  return std::this_thread::get_id() == m_asyncThreadId;
+}
+
 void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
                                                     SignalHandlerHook &&hook) {
   this->addExecTask([this, signo, hook = std::move(hook)]() mutable {
@@ -444,7 +460,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
 
   struct timespec ts{};
 
-#ifdef _POSIX_TIMERS> 0
+#ifdef _POSIX_TIMERS
   if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
 #else
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
@@ -485,7 +501,7 @@ void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
   assert(m_pimpl);
   assert(m_pimpl->m_timer_created);
 
-#ifdef _POSIX_TIMERS> 0
+#ifdef _POSIX_TIMERS
   struct itimerspec its{};
 
   its.it_value.tv_sec = sec;
