@@ -285,7 +285,7 @@ public:
         auto tp = rjob.m_due;
 
         this->m_timedQueue.push(std::move(rjob));
-        this->setNextTimerSinceEpoch(tp);
+        this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
       });
     } else {
       throw std::runtime_error("Error in clock_gettime: " +
