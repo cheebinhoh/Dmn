@@ -263,8 +263,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   // this will make sure that:
   // - we decrement the m_jobs_count if a job is run and
   // - we call runRuntimeJobExecutor() only if sched_stack is empty (it means
-  // that
-  //   sched does not run any running job on stack.
+  //   that sched does not run any running job on stack.
   if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1 &&
       this->m_sched_stack.empty()) {
     this->runRuntimeJobExecutor();
@@ -390,8 +389,8 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
  * handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP
  * can NOT be handled.
  *
- *        This is a private method to be called in the Dmn_Runtime_Manager
- *        instance asynchronous thread context.
+ * This is a private method to be called in the Dmn_Runtime_Manager instance
+ * asynchronous thread context.
  *
  * @param signo The POSIX signal number
  * @param hook  The signal handler hook function to be called when the signal is
@@ -423,10 +422,21 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
   }
 }
 
+/**
+ * @brief The method runs the job executor in the singleton asynchronous thread
+ * context.
+ */
 void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
   this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
 }
 
+/**
+ * @brief The method sets the next scheduled timer (SIGALRM) according to the
+ * timepoint. if the timepoint is in now or the past, SIGALRM is scheduled after
+ * 10ms.
+ *
+ * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
+ */
 void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
   if (!m_pimpl) {
     return;
@@ -447,9 +457,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
     // 1. Subtract to get the total duration
     auto diff = tp - tpNow;
 
-    if (diff < std::chrono::nanoseconds::zero() ||
-        diff == std::chrono::nanoseconds::zero()) {
-
+    if (diff <= std::chrono::nanoseconds::zero()) {
       this->setNextTimer(0, 10000); // run it in next 10 microseconds
     } else {
       // 2. Extract the whole seconds
@@ -466,6 +474,13 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
   }
 }
 
+/**
+ * @brief The method sets the next scheduled timer (SIGALRM) after seconds +
+ * nanoseconds.
+ *
+ * @param sec The seconds after that to run the timer (SIGALRM)
+ * @param nsec The nanoseconds after that to run the timer (SIGALRM)
+ */
 void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
   assert(m_pimpl);
   assert(m_pimpl->m_timer_created);
@@ -475,8 +490,8 @@ void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
 
   its.it_value.tv_sec = sec;
   its.it_value.tv_nsec = nsec;
-  its.it_interval.tv_sec = 0;  // sec;
-  its.it_interval.tv_nsec = 0; // nsec;
+  its.it_interval.tv_sec = 0;
+  its.it_interval.tv_nsec = 0;
 
   int err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
   if (-1 == err) {
@@ -489,8 +504,8 @@ void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
   timer.it_value.tv_sec = sec;
   timer.it_value.tv_usec = nsec / 1000;
 
-  timer.it_interval.tv_sec = 0;  // sec;
-  timer.it_interval.tv_usec = 0; // nsec / 1000;
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 0;
 
   int err = setitimer(ITIMER_REAL, &timer, nullptr);
   if (-1 == err) {

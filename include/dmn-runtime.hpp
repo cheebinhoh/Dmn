@@ -13,8 +13,8 @@
  *   context.
  * - Scheduling and executing asynchronous jobs with priority levels
  *   (high/medium/low) as well as delayed (timed) jobs.
- * - All jobs are scheduled (if via addTimedJob()), serialized and executed in
- *   a singleton asynchronous thread context.
+ * - All jobs are scheduled, serialized and executed in a singleton asynchronous
+ *   thread context.
  * - Executing jobs scheduled through addJob() and addTimedJob() sequentially
  *   according to priority within a C++ coroutine execution model.
  *
@@ -44,8 +44,8 @@
  *   std::once_flag to prevent race conditions in Dmn_Singleton.
  * - Signal handlers avoid performing non‑async‑signal‑safe operations inside
  *   the raw signal handler but are handled through a dedicated Dmn_Proc thread
- *   and then the attached signal handler hook function(s) are executed in the
- *   singleton asynchronous thread context.
+ *   as the singleton asynchronous thread context and then the attached signal
+ *   handler hook function(s) are executed in the thread context.
  *
  * Usage Summary
  * -------------
@@ -218,12 +218,16 @@ struct Dmn_Runtime_Manager_Impl;
  * runtime thread used for processing.
  *
  * Public API highlights:
- *  - addJob(job, priority): enqueue a job for (near-)immediate execution.
- *  - addTimedJob(job, duration, priority): schedule job to run after duration.
+ *  - addJob(job, priority): enqueue a job for immediate execution in the
+ * singleton asynchronous thread context.
+ *  - addTimedJob(job, duration, priority): schedule job to run after duration
+ * in the singleton asychronous thread context.
  *  - registerSignalHandlerHook(signo, hook): register a handler to be invoked
- *    when the given signal is delivered.
- *  - enterMainLoop() / exitMainLoop(): control the runtime processing
- * lifecycle.
+ *    when the given signal is delivered in the singleton asychronous thread
+ * context.
+ *  - enterMainLoop() / exitMainLoop(): control the runtime starts processing
+ *    jobs and signal handler hooks in the singleton asynchronous thread
+ * context.
  *
  * Important behaviour:
  *  - Signals used by the runtime are blocked prior to creating the singleton
