@@ -71,7 +71,6 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
-  m_pimpl->m_timer_created = true;
 
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
@@ -85,10 +84,15 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
                              std::system_category().message(errno));
   }
 
+  m_pimpl->m_timer_created = true;
   this->setNextTimer(0, 50000);
 #else /* _POSIX_TIMERS */
+  m_pimpl->m_timer_created = true;
+
   this->setNextTimer(0, 50000);
 #endif
+
+
 
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks

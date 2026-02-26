@@ -282,8 +282,6 @@ public:
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
       this->addExecTask([this, rjob = std::move(rjob)]() {
-        auto tp = rjob.m_due;
-
         this->m_timedQueue.push(std::move(rjob));
         this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
       });
