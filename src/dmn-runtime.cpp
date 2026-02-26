@@ -115,7 +115,11 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     }
 
     struct timespec ts{};
+#ifdef _POSIX_TIMERS
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+#else
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+#endif /* _POSIX_TIMERS */
       auto d = std::chrono::seconds{ts.tv_sec} +
                std::chrono::nanoseconds{ts.tv_nsec};
 
@@ -126,7 +130,8 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
         if (tp >= job.m_due) {
           m_timedQueue.pop();
 
-          this->addJob(std::move(job.m_job), job.m_priority);
+          this->addJob(std::move(job.m_fnc), job.m_priority,
+                       std::move(job.m_onErrorFnc));
         } else {
           this->setNextTimerSinceEpoch(job.m_due);
 
@@ -161,9 +166,12 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  * @param job The asynchronous job
  * @param priority The priority of the asynchronous job
  */
-void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
-                                 Dmn_Runtime_Job::Priority priority) {
-  Dmn_Runtime_Job rjob{.m_priority = priority, .m_job = std::move(job)};
+void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType fnc,
+                                 Dmn_Runtime_Job::Priority priority,
+                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
+  Dmn_Runtime_Job rjob{.m_priority = priority,
+                       .m_fnc = std::move(fnc),
+                       .m_onErrorFnc = std::move(onErrorFnc)};
 
   switch (priority) {
   case Dmn_Runtime_Job::Priority::kHigh:
@@ -202,7 +210,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
   this->m_sched_stack.push(std::move(job));
 
   const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
-  auto task = runningJob.m_job(runningJob);
+  auto task = runningJob.m_fnc(runningJob);
 
   try {
     if (task.isValid()) {
@@ -233,7 +241,10 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
       } while (true);
     }
   } catch (...) {
-    task.m_except = std::current_exception();
+    if (runningJob.m_onErrorFnc) {
+      std::exception_ptr ep = std::current_exception();
+      runningJob.m_onErrorFnc(ep);
+    }
   }
 
   this->m_sched_stack.pop();

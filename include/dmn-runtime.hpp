@@ -195,12 +195,15 @@ struct Dmn_Runtime_Task {
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
+  using OnErrorFncType = std::function<void(std::exception_ptr &)>;
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
   Priority m_priority{Priority::kMedium};
-  FncType m_job{};
+  FncType m_fnc{};
   TimePoint m_due{};
+
+  OnErrorFncType m_onErrorFnc{};
 };
 
 // TimedJobComparator
@@ -259,15 +262,16 @@ public:
   Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 
   /**
-   * Enqueue a job for immediate execution with the given priority.
+   * @brief Enqueue a job for immediate execution with the given priority.
    * The runtime will schedule the job onto the appropriate internal buffer.
    */
   void addJob(
-      Dmn_Runtime_Job::FncType job,
-      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium);
+      Dmn_Runtime_Job::FncType fnc,
+      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
+      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
-   * Schedule a job to run after the specified duration.
+   * @brief Schedule a job to run after the specified duration.
    * If the kernel clock read fails, an exception is thrown.
    *
    * Template parameters:
@@ -278,8 +282,9 @@ public:
    */
   template <class Rep, class Period>
   void addTimedJob(
-      Dmn_Runtime_Job::FncType job, std::chrono::duration<Rep, Period> duration,
-      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium) {
+      Dmn_Runtime_Job::FncType fnc, std::chrono::duration<Rep, Period> duration,
+      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
+      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {}) {
     struct timespec ts{};
 
 #ifdef _POSIX_TIMERS
@@ -293,8 +298,10 @@ public:
       TimePoint tp =
           TimePoint{std::chrono::duration_cast<Clock::duration>(d)} + duration;
 
-      Dmn_Runtime_Job rjob{
-          .m_priority = priority, .m_job = std::move(job), .m_due = tp};
+      Dmn_Runtime_Job rjob{.m_priority = priority,
+                           .m_fnc = std::move(fnc),
+                           .m_due = tp,
+                           .m_onErrorFnc = std::move(onErrorFnc)};
 
       // add rjob to m_timedQueue via singleton main asynchronous thread
       this->addExecTask([this, rjob = std::move(rjob)]() {
