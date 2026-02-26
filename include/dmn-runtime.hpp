@@ -71,6 +71,7 @@
 #include <chrono>
 #include <coroutine>
 #include <csignal>
+#include <cstdint>
 #include <ctime>
 #include <exception>
 #include <functional>
