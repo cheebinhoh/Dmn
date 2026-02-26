@@ -99,6 +99,8 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
           this->addJob(std::move(job.m_job), job.m_priority);
         } else {
+          this->setNextTimerSinceEpoch(job.m_due);
+
           break;
         }
       }
@@ -286,6 +288,8 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
     m_main_exit_atomic_flag.notify_all();
 
+    this->setNextTimer(0, 50000);
+
     // after set the main loop enter (false) and exit (true) flag, we just
     // have to wait for signalWaitProc to gradefully exit as it is triggered
     // at fixed interval before we clear the timer.
@@ -343,10 +347,10 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   Dmn_Proc::yield();
 
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
+  m_pimpl->m_timer_created = true;
 
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
-  struct itimerspec its{};
 
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
@@ -357,36 +361,10 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                              std::system_category().message(errno));
   }
 
-  // 2. Set for 50 microseconds (0.05ms)
-  its.it_value.tv_sec = 0;
-  its.it_value.tv_nsec = 50000;    // 50,000 ns = 50 us
-  its.it_interval.tv_sec = 0;      // Periodic repeat
-  its.it_interval.tv_nsec = 50000; // Periodic repeat
-
-  err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
-  if (-1 == err) {
-    throw std::runtime_error("Error in timer_settime: " +
-                             std::system_category().message(errno));
-  }
+  this->setNextTimer(0, 50000);
 #else /* _POSIX_TIMERS */
-  struct itimerval timer{};
-
-  // Set initial delay to 50 microseconds
-  timer.it_value.tv_sec = 0;
-  timer.it_value.tv_usec = 50;
-
-  // Set repeat interval to 50 microseconds
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 50;
-
-  int err = setitimer(ITIMER_REAL, &timer, nullptr);
-  if (-1 == err) {
-    throw std::runtime_error("Error in setitimer: " +
-                             std::system_category().message(errno));
-  }
+  this->setNextTimer(0, 50000);
 #endif
-
-  m_pimpl->m_timer_created = true;
 
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
@@ -492,6 +470,73 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
 
 void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
   this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+}
+
+void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
+  if (!m_pimpl) {
+    return;
+  }
+
+  struct timespec ts{};
+
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+    auto d =
+        std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec};
+
+    TimePoint tpNow = TimePoint{std::chrono::duration_cast<Clock::duration>(d)};
+
+    // 1. Subtract to get the total duration
+    auto diff = tp - tpNow;
+
+    if (diff < std::chrono::nanoseconds::zero() ||
+        diff == std::chrono::nanoseconds::zero()) {
+
+      this->setNextTimer(0, 10000); // run it in next 10 microseconds
+    } else {
+      // 2. Extract the whole seconds
+      auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
+
+      // 3. Extract the remaining nanoseconds (the "remainder")
+      auto nsecs =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(diff - secs);
+
+      this->setNextTimer(secs.count(), nsecs.count());
+    }
+  }
+}
+
+void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
+  assert(m_pimpl);
+  assert(m_pimpl->m_timer_created);
+
+#ifdef _POSIX_TIMERS
+  struct itimerspec its{};
+
+  its.it_value.tv_sec = sec;
+  its.it_value.tv_nsec = nsec;
+  its.it_interval.tv_sec = 0;  // sec;
+  its.it_interval.tv_nsec = 0; // nsec;
+
+  err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_settime: " +
+                             std::system_category().message(errno));
+  }
+#else /* _POSIX_TIMERS */
+  struct itimerval timer{};
+
+  timer.it_value.tv_sec = sec;
+  timer.it_value.tv_usec = nsec / 1000;
+
+  timer.it_interval.tv_sec = 0;  // sec;
+  timer.it_interval.tv_usec = 0; // nsec / 1000;
+
+  int err = setitimer(ITIMER_REAL, &timer, nullptr);
+  if (-1 == err) {
+    throw std::runtime_error("Error in setitimer: " +
+                             std::system_category().message(errno));
+  }
+#endif
 }
 
 } // namespace dmn
