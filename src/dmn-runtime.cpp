@@ -449,7 +449,7 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
 /**
  * @brief The method sets the next scheduled timer (SIGALRM) according to the
  * timepoint. if the timepoint is in now or the past, SIGALRM is scheduled after
- * 10ms.
+ * 10us.
  *
  * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
  */
