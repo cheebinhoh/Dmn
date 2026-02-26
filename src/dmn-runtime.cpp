@@ -70,6 +70,26 @@ struct Dmn_Runtime_Manager_Impl {
 Dmn_Runtime_Manager::Dmn_Runtime_Manager()
     : Dmn_Singleton{}, Dmn_Async{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
+  m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
+  m_pimpl->m_timer_created = true;
+
+#ifdef _POSIX_TIMERS
+  struct sigevent sev{};
+
+  // 1. Setup signal delivery
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = SIGALRM;
+  int err = timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
+  if (-1 == err) {
+    throw std::runtime_error("Error in timer_create: " +
+                             std::system_category().message(errno));
+  }
+
+  this->setNextTimer(0, 50000);
+#else /* _POSIX_TIMERS */
+  this->setNextTimer(0, 50000);
+#endif
+
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
   m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
@@ -346,26 +366,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
   m_main_enter_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
-  m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
-  m_pimpl->m_timer_created = true;
-
-#ifdef _POSIX_TIMERS
-  struct sigevent sev{};
-
-  // 1. Setup signal delivery
-  sev.sigev_notify = SIGEV_SIGNAL;
-  sev.sigev_signo = SIGALRM;
-  int err = timer_create(CLOCK_MONOTONIC, &sev, &(m_pimpl->m_timerid));
-  if (-1 == err) {
-    throw std::runtime_error("Error in timer_create: " +
-                             std::system_category().message(errno));
-  }
-
-  this->setNextTimer(0, 50000);
-#else /* _POSIX_TIMERS */
-  this->setNextTimer(0, 50000);
-#endif
-
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
       "DmnRuntimeManager_SignalWait", [this]() -> void {
         while (true) {
@@ -517,7 +517,7 @@ void Dmn_Runtime_Manager::setNextTimer(SecInt sec, NSecInt nsec) {
   its.it_interval.tv_sec = 0;  // sec;
   its.it_interval.tv_nsec = 0; // nsec;
 
-  err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
+  int err = timer_settime(m_pimpl->m_timerid, 0, &its, nullptr);
   if (-1 == err) {
     throw std::runtime_error("Error in timer_settime: " +
                              std::system_category().message(errno));
