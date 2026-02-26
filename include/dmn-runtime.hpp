@@ -187,11 +187,12 @@ struct Dmn_Runtime_Task {
  * Represents a unit of work that can be scheduled and executed by the runtime.
  *
  * Members:
- *  - m_priority: Priority level for scheduling (kHigh, kMedium, kLow).
- *  - m_job: Callable that performs the work. It is invoked with the job
+ *  - m_priority: Priority level for scheduling (kSched, kHigh, kMedium, kLow).
+ *  - m_fnc: Callable that performs the work. It is invoked with the job
  *           metadata so the callable can inspect runtime fields if needed.
  *  - m_due: TimePoint representing the absolute time (since boot/monotonic
  *           start) when the job should be executed.
+ *  - m_onErrorFnc: Callable for exception thrown inside m_fnc Callable.
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
