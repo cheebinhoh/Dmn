@@ -506,6 +506,8 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
 
       this->setNextTimer(secs.count(), nsecs.count());
     }
+  } else {
+    this->setNextTimer(0, 50000); // run it in next 50 microseconds
   }
 }
 
