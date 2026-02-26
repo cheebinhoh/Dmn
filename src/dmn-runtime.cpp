@@ -159,74 +159,18 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
  */
 void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType job,
                                  Dmn_Runtime_Job::Priority priority) {
-  switch (priority) {
-  case Dmn_Runtime_Job::kHigh:
-    this->addHighJob(std::move(job));
-    break;
 
-  case Dmn_Runtime_Job::kMedium:
-    this->addMediumJob(std::move(job));
-    break;
-
-  case Dmn_Runtime_Job::kLow:
-    this->addLowJob(std::move(job));
-    break;
-
-  default:
-    assert(false && "Unsupported priority type");
-    throw std::runtime_error("Unsupported priority type");
-
-    break;
-  }
-
-  if (m_jobs_count.fetch_add(1) == 0) {
-    this->runRuntimeJobExecutor();
-  }
-}
-
-/**
- * @brief The method will add high priority asynchronous job.
- *
- * @param job The high priority asynchronous job
- */
-void Dmn_Runtime_Manager::addHighJob(Dmn_Runtime_Job::FncType &&job) {
   while (!m_main_enter_atomic_flag.test()) { // NOLINT(altera-unroll-loops)
     m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
   }
 
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kHigh,
+  Dmn_Runtime_Job rjob{.m_priority = priority,
                        .m_job = std::move(job)};
   m_highQueue.push(std::move(rjob));
-}
 
-/**
- * @brief The method will add low priority asynchronous job.
- *
- * @param job The low priority asynchronous job
- */
-void Dmn_Runtime_Manager::addLowJob(Dmn_Runtime_Job::FncType &&job) {
-  while (!m_main_enter_atomic_flag.test()) {
-    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
+  if (m_jobs_count.fetch_add(1) == 0) {
+    this->runRuntimeJobExecutor();
   }
-
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kLow,
-                       .m_job = std::move(job)};
-  m_lowQueue.push(std::move(rjob));
-}
-
-/**
- * @brief The method will add medium priority asynchronous job.
- *
- * @param job The medium priority asynchronous job
- */
-void Dmn_Runtime_Manager::addMediumJob(Dmn_Runtime_Job::FncType &&job) {
-  while (!m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
-    m_main_enter_atomic_flag.wait(false, std::memory_order_relaxed);
-  }
-
-  Dmn_Runtime_Job rjob{.m_priority = Dmn_Runtime_Job::kMedium,
-                       .m_job = std::move(job)};
-  m_mediumQueue.push(std::move(rjob));
 }
 
 /**
@@ -254,12 +198,12 @@ void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
         assert(!this->m_sched_stack.empty());
 
         switch (priority) {
-        case Dmn_Runtime_Job::kHigh:
+        case Dmn_Runtime_Job::Priority::kHigh:
           // skip!
           break;
 
-        case Dmn_Runtime_Job::kMedium:
-        case Dmn_Runtime_Job::kLow:
+        case Dmn_Runtime_Job::Priority::kMedium:
+        case Dmn_Runtime_Job::Priority::kLow:
         default:
           this->execRuntimeJobInternal();
           break;
@@ -282,18 +226,18 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     state = this->m_sched_stack.top().m_priority;
   }
 
-  if (state != Dmn_Runtime_Job::kHigh) {
+  if (state != Dmn_Runtime_Job::Priority::kHigh) {
     auto item = m_highQueue.popNoWait();
     if (item) {
       this->execRuntimeJobInContext(std::move(*item));
       jobIsRun = true;
-    } else if (state != Dmn_Runtime_Job::kMedium) {
+    } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
       item = m_mediumQueue.popNoWait();
 
       if (item) {
         this->execRuntimeJobInContext(std::move(*item));
         jobIsRun = true;
-      } else if (state != Dmn_Runtime_Job::kLow) {
+      } else if (state != Dmn_Runtime_Job::Priority::kLow) {
 
         item = m_lowQueue.popNoWait();
         if (item) {
@@ -505,7 +449,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
       this->setNextTimer(secs.count(), nsecs.count());
     }
   } else {
-    this->setNextTimer(0, 10000); // run it in next 50 microseconds
+    this->setNextTimer(0, 10000); // run it in next 10 microseconds
   }
 }
 

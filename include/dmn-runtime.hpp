@@ -167,7 +167,7 @@ struct Dmn_Runtime_Task {
     return *this;
   }
 
-  bool isValid() const {
+  [[nodiscard]] bool isValid() const {
     // Returns true if the handle points to a coroutine frame
     return handle ? true : false;
   }
@@ -188,9 +188,9 @@ struct Dmn_Runtime_Task {
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
 
-  enum Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
+  enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
-  Priority m_priority{kMedium};
+  Priority m_priority{Priority::kMedium};
   FncType m_job{};
   TimePoint m_due{};
 };
@@ -321,11 +321,6 @@ public:
   static void runPriorToCreateInstance();
 
 private:
-  // Helpers for pushing jobs to the appropriate priority buffer.
-  void addHighJob(Dmn_Runtime_Job::FncType &&job);
-  void addLowJob(Dmn_Runtime_Job::FncType &&job);
-  void addMediumJob(Dmn_Runtime_Job::FncType &&job);
-
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);
