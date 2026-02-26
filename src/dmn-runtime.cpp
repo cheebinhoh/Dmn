@@ -72,6 +72,9 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
 
+// set first timer (SIGALRM), so that all prior-queued timed jobs
+// are queued to be processed without accessing m_timedQueue to avoid
+// data race condition
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
 
@@ -310,6 +313,7 @@ void Dmn_Runtime_Manager::exitMainLoop() {
     m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
     m_main_exit_atomic_flag.notify_all();
 
+    // set the last timer, so that signalWaitProc gradefully exit.
     this->setNextTimer(0, 50000);
 
     // after set the main loop enter (false) and exit (true) flag, we just
@@ -322,25 +326,9 @@ void Dmn_Runtime_Manager::exitMainLoop() {
   }
 
   if (m_pimpl) {
-    if (m_pimpl->m_timer_created) {
-#ifdef _POSIX_TIMERS
-      struct itimerspec stop_its{};
-
-      timer_settime(m_pimpl->m_timerid, 0, &stop_its, nullptr);
-
-      timer_delete(m_pimpl->m_timerid);
-#else /* _POSIX_TIMERS */
-      struct itimerval timer{};
-
-      timer.it_value.tv_sec = 0;
-      timer.it_value.tv_usec = 0;
-
-      timer.it_interval.tv_sec = 0;
-      timer.it_interval.tv_usec = 0;
-
-      setitimer(ITIMER_REAL, &timer, nullptr);
-#endif
-    }
+    this->setNextTimer(
+        0, 0); // disable timer though m_signalWaitProc shall already done so
+               // but if it is crashed, we still disable timer.
 
     m_pimpl->m_timer_created = false;
 
@@ -381,6 +369,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
           }
 
           if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+            setNextTimer(0, 0);
+
             break;
           } else {
             this->addExecTask([this, signo]() {
