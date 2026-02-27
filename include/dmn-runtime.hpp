@@ -282,8 +282,7 @@ public:
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
-   * @brief Enqueue a job to be run after the specified duration. If the kernel
-   *        clock read fails, an exception is thrown.
+   * @brief Enqueue a job to be run after the specified duration.
    *
    *        Template parameters:
    *        - Rep, Period: std::chrono::duration parameterization.

@@ -15,9 +15,12 @@
  * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
  *   itself again if there is more job to be executed
- * - addRuntimeJobToCoroutineSchedulerContext(): add runtime job and its
- * co-routine task to scheduler context, so that it will be picked up and
- * executed.
+ * - addRuntimeJobToCoroutineSchedulerContext(): adds runtime job and its
+ *   co-routine task to scheduler context, so that it will be picked up and
+ *   executed by the coroutine scheduler.
+ * - runRuntimeCoroutineScheduler(): retrieves the scheduled job (and
+ *   corresponding co-routine task) and execute it in the singleton asynchronous
+ *   thread context.
  * - enterMainLoop(): enables all priority queues, starts the signal-wait thread
  *   which calls sigwait() and dispatches to registered handlers via async
  *   context, then blocks until exitMainLoop() is called.
