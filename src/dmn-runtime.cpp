@@ -221,7 +221,7 @@ void Dmn_Runtime_Manager::addRuntimeJobToCoroutineSchedulerContext(
 }
 
 /**
- * @brief The method will execute the job continously.
+ * @brief The method will schedule job and dispatch it as a coroutine task.
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
@@ -256,13 +256,21 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
   size_t jobsCountInScheduler = this->m_sched_job.size();
 
   if (jobsCountInScheduler > 0) {
-    this->runRuntimeCoroutineScheduler();
+    bool done = this->runRuntimeCoroutineScheduler();
 
-    if (this->m_sched_job.size() < jobsCountInScheduler &&
-        this->m_jobs_count.fetch_sub(1) > 1) {
+    if (!done) {
+      assert(!this->m_sched_job.empty());
+      assert(!this->m_sched_task.empty());
+      assert(this->m_sched_job.size() == jobsCountInScheduler);
+
       this->runRuntimeJobExecutor();
-    } else if (this->m_sched_task.size() > 0) {
+    } else if (this->m_sched_job.size() < jobsCountInScheduler &&
+               this->m_jobs_count.fetch_sub(1) > 1) {
       this->runRuntimeJobExecutor();
+    } else {
+      assert(this->m_sched_job.empty());
+      assert(this->m_sched_task.empty());
+      assert(0 == m_jobs_count.load(std::memory_order_acquire));
     }
   }
 }
@@ -433,7 +441,16 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
   }
 }
 
-void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
+/**
+ * @brief The method is a coroutine task scheduler that will run the top
+ *        task until it is done or suspend, true if the task run is complete,
+ *        or false if it is suspend.
+ *
+ * @return True if the task is completed or false if it is suspend.
+ */
+auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
+  bool complete{true};
+
   assert(isRunInAsyncThread());
   assert(this->m_sched_task.size() > 0);
   assert(this->m_sched_job.size() > 0);
@@ -458,12 +475,11 @@ void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
           this->m_sched_job.pop();
 
           break;
-        } else if (m_jobs_count.load(std::memory_order_acquire) >
-                   this->m_sched_task.size()) {
+        } else {
           assert(!this->m_sched_job.empty());
           assert(!this->m_sched_task.empty());
 
-          this->runRuntimeJobExecutor();
+          complete = false;
           break;
         }
       } while (true);
@@ -480,6 +496,8 @@ void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
     this->m_sched_task.pop();
     this->m_sched_job.pop();
   }
+
+  return complete;
 }
 
 /**
