@@ -211,13 +211,20 @@ void Dmn_Runtime_Manager::clearSignalHandlerHookInternal(int signo) {
 void Dmn_Runtime_Manager::addRuntimeJobToCoroutineSchedulerContext(
     Dmn_Runtime_Job &&job) {
   assert(isRunInAsyncThread());
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
 
-  this->m_sched_job.push(std::move(job));
+  try {
+    auto task = job.m_fnc(job);
+    this->m_sched_task.push(std::move(task));
+    this->m_sched_job.push(std::move(job));
+  } catch (...) {
+    if (job.m_onErrorFnc) {
+      std::exception_ptr ep = std::current_exception();
+      job.m_onErrorFnc(ep);
+    }
+  }
 
-  const Dmn_Runtime_Job &runningJob = this->m_sched_job.top();
-
-  auto newTask = runningJob.m_fnc(runningJob);
-  this->m_sched_task.push(std::move(newTask));
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
 }
 
 /**
