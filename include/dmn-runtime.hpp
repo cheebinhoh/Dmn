@@ -77,7 +77,6 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <queue>
 #include <stack>
 #include <system_error>
