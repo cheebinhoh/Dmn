@@ -77,6 +77,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <stack>
 #include <system_error>
@@ -168,6 +169,7 @@ struct Dmn_Runtime_Task {
       if (m_handle) {
         m_handle.destroy();
       }
+
       m_handle = std::exchange(other.m_handle, nullptr);
     }
     return *this;
@@ -366,9 +368,10 @@ public:
   static void runPriorToCreateInstance();
 
 private:
+  void addRuntimeJobToCoroutineSchedulerContext(Dmn_Runtime_Job &&job);
+
   void clearSignalHandlerHookInternal(int signo);
 
-  void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);
 
@@ -376,6 +379,7 @@ private:
 
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
+  void runRuntimeCoroutineScheduler();
   void runRuntimeJobExecutor();
 
   void setNextTimer(SecInt sec, NSecInt nsec);
@@ -410,7 +414,8 @@ private:
   std::atomic<std::size_t> m_jobs_count{};
 
   // Small LIFO stack used by the scheduler to reorder or delay execution
-  std::stack<Dmn_Runtime_Job> m_sched_stack{};
+  std::stack<Dmn_Runtime_Job> m_sched_job{};
+  std::stack<Dmn_Runtime_Task> m_sched_task{};
 
   // Wrap platform specific implementation behind this unique ptr object
   // So that specific part of it is within dmn-runtime.cpp

@@ -15,9 +15,9 @@
  * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
  *   itself again if there is more job to be executed
- * - execRuntimeJobInContext(): executes a single coroutine-based job,
- *   resuming it until it either completes or suspends, interleaving
- *   lower-priority jobs between suspension points.
+ * - addRuntimeJobToCoroutineSchedulerContext(): add runtime job and its
+ * co-routine task to scheduler context, so that it will be picked up and
+ * executed.
  * - enterMainLoop(): enables all priority queues, starts the signal-wait thread
  *   which calls sigwait() and dispatches to registered handlers via async
  *   context, then blocks until exitMainLoop() is called.
@@ -124,12 +124,12 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       TimePoint tp{std::chrono::duration_cast<Clock::duration>(d)};
 
       while (!m_timedQueue.empty()) {
-        auto job = m_timedQueue.top();
+        auto &job = m_timedQueue.top();
         if (tp >= job.m_due) {
-          m_timedQueue.pop();
-
           this->addJob(std::move(job.m_fnc), job.m_priority,
                        std::move(job.m_onErrorFnc));
+
+          m_timedQueue.pop();
         } else {
           this->setNextTimerSinceEpoch(job.m_due);
 
@@ -214,94 +214,63 @@ void Dmn_Runtime_Manager::clearSignalHandlerHookInternal(int signo) {
  *
  * @param job The job to be run in the runtime context
  */
-void Dmn_Runtime_Manager::execRuntimeJobInContext(Dmn_Runtime_Job &&job) {
+void Dmn_Runtime_Manager::addRuntimeJobToCoroutineSchedulerContext(
+    Dmn_Runtime_Job &&job) {
   assert(isRunInAsyncThread());
 
-  auto priority = job.m_priority;
+  this->m_sched_job.push(std::move(job));
 
-  this->m_sched_stack.push(std::move(job));
+  const Dmn_Runtime_Job &runningJob = this->m_sched_job.top();
 
-  const Dmn_Runtime_Job &runningJob = this->m_sched_stack.top();
-  auto task = runningJob.m_fnc(runningJob);
-
-  try {
-    if (task.isValid()) {
-      // runtime jobs must complete before returning to scheduler; suspension is
-      // only used for intra-job yielding and will be resumed immediately.
-      do {
-        task.m_handle.resume();
-
-        if (task.m_handle.done()) {
-          task.await_resume(); // rethrow exception captured by
-                               // promise_type::unhandled_exception()
-          break;
-        } else {
-          assert(!this->m_sched_stack.empty());
-
-          switch (priority) {
-          case Dmn_Runtime_Job::Priority::kHigh:
-            // skip!
-            break;
-
-          case Dmn_Runtime_Job::Priority::kMedium:
-          case Dmn_Runtime_Job::Priority::kLow:
-          default:
-            this->execRuntimeJobInternal();
-            break;
-          }
-        }
-      } while (true);
-    }
-  } catch (...) {
-    if (runningJob.m_onErrorFnc) {
-      std::exception_ptr ep = std::current_exception();
-      runningJob.m_onErrorFnc(ep);
-    }
-  }
-
-  this->m_sched_stack.pop();
+  auto newTask = runningJob.m_fnc(runningJob);
+  this->m_sched_task.push(std::move(newTask));
 }
 
 /**
  * @brief The method will execute the job continously.
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal() {
-  bool jobIsRun{};
+  bool jobIsAdded{};
   Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
 
-  if (!this->m_sched_stack.empty()) {
-    state = this->m_sched_stack.top().m_priority;
+  assert(isRunInAsyncThread());
+
+  if (!this->m_sched_job.empty()) {
+    state = this->m_sched_job.top().m_priority;
   }
 
   if (state != Dmn_Runtime_Job::Priority::kHigh) {
     auto item = m_highQueue.popNoWait();
     if (item) {
-      this->execRuntimeJobInContext(std::move(*item));
-      jobIsRun = true;
+      this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+      jobIsAdded = true;
     } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
       item = m_mediumQueue.popNoWait();
 
       if (item) {
-        this->execRuntimeJobInContext(std::move(*item));
-        jobIsRun = true;
+        this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+        jobIsAdded = true;
       } else if (state != Dmn_Runtime_Job::Priority::kLow) {
 
         item = m_lowQueue.popNoWait();
         if (item) {
-          this->execRuntimeJobInContext(std::move(*item));
-          jobIsRun = true;
+          this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+          jobIsAdded = true;
         }
       }
     }
   }
 
-  // this will make sure that:
-  // - we decrement the m_jobs_count if a job is run and
-  // - we call runRuntimeJobExecutor() only if sched_stack is empty (it means
-  //   that sched does not run any running job on stack.
-  if (jobIsRun && this->m_jobs_count.fetch_sub(1) > 1 &&
-      this->m_sched_stack.empty()) {
-    this->runRuntimeJobExecutor();
+  if (jobIsAdded) {
+    this->runRuntimeCoroutineScheduler();
+
+    // this will make sure that:
+    // - we decrement the m_jobs_count if a job is run and
+    // - we call runRuntimeJobExecutor() only if sched_stack is empty (it means
+    //   that sched does not run any running job on stack.
+    if (this->m_jobs_count.fetch_sub(1) > 1 && this->m_sched_job.empty()) {
+      this->runRuntimeJobExecutor();
+    }
   }
 }
 
@@ -469,6 +438,46 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
     throw std::runtime_error("Error in pthread_sigmask: " +
                              std::string{strerror(err)});
   }
+}
+
+void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
+  assert(isRunInAsyncThread());
+  assert(this->m_sched_task.size() > 0);
+  assert(this->m_sched_job.size() > 0);
+
+  const Dmn_Runtime_Job &runningJob = this->m_sched_job.top();
+
+  auto &task = this->m_sched_task.top();
+
+  try {
+    if (task.isValid()) {
+      // runtime jobs must complete before returning to scheduler; suspension is
+      // only used for intra-job yielding and will be resumed immediately.
+      do {
+        task.m_handle.resume();
+
+        if (task.m_handle.done()) {
+          task.await_resume(); // rethrow exception captured by
+                               // promise_type::unhandled_exception()
+          break;
+        } else if (m_jobs_count.load(std::memory_order_acquire) >
+                   this->m_sched_task.size()) {
+          assert(!this->m_sched_job.empty());
+          assert(!this->m_sched_task.empty());
+
+          this->execRuntimeJobInternal();
+        }
+      } while (true);
+    }
+  } catch (...) {
+    if (runningJob.m_onErrorFnc) {
+      std::exception_ptr ep = std::current_exception();
+      runningJob.m_onErrorFnc(ep);
+    }
+  }
+
+  this->m_sched_task.pop();
+  this->m_sched_job.pop();
 }
 
 /**
