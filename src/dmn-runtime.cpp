@@ -16,10 +16,10 @@
  *   priority level in order (high → medium → low), then schedules
  *   itself again if there is more job to be executed
  * - addRuntimeJobToCoroutineSchedulerContext(): adds runtime job and its
- *   co-routine task to scheduler context, so that it will be picked up and
+ *   coroutine task to the scheduler context, so that it will be picked up and
  *   executed by the coroutine scheduler.
  * - runRuntimeCoroutineScheduler(): retrieves the scheduled job (and
- *   corresponding co-routine task) and execute it in the singleton asynchronous
+ *   corresponding coroutine task) and executes it in the singleton asynchronous
  *   thread context.
  * - enterMainLoop(): enables all priority queues, starts the signal-wait thread
  *   which calls sigwait() and dispatches to registered handlers via async
@@ -204,7 +204,7 @@ void Dmn_Runtime_Manager::clearSignalHandlerHookInternal(int signo) {
 }
 
 /**
- * @brief The method will execute the job in runtime' co-routine context.
+ * @brief The method will execute the job in runtime coroutine context.
  *
  * @param job The job to be run in the runtime context
  */
@@ -414,7 +414,7 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
  *        SIGSTOP can NOT be handled.
  *
  *        This is a private method to be called in the Dmn_Runtime_Manager
- * instance asynchronous thread context.
+ *        instance asynchronous thread context.
  *
  * @param signo The POSIX signal number
  * @param hook  The signal handler hook function to be called when the signal is
@@ -449,11 +449,16 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
 }
 
 /**
- * @brief The method is a coroutine task scheduler that will run the top
- *        task until it is done or suspend, true if the task run is complete,
- *        or false if it is suspend.
+ * @brief Coroutine task scheduler entry point.
  *
- * @return True if the task is completed or false if it is suspend.
+ *        Resumes the top scheduled task until it either completes or reaches
+ *        a suspension point. Returns true when the task has finished
+ *        execution and has been removed from the scheduler and false when
+ *        the task has been suspended and remains scheduled to be resumed later.
+ *
+ * @return true if the top task has completed and been removed from the
+ *         scheduler; false if the task has suspended and remains in the
+ *         scheduler to be resumed later.
  */
 auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
   bool complete{true};
