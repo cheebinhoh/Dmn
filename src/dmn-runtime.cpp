@@ -47,6 +47,7 @@
 #include <string>
 #include <sys/time.h>
 #include <system_error>
+#include <thread>
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue.hpp"
@@ -74,9 +75,6 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
   m_pimpl = std::make_unique<Dmn_Runtime_Manager_Impl>();
 
-// set first timer (SIGALRM), so that all prior-queued timed jobs
-// are queued to be processed without accessing m_timedQueue to avoid
-// data race condition
 #ifdef _POSIX_TIMERS
   struct sigevent sev{};
 
