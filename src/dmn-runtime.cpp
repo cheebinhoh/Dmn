@@ -112,29 +112,18 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    struct timespec ts{};
-#ifdef _POSIX_TIMERS
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-#else
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-#endif /* _POSIX_TIMERS */
-      auto d = std::chrono::seconds{ts.tv_sec} +
-               std::chrono::nanoseconds{ts.tv_nsec};
+    TimePoint tp = std::chrono::steady_clock::now();
+    while (!m_timedQueue.empty()) {
+      auto &job = m_timedQueue.top();
+      if (tp >= job.m_due) {
+        this->addJob(std::move(job.m_fnc), job.m_priority,
+                     std::move(job.m_onErrorFnc));
 
-      TimePoint tp{std::chrono::duration_cast<Clock::duration>(d)};
+        m_timedQueue.pop();
+      } else {
+        this->setNextTimerSinceEpoch(job.m_due);
 
-      while (!m_timedQueue.empty()) {
-        auto &job = m_timedQueue.top();
-        if (tp >= job.m_due) {
-          this->addJob(std::move(job.m_fnc), job.m_priority,
-                       std::move(job.m_onErrorFnc));
-
-          m_timedQueue.pop();
-        } else {
-          this->setNextTimerSinceEpoch(job.m_due);
-
-          break;
-        }
+        break;
       }
     }
   };
@@ -144,10 +133,6 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
-#ifdef _POSIX_TIMERS
-    timer_delete(m_pimpl->m_timerid);
-#endif
-
     m_pimpl->m_timer_created = false;
 
     m_pimpl = {};
@@ -230,7 +215,6 @@ void Dmn_Runtime_Manager::addRuntimeJobToCoroutineSchedulerContext(
  * @brief The method will execute the job continously.
  */
 void Dmn_Runtime_Manager::execRuntimeJobInternal() {
-  bool jobIsAdded{};
   Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
 
   assert(isRunInAsyncThread());
@@ -243,32 +227,32 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     auto item = m_highQueue.popNoWait();
     if (item) {
       this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
-      jobIsAdded = true;
     } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
       item = m_mediumQueue.popNoWait();
 
       if (item) {
         this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
-        jobIsAdded = true;
       } else if (state != Dmn_Runtime_Job::Priority::kLow) {
 
         item = m_lowQueue.popNoWait();
         if (item) {
           this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
-          jobIsAdded = true;
         }
       }
     }
   }
 
-  if (jobIsAdded) {
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
+
+  size_t jobsCountInScheduler = this->m_sched_job.size();
+
+  if (jobsCountInScheduler > 0) {
     this->runRuntimeCoroutineScheduler();
 
-    // this will make sure that:
-    // - we decrement the m_jobs_count if a job is run and
-    // - we call runRuntimeJobExecutor() only if sched_stack is empty (it means
-    //   that sched does not run any running job on stack.
-    if (this->m_jobs_count.fetch_sub(1) > 1 && this->m_sched_job.empty()) {
+    if (this->m_sched_job.size() < jobsCountInScheduler &&
+        this->m_jobs_count.fetch_sub(1) > 1) {
+      this->runRuntimeJobExecutor();
+    } else if (this->m_sched_task.size() > 0) {
       this->runRuntimeJobExecutor();
     }
   }
@@ -444,6 +428,7 @@ void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
   assert(isRunInAsyncThread());
   assert(this->m_sched_task.size() > 0);
   assert(this->m_sched_job.size() > 0);
+  assert(this->m_sched_task.size() == this->m_sched_job.size());
 
   const Dmn_Runtime_Job &runningJob = this->m_sched_job.top();
 
@@ -459,25 +444,33 @@ void Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() {
         if (task.m_handle.done()) {
           task.await_resume(); // rethrow exception captured by
                                // promise_type::unhandled_exception()
+
+          this->m_sched_task.pop();
+          this->m_sched_job.pop();
+
           break;
         } else if (m_jobs_count.load(std::memory_order_acquire) >
                    this->m_sched_task.size()) {
           assert(!this->m_sched_job.empty());
           assert(!this->m_sched_task.empty());
 
-          this->execRuntimeJobInternal();
+          this->runRuntimeJobExecutor();
+          break;
         }
       } while (true);
+    } else {
+      this->m_sched_task.pop();
+      this->m_sched_job.pop();
     }
   } catch (...) {
     if (runningJob.m_onErrorFnc) {
       std::exception_ptr ep = std::current_exception();
       runningJob.m_onErrorFnc(ep);
     }
-  }
 
-  this->m_sched_task.pop();
-  this->m_sched_job.pop();
+    this->m_sched_task.pop();
+    this->m_sched_job.pop();
+  }
 }
 
 /**
@@ -500,35 +493,22 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
     return;
   }
 
-  struct timespec ts{};
+  TimePoint tpNow = std::chrono::steady_clock::now();
 
-#ifdef _POSIX_TIMERS
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-#else
-  if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-#endif /* _POSIX_TIMERS */
-    auto d =
-        std::chrono::seconds{ts.tv_sec} + std::chrono::nanoseconds{ts.tv_nsec};
+  // 1. Subtract to get the total duration
+  auto diff = tp - tpNow;
 
-    TimePoint tpNow = TimePoint{std::chrono::duration_cast<Clock::duration>(d)};
-
-    // 1. Subtract to get the total duration
-    auto diff = tp - tpNow;
-
-    if (diff <= std::chrono::nanoseconds::zero()) {
-      this->setNextTimer(0, 10000); // run it in next 10 microseconds
-    } else {
-      // 2. Extract the whole seconds
-      auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
-
-      // 3. Extract the remaining nanoseconds (the "remainder")
-      auto nsecs =
-          std::chrono::duration_cast<std::chrono::nanoseconds>(diff - secs);
-
-      this->setNextTimer(secs.count(), nsecs.count());
-    }
-  } else {
+  if (diff <= std::chrono::nanoseconds::zero()) {
     this->setNextTimer(0, 10000); // run it in next 10 microseconds
+  } else {
+    // 2. Extract the whole seconds
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
+
+    // 3. Extract the remaining nanoseconds (the "remainder")
+    auto nsecs =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(diff - secs);
+
+    this->setNextTimer(secs.count(), nsecs.count());
   }
 }
 

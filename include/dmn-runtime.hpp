@@ -303,35 +303,21 @@ public:
       Dmn_Runtime_Job::FncType fnc, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {}) {
-    struct timespec ts{};
 
-#ifdef _POSIX_TIMERS
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-#else
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-#endif /* _POSIX_TIMERS */
-      auto d = std::chrono::seconds{ts.tv_sec} +
-               std::chrono::nanoseconds{ts.tv_nsec};
+    TimePoint tp = std::chrono::steady_clock::now() + duration;
 
-      TimePoint tp =
-          TimePoint{std::chrono::duration_cast<Clock::duration>(d)} + duration;
+    Dmn_Runtime_Job rjob{.m_priority = priority,
+                         .m_fnc = std::move(fnc),
+                         .m_due = tp,
+                         .m_onErrorFnc = std::move(onErrorFnc)};
 
-      Dmn_Runtime_Job rjob{.m_priority = priority,
-                           .m_fnc = std::move(fnc),
-                           .m_due = tp,
-                           .m_onErrorFnc = std::move(onErrorFnc)};
+    // add rjob to m_timedQueue via singleton main asynchronous thread
+    this->addExecTask([this, rjob = std::move(rjob)]() {
+      assert(isRunInAsyncThread());
 
-      // add rjob to m_timedQueue via singleton main asynchronous thread
-      this->addExecTask([this, rjob = std::move(rjob)]() {
-        assert(isRunInAsyncThread());
-
-        this->m_timedQueue.push(std::move(rjob));
-        this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
-      });
-    } else {
-      throw std::runtime_error("Error in clock_gettime: " +
-                               std::system_category().message(errno));
-    }
+      this->m_timedQueue.push(std::move(rjob));
+      this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
+    });
   }
 
   /**
