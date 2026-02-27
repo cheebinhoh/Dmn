@@ -222,6 +222,8 @@ void Dmn_Runtime_Manager::addRuntimeJobToCoroutineSchedulerContext(
       std::exception_ptr ep = std::current_exception();
       job.m_onErrorFnc(ep);
     }
+
+    throw;
   }
 
   assert(this->m_sched_job.size() == this->m_sched_task.size());
@@ -239,45 +241,51 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
     state = this->m_sched_job.top().m_priority;
   }
 
-  if (state != Dmn_Runtime_Job::Priority::kHigh) {
-    auto item = m_highQueue.popNoWait();
-    if (item) {
-      this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
-    } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
-      item = m_mediumQueue.popNoWait();
-
+  try {
+    if (state != Dmn_Runtime_Job::Priority::kHigh) {
+      auto item = m_highQueue.popNoWait();
       if (item) {
         this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
-      } else if (state != Dmn_Runtime_Job::Priority::kLow) {
+      } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
+        item = m_mediumQueue.popNoWait();
 
-        item = m_lowQueue.popNoWait();
         if (item) {
           this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+        } else if (state != Dmn_Runtime_Job::Priority::kLow) {
+
+          item = m_lowQueue.popNoWait();
+          if (item) {
+            this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+          }
         }
       }
     }
-  }
 
-  assert(this->m_sched_job.size() == this->m_sched_task.size());
+    assert(this->m_sched_job.size() == this->m_sched_task.size());
 
-  size_t jobsCountInScheduler = this->m_sched_job.size();
+    size_t jobsCountInScheduler = this->m_sched_job.size();
 
-  if (jobsCountInScheduler > 0) {
-    bool done = this->runRuntimeCoroutineScheduler();
+    if (jobsCountInScheduler > 0) {
+      bool done = this->runRuntimeCoroutineScheduler();
 
-    if (!done) {
-      assert(!this->m_sched_job.empty());
-      assert(!this->m_sched_task.empty());
-      assert(this->m_sched_job.size() == jobsCountInScheduler);
+      if (!done) {
+        assert(!this->m_sched_job.empty());
+        assert(!this->m_sched_task.empty());
+        assert(this->m_sched_job.size() == jobsCountInScheduler);
 
+        this->runRuntimeJobExecutor();
+      } else if (this->m_sched_job.size() < jobsCountInScheduler &&
+                 this->m_jobs_count.fetch_sub(1) > 1) {
+        this->runRuntimeJobExecutor();
+      } else {
+        assert(this->m_sched_job.empty());
+        assert(this->m_sched_task.empty());
+        assert(0 == m_jobs_count.load(std::memory_order_acquire));
+      }
+    }
+  } catch (...) {
+    if (this->m_jobs_count.fetch_sub(1) > 1) {
       this->runRuntimeJobExecutor();
-    } else if (this->m_sched_job.size() < jobsCountInScheduler &&
-               this->m_jobs_count.fetch_sub(1) > 1) {
-      this->runRuntimeJobExecutor();
-    } else {
-      assert(this->m_sched_job.empty());
-      assert(this->m_sched_task.empty());
-      assert(0 == m_jobs_count.load(std::memory_order_acquire));
     }
   }
 }
