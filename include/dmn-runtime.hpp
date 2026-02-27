@@ -227,19 +227,21 @@ struct Dmn_Runtime_Manager_Impl;
  * A singleton runtime manager that centralizes POSIX signal handling and
  * asynchronous job scheduling/execution. It inherits Dmn_Singleton for
  * singleton lifecycle and privately from Dmn_Async to run an internal
- * runtime thread used for processing.
+ * runtime asynchronous thread used for processing job.
  *
  * Public API highlights:
- *  - addJob(job, priority): enqueue a job for immediate execution in the
- * singleton asynchronous thread context.
- *  - addTimedJob(job, duration, priority): schedule job to run after duration
- * in the singleton asychronous thread context.
- *  - registerSignalHandlerHook(signo, hook): register a handler to be invoked
- *    when the given signal is delivered in the singleton asychronous thread
- * context.
+ *  - addJob(fnc, priority, onErrorFnc): enqueue a job for immediate execution
+ *    in the singleton asynchronous thread context.
+ *  - addTimedJob(fnc, duration, priority, onErrorFnc): schedule job to run
+ *    after duration in the singleton asychronous thread context.
+ *  - registerSignalHandlerHook(signo, hook): register a handler hook to be
+ *    invoked when the given signal is delivered in the singleton asychronous
+ *    thread context.
+ *  - clearSignalHandlerHook(signo): clear all register handler hooks for
+ *    the particular signo.
  *  - enterMainLoop() / exitMainLoop(): control the runtime starts processing
  *    jobs and signal handler hooks in the singleton asynchronous thread
- * context.
+ *    context.
  *
  * Important behaviour:
  *  - Signals used by the runtime are blocked prior to creating the singleton
@@ -264,7 +266,13 @@ public:
 
   /**
    * @brief Enqueue a job for immediate execution with the given priority.
-   * The runtime will schedule the job onto the appropriate internal buffer.
+   *        The runtime will schedule the job onto the appropriate internal
+   *        buffer.
+   *
+   * @param fnc The callable to be executed.
+   * @param duration The duration after that the fnc is posted for execution.
+   * @param priority The job priority.
+   * @param onErrorFnc The callable for exception thrown inside fnc.
    */
   void addJob(
       Dmn_Runtime_Job::FncType fnc,
@@ -272,14 +280,20 @@ public:
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
-   * @brief Schedule a job to run after the specified duration.
-   * If the kernel clock read fails, an exception is thrown.
+   * @brief Enqueue a job to be run after the specified duration. If the kernel
+   *        clock read fails, an exception is thrown.
    *
-   * Template parameters:
-   *  - Rep, Period: std::chrono::duration parameterization (e.g. milliseconds).
+   *        Template parameters:
+   *        - Rep, Period: std::chrono::duration parameterization.
    *
-   * Note: timed jobs are converted to a microseconds since boot/monotonic start
-   * stored in a min-heap to guarantee earliest-first execution.
+   *        Note: timed jobs are converted to a microseconds since
+   *        boot/monotonic start stored in a min-heap to guarantee
+   *        earliest-first execution.
+   *
+   * @param fnc The callable to be executed.
+   * @param duration The duration after that the fnc is posted for execution.
+   * @param priority The job priority.
+   * @param onErrorFnc The callable for exception thrown inside fnc.
    */
   template <class Rep, class Period>
   void addTimedJob(
@@ -318,9 +332,17 @@ public:
   }
 
   /**
+   * @brief Clear all registered handler hooks for the signal number. Note that
+   *        only client registered signal handler hooks are clear.
+   *
+   * @param signo The POSIX signal number
+   */
+  void clearSignalHandlerHook(int signo);
+
+  /**
    * @brief Start processing runtime events / jobs. Blocks until exitMainLoop()
-   * is called or the runtime decides to stop (a signal handler hook calls
-   *        exitMainLoop).
+   *        is called or the runtime decides to stop (a signal handler hook
+   *        calls exitMainLoop).
    */
   void enterMainLoop();
 
@@ -330,9 +352,9 @@ public:
   void exitMainLoop();
 
   /**
-   * @brief Register a signal handler for a particular signal number. Handlers
-   *        are invoked by the runtime in a safe context (not from the raw
-   * signal handler) in a singleton asynchronous thread context.
+   * @brief Register a signal handler hook for a particular signal number.
+   *        Handlers are invoked by the runtime in a safe context (not from
+   *        the raw signal handler) in a singleton asynchronous thread context.
    *
    * @param signo The POSIX signal number
    * @param hook  The signal handler hook function to be called when the
@@ -343,6 +365,8 @@ public:
   static void runPriorToCreateInstance();
 
 private:
+  void clearSignalHandlerHookInternal(int signo);
+
   void execRuntimeJobInContext(Dmn_Runtime_Job &&job);
   void execRuntimeJobInternal();
   void execSignalHandlerHookInternal(int signo);

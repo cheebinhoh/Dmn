@@ -199,6 +199,18 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType fnc,
   }
 }
 
+void Dmn_Runtime_Manager::clearSignalHandlerHook(int signo) {
+  this->addExecTask(
+      [this, signo]() mutable { this->clearSignalHandlerHookInternal(signo); });
+}
+
+void Dmn_Runtime_Manager::clearSignalHandlerHookInternal(int signo) {
+  assert(isRunInAsyncThread());
+
+  auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
+  extHandlerHooks.clear();
+}
+
 /**
  * @brief The method will execute the job in runtime' co-routine context.
  *
@@ -422,12 +434,12 @@ void Dmn_Runtime_Manager::registerSignalHandlerHook(int signo,
 
 /**
  * @brief The method registers external signal handler hook function for the
- * signal number. The hook functions are executed before default internal
- * handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and SIGSTOP
- * can NOT be handled.
+ *        signal number. The hook functions are executed before default internal
+ *        handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and
+ *        SIGSTOP can NOT be handled.
  *
- * This is a private method to be called in the Dmn_Runtime_Manager instance
- * asynchronous thread context.
+ *        This is a private method to be called in the Dmn_Runtime_Manager
+ * instance asynchronous thread context.
  *
  * @param signo The POSIX signal number
  * @param hook  The signal handler hook function to be called when the signal is
@@ -463,7 +475,7 @@ void Dmn_Runtime_Manager::runPriorToCreateInstance() {
 
 /**
  * @brief The method runs the job executor in the singleton asynchronous thread
- * context.
+ *        context.
  */
 void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
   this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
@@ -471,8 +483,8 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
 
 /**
  * @brief The method sets the next scheduled timer (SIGALRM) according to the
- * timepoint. if the timepoint is in now or the past, SIGALRM is scheduled after
- * 10us.
+ *        timepoint. if the timepoint is in now or the past, SIGALRM is
+ * scheduled after 10us.
  *
  * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
  */
@@ -515,7 +527,7 @@ void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
 
 /**
  * @brief The method sets the next scheduled timer (SIGALRM) after seconds +
- * nanoseconds.
+ *        nanoseconds.
  *
  * @param sec The seconds after that to run the timer (SIGALRM)
  * @param nsec The nanoseconds after that to run the timer (SIGALRM)
