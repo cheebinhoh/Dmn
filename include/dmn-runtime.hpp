@@ -363,7 +363,7 @@ private:
 
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
-  void runRuntimeCoroutineScheduler();
+  auto runRuntimeCoroutineScheduler() -> bool;
   void runRuntimeJobExecutor();
 
   void setNextTimer(SecInt sec, NSecInt nsec);
