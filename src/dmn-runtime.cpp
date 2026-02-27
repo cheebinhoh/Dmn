@@ -115,7 +115,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
       return;
     }
 
-    TimePoint tp = std::chrono::steady_clock::now();
+    const TimePoint &tp = std::chrono::steady_clock::now();
     while (!m_timedQueue.empty()) {
       const auto &job = m_timedQueue.top();
       if (tp >= job.m_due) {
