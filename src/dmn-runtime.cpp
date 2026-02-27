@@ -133,6 +133,13 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
+#ifdef _POSIX_TIMERS
+    if (m_pimpl->m_timer_created) {
+      // Ignore errors in destructor; cannot throw from noexcept destructor.
+      (void)timer_delete(m_pimpl->m_timerid);
+    }
+#endif
+
     m_pimpl->m_timer_created = false;
 
     m_pimpl = {};
