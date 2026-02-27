@@ -117,10 +117,9 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
     TimePoint tp = std::chrono::steady_clock::now();
     while (!m_timedQueue.empty()) {
-      auto &job = m_timedQueue.top();
+      const auto &job = m_timedQueue.top();
       if (tp >= job.m_due) {
-        this->addJob(std::move(job.m_fnc), job.m_priority,
-                     std::move(job.m_onErrorFnc));
+        this->addJob(job.m_fnc, job.m_priority, job.m_onErrorFnc);
 
         m_timedQueue.pop();
       } else {
