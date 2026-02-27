@@ -270,7 +270,7 @@ public:
    *        buffer.
    *
    * @param fnc The callable to be executed.
-   * @param duration The duration after that the fnc is posted for execution.
+
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
