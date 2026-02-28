@@ -4,7 +4,6 @@
  * @file dmn-runtime-internal.hpp
  * @brief Internal module and details for Dmn_Runtime_Manager coroutine
  * integration.
- *
  */
 
 #ifndef DMN_RUNTIME_INTERNAL_HPP_
