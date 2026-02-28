@@ -134,15 +134,10 @@ struct Dmn_Runtime_Task {
   /**
    * Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
    *
-   * Its lifetime and execution are managed by Dmn_Runtime_Manager’s scheduler
-   * rather than being awaited directly with co_await. Earlier experimental
-   * implementations made this type awaitable by wiring a continuation into
-   * m_continuation and resuming the coroutine from await_suspend, but that
-   * behavior is no longer part of the supported interface.
-   *
-   * If an awaitable example is needed, prefer documenting it externally
-   * (e.g. in design notes or tests) instead of embedding inactive
-   * implementation code here.
+   * Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler,
+   * and it is not meant to be used with direct `co_await` by user code.
+   * Consumers should treat this as an internal task handle owned and managed
+   * by the runtime rather than as a public coroutine/awaitable abstraction.
    */
 
   ~Dmn_Runtime_Task() noexcept {
