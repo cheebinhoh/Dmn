@@ -13,7 +13,7 @@
  *   enqueued jobs.
  * - runRuntimeJobExecutor(): dequeues and executes one job per
  *   priority level in order (high → medium → low), then schedules
- *   itself again if there is more job to be executed.
+ *   itself again if there are more jobs to be executed.
  * - addRuntimeJobToCoroutineSchedulerContext(): adds runtime job and its
  *   coroutine task to the scheduler context, so that it will be picked up and
  *   executed by the coroutine scheduler.
@@ -404,7 +404,7 @@ void Dmn_Runtime_Manager::execSignalHandlerHookInternal(int signo) {
 
 /**
  * @brief The method returns true or false if it is called within the runtime
- *        singleton asychronous thread context.
+ *        singleton asynchronous thread context.
  *
  * @return True or false
  */
@@ -535,7 +535,7 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
 
 /**
  * @brief The method sets the next scheduled timer (SIGALRM) according to the
- *        timepoint. if the timepoint is in now or the past, SIGALRM is
+ *        timepoint. If the timepoint is in now or the past, SIGALRM is
  *        scheduled after 10us.
  *
  * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
