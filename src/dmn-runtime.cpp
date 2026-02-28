@@ -515,8 +515,10 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
     }
   }
 
-  this->m_sched_task.pop();
-  this->m_sched_job.pop();
+  if (complete) {
+    this->m_sched_task.pop();
+    this->m_sched_job.pop();
+  }
 
   return complete;
 }

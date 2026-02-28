@@ -148,9 +148,7 @@ struct Dmn_Runtime_Task {
   struct Awaiter {
     std::coroutine_handle<promise_type> m_handle;
 
-    bool await_ready() const noexcept {
-      return !m_handle || m_handle.done();
-    }
+    bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
 
     void await_suspend(std::coroutine_handle<> awaiting) const noexcept {
       // Record the awaiting coroutine as the continuation and start the task.
