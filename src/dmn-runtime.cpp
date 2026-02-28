@@ -122,7 +122,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
         m_timedQueue.pop();
       } else {
-        this->setNextTimerSinceEpoch(job.m_due);
+        this->setNextTimerAt(job.m_due);
 
         break;
       }
@@ -492,11 +492,10 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
         task.m_handle.resume();
 
         if (task.m_handle.done()) {
-          task.await_resume(); // rethrow exception captured by
-                               // promise_type::unhandled_exception()
-
-          this->m_sched_task.pop();
-          this->m_sched_job.pop();
+          auto &ep = task.m_handle.promise().m_except;
+          if (ep && runningJob.m_onErrorFnc) {
+            std::rethrow_exception(ep);
+          }
 
           break;
         } else {
@@ -507,9 +506,6 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
           break;
         }
       } while (true);
-    } else {
-      this->m_sched_task.pop();
-      this->m_sched_job.pop();
     }
   } catch (...) {
     if (runningJob.m_onErrorFnc) {
@@ -517,10 +513,10 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
 
       runningJob.m_onErrorFnc(ep);
     }
-
-    this->m_sched_task.pop();
-    this->m_sched_job.pop();
   }
+
+  this->m_sched_task.pop();
+  this->m_sched_job.pop();
 
   return complete;
 }
@@ -538,9 +534,9 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
  *        timepoint. If the timepoint is in now or the past, SIGALRM is
  *        scheduled after 10us.
  *
- * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
+ * @param tp The timepoint after that the timer (SIGALRM) will be triggered.
  */
-void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
+void Dmn_Runtime_Manager::setNextTimerAt(TimePoint tp) {
   if (!m_pimpl) {
     return;
   }

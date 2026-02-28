@@ -67,6 +67,7 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <cassert>
 #include <cerrno>
 #include <chrono>
 #include <coroutine>
@@ -96,6 +97,9 @@ using TimePoint = Clock::time_point;
 using SecInt = int64_t;
 using NSecInt = std::chrono::nanoseconds::rep;
 
+/**
+ * @brief A small RAII wrapper around coroutine frame for Dmn_Runtime_Job
+ */
 struct Dmn_Runtime_Task {
   struct promise_type {
     Dmn_Runtime_Task get_return_object() {
@@ -109,7 +113,7 @@ struct Dmn_Runtime_Task {
     struct FinalAwaiter {
       bool await_ready() const noexcept { return false; }
 
-      void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+      void await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
         if (h && h.promise().m_continuation) {
           h.promise().m_continuation.resume();
         }
@@ -127,25 +131,52 @@ struct Dmn_Runtime_Task {
     std::coroutine_handle<> m_continuation; // The handle of the caller
     std::exception_ptr m_except{};
   };
+  /**
+   * Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
+   *
+   * Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler.
+   * Library consumers should normally interact with higher-level runtime
+   * abstractions instead of awaiting this type directly.
+   *
+   * However, to preserve backward compatibility for existing code that
+   * previously did `co_await Dmn_Runtime_Task`, we provide a minimal
+   * awaitable interface via `operator co_await`. This simply wires the
+   * awaiting coroutine into the task’s continuation and propagates any
+   * stored exception.
+   */
 
-  // This makes the Dmn_Runtime_Task "Awaitable"
-  bool await_ready() { return false; }
+  struct Awaiter {
+    std::coroutine_handle<promise_type> m_handle;
 
-  void await_suspend(std::coroutine_handle<> caller_handle) {
-    if (m_handle) {
-      m_handle.promise().m_continuation = caller_handle;
-      m_handle.resume(); // Start the child coroutine
+    bool await_ready() const noexcept {
+      return !m_handle || m_handle.done();
     }
-  }
 
-  void await_resume() {
-    if (m_handle) {
-      if (auto &ep = m_handle.promise().m_except) {
-        std::rethrow_exception(ep);
+    void await_suspend(std::coroutine_handle<> awaiting) const noexcept {
+      // Record the awaiting coroutine as the continuation and start the task.
+      if (m_handle) {
+        m_handle.promise().m_continuation = awaiting;
+        m_handle.resume();
       }
     }
+
+    void await_resume() {
+      if (m_handle) {
+        auto &promise = m_handle.promise();
+        if (promise.m_except) {
+          std::rethrow_exception(promise.m_except);
+        }
+      }
+    }
+  };
+
+  [[nodiscard]] Awaiter operator co_await() noexcept {
+    return Awaiter{m_handle};
   }
 
+  [[nodiscard]] Awaiter operator co_await() const noexcept {
+    return Awaiter{m_handle};
+  }
   ~Dmn_Runtime_Task() noexcept {
     if (m_handle) {
       m_handle.destroy();
@@ -313,7 +344,7 @@ public:
       assert(isRunInAsyncThread());
 
       this->m_timedQueue.push(std::move(rjob));
-      this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
+      this->setNextTimerAt(this->m_timedQueue.top().m_due);
     });
   }
 
@@ -366,7 +397,7 @@ private:
   void runRuntimeJobExecutor();
 
   void setNextTimer(SecInt sec, NSecInt nsec);
-  void setNextTimerSinceEpoch(TimePoint tp);
+  void setNextTimerAt(TimePoint tp);
 
   /**
    * Internal state
