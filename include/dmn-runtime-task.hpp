@@ -68,12 +68,17 @@ struct Dmn_Runtime_Task {
 
     bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
 
-    void await_suspend(std::coroutine_handle<> awaiting) const noexcept {
-      // Record the awaiting coroutine as the continuation and start the task.
+    std::coroutine_handle<> await_suspend(
+        std::coroutine_handle<> awaiting) const noexcept {
+      // Record the awaiting coroutine as the continuation and use symmetric
+      // transfer to start the task without re-entrant resume.
       if (m_handle) {
         m_handle.promise().m_continuation = awaiting;
-        m_handle.resume();
+        return m_handle;
       }
+      // Fallback: nothing to resume (should not be hit when await_ready() is
+      // false), so transfer to a no-op coroutine.
+      return std::noop_coroutine();
     }
 
     void await_resume() {
