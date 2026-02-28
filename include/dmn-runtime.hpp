@@ -226,7 +226,7 @@ struct Dmn_Runtime_Task {
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
-  using OnErrorFncType = std::function<void(std::exception_ptr &) noexcept>;
+  using OnErrorFncType = std::function<void(std::exception_ptr &)>;
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
