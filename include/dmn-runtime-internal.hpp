@@ -10,6 +10,7 @@
 #define DMN_RUNTIME_INTERNAL_HPP_
 
 #include <coroutine>
+#include <exception>
 
 namespace dmn {
 
