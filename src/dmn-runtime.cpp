@@ -497,9 +497,6 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
             std::rethrow_exception(ep);
           }
 
-          this->m_sched_task.pop();
-          this->m_sched_job.pop();
-
           break;
         } else {
           assert(!this->m_sched_job.empty());
@@ -509,9 +506,6 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
           break;
         }
       } while (true);
-    } else {
-      this->m_sched_task.pop();
-      this->m_sched_job.pop();
     }
   } catch (...) {
     if (runningJob.m_onErrorFnc) {
@@ -519,13 +513,10 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
 
       runningJob.m_onErrorFnc(ep);
     }
-
-    assert(!this->m_sched_job.empty());
-    assert(!this->m_sched_task.empty());
-
-    this->m_sched_task.pop();
-    this->m_sched_job.pop();
   }
+
+  this->m_sched_task.pop();
+  this->m_sched_job.pop();
 
   return complete;
 }
