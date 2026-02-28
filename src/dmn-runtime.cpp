@@ -492,6 +492,11 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
         task.m_handle.resume();
 
         if (task.m_handle.done()) {
+          auto &ep = task.m_handle.promise().m_except;
+          if (ep && runningJob.m_onErrorFnc) {
+            runningJob.m_onErrorFnc(ep);
+          }
+
           this->m_sched_task.pop();
           this->m_sched_job.pop();
 
