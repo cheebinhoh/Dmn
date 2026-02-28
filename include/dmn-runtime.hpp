@@ -189,7 +189,6 @@ struct Dmn_Runtime_Task {
     return m_handle ? true : false;
   }
 
-  // internal data
   std::coroutine_handle<promise_type> m_handle;
 };
 
