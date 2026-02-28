@@ -153,8 +153,9 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
 
   // it is important that we wait for all Dmn_Runtime_Job and its companion
-  // Dmn_Runtime_Task to be destroyed and unwinded from the stack, as coroutine
-  // frame needed to be deleted prior to the destruction of Dmn_Runtime_Manager.
+  // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
+  // coroutine frame needs to be deleted prior to the destruction of
+  // Dmn_Runtime_Manager.
 
   this->waitForEmpty();
 
