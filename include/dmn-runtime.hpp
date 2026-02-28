@@ -88,8 +88,9 @@
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue.hpp"
-#include "dmn-runtime-internal.hpp"
 #include "dmn-singleton.hpp"
+
+#include "dmn-runtime-task.hpp"
 
 namespace dmn {
 

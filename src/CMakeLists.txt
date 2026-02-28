@@ -54,6 +54,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-teepipe.hpp
 
@@ -66,9 +67,6 @@ target_sources(dmn
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
-
-                 INTERFACE
-                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime-internal.hpp
 )
 
 target_include_directories(dmn

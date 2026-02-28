@@ -1,13 +1,13 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-runtime-internal.hpp
+ * @file dmn-runtime-task.hpp
  * @brief Coroutine support types for Dmn_Runtime_Manager runtime
  * integration, used by the public runtime API.
  */
 
-#ifndef DMN_RUNTIME_INTERNAL_HPP_
-#define DMN_RUNTIME_INTERNAL_HPP_
+#ifndef DMN_RUNTIME_TASK_HPP_
+#define DMN_RUNTIME_TASK_HPP_
 
 #include <coroutine>
 #include <exception>
@@ -132,4 +132,4 @@ struct Dmn_Runtime_Task {
 
 } // namespace dmn
 
-#endif // DMN_RUNTIME_INTERNAL_HPP_
+#endif // DMN_RUNTIME_TASK_HPP_
