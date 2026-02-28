@@ -133,7 +133,6 @@ struct Dmn_Runtime_Task {
   };
 
   /*****
-   *  Dmn_Runtime_Task is not a general co-routine task, but scheduled by
    *  Dmn_Runtime_Manager scheduler.
    *
    *  This makes the Dmn_Runtime_Task "Awaitable"

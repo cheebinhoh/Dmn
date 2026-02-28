@@ -494,7 +494,7 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
         if (task.m_handle.done()) {
           auto &ep = task.m_handle.promise().m_except;
           if (ep && runningJob.m_onErrorFnc) {
-            runningJob.m_onErrorFnc(ep);
+            std::rethrow_exception(ep);
           }
 
           this->m_sched_task.pop();
@@ -543,7 +543,7 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
  *        timepoint. If the timepoint is in now or the past, SIGALRM is
  *        scheduled after 10us.
  *
- * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
+ * @param tp The timepoint after that the timer (SIGALRM) will be triggered.
  */
 void Dmn_Runtime_Manager::setNextTimerAt(TimePoint tp) {
   if (!m_pimpl) {
