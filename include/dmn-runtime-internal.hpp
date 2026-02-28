@@ -2,8 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-runtime-internal.hpp
- * @brief Internal module and details for Dmn_Runtime_Manager coroutine
- * integration.
+ * @brief Coroutine support types for Dmn_Runtime_Manager runtime
+ * integration, used by the public runtime API.
  */
 
 #ifndef DMN_RUNTIME_INTERNAL_HPP_
