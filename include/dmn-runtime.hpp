@@ -67,6 +67,7 @@
 #define DMN_RUNTIME_HPP_
 
 #include <atomic>
+#include <cassert>
 #include <cerrno>
 #include <chrono>
 #include <coroutine>
@@ -96,6 +97,9 @@ using TimePoint = Clock::time_point;
 using SecInt = int64_t;
 using NSecInt = std::chrono::nanoseconds::rep;
 
+/**
+ * @brief A small RAII wrapper around coroutine frame for Dmn_Runtime_Job
+ */
 struct Dmn_Runtime_Task {
   struct promise_type {
     Dmn_Runtime_Task get_return_object() {
@@ -109,7 +113,7 @@ struct Dmn_Runtime_Task {
     struct FinalAwaiter {
       bool await_ready() const noexcept { return false; }
 
-      void await_suspend(std::coroutine_handle<promise_type> h) noexcept {
+      void await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
         if (h && h.promise().m_continuation) {
           h.promise().m_continuation.resume();
         }
@@ -128,23 +132,29 @@ struct Dmn_Runtime_Task {
     std::exception_ptr m_except{};
   };
 
-  // This makes the Dmn_Runtime_Task "Awaitable"
-  bool await_ready() { return false; }
-
-  void await_suspend(std::coroutine_handle<> caller_handle) {
-    if (m_handle) {
-      m_handle.promise().m_continuation = caller_handle;
-      m_handle.resume(); // Start the child coroutine
-    }
-  }
-
-  void await_resume() {
-    if (m_handle) {
-      if (auto &ep = m_handle.promise().m_except) {
-        std::rethrow_exception(ep);
-      }
-    }
-  }
+  /*****
+   *  Dmn_Runtime_Task is not a general co-routine task, but scheduled by
+   *  Dmn_Runtime_Manager scheduler.
+   *
+   *  This makes the Dmn_Runtime_Task "Awaitable"
+   *
+   *  bool await_ready() { return false; }
+   *
+   *  void await_suspend(std::coroutine_handle<> caller_handle) {
+   *    if (m_handle) {
+   *      m_handle.promise().m_continuation = caller_handle;
+   *      m_handle.resume(); // Start the child coroutine
+   *    }
+   *  }
+   *
+   *  void await_resume() {
+   *    if (m_handle) {
+   *      if (auto &ep = m_handle.promise().m_except) {
+   *        std::rethrow_exception(ep);
+   *      }
+   *    }
+   *  }
+   */
 
   ~Dmn_Runtime_Task() noexcept {
     if (m_handle) {
@@ -179,6 +189,7 @@ struct Dmn_Runtime_Task {
     return m_handle ? true : false;
   }
 
+  // internal data
   std::coroutine_handle<promise_type> m_handle;
 };
 
@@ -313,7 +324,7 @@ public:
       assert(isRunInAsyncThread());
 
       this->m_timedQueue.push(std::move(rjob));
-      this->setNextTimerSinceEpoch(this->m_timedQueue.top().m_due);
+      this->setNextTimerAt(this->m_timedQueue.top().m_due);
     });
   }
 
@@ -366,7 +377,7 @@ private:
   void runRuntimeJobExecutor();
 
   void setNextTimer(SecInt sec, NSecInt nsec);
-  void setNextTimerSinceEpoch(TimePoint tp);
+  void setNextTimerAt(TimePoint tp);
 
   /**
    * Internal state

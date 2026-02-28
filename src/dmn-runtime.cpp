@@ -122,7 +122,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
         m_timedQueue.pop();
       } else {
-        this->setNextTimerSinceEpoch(job.m_due);
+        this->setNextTimerAt(job.m_due);
 
         break;
       }
@@ -492,9 +492,6 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
         task.m_handle.resume();
 
         if (task.m_handle.done()) {
-          task.await_resume(); // rethrow exception captured by
-                               // promise_type::unhandled_exception()
-
           this->m_sched_task.pop();
           this->m_sched_job.pop();
 
@@ -518,6 +515,9 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
       runningJob.m_onErrorFnc(ep);
     }
 
+    assert(!this->m_sched_job.empty());
+    assert(!this->m_sched_task.empty());
+
     this->m_sched_task.pop();
     this->m_sched_job.pop();
   }
@@ -540,7 +540,7 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
  *
  * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
  */
-void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
+void Dmn_Runtime_Manager::setNextTimerAt(TimePoint tp) {
   if (!m_pimpl) {
     return;
   }
