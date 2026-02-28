@@ -90,6 +90,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   }
 
   m_pimpl->m_timer_created = true;
+
   this->setNextTimer(0, 0);
 #else /* _POSIX_TIMERS */
   m_pimpl->m_timer_created = true;
@@ -145,6 +146,8 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 
     m_pimpl = {};
   }
+
+  this->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
