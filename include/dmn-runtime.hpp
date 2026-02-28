@@ -134,12 +134,49 @@ struct Dmn_Runtime_Task {
   /**
    * Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
    *
-   * Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler,
-   * and it is not meant to be used with direct `co_await` by user code.
-   * Consumers should treat this as an internal task handle owned and managed
-   * by the runtime rather than as a public coroutine/awaitable abstraction.
+   * Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler.
+   * Library consumers should normally interact with higher-level runtime
+   * abstractions instead of awaiting this type directly.
+   *
+   * However, to preserve backward compatibility for existing code that
+   * previously did `co_await Dmn_Runtime_Task`, we provide a minimal
+   * awaitable interface via `operator co_await`. This simply wires the
+   * awaiting coroutine into the task’s continuation and propagates any
+   * stored exception.
    */
 
+  struct Awaiter {
+    std::coroutine_handle<promise_type> m_handle;
+
+    bool await_ready() const noexcept {
+      return !m_handle || m_handle.done();
+    }
+
+    void await_suspend(std::coroutine_handle<> awaiting) const noexcept {
+      // Record the awaiting coroutine as the continuation and start the task.
+      if (m_handle) {
+        m_handle.promise().m_continuation = awaiting;
+        m_handle.resume();
+      }
+    }
+
+    void await_resume() {
+      if (m_handle) {
+        auto &promise = m_handle.promise();
+        if (promise.m_except) {
+          std::rethrow_exception(promise.m_except);
+        }
+      }
+    }
+  };
+
+  [[nodiscard]] Awaiter operator co_await() noexcept {
+    return Awaiter{m_handle};
+  }
+
+  [[nodiscard]] Awaiter operator co_await() const noexcept {
+    return Awaiter{m_handle};
+  }
   ~Dmn_Runtime_Task() noexcept {
     if (m_handle) {
       m_handle.destroy();
