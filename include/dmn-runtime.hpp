@@ -131,28 +131,18 @@ struct Dmn_Runtime_Task {
     std::coroutine_handle<> m_continuation; // The handle of the caller
     std::exception_ptr m_except{};
   };
-
-  /*****
-   *  Dmn_Runtime_Manager scheduler.
+  /**
+   * Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
    *
-   *  This makes the Dmn_Runtime_Task "Awaitable"
+   * Its lifetime and execution are managed by Dmn_Runtime_Manager’s scheduler
+   * rather than being awaited directly with co_await. Earlier experimental
+   * implementations made this type awaitable by wiring a continuation into
+   * m_continuation and resuming the coroutine from await_suspend, but that
+   * behavior is no longer part of the supported interface.
    *
-   *  bool await_ready() { return false; }
-   *
-   *  void await_suspend(std::coroutine_handle<> caller_handle) {
-   *    if (m_handle) {
-   *      m_handle.promise().m_continuation = caller_handle;
-   *      m_handle.resume(); // Start the child coroutine
-   *    }
-   *  }
-   *
-   *  void await_resume() {
-   *    if (m_handle) {
-   *      if (auto &ep = m_handle.promise().m_except) {
-   *        std::rethrow_exception(ep);
-   *      }
-   *    }
-   *  }
+   * If an awaitable example is needed, prefer documenting it externally
+   * (e.g. in design notes or tests) instead of embedding inactive
+   * implementation code here.
    */
 
   ~Dmn_Runtime_Task() noexcept {
