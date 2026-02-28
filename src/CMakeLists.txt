@@ -66,6 +66,9 @@ target_sources(dmn
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
+
+                 PRIVATE
+                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime-internal.hpp
 )
 
 target_include_directories(dmn
