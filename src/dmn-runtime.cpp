@@ -508,10 +508,14 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
       } while (true);
     }
   } catch (...) {
-    if (runningJob.m_onErrorFnc) {
-      std::exception_ptr ep = std::current_exception();
+    try {
+      if (runningJob.m_onErrorFnc) {
+        std::exception_ptr ep = std::current_exception();
 
-      runningJob.m_onErrorFnc(ep);
+        runningJob.m_onErrorFnc(ep);
+      }
+    } catch (...) {
+      // ignore it.
     }
   }
 

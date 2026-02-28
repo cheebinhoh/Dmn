@@ -226,7 +226,7 @@ struct Dmn_Runtime_Task {
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
-  using OnErrorFncType = std::function<void(std::exception_ptr &)>;
+  using OnErrorFncType = std::function<void(std::exception_ptr &) noexcept>;
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
@@ -329,7 +329,6 @@ public:
       Dmn_Runtime_Job::FncType fnc, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {}) {
-
     TimePoint tp = std::chrono::steady_clock::now() + duration;
 
     Dmn_Runtime_Job rjob{.m_priority = priority,
