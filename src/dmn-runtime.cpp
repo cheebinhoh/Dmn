@@ -147,6 +147,9 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
     m_pimpl = {};
   }
 
+  // it is important that we wait for all Dmn_Runtime_Job and its companion
+  // Dmn_Runtime_Task to be destroyed and unwinded from the stack, as coroutine
+  // frame needed to be deleted prior to the destruction of Dmn_Runtime_Manager.
   this->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
