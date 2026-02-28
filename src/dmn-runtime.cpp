@@ -90,6 +90,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
   }
 
   m_pimpl->m_timer_created = true;
+
   this->setNextTimer(0, 0);
 #else /* _POSIX_TIMERS */
   m_pimpl->m_timer_created = true;
@@ -122,7 +123,7 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 
         m_timedQueue.pop();
       } else {
-        this->setNextTimerSinceEpoch(job.m_due);
+        this->setNextTimerAt(job.m_due);
 
         break;
       }
@@ -134,6 +135,8 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
+    this->setNextTimer(0, 0);
+
 #ifdef _POSIX_TIMERS
     if (m_pimpl->m_timer_created) {
       // Ignore errors in destructor; cannot throw from noexcept destructor.
@@ -145,6 +148,19 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 
     m_pimpl = {};
   }
+
+  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
+  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
+
+  // it is important that we wait for all Dmn_Runtime_Job and its companion
+  // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
+  // coroutine frame needs to be deleted prior to the destruction of
+  // Dmn_Runtime_Manager.
+
+  this->waitForEmpty();
+
+  assert(this->m_sched_job.empty());
+  assert(this->m_sched_task.empty());
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -185,7 +201,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType fnc,
   }
 
   if (m_jobs_count.fetch_add(1) == 0 &&
-      m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
+      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {
     this->runRuntimeJobExecutor();
   }
 }
@@ -300,7 +316,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
   if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
-    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_enter_atomic_flag.clear(std::memory_order_release);
     m_main_exit_atomic_flag.notify_all();
 
     // set the last timer, so that signalWaitProc gradefully exit.
@@ -338,7 +354,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
-  m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
+  m_main_exit_atomic_flag.clear(std::memory_order_release);
   m_main_enter_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
@@ -354,7 +370,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                                      std::system_category().message(err));
           }
 
-          if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+          if (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
             setNextTimer(0, 0);
 
             break;
@@ -375,8 +391,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     this->runRuntimeJobExecutor();
   }
 
-  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  while (!m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
+    m_main_exit_atomic_flag.wait(false, std::memory_order_acquire);
   }
 }
 
@@ -492,11 +508,10 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
         task.m_handle.resume();
 
         if (task.m_handle.done()) {
-          task.await_resume(); // rethrow exception captured by
-                               // promise_type::unhandled_exception()
-
-          this->m_sched_task.pop();
-          this->m_sched_job.pop();
+          auto &ep = task.m_handle.promise().m_except;
+          if (ep && runningJob.m_onErrorFnc) {
+            std::rethrow_exception(ep);
+          }
 
           break;
         } else {
@@ -507,17 +522,20 @@ auto Dmn_Runtime_Manager::runRuntimeCoroutineScheduler() -> bool {
           break;
         }
       } while (true);
-    } else {
-      this->m_sched_task.pop();
-      this->m_sched_job.pop();
     }
   } catch (...) {
-    if (runningJob.m_onErrorFnc) {
-      std::exception_ptr ep = std::current_exception();
+    try {
+      if (runningJob.m_onErrorFnc) {
+        std::exception_ptr ep = std::current_exception();
 
-      runningJob.m_onErrorFnc(ep);
+        runningJob.m_onErrorFnc(ep);
+      }
+    } catch (...) {
+      // ignore it.
     }
+  }
 
+  if (complete) {
     this->m_sched_task.pop();
     this->m_sched_job.pop();
   }
@@ -538,9 +556,9 @@ void Dmn_Runtime_Manager::runRuntimeJobExecutor() {
  *        timepoint. If the timepoint is in now or the past, SIGALRM is
  *        scheduled after 10us.
  *
- * @param tp The timepoint after that the timer (SIGALRM) will be triggred.
+ * @param tp The timepoint after that the timer (SIGALRM) will be triggered.
  */
-void Dmn_Runtime_Manager::setNextTimerSinceEpoch(TimePoint tp) {
+void Dmn_Runtime_Manager::setNextTimerAt(TimePoint tp) {
   if (!m_pimpl) {
     return;
   }
