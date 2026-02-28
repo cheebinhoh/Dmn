@@ -134,6 +134,8 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
   if (m_pimpl) {
+    this->setNextTimer(0, 0);
+
 #ifdef _POSIX_TIMERS
     if (m_pimpl->m_timer_created) {
       // Ignore errors in destructor; cannot throw from noexcept destructor.
@@ -145,6 +147,14 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 
     m_pimpl = {};
   }
+
+  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
+  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
+
+  this->waitForEmpty();
+
+  assert(this->m_sched_job.empty());
+  assert(this->m_sched_task.empty());
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -185,7 +195,7 @@ void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType fnc,
   }
 
   if (m_jobs_count.fetch_add(1) == 0 &&
-      m_main_enter_atomic_flag.test(std::memory_order_relaxed)) {
+      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {
     this->runRuntimeJobExecutor();
   }
 }
@@ -300,7 +310,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
  */
 void Dmn_Runtime_Manager::exitMainLoop() {
   if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
-    m_main_enter_atomic_flag.clear(std::memory_order_relaxed);
+    m_main_enter_atomic_flag.clear(std::memory_order_release);
     m_main_exit_atomic_flag.notify_all();
 
     // set the last timer, so that signalWaitProc gradefully exit.
@@ -338,7 +348,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
-  m_main_exit_atomic_flag.clear(std::memory_order_relaxed);
+  m_main_exit_atomic_flag.clear(std::memory_order_release);
   m_main_enter_atomic_flag.notify_all();
   Dmn_Proc::yield();
 
@@ -354,7 +364,7 @@ void Dmn_Runtime_Manager::enterMainLoop() {
                                      std::system_category().message(err));
           }
 
-          if (m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
+          if (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
             setNextTimer(0, 0);
 
             break;
@@ -375,8 +385,8 @@ void Dmn_Runtime_Manager::enterMainLoop() {
     this->runRuntimeJobExecutor();
   }
 
-  while (!m_main_exit_atomic_flag.test(std::memory_order_relaxed)) {
-    m_main_exit_atomic_flag.wait(false, std::memory_order_relaxed);
+  while (!m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
+    m_main_exit_atomic_flag.wait(false, std::memory_order_acquire);
   }
 }
 
