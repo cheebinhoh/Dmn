@@ -180,7 +180,6 @@ struct Dmn_Runtime_Task {
   }
 
   std::coroutine_handle<promise_type> m_handle;
-  std::exception_ptr m_except{};
 };
 
 /**
