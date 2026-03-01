@@ -289,6 +289,8 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
   m_queue.emplace_back(std::forward<U>(item));
   ++m_push_count;
 
+  lock.unlock();
+
   // Notify multi-pop waiters first (they use m_none_empty_cond).
   m_not_empty_cond.notify_one();
 }
@@ -296,6 +298,8 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
 template <typename T> void Dmn_BlockingQueue<T>::stop() {
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown = true;
+
+  lock.unlock();
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
@@ -395,8 +399,12 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
   ++m_pop_count;
 
+  bool empty = m_queue.empty();
+
+  lock.unlock();
+
   // Notify waiters waiting for the queue to become empty.
-  if (m_queue.empty()) {
+  if (empty) {
     m_empty_cond.notify_all();
   } else {
     m_not_empty_cond.notify_one();

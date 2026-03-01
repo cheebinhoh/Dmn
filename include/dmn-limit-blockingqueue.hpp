@@ -178,6 +178,7 @@ void Dmn_Limit_BlockingQueue<T>::push(T &item, bool move) {
   Dmn_BlockingQueue<T>::push(item, move);
   ++m_size;
 
+  lock.unlock();
   m_pop_cond.notify_all();
 }
 
@@ -205,6 +206,7 @@ auto Dmn_Limit_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   val = Dmn_BlockingQueue<T>::popOptional(wait);
   m_size--;
 
+  lock.unlock();
   m_push_cond.notify_all();
 
   return val; // val is local variable, hence rvalue and hence move semantic
