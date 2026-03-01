@@ -267,6 +267,8 @@ void Dmn_TeePipe<T>::Dmn_TeePipeSource::write(T &item, bool move) {
 
   m_teepipe->m_fill_buffer_count++;
 
+  lock.unlock();
+
   m_teepipe->m_cond.notify_all();
 }
 
@@ -310,6 +312,8 @@ Dmn_TeePipe<T>::addDmn_TeePipeSource() {
 
   m_buffers.push_back(sp_tpSource);
 
+  lock.unlock();
+
   m_cond.notify_all();
 
   return sp_tpSource;
@@ -336,6 +340,8 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
     m_buffers.erase(iter);
     tps = {};
   }
+
+  lock.unlock();
 
   m_cond.notify_all();
 }
@@ -401,6 +407,8 @@ template <typename T> void Dmn_TeePipe<T>::runConveyorExec() {
       }
 
       post_processing_buffers.clear();
+
+      lock.unlock();
 
       m_empty_cond.notify_all();
     }
