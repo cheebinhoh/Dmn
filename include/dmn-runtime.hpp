@@ -12,9 +12,9 @@
  *   function(s) that are executed safely in a singleton asynchronous thread
  *   context.
  * - Scheduling and executing asynchronous jobs with priority levels
- *   (high/medium/low) as well as delayed (timed) jobs.
+ *   (high/medium/low) as well as delayed (timed) jobs with priority level.
  * - All jobs are scheduled, serialized and executed in a singleton asynchronous
- *   thread context.
+ *   thread context by high, medium and then low priority ordering.
  * - Executing jobs scheduled through addJob() and addTimedJob() sequentially
  *   according to priority within a C++ coroutine execution model.
  *
@@ -54,7 +54,10 @@
  *   registerSignalHandlerHook(signo, hook).
  * - Enqueue immediate work with addJob() or schedule delayed work with
  *   addTimedJob().
- * - Start processing with enterMainLoop() and stop with exitMainLoop().
+ * - Start processing job and signal handler hooks with enterMainLoop()
+ *   and stop with exitMainLoop().
+ * - job, timedJob and signal handler hooks are all processed in the singleton
+ *   asynchronous thread context.
  *
  * Implementation Notes
  * --------------------
@@ -278,6 +281,10 @@ public:
 private:
   void addRuntimeJobToCoroutineSchedulerContext(Dmn_Runtime_Job &&job);
 
+  template <typename F>
+    requires IsValidJobFnc<F>
+  auto createJobTaskFnc(F &&fnc) -> Dmn_Runtime_Job::TaskFncType;
+
   void clearSignalHandlerHookInternal(int signo);
 
   void execRuntimeJobInternal();
@@ -339,10 +346,18 @@ private:
   static sigset_t s_mask;
 }; // class Dmn_Runtime_Manager
 
+/**
+ * @brief The method creates a TaskFncType object based on if the input
+ *        fnc type uses coroutine or not.
+ *
+ * @param fnc is either TaskFncType or FncType.
+ *
+ * @return The TaskFncType for callable coroutine task function.
+ */
 template <typename F>
   requires IsValidJobFnc<F>
-void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
-                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
+auto Dmn_Runtime_Manager::createJobTaskFnc(F &&fnc)
+    -> Dmn_Runtime_Job::TaskFncType {
   Dmn_Runtime_Job::TaskFncType taskFnc{};
 
   if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
@@ -358,8 +373,16 @@ void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
     };
   }
 
+  return taskFnc;
+}
+
+template <typename F>
+  requires IsValidJobFnc<F>
+void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
+                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
   Dmn_Runtime_Job rjob{.m_priority = priority,
-                       .m_fnc = std::move(taskFnc),
+                       .m_fnc =
+                           std::move(createJobTaskFnc(std::forward<F>(fnc))),
                        .m_onErrorFnc = std::move(onErrorFnc)};
 
   switch (priority) {
@@ -392,26 +415,10 @@ void Dmn_Runtime_Manager::addTimedJob(
     F &&fnc, std::chrono::duration<Rep, Period> duration,
     Dmn_Runtime_Job::Priority priority,
     Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
-  TimePoint tp = std::chrono::steady_clock::now() + duration;
-
-  Dmn_Runtime_Job::TaskFncType taskFnc{};
-
-  if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
-                                      const Dmn_Runtime_Job &>) {
-    // User gave us a coroutine: use it directly
-    taskFnc = std::forward<F>(fnc);
-  } else {
-    // User gave us a void function: wrap it
-    taskFnc = [f = std::forward<F>(fnc)](
-                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
-      f(j);
-      co_return;
-    };
-  }
-
   Dmn_Runtime_Job rjob{.m_priority = priority,
-                       .m_fnc = std::move(taskFnc),
-                       .m_due = tp,
+                       .m_fnc =
+                           std::move(createJobTaskFnc(std::forward<F>(fnc))),
+                       .m_due = std::chrono::steady_clock::now() + duration,
                        .m_onErrorFnc = std::move(onErrorFnc)};
 
   // add rjob to m_timedQueue via singleton main asynchronous thread
