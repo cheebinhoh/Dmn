@@ -347,14 +347,14 @@ void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
   if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
                                       const Dmn_Runtime_Job &>) {
     // User gave us a coroutine: use it directly
-    taskFnc = std::move(std::forward<F>(fnc));
+    taskFnc = std::forward<F>(fnc);
   } else {
     // User gave us a void function: wrap it
-    taskFnc = std::move([f = std::forward<F>(fnc)](
-                            const Dmn_Runtime_Job &j) -> Dmn_Runtime_Task {
+    taskFnc = [f = std::forward<F>(fnc)](
+                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
       f(j);
       co_return;
-    });
+    };
   }
 
   Dmn_Runtime_Job rjob{.m_priority = priority,
@@ -398,14 +398,14 @@ void Dmn_Runtime_Manager::addTimedJob(
   if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
                                       const Dmn_Runtime_Job &>) {
     // User gave us a coroutine: use it directly
-    taskFnc = std::move(std::forward<F>(fnc));
+    taskFnc = std::forward<F>(fnc);
   } else {
     // User gave us a void function: wrap it
-    taskFnc = std::move([f = std::forward<F>(fnc)](
-                            const Dmn_Runtime_Job &j) -> Dmn_Runtime_Task {
+    taskFnc = [f = std::forward<F>(fnc)](
+                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
       f(j);
       co_return;
-    });
+    };
   }
 
   Dmn_Runtime_Job rjob{.m_priority = priority,
