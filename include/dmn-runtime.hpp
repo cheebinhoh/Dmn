@@ -82,6 +82,7 @@
 #include <stack>
 #include <system_error>
 #include <thread>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -137,10 +138,20 @@ struct TimedJobComparator {
   }
 };
 
+template <typename F, typename... Args>
+concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
+  {
+    std::invoke(std::forward<F>(f), std::forward<Args>(args)...)
+  } -> std::same_as<void>;
+} || requires(F &&f, Args &&...args) {
+  {
+    std::invoke(std::forward<F>(f), std::forward<Args>(args)...)
+  } -> std::same_as<Dmn_Runtime_Task>;
+};
+
+// Simplified alias for your specific Job signature
 template <typename F>
-concept IsValidJobFnc =
-    std::is_invocable_r_v<void, F, const Dmn_Runtime_Job &> ||
-    std::is_invocable_r_v<Dmn_Runtime_Task, F, const Dmn_Runtime_Job &>;
+concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
 
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
