@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Runtime_Manager::createInstance();
   int count{};
 
-  // std::function<void(const dmn::Dmn_Runtime_Job &j)> timedJob{};
   dmn::Dmn_Runtime_Job::FncType timedJob{};
   timedJob = [&inst, &count, &timedJob](const auto &) {
     std::cout << "********* handle timerjob: " << count << "\n";

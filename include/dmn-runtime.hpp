@@ -80,6 +80,7 @@
 #include <mutex>
 #include <queue>
 #include <stack>
+#include <stdexcept>
 #include <system_error>
 #include <thread>
 #include <type_traits>
