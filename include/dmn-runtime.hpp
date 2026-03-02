@@ -70,6 +70,7 @@
 #include <cassert>
 #include <cerrno>
 #include <chrono>
+#include <concepts>
 #include <coroutine>
 #include <csignal>
 #include <cstdint>
