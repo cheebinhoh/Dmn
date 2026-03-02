@@ -70,6 +70,7 @@
 #include <cassert>
 #include <cerrno>
 #include <chrono>
+#include <concepts>
 #include <coroutine>
 #include <csignal>
 #include <cstdint>
@@ -80,8 +81,10 @@
 #include <mutex>
 #include <queue>
 #include <stack>
+#include <stdexcept>
 #include <system_error>
 #include <thread>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -113,13 +116,14 @@ using NSecInt = std::chrono::nanoseconds::rep;
  *  - m_onErrorFnc: Callable for exception thrown inside m_fnc Callable.
  */
 struct Dmn_Runtime_Job {
-  using FncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
+  using FncType = std::function<void(const Dmn_Runtime_Job &j)>;
+  using TaskFncType = std::function<Dmn_Runtime_Task(const Dmn_Runtime_Job &j)>;
   using OnErrorFncType = std::function<void(std::exception_ptr &)>;
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
   Priority m_priority{Priority::kMedium};
-  FncType m_fnc{};
+  TaskFncType m_fnc{};
   TimePoint m_due{};
 
   OnErrorFncType m_onErrorFnc{};
@@ -135,6 +139,21 @@ struct TimedJobComparator {
     return a.m_due > b.m_due;
   }
 };
+
+template <typename F, typename... Args>
+concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
+  {
+    std::invoke(std::forward<F>(f), std::forward<Args>(args)...)
+  } -> std::same_as<void>;
+} || requires(F &&f, Args &&...args) {
+  {
+    std::invoke(std::forward<F>(f), std::forward<Args>(args)...)
+  } -> std::same_as<Dmn_Runtime_Task>;
+};
+
+// Simplified alias for your specific Job signature
+template <typename F>
+concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
 
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
@@ -185,20 +204,23 @@ public:
   /**
    * @brief Enqueue a job for immediate execution with the given priority.
    *        The runtime will schedule the job onto the appropriate internal
-   *        buffer.
+   *        priority queue.
    *
-   * @param fnc The callable to be executed.
-
+   * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
+   *            Dmn_Runtime_Job::TaskFncType.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
+  template <typename F>
+    requires IsValidJobFnc<F>
   void addJob(
-      Dmn_Runtime_Job::FncType fnc,
+      F &&fnc,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
-   * @brief Enqueue a job to be run after the specified duration.
+   * @brief Enqueue a job into appropriate queue to be run after the specified
+   * duration.
    *
    *        Template parameters:
    *        - Rep, Period: std::chrono::duration parameterization.
@@ -207,31 +229,18 @@ public:
    *        boot/monotonic start stored in a min-heap to guarantee
    *        earliest-first execution.
    *
-   * @param fnc The callable to be executed.
+   * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
+   *            Dmn_Runtime_Job::TaskFncType.
    * @param duration The duration after that the fnc is posted for execution.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
-  template <class Rep, class Period>
+  template <typename F, class Rep, class Period>
+    requires IsValidJobFnc<F>
   void addTimedJob(
-      Dmn_Runtime_Job::FncType fnc, std::chrono::duration<Rep, Period> duration,
+      F &&fnc, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
-      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {}) {
-    TimePoint tp = std::chrono::steady_clock::now() + duration;
-
-    Dmn_Runtime_Job rjob{.m_priority = priority,
-                         .m_fnc = std::move(fnc),
-                         .m_due = tp,
-                         .m_onErrorFnc = std::move(onErrorFnc)};
-
-    // add rjob to m_timedQueue via singleton main asynchronous thread
-    this->addExecTask([this, rjob = std::move(rjob)]() {
-      assert(isRunInAsyncThread());
-
-      this->m_timedQueue.push(std::move(rjob));
-      this->setNextTimerAt(this->m_timedQueue.top().m_due);
-    });
-  }
+      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
    * @brief Clear all registered handler hooks for the signal number. Note that
@@ -329,6 +338,90 @@ private:
    */
   static sigset_t s_mask;
 }; // class Dmn_Runtime_Manager
+
+template <typename F>
+  requires IsValidJobFnc<F>
+void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
+                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
+  Dmn_Runtime_Job::TaskFncType taskFnc{};
+
+  if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
+                                      const Dmn_Runtime_Job &>) {
+    // User gave us a coroutine: use it directly
+    taskFnc = std::forward<F>(fnc);
+  } else {
+    // User gave us a void function: wrap it
+    taskFnc = [f = std::forward<F>(fnc)](
+                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
+      f(j);
+      co_return;
+    };
+  }
+
+  Dmn_Runtime_Job rjob{.m_priority = priority,
+                       .m_fnc = std::move(taskFnc),
+                       .m_onErrorFnc = std::move(onErrorFnc)};
+
+  switch (priority) {
+  case Dmn_Runtime_Job::Priority::kHigh:
+    m_highQueue.push(std::move(rjob));
+    break;
+
+  case Dmn_Runtime_Job::Priority::kMedium:
+    m_mediumQueue.push(std::move(rjob));
+    break;
+
+  case Dmn_Runtime_Job::Priority::kLow:
+    m_lowQueue.push(std::move(rjob));
+    break;
+
+  default:
+    throw std::runtime_error(
+        "Error: invalid priority, only kHigh, kMedium and kLow is allowed");
+  }
+
+  if (m_jobs_count.fetch_add(1) == 0 &&
+      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {
+    this->runRuntimeJobExecutor();
+  }
+}
+
+template <typename F, class Rep, class Period>
+  requires IsValidJobFnc<F>
+void Dmn_Runtime_Manager::addTimedJob(
+    F &&fnc, std::chrono::duration<Rep, Period> duration,
+    Dmn_Runtime_Job::Priority priority,
+    Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
+  TimePoint tp = std::chrono::steady_clock::now() + duration;
+
+  Dmn_Runtime_Job::TaskFncType taskFnc{};
+
+  if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
+                                      const Dmn_Runtime_Job &>) {
+    // User gave us a coroutine: use it directly
+    taskFnc = std::forward<F>(fnc);
+  } else {
+    // User gave us a void function: wrap it
+    taskFnc = [f = std::forward<F>(fnc)](
+                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
+      f(j);
+      co_return;
+    };
+  }
+
+  Dmn_Runtime_Job rjob{.m_priority = priority,
+                       .m_fnc = std::move(taskFnc),
+                       .m_due = tp,
+                       .m_onErrorFnc = std::move(onErrorFnc)};
+
+  // add rjob to m_timedQueue via singleton main asynchronous thread
+  this->addExecTask([this, rjob = std::move(rjob)]() {
+    assert(isRunInAsyncThread());
+
+    this->m_timedQueue.push(std::move(rjob));
+    this->setNextTimerAt(this->m_timedQueue.top().m_due);
+  });
+}
 
 } // namespace dmn
 

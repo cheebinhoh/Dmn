@@ -166,46 +166,6 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   return;
 }
 
-/**
- * @brief The method will add a priority asynchronous job to be run in runtime
- *        context.
- *
- * @param fnc The asynchronous job function to be executed
- * @param priority The priority of the asynchronous job
- * @param onErrorFnc The callback to be invoked if executing the job results
- *        in an error
- */
-void Dmn_Runtime_Manager::addJob(Dmn_Runtime_Job::FncType fnc,
-                                 Dmn_Runtime_Job::Priority priority,
-                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
-  Dmn_Runtime_Job rjob{.m_priority = priority,
-                       .m_fnc = std::move(fnc),
-                       .m_onErrorFnc = std::move(onErrorFnc)};
-
-  switch (priority) {
-  case Dmn_Runtime_Job::Priority::kHigh:
-    m_highQueue.push(std::move(rjob));
-    break;
-
-  case Dmn_Runtime_Job::Priority::kMedium:
-    m_mediumQueue.push(std::move(rjob));
-    break;
-
-  case Dmn_Runtime_Job::Priority::kLow:
-    m_lowQueue.push(std::move(rjob));
-    break;
-
-  default:
-    throw std::runtime_error(
-        "Error: invalid priority, only kHigh, kMedium and kLow is allowed");
-  }
-
-  if (m_jobs_count.fetch_add(1) == 0 &&
-      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {
-    this->runRuntimeJobExecutor();
-  }
-}
-
 void Dmn_Runtime_Manager::clearSignalHandlerHook(int signo) {
   this->addExecTask(
       [this, signo]() mutable { this->clearSignalHandlerHookInternal(signo); });
