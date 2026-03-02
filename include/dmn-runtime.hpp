@@ -137,6 +137,11 @@ struct TimedJobComparator {
   }
 };
 
+template <typename F>
+concept IsValidJobFnc =
+    std::is_invocable_r_v<void, F, const Dmn_Runtime_Job &> ||
+    std::is_invocable_r_v<Dmn_Runtime_Task, F, const Dmn_Runtime_Job &>;
+
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
@@ -186,21 +191,23 @@ public:
   /**
    * @brief Enqueue a job for immediate execution with the given priority.
    *        The runtime will schedule the job onto the appropriate internal
-   *        buffer.
+   *        priority queue.
    *
-   * @param fnc The callable to be executed.
-
+   * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
+   *            Dmn_Runtime_Job::TaskFncType.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
   template <typename F>
+    requires IsValidJobFnc<F>
   void addJob(
       F &&fnc,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
       Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});
 
   /**
-   * @brief Enqueue a job to be run after the specified duration.
+   * @brief Enqueue a job into appropriate queue to be run after the specified
+   * duration.
    *
    *        Template parameters:
    *        - Rep, Period: std::chrono::duration parameterization.
@@ -209,12 +216,14 @@ public:
    *        boot/monotonic start stored in a min-heap to guarantee
    *        earliest-first execution.
    *
-   * @param fnc The callable to be executed.
+   * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
+   *            Dmn_Runtime_Job::TaskFncType.
    * @param duration The duration after that the fnc is posted for execution.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
   template <typename F, class Rep, class Period>
+    requires IsValidJobFnc<F>
   void addTimedJob(
       F &&fnc, std::chrono::duration<Rep, Period> duration,
       Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
@@ -317,16 +326,8 @@ private:
   static sigset_t s_mask;
 }; // class Dmn_Runtime_Manager
 
-/**
- * @brief The method will add a priority asynchronous job to be run in runtime
- *        context.
- *
- * @param fnc The asynchronous job function to be executed
- * @param priority The priority of the asynchronous job
- * @param onErrorFnc The callback to be invoked if executing the job results
- *        in an error
- */
 template <typename F>
+  requires IsValidJobFnc<F>
 void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
                                  Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
   Dmn_Runtime_Job::TaskFncType taskFnc{};
@@ -373,6 +374,7 @@ void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
 }
 
 template <typename F, class Rep, class Period>
+  requires IsValidJobFnc<F>
 void Dmn_Runtime_Manager::addTimedJob(
     F &&fnc, std::chrono::duration<Rep, Period> duration,
     Dmn_Runtime_Job::Priority priority,
