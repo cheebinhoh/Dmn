@@ -33,8 +33,9 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Runtime_Manager::createInstance();
   int count{};
 
+  // std::function<void(const dmn::Dmn_Runtime_Job &j)> timedJob{};
   dmn::Dmn_Runtime_Job::FncType timedJob{};
-  timedJob = [&inst, &count, &timedJob](const auto &) -> dmn::Dmn_Runtime_Task {
+  timedJob = [&inst, &count, &timedJob](const auto &) {
     std::cout << "********* handle timerjob: " << count << "\n";
     if (count >= 5) {
       inst->exitMainLoop();
@@ -43,8 +44,6 @@ int main(int argc, char *argv[]) {
       inst->addTimedJob(timedJob, std::chrono::seconds(5),
                         dmn::Dmn_Runtime_Job::Priority::kHigh);
     }
-
-    co_return;
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(5),
@@ -60,16 +59,13 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&highRun, &mediumRun,
-               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
+              [&highRun, &mediumRun, &lowRun](const auto &) {
                 EXPECT_TRUE(0 == lowRun);
                 EXPECT_TRUE(0 == mediumRun);
 
                 std::cout << "** high job\n";
                 highRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-
-                co_return;
               },
               dmn::Dmn_Runtime_Job::Priority::kHigh);
 

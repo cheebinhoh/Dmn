@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Runtime_Manager::createInstance();
   int count{};
 
-  dmn::Dmn_Runtime_Job::FncType timedJob{};
+  dmn::Dmn_Runtime_Job::TaskFncType timedJob{};
   timedJob = [&inst, &count, &timedJob](const auto &) -> dmn::Dmn_Runtime_Task {
     std::cout << "********* handle timerjob: " << count << "\n";
     if (count >= 7) {
