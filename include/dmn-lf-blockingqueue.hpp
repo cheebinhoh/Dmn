@@ -8,8 +8,8 @@
  * <<<< NOTE: work in progress >>>>
  */
 
-#ifndef DMN_LF_BUFFER_HPP_
-#define DMN_LF_BUFFER_HPP_
+#ifndef DMN_LF_BLOCKINGQUEUE_HPP_
+#define DMN_LF_BLOCKINGQUEUE_HPP_
 
 #include <algorithm>
 #include <atomic>
@@ -34,8 +34,8 @@ namespace dmn {
  */
 template <typename T = std::string> class Dmn_Lf_BlockingQueue {
   struct Node {
-    T data{};
-    std::shared_ptr<Node> next{};
+    T m_data{};
+    std::atomic<Node *> m_next{};
   };
 
 public:
@@ -57,16 +57,15 @@ protected:
   template <class U> void pushImpl(U &&item);
 
 private:
-  std::shared_ptr<Node> m_dummy{};
-
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 }; // class Dmn_Lf_BlockingQueue
 
 template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
-  m_dummy = std::make_shared<Node>();
-  m_head.store(m_dummy.get());
-  m_tail.store(m_dummy.get());
+  Node *dummy = new Node;
+
+  m_head.store(dummy);
+  m_tail.store(dummy);
 }
 
 template <typename T>
@@ -75,6 +74,15 @@ Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
+  Node *ptr = m_head;
+
+  while (nullptr != ptr) {
+    Node *nextPtr = ptr->m_next;
+
+    delete ptr;
+
+    ptr = nextPtr;
+  }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
@@ -92,57 +100,49 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::debugPrint() -> size_t {
   size_t count{};
 
-  Node *pointNull{};
-  Node *last{};
-
-  do {
-    last = m_tail.load();
-  } while ((nullptr == last) || !m_tail.compare_exchange_weak(last, pointNull));
-
-  Node *first{};
-
-  do {
-    first = m_head.load();
-  } while ((nullptr == first) ||
-           !m_head.compare_exchange_weak(first, pointNull));
+  Node *first = m_head.load();
 
   Node *cur = first;
   while (nullptr != cur) {
-    if (cur != m_dummy.get()) {
-      count++;
-    }
+    count++;
 
-    cur = cur->next.get();
+    cur = cur->m_next;
   }
 
-  m_head.compare_exchange_strong(pointNull, first);
-  m_tail.compare_exchange_strong(pointNull, last);
-
-  return count;
+  return count - 1; // remove dummy count;
 }
 
 template <typename T>
 template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
-  Node *pointNull{};
-  Node *last{};
+  Node *newNode = new Node;
 
-  do {
-    last = m_tail.load();
-  } while ((nullptr == last) || !m_tail.compare_exchange_weak(last, pointNull));
+  newNode->m_data = std::move(item);
 
-  assert(nullptr != last);
-  assert(nullptr == m_tail.load());
+  Node *t{};
+  Node *next{};
 
-  auto *newNode = new Node;
-  newNode->data = std::move(item);
-  newNode->next = nullptr;
+  while (true) {
+    t = m_tail.load();
+    next = t->m_next.load();
 
-  last->next = std::shared_ptr<Node>(newNode);
+    if (t == m_tail.load()) { // Are tail and next consistent?
+      if (next == nullptr) {
+        // Step 1: Try to link the new node to the end
+        if (t->m_next.compare_exchange_strong(next, newNode)) {
+          break; // Success!
+        }
+      } else {
+        // Step 2: Tail is falling behind; try to help advance it
+        m_tail.compare_exchange_strong(t, next);
+      }
+    }
+  }
 
-  m_tail.compare_exchange_strong(pointNull, newNode);
+  // Step 3: Try to swing the tail to the new node
+  m_tail.compare_exchange_strong(t, newNode);
 }
 
 } // namespace dmn
 
-#endif // DMN_LF_BUFFER_HPP_
+#endif // DMN_LF_BLOCKINGQUEUE_HPP_

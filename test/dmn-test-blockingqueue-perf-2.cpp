@@ -11,6 +11,7 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <random> // Essential library
 #include <string>
 #include <thread>
 #include <vector>
@@ -22,15 +23,20 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   using namespace std::string_literals;
 
+  std::uniform_int_distribution<> global_distr(1, 10);
+
   auto queue = std::make_unique<dmn::Dmn_BlockingQueue<int>>();
 
   std::atomic_flag proc1Stop{};
-  auto proc1 = std::make_unique<dmn::Dmn_Proc>("proc1", [&queue, &proc1Stop]() {
+  auto proc1 = std::make_unique<dmn::Dmn_Proc>("proc1", [&queue, &proc1Stop, &global_distr]() {
+    std::mt19937 local_gen(std::random_device{}());
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
       queue->push(i);
-      dmn::Dmn_Proc::yield();
+
+      int pause = global_distr(local_gen);
+      std::this_thread::sleep_for(std::chrono::microseconds(pause));
     }
 
     proc1Stop.test_and_set(std::memory_order_release);
@@ -38,12 +44,15 @@ int main(int argc, char *argv[]) {
   });
 
   std::atomic_flag proc2Stop{};
-  auto proc2 = std::make_unique<dmn::Dmn_Proc>("proc2", [&queue, &proc2Stop]() {
+  auto proc2 = std::make_unique<dmn::Dmn_Proc>("proc2", [&queue, &proc2Stop, &global_distr]() {
+    std::mt19937 local_gen(std::random_device{}());
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
       queue->push(i);
-      dmn::Dmn_Proc::yield();
+
+      int pause = global_distr(local_gen);
+      std::this_thread::sleep_for(std::chrono::microseconds(pause));
     }
 
     proc2Stop.test_and_set(std::memory_order_release);
