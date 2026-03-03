@@ -49,7 +49,7 @@ public:
   Dmn_Lf_BlockingQueue(const Dmn_Lf_BlockingQueue<T> &&obj) = delete;
   Dmn_Lf_BlockingQueue<T> &operator=(Dmn_Lf_BlockingQueue<T> &&obj) = delete;
 
-  virtual void push(T &item, bool move = false);
+  virtual void push(T &item, bool move = true);
 
   auto debugPrint() -> size_t;
 
