@@ -79,10 +79,11 @@ if(BUILD_NDEBUG)
   add_compile_definitions(NDEBUG)
 endif()
 
+
 # build DMN library and applications
 add_subdirectory(src)
+
 
 # run unit test for DMN
 message(STATUS "build and run unit test...")
 add_subdirectory(test)
-
