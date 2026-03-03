@@ -14,6 +14,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-4
                       dmn-test-blockingqueue-5
                       dmn-test-blockingqueue-perf-1
+                      dmn-test-blockingqueue-perf-2
                       dmn-test-dmesg-1
                       dmn-test-dmesg-2
                       dmn-test-dmesg-3

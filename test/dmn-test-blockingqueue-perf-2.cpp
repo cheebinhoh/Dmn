@@ -14,14 +14,14 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-lf-blockingqueue.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   using namespace std::string_literals;
 
-  auto queue = std::make_unique<dmn::Dmn_Lf_BlockingQueue<int>>();
+  auto queue = std::make_unique<dmn::Dmn_BlockingQueue<int>>();
 
   std::atomic_flag proc1Stop{};
   auto proc1 = std::make_unique<dmn::Dmn_Proc>("proc1", [&queue, &proc1Stop]() {
@@ -66,8 +66,7 @@ int main(int argc, char *argv[]) {
   auto durationSending =
       std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
 
-  std::cout << "count: " << queue->debugPrint()
-            << ", time: " << durationSending.count() << "\n";
+  std::cout << "time: " << durationSending.count() << "\n";
 
   proc1 = {};
   proc2 = {};

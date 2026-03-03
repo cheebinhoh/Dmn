@@ -1,88 +1,20 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-blockingqueue.hpp
- * @brief Thread-safe FIFO blocking queue for passing items between threads.
+ * @file dmn-lf-blockingqueue.hpp
+ * @brief Thread-safe lock free FIFO blocking queue for passing items between
+ *        threads.
  *
- * Overview
- * --------
- * Dmn_Lf_BlockingQueue<T> is a thread-safe FIFO queue implementation intended
- * for use by producer and consumer threads. Key behavioral properties:
- *  - push operations are non-blocking (they will not wait for consumers).
- *  - pop operations may block waiting for data (either indefinitely or with a
- *    timeout, depending on the API used).
- *
- * Synchronization and semantics
- * -----------------------------
- * - A mutex (m_mutex) protects the internal std::deque<T> m_queue and
- *   associated counters (m_push_count, m_pop_count).
- *
- * - Three condition variables are used:
- *   - m_not_empty_cond: signalled on push; used by the multi-item timed pop
- *     pop(count, timeout) to wait until the queue has at least one item or the
- *     target number of items.
- *   - m_empty_cond: signalled when the queue becomes empty; used by
- *     waitForEmpty() to wait until all outstanding items have been consumed.
- *
- * - Counters:
- *   - m_push_count: incremented on every successful push. This is useful for
- *     accounting how many items have entered the buffer in total.
- *   - m_pop_count: incremented on every successful pop. waitForEmpty() asserts
- *     that m_pop_count == m_push_count when returning.
- *
- * Blocking and timeout semantics
- * ------------------------------
- * - pop(): Blocks until at least one item is available, then returns that
- *   item.
- *
- * - popNoWait(): Non-blocking pop that returns std::nullopt if the queue is
- *   empty.
- *
- * - pop(count, timeout):
- *   This function attempts to retrieve up to `count` items. Its blocking and
- *   return behavior:
- *     1. If the queue already contains >= count items, it returns exactly
- *        `count` items immediately.
- *     2. If the queue contains 0 items, it blocks:
- *        - If timeout == 0: blocks indefinitely until at least `count` items
- *          become available (returns exactly `count`).
- *        - If timeout > 0: waits up to `timeout` microseconds for items.
- *          * If enough items are available before timeout, returns exactly
- *            `count` items.
- *          * If the timeout expires and the queue contains at least 1 item,
- *            returns however many items are currently available (between 1
- *            and `count`).
- *          * If the timeout expires and the queue is still empty, returns
- *            no item.
- *
- *   Note: The timeout is interpreted as a maximum time to wait for the full
- *   `count` items (measured from the first blocking wait inside the call).
- *   A zero timeout value means "wait forever".
- *
- * Move and copy behavior
- * ----------------------
- * - push(T&&): Attempts to move the provided rvalue into the queue. It uses
- *   std::move_if_noexcept to prefer move only when it is noexcept (or the
- *   type is noexcept-movable).
- *
- * - push(T&, bool move=true): Pushes the provided lvalue. If `move` is true,
- *   the code will attempt to move (using move_if_noexcept), otherwise it will
- *   copy.
- *
- * Implementation notes
- * --------------------
- * - The queue uses an unbounded std::deque<T>. There is no programmatic
- *   limit beyond available memory and the semantics of the stored type T.
- *
- * - The class deletes copy and move constructors / assignment operators to
- *   ensure unique ownership of the synchronization primitives and avoid
- *   incidental sharing between objects.
+ * <<<< NOTE: work in progress >>>>
  */
 
 #ifndef DMN_LF_BUFFER_HPP_
 #define DMN_LF_BUFFER_HPP_
 
+#include <iostream>
+
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
@@ -90,11 +22,10 @@
 #include <ctime>
 #include <deque>
 #include <initializer_list>
-#include <mutex>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 namespace dmn {
 
@@ -104,6 +35,11 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string> class Dmn_Lf_BlockingQueue {
+  struct Node {
+    T data{};
+    std::shared_ptr<Node> next{};
+  };
+
 public:
   Dmn_Lf_BlockingQueue();
   Dmn_Lf_BlockingQueue(std::initializer_list<T> list);
@@ -115,11 +51,25 @@ public:
   Dmn_Lf_BlockingQueue(const Dmn_Lf_BlockingQueue<T> &&obj) = delete;
   Dmn_Lf_BlockingQueue<T> &operator=(Dmn_Lf_BlockingQueue<T> &&obj) = delete;
 
+  virtual void push(T &item, bool move = false);
+
+  auto debugPrint() -> size_t;
+
 protected:
+  template <class U> void pushImpl(U &&item);
+
 private:
+  std::shared_ptr<Node> m_dummy{};
+
+  std::atomic<Node *> m_head{};
+  std::atomic<Node *> m_tail{};
 }; // class Dmn_Lf_BlockingQueue
 
-template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {}
+template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
+  m_dummy = std::make_shared<Node>();
+  m_head.store(m_dummy.get());
+  m_tail.store(m_dummy.get());
+}
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
@@ -130,6 +80,69 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
+}
+
+template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
+  if (move) {
+    // Preserve the original preference for noexcept-move (otherwise copy).
+    pushImpl(std::move_if_noexcept(item));
+  } else {
+    pushImpl(item); // copy
+  }
+}
+
+template <typename T> auto Dmn_Lf_BlockingQueue<T>::debugPrint() -> size_t {
+  size_t count{};
+
+  Node *pointNull{};
+  Node *last{};
+
+  do {
+    last = m_tail.load();
+  } while ((nullptr == last) || !m_tail.compare_exchange_weak(last, pointNull));
+
+  Node *first{};
+
+  do {
+    first = m_head.load();
+  } while ((nullptr == first) ||
+           !m_head.compare_exchange_weak(first, pointNull));
+
+  Node *cur = first;
+  while (nullptr != cur) {
+    if (cur != m_dummy.get()) {
+      count++;
+    }
+
+    cur = cur->next.get();
+  }
+
+  m_head.compare_exchange_strong(pointNull, first);
+  m_tail.compare_exchange_strong(pointNull, last);
+
+  return count;
+}
+
+template <typename T>
+template <class U>
+void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
+  Node *pointNull{};
+  Node *last{};
+
+  do {
+    last = m_tail.load();
+  } while ((nullptr == last) || !m_tail.compare_exchange_weak(last, pointNull));
+
+  assert(nullptr != last);
+  assert(nullptr == m_tail.load());
+
+  auto *newNode = new Node;
+  newNode->data = std::move(item);
+  newNode->next = nullptr;
+
+  last->next = std::shared_ptr<Node>(newNode);
+
+  m_tail.compare_exchange_strong(pointNull, newNode);
 }
 
 } // namespace dmn
