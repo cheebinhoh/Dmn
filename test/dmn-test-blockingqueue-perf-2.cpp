@@ -59,10 +59,28 @@ int main(int argc, char *argv[]) {
     proc2Stop.notify_all();
   });
 
+  std::atomic_flag proc3Stop{};
+  auto proc3 = std::make_unique<dmn::Dmn_Proc>("proc3", [&queue, &proc3Stop, &global_distr]() {
+    std::mt19937 local_gen(std::random_device{}());
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    for (int i = 0; i < 10000; i++) {
+      queue->push(i);
+
+      int pause = global_distr(local_gen);
+      std::this_thread::sleep_for(std::chrono::microseconds(pause));
+    }
+
+    proc3Stop.test_and_set(std::memory_order_release);
+    proc3Stop.notify_all();
+  });
+
+
   auto start = std::chrono::high_resolution_clock::now();
 
   proc1->exec();
   proc2->exec();
+  proc3->exec();
 
   while (!proc1Stop.test(std::memory_order_acquire)) {
     proc1Stop.wait(false, std::memory_order_acquire);
@@ -71,6 +89,11 @@ int main(int argc, char *argv[]) {
   while (!proc2Stop.test(std::memory_order_acquire)) {
     proc2Stop.wait(false, std::memory_order_acquire);
   }
+
+  while (!proc3Stop.test(std::memory_order_acquire)) {
+    proc3Stop.wait(false, std::memory_order_acquire);
+  }
+
 
   auto endSending = std::chrono::high_resolution_clock::now();
   auto durationSending =
