@@ -11,8 +11,6 @@
 #ifndef DMN_LF_BUFFER_HPP_
 #define DMN_LF_BUFFER_HPP_
 
-#include <iostream>
-
 #include <algorithm>
 #include <atomic>
 #include <cassert>
