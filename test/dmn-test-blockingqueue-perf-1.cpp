@@ -83,20 +83,25 @@ int main(int argc, char *argv[]) {
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  for (int i = 0; i < 1000; i++) {
-    queue->push(i);
-  }
-
   cons1->exec();
   cons2->exec();
   cons3->exec();
   cons4->exec();
 
+  for (int i = 0; i < 1000; i++) {
+    queue->push(i);
+  }
+
+  auto endSending = std::chrono::high_resolution_clock::now();
+  auto durationSending =
+      std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
+
   queue->waitForEmpty();
 
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration =
-      std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  auto endProcessing = std::chrono::high_resolution_clock::now();
+  auto durationProcessing =
+      std::chrono::duration_cast<std::chrono::microseconds>(endProcessing -
+                                                            start);
 
   std::this_thread::sleep_for(std::chrono::microseconds(10000));
   queue = {};
@@ -106,7 +111,8 @@ int main(int argc, char *argv[]) {
   cons3 = {};
   cons4 = {};
 
-  std::cout << "**** total: " << duration.count() << ", :" << count1 << ", "
+  std::cout << "**** total duration: " << durationSending.count() << ", "
+            << durationProcessing.count() << ", count:" << count1 << ", "
             << count2 << ", " << count3 << ", " << count4 << "\n";
 
   EXPECT_TRUE((count1 + count2 + count3 + count4) == 1000);
