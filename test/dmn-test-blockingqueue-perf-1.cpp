@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
         std::mt19937 local_gen(std::random_device{}());
 
         while (true) {
-          auto val = queue->pop();
+          [[maybe_unused]] auto val = queue->pop();
           count1++;
 
           int pause = global_distr(local_gen);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
         std::mt19937 local_gen(std::random_device{}());
 
         while (true) {
-          auto val = queue->pop();
+          [[maybe_unused]] auto val = queue->pop();
           count2++;
 
           int pause = global_distr(local_gen);
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
         std::mt19937 local_gen(std::random_device{}());
 
         while (true) {
-          auto val = queue->pop();
+          [[maybe_unused]] auto val = queue->pop();
           count3++;
 
           int pause = global_distr(local_gen);
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
         std::mt19937 local_gen(std::random_device{}());
 
         while (true) {
-          auto val = queue->pop();
+          [[maybe_unused]] auto val = queue->pop();
           count4++;
 
           int pause = global_distr(local_gen);
@@ -108,6 +108,8 @@ int main(int argc, char *argv[]) {
 
   std::cout << "**** total: " << duration.count() << ", :" << count1 << ", "
             << count2 << ", " << count3 << ", " << count4 << "\n";
+
+  EXPECT_TRUE((count1 + count2 + count3 + count4) == 1000);
 
   return RUN_ALL_TESTS();
 }
