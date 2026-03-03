@@ -38,6 +38,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
+                      dmn-test-lf-blockingqueue-1
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3

@@ -65,7 +65,7 @@
  *   std::move_if_noexcept to prefer move only when it is noexcept (or the
  *   type is noexcept-movable).
  *
- * - push(T&, bool move=true): Pushes the provided lvalue. If `move` is true,
+ * - push(T&, bool move=false): Pushes the provided lvalue. If `move` is true,
  *   the code will attempt to move (using move_if_noexcept), otherwise it will
  *   copy.
  *
@@ -177,7 +177,7 @@ public:
    * @param item The value to push (lvalue reference).
    * @param move If true attempt move semantics; otherwise copy.
    */
-  virtual void push(T &item, bool move = true);
+  virtual void push(T &item, bool move = false);
 
   /**
    * @brief Wait until the queue becomes empty and return the total number of
