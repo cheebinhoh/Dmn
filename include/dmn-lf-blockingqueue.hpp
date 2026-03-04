@@ -94,12 +94,15 @@ public:
   virtual auto popNoWait() -> std::optional<T>;
 
   /**
-   * @brief Push an rvalue into the queue (attempts move, with
-   *        move_if_noexcept).
+   * @brief Push an item into the queue, optionally moving it (using
+   *        move_if_noexcept or equivalent).
    *
    * Non-blocking and signals waiting consumers.
    *
-   * @param item The value to push (rvalue reference).
+   * @param item The value to push (lvalue reference; may be moved-from if
+   *             move is true).
+   * @param move If true, attempt to move the value into the queue; otherwise,
+   *             copy it.
    */
   virtual void push(T &&item);
 
