@@ -120,10 +120,6 @@ public:
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
-   * This blocks until the queue is empty and asserts that all pushed items
-   * have been popped (m_pop_count == m_push_count) before returning the
-   * inbound count.
-   *
    * @return The total number of items that have been passed through the queue.
    */
   virtual auto waitForEmpty() -> size_t;
