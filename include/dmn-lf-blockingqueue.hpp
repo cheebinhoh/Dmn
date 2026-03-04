@@ -158,16 +158,6 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   m_tail.store(nullptr);
   m_tail.notify_all();
 
-  Node *ptr = m_head;
-
-  while (nullptr != ptr) {
-    Node *nextPtr = ptr->m_next;
-
-    delete ptr;
-
-    ptr = nextPtr;
-  }
-
   size_t pushcall_count{};
   while ((pushcall_count = m_pushcall_count.load(std::memory_order_acquire)) >
          0) {
@@ -178,6 +168,15 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
          0) {
     m_popcall_count.wait(popcall_count, std::memory_order_acquire);
+  }
+
+  Node *ptr = m_head;
+  while (nullptr != ptr) {
+    Node *nextPtr = ptr->m_next;
+
+    delete ptr;
+
+    ptr = nextPtr;
   }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
