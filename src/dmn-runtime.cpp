@@ -134,6 +134,9 @@ Dmn_Runtime_Manager::Dmn_Runtime_Manager()
 Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
   exitMainLoop();
 
+  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
+  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
+
   if (m_pimpl) {
     this->setNextTimer(0, 0);
 
@@ -148,9 +151,6 @@ Dmn_Runtime_Manager::~Dmn_Runtime_Manager() noexcept try {
 
     m_pimpl = {};
   }
-
-  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
-  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
 
   // it is important that we wait for all Dmn_Runtime_Job and its companion
   // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
@@ -331,8 +331,6 @@ void Dmn_Runtime_Manager::enterMainLoop() {
           }
 
           if (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
-            setNextTimer(0, 0);
-
             break;
           } else {
             this->addExecTask([this, signo]() {
