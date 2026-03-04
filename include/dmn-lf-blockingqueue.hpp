@@ -226,7 +226,7 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
   } while (res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
 
-  return std::move(res);
+  return res;
 }
 
 template <typename T>
