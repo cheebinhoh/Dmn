@@ -119,7 +119,7 @@ inline bool stringCompare(const std::string_view str1,
  */
 template <typename F> struct ScopeGuard {
   F f;
-  ~ScopeGuard() { f(); }
+  ~ScopeGuard() noexcept { f(); }
 };
 
 /**

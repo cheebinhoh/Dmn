@@ -339,7 +339,7 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
       delete newNode;
       newNode = nullptr;
 
-      break; // unfortunate, the move has happend!
+      break; // unfortunate, the move has happened!
     }
 
     next = last->m_next.load();
