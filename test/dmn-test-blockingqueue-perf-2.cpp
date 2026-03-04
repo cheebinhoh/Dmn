@@ -102,6 +102,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "time: " << durationSending.count() << "\n";
 
+  proc1->wait();
+  proc2->wait();
+
   proc1 = {};
   proc2 = {};
 

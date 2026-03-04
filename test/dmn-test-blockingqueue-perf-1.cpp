@@ -33,12 +33,15 @@ int main(int argc, char *argv[]) {
       "cons1", [&count1, &queue, &global_distr]() {
         std::mt19937 local_gen(std::random_device{}());
 
-        while (true) {
-          [[maybe_unused]] auto val = queue->pop();
-          count1++;
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count1++;
 
-          int pause = global_distr(local_gen);
-          std::this_thread::sleep_for(std::chrono::microseconds(pause));
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
         }
       });
 
@@ -46,12 +49,15 @@ int main(int argc, char *argv[]) {
       "cons2", [&count2, &queue, &global_distr]() {
         std::mt19937 local_gen(std::random_device{}());
 
-        while (true) {
-          [[maybe_unused]] auto val = queue->pop();
-          count2++;
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count2++;
 
-          int pause = global_distr(local_gen);
-          std::this_thread::sleep_for(std::chrono::microseconds(pause));
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
         }
       });
 
@@ -59,12 +65,15 @@ int main(int argc, char *argv[]) {
       "cons3", [&count3, &queue, &global_distr]() {
         std::mt19937 local_gen(std::random_device{}());
 
-        while (true) {
-          [[maybe_unused]] auto val = queue->pop();
-          count3++;
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count3++;
 
-          int pause = global_distr(local_gen);
-          std::this_thread::sleep_for(std::chrono::microseconds(pause));
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
         }
       });
 
@@ -72,12 +81,15 @@ int main(int argc, char *argv[]) {
       "cons4", [&count4, &queue, &global_distr]() {
         std::mt19937 local_gen(std::random_device{}());
 
-        while (true) {
-          [[maybe_unused]] auto val = queue->pop();
-          count4++;
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count4++;
 
-          int pause = global_distr(local_gen);
-          std::this_thread::sleep_for(std::chrono::microseconds(pause));
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
         }
       });
 
@@ -106,6 +118,11 @@ int main(int argc, char *argv[]) {
 
   std::this_thread::sleep_for(std::chrono::microseconds(10000));
   queue = {};
+
+  cons1->wait();
+  cons2->wait();
+  cons3->wait();
+  cons4->wait();
 
   cons1 = {};
   cons2 = {};
