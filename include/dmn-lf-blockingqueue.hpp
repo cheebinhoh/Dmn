@@ -133,6 +133,8 @@ private:
 
   std::atomic<std::size_t> m_popcall_count{};
   std::atomic<std::size_t> m_pushcall_count{};
+  std::atomic<std::size_t> m_waitforemptycall_count{};
+
   std::atomic<std::size_t> m_total_push_count{};
 }; // class Dmn_Lf_BlockingQueue
 
@@ -166,6 +168,13 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
          0) {
     m_popcall_count.wait(popcall_count, std::memory_order_acquire);
+  }
+
+  size_t waitforemptycall_count{};
+  while ((waitforemptycall_count =
+              m_waitforemptycall_count.load(std::memory_order_acquire)) > 0) {
+    m_waitforemptycall_count.wait(waitforemptycall_count,
+                                  std::memory_order_acquire);
   }
 
   Node *ptr = m_head;
@@ -356,6 +365,14 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
+  m_waitforemptycall_count.fetch_add(1, std::memory_order_relaxed);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_waitforemptycall_count.fetch_sub(1, std::memory_order_seq_cst);
+    m_waitforemptycall_count.notify_all();
+  });
+
   while (true) {
     Node *last = m_tail.load();
     if (nullptr == last) {
