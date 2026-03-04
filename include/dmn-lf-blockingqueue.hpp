@@ -319,7 +319,7 @@ template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   Node *newNode = new Node;
 
-  newNode->m_data = std::move(item);
+  newNode->m_data = std::forward<U>(item);
 
   Node *t{};
   Node *next{};
