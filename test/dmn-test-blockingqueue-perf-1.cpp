@@ -81,14 +81,15 @@ int main(int argc, char *argv[]) {
         }
       });
 
-  auto start = std::chrono::high_resolution_clock::now();
-
   cons1->exec();
   cons2->exec();
   cons3->exec();
   cons4->exec();
 
-  for (int i = 0; i < 1000; i++) {
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  auto start = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < 10000; i++) {
     queue->push(i);
   }
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
             << durationProcessing.count() << ", count:" << count1 << ", "
             << count2 << ", " << count3 << ", " << count4 << "\n";
 
-  EXPECT_TRUE((count1 + count2 + count3 + count4) == 1000);
+  EXPECT_TRUE((count1 + count2 + count3 + count4) == 10000);
 
   return RUN_ALL_TESTS();
 }
