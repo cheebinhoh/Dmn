@@ -199,6 +199,8 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
+  assert(count > 0);
+
   m_popcall_count.fetch_add(1, std::memory_order_acquire);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
