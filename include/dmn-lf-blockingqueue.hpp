@@ -2,18 +2,18 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-lf-blockingqueue.hpp
- * @brief Thread-safe mutex lock free FIFO blocking queue for passing items
- *        between threads, the Michael-Scott lock free queue algorithm but
- *        adapted for empty queue pop blocking semantics.
+ * @brief Thread-safe mutex lock and condition variable free FIFO blocking queue
+ * for passing items between threads, the Michael-Scott lock free queue
+ * algorithm but adapted for empty queue pop blocking semantics.
  */
 
 #ifndef DMN_LF_BLOCKINGQUEUE_HPP_
 #define DMN_LF_BLOCKINGQUEUE_HPP_
-
 #include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <initializer_list>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -53,6 +53,35 @@ public:
    * @return The front item.
    */
   virtual auto pop() -> T;
+
+  /**
+   * @brief Pop multiple items from the queue with optional timeout semantics.
+   *
+   * @warning The method does not guarantee that returned items are consecutive
+   *          and next to each other, but ordering of the returning items in
+   *          case that multiple threads are doing pop at the same time.
+   *
+   * Detailed semantics:
+   * - count > 0 is required (asserted).
+   * - If the queue has >= count items, this returns exactly count items.
+   * - If the queue is empty:
+   *   - timeout == 0: wait indefinitely for count items (return exactly count).
+   *   - timeout > 0: wait up to timeout microseconds for items.
+   *     * If timeout expires and there is at least one item, return 1..count
+   *       items (the current queue size).
+   *     * If timeout expires and the queue is still empty, the function returns
+   *       no item.
+   *
+   * The returned vector contains moved items removed from the queue.
+   *
+   * @param count   Number of desired items (must be > 0).
+   * @param timeout Timeout in microseconds for waiting for the full count.
+   *                A value of 0 means wait forever.
+   * @return Vector of items (size == count on success without timeout, or
+   *         between 1 and count if a timeout occurred after at least one item
+   *         was produced).
+   */
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
   /**
    * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
@@ -154,6 +183,35 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
   }
 
   return std::move(*data);
+}
+
+template <typename T>
+auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
+    -> std::vector<T> {
+  m_popcall_count.fetch_add(1, std::memory_order_acquire);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.notify_all();
+  });
+
+  std::vector<T> res{};
+
+  auto end = std::chrono::high_resolution_clock::now() +
+             std::chrono::microseconds(timeout);
+
+  do {
+    auto data = popOptional(false);
+    if (data) {
+      res.push_back(std::move(*data));
+    } else {
+      dmn::Dmn_Proc::yield();
+    }
+  } while (res.size() < count &&
+           std::chrono::high_resolution_clock::now() < end);
+
+  return std::move(res);
 }
 
 template <typename T>
