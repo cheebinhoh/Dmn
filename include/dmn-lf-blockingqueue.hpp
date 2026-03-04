@@ -235,12 +235,14 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
   while (true) {
     Node *last = m_tail.load();
+    if (nullptr == last) {
+      break;
+    }
+
     Node *first = m_head.load();
     Node *next = first->m_next.load();
 
-    if (nullptr == last) {
-      break;
-    } else if (first == m_head.load()) {
+    if (first == m_head.load()) {
       if (first == last) {
         if (next == nullptr) {
           if (!wait) {
