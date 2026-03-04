@@ -9,11 +9,12 @@
 
 #ifndef DMN_LF_BLOCKINGQUEUE_HPP_
 #define DMN_LF_BLOCKINGQUEUE_HPP_
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <chrono>
 #include <initializer_list>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -98,6 +99,16 @@ public:
    *
    * @param item The value to push (rvalue reference).
    */
+  virtual void push(T &&item);
+
+  /**
+   * @brief Push an rvalue into the queue (attempts move, with
+   *        move_if_noexcept).
+   *
+   * Non-blocking and signals waiting consumers.
+   *
+   * @param item The value to push (rvalue reference).
+   */
   virtual void push(T &item, bool move = true);
 
   /**
@@ -135,7 +146,11 @@ template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
-    : Dmn_Lf_BlockingQueue{} {}
+    : Dmn_Lf_BlockingQueue{} {
+  for (auto data : list) {
+    this->push(data);
+  }
+}
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
@@ -268,6 +283,19 @@ auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
   });
 
   return popOptional(false);
+}
+
+template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
+  m_pushcall_count.fetch_add(1, std::memory_order_acquire);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_pushcall_count.fetch_sub(1, std::memory_order_release);
+    m_pushcall_count.notify_all();
+  });
+
+  // Preserve the original preference for noexcept-move (otherwise copy).
+  pushImpl(std::move_if_noexcept(item));
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
