@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
         try {
           while (true) {
-            int i = queue->pop();
+            [[maybe_unused]] int i = queue->pop();
             count1++;
 
             int pause = global_distr(local_gen);
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
         try {
           while (true) {
-            int i = queue->pop();
+            [[maybe_unused]] int i = queue->pop();
             count2++;
 
             int pause = global_distr(local_gen);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 
         try {
           while (true) {
-            int i = queue->pop();
+            [[maybe_unused]] int i = queue->pop();
             count3++;
 
             int pause = global_distr(local_gen);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
         try {
           while (true) {
-            int i = queue->pop();
+            [[maybe_unused]] int i = queue->pop();
             count4++;
 
             int pause = global_distr(local_gen);
@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
   auto durationSending =
       std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
 
-  queue->waitForEmpty();
+  size_t total = queue->waitForEmpty();
+  EXPECT_TRUE((10000 == total));
 
   auto endProcessing = std::chrono::high_resolution_clock::now();
   auto durationProcessing =

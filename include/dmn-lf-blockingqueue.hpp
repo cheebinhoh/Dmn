@@ -3,7 +3,8 @@
  *
  * @file dmn-lf-blockingqueue.hpp
  * @brief Thread-safe mutex lock free FIFO blocking queue for passing items
- *        between threads, the Michael-Scott lock free queue algorithm.
+ *        between threads, the Michael-Scott lock free queue algorithm but
+ *        adapted for empty queue pop blocking semantics.
  */
 
 #ifndef DMN_LF_BLOCKINGQUEUE_HPP_
@@ -45,17 +46,42 @@ public:
   Dmn_Lf_BlockingQueue<T> &operator=(Dmn_Lf_BlockingQueue<T> &&obj) = delete;
 
   /**
-   * @brief Remove and return the front item from the queue, blocking if empty.
-   *
-   * This call blocks until an item becomes available. It throws
+   * @brief Remove and return the front item from the queue, blocking if empty,
+   *        it throws exception if the queue is destroyed while the caller
+   *        pop calls block waiting for item.
    *
    * @return The front item.
    */
   virtual auto pop() -> T;
 
+  /**
+   * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
+   *
+   * @return optional item, or std::nullopt if the queue was empty.
+   */
+  virtual auto popNoWait() -> std::optional<T>;
+
+  /**
+   * @brief Push an rvalue into the queue (attempts move, with
+   *        move_if_noexcept).
+   *
+   * Non-blocking and signals waiting consumers.
+   *
+   * @param item The value to push (rvalue reference).
+   */
   virtual void push(T &item, bool move = true);
 
-  virtual void waitForEmpty();
+  /**
+   * @brief Wait until the queue becomes empty and return the total number of
+   *        items that have passed through the queue.
+   *
+   * This blocks until the queue is empty and asserts that all pushed items
+   * have been popped (m_pop_count == m_push_count) before returning the
+   * inbound count.
+   *
+   * @return The total number of items that have been passed through the queue.
+   */
+  virtual auto waitForEmpty() -> size_t;
 
 protected:
   virtual auto popOptional(bool wait) -> std::optional<T>;
@@ -66,7 +92,9 @@ private:
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
-  std::atomic<std::size_t> m_pop_count{};
+  std::atomic<std::size_t> m_popcall_count{};
+  std::atomic<std::size_t> m_pushcall_count{};
+  std::atomic<std::size_t> m_total_push_count{};
 }; // class Dmn_Lf_BlockingQueue
 
 template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
@@ -82,6 +110,9 @@ Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
+  m_tail.store(nullptr);
+  m_tail.notify_all();
+
   Node *ptr = m_head;
 
   while (nullptr != ptr) {
@@ -92,34 +123,29 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
     ptr = nextPtr;
   }
 
-  m_tail.store(nullptr);
-  m_tail.notify_all();
+  size_t pushcall_count{};
+  while ((pushcall_count = m_pushcall_count.load(std::memory_order_acquire)) >
+         0) {
+    m_pushcall_count.wait(pushcall_count, std::memory_order_acquire);
+  }
 
-  size_t pop_count{};
-  while ((pop_count = m_pop_count.load(std::memory_order_acquire)) > 0) {
-    m_pop_count.wait(pop_count, std::memory_order_acquire);
+  size_t popcall_count{};
+  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
+         0) {
+    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
   }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
 }
 
-template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
-  if (move) {
-    // Preserve the original preference for noexcept-move (otherwise copy).
-    pushImpl(std::move_if_noexcept(item));
-  } else {
-    pushImpl(item); // copy
-  }
-}
-
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
-  m_pop_count.fetch_add(1, std::memory_order_relaxed);
+  m_popcall_count.fetch_add(1, std::memory_order_acquire);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_pop_count.fetch_sub(1, std::memory_order_release);
-    m_pop_count.notify_all();
+    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.notify_all();
   });
 
   auto data = popOptional(true);
@@ -160,7 +186,7 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
         res = std::move(next->m_data);
 
         if (m_head.compare_exchange_weak(first, next)) {
-          delete first; // Note: In production, use Hazard Pointers or RCU
+          delete first;
 
           break;
         } else {
@@ -171,6 +197,36 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   }
 
   return res;
+}
+
+template <typename T>
+auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
+  m_popcall_count.fetch_add(1, std::memory_order_acquire);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.notify_all();
+  });
+
+  return popOptional(false);
+}
+
+template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
+  m_pushcall_count.fetch_add(1, std::memory_order_acquire);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_pushcall_count.fetch_sub(1, std::memory_order_release);
+    m_pushcall_count.notify_all();
+  });
+
+  if (move) {
+    // Preserve the original preference for noexcept-move (otherwise copy).
+    pushImpl(std::move_if_noexcept(item));
+  } else {
+    pushImpl(item); // copy
+  }
 }
 
 template <typename T>
@@ -189,23 +245,24 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 
     if (t == m_tail.load()) { // Are tail and next consistent?
       if (next == nullptr) {
-        // Step 1: Try to link the new node to the end
         if (t->m_next.compare_exchange_strong(next, newNode)) {
-          break; // Success!
+          break;
         }
       } else {
-        // Step 2: Tail is falling behind; try to help advance it
         m_tail.compare_exchange_strong(t, next);
       }
     }
   }
 
-  // Step 3: Try to swing the tail to the new node
   m_tail.compare_exchange_strong(t, newNode);
   m_tail.notify_all();
+
+  m_total_push_count.fetch_add(1, std::memory_order_release);
 }
 
-template <typename T> void Dmn_Lf_BlockingQueue<T>::waitForEmpty() {
+template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
+  size_t res{};
+
   while (true) {
     Node *last = m_tail.load();
     Node *first = m_head.load();
@@ -214,11 +271,15 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::waitForEmpty() {
     if (first == m_head.load()) {
       if (first == last) {
         if (next == nullptr) {
+          res = m_total_push_count.load(std::memory_order_acquire);
+
           break;
         }
       }
     }
   }
+
+  return res;
 }
 
 } // namespace dmn

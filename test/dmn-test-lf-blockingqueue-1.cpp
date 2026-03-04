@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
   auto durationSending =
       std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
 
-  std::cout << durationSending.count() << "\n";
+  std::cout << "Send duration: " << durationSending.count() << "\n";
 
   proc1 = {};
   proc2 = {};

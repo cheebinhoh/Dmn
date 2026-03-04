@@ -121,8 +121,6 @@ public:
   /**
    * @brief Remove and return the front item from the queue, blocking if empty.
    *
-   * This call blocks until an item becomes available. It throws
-   *
    * @return The front item.
    */
   virtual auto pop() -> T;
