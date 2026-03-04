@@ -97,6 +97,7 @@
 #include <vector>
 
 #include "dmn-proc.hpp"
+#include "dmn-util.hpp"
 
 namespace dmn {
 
@@ -119,8 +120,6 @@ public:
 
   /**
    * @brief Remove and return the front item from the queue, blocking if empty.
-   *
-   * This call blocks until an item becomes available. It throws
    *
    * @return The front item.
    */
@@ -223,6 +222,8 @@ private:
   size_t m_push_count{};
   size_t m_pop_count{};
   bool m_shutdown{};
+
+  std::atomic<std::size_t> m_popcall_count{};
 }; // class Dmn_BlockingQueue
 
 template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
@@ -236,13 +237,33 @@ Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
 }
 
 template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
+  stop();
+
+  size_t popcall_count{};
+  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
+         0) {
+    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
+  }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
 }
 
 template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  return *popOptional(true);
+  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
+
+  // Use RAII to ensure the counter is decremented even if an exception occurs
+  auto cleanup = make_scope_guard([&] {
+    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.notify_all();
+  });
+
+  auto data = popOptional(true);
+  if (!data) {
+    throw std::runtime_error("pop is interrupted, and return without data");
+  }
+
+  return std::move(*data);
 }
 
 template <typename T>

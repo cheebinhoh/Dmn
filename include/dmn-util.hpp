@@ -113,6 +113,23 @@ inline bool stringCompare(const std::string_view str1,
   return strValue1 == strValue2;
 }
 
+/**
+ * @brief The type to support scope guard (like std::scope_exit in proposed
+ *        c++ standard).
+ */
+template <typename F> struct ScopeGuard {
+  F f;
+  ~ScopeGuard() noexcept { f(); }
+};
+
+/**
+ * @brief This helper allows the compiler to deduce the lambda type
+ *        automatically.
+ */
+template <typename F> ScopeGuard<F> make_scope_guard(F f) {
+  return ScopeGuard<F>{f};
+}
+
 } // namespace dmn
 
 #endif // DMN_UTIL_HPP_

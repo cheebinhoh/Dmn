@@ -13,6 +13,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-3
                       dmn-test-blockingqueue-4
                       dmn-test-blockingqueue-5
+                      dmn-test-blockingqueue-perf-1
+                      dmn-test-blockingqueue-perf-2
                       dmn-test-dmesg-1
                       dmn-test-dmesg-2
                       dmn-test-dmesg-3
@@ -37,6 +39,9 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
+                      dmn-test-lf-blockingqueue-1
+                      dmn-test-lf-blockingqueue-2
+                      dmn-test-lf-blockingqueue-3
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3
@@ -50,16 +55,16 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-timer
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
-                    )
+                   )
 
 if (BUILD_KAFKA_TEST)
-ADD_TEST_EXECUTABLE(dmn-kafka
-                      dmn-test-dmesgnet-with-kafka-1
-                      dmn-test-dmesgnet-with-kafka-2
-                      dmn-test-dmesgnet-with-kafka-3
-                      dmn-test-dmesgnet-with-kafka-4
-                      dmn-test-dmesgnet-with-kafka-5
-                      dmn-test-kafka
-                      dmn-test-kafka-protobuf
-                    )
+  ADD_TEST_EXECUTABLE(dmn-kafka
+                        dmn-test-dmesgnet-with-kafka-1
+                        dmn-test-dmesgnet-with-kafka-2
+                        dmn-test-dmesgnet-with-kafka-3
+                        dmn-test-dmesgnet-with-kafka-4
+                        dmn-test-dmesgnet-with-kafka-5
+                        dmn-test-kafka
+                        dmn-test-kafka-protobuf
+                     )
 endif()
