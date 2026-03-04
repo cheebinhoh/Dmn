@@ -269,7 +269,7 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
       } else {
         if (m_head.compare_exchange_weak(first, next)) {
           res = std::move(next->m_data);
-          delete first;
+          delete first; // NOT a hazard free delete
 
           break;
         }
