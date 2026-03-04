@@ -321,28 +321,38 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 
   newNode->m_data = std::forward<U>(item);
 
-  Node *t{};
+  Node *last{};
   Node *next{};
 
   while (true) {
-    t = m_tail.load();
-    next = t->m_next.load();
+    last = m_tail.load();
+    if (nullptr == last) {
+      delete newNode;
+      newNode = nullptr;
 
-    if (t == m_tail.load()) { // Are tail and next consistent?
+      break; // unfortunate, the move has happend!
+    }
+
+    next = last->m_next.load();
+
+    if (last == m_tail.load()) { // Are tail and next consistent?
       if (next == nullptr) {
-        if (t->m_next.compare_exchange_strong(next, newNode)) {
+
+        if (last->m_next.compare_exchange_strong(next, newNode)) {
           break;
         }
       } else {
-        m_tail.compare_exchange_strong(t, next);
+        m_tail.compare_exchange_strong(last, next);
       }
     }
   }
 
-  m_tail.compare_exchange_strong(t, newNode);
-  m_tail.notify_all();
+  if (newNode) {
+    m_tail.compare_exchange_strong(last, newNode);
+    m_tail.notify_all();
 
-  m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
+    m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
+  }
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
