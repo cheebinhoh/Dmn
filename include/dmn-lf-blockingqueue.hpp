@@ -16,8 +16,10 @@
 #include <chrono>
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "dmn-proc.hpp"
 #include "dmn-util.hpp"
