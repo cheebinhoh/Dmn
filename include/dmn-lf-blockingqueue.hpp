@@ -180,11 +180,11 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
-  m_popcall_count.fetch_add(1, std::memory_order_acquire);
+  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
     m_popcall_count.notify_all();
   });
 
@@ -201,11 +201,11 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
   assert(count > 0);
 
-  m_popcall_count.fetch_add(1, std::memory_order_acquire);
+  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
     m_popcall_count.notify_all();
   });
 
@@ -272,11 +272,11 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
-  m_popcall_count.fetch_add(1, std::memory_order_acquire);
+  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_release);
+    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
     m_popcall_count.notify_all();
   });
 
@@ -284,11 +284,11 @@ auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
-  m_pushcall_count.fetch_add(1, std::memory_order_acquire);
+  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_release);
+    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
     m_pushcall_count.notify_all();
   });
 
@@ -297,11 +297,11 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
-  m_pushcall_count.fetch_add(1, std::memory_order_acquire);
+  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
   auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_release);
+    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
     m_pushcall_count.notify_all();
   });
 
@@ -341,7 +341,7 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   m_tail.compare_exchange_strong(t, newNode);
   m_tail.notify_all();
 
-  m_total_push_count.fetch_add(1, std::memory_order_release);
+  m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
