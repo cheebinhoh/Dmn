@@ -349,18 +349,18 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
-  size_t res{};
-
   while (true) {
     Node *last = m_tail.load();
+    if (nullptr == last) {
+      break;
+    }
+
     Node *first = m_head.load();
     Node *next = first->m_next.load();
 
     if (first == m_head.load()) {
       if (first == last) {
         if (next == nullptr) {
-          res = m_total_push_count.load(std::memory_order_acquire);
-
           break;
         }
       }
@@ -369,7 +369,7 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
     dmn::Dmn_Proc::yield();
   }
 
-  return res;
+  return m_total_push_count.load(std::memory_order_acquire);
 }
 
 } // namespace dmn
