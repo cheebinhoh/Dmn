@@ -258,14 +258,11 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
         m_tail.compare_exchange_strong(last, next); // Help move tail
       } else {
-        res = std::move(next->m_data);
-
         if (m_head.compare_exchange_weak(first, next)) {
+          res = std::move(next->m_data);
           delete first;
 
           break;
-        } else {
-          res = {};
         }
       }
     }
