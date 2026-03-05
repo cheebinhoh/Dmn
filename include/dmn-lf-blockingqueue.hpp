@@ -251,7 +251,8 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
             last, next, std::memory_order_release); // Help move tail
       } else {
         if (m_head.compare_exchange_weak(first, next,
-                                         std::memory_order_release)) {
+                                         std::memory_order_acq_rel,
+                                         std::memory_order_acquire)) {
           res = std::move(next->m_data);
           delete first; // NOT a hazard free delete
 
@@ -311,7 +312,8 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
       delete newNode;
       newNode = nullptr;
 
-      break;
+      throw std::runtime_error(
+          "Dmn_Lf_BlockingQueue: push attempted on shutdown queue");
     }
 
     next = last->m_next.load(std::memory_order_acquire);
