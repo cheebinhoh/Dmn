@@ -18,9 +18,9 @@
 #include "dmn-async.hpp"
 #include "dmn-proc.hpp"
 
-class Counter : dmn::Dmn_Async {
+class Counter : dmn::Dmn_Async<> {
 public:
-  Counter() : dmn::Dmn_Async{"counter"} {}
+  Counter() : dmn::Dmn_Async<>{"counter"} {}
 
   void increment() {
     DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->m_count++; });

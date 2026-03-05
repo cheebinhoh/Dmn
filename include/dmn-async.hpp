@@ -32,6 +32,7 @@
 #include <memory>
 #include <string_view>
 
+#include "dmn-blockingqueue.hpp"
 #include "dmn-pipe.hpp"
 
 // Helper macros to submit tasks with different capture styles. They call
@@ -58,7 +59,7 @@ namespace dmn {
 // until the task has completed. If the task threw, the stored exception
 // will be rethrown to the waiter.
 class Dmn_Async_Handle {
-  friend class Dmn_Async;
+  template <template <class> class> friend class Dmn_Async;
 
 public:
   Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
@@ -73,7 +74,7 @@ public:
   Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
   Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
-  void wait();
+  void wait() { m_fut.get(); }
 
 private:
   std::function<void()> m_fnc{};
@@ -83,7 +84,10 @@ private:
   std::future<void> m_fut{};
 };
 
-class Dmn_Async : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>> {
+template <template <class> class QueueType = Dmn_BlockingQueue>
+class Dmn_Async
+    : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
+                      Dmn_BlockingQueue<std::shared_ptr<Dmn_Async_Handle>>> {
 public:
   /**
    * @brief Construct a Dmn_Async helper.
@@ -153,15 +157,17 @@ private:
   using Dmn_Pipe::write;
 }; // class Dmn_Async
 
+template <template <class> class QueueType>
 template <class Rep, class Period>
-void Dmn_Async::addExecTaskAfter(
+void Dmn_Async<QueueType>::addExecTaskAfter(
     const std::chrono::duration<Rep, Period> &duration,
     std::function<void()> fnc) {
   this->addExecTaskAfterWithWait(duration, fnc);
 }
 
+template <template <class> class QueueType>
 template <class Rep, class Period>
-auto Dmn_Async::addExecTaskAfterWithWait(
+auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
     const std::chrono::duration<Rep, Period> &duration,
     std::function<void()> fnc) -> std::shared_ptr<Dmn_Async_Handle> {
   long long time_in_future =
@@ -172,6 +178,63 @@ auto Dmn_Async::addExecTaskAfterWithWait(
 
   auto task_shared_ptr =
       std::make_shared<Dmn_Async_Handle>(fnc, time_in_future);
+  auto task_ret = task_shared_ptr;
+
+  this->write(task_shared_ptr);
+
+  return task_ret;
+}
+
+template <template <class> class QueueType>
+Dmn_Async<QueueType>::Dmn_Async(std::string_view name)
+    : Dmn_Pipe{
+          name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
+            try {
+              if (task->m_due_in_future > 0) {
+                const long long now =
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch())
+                        .count();
+
+                if (now >= task->m_due_in_future) {
+                  if (task->m_fnc) {
+                    task->m_fnc();
+                  }
+
+                  task->m_p.set_value();
+                } else {
+                  this->write(task);
+                }
+              } else {
+                if (task->m_fnc) {
+                  task->m_fnc();
+                }
+
+                task->m_p.set_value();
+              }
+            } catch (...) {
+              task->m_p.set_exception(std::current_exception());
+            }
+
+            Dmn_Proc::yield();
+          }} {}
+
+template <template <class> class QueueType>
+Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
+}
+
+template <template <class> class QueueType>
+void Dmn_Async<QueueType>::addExecTask(std::function<void()> fnc) {
+  addExecTaskWithWait(fnc);
+}
+
+template <template <class> class QueueType>
+auto Dmn_Async<QueueType>::addExecTaskWithWait(std::function<void()> fnc)
+    -> std::shared_ptr<Dmn_Async_Handle> {
+  auto task_shared_ptr = std::make_shared<Dmn_Async_Handle>(fnc);
   auto task_ret = task_shared_ptr;
 
   this->write(task_shared_ptr);
