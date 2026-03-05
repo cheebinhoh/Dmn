@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   sact.sa_handler = &timer_handler;
   sigaction(SIGALRM, &sact, nullptr);
 
-  // Configure the timer to expire after 1 second...
+  // Configure the timer to expire after 10 second...
   timer.it_value.tv_sec = 10;
   timer.it_value.tv_usec = 0;
 

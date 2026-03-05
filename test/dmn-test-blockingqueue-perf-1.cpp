@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
   int count2{};
   int count3{};
   int count4{};
+  int count5{};
+  int count6{};
   auto cons1 = std::make_unique<dmn::Dmn_Proc>(
       "cons1", [&count1, &queue, &global_distr]() {
         std::mt19937 local_gen(std::random_device{}());
@@ -93,10 +95,44 @@ int main(int argc, char *argv[]) {
         }
       });
 
+  auto cons5 = std::make_unique<dmn::Dmn_Proc>(
+      "cons5", [&count5, &queue, &global_distr]() {
+        std::mt19937 local_gen(std::random_device{}());
+
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count5++;
+
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
+        }
+      });
+
+  auto cons6 = std::make_unique<dmn::Dmn_Proc>(
+      "cons6", [&count6, &queue, &global_distr]() {
+        std::mt19937 local_gen(std::random_device{}());
+
+        try {
+          while (true) {
+            [[maybe_unused]] auto val = queue->pop();
+            count6++;
+
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
+        }
+      });
+
   cons1->exec();
   cons2->exec();
   cons3->exec();
   cons4->exec();
+  cons5->exec();
+  cons6->exec();
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -124,17 +160,22 @@ int main(int argc, char *argv[]) {
   cons2->wait();
   cons3->wait();
   cons4->wait();
+  cons5->wait();
+  cons6->wait();
 
   cons1 = {};
   cons2 = {};
   cons3 = {};
   cons4 = {};
+  cons5 = {};
+  cons6 = {};
 
   std::cout << "**** total duration: " << durationSending.count() << ", "
             << durationProcessing.count() << ", count:" << count1 << ", "
-            << count2 << ", " << count3 << ", " << count4 << "\n";
+            << count2 << ", " << count3 << ", " << count4 << ", " << count5
+            << ", " << count6 << "\n";
 
-  EXPECT_TRUE((count1 + count2 + count3 + count4) == 10000);
+  EXPECT_TRUE((count1 + count2 + count3 + count4 + count5 + count6) == 10000);
 
   return RUN_ALL_TESTS();
 }
