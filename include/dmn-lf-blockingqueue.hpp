@@ -243,31 +243,33 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> res{};
 
   while (true) {
-    Node *last = m_tail.load();
+    Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
     }
 
-    Node *first = m_head.load();
-    Node *next = first->m_next.load();
+    Node *first = m_head.load(std::memory_order_acquire);
+    Node *next = first->m_next.load(std::memory_order_acquire);
 
-    if (first == m_head.load()) {
+    if (first == m_head.load(std::memory_order_acquire)) {
       if (first == last) {
         if (next == nullptr) {
           if (!wait) {
             break;
           }
 
-          while (last == m_tail.load()) {
+          while (last == m_tail.load(std::memory_order_acquire)) {
             m_tail.wait(last, std::memory_order_acquire);
           }
 
           continue;
         }
 
-        m_tail.compare_exchange_strong(last, next); // Help move tail
+        m_tail.compare_exchange_strong(
+            last, next, std::memory_order_release); // Help move tail
       } else {
-        if (m_head.compare_exchange_weak(first, next)) {
+        if (m_head.compare_exchange_weak(first, next,
+                                         std::memory_order_release)) {
           res = std::move(next->m_data);
           delete first; // NOT a hazard free delete
 
@@ -328,36 +330,38 @@ template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   Node *newNode = new Node;
 
-  newNode->m_data = std::forward<U>(item);
-
   Node *last{};
   Node *next{};
 
   while (true) {
-    last = m_tail.load();
+    last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       delete newNode;
       newNode = nullptr;
 
-      break; // unfortunate, the move has happened!
+      break;
     }
 
-    next = last->m_next.load();
+    next = last->m_next.load(std::memory_order_acquire);
 
-    if (last == m_tail.load()) { // Are tail and next consistent?
+    if (last ==
+        m_tail.load(
+            std::memory_order_acquire)) { // Are tail and next consistent?
       if (next == nullptr) {
 
-        if (last->m_next.compare_exchange_strong(next, newNode)) {
+        newNode->m_data = std::forward<U>(item);
+        if (last->m_next.compare_exchange_strong(next, newNode,
+                                                 std::memory_order_acquire)) {
           break;
         }
       } else {
-        m_tail.compare_exchange_strong(last, next);
+        m_tail.compare_exchange_strong(last, next, std::memory_order_acquire);
       }
     }
   }
 
   if (newNode) {
-    m_tail.compare_exchange_strong(last, newNode);
+    m_tail.compare_exchange_strong(last, newNode, std::memory_order_acquire);
     m_tail.notify_all();
 
     m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
@@ -374,15 +378,15 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
   });
 
   while (true) {
-    Node *last = m_tail.load();
+    Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
     }
 
-    Node *first = m_head.load();
-    Node *next = first->m_next.load();
+    Node *first = m_head.load(std::memory_order_acquire);
+    Node *next = first->m_next.load(std::memory_order_acquire);
 
-    if (first == m_head.load()) {
+    if (first == m_head.load(std::memory_order_acquire)) {
       if (first == last) {
         if (next == nullptr) {
           break;
