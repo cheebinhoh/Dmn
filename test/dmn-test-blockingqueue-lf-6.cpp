@@ -13,7 +13,7 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-lf-blockingqueue.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   std::string data2{"xyz"};
   std::string data3{"mno"};
 
-  auto buf = std::make_unique<dmn::Dmn_Lf_BlockingQueue<std::string>>();
+  auto buf = std::make_unique<dmn::Dmn_BlockingQueue_Lf<std::string>>();
   bool readDone{};
   auto proc = std::make_unique<dmn::Dmn_Proc>(
       "proc", [&buf, &readDone, data1, data2, data3]() -> void {

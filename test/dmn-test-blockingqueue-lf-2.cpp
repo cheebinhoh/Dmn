@@ -16,7 +16,7 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-lf-blockingqueue.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   std::uniform_int_distribution<> global_distr(1, 10);
 
-  auto queue = std::make_unique<dmn::Dmn_Lf_BlockingQueue<int>>();
+  auto queue = std::make_unique<dmn::Dmn_BlockingQueue_Lf<int>>();
 
   long long count1{};
   auto proc1 = std::make_unique<dmn::Dmn_Proc>(

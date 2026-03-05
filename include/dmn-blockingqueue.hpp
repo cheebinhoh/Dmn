@@ -79,8 +79,8 @@
  *   incidental sharing between objects.
  */
 
-#ifndef DMN_BUFFER_HPP_
-#define DMN_BUFFER_HPP_
+#ifndef DMN_BLOCKINGQUEUE_HPP_
+#define DMN_BLOCKINGQUEUE_HPP_
 
 #include <algorithm>
 #include <cassert>
@@ -99,6 +99,8 @@
 #include "dmn-proc.hpp"
 #include "dmn-util.hpp"
 
+#include "dmn-blockingqueue-interface.hpp"
+
 namespace dmn {
 
 /**
@@ -106,7 +108,8 @@ namespace dmn {
  *
  * Template parameter T is the stored item type.
  */
-template <typename T = std::string> class Dmn_BlockingQueue {
+template <typename T = std::string>
+class Dmn_BlockingQueue : Dmn_BlockingQueue_Interface<T> {
 public:
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
@@ -436,4 +439,4 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
 } // namespace dmn
 
-#endif // DMN_BUFFER_HPP_
+#endif // DMN_BLOCKINGQUEUE_HPP_
