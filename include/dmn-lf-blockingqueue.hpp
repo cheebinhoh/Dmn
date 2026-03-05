@@ -39,6 +39,39 @@ template <typename T = std::string> class Dmn_Lf_BlockingQueue {
     std::atomic<Node *> m_next{nullptr};
   };
 
+  struct InFlightGuard {
+    Dmn_Lf_BlockingQueue *m_q{};
+    bool m_entered{false};
+
+    explicit InFlightGuard(Dmn_Lf_BlockingQueue *q) : m_q(q) {
+      // fast reject
+      if (m_q->m_shutdown_flag.test(std::memory_order_acquire)) {
+        return;
+      }
+
+      m_q->m_in_flight.fetch_add(1, std::memory_order_acq_rel);
+      m_entered = true;
+
+      // close race: if destructor set shutdown concurrently, back out
+      if (q->m_shutdown_flag.test(std::memory_order_acquire)) {
+        m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+        m_q->m_in_flight.notify_all();
+        m_entered = false;
+      }
+    }
+
+    ~InFlightGuard() {
+      if (!m_entered) {
+        return;
+      }
+
+      m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+      m_q->m_in_flight.notify_all();
+    }
+
+    explicit operator bool() const noexcept { return m_entered; }
+  };
+
 public:
   Dmn_Lf_BlockingQueue();
   Dmn_Lf_BlockingQueue(std::initializer_list<T> list);
@@ -130,6 +163,8 @@ protected:
   template <class U> void pushImpl(U &&item);
 
 private:
+  static void cleanup_tunk_inflight(void *arg);
+
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
@@ -137,6 +172,7 @@ private:
 
   std::atomic<std::size_t> m_total_push_count{};
 
+  std::atomic<std::uint64_t> m_in_flight{0};
   std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_Lf_BlockingQueue
 
@@ -162,6 +198,13 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   m_tail.store(nullptr);
   m_tail.notify_all();
 
+  // 3) wait for all threads that already "entered the epoch" to leave
+  std::uint64_t n = m_in_flight.load(std::memory_order_acquire);
+  while (n != 0) {
+    m_in_flight.wait(n, std::memory_order_acquire);
+    n = m_in_flight.load(std::memory_order_acquire);
+  }
+
   Node *ptr = m_head.load(std::memory_order_acquire);
   while (nullptr != ptr) {
     Node *nextPtr = ptr->m_next;
@@ -173,6 +216,13 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
+}
+
+template <typename T>
+void Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight(void *arg) {
+  auto ptr = static_cast<std::unique_ptr<InFlightGuard> *>(arg);
+
+  (*ptr).reset();
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
@@ -218,7 +268,15 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
 
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
+  auto g = std::make_unique<InFlightGuard>(this);
+  if (!g || !(*g)) {
+    // choose behavior: throw, return nullopt, etc.
+    return std::nullopt;
+  }
+
   std::optional<T> res{};
+
+  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -250,8 +308,7 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
         m_tail.compare_exchange_strong(
             last, next, std::memory_order_release); // Help move tail
       } else {
-        if (m_head.compare_exchange_weak(first, next,
-                                         std::memory_order_acq_rel,
+        if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
           res = std::move(next->m_data);
           delete first; // NOT a hazard free delete
@@ -261,6 +318,8 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
       }
     }
   }
+
+  pthread_cleanup_pop(0);
 
   return res;
 }
@@ -299,12 +358,19 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
 template <typename T>
 template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
+  auto g = std::make_unique<InFlightGuard>(this);
+  if (!g || !(*g)) {
+    return;
+  }
+
   Node *newNode = new Node;
 
   newNode->m_data = std::forward<U>(item);
 
   Node *last{};
   Node *next{};
+
+  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     last = m_tail.load(std::memory_order_acquire);
@@ -338,6 +404,8 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 
     m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
   }
+
+  pthread_cleanup_pop(0);
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
