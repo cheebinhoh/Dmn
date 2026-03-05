@@ -195,6 +195,10 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
+
   m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
@@ -216,6 +220,10 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
   assert(count > 0);
 
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
+
   m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
@@ -236,7 +244,7 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     } else {
       dmn::Dmn_Proc::yield();
     }
-  } while (m_shutdown_flag.test(std::memory_order_acquire) &&
+  } while (false == m_shutdown_flag.test(std::memory_order_acquire) &&
            res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
 
@@ -289,6 +297,10 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
+
   m_popcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
@@ -301,6 +313,10 @@ auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
+
   m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
@@ -314,6 +330,10 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
+
   m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
 
   // Use RAII to ensure the counter is decremented even if an exception occurs
@@ -335,6 +355,8 @@ template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   Node *newNode = new Node;
 
+  newNode->m_data = std::forward<U>(item);
+
   Node *last{};
   Node *next{};
 
@@ -353,8 +375,6 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
         m_tail.load(
             std::memory_order_acquire)) { // Are tail and next consistent?
       if (next == nullptr) {
-
-        newNode->m_data = std::forward<U>(item);
         if (last->m_next.compare_exchange_strong(next, newNode,
                                                  std::memory_order_acquire)) {
           break;
