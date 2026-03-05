@@ -23,6 +23,9 @@ public:
   virtual void push(T &item, bool move = true) = 0;
 
   virtual std::size_t waitForEmpty() = 0;
+
+protected:
+  virtual void stop() = 0;
 };
 
 } // namespace dmn

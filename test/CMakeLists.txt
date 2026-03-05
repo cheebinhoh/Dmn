@@ -49,6 +49,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3
+                      dmn-test-pipe-queue-lf
                       dmn-test-pub-sub
                       dmn-test-runtime
                       dmn-test-runtime-2
