@@ -34,7 +34,7 @@ namespace dmn {
 template <typename T = std::string> class Dmn_Lf_BlockingQueue {
   struct Node {
     T m_data{};
-    std::atomic<Node *> m_next{};
+    std::atomic<Node *> m_next{nullptr};
   };
 
 public:
@@ -67,20 +67,20 @@ public:
    * Detailed semantics:
    * - count > 0 is required (asserted).
    * - If the queue has >= count items, this returns exactly count items.
-   * - If the queue is empty:
+   * - If the queue is empty or less than count items:
    *   - timeout == 0: wait indefinitely for count items (return exactly
-   * count).
+   *     count).
    *   - timeout > 0: wait up to timeout microseconds for items.
    *     * If timeout expires and there is at least one item, return 1..count
    *       items (the current queue size).
    *     * If timeout expires and the queue is still empty, the function
-   * returns no item.
+   *       returns no item.
    *
    * The returned vector contains moved items removed from the queue.
    *
    * @param count   Number of desired items (must be > 0).
    * @param timeout Timeout in microseconds for waiting for the full count.
-   *                A value of 0 means wait forever.
+   *                A value of 0 means wait forever for the count items.
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
@@ -136,6 +136,8 @@ private:
   std::atomic<std::size_t> m_waitforemptycall_count{};
 
   std::atomic<std::size_t> m_total_push_count{};
+
+  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_Lf_BlockingQueue
 
 template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
@@ -155,6 +157,8 @@ Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
+  m_shutdown_flag.test_and_set(std::memory_order_release);
+
   m_tail.store(nullptr);
   m_tail.notify_all();
 
@@ -177,7 +181,7 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
                                   std::memory_order_acquire);
   }
 
-  Node *ptr = m_head;
+  Node *ptr = m_head.load(std::memory_order_acquire);
   while (nullptr != ptr) {
     Node *nextPtr = ptr->m_next;
 
@@ -232,7 +236,8 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     } else {
       dmn::Dmn_Proc::yield();
     }
-  } while (res.size() < count &&
+  } while (m_shutdown_flag.test(std::memory_order_acquire) &&
+           res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
 
   return res;
