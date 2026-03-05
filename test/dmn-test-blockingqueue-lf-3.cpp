@@ -16,14 +16,14 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-lf-blockingqueue.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   using namespace std::string_literals;
 
-  auto queue = std::make_unique<dmn::Dmn_Lf_BlockingQueue<int>>(
+  auto queue = std::make_unique<dmn::Dmn_BlockingQueue_Lf<int>>(
       std::initializer_list<int>{0, 1});
 
   auto proc1 = std::make_unique<dmn::Dmn_Proc>("proc1", [&queue]() {

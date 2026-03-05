@@ -44,8 +44,9 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-async.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-interface.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-lf-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-limit-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp

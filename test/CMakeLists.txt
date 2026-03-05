@@ -13,6 +13,13 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-3
                       dmn-test-blockingqueue-4
                       dmn-test-blockingqueue-5
+                      dmn-test-blockingqueue-lf-1
+                      dmn-test-blockingqueue-lf-2
+                      dmn-test-blockingqueue-lf-3
+                      dmn-test-blockingqueue-lf-4
+                      dmn-test-blockingqueue-lf-5
+                      dmn-test-blockingqueue-lf-6
+                      dmn-test-blockingqueue-lf-7
                       dmn-test-blockingqueue-perf-1
                       dmn-test-blockingqueue-perf-2
                       dmn-test-dmesg-1
@@ -39,13 +46,6 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-io
-                      dmn-test-lf-blockingqueue-1
-                      dmn-test-lf-blockingqueue-2
-                      dmn-test-lf-blockingqueue-3
-                      dmn-test-lf-blockingqueue-4
-                      dmn-test-lf-blockingqueue-5
-                      dmn-test-lf-blockingqueue-6
-                      dmn-test-lf-blockingqueue-7
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3

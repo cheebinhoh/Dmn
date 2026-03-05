@@ -1,14 +1,14 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-lf-blockingqueue.hpp
+ * @file dmn-blockingqueue-lf.hpp
  * @brief Thread-safe mutex lock and condition variable free FIFO blocking queue
  * for passing items between threads, the Michael-Scott lock free queue
  * algorithm but adapted for empty queue pop blocking semantics.
  */
 
-#ifndef DMN_LF_BLOCKINGQUEUE_HPP_
-#define DMN_LF_BLOCKINGQUEUE_HPP_
+#ifndef DMN_BLOCKINGQUEUE_LF_HPP_
+#define DMN_BLOCKINGQUEUE_LF_HPP_
 
 #include <algorithm>
 #include <atomic>
@@ -24,6 +24,8 @@
 #include "dmn-proc.hpp"
 #include "dmn-util.hpp"
 
+#include "dmn-blockingqueue-interface.hpp"
+
 namespace dmn {
 
 /**
@@ -31,17 +33,18 @@ namespace dmn {
  *
  * Template parameter T is the stored item type.
  */
-template <typename T = std::string> class Dmn_Lf_BlockingQueue {
+template <typename T = std::string>
+class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   struct Node {
     T m_data{};
     std::atomic<Node *> m_next{nullptr};
   };
 
   struct InFlightGuard {
-    Dmn_Lf_BlockingQueue *m_q{};
+    Dmn_BlockingQueue_Lf *m_q{};
     bool m_entered{false};
 
-    explicit InFlightGuard(Dmn_Lf_BlockingQueue *q) : m_q(q) {
+    explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
       // fast reject
       if (m_q->m_shutdown_flag.test(std::memory_order_acquire)) {
         return;
@@ -71,15 +74,15 @@ template <typename T = std::string> class Dmn_Lf_BlockingQueue {
   };
 
 public:
-  Dmn_Lf_BlockingQueue();
-  Dmn_Lf_BlockingQueue(std::initializer_list<T> list);
-  virtual ~Dmn_Lf_BlockingQueue() noexcept;
+  Dmn_BlockingQueue_Lf();
+  Dmn_BlockingQueue_Lf(std::initializer_list<T> list);
+  virtual ~Dmn_BlockingQueue_Lf() noexcept;
 
-  Dmn_Lf_BlockingQueue(const Dmn_Lf_BlockingQueue<T> &obj) = delete;
-  const Dmn_Lf_BlockingQueue<T> &
-  operator=(const Dmn_Lf_BlockingQueue<T> &obj) = delete;
-  Dmn_Lf_BlockingQueue(const Dmn_Lf_BlockingQueue<T> &&obj) = delete;
-  Dmn_Lf_BlockingQueue<T> &operator=(Dmn_Lf_BlockingQueue<T> &&obj) = delete;
+  Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
+  const Dmn_BlockingQueue_Lf<T> &
+  operator=(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
+  Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &&obj) = delete;
+  Dmn_BlockingQueue_Lf<T> &operator=(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
 
   /**
    * @brief Remove and return the front item from the queue, blocking if
@@ -170,9 +173,9 @@ private:
 
   std::atomic<std::uint64_t> m_in_flight{0};
   std::atomic_flag m_shutdown_flag{};
-}; // class Dmn_Lf_BlockingQueue
+}; // class Dmn_BlockingQueue_Lf
 
-template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
+template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
   auto dummy = new Node;
 
   m_head.store(dummy);
@@ -180,15 +183,15 @@ template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
 }
 
 template <typename T>
-Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
-    : Dmn_Lf_BlockingQueue{} {
+Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf(std::initializer_list<T> list)
+    : Dmn_BlockingQueue_Lf{} {
   for (auto data : list) {
     this->push(data);
   }
 }
 
 template <typename T>
-Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
+Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 
   m_tail.store(nullptr);
@@ -215,15 +218,15 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
 }
 
 template <typename T>
-void Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight(void *arg) {
+void Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight(void *arg) {
   auto ptr = static_cast<std::unique_ptr<InFlightGuard> *>(arg);
 
   (*ptr).reset();
 }
 
-template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
+template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
   }
 
   auto data = popOptional(true);
@@ -235,12 +238,12 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
 }
 
 template <typename T>
-auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
+auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
   assert(count > 0);
 
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
   }
 
   std::vector<T> res{};
@@ -263,7 +266,7 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
 }
 
 template <typename T>
-auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
+auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   auto g = std::make_unique<InFlightGuard>(this);
   if (!g || !(*g)) {
     // choose behavior: throw, return nullopt, etc.
@@ -272,7 +275,7 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
   std::optional<T> res{};
 
-  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
+  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -318,26 +321,26 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 }
 
 template <typename T>
-auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
+auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
   }
 
   return popOptional(false);
 }
 
-template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
+template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
   }
 
   // Preserve the original preference for noexcept-move (otherwise copy).
   pushImpl(std::move_if_noexcept(item));
 }
 
-template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
+template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
   }
 
   if (move) {
@@ -350,7 +353,7 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
 
 template <typename T>
 template <class U>
-void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
+void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   auto g = std::make_unique<InFlightGuard>(this);
   if (!g || !(*g)) {
     return;
@@ -363,7 +366,7 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   Node *last{};
   Node *next{};
 
-  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
+  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     last = m_tail.load(std::memory_order_acquire);
@@ -372,7 +375,7 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
       newNode = nullptr;
 
       throw std::runtime_error(
-          "Dmn_Lf_BlockingQueue: push attempted on shutdown queue");
+          "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
     }
 
     next = last->m_next.load(std::memory_order_acquire);
@@ -401,7 +404,7 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   pthread_cleanup_pop(0);
 }
 
-template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
+template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
@@ -427,4 +430,4 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
 
 } // namespace dmn
 
-#endif // DMN_LF_BLOCKINGQUEUE_HPP_
+#endif // DMN_BLOCKINGQUEUE_LF_HPP_
