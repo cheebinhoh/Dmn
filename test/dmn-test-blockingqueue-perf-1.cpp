@@ -109,7 +109,8 @@ int main(int argc, char *argv[]) {
   auto durationSending =
       std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
 
-  queue->waitForEmpty();
+  size_t size = queue->waitForEmpty();
+  EXPECT_TRUE((10000 == size));
 
   auto endProcessing = std::chrono::high_resolution_clock::now();
   auto durationProcessing =

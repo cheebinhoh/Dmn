@@ -42,6 +42,10 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-lf-blockingqueue-1
                       dmn-test-lf-blockingqueue-2
                       dmn-test-lf-blockingqueue-3
+                      dmn-test-lf-blockingqueue-4
+                      dmn-test-lf-blockingqueue-5
+                      dmn-test-lf-blockingqueue-6
+                      dmn-test-lf-blockingqueue-7
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3

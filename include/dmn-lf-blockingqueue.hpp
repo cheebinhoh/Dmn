@@ -34,7 +34,40 @@ namespace dmn {
 template <typename T = std::string> class Dmn_Lf_BlockingQueue {
   struct Node {
     T m_data{};
-    std::atomic<Node *> m_next{};
+    std::atomic<Node *> m_next{nullptr};
+  };
+
+  struct InFlightGuard {
+    Dmn_Lf_BlockingQueue *m_q{};
+    bool m_entered{false};
+
+    explicit InFlightGuard(Dmn_Lf_BlockingQueue *q) : m_q(q) {
+      // fast reject
+      if (m_q->m_shutdown_flag.test(std::memory_order_acquire)) {
+        return;
+      }
+
+      m_q->m_in_flight.fetch_add(1, std::memory_order_acq_rel);
+      m_entered = true;
+
+      // close race: if destructor set shutdown concurrently, back out
+      if (q->m_shutdown_flag.test(std::memory_order_acquire)) {
+        m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+        m_q->m_in_flight.notify_all();
+        m_entered = false;
+      }
+    }
+
+    ~InFlightGuard() {
+      if (!m_entered) {
+        return;
+      }
+
+      m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
+      m_q->m_in_flight.notify_all();
+    }
+
+    explicit operator bool() const noexcept { return m_entered; }
   };
 
 public:
@@ -67,20 +100,20 @@ public:
    * Detailed semantics:
    * - count > 0 is required (asserted).
    * - If the queue has >= count items, this returns exactly count items.
-   * - If the queue is empty:
+   * - If the queue is empty or less than count items:
    *   - timeout == 0: wait indefinitely for count items (return exactly
-   * count).
+   *     count).
    *   - timeout > 0: wait up to timeout microseconds for items.
    *     * If timeout expires and there is at least one item, return 1..count
    *       items (the current queue size).
    *     * If timeout expires and the queue is still empty, the function
-   * returns no item.
+   *       returns no item.
    *
    * The returned vector contains moved items removed from the queue.
    *
    * @param count   Number of desired items (must be > 0).
    * @param timeout Timeout in microseconds for waiting for the full count.
-   *                A value of 0 means wait forever.
+   *                A value of 0 means wait forever for the count items.
    * @return Vector of items (size == count on success without timeout, or
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
@@ -128,14 +161,15 @@ protected:
   template <class U> void pushImpl(U &&item);
 
 private:
+  static void cleanup_tunk_inflight(void *arg);
+
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
-  std::atomic<std::size_t> m_popcall_count{};
-  std::atomic<std::size_t> m_pushcall_count{};
-  std::atomic<std::size_t> m_waitforemptycall_count{};
-
   std::atomic<std::size_t> m_total_push_count{};
+
+  std::atomic<std::uint64_t> m_in_flight{0};
+  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_Lf_BlockingQueue
 
 template <typename T> Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue() {
@@ -155,29 +189,19 @@ Dmn_Lf_BlockingQueue<T>::Dmn_Lf_BlockingQueue(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
+  m_shutdown_flag.test_and_set(std::memory_order_release);
+
   m_tail.store(nullptr);
   m_tail.notify_all();
 
-  size_t pushcall_count{};
-  while ((pushcall_count = m_pushcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_pushcall_count.wait(pushcall_count, std::memory_order_acquire);
+  // 3) wait for all threads that already "entered the epoch" to leave
+  std::uint64_t n = m_in_flight.load(std::memory_order_acquire);
+  while (n != 0) {
+    m_in_flight.wait(n, std::memory_order_acquire);
+    n = m_in_flight.load(std::memory_order_acquire);
   }
 
-  size_t popcall_count{};
-  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
-  }
-
-  size_t waitforemptycall_count{};
-  while ((waitforemptycall_count =
-              m_waitforemptycall_count.load(std::memory_order_acquire)) > 0) {
-    m_waitforemptycall_count.wait(waitforemptycall_count,
-                                  std::memory_order_acquire);
-  }
-
-  Node *ptr = m_head;
+  Node *ptr = m_head.load(std::memory_order_acquire);
   while (nullptr != ptr) {
     Node *nextPtr = ptr->m_next;
 
@@ -190,14 +214,17 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   return;
 }
 
-template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
+template <typename T>
+void Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight(void *arg) {
+  auto ptr = static_cast<std::unique_ptr<InFlightGuard> *>(arg);
 
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
+  (*ptr).reset();
+}
+
+template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
 
   auto data = popOptional(true);
   if (!data) {
@@ -212,13 +239,9 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
   assert(count > 0);
 
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
 
   std::vector<T> res{};
 
@@ -232,7 +255,8 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
     } else {
       dmn::Dmn_Proc::yield();
     }
-  } while (res.size() < count &&
+  } while (false == m_shutdown_flag.test(std::memory_order_acquire) &&
+           res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
 
   return res;
@@ -240,34 +264,45 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
 
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
+  auto g = std::make_unique<InFlightGuard>(this);
+  if (!g || !(*g)) {
+    // choose behavior: throw, return nullopt, etc.
+    return std::nullopt;
+  }
+
   std::optional<T> res{};
 
+  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
+
   while (true) {
-    Node *last = m_tail.load();
+    Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
     }
 
-    Node *first = m_head.load();
-    Node *next = first->m_next.load();
+    Node *first = m_head.load(std::memory_order_acquire);
+    Node *next = first->m_next.load(std::memory_order_acquire);
 
-    if (first == m_head.load()) {
+    if (first == m_head.load(std::memory_order_acquire)) {
       if (first == last) {
         if (next == nullptr) {
           if (!wait) {
             break;
           }
 
-          while (last == m_tail.load()) {
-            m_tail.wait(last, std::memory_order_acquire);
+          while (last == m_tail.load(std::memory_order_acquire)) {
+            dmn::Dmn_Proc::testcancel();
+            dmn::Dmn_Proc::yield();
           }
 
           continue;
         }
 
-        m_tail.compare_exchange_strong(last, next); // Help move tail
+        m_tail.compare_exchange_strong(
+            last, next, std::memory_order_release); // Help move tail
       } else {
-        if (m_head.compare_exchange_weak(first, next)) {
+        if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
+                                         std::memory_order_acquire)) {
           res = std::move(next->m_data);
           delete first; // NOT a hazard free delete
 
@@ -277,43 +312,33 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     }
   }
 
+  pthread_cleanup_pop(0);
+
   return res;
 }
 
 template <typename T>
 auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
 
   return popOptional(false);
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
-  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_pushcall_count.notify_all();
-  });
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
 
   // Preserve the original preference for noexcept-move (otherwise copy).
   pushImpl(std::move_if_noexcept(item));
 }
 
 template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
-  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_pushcall_count.notify_all();
-  });
+  if (m_shutdown_flag.test(std::memory_order_acquire)) {
+    throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
+  }
 
   if (move) {
     // Preserve the original preference for noexcept-move (otherwise copy).
@@ -326,6 +351,11 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
 template <typename T>
 template <class U>
 void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
+  auto g = std::make_unique<InFlightGuard>(this);
+  if (!g || !(*g)) {
+    return;
+  }
+
   Node *newNode = new Node;
 
   newNode->m_data = std::forward<U>(item);
@@ -333,56 +363,55 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
   Node *last{};
   Node *next{};
 
+  pthread_cleanup_push(&Dmn_Lf_BlockingQueue<T>::cleanup_tunk_inflight, &g);
+
   while (true) {
-    last = m_tail.load();
+    last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       delete newNode;
       newNode = nullptr;
 
-      break; // unfortunate, the move has happened!
+      throw std::runtime_error(
+          "Dmn_Lf_BlockingQueue: push attempted on shutdown queue");
     }
 
-    next = last->m_next.load();
+    next = last->m_next.load(std::memory_order_acquire);
 
-    if (last == m_tail.load()) { // Are tail and next consistent?
+    if (last ==
+        m_tail.load(
+            std::memory_order_acquire)) { // Are tail and next consistent?
       if (next == nullptr) {
-
-        if (last->m_next.compare_exchange_strong(next, newNode)) {
+        if (last->m_next.compare_exchange_strong(next, newNode,
+                                                 std::memory_order_acquire)) {
           break;
         }
       } else {
-        m_tail.compare_exchange_strong(last, next);
+        m_tail.compare_exchange_strong(last, next, std::memory_order_acquire);
       }
     }
   }
 
   if (newNode) {
-    m_tail.compare_exchange_strong(last, newNode);
+    m_tail.compare_exchange_strong(last, newNode, std::memory_order_acquire);
     m_tail.notify_all();
 
     m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
   }
+
+  pthread_cleanup_pop(0);
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
-  m_waitforemptycall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_waitforemptycall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_waitforemptycall_count.notify_all();
-  });
-
   while (true) {
-    Node *last = m_tail.load();
+    Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
     }
 
-    Node *first = m_head.load();
-    Node *next = first->m_next.load();
+    Node *first = m_head.load(std::memory_order_acquire);
+    Node *next = first->m_next.load(std::memory_order_acquire);
 
-    if (first == m_head.load()) {
+    if (first == m_head.load(std::memory_order_acquire)) {
       if (first == last) {
         if (next == nullptr) {
           break;
