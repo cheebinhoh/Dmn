@@ -6,17 +6,17 @@
  *        background processing.
  *
  * Overview
- * - Dmn_Pipe<T> implements a FIFO buffer that:
+ * - Dmn_Pipe<T, QueueType> implements a FIFO buffer that:
  *   - allows producers to write without blocking (write operations enqueue
  *     items immediately),
  *   - allows a consumer to read items either synchronously via `read()` or
  *     by providing a processing task via `readAndProcess()` or by launching a
  *     background processing thread (using Dmn_Proc::exec).
- * - The class combines Dmn_BlockingQueue<T> (storage), Dmn_Io<T> (I/O
+ * - The class combines QueueType (storage), Dmn_Io<T> (I/O
  *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
- * - push/pop and internal synchronization are handled by Dmn_BlockingQueue<T>.
+ * - push/pop and internal synchronization are handled by QueueType.
  * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
@@ -27,7 +27,7 @@
  * Read / Write semantics
  * - write(T&) copies `item` into the pipe.
  * - write(T&&) moves `item` into the pipe; move will be used when the move
- *   constructor is noexcept (via Dmn_BlockingQueue<T>::push semantics).
+ *   constructor is noexcept (via QueueType::push semantics).
  * - read() blocks until the next item is available and returns it wrapped
  *   in std::optional; when the pipe is closed it returns std::nullopt.
  * - readAndProcess(fn) blocks until the next item is available or timeout
@@ -75,6 +75,8 @@
 #include <string_view>
 #include <vector>
 
+#include "dmn-blockingqueue-interface.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-io.hpp"
@@ -82,10 +84,12 @@
 
 namespace dmn {
 
-template <typename T>
-class Dmn_Pipe : public Dmn_BlockingQueue<T>,
-                 public Dmn_Io<T>,
-                 public Dmn_Proc {
+template <typename T, typename QueueType = Dmn_BlockingQueue<T>>
+class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
+  static_assert(
+      std::is_base_of_v<Dmn_BlockingQueue_Interface<T>, QueueType>,
+      "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<T>");
+
   using Task = std::function<void(T &&)>;
 
 public:
@@ -94,10 +98,11 @@ public:
 
   virtual ~Dmn_Pipe() noexcept;
 
-  Dmn_Pipe(const Dmn_Pipe<T> &obj) = delete;
-  const Dmn_Pipe<T> &operator=(const Dmn_Pipe<T> &obj) = delete;
-  Dmn_Pipe(Dmn_Pipe<T> &&obj) = delete;
-  Dmn_Pipe<T> &operator=(Dmn_Pipe<T> &&obj) = delete;
+  Dmn_Pipe(const Dmn_Pipe<T, QueueType> &obj) = delete;
+  const Dmn_Pipe<T, QueueType> &
+  operator=(const Dmn_Pipe<T, QueueType> &obj) = delete;
+  Dmn_Pipe(Dmn_Pipe<T, QueueType> &&obj) = delete;
+  Dmn_Pipe<T, QueueType> &operator=(Dmn_Pipe<T, QueueType> &&obj) = delete;
 
   /**
    * @brief Read and return the item from the pipe.
@@ -184,9 +189,9 @@ public:
   auto waitForEmpty() -> size_t override;
 
 private:
-  using Dmn_BlockingQueue<T>::pop;
-  using Dmn_BlockingQueue<T>::popNoWait;
-  using Dmn_BlockingQueue<T>::push;
+  using QueueType::pop;
+  using QueueType::popNoWait;
+  using QueueType::push;
 
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
@@ -194,9 +199,9 @@ private:
   std::atomic<bool> m_shutdown{};
 }; // class Dmn_Pipe
 
-template <typename T>
-Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
-                      long timeout)
+template <typename T, typename QueueType>
+Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
+                                 size_t count, long timeout)
     : Dmn_Proc{name} {
   if (fn) {
     exec([this, fn, count, timeout]() {
@@ -212,20 +217,22 @@ Dmn_Pipe<T>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn, size_t count,
   }
 }
 
-template <typename T> Dmn_Pipe<T>::~Dmn_Pipe() noexcept try {
+template <typename T, typename QueueType>
+Dmn_Pipe<T, QueueType>::~Dmn_Pipe() noexcept try {
   // stopExec is not noexcept, so we need to resolve it in destructor
   std::unique_lock<std::mutex> lock(m_mutex);
   m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
 
-  Dmn_BlockingQueue<T>::stop();
+  QueueType::stop();
   Dmn_Proc::wait();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-template <typename T> auto Dmn_Pipe<T>::read() -> std::optional<T> {
+template <typename T, typename QueueType>
+auto Dmn_Pipe<T, QueueType>::read() -> std::optional<T> {
   std::optional<T> data{};
 
   readAndProcess([&data](T &&item) { data = std::move_if_noexcept(item); });
@@ -233,8 +240,9 @@ template <typename T> auto Dmn_Pipe<T>::read() -> std::optional<T> {
   return data;
 }
 
-template <typename T>
-auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
+template <typename T, typename QueueType>
+auto Dmn_Pipe<T, QueueType>::read(size_t count, long timeout)
+    -> std::vector<T> {
   std::vector<T> dataList{};
 
   readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },
@@ -243,9 +251,9 @@ auto Dmn_Pipe<T>::read(size_t count, long timeout) -> std::vector<T> {
   return std::move(dataList);
 }
 
-template <typename T>
-auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
-    -> size_t {
+template <typename T, typename QueueType>
+auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
+                                            long timeout) -> size_t {
   auto dataList = this->pop(count, timeout);
 
   size_t processedCount = dataList.size();
@@ -267,18 +275,21 @@ auto Dmn_Pipe<T>::readAndProcess(Dmn_Pipe::Task fn, size_t count, long timeout)
   return processedCount;
 }
 
-template <typename T> void Dmn_Pipe<T>::write(T &item) {
-  Dmn_BlockingQueue<T>::push(item);
+template <typename T, typename QueueType>
+void Dmn_Pipe<T, QueueType>::write(T &item) {
+  QueueType::push(item);
 }
 
-template <typename T> void Dmn_Pipe<T>::write(T &&item) {
-  Dmn_BlockingQueue<T>::push(std::move_if_noexcept(item));
+template <typename T, typename QueueType>
+void Dmn_Pipe<T, QueueType>::write(T &&item) {
+  QueueType::push(std::move_if_noexcept(item));
 }
 
-template <typename T> auto Dmn_Pipe<T>::waitForEmpty() -> size_t {
+template <typename T, typename QueueType>
+auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> size_t {
   size_t inbound_count{};
 
-  inbound_count = Dmn_BlockingQueue<T>::waitForEmpty();
+  inbound_count = QueueType::waitForEmpty();
 
   std::unique_lock<std::mutex> lock(m_mutex);
 

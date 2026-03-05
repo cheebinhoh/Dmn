@@ -203,6 +203,7 @@ protected:
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
+protected:
   /**
    * @brief Signal all waiting threads to wake up and return.
    *
@@ -212,7 +213,7 @@ protected:
    * This method is called by Dmn_Pipe's destructor via the protected
    * interface.
    */
-  void stop();
+  virtual void stop();
 
 private:
   template <class U> void pushImpl(U &&item);

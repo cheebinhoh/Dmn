@@ -159,6 +159,13 @@ public:
   virtual auto waitForEmpty() -> size_t;
 
 protected:
+  /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
+   */
+  virtual void stop();
+
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
   template <class U> void pushImpl(U &&item);
@@ -192,17 +199,7 @@ Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
-  m_shutdown_flag.test_and_set(std::memory_order_release);
-
-  m_tail.store(nullptr);
-  m_tail.notify_all();
-
-  // 3) wait for all threads that already "entered the epoch" to leave
-  std::uint64_t n = m_in_flight.load(std::memory_order_acquire);
-  while (n != 0) {
-    m_in_flight.wait(n, std::memory_order_acquire);
-    n = m_in_flight.load(std::memory_order_acquire);
-  }
+  stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
   while (nullptr != ptr) {
@@ -405,6 +402,13 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
+  auto g = std::make_unique<InFlightGuard>(this);
+  if (!g || !(*g)) {
+    return m_total_push_count.load(std::memory_order_acquire);
+  }
+
+  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
+
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
@@ -425,7 +429,25 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
     dmn::Dmn_Proc::yield();
   }
 
+  pthread_cleanup_pop(0);
+
   return m_total_push_count.load(std::memory_order_acquire);
+}
+
+template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
+  // 1. set shutdown flag
+  m_shutdown_flag.test_and_set(std::memory_order_release);
+
+  // 2. detach m_tail and mark data as empty.
+  m_tail.store(nullptr);
+  m_tail.notify_all();
+
+  // 3) wait for all threads that already "entered the epoch" to leave
+  std::uint64_t n = m_in_flight.load(std::memory_order_acquire);
+  while (n != 0) {
+    m_in_flight.wait(n, std::memory_order_acquire);
+    n = m_in_flight.load(std::memory_order_acquire);
+  }
 }
 
 } // namespace dmn
