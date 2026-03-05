@@ -14,8 +14,10 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <condition_variable>
 #include <initializer_list>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -131,9 +133,7 @@ private:
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
-  std::atomic<std::size_t> m_popcall_count{};
-  std::atomic<std::size_t> m_pushcall_count{};
-  std::atomic<std::size_t> m_waitforemptycall_count{};
+  std::condition_variable m_non_empty{};
 
   std::atomic<std::size_t> m_total_push_count{};
 
@@ -162,25 +162,6 @@ Dmn_Lf_BlockingQueue<T>::~Dmn_Lf_BlockingQueue() noexcept try {
   m_tail.store(nullptr);
   m_tail.notify_all();
 
-  size_t pushcall_count{};
-  while ((pushcall_count = m_pushcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_pushcall_count.wait(pushcall_count, std::memory_order_acquire);
-  }
-
-  size_t popcall_count{};
-  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
-  }
-
-  size_t waitforemptycall_count{};
-  while ((waitforemptycall_count =
-              m_waitforemptycall_count.load(std::memory_order_acquire)) > 0) {
-    m_waitforemptycall_count.wait(waitforemptycall_count,
-                                  std::memory_order_acquire);
-  }
-
   Node *ptr = m_head.load(std::memory_order_acquire);
   while (nullptr != ptr) {
     Node *nextPtr = ptr->m_next;
@@ -199,14 +180,6 @@ template <typename T> auto Dmn_Lf_BlockingQueue<T>::pop() -> T {
     throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
   }
 
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
-
   auto data = popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
@@ -223,14 +196,6 @@ auto Dmn_Lf_BlockingQueue<T>::pop(size_t count, long timeout)
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
     throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
   }
-
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
 
   std::vector<T> res{};
 
@@ -271,8 +236,12 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
             break;
           }
 
+          std::mutex mtx{};
+          std::unique_lock<std::mutex> lock(mtx);
+
           while (last == m_tail.load(std::memory_order_acquire)) {
-            m_tail.wait(last, std::memory_order_acquire);
+            dmn::Dmn_Proc::testcancel();
+            dmn::Dmn_Proc::yield();
           }
 
           continue;
@@ -301,14 +270,6 @@ auto Dmn_Lf_BlockingQueue<T>::popNoWait() -> std::optional<T> {
     throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
   }
 
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_popcall_count.notify_all();
-  });
-
   return popOptional(false);
 }
 
@@ -316,14 +277,6 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &&item) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
     throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
   }
-
-  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_pushcall_count.notify_all();
-  });
 
   // Preserve the original preference for noexcept-move (otherwise copy).
   pushImpl(std::move_if_noexcept(item));
@@ -333,14 +286,6 @@ template <typename T> void Dmn_Lf_BlockingQueue<T>::push(T &item, bool move) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
     throw std::runtime_error("Dmn_Lf_BlockingQueue object is shutting down");
   }
-
-  m_pushcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_pushcall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_pushcall_count.notify_all();
-  });
 
   if (move) {
     // Preserve the original preference for noexcept-move (otherwise copy).
@@ -394,14 +339,6 @@ void Dmn_Lf_BlockingQueue<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_Lf_BlockingQueue<T>::waitForEmpty() -> size_t {
-  m_waitforemptycall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_waitforemptycall_count.fetch_sub(1, std::memory_order_seq_cst);
-    m_waitforemptycall_count.notify_all();
-  });
-
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
