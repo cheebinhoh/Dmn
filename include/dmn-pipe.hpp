@@ -76,7 +76,6 @@
 #include <vector>
 
 #include "dmn-blockingqueue-interface.hpp"
-#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-io.hpp"

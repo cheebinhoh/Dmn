@@ -265,14 +265,14 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   auto g = std::make_unique<InFlightGuard>(this);
-  if (!g || !(*g)) {
+  if (!(*g)) {
     // choose behavior: throw, return nullopt, etc.
     return std::nullopt;
   }
 
   std::optional<T> res{};
 
-  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -312,7 +312,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
     }
   }
 
-  pthread_cleanup_pop(0);
+  DMN_PROC_CLEANUP_POP(0);
 
   return res;
 }
@@ -352,9 +352,11 @@ template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   auto g = std::make_unique<InFlightGuard>(this);
-  if (!g || !(*g)) {
+  if (!(*g)) {
     return;
   }
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   Node *newNode = new Node;
 
@@ -362,8 +364,6 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 
   Node *last{};
   Node *next{};
-
-  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     last = m_tail.load(std::memory_order_acquire);
@@ -398,16 +398,16 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
     m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
   }
 
-  pthread_cleanup_pop(0);
+  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
   auto g = std::make_unique<InFlightGuard>(this);
-  if (!g || !(*g)) {
+  if (!(*g)) {
     return m_total_push_count.load(std::memory_order_acquire);
   }
 
-  pthread_cleanup_push(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -429,7 +429,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
     dmn::Dmn_Proc::yield();
   }
 
-  pthread_cleanup_pop(0);
+  DMN_PROC_CLEANUP_POP(0);
 
   return m_total_push_count.load(std::memory_order_acquire);
 }
