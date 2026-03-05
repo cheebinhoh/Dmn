@@ -14,10 +14,8 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
-#include <condition_variable>
 #include <initializer_list>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -168,8 +166,6 @@ private:
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
-  std::condition_variable m_non_empty{};
-
   std::atomic<std::size_t> m_total_push_count{};
 
   std::atomic<std::uint64_t> m_in_flight{0};
@@ -293,9 +289,6 @@ auto Dmn_Lf_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
           if (!wait) {
             break;
           }
-
-          std::mutex mtx{};
-          std::unique_lock<std::mutex> lock(mtx);
 
           while (last == m_tail.load(std::memory_order_acquire)) {
             dmn::Dmn_Proc::testcancel();
