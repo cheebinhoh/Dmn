@@ -8,6 +8,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/teepipe-test-data-2.txt
 
 ADD_TEST_EXECUTABLE(dmn
                       dmn-test-async
+                      dmn-test-async-queue-lf
                       dmn-test-blockingqueue
                       dmn-test-blockingqueue-2
                       dmn-test-blockingqueue-3
