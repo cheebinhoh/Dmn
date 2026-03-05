@@ -192,7 +192,7 @@ struct Dmn_Runtime_Manager_Impl;
  *    from repeated short-duration sleeps.
  */
 class Dmn_Runtime_Manager : public Dmn_Singleton<Dmn_Runtime_Manager>,
-                            private Dmn_Async {
+                            private Dmn_Async<> {
 public:
   using SignalHandlerHook = std::function<void(int signo)>;
 

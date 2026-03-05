@@ -60,6 +60,16 @@
  */
 #define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
 
+/**
+ * More generic macro to wrap pthread_cleanup_push
+ */
+#define DMN_PROC_CLEANUP_PUSH(...) pthread_cleanup_push(__VA_ARGS__)
+
+/**
+ * More generic macro to wrap pthread_cleanup_pop
+ */
+#define DMN_PROC_CLEANUP_POP(...) pthread_cleanup_pop(__VA_ARGS__)
+
 namespace dmn {
 
 /**

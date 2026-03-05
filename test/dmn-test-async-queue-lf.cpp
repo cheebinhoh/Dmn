@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-async.cpp
+ * @file dmn-test-async-queue-lf.cpp
  * @brief The unit test for dmn-async module.
  */
 
@@ -16,11 +16,14 @@
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-proc.hpp"
 
-class Counter : dmn::Dmn_Async<> {
+class Counter : dmn::Dmn_Async<dmn::Dmn_BlockingQueue_Lf> {
+  using Base = dmn::Dmn_Async<dmn::Dmn_BlockingQueue_Lf>;
+
 public:
-  Counter() : dmn::Dmn_Async<>{"counter"} {}
+  Counter() : Base{"counter"} {}
 
   void increment() {
     DMN_ASYNC_CALL_WITH_REF_CAPTURE({ this->m_count++; });
@@ -86,7 +89,7 @@ int main(int argc, char *argv[]) {
   sact.sa_handler = &timer_handler;
   sigaction(SIGALRM, &sact, nullptr);
 
-  // Configure the timer to expire after 1 second...
+  // Configure the timer to expire after 10 second...
   timer.it_value.tv_sec = 10;
   timer.it_value.tv_usec = 0;
 

@@ -95,10 +95,46 @@ int main(int argc, char *argv[]) {
         }
       });
 
+  long long count5{};
+  auto proc5 = std::make_unique<dmn::Dmn_Proc>(
+      "proc5", [&queue, &global_distr, &count5]() {
+        std::mt19937 local_gen(std::random_device{}());
+
+        try {
+          while (true) {
+            [[maybe_unused]] int i = queue->pop();
+            count5++;
+
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
+        }
+      });
+
+  long long count6{};
+  auto proc6 = std::make_unique<dmn::Dmn_Proc>(
+      "proc6", [&queue, &global_distr, &count6]() {
+        std::mt19937 local_gen(std::random_device{}());
+
+        try {
+          while (true) {
+            [[maybe_unused]] int i = queue->pop();
+            count6++;
+
+            int pause = global_distr(local_gen);
+            std::this_thread::sleep_for(std::chrono::microseconds(pause));
+          }
+        } catch (...) {
+        }
+      });
+
   proc1->exec();
   proc2->exec();
   proc3->exec();
   proc4->exec();
+  proc5->exec();
+  proc6->exec();
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -127,17 +163,22 @@ int main(int argc, char *argv[]) {
   proc2->wait();
   proc3->wait();
   proc4->wait();
+  proc5->wait();
+  proc6->wait();
 
   proc1 = {};
   proc2 = {};
   proc3 = {};
   proc4 = {};
+  proc5 = {};
+  proc6 = {};
 
   std::cout << "**** total duration: " << durationSending.count() << ", "
             << durationProcessing.count() << ", count:" << count1 << ", "
-            << count2 << ", " << count3 << ", " << count4 << "\n";
+            << count2 << ", " << count3 << ", " << count4 << ", " << count5
+            << ", " << count6 << "\n";
 
-  EXPECT_TRUE((count1 + count2 + count3 + count4) == 10000);
+  EXPECT_TRUE((count1 + count2 + count3 + count4 + count5 + count6) == 10000);
 
   return RUN_ALL_TESTS();
 }

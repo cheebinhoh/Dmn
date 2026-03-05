@@ -3,7 +3,6 @@
 # build the dmn library
 message(STATUS "build dmn...")
 add_library(dmn
-              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-async.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
