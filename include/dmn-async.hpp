@@ -87,7 +87,7 @@ private:
 template <template <class> class QueueType = Dmn_BlockingQueue>
 class Dmn_Async
     : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
-                      Dmn_BlockingQueue<std::shared_ptr<Dmn_Async_Handle>>> {
+                      QueueType<std::shared_ptr<Dmn_Async_Handle>>> {
 public:
   /**
    * @brief Construct a Dmn_Async helper.
@@ -152,10 +152,20 @@ public:
       -> std::shared_ptr<Dmn_Async_Handle>;
 
 private:
-  using Dmn_Pipe::read;
-  using Dmn_Pipe::readAndProcess;
-  using Dmn_Pipe::write;
+  using BasePipe = Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
+                            QueueType<std::shared_ptr<Dmn_Async_Handle>>>;
+
+  using BasePipe::read;
+  using BasePipe::readAndProcess;
+  using BasePipe::write;
 }; // class Dmn_Async
+
+template <template <class> class QueueType>
+Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
+}
 
 template <template <class> class QueueType>
 template <class Rep, class Period>
@@ -187,7 +197,7 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
 
 template <template <class> class QueueType>
 Dmn_Async<QueueType>::Dmn_Async(std::string_view name)
-    : Dmn_Pipe{
+    : BasePipe{
           name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
             try {
               if (task->m_due_in_future > 0) {
@@ -218,13 +228,6 @@ Dmn_Async<QueueType>::Dmn_Async(std::string_view name)
 
             Dmn_Proc::yield();
           }} {}
-
-template <template <class> class QueueType>
-Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
-} catch (...) {
-  // explicit return to resolve exception as destructor must be noexcept
-  return;
-}
 
 template <template <class> class QueueType>
 void Dmn_Async<QueueType>::addExecTask(std::function<void()> fnc) {
