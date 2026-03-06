@@ -68,7 +68,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
 
   struct EpochData {
     std::chrono::microseconds::rep m_timestamp{};
-    uint64_t m_id{};
+    uint32_t m_id{};
   };
 
   static_assert(
@@ -83,7 +83,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   struct InFlightGuard {
     Dmn_BlockingQueue_Lf *m_q{};
     bool m_entered{false};
-    uint64_t m_epochIndex{};
+    uint32_t m_epochIndex{};
 
     explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
       // fast reject
@@ -282,7 +282,7 @@ private:
    * @param epochIndex Index to the epoch block to retire the node.
    * @param node Poitner to the node to be free.
    */
-  void retireNode(uint64_t epochIndex, Node *node);
+  void retireNode(uint32_t epochIndex, Node *node);
 
   /**
    * @brief The method frees a chain of nodes.
@@ -297,7 +297,7 @@ private:
   std::atomic<Node *> m_tail{};
 
   std::atomic<EpochData> m_epochData{};
-  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochCount{};
+  std::array<std::atomic<uint32_t>, s_epochDataSize> m_epochCount{};
   std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
 
   std::atomic<std::size_t> m_total_push_count{};
@@ -574,7 +574,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
 }
 
 template <typename T>
-void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
+void Dmn_BlockingQueue_Lf<T>::retireNode(uint32_t epochIndex, Node *node) {
   assert(epochIndex < s_epochDataSize);
 
   do {
