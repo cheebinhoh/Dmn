@@ -71,9 +71,9 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
     uint32_t m_id{};
   };
 
-//  static_assert(
-//      std::atomic<EpochData>::is_always_lock_free,
-//      "Type EpochIdentifierData does not support hardware-level CAS!");
+  //  static_assert(
+  //      std::atomic<EpochData>::is_always_lock_free,
+  //      "Type EpochIdentifierData does not support hardware-level CAS!");
 
   struct Node {
     T m_data{};
@@ -123,16 +123,21 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
             size_t index = 0;
             while (index < s_epochDataSize) {
               if (m_epochIndex != index) {
-                auto ptr = m_q->m_epochReclaimNode[index].load(
-                    std::memory_order_acquire);
-                if (nullptr != ptr &&
-                    !m_q->m_epochReclaimNode[index].compare_exchange_strong(
-                        ptr, nullptr, std::memory_order_release,
-                        std::memory_order_acquire)) {
-                  continue;
-                }
+                auto count =
+                    m_q->m_epochCount[index].load(std::memory_order_acquire);
 
-                m_q->freeNodeList(ptr);
+                if (0 == count) {
+                  auto ptr = m_q->m_epochReclaimNode[index].load(
+                      std::memory_order_acquire);
+                  if (nullptr != ptr &&
+                      !m_q->m_epochReclaimNode[index].compare_exchange_strong(
+                          ptr, nullptr, std::memory_order_release,
+                          std::memory_order_acquire)) {
+                    continue;
+                  }
+
+                  m_q->freeNodeList(ptr);
+                }
               }
 
               index++;
@@ -155,19 +160,25 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
 
       if (1 == m_q->m_epochCount[m_epochIndex].fetch_sub(
                    1, std::memory_order_seq_cst)) {
-        do {
-          auto ptr = m_q->m_epochReclaimNode[m_epochIndex].load(
-              std::memory_order_acquire);
-          if (nullptr != ptr &&
-              !m_q->m_epochReclaimNode[m_epochIndex].compare_exchange_strong(
-                  ptr, nullptr, std::memory_order_release,
-                  std::memory_order_acquire)) {
-            continue;
-          }
 
-          m_q->freeNodeList(ptr);
-          break;
-        } while (true);
+        auto ep = m_q->m_epochData.load(std::memory_order_acquire);
+        auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+
+        if (globalEpochIndex != m_epochIndex) {
+          do {
+            auto ptr = m_q->m_epochReclaimNode[m_epochIndex].load(
+                std::memory_order_acquire);
+            if (nullptr != ptr &&
+                !m_q->m_epochReclaimNode[m_epochIndex].compare_exchange_strong(
+                    ptr, nullptr, std::memory_order_release,
+                    std::memory_order_acquire)) {
+              continue;
+            }
+
+            m_q->freeNodeList(ptr);
+            break;
+          } while (true);
+        }
       }
 
       m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
@@ -339,11 +350,17 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   Node *ptr = m_head.load(std::memory_order_acquire);
   freeNodeList(ptr);
 
+  auto ep = m_epochData.load(std::memory_order_acquire);
+  auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+
+  size_t index{};
   for (auto &epRN : m_epochReclaimNode) {
     Node *head = epRN.load(std::memory_order_acquire);
-    assert(nullptr == head);
 
+    assert(index == globalEpochIndex || nullptr == head);
     freeNodeList(head);
+
+    index++;
   }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
