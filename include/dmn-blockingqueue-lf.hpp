@@ -66,8 +66,8 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   static constexpr size_t s_epochIdScale{2};
   static constexpr size_t s_epochDataSize{50};
 
-  struct EpochData {
-    std::chrono::microseconds::rep m_timestamp{};
+  struct alignas(16) EpochData {
+    int64_t m_timestamp{};
     uint32_t m_id{};
   };
 
