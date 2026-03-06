@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y \
       openjdk-17-jre-headless \
       libatomic1 \
       libgtest-dev \
-      libgtest-dev \
       libprotobuf-dev \
       libtool \
       net-tools \

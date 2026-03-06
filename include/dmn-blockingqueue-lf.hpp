@@ -95,10 +95,10 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         m_q->m_in_flight.notify_all();
         m_entered = false;
       } else {
-        do {
-          auto total =
-              m_q->m_in_flight_total.fetch_add(1, std::memory_order_acq_rel);
+        auto total =
+            m_q->m_in_flight_total.fetch_add(1, std::memory_order_acq_rel);
 
+        do {
           auto ep = m_q->m_epochData.load(std::memory_order_acquire);
           if ((total - ep.m_in_flight_total) >= s_epochTimeScale ||
               total < ep.m_in_flight_total) {
