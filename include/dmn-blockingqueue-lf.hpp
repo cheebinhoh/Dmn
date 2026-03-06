@@ -128,7 +128,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
                     continue;
                   }
 
-                  m_q->freeNodeList<&Node::m_retired_next>(ptr);
+                  m_q->freeRetiredNodeList(ptr);
                 }
               }
 
@@ -167,7 +167,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
               continue;
             }
 
-            m_q->freeNodeList<&Node::m_retired_next>(ptr);
+            m_q->freeRetiredNodeList(ptr);
             break;
 
           } while (true);
@@ -286,8 +286,14 @@ private:
    *
    * @param head The head pointer to a chain of nodes.
    */
-  template <std::atomic<Node *> Node::*MemberPtr>
   auto freeNodeList(Node *head) -> size_t;
+
+  /**
+   * @brief The method frees a chain of retired nodes.
+   *
+   * @param head The head pointer to a chain of retired nodes.
+   */
+  auto freeRetiredNodeList(Node *head) -> size_t;
 
   /**
    * @brief The method returns a node into epoch based reclamation
@@ -340,7 +346,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
-  freeNodeList<&Node::m_next>(ptr);
+  freeNodeList(ptr);
 
   auto ep = m_epochData.load(std::memory_order_acquire);
   auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
@@ -350,7 +356,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
     Node *head = epRN.load(std::memory_order_acquire);
 
     assert(index == globalEpochIndex || nullptr == head);
-    freeNodeList<&Node::m_retired_next>(head);
+    freeRetiredNodeList(head);
 
     index++;
   }
@@ -367,17 +373,31 @@ void Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight(void *arg) {
 }
 
 template <typename T>
-template <std::atomic<typename Dmn_BlockingQueue_Lf<T>::Node *>
-              Dmn_BlockingQueue_Lf<T>::Node::*MemberPtr>
-auto Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
   size_t cnt{};
 
   while (nullptr != head) {
-    Node *nextPtr = (head->*MemberPtr).load(std::memory_order_relaxed);
+    // Correct pointer-to-member access syntax
+    Node *nextPtr = head->m_next.load(std::memory_order_relaxed);
     delete head;
 
     head = nextPtr;
+    cnt++;
+  }
 
+  return cnt;
+}
+
+template <typename T>
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> size_t {
+  size_t cnt{};
+
+  while (nullptr != head) {
+    // Correct pointer-to-member access syntax
+    Node *nextPtr = head->m_retired_next.load(std::memory_order_relaxed);
+    delete head;
+
+    head = nextPtr;
     cnt++;
   }
 
