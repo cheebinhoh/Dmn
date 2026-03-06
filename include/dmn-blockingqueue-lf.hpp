@@ -10,8 +10,6 @@
 #ifndef DMN_BLOCKINGQUEUE_LF_HPP_
 #define DMN_BLOCKINGQUEUE_LF_HPP_
 
-#include <iostream>
-
 #include <algorithm>
 #include <array>
 #include <atomic>
