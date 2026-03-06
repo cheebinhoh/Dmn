@@ -59,9 +59,9 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
    * The configuration of these 3 static members allows us to adjust reclaim
    * and free strategy depends on load.
    */
-  static constexpr std::chrono::microseconds::rep s_epochTimeScale{500};
-  static constexpr size_t s_epochIdScale{2};
-  static constexpr size_t s_epochDataSize{50};
+  static constexpr uint64_t s_epochTimeScale{500};
+  static constexpr uint64_t s_epochIdScale{2};
+  static constexpr uint32_t s_epochDataSize{50};
 
   struct alignas(16) EpochData {
     uint64_t m_in_flight_total{};
@@ -337,8 +337,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
-  auto cnt = freeNodeList(ptr);
-  std::cout << "free: " << cnt << "\n";
+  freeNodeList(ptr);
 
   auto ep = m_epochData.load(std::memory_order_acquire);
   auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
@@ -348,8 +347,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
     Node *head = epRN.load(std::memory_order_acquire);
 
     assert(index == globalEpochIndex || nullptr == head);
-    auto cnt = freeNodeList(head);
-    std::cout << "free: " << cnt << "\n";
+    freeNodeList(head);
 
     index++;
   }
