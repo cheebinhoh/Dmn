@@ -53,8 +53,9 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
    * the value is further modular divided by s_epochDataSize to derive the
    * m_epochIndex.
    *
-   * The m_epochIndex is used to reference m_epochCount and m_epochReclaimNode
-   * array of size s_epochDataSize, hence both are circular buffer.
+   * The m_epochIndex is used to reference m_epochInFlightCount and
+   * m_epochReclaimNode array of size s_epochDataSize, hence both are circular
+   * buffer.
    *
    * The configuration of these 3 static members allows us to adjust reclaim
    * and free strategy depends on load.
