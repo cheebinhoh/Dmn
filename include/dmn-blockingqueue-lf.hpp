@@ -72,6 +72,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   struct Node {
     T m_data{};
     std::atomic<Node *> m_next{nullptr};
+    std::atomic<Node *> m_retired_next{nullptr};
   };
 
   struct InFlightGuard {
@@ -127,7 +128,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
                     continue;
                   }
 
-                  m_q->freeNodeList(ptr);
+                  m_q->freeNodeList<&Node::m_retired_next>(ptr);
                 }
               }
 
@@ -166,7 +167,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
               continue;
             }
 
-            m_q->freeNodeList(ptr);
+            m_q->freeNodeList<&Node::m_retired_next>(ptr);
             break;
 
           } while (true);
@@ -285,6 +286,7 @@ private:
    *
    * @param head The head pointer to a chain of nodes.
    */
+  template <std::atomic<Node *> Node::*MemberPtr>
   auto freeNodeList(Node *head) -> size_t;
 
   /**
@@ -338,7 +340,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
-  freeNodeList(ptr);
+  freeNodeList<&Node::m_next>(ptr);
 
   auto ep = m_epochData.load(std::memory_order_acquire);
   auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
@@ -348,7 +350,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
     Node *head = epRN.load(std::memory_order_acquire);
 
     assert(index == globalEpochIndex || nullptr == head);
-    freeNodeList(head);
+    freeNodeList<&Node::m_retired_next>(head);
 
     index++;
   }
@@ -365,11 +367,13 @@ void Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight(void *arg) {
 }
 
 template <typename T>
+template <std::atomic<typename Dmn_BlockingQueue_Lf<T>::Node *>
+              Dmn_BlockingQueue_Lf<T>::Node::*MemberPtr>
 auto Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
   size_t cnt{};
 
   while (nullptr != head) {
-    Node *nextPtr = head->m_next.load(std::memory_order_relaxed);
+    Node *nextPtr = (head->*MemberPtr).load(std::memory_order_relaxed);
     delete head;
 
     head = nextPtr;
@@ -591,7 +595,7 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
 
   do {
     auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
-    node->m_next = first;
+    node->m_retired_next = first;
 
     if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
             first, node, std::memory_order_release,
