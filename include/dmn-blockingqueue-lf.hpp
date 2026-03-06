@@ -596,14 +596,12 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint32_t epochIndex, Node *node) {
 
   do {
     auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
-    if (nullptr != first) {
-      node->m_next = first;
-    }
+    node->m_next = first;
 
-    if (m_epochReclaimNode[epochIndex].compare_exchange_strong(
+    if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
             first, node, std::memory_order_release,
             std::memory_order_acquire)) {
-      break;
+      continue;
     }
   } while (true);
 }
