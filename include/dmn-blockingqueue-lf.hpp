@@ -585,7 +585,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
 }
 
 template <typename T>
-void Dmn_BlockingQueue_Lf<T>::retireNode(uint32_t epochIndex, Node *node) {
+void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
   assert(epochIndex < s_epochDataSize);
 
   do {
