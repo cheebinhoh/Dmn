@@ -293,7 +293,7 @@ private:
    * @param epochIndex Index to the epoch block to retire the node.
    * @param node Pointer to the node to be free.
    */
-  void retireNode(uint32_t epochIndex, Node *node);
+  void retireNode(uint64_t epochIndex, Node *node);
 
   std::atomic<EpochData> m_epochData{};
   std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
