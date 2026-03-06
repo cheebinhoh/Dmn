@@ -30,6 +30,7 @@ target_include_directories(dmn PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(dmn INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(dmn INTERFACE ${PROJECT_SOURCE_DIR})
 target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
+
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies(dmn rdkafka)
@@ -83,11 +84,20 @@ target_include_directories(dmn
                              ${rdkafka_INCLUDE}
 )
 
-target_link_libraries(dmn
-                        PRIVATE
-                        protobuf::libprotobuf
-                        ${rdkafka_LIB}
+if(NOT APPLE)
+  target_link_libraries(dmn
+                          PUBLIC
+                          protobuf::libprotobuf
+                          ${rdkafka_LIB}
+                          atomic
 )
+else()
+  target_link_libraries(dmn
+                          PUBLIC
+                          protobuf::libprotobuf
+                          ${rdkafka_LIB}
+)
+endif()
 
 # Install the library binary
 install(TARGETS dmn

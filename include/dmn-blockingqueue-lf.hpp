@@ -11,6 +11,7 @@
 #define DMN_BLOCKINGQUEUE_LF_HPP_
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -35,14 +36,49 @@ namespace dmn {
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
+  /**
+   * Epoch based Reclamation logic
+   *
+   * The following parameters control Epoch based reclamation logic
+   * for the pop out node with InFlightGuard. Each pop or push is
+   * guard via InFlightGuard.
+   *
+   * When the queue' m_in_flight_total is s_epochTimeScale away from the
+   * epoch' m_in_flight_total, the global epoch' m_in_flight_total is set
+   * to queue' m_in_flight_total and the m_id is increased.
+   *
+   * Each InFlightGuard entered will derive the m_epochIndex based on
+   * current m_epochData.m_id, and each m_id is grouped by s_epochIdScale,
+   * so m_id 0, 1 is one group, 2, 3 is another group if s_epochIdScale is 2,
+   * the value is further modular divided by s_epochDataSize to derive the
+   * m_epochIndex.
+   *
+   * The m_epochIndex is used to reference m_epochInFlightCount and
+   * m_epochReclaimNode array of size s_epochDataSize, hence both are circular
+   * buffer.
+   *
+   * The configuration of these 3 static members allows us to adjust reclaim
+   * and free strategy depends on load.
+   */
+  static constexpr uint64_t s_epochTimeScale{500};
+  static constexpr uint64_t s_epochIdScale{2};
+  static constexpr uint32_t s_epochDataSize{50};
+
+  struct alignas(16) EpochData {
+    uint64_t m_in_flight_total{};
+    uint64_t m_id{};
+  };
+
   struct Node {
     T m_data{};
     std::atomic<Node *> m_next{nullptr};
+    std::atomic<Node *> m_retired_next{nullptr};
   };
 
   struct InFlightGuard {
     Dmn_BlockingQueue_Lf *m_q{};
     bool m_entered{false};
+    uint64_t m_epochIndex{};
 
     explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
       // fast reject
@@ -58,12 +94,84 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
         m_q->m_in_flight.notify_all();
         m_entered = false;
+      } else {
+        auto total =
+            m_q->m_in_flight_total.fetch_add(1, std::memory_order_acq_rel);
+
+        do {
+          auto ep = m_q->m_epochData.load(std::memory_order_acquire);
+          if ((total - ep.m_in_flight_total) >= s_epochTimeScale ||
+              total < ep.m_in_flight_total) {
+            EpochData epNew{.m_in_flight_total = total, .m_id = ep.m_id + 1};
+
+            if (!m_q->m_epochData.compare_exchange_strong(
+                    ep, epNew, std::memory_order_release,
+                    std::memory_order_acquire)) {
+              continue;
+            }
+
+            m_epochIndex = (epNew.m_id / s_epochIdScale) % s_epochDataSize;
+
+            size_t index = 0;
+            while (index < s_epochDataSize) {
+              if (m_epochIndex != index) {
+                auto count = m_q->m_epochInFlightCount[index].load(
+                    std::memory_order_acquire);
+
+                if (0 == count) {
+                  auto ptr = m_q->m_epochReclaimNode[index].load(
+                      std::memory_order_acquire);
+                  if (nullptr != ptr &&
+                      !m_q->m_epochReclaimNode[index].compare_exchange_strong(
+                          ptr, nullptr, std::memory_order_release,
+                          std::memory_order_acquire)) {
+                    continue;
+                  }
+
+                  m_q->freeRetiredNodeList(ptr);
+                }
+              }
+
+              index++;
+            }
+          } else {
+            m_epochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+          }
+
+          m_q->m_epochInFlightCount[m_epochIndex].fetch_add(
+              1, std::memory_order_seq_cst);
+
+          break;
+        } while (true);
       }
     }
 
     ~InFlightGuard() {
       if (!m_entered) {
         return;
+      }
+
+      if (1 == m_q->m_epochInFlightCount[m_epochIndex].fetch_sub(
+                   1, std::memory_order_seq_cst)) {
+        auto ep = m_q->m_epochData.load(std::memory_order_acquire);
+        auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+
+        if (globalEpochIndex != m_epochIndex) {
+          do {
+            auto ptr = m_q->m_epochReclaimNode[m_epochIndex].load(
+                std::memory_order_acquire);
+            if (nullptr != ptr &&
+                !m_q->m_epochReclaimNode[m_epochIndex].compare_exchange_strong(
+                    ptr, nullptr, std::memory_order_release,
+                    std::memory_order_acquire)) {
+              continue;
+            }
+
+            m_q->freeRetiredNodeList(ptr);
+            break;
+
+          } while (true);
+        }
       }
 
       m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
@@ -173,16 +281,52 @@ protected:
 private:
   static void cleanup_tunk_inflight(void *arg);
 
+  /**
+   * @brief The method frees a chain of nodes.
+   *
+   * @param head The head pointer to a chain of nodes.
+   */
+  auto freeNodeList(Node *head) -> size_t;
+
+  /**
+   * @brief The method frees a chain of retired nodes.
+   *
+   * @param head The head pointer to a chain of retired nodes.
+   */
+  auto freeRetiredNodeList(Node *head) -> size_t;
+
+  /**
+   * @brief The method returns a node into epoch based reclamation
+   *        blocks, and free it later.
+   *
+   * @param epochIndex Index to the epoch block to retire the node.
+   * @param node Pointer to the node to be free.
+   */
+  void retireNode(uint64_t epochIndex, Node *node);
+
+  std::atomic<EpochData> m_epochData{};
+  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
+  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
+
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
   std::atomic<std::size_t> m_total_push_count{};
 
   std::atomic<std::uint64_t> m_in_flight{0};
+  std::atomic<std::uint64_t> m_in_flight_total{0};
   std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_BlockingQueue_Lf
 
 template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
+  EpochData ep{.m_in_flight_total = 0, .m_id = 0};
+  m_epochData.store(ep);
+
+  for (size_t i = 0; i < s_epochDataSize; i++) {
+    m_epochReclaimNode[i].store(nullptr);
+    m_epochInFlightCount[i].store(0);
+  }
+
   auto dummy = new Node;
 
   m_head.store(dummy);
@@ -202,12 +346,19 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
-  while (nullptr != ptr) {
-    Node *nextPtr = ptr->m_next;
+  freeNodeList(ptr);
 
-    delete ptr;
+  auto ep = m_epochData.load(std::memory_order_acquire);
+  auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
 
-    ptr = nextPtr;
+  size_t index{};
+  for (auto &epRN : m_epochReclaimNode) {
+    Node *head = epRN.load(std::memory_order_acquire);
+
+    assert(index == globalEpochIndex || nullptr == head);
+    freeRetiredNodeList(head);
+
+    index++;
   }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
@@ -219,6 +370,38 @@ void Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight(void *arg) {
   auto ptr = static_cast<std::unique_ptr<InFlightGuard> *>(arg);
 
   (*ptr).reset();
+}
+
+template <typename T>
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
+  size_t cnt{};
+
+  while (nullptr != head) {
+    // Correct pointer-to-member access syntax
+    Node *nextPtr = head->m_next.load(std::memory_order_relaxed);
+    delete head;
+
+    head = nextPtr;
+    cnt++;
+  }
+
+  return cnt;
+}
+
+template <typename T>
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> size_t {
+  size_t cnt{};
+
+  while (nullptr != head) {
+    // Correct pointer-to-member access syntax
+    Node *nextPtr = head->m_retired_next.load(std::memory_order_relaxed);
+    delete head;
+
+    head = nextPtr;
+    cnt++;
+  }
+
+  return cnt;
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
@@ -304,7 +487,8 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
         if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
           res = std::move(next->m_data);
-          delete first; // NOT a hazard free delete
+
+          retireNode(g->m_epochIndex, first);
 
           break;
         }
@@ -402,13 +586,6 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
-  auto g = std::make_unique<InFlightGuard>(this);
-  if (!(*g)) {
-    return m_total_push_count.load(std::memory_order_acquire);
-  }
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
-
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
@@ -429,9 +606,25 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
     dmn::Dmn_Proc::yield();
   }
 
-  DMN_PROC_CLEANUP_POP(0);
-
   return m_total_push_count.load(std::memory_order_acquire);
+}
+
+template <typename T>
+void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
+  assert(epochIndex < s_epochDataSize);
+
+  do {
+    auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
+    node->m_retired_next = first;
+
+    if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
+            first, node, std::memory_order_release,
+            std::memory_order_acquire)) {
+      continue;
+    }
+
+    break;
+  } while (true);
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
