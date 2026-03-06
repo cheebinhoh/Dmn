@@ -144,7 +144,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
           }
 
           break;
-        } while (false);
+        } while (true);
       }
     }
 
@@ -166,7 +166,8 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
           }
 
           m_q->freeNodeList(ptr);
-        } while (false);
+          break;
+        } while (true);
       }
 
       m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
