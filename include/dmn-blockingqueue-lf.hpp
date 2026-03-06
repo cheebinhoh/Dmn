@@ -10,7 +10,10 @@
 #ifndef DMN_BLOCKINGQUEUE_LF_HPP_
 #define DMN_BLOCKINGQUEUE_LF_HPP_
 
+#include <iostream>
+
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -28,6 +31,9 @@
 
 namespace dmn {
 
+using Clock = std::chrono::steady_clock;
+using TimePoint = Clock::time_point;
+
 /**
  * @brief Thread-safe FIFO buffer.
  *
@@ -35,6 +41,15 @@ namespace dmn {
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
+  struct EpochData {
+    std::chrono::microseconds::rep m_timestamp{};
+    uint32_t m_id{};
+  };
+
+  static_assert(
+      std::atomic<EpochData>::is_always_lock_free,
+      "Type EpochIdentifierData does not support hardware-level CAS!");
+
   struct Node {
     T m_data{};
     std::atomic<Node *> m_next{nullptr};
@@ -43,6 +58,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   struct InFlightGuard {
     Dmn_BlockingQueue_Lf *m_q{};
     bool m_entered{false};
+    uint64_t m_epochId{};
 
     explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
       // fast reject
@@ -58,6 +74,25 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
         m_q->m_in_flight.notify_all();
         m_entered = false;
+      } else {
+        auto ep = m_q->m_epochData.load();
+
+        TimePoint tpNow = std::chrono::steady_clock::now();
+        auto usecs = std::chrono::duration_cast<std::chrono::microseconds>(
+            tpNow.time_since_epoch());
+
+        if ((usecs.count() - ep.m_timestamp) >= 1000) {
+          EpochData epNew{.m_timestamp = usecs.count(), .m_id = ep.m_id + 1};
+
+          m_q->m_epochData.compare_exchange_strong(ep, epNew,
+                                                   std::memory_order_release);
+          m_epochId = epNew.m_id;
+        } else {
+          m_epochId = ep.m_id;
+        }
+
+        m_q->m_epochIdCount[m_epochId / 3].fetch_add(1,
+                                                     std::memory_order_seq_cst);
       }
     }
 
@@ -66,6 +101,8 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         return;
       }
 
+      m_q->m_epochIdCount[m_epochId / 3].fetch_sub(1,
+                                                   std::memory_order_seq_cst);
       m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
       m_q->m_in_flight.notify_all();
     }
@@ -176,6 +213,9 @@ private:
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
+  std::atomic<EpochData> m_epochData{};
+  std::array<std::atomic<uint64_t>, 3> m_epochIdCount{};
+
   std::atomic<std::size_t> m_total_push_count{};
 
   std::atomic<std::uint64_t> m_in_flight{0};
@@ -187,6 +227,13 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
 
   m_head.store(dummy);
   m_tail.store(dummy);
+
+  TimePoint tpNow = std::chrono::steady_clock::now();
+  auto usecs = std::chrono::duration_cast<std::chrono::microseconds>(
+      tpNow.time_since_epoch());
+
+  EpochData ep{.m_timestamp = usecs.count(), .m_id = 0};
+  m_epochData.store(ep);
 }
 
 template <typename T>
