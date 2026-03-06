@@ -41,9 +41,36 @@ using TimePoint = Clock::time_point;
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
+  /**
+   * The following parameters control Epoch based reclamation logic
+   * for the pop out node with InFlightGuard. Each pop or push is
+   * guard via InFlightGuard.
+   *
+   * The m_epochData contains a m_timestamp that is last time since
+   * the m_id is assigned a value.
+   *
+   * The m_id is increased when m_timestamp is s_epochTimeScale before
+   * this point of time.
+   *
+   * Each InFlightGuard entered will derive the m_epochIndex based on
+   * current m_epochData.m_id, and each m_id is grouped by s_epochIdScale,
+   * so m_id 0, 1 is one group, 2, 3 is another group if s_epochIdScale is 2,
+   * the value is further modular divided by s_epochDataSize to derive the
+   * m_epochIndex.
+   *
+   * The m_epochIndex is used to reference m_epochCount and m_epochReclaimNode
+   * array of size s_epochDataSize, hence both are circular buffer.
+   *
+   * The configuration of these 3 static members allows us to adjust reclaim
+   * and free strategy depends on load.
+   */
+  static constexpr std::chrono::microseconds::rep s_epochTimeScale{100};
+  static constexpr size_t s_epochIdScale{2};
+  static constexpr size_t s_epochDataSize{50};
+
   struct EpochData {
     std::chrono::microseconds::rep m_timestamp{};
-    uint32_t m_id{};
+    uint64_t m_id{};
   };
 
   static_assert(
@@ -58,7 +85,7 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
   struct InFlightGuard {
     Dmn_BlockingQueue_Lf *m_q{};
     bool m_entered{false};
-    uint64_t m_epochId{};
+    uint64_t m_epochIndex{};
 
     explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
       // fast reject
@@ -75,24 +102,51 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         m_q->m_in_flight.notify_all();
         m_entered = false;
       } else {
-        auto ep = m_q->m_epochData.load();
+        do {
+          auto ep = m_q->m_epochData.load(std::memory_order_acquire);
 
-        TimePoint tpNow = std::chrono::steady_clock::now();
-        auto usecs = std::chrono::duration_cast<std::chrono::microseconds>(
-            tpNow.time_since_epoch());
+          TimePoint tpNow = std::chrono::steady_clock::now();
+          auto usecs = std::chrono::duration_cast<std::chrono::microseconds>(
+              tpNow.time_since_epoch());
 
-        if ((usecs.count() - ep.m_timestamp) >= 1000) {
-          EpochData epNew{.m_timestamp = usecs.count(), .m_id = ep.m_id + 1};
+          if ((usecs.count() - ep.m_timestamp) >= s_epochTimeScale) {
+            EpochData epNew{.m_timestamp = usecs.count(), .m_id = ep.m_id + 1};
 
-          m_q->m_epochData.compare_exchange_strong(ep, epNew,
-                                                   std::memory_order_release);
-          m_epochId = epNew.m_id;
-        } else {
-          m_epochId = ep.m_id;
-        }
+            if (!m_q->m_epochData.compare_exchange_strong(
+                    ep, epNew, std::memory_order_release,
+                    std::memory_order_acquire)) {
+              continue;
+            }
 
-        m_q->m_epochIdCount[m_epochId / 3].fetch_add(1,
-                                                     std::memory_order_seq_cst);
+            m_epochIndex = (epNew.m_id / s_epochIdScale) % s_epochDataSize;
+            m_q->m_epochCount[m_epochIndex].fetch_add(
+                1, std::memory_order_seq_cst);
+
+            size_t index = 0;
+            while (index < s_epochDataSize) {
+              if (m_epochIndex != index) {
+                auto ptr = m_q->m_epochReclaimNode[index].load(
+                    std::memory_order_acquire);
+                if (nullptr != ptr &&
+                    !m_q->m_epochReclaimNode[index].compare_exchange_strong(
+                        ptr, nullptr, std::memory_order_release,
+                        std::memory_order_acquire)) {
+                  continue;
+                }
+
+                m_q->freeNodeList(ptr);
+              }
+
+              index++;
+            }
+          } else {
+            m_epochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+            m_q->m_epochCount[m_epochIndex].fetch_add(
+                1, std::memory_order_seq_cst);
+          }
+
+          break;
+        } while (false);
       }
     }
 
@@ -101,8 +155,22 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         return;
       }
 
-      m_q->m_epochIdCount[m_epochId / 3].fetch_sub(1,
-                                                   std::memory_order_seq_cst);
+      if (1 == m_q->m_epochCount[m_epochIndex].fetch_sub(
+                   1, std::memory_order_seq_cst)) {
+        do {
+          auto ptr = m_q->m_epochReclaimNode[m_epochIndex].load(
+              std::memory_order_acquire);
+          if (nullptr != ptr &&
+              !m_q->m_epochReclaimNode[m_epochIndex].compare_exchange_strong(
+                  ptr, nullptr, std::memory_order_release,
+                  std::memory_order_acquire)) {
+            continue;
+          }
+
+          m_q->freeNodeList(ptr);
+        } while (false);
+      }
+
       m_q->m_in_flight.fetch_sub(1, std::memory_order_acq_rel);
       m_q->m_in_flight.notify_all();
     }
@@ -208,13 +276,30 @@ protected:
   template <class U> void pushImpl(U &&item);
 
 private:
+  /**
+   * @brief The method returns a node into epoch based reclamation
+   *        blocks, and free it later.
+   *
+   * @param epochIndex Index to the epoch block to retire the node.
+   * @param node Poitner to the node to be free.
+   */
+  void retireNode(uint64_t epochIndex, Node *node);
+
+  /**
+   * @brief The method frees a chain of nodes.
+   *
+   * @param head The head pointer to a chain of nodes.
+   */
+  void freeNodeList(Node *head);
+
   static void cleanup_tunk_inflight(void *arg);
 
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
   std::atomic<EpochData> m_epochData{};
-  std::array<std::atomic<uint64_t>, 3> m_epochIdCount{};
+  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochCount{};
+  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
 
   std::atomic<std::size_t> m_total_push_count{};
 
@@ -234,6 +319,10 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
 
   EpochData ep{.m_timestamp = usecs.count(), .m_id = 0};
   m_epochData.store(ep);
+
+  for (size_t i = 0; i < s_epochDataSize; i++) {
+    m_epochReclaimNode[i].store(nullptr);
+  }
 }
 
 template <typename T>
@@ -249,12 +338,13 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   stop();
 
   Node *ptr = m_head.load(std::memory_order_acquire);
-  while (nullptr != ptr) {
-    Node *nextPtr = ptr->m_next;
+  freeNodeList(ptr);
 
-    delete ptr;
+  for (auto &epRN : m_epochReclaimNode) {
+    Node *head = epRN.load(std::memory_order_acquire);
+    assert(nullptr == head);
 
-    ptr = nextPtr;
+    freeNodeList(head);
   }
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
@@ -279,6 +369,15 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
   }
 
   return std::move(*data);
+}
+
+template <typename T> void Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) {
+  while (nullptr != head) {
+    Node *nextPtr = head->m_next;
+    delete head;
+
+    head = nextPtr;
+  }
 }
 
 template <typename T>
@@ -351,7 +450,10 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
         if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
           res = std::move(next->m_data);
-          delete first; // NOT a hazard free delete
+
+          first->m_next = nullptr;
+
+          retireNode(g->m_epochIndex, first);
 
           break;
         }
@@ -449,13 +551,6 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
-  auto g = std::make_unique<InFlightGuard>(this);
-  if (!(*g)) {
-    return m_total_push_count.load(std::memory_order_acquire);
-  }
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
-
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
@@ -476,9 +571,25 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
     dmn::Dmn_Proc::yield();
   }
 
-  DMN_PROC_CLEANUP_POP(0);
-
   return m_total_push_count.load(std::memory_order_acquire);
+}
+
+template <typename T>
+void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
+  assert(epochIndex < s_epochDataSize);
+
+  do {
+    auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
+    if (nullptr != first) {
+      node->m_next = first;
+    }
+
+    if (m_epochReclaimNode[epochIndex].compare_exchange_strong(
+            first, node, std::memory_order_release,
+            std::memory_order_acquire)) {
+      break;
+    }
+  } while (true);
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
