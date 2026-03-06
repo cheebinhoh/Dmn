@@ -291,7 +291,7 @@ private:
    *        blocks, and free it later.
    *
    * @param epochIndex Index to the epoch block to retire the node.
-   * @param node Poitner to the node to be free.
+   * @param node Pointer to the node to be free.
    */
   void retireNode(uint32_t epochIndex, Node *node);
 
@@ -389,7 +389,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) {
   while (nullptr != head) {
-    Node *nextPtr = head->m_next;
+    Node *nextPtr = head->m_next.load(std::memory_order_relaxed);
     delete head;
 
     head = nextPtr;
