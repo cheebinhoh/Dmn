@@ -25,6 +25,8 @@ option(BUILD_KAFKA_TEST "build with kafka test" ON)
 
 
 # include cmake macro and fetch dependent modules
+include(CheckCXXCompilerFlag)
+include(CheckLibraryExists)
 include(CMakeMacro.cmake)
 include(FetchContent)
 
