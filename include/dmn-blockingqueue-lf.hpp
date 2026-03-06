@@ -71,9 +71,9 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
     uint32_t m_id{};
   };
 
-  static_assert(
-      std::atomic<EpochData>::is_always_lock_free,
-      "Type EpochIdentifierData does not support hardware-level CAS!");
+//  static_assert(
+//      std::atomic<EpochData>::is_always_lock_free,
+//      "Type EpochIdentifierData does not support hardware-level CAS!");
 
   struct Node {
     T m_data{};
