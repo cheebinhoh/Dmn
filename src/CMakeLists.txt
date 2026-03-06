@@ -86,14 +86,14 @@ target_include_directories(dmn
 
 if(NOT APPLE)
   target_link_libraries(dmn
-                          PRIVATE
+                          PUBLIC
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
                           atomic
 )
 else()
   target_link_libraries(dmn
-                          PRIVATE
+                          PUBLIC
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
 )
