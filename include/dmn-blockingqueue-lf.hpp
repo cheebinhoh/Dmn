@@ -119,7 +119,7 @@ public:
    *
    * @return The front item.
    */
-  virtual auto pop() -> T;
+  virtual auto pop() -> T override;
 
   /**
    * @brief Pop multiple items from the queue with optional timeout semantics.
@@ -149,14 +149,14 @@ public:
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
    */
-  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
    * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
    *
    * @return optional item, or std::nullopt if the queue was empty.
    */
-  virtual auto popNoWait() -> std::optional<T>;
+  virtual auto popNoWait() -> std::optional<T> override;
 
   /**
    * @brief Push an rvalue into the queue (attempts move, with
@@ -164,7 +164,7 @@ public:
    *
    * @param item The value to push (rvalue reference).
    */
-  virtual void push(T &&item);
+  virtual void push(T &&item) override;
 
   /**
    * @brief Push an lvalue into the queue, optionally moving it (using
@@ -175,7 +175,7 @@ public:
    * @param move If true, attempt to move the value into the queue; otherwise
    *             copy it.
    */
-  virtual void push(T &item, bool move = true);
+  virtual void push(T &item, bool move = true) override;
 
   /**
    * @brief Wait until the queue becomes empty and return the total number of
@@ -187,7 +187,7 @@ public:
    * @return The total number of items that have been passed through the
    * queue.
    */
-  virtual auto waitForEmpty() -> uint64_t;
+  virtual auto waitForEmpty() -> uint64_t override;
 
 protected:
   /**
@@ -195,7 +195,7 @@ protected:
    *
    * Sets the m_shutdown flag and gradually exit all inflight threads.
    */
-  virtual void stop();
+  virtual void stop() override;
 
   /**
    * @brief Pop the head data, and wait for it if empty and wait is true.
