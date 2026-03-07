@@ -102,6 +102,7 @@
 #include "dmn-util.hpp"
 
 #include "dmn-blockingqueue-interface.hpp"
+#include "dmn-inflight-guard.hpp"
 
 namespace dmn {
 
@@ -111,7 +112,8 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T> {
+class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
+                          Dmn_Inflight_Guard {
 public:
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
@@ -168,7 +170,6 @@ public:
    *
    * Non-blocking and signals waiting consumers.
    *
-   * @param item The value to push (rvalue reference).
    */
   virtual void push(T &&item) override;
 
@@ -227,8 +228,6 @@ private:
   uint64_t m_push_count{};
   uint64_t m_pop_count{};
   bool m_shutdown{};
-
-  std::atomic<std::uint64_t> m_popcall_count{};
 }; // class Dmn_BlockingQueue
 
 template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
@@ -244,24 +243,15 @@ Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
 template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
   stop();
 
-  uint64_t popcall_count{};
-  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
-  }
+  // make sure that all api call within the inflight gaurd exits.
+  waitForEmptyInflight();
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
 }
 
 template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
-
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_release);
-    m_popcall_count.notify_all();
-  });
+  [[maybe_unused]] auto scope_lifetime_extender = this->enterInflightGate();
 
   auto data = popOptional(true);
   if (!data) {

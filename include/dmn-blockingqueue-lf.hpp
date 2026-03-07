@@ -217,6 +217,15 @@ private:
   static void cleanup_thunk_inflight(void *arg);
 
   /**
+   * @brief Derive the epoch index (base of epoch id) to reference into queue's
+   *        epoch blocks.
+   *
+   * @param epoch_id The epoch id
+   * @return The derived epoch index into queue's epoch blocks.
+   */
+  static uint64_t calc_epoch_index(uint64_t epoch_id);
+
+  /**
    * @brief Free the chain of nodes based on templatized next field, and
    *        return total number of nodes freed.
    *
@@ -309,7 +318,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   freeNodeList(ptr);
 
   auto ep = m_epochData.load(std::memory_order_acquire);
-  auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+  auto globalEpochIndex = calc_epoch_index(ep.m_id);
 
   uint64_t index{};
   for (auto &epRN : m_epochReclaimNode) {
@@ -323,6 +332,11 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
+}
+
+template <typename T>
+auto Dmn_BlockingQueue_Lf<T>::calc_epoch_index(uint64_t epochId) -> uint64_t {
+  return (epochId / s_epochIdScale) % s_epochDataSize;
 }
 
 template <typename T>
@@ -634,7 +648,7 @@ Dmn_BlockingQueue_Lf<T>::InFlightGuard::InFlightGuard(Dmn_BlockingQueue_Lf *q)
           continue;
         }
 
-        m_epochIndex = (epNew.m_id / s_epochIdScale) % s_epochDataSize;
+        m_epochIndex = calc_epoch_index(epNew.m_id);
 
         uint64_t index = 0;
         while (index < s_epochDataSize) {
@@ -659,7 +673,7 @@ Dmn_BlockingQueue_Lf<T>::InFlightGuard::InFlightGuard(Dmn_BlockingQueue_Lf *q)
           index++;
         }
       } else {
-        m_epochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+        m_epochIndex = calc_epoch_index(ep.m_id);
       }
 
       // acq_rel: acquire prevents subsequent operations in this critical
@@ -686,7 +700,7 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::InFlightGuard::~InFlightGuard() {
   if (1 == m_q->m_epochInFlightCount[m_epochIndex].fetch_sub(
                1, std::memory_order_acq_rel)) {
     auto ep = m_q->m_epochData.load(std::memory_order_acquire);
-    auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
+    auto globalEpochIndex = calc_epoch_index(ep.m_id);
 
     if (globalEpochIndex != m_epochIndex) {
       do {
