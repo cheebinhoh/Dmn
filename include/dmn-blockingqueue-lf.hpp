@@ -30,12 +30,12 @@
 namespace dmn {
 
 /**
- * @brief Thread-safe FIFO buffer.
+ * @brief Thread-safe FIFO queue.
  *
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
+class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
   /**
    * Epoch based Reclamation logic
    *
@@ -138,8 +138,12 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
             m_epochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
           }
 
+          // acq_rel: acquire prevents subsequent operations in this critical
+          // section from being reordered before we register this "in-flight"
+          // entry; release pairs with decrements on the same counter so that
+          // all work done under this guard happens-before leaving the epoch.
           m_q->m_epochInFlightCount[m_epochIndex].fetch_add(
-              1, std::memory_order_seq_cst);
+              1, std::memory_order_acq_rel);
 
           break;
         } while (true);
@@ -151,8 +155,12 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
         return;
       }
 
+      // acq_rel: acquire synchronizes with the registration fetch_add so that
+      // shared state is visible; release ensures all operations performed under
+      // this guard are visible to any thread that observes the count reaching
+      // 0.
       if (1 == m_q->m_epochInFlightCount[m_epochIndex].fetch_sub(
-                   1, std::memory_order_seq_cst)) {
+                   1, std::memory_order_acq_rel)) {
         auto ep = m_q->m_epochData.load(std::memory_order_acquire);
         auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
 
@@ -482,7 +490,8 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
         }
 
         m_tail.compare_exchange_strong(
-            last, next, std::memory_order_release); // Help move tail
+            last, next, std::memory_order_release,
+            std::memory_order_relaxed); // Help move tail
       } else {
         if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
@@ -565,21 +574,31 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
         m_tail.load(
             std::memory_order_acquire)) { // Are tail and next consistent?
       if (next == nullptr) {
+        // Release: ensures newNode->m_data is visible to any consumer that
+        // acquires this m_next pointer (publish-subscribe ordering).
         if (last->m_next.compare_exchange_strong(next, newNode,
-                                                 std::memory_order_acquire)) {
+                                                 std::memory_order_release,
+                                                 std::memory_order_relaxed)) {
           break;
         }
       } else {
-        m_tail.compare_exchange_strong(last, next, std::memory_order_acquire);
+        // Help advance the tail past a lagging pointer; release so that
+        // readers of m_tail see the node's data via the earlier m_next publish.
+        m_tail.compare_exchange_strong(last, next, std::memory_order_release,
+                                       std::memory_order_relaxed);
       }
     }
   }
 
   if (newNode) {
-    m_tail.compare_exchange_strong(last, newNode, std::memory_order_acquire);
+    // Release: publishes the newly linked node so consumers see it via m_tail.
+    m_tail.compare_exchange_strong(last, newNode, std::memory_order_release,
+                                   std::memory_order_relaxed);
     m_tail.notify_all();
 
-    m_total_push_count.fetch_add(1, std::memory_order_seq_cst);
+    // Relaxed: m_total_push_count is an exact counter (used by waitForEmpty());
+    // we only require atomicity for the increment, not additional ordering.
+    m_total_push_count.fetch_add(1, std::memory_order_relaxed);
   }
 
   DMN_PROC_CLEANUP_POP(0);
@@ -615,7 +634,8 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
 
   do {
     auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
-    node->m_retired_next = first;
+    // Relaxed: the subsequent CAS (release) will order this store.
+    node->m_retired_next.store(first, std::memory_order_relaxed);
 
     if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
             first, node, std::memory_order_release,
@@ -632,7 +652,9 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 
   // 2. detach m_tail and mark data as empty.
-  m_tail.store(nullptr);
+  // Release: establishes synchronization with threads that acquire m_tail in
+  // pushImpl/popOptional, ensuring they observe the shutdown state.
+  m_tail.store(nullptr, std::memory_order_release);
   m_tail.notify_all();
 
   // 3) wait for all threads that already "entered the epoch" to leave

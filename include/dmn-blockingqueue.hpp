@@ -109,7 +109,7 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue : Dmn_BlockingQueue_Interface<T> {
+class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T> {
 public:
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
