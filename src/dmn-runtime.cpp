@@ -243,7 +243,7 @@ void Dmn_Runtime_Manager::execRuntimeJobInternal() {
 
     assert(this->m_sched_job.size() == this->m_sched_task.size());
 
-    size_t jobsCountInScheduler = this->m_sched_job.size();
+    auto jobsCountInScheduler = this->m_sched_job.size();
 
     if (jobsCountInScheduler > 0) {
       bool done = this->runRuntimeCoroutineScheduler();

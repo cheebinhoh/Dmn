@@ -9,6 +9,11 @@
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 #define DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <vector>
+
 namespace dmn {
 
 template <typename T> class Dmn_BlockingQueue_Interface {
@@ -22,7 +27,7 @@ public:
   virtual void push(T &&item) = 0;
   virtual void push(T &item, bool move = true) = 0;
 
-  virtual std::size_t waitForEmpty() = 0;
+  virtual std::uint64_t waitForEmpty() = 0;
 
 protected:
   virtual void stop() = 0;
