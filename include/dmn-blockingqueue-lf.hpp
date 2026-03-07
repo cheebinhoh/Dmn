@@ -203,10 +203,34 @@ protected:
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
+  /**
+   * @brief Push the item into the tail of the queue (move or copy semantic).
+   *
+   * @param item The item to be pushed into tail of the queue
+   */
   template <class U> void pushImpl(U &&item);
 
 private:
   static void cleanup_thunk_inflight(void *arg);
+
+  /**
+   * @brief Free the chain of nodes based on templatized next field, and
+   *        return total number of nodes free.
+   *
+   * @param head Pointer to chain of nodes to be freed.
+   * @return Total number of nodes free.
+   */
+  template <std::atomic<Node *> Node::*NextField>
+  static auto freeNodeChain(Node *head) -> size_t {
+    size_t cnt = 0;
+    while (head != nullptr) {
+      Node *next = (head->*NextField).load(std::memory_order_relaxed);
+      delete head;
+      head = next;
+      ++cnt;
+    }
+    return cnt;
+  }
 
   /**
    * @brief The method frees a chain of nodes.
@@ -303,34 +327,12 @@ void Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight(void *arg) {
 
 template <typename T>
 auto dmn::Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
-  size_t cnt{};
-
-  while (nullptr != head) {
-    // Correct pointer-to-member access syntax
-    Node *nextPtr = head->m_next.load(std::memory_order_relaxed);
-    delete head;
-
-    head = nextPtr;
-    cnt++;
-  }
-
-  return cnt;
+  return freeNodeChain<&Node::m_next>(head);
 }
 
 template <typename T>
 auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> size_t {
-  size_t cnt{};
-
-  while (nullptr != head) {
-    // Correct pointer-to-member access syntax
-    Node *nextPtr = head->m_retired_next.load(std::memory_order_relaxed);
-    delete head;
-
-    head = nextPtr;
-    cnt++;
-  }
-
-  return cnt;
+  return freeNodeChain<&Node::m_retired_next>(head);
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
