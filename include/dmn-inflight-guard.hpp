@@ -29,6 +29,7 @@ class Dmn_Inflight_Guard {
       m_inflightguard->leaveGateFnc();
 
       m_inflightguard->m_inflight_count.fetch_sub(1, std::memory_order_release);
+      m_inflightguard->m_inflight_count.notify_all();
     }
 
   private:
