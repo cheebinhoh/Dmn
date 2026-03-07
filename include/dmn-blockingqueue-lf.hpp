@@ -181,6 +181,9 @@ public:
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
+   *        Note that waitForEmpty is not guard by InFlightGuard, so only call
+   *        this method by thread that owns the queue.
+   *
    * @return The total number of items that have been passed through the
    * queue.
    */
@@ -223,12 +226,16 @@ private:
   template <std::atomic<Node *> Node::*NextField>
   static auto freeNodeChain(Node *head) -> size_t {
     size_t cnt = 0;
+
     while (head != nullptr) {
       Node *next = (head->*NextField).load(std::memory_order_relaxed);
+
       delete head;
+
       head = next;
       ++cnt;
     }
+
     return cnt;
   }
 
@@ -337,7 +344,8 @@ auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> size_t {
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
+    throw std::runtime_error(
+        "Dmn_BlockingQueue_Lf: pop attempted on shutdown queue");
   }
 
   auto data = popOptional(true);
@@ -354,7 +362,8 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
   assert(count > 0);
 
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
+    throw std::runtime_error(
+        "Dmn_BlockingQueue_Lf: pop attempted on shutdown queue");
   }
 
   std::vector<T> res{};
@@ -436,7 +445,8 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
+    throw std::runtime_error(
+        "Dmn_BlockingQueue_Lf: pop attempted on shutdown queue");
   }
 
   return popOptional(false);
@@ -444,7 +454,8 @@ auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
+    throw std::runtime_error(
+        "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
   }
 
   // Preserve the original preference for noexcept-move (otherwise copy).
@@ -453,7 +464,8 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
   if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error("Dmn_BlockingQueue_Lf object is shutting down");
+    throw std::runtime_error(
+        "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
   }
 
   if (move) {
@@ -540,11 +552,12 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
     if (first == m_head.load(std::memory_order_acquire)) {
       if (first == last) {
         if (next == nullptr) {
-          break;
+          break; // empty!
         }
       }
     }
 
+    dmn::Dmn_Proc::testcancel();
     dmn::Dmn_Proc::yield();
   }
 
@@ -557,6 +570,7 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
 
   do {
     auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
+
     // Relaxed: the subsequent CAS (release) will order this store.
     node->m_retired_next.store(first, std::memory_order_relaxed);
 
@@ -575,15 +589,16 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 
   // 2. detach m_tail and mark data as empty.
-  // Release: establishes synchronization with threads that acquire m_tail in
-  // pushImpl/popOptional, ensuring they observe the shutdown state.
+  //    Release: establishes synchronization with threads that acquire m_tail in
+  //    pushImpl/popOptional, ensuring they observe the shutdown state.
   m_tail.store(nullptr, std::memory_order_release);
   m_tail.notify_all();
 
-  // 3) wait for all threads that already "entered the epoch" to leave
+  // 3. wait for all threads that already "entered the epoch" to leave
   std::uint64_t n = m_in_flight.load(std::memory_order_acquire);
   while (n != 0) {
     m_in_flight.wait(n, std::memory_order_acquire);
+
     n = m_in_flight.load(std::memory_order_acquire);
   }
 }
@@ -685,8 +700,8 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::InFlightGuard::~InFlightGuard() {
         }
 
         m_q->freeRetiredNodeList(ptr);
-        break;
 
+        break;
       } while (true);
     }
   }
