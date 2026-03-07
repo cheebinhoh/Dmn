@@ -204,7 +204,7 @@ protected:
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
   /**
-   * @brief Push the item into the tail of the queue (move or copy semantic).
+   * @brief Push the item into the tail of the queue (move or copy semantics).
    *
    * @param item The item to be pushed into tail of the queue
    */
