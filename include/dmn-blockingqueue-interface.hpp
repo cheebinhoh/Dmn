@@ -9,6 +9,11 @@
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 #define DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <vector>
+
 namespace dmn {
 
 template <typename T> class Dmn_BlockingQueue_Interface {

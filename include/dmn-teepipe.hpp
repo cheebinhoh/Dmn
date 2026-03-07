@@ -83,6 +83,7 @@
 #include <algorithm>
 #include <cassert>
 #include <condition_variable>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <map>

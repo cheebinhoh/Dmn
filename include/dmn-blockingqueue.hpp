@@ -83,9 +83,11 @@
 #define DMN_BLOCKINGQUEUE_HPP_
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <cstring>
 #include <ctime>
 #include <deque>
