@@ -595,7 +595,8 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
                                    std::memory_order_relaxed);
     m_tail.notify_all();
 
-    // Relaxed: m_total_push_count is a statistic; no ordering guarantee needed.
+    // Relaxed: m_total_push_count is an exact counter (used by waitForEmpty());
+    // we only require atomicity for the increment, not additional ordering.
     m_total_push_count.fetch_add(1, std::memory_order_relaxed);
   }
 
