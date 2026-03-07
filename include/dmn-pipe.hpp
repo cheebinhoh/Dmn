@@ -185,7 +185,7 @@ public:
    *
    * @return The number of items that were passed through the pipe in total
    */
-  auto waitForEmpty() -> size_t override;
+  auto waitForEmpty() -> uint64_t override;
 
 private:
   using QueueType::pop;
@@ -285,8 +285,8 @@ void Dmn_Pipe<T, QueueType>::write(T &&item) {
 }
 
 template <typename T, typename QueueType>
-auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> size_t {
-  size_t inbound_count{};
+auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
+  uint64_t inbound_count{};
 
   inbound_count = QueueType::waitForEmpty();
 

@@ -187,7 +187,7 @@ public:
    * @return The total number of items that have been passed through the
    * queue.
    */
-  virtual auto waitForEmpty() -> size_t;
+  virtual auto waitForEmpty() -> uint64_t;
 
 protected:
   /**
@@ -224,8 +224,8 @@ private:
    * @return Total number of nodes freed.
    */
   template <std::atomic<Node *> Node::*NextField>
-  static auto freeNodeChain(Node *head) -> size_t {
-    size_t cnt = 0;
+  static auto freeNodeChain(Node *head) -> uint64_t {
+    uint64_t cnt = 0;
 
     while (head != nullptr) {
       Node *next = (head->*NextField).load(std::memory_order_relaxed);
@@ -244,14 +244,14 @@ private:
    *
    * @param head The head pointer to a chain of nodes.
    */
-  auto freeNodeList(Node *head) -> size_t;
+  auto freeNodeList(Node *head) -> uint64_t;
 
   /**
    * @brief The method frees a chain of retired nodes.
    *
    * @param head The head pointer to a chain of retired nodes.
    */
-  auto freeRetiredNodeList(Node *head) -> size_t;
+  auto freeRetiredNodeList(Node *head) -> uint64_t;
 
   /**
    * @brief The method returns a node into epoch based reclamation
@@ -267,7 +267,7 @@ private:
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
-  std::atomic<std::size_t> m_total_push_count{};
+  std::atomic<std::uint64_t> m_total_push_count{};
 
   std::atomic<EpochData> m_epochData{};
   std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
@@ -282,7 +282,7 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
   EpochData ep{.m_in_flight_total = 0, .m_id = 0};
   m_epochData.store(ep);
 
-  for (size_t i = 0; i < s_epochDataSize; i++) {
+  for (uint64_t i = 0; i < s_epochDataSize; i++) {
     m_epochReclaimNode[i].store(nullptr);
     m_epochInFlightCount[i].store(0);
   }
@@ -311,7 +311,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   auto ep = m_epochData.load(std::memory_order_acquire);
   auto globalEpochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
 
-  size_t index{};
+  uint64_t index{};
   for (auto &epRN : m_epochReclaimNode) {
     Node *head = epRN.load(std::memory_order_acquire);
 
@@ -333,12 +333,12 @@ void Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight(void *arg) {
 }
 
 template <typename T>
-auto dmn::Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> size_t {
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeNodeList(Node *head) -> uint64_t {
   return freeNodeChain<&Node::m_next>(head);
 }
 
 template <typename T>
-auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> size_t {
+auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> uint64_t {
   return freeNodeChain<&Node::m_retired_next>(head);
 }
 
@@ -539,7 +539,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   DMN_PROC_CLEANUP_POP(0);
 }
 
-template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> size_t {
+template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
@@ -636,7 +636,7 @@ Dmn_BlockingQueue_Lf<T>::InFlightGuard::InFlightGuard(Dmn_BlockingQueue_Lf *q)
 
         m_epochIndex = (epNew.m_id / s_epochIdScale) % s_epochDataSize;
 
-        size_t index = 0;
+        uint64_t index = 0;
         while (index < s_epochDataSize) {
           if (m_epochIndex != index) {
             auto count = m_q->m_epochInFlightCount[index].load(

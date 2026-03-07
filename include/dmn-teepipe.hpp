@@ -195,7 +195,7 @@ public:
    * Returns the number of remaining items in the outbound pipe (inherited
    * behavior) after draining.
    */
-  size_t waitForEmpty() override;
+  auto waitForEmpty() -> uint64_t override;
 
 private:
   /**
@@ -205,7 +205,7 @@ private:
    * @param no_open_source If true, wait until there are no external owners of
    *                       any Dmn_TeePipeSource before draining.
    */
-  size_t wait(bool no_open_source);
+  auto wait(bool no_open_source) -> uint64_t;
 
   /**
    * Move/copy the given item into the outbound Dmn_Pipe<T>.
@@ -348,11 +348,12 @@ void Dmn_TeePipe<T>::removeDmn_TeePipeSource(
 
 template <typename T> void Dmn_TeePipe<T>::wait() { wait(true); }
 
-template <typename T> size_t Dmn_TeePipe<T>::waitForEmpty() {
+template <typename T> auto Dmn_TeePipe<T>::waitForEmpty() -> uint64_t {
   return wait(false);
 }
 
-template <typename T> size_t Dmn_TeePipe<T>::wait(bool no_open_source) {
+template <typename T>
+auto Dmn_TeePipe<T>::wait(bool no_open_source) -> uint64_t {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   Dmn_Proc::testcancel();

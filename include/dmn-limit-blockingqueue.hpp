@@ -112,7 +112,7 @@ public:
    * @return The number of items that were passed through the queue
    *         in total
    */
-  auto waitForEmpty() -> size_t override;
+  auto waitForEmpty() -> uint64_t override;
 
 private:
   /**
@@ -191,7 +191,7 @@ template <typename T> auto Dmn_Limit_BlockingQueue<T>::size() -> size_t {
 }
 
 template <typename T>
-auto Dmn_Limit_BlockingQueue<T>::waitForEmpty() -> size_t {
+auto Dmn_Limit_BlockingQueue<T>::waitForEmpty() -> uint64_t {
   return Dmn_BlockingQueue<T>::waitForEmpty();
 }
 

@@ -22,7 +22,7 @@ public:
   virtual void push(T &&item) = 0;
   virtual void push(T &item, bool move = true) = 0;
 
-  virtual std::size_t waitForEmpty() = 0;
+  virtual std::uint64_t waitForEmpty() = 0;
 
 protected:
   virtual void stop() = 0;
