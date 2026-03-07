@@ -30,12 +30,12 @@
 namespace dmn {
 
 /**
- * @brief Thread-safe FIFO buffer.
+ * @brief Thread-safe FIFO queue.
  *
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
+class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
   /**
    * Epoch based Reclamation logic
    *
@@ -156,7 +156,8 @@ class Dmn_BlockingQueue_Lf : Dmn_BlockingQueue_Interface<T> {
 
       // acq_rel: acquire synchronizes with the registration fetch_add so that
       // shared state is visible; release ensures all operations performed under
-      // this guard are visible to any thread that observes the count reaching 0.
+      // this guard are visible to any thread that observes the count reaching
+      // 0.
       if (1 == m_q->m_epochInFlightCount[m_epochIndex].fetch_sub(
                    1, std::memory_order_acq_rel)) {
         auto ep = m_q->m_epochData.load(std::memory_order_acquire);
