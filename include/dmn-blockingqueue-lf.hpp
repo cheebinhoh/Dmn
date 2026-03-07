@@ -1,16 +1,14 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue-lf.hpp
- * @brief Thread-safe mutex lock and condition variable free FIFO blocking queue
- * for passing items between threads, the Michael-Scott lock free queue
- * algorithm but adapted for empty queue pop blocking semantics.
+ * @brief Thread safe and lock free FIFO queue where pop can be optionally
+ * block.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_LF_HPP_
 #define DMN_BLOCKINGQUEUE_LF_HPP_
 
-#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -40,25 +38,39 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
    * Epoch based Reclamation logic
    *
    * The following parameters control Epoch based reclamation logic
-   * for the pop out node with InFlightGuard. Each pop or push is
+   * for the pop out node with InFlightGuard. Each pop or push call is
    * guard via InFlightGuard.
    *
-   * When the queue' m_in_flight_total is s_epochTimeScale away from the
-   * epoch' m_in_flight_total, the global epoch' m_in_flight_total is set
-   * to queue' m_in_flight_total and the m_id is increased.
+   * The queue maintains global epoch data in m_epochData which contains
+   * the epoch id and the last timepoint where epoch id is updated. Instead
+   * of using system time (which will be a hot path) as last time point,
+   * we use the number of pop or push call as timepoint reference, if the
+   * number of such api call is s_epochTimeScale difference from the last
+   * value in m_epochData's m_in_flight_total, both the m_in_flight_total
+   * and m_id is moved forward (aka the epoch is moved).
    *
    * Each InFlightGuard entered will derive the m_epochIndex based on
    * current m_epochData.m_id, and each m_id is grouped by s_epochIdScale,
-   * so m_id 0, 1 is one group, 2, 3 is another group if s_epochIdScale is 2,
-   * the value is further modular divided by s_epochDataSize to derive the
-   * m_epochIndex.
+   * for example if s_epochIdScale is , then m_id 0, 1 is one group, 2, 3
+   * is another group, then the (m_id / s_epochIdScale) is modular divided
+   * by s_epochDataSize (m_id / s_epochIdScale) % s_epochDataSize, and the
+   * value is an m_epochIndex in the api call's InFlightGuard that will
+   * be used to reference to the entry in the queue's global m_epochReclaimNode
+   * and m_epochInFlightCount.
    *
-   * The m_epochIndex is used to reference m_epochInFlightCount and
-   * m_epochReclaimNode array of size s_epochDataSize, hence both are circular
-   * buffer.
+   * The m_epochReclaimNode maintains a list of retired nodes parked under
+   * the epoch and waiting to be deleted when the number of in flight api call
+   * assigned to the epoch is zero and the epoch is not longer active global
+   * epoch.
    *
-   * The configuration of these 3 static members allows us to adjust reclaim
-   * and free strategy depends on load.
+   * Note that the m_epochData.m_id is a running counter, but multiple
+   * consecutive m_id will be derived into a same m_epochIndex that is used to
+   * reference the entry in the m_epochReclaimNode and m_epochInFlightCount.
+   *
+   * Such design allows us to have figure in time (s_epochTimeSccale) and space
+   * (s_epochIdScale) when deriving the epochIndex where multiple calls in short
+   * proximity in time are same epoch, but uses the space factor to make sure
+   * that we do not have a large number of retired node waiting to be free.
    */
   static constexpr uint64_t s_epochTimeScale{500};
   static constexpr uint64_t s_epochIdScale{2};
@@ -80,7 +92,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
     bool m_entered{false};
     uint64_t m_epochIndex{};
 
-    explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q(q) {
+    explicit InFlightGuard(Dmn_BlockingQueue_Lf *q) : m_q{q} {
       // fast reject
       if (m_q->m_shutdown_flag.test(std::memory_order_acquire)) {
         return;
@@ -187,7 +199,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
     }
 
     explicit operator bool() const noexcept { return m_entered; }
-  };
+  }; // InFlightGuard
 
 public:
   Dmn_BlockingQueue_Lf();
@@ -312,14 +324,16 @@ private:
    */
   void retireNode(uint64_t epochIndex, Node *node);
 
-  std::atomic<EpochData> m_epochData{};
-  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
-  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
-
+  // a linked list of nodes that are maintained in FIFO and contains
+  // the data pushed into and pop out of queue.
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
   std::atomic<std::size_t> m_total_push_count{};
+
+  std::atomic<EpochData> m_epochData{};
+  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
+  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
 
   std::atomic<std::uint64_t> m_in_flight{0};
   std::atomic<std::uint64_t> m_in_flight_total{0};
