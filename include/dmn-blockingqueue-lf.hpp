@@ -287,7 +287,7 @@ protected:
   template <class U> void pushImpl(U &&item);
 
 private:
-  static void cleanup_tunk_inflight(void *arg);
+  static void cleanup_thunk_inflight(void *arg);
 
   /**
    * @brief The method frees a chain of nodes.
@@ -374,7 +374,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
 }
 
 template <typename T>
-void Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight(void *arg) {
+void Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight(void *arg) {
   auto ptr = static_cast<std::unique_ptr<InFlightGuard> *>(arg);
 
   (*ptr).reset();
@@ -463,7 +463,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
 
   std::optional<T> res{};
 
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight, &g);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -549,7 +549,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
     return;
   }
 
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_tunk_inflight, &g);
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight, &g);
 
   Node *newNode = new Node;
 
