@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue-lf.hpp
- * @brief Thread safe and lock free FIFO queue where pop can be optionally
+ * @brief Thread-safe and lock-free FIFO queue where pop can optionally
  * block.
  */
 
@@ -39,7 +39,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
    *
    * The following parameters control Epoch based reclamation logic
    * for the pop out node with InFlightGuard. Each pop or push call is
-   * guard via InFlightGuard.
+   * guarded by InFlightGuard.
    *
    * The queue maintains global epoch data in m_epochData which contains
    * the epoch id and the last timepoint where epoch id is updated. Instead
@@ -51,26 +51,27 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
    *
    * Each InFlightGuard entered will derive the m_epochIndex based on
    * current m_epochData.m_id, and each m_id is grouped by s_epochIdScale,
-   * for example if s_epochIdScale is , then m_id 0, 1 is one group, 2, 3
+   * for example if s_epochIdScale is 2, then m_id 0, 1 is one group, 2, 3
    * is another group, then the (m_id / s_epochIdScale) is modular divided
-   * by s_epochDataSize (m_id / s_epochIdScale) % s_epochDataSize, and the
+   * by s_epochDataSize, i.e. (m_id / s_epochIdScale) % s_epochDataSize, and the
    * value is an m_epochIndex in the api call's InFlightGuard that will
    * be used to reference to the entry in the queue's global m_epochReclaimNode
    * and m_epochInFlightCount.
    *
    * The m_epochReclaimNode maintains a list of retired nodes parked under
-   * the epoch and waiting to be deleted when the number of in flight api call
-   * assigned to the epoch is zero and the epoch is not longer active global
+   * the epoch and waiting to be deleted when the number of in-flight API calls
+   * assigned to the epoch is zero and the epoch is no longer the active global
    * epoch.
    *
    * Note that the m_epochData.m_id is a running counter, but multiple
    * consecutive m_id will be derived into a same m_epochIndex that is used to
    * reference the entry in the m_epochReclaimNode and m_epochInFlightCount.
    *
-   * Such design allows us to have figure in time (s_epochTimeSccale) and space
-   * (s_epochIdScale) when deriving the epochIndex where multiple calls in short
-   * proximity in time are same epoch, but uses the space factor to make sure
-   * that we do not have a large number of retired node waiting to be free.
+   * Such design allows us to have configuration in time (s_epochTimeScale) and
+   * space (s_epochIdScale) when deriving the epochIndex where multiple calls in
+   * short proximity in time are same epoch, but uses the space factor to make
+   * sure that we do not have a large number of retired nodes waiting to be
+   * freed.
    */
   static constexpr uint64_t s_epochTimeScale{500};
   static constexpr uint64_t s_epochIdScale{2};
@@ -325,7 +326,7 @@ private:
   void retireNode(uint64_t epochIndex, Node *node);
 
   // a linked list of nodes that are maintained in FIFO and contains
-  // the data pushed into and pop out of queue.
+  // the data pushed into and popped out of the queue.
   std::atomic<Node *> m_head{};
   std::atomic<Node *> m_tail{};
 
