@@ -138,9 +138,10 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T> {
             m_epochIndex = (ep.m_id / s_epochIdScale) % s_epochDataSize;
           }
 
-          // acq_rel: acquire ensures visibility of epoch metadata (e.g. prior
-          // epoch-id advances); release makes this registration visible to any
-          // thread that later decrements the count for this slot.
+          // acq_rel: acquire prevents subsequent operations in this critical
+          // section from being reordered before we register this "in-flight"
+          // entry; release pairs with decrements on the same counter so that
+          // all work done under this guard happens-before leaving the epoch.
           m_q->m_epochInFlightCount[m_epochIndex].fetch_add(
               1, std::memory_order_acq_rel);
 
