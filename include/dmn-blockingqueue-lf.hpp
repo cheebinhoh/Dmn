@@ -198,8 +198,8 @@ protected:
    * @brief Pop the head data, and wait for it if empty and wait is true.
    *
    * @param wait True will block the caller if the queue is empty.
-   * @return return the data from head or nullptr if queue is empty
-   *         and wait is false.
+   * @return An optional containing the data from the head of the queue, or
+   *         std::nullopt if the queue is empty and wait is false.
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
@@ -215,10 +215,10 @@ private:
 
   /**
    * @brief Free the chain of nodes based on templatized next field, and
-   *        return total number of nodes free.
+   *        return total number of nodes freed.
    *
    * @param head Pointer to chain of nodes to be freed.
-   * @return Total number of nodes free.
+   * @return Total number of nodes freed.
    */
   template <std::atomic<Node *> Node::*NextField>
   static auto freeNodeChain(Node *head) -> size_t {
