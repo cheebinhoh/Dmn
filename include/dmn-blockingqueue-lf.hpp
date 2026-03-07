@@ -181,8 +181,8 @@ public:
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
-   *        Note that waitForEmpty is not guard by InFlightGuard, so only call
-   *        this method by thread that owns the queue.
+   *        Note that waitForEmpty is not guarded by InFlightGuard, so only
+   *        call this method from the thread that owns the queue.
    *
    * @return The total number of items that have been passed through the
    * queue.
