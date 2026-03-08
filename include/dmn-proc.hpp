@@ -127,7 +127,7 @@ public:
   virtual ~Dmn_Proc() noexcept;
 
   Dmn_Proc(const Dmn_Proc &obj) = delete;
-  const Dmn_Proc &operator=(const Dmn_Proc &obj) = delete;
+  Dmn_Proc &operator=(const Dmn_Proc &obj) = delete;
   Dmn_Proc(Dmn_Proc &&obj) = delete;
   Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
 

@@ -98,8 +98,7 @@ public:
   virtual ~Dmn_Pipe() noexcept;
 
   Dmn_Pipe(const Dmn_Pipe<T, QueueType> &obj) = delete;
-  const Dmn_Pipe<T, QueueType> &
-  operator=(const Dmn_Pipe<T, QueueType> &obj) = delete;
+  Dmn_Pipe<T, QueueType> &operator=(const Dmn_Pipe<T, QueueType> &obj) = delete;
   Dmn_Pipe(Dmn_Pipe<T, QueueType> &&obj) = delete;
   Dmn_Pipe<T, QueueType> &operator=(Dmn_Pipe<T, QueueType> &&obj) = delete;
 

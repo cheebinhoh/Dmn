@@ -70,7 +70,7 @@ public:
   ~Dmn_Async_Handle() = default;
 
   Dmn_Async_Handle(const Dmn_Async_Handle &obj) = delete;
-  const Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;
+  Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;
   Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
   Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
@@ -98,7 +98,7 @@ public:
   virtual ~Dmn_Async() noexcept;
 
   Dmn_Async(const Dmn_Async &obj) = delete;
-  const Dmn_Async &operator=(const Dmn_Async &obj) = delete;
+  Dmn_Async &operator=(const Dmn_Async &obj) = delete;
   Dmn_Async(Dmn_Async &&obj) = delete;
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
 

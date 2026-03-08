@@ -100,9 +100,9 @@ public:
   virtual ~Dmn_BlockingQueue_Lf() noexcept;
 
   Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
-  const Dmn_BlockingQueue_Lf<T> &
+  Dmn_BlockingQueue_Lf<T> &
   operator=(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
-  Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &&obj) = delete;
+  Dmn_BlockingQueue_Lf(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
   Dmn_BlockingQueue_Lf<T> &operator=(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
 
   /**

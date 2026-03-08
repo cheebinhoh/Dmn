@@ -128,7 +128,7 @@ public:
     virtual ~Dmn_Sub() noexcept;
 
     Dmn_Sub(const Dmn_Sub &obj) = delete;
-    const Dmn_Sub &operator=(const Dmn_Sub &obj) = delete;
+    Dmn_Sub &operator=(const Dmn_Sub &obj) = delete;
     Dmn_Sub(Dmn_Sub &&obj) = delete;
     Dmn_Sub &operator=(Dmn_Sub &&obj) = delete;
 

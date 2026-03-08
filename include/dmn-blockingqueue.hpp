@@ -120,9 +120,8 @@ public:
   virtual ~Dmn_BlockingQueue() noexcept;
 
   Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &obj) = delete;
-  const Dmn_BlockingQueue<T> &
-  operator=(const Dmn_BlockingQueue<T> &obj) = delete;
-  Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &&obj) = delete;
+  Dmn_BlockingQueue<T> &operator=(const Dmn_BlockingQueue<T> &obj) = delete;
+  Dmn_BlockingQueue(Dmn_BlockingQueue<T> &&obj) = delete;
   Dmn_BlockingQueue<T> &operator=(Dmn_BlockingQueue<T> &&obj) = delete;
 
   /**
@@ -220,7 +219,7 @@ protected:
 
   /**
    * @brief Return true if the queue is stop (m_shutdown_flag is true), or flase
-   *        otherwise.
+   *        otherwise. The method is delegation of Dmn_Inflight_Guard module.
    *
    * @return true or false that the queue is shutdown.
    */

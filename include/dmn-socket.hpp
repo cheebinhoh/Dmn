@@ -78,7 +78,7 @@ public:
 
   /* Non-copyable and non-movable: owning the socket FD prohibits copying. */
   Dmn_Socket(const Dmn_Socket &obj) = delete;
-  const Dmn_Socket &operator=(const Dmn_Socket &obj) = delete;
+  Dmn_Socket &operator=(const Dmn_Socket &obj) = delete;
   Dmn_Socket(Dmn_Socket &&obj) = delete;
   Dmn_Socket &operator=(Dmn_Socket &&obj) = delete;
 

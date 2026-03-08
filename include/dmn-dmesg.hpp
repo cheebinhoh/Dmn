@@ -172,8 +172,7 @@ public:
       virtual ~Dmn_DMesgHandlerSub() noexcept;
 
       Dmn_DMesgHandlerSub(const Dmn_DMesgHandlerSub &obj) = delete;
-      const Dmn_DMesgHandlerSub &
-      operator=(const Dmn_DMesgHandlerSub &obj) = delete;
+      Dmn_DMesgHandlerSub &operator=(const Dmn_DMesgHandlerSub &obj) = delete;
       Dmn_DMesgHandlerSub(Dmn_DMesgHandlerSub &&obj) = delete;
       Dmn_DMesgHandlerSub &operator=(Dmn_DMesgHandlerSub &&obj) = delete;
 
@@ -271,7 +270,7 @@ public:
     virtual ~Dmn_DMesgHandler() noexcept;
 
     Dmn_DMesgHandler(const Dmn_DMesgHandler &obj) = delete;
-    const Dmn_DMesgHandler &operator=(const Dmn_DMesgHandler &obj) = delete;
+    Dmn_DMesgHandler &operator=(const Dmn_DMesgHandler &obj) = delete;
     Dmn_DMesgHandler(Dmn_DMesgHandler &&obj) = delete;
     Dmn_DMesgHandler &operator=(Dmn_DMesgHandler &&obj) = delete;
 
@@ -499,7 +498,7 @@ public:
   virtual ~Dmn_DMesg() noexcept;
 
   Dmn_DMesg(const Dmn_DMesg &obj) = delete;
-  const Dmn_DMesg &operator=(const Dmn_DMesg &obj) = delete;
+  Dmn_DMesg &operator=(const Dmn_DMesg &obj) = delete;
   Dmn_DMesg(Dmn_DMesg &&obj) = delete;
   Dmn_DMesg &operator=(Dmn_DMesg &&obj) = delete;
 

@@ -35,7 +35,7 @@
  *    This ensures that once stop() marks the queue shutdown
  *    (isInflightGuardClosed() becomes true), no new operations can enter, and
  *    the destructor waits for all already-running calls (possibly blocked) to
- *    return before the object is destroyed. Hence the call() should either
+ *    return before the object is destroyed. Hence the stop() should either
  *    force already-running calls to be returned, or those calls are timed
  *    based and will return eventually.
  *
@@ -59,7 +59,7 @@
  *   prevent new work from starting against a shutting-down object.
  *
  * - "In-flight":
- *   Any operation that successfully acquired an Ticket. The ticket
+ *   Any operation that successfully acquired a Ticket. The ticket
  *   lifetime should cover the entire public API call (or the entire critical
  *   section that must not overlap with teardown / reclamation).
  *
@@ -123,7 +123,8 @@ public:
       assert(nullptr != m_inflightguard);
 
       if (m_inflightguard->isInflightGuardClosed()) {
-        throw std::runtime_error("fail to acquire Ticket, it is shutting down");
+        throw std::runtime_error(
+            "failed to acquire inflight ticket: guard is shutting down/closed");
       }
 
       m_inflightguard->m_inflight_count.fetch_add(1, std::memory_order_acq_rel);
@@ -132,7 +133,8 @@ public:
                                                     std::memory_order_acq_rel);
         m_inflightguard->m_inflight_count.notify_all();
 
-        throw std::runtime_error("fail to acquire Ticket, it is shutting down");
+        throw std::runtime_error(
+            "failed to acquire inflight ticket: guard is shutting down/closed");
       }
 
       m_entered = true;
@@ -168,8 +170,8 @@ public:
     }
 
     Ticket(const Ticket &obj) = delete;
-    const Ticket &operator=(const Ticket &obj) = delete;
-    Ticket(const Ticket &&obj) = delete;
+    Ticket &operator=(const Ticket &obj) = delete;
+    Ticket(Ticket &&obj) = delete;
     Ticket &operator=(Ticket &&obj) = delete;
 
     explicit operator bool() const noexcept { return m_entered; }
@@ -186,8 +188,8 @@ public:
   virtual ~Dmn_Inflight_Guard() noexcept { waitForEmptyInflight(); };
 
   Dmn_Inflight_Guard(const Dmn_Inflight_Guard &obj) = delete;
-  const Dmn_Inflight_Guard &operator=(const Dmn_Inflight_Guard &obj) = delete;
-  Dmn_Inflight_Guard(const Dmn_Inflight_Guard &&obj) = delete;
+  Dmn_Inflight_Guard &operator=(const Dmn_Inflight_Guard &obj) = delete;
+  Dmn_Inflight_Guard(Dmn_Inflight_Guard &&obj) = delete;
   Dmn_Inflight_Guard &operator=(Dmn_Inflight_Guard &&obj) = delete;
 
   virtual auto enterInflightGate() -> std::unique_ptr<Ticket> final {
