@@ -191,10 +191,15 @@ protected:
    * @brief Pop the head data, and wait for it if empty and wait is true.
    *
    * @param wait True will block the caller if the queue is empty.
+   * @param inflightTicket The inflight ticket that keeps track of epochIndex
+   *                       for epoch to store deleted node.
    * @return An optional containing the data from the head of the queue, or
    *         std::nullopt if the queue is empty and wait is false.
    */
-  virtual auto popOptional(bool wait) -> std::optional<T>;
+  virtual auto
+  popOptional(bool wait,
+              std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
+                  inflightTiket) -> std::optional<T>;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
@@ -301,8 +306,8 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
 template <typename T>
 Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf(std::initializer_list<T> list)
     : Dmn_BlockingQueue_Lf{} {
-  for (auto data : list) {
-    this->push(data);
+  for (auto &data : list) {
+    this->pushImpl(data); // use pushImpl and skip inflight check
   }
 }
 
@@ -354,12 +359,17 @@ auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> uint64_t {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
-  if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error(
-        "Dmn_BlockingQueue_Lf: pop attempted on shutdown queue");
-  }
+  std::optional<T> data{};
 
-  auto data = popOptional(true);
+  auto inflightTicket = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
+  data = popOptional(true, inflightTicket);
+
+  DMN_PROC_CLEANUP_POP(0);
+
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
   }
@@ -372,7 +382,7 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
   assert(count > 0);
 
-  auto scope_lifetime_extender = this->enterInflightGate();
+  auto inflightTicket = this->enterInflightGate();
 
   std::vector<T> res{};
 
@@ -380,10 +390,10 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
              std::chrono::microseconds(timeout);
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &scope_lifetime_extender);
+                        &inflightTicket);
 
   do {
-    auto data = popOptional(false);
+    auto data = popOptional(false, inflightTicket);
     if (data) {
       res.push_back(std::move(*data));
     } else {
@@ -399,13 +409,10 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
 }
 
 template <typename T>
-auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
-  auto scope_lifetime_extender = this->enterInflightGate();
-
+auto Dmn_BlockingQueue_Lf<T>::popOptional(
+    bool wait, std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
+                   inflightTicket) -> std::optional<T> {
   std::optional<T> res{};
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &scope_lifetime_extender);
 
   while (true) {
     Node *last = m_tail.load(std::memory_order_acquire);
@@ -439,7 +446,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
                                          std::memory_order_acquire)) {
           res = std::move(next->m_data);
 
-          retireNode(scope_lifetime_extender->getValue(), first);
+          retireNode(inflightTicket->getValue(), first);
 
           break;
         }
@@ -447,26 +454,30 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
     }
   }
 
-  DMN_PROC_CLEANUP_POP(0);
-
   return res;
 }
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
-  if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error(
-        "Dmn_BlockingQueue_Lf: pop attempted on shutdown queue");
-  }
+  std::optional<T> data{};
 
-  return popOptional(false);
+  auto inflightTicket = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
+  data = popOptional(false, inflightTicket);
+
+  DMN_PROC_CLEANUP_POP(0);
+
+  return data;
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
-  auto scope_lifetime_extender = this->enterInflightGate();
+  auto inflightTicket = this->enterInflightGate();
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &scope_lifetime_extender);
+                        &inflightTicket);
 
   // Preserve the original preference for noexcept-move (otherwise copy).
   pushImpl(std::move_if_noexcept(item));
@@ -475,10 +486,10 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
-  auto scope_lifetime_extender = this->enterInflightGate();
+  auto inflightTicket = this->enterInflightGate();
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &scope_lifetime_extender);
+                        &inflightTicket);
 
   if (move) {
     // Preserve the original preference for noexcept-move (otherwise copy).
