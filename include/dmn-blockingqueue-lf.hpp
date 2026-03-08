@@ -28,6 +28,9 @@
 
 namespace dmn {
 
+using Inflight_Guard_Ticket =
+    std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
+
 /**
  * @brief Thread-safe FIFO queue.
  *
@@ -196,10 +199,9 @@ protected:
    * @return An optional containing the data from the head of the queue, or
    *         std::nullopt if the queue is empty and wait is false.
    */
-  virtual auto popOptional(
-      bool wait,
-      const std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
-          &inflightTicket) -> std::optional<T>;
+  virtual auto popOptional(bool wait,
+                           const Inflight_Guard_Ticket &inflightTicket)
+      -> std::optional<T>;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
@@ -208,11 +210,12 @@ protected:
    */
   template <class U> void pushImpl(U &&item);
 
-  virtual auto enterGateFnc() -> uint64_t override;
-
-  virtual auto isGateClosed() -> bool override;
-
-  virtual void leaveGateFnc(const uint64_t &) noexcept override;
+  /**
+   * Delegation methods integrates the queue into Dmn_InflightGuared interface.
+   */
+  virtual auto enterInflightGuardFnc() -> uint64_t override;
+  virtual auto isInflightGuardClosed() -> bool override;
+  virtual void leaveInflightGuardFnc(const uint64_t &) noexcept override;
 
 private:
   static void cleanup_thunk_inflight(void *arg);
@@ -341,8 +344,7 @@ auto Dmn_BlockingQueue_Lf<T>::calc_epoch_index(uint64_t epochId) -> uint64_t {
 
 template <typename T>
 void Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight(void *arg) {
-  auto *ticket_sp = static_cast<
-      std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket> *>(arg);
+  auto *ticket_sp = static_cast<Inflight_Guard_Ticket *>(arg);
 
   (*ticket_sp).reset();
 }
@@ -409,9 +411,8 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popOptional(
-    bool wait,
-    const std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
-        &inflightTicket) -> std::optional<T> {
+    bool wait, const Inflight_Guard_Ticket &inflightTicket)
+    -> std::optional<T> {
   std::optional<T> res{};
 
   while (true) {
@@ -614,7 +615,8 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
   this->waitForEmptyInflight();
 }
 
-template <typename T> auto Dmn_BlockingQueue_Lf<T>::enterGateFnc() -> uint64_t {
+template <typename T>
+auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
   uint64_t epochIndex = 0;
   auto total = m_in_flight_total.fetch_add(1, std::memory_order_acq_rel);
 
@@ -670,12 +672,13 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::enterGateFnc() -> uint64_t {
   return epochIndex;
 }
 
-template <typename T> auto Dmn_BlockingQueue_Lf<T>::isGateClosed() -> bool {
+template <typename T>
+auto Dmn_BlockingQueue_Lf<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
 
 template <typename T>
-void Dmn_BlockingQueue_Lf<T>::leaveGateFnc(
+void Dmn_BlockingQueue_Lf<T>::leaveInflightGuardFnc(
     const uint64_t &epochIndex) noexcept {
   // acq_rel: acquire synchronizes with the registration fetch_add so that
   // shared state is visible; release ensures all operations performed under
