@@ -114,7 +114,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
   };
 
   struct Node {
-    T m_data{}; ///< value & valid for non-dummy nodes).
+    T m_data{};
     std::atomic<Node *> m_next{nullptr};
     std::atomic<Node *> m_retired_next{nullptr};
   };
@@ -132,111 +132,87 @@ public:
   Dmn_BlockingQueue_Lf<T> &operator=(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
 
   /**
-   * @brief Remove and return the front item, waiting until an item is
-   * available.
+   * @brief Remove and return the front item from the queue, blocking if
+   * empty, it throws exception if the queue is destroyed while the caller pop
+   * calls block waiting for item.
    *
-   * @details
-   * If the queue is empty, this call waits (by yielding) until either:
-   * - an item is pushed, in which case that item is removed and returned, or
-   * - shutdown begins (e.g., destructor calls @ref stop()).
-   *
-   * @return The dequeued item.
-   *
-   * @throws std::runtime_error
-   *         If shutdown begins while waiting and no item is returned.
+   * @return The front item.
    */
   virtual auto pop() -> T override;
 
   /**
-   * @brief Pop up to @p count items, optionally bounded by a timeout.
+   * @brief Pop multiple items from the queue with optional timeout semantics.
    *
-   * @details
-   * Semantics:
-   * - @p count must be > 0 (asserted).
-   * - If @p timeout == 0, this call keeps attempting to dequeue until exactly
-   *   @p count items have been returned, or until shutdown begins.
-   * - If @p timeout > 0, this call keeps attempting to dequeue until either:
-   *   - @p count items have been collected, or
-   *   - the timeout duration (in microseconds) elapses, or
-   *   - shutdown begins.
+   * @warning The method does not guarantee that returned items are
+   * consecutive and next to each other, but ordering of the returning items
+   * in case that multiple threads are doing pop at the same time.
    *
-   * If the timeout elapses (or shutdown begins) and at least one item was
-   * dequeued, the returned vector contains the items obtained so far.
-   * If no item was dequeued before timeout/shutdown, the returned vector is
-   * empty.
+   * Detailed semantics:
+   * - count > 0 is required (asserted).
+   * - If the queue has >= count items, this returns exactly count items.
+   * - If the queue is empty or less than count items:
+   *   - timeout == 0: wait indefinitely for count items (return exactly
+   *     count).
+   *   - timeout > 0: wait up to timeout microseconds for items.
+   *     * If timeout expires and there is at least one item, return 1..count
+   *       items (the current queue size).
+   *     * If timeout expires and the queue is still empty, the function
+   *       returns no item.
    *
-   * @warning The returned items are not guaranteed to be consecutive relative
-   * to other concurrent consumers. This function only returns items
-   *          successfully dequeued by the calling thread.
+   * The returned vector contains moved items removed from the queue.
    *
-   * @param count   Maximum number of items to return (must be > 0).
-   * @param timeout Timeout in microseconds. 0 means wait indefinitely.
-   * @return Vector of dequeued items (size in [0, count]).
+   * @param count   Number of desired items (must be > 0).
+   * @param timeout Timeout in microseconds for waiting for the full count.
+   *                A value of 0 means wait forever for the count items.
+   * @return Vector of items (size == count on success without timeout, or
+   *         between 1 and count if a timeout occurred after at least one item
+   *         was produced).
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
-   * @brief Attempt to pop a single item without waiting.
+   * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
    *
-   * @return The dequeued item, or std::nullopt if the queue was empty or
-   * shutdown has detached the queue.
+   * @return optional item, or std::nullopt if the queue was empty.
    */
   virtual auto popNoWait() -> std::optional<T> override;
 
   /**
-   * @brief Enqueue an item (rvalue overload).
+   * @brief Push an rvalue into the queue (attempts move, with
+   * move_if_noexcept or equivalent).
    *
-   * @details
-   * The value is moved into the queue using a noexcept-move preference
-   * (i.e., move if it is noexcept, otherwise copy).
-   *
-   * @param item Value to enqueue.
-   *
-   * @throws std::runtime_error If the queue is shutting down.
+   * @param item The value to push (rvalue reference).
    */
   virtual void push(T &&item) override;
 
   /**
-   * @brief Enqueue an item (lvalue overload) with optional move.
+   * @brief Push an lvalue into the queue, optionally moving it (using
+   *        move_if_noexcept or equivalent).
    *
-   * @details
-   * If @p move is true, the value may be moved-from (noexcept-move preferred).
-   * If @p move is false, the value is copied.
-   *
-   * @param item The value to enqueue.
-   * @param move If true, attempt to move the item; otherwise copy.
-   *
-   * @throws std::runtime_error If the queue is shutting down.
+   * @param item The value to push (lvalue reference; may be moved-from if
+   *             move is true).
+   * @param move If true, attempt to move the value into the queue; otherwise
+   *             copy it.
    */
   virtual void push(T &item, bool move = true) override;
 
   /**
-   * @brief Busy-wait until the queue becomes empty.
+   * @brief Wait until the queue becomes empty and return the total number of
+   *        items that have passed through the queue.
    *
-   * @details
-   * This method repeatedly checks the queue state until it observes an empty
-   * condition. It is intended to be used by a single owning thread to wait for
-   * draining, typically as part of a shutdown protocol external to this queue.
+   *        Note that waitForEmpty is not guarded by Dmn_Inflight_Guard, so only
+   *        call this method from the thread that owns the queue.
    *
-   * @warning This method is not protected by the inflight/epoch guard and
-   * should not be used concurrently with arbitrary producers/consumers unless
-   *          the caller can ensure safe coordination.
-   *
-   * @return Total number of successful pushes observed by this queue since
-   *         construction.
+   * @return The total number of items that have been passed through the
+   * queue.
    */
   virtual auto waitForEmpty() -> uint64_t override;
 
 protected:
   /**
-   * @brief Initiate shutdown and wake/interrupt waiting operations.
+   * @brief Signal all waiting threads to wake up and return.
    *
-   * @details
-   * Sets the shutdown flag and detaches the tail pointer to prevent further
-   * enqueues. Then waits until all in-flight guarded operations have exited so
-   * that deferred node reclamation can complete safely.
-   *
-   * This is called from the destructor.
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
    */
   virtual void stop() override;
 
@@ -261,36 +237,11 @@ protected:
   template <class U> void pushImpl(U &&item);
 
   /**
-   * @name Epoch-based reclamation (implementation notes)
-   *
-   * @details
-   * Popped nodes cannot be immediately deleted because other threads may still
-   * be reading pointers obtained during concurrent operations. This
-   * implementation uses an epoch-based scheme coordinated by @ref
-   * dmn::Dmn_Inflight_Guard:
-   *
-   * - Each push/pop enters an in-flight region and is assigned an epoch index.
-   * - Removed nodes are placed onto a per-epoch retired list (not deleted yet).
-   * - When an epoch bucket is no longer active and its in-flight count drops to
-   *   zero, its retired nodes can be safely freed.
-   *
-   * The mapping from a monotonically increasing epoch id to a bounded number of
-   * epoch buckets is controlled by:
-   * - @ref s_epochTimeScale: how frequently the global epoch advances as a
-   *   function of total in-flight API calls.
-   * - @ref s_epochIdScale: how many consecutive epoch ids map to the same
-   * bucket (coarser grouping reduces churn).
-   * - @ref s_epochDataSize: number of buckets (upper bound on parked retired
-   * lists).
-   *
-   * This bounded-bucket design prevents unbounded growth of deferred nodes
-   * while still allowing safe reclamation under concurrency.
+   * Delegation methods integrate the queue into Dmn_InflightGuard interface.
    */
-  /// @{
-  static constexpr uint64_t s_epochTimeScale{500};
-  static constexpr uint64_t s_epochIdScale{2};
-  static constexpr uint32_t s_epochDataSize{50};
-  /// @}
+  virtual auto enterInflightGuardFnc() -> uint64_t override;
+  virtual auto isInflightGuardClosed() -> bool override;
+  virtual void leaveInflightGuardFnc(const uint64_t &) noexcept override;
 
 private:
   static void cleanup_thunk_inflight(void *arg);
@@ -352,8 +303,8 @@ private:
 
   // a linked list of nodes that are maintained in FIFO and contains
   // the data pushed into and popped out of the queue.
-  std::atomic<Node *> m_head{}; ///< points to dummy or first.
-  std::atomic<Node *> m_tail{}; ///< nullptr after shutdown.
+  std::atomic<Node *> m_head{};
+  std::atomic<Node *> m_tail{};
 
   std::atomic<std::uint64_t> m_total_push_count{};
 
