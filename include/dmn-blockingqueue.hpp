@@ -218,7 +218,7 @@ protected:
   virtual void stop() override;
 
   /**
-   * @brief Return true if the queue is stop (m_shutdown_flag is true), or flase
+   * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
    *        otherwise. The method is delegation of Dmn_Inflight_Guard module.
    *
    * @return true or false that the queue is shutdown.

@@ -211,7 +211,7 @@ protected:
   template <class U> void pushImpl(U &&item);
 
   /**
-   * Delegation methods integrates the queue into Dmn_InflightGuared interface.
+   * Delegation methods integrate the queue into Dmn_InflightGuard interface.
    */
   virtual auto enterInflightGuardFnc() -> uint64_t override;
   virtual auto isInflightGuardClosed() -> bool override;
