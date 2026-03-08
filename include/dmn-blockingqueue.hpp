@@ -102,6 +102,7 @@
 #include "dmn-util.hpp"
 
 #include "dmn-blockingqueue-interface.hpp"
+#include "dmn-inflight-guard.hpp"
 
 namespace dmn {
 
@@ -111,7 +112,8 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T> {
+class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
+                          Dmn_Inflight_Guard {
 public:
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
@@ -168,7 +170,7 @@ public:
    *
    * Non-blocking and signals waiting consumers.
    *
-   * @param item The value to push (rvalue reference).
+   * @param item The value to push (rvalue reference, will be moved from).
    */
   virtual void push(T &&item) override;
 
@@ -208,13 +210,21 @@ protected:
   /**
    * @brief Signal all waiting threads to wake up and return.
    *
-   * Sets the m_shutdown flag and notifies all condition variables so
+   * Sets the m_shutdown_flag and notifies all condition variables so
    * that threads blocked in pop(), pop(count, timeout), or
    * waitForEmpty() can observe the shutdown flag and return cleanly.
    * This method is called by Dmn_Pipe's destructor via the protected
    * interface.
    */
   virtual void stop() override;
+
+  /**
+   * @brief Return true if the queue is stop (m_shutdown_flag is true), or flase
+   *        otherwise.
+   *
+   * @return true or false that the queue is shutdown.
+   */
+  auto isGateClosed() -> bool override;
 
 private:
   template <class U> void pushImpl(U &&item);
@@ -226,9 +236,7 @@ private:
       m_not_empty_cond{}; // signalled on push (multi-pop timed wait)
   uint64_t m_push_count{};
   uint64_t m_pop_count{};
-  bool m_shutdown{};
-
-  std::atomic<std::uint64_t> m_popcall_count{};
+  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_BlockingQueue
 
 template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
@@ -244,24 +252,19 @@ Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
 template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
   stop();
 
-  uint64_t popcall_count{};
-  while ((popcall_count = m_popcall_count.load(std::memory_order_acquire)) >
-         0) {
-    m_popcall_count.wait(popcall_count, std::memory_order_acquire);
-  }
+  // make sure that all api call within the inflight guard exits.
+  this->waitForEmptyInflight();
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
 }
 
-template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  m_popcall_count.fetch_add(1, std::memory_order_relaxed);
+template <typename T> auto Dmn_BlockingQueue<T>::isGateClosed() -> bool {
+  return m_shutdown_flag.test(std::memory_order_acquire);
+}
 
-  // Use RAII to ensure the counter is decremented even if an exception occurs
-  auto cleanup = make_scope_guard([&] {
-    m_popcall_count.fetch_sub(1, std::memory_order_release);
-    m_popcall_count.notify_all();
-  });
+template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
+  [[maybe_unused]] auto scope_lifetime_extender = this->enterInflightGate();
 
   auto data = popOptional(true);
   if (!data) {
@@ -322,10 +325,7 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
 }
 
 template <typename T> void Dmn_BlockingQueue<T>::stop() {
-  std::unique_lock<std::mutex> lock(m_mutex);
-  m_shutdown = true;
-
-  lock.unlock();
+  m_shutdown_flag.test_and_set(std::memory_order_release);
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
@@ -338,7 +338,8 @@ template <typename T> auto Dmn_BlockingQueue<T>::waitForEmpty() -> uint64_t {
 
   Dmn_Proc::testcancel();
 
-  m_empty_cond.wait(lock, [this] { return m_queue.empty() || m_shutdown; });
+  m_empty_cond.wait(lock,
+                    [this] { return m_queue.empty() || this->isGateClosed(); });
 
   assert(m_pop_count == m_push_count);
   inbound_count = m_pop_count;
@@ -360,8 +361,9 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
   // least one available item.
   if (timeout > 0) {
     if (m_not_empty_cond.wait_for(
-            lock, std::chrono::microseconds(timeout),
-            [this, count] { return m_queue.size() >= count || m_shutdown; })) {
+            lock, std::chrono::microseconds(timeout), [this, count] {
+              return m_queue.size() >= count || this->isGateClosed();
+            })) {
       // do nothing and we have what we want
     } else if (m_queue.empty()) {
       return {};
@@ -369,11 +371,12 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
       // do nothing and fetch whatever we have
     }
   } else {
-    m_not_empty_cond.wait(
-        lock, [this, count] { return m_queue.size() >= count || m_shutdown; });
+    m_not_empty_cond.wait(lock, [this, count] {
+      return m_queue.size() >= count || this->isGateClosed();
+    });
   }
 
-  if (m_shutdown) {
+  if (this->isGateClosed()) {
     return ret;
   }
 
@@ -412,11 +415,11 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     }
 
     // Block until an item is available. This wait is a cancellation point.
-    m_not_empty_cond.wait(lock,
-                          [this] { return !m_queue.empty() || m_shutdown; });
+    m_not_empty_cond.wait(
+        lock, [this] { return !m_queue.empty() || this->isGateClosed(); });
   }
 
-  if (m_shutdown) {
+  if (this->isGateClosed()) {
     return {};
   }
 
