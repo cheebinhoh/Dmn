@@ -199,7 +199,7 @@ protected:
   virtual auto
   popOptional(bool wait,
               std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
-                  inflightTiket) -> std::optional<T>;
+                  inflightTicket) -> std::optional<T>;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
