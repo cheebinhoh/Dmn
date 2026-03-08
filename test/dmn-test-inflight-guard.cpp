@@ -11,7 +11,7 @@
 
 #include "dmn-inflight-guard.hpp"
 
-class InflightTest : public dmn::Dmn_Inflight_Guard {
+class InflightTest : public dmn::Dmn_Inflight_Guard<> {
 public:
   InflightTest() {}
 
