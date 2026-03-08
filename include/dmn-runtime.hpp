@@ -200,7 +200,7 @@ public:
   virtual ~Dmn_Runtime_Manager() noexcept;
 
   Dmn_Runtime_Manager(const Dmn_Runtime_Manager &obj) = delete;
-  const Dmn_Runtime_Manager &operator=(const Dmn_Runtime_Manager &obj) = delete;
+  Dmn_Runtime_Manager &operator=(const Dmn_Runtime_Manager &obj) = delete;
   Dmn_Runtime_Manager(Dmn_Runtime_Manager &&obj) = delete;
   Dmn_Runtime_Manager &operator=(Dmn_Runtime_Manager &&obj) = delete;
 

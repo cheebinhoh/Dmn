@@ -162,8 +162,8 @@ public:
   virtual ~Dmn_TeePipe() noexcept;
 
   Dmn_TeePipe(const Dmn_TeePipe<T> &obj) = delete;
-  const Dmn_TeePipe<T> &operator=(const Dmn_TeePipe<T> &obj) = delete;
-  Dmn_TeePipe(const Dmn_TeePipe<T> &&obj) = delete;
+  Dmn_TeePipe<T> &operator=(const Dmn_TeePipe<T> &obj) = delete;
+  Dmn_TeePipe(Dmn_TeePipe &&obj) = delete;
   Dmn_TeePipe<T> &operator=(Dmn_TeePipe<T> &&obj) = delete;
 
   /**

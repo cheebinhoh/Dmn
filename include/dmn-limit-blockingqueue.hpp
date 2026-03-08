@@ -50,7 +50,7 @@ public:
   virtual ~Dmn_Limit_BlockingQueue();
 
   Dmn_Limit_BlockingQueue(const Dmn_Limit_BlockingQueue<T> &obj) = delete;
-  const Dmn_Limit_BlockingQueue<T> &
+  Dmn_Limit_BlockingQueue<T> &
   operator=(const Dmn_Limit_BlockingQueue<T> &obj) = delete;
   Dmn_Limit_BlockingQueue(Dmn_Limit_BlockingQueue<T> &&obj) = delete;
   Dmn_Limit_BlockingQueue<T> &&

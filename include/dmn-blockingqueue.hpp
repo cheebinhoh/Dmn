@@ -120,9 +120,8 @@ public:
   virtual ~Dmn_BlockingQueue() noexcept;
 
   Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &obj) = delete;
-  const Dmn_BlockingQueue<T> &
-  operator=(const Dmn_BlockingQueue<T> &obj) = delete;
-  Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &&obj) = delete;
+  Dmn_BlockingQueue<T> &operator=(const Dmn_BlockingQueue<T> &obj) = delete;
+  Dmn_BlockingQueue(Dmn_BlockingQueue<T> &&obj) = delete;
   Dmn_BlockingQueue<T> &operator=(Dmn_BlockingQueue<T> &&obj) = delete;
 
   /**
@@ -219,12 +218,12 @@ protected:
   virtual void stop() override;
 
   /**
-   * @brief Return true if the queue is stop (m_shutdown_flag is true), or flase
-   *        otherwise.
+   * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
+   *        otherwise. The method is delegation of Dmn_Inflight_Guard module.
    *
    * @return true or false that the queue is shutdown.
    */
-  auto isGateClosed() -> bool override;
+  auto isInflightGuardClosed() -> bool override;
 
 private:
   template <class U> void pushImpl(U &&item);
@@ -259,7 +258,8 @@ template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
   return;
 }
 
-template <typename T> auto Dmn_BlockingQueue<T>::isGateClosed() -> bool {
+template <typename T>
+auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
 
@@ -338,8 +338,9 @@ template <typename T> auto Dmn_BlockingQueue<T>::waitForEmpty() -> uint64_t {
 
   Dmn_Proc::testcancel();
 
-  m_empty_cond.wait(lock,
-                    [this] { return m_queue.empty() || this->isGateClosed(); });
+  m_empty_cond.wait(lock, [this] {
+    return m_queue.empty() || this->isInflightGuardClosed();
+  });
 
   assert(m_pop_count == m_push_count);
   inbound_count = m_pop_count;
@@ -362,7 +363,7 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
   if (timeout > 0) {
     if (m_not_empty_cond.wait_for(
             lock, std::chrono::microseconds(timeout), [this, count] {
-              return m_queue.size() >= count || this->isGateClosed();
+              return m_queue.size() >= count || this->isInflightGuardClosed();
             })) {
       // do nothing and we have what we want
     } else if (m_queue.empty()) {
@@ -372,11 +373,11 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
     }
   } else {
     m_not_empty_cond.wait(lock, [this, count] {
-      return m_queue.size() >= count || this->isGateClosed();
+      return m_queue.size() >= count || this->isInflightGuardClosed();
     });
   }
 
-  if (this->isGateClosed()) {
+  if (this->isInflightGuardClosed()) {
     return ret;
   }
 
@@ -415,11 +416,12 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     }
 
     // Block until an item is available. This wait is a cancellation point.
-    m_not_empty_cond.wait(
-        lock, [this] { return !m_queue.empty() || this->isGateClosed(); });
+    m_not_empty_cond.wait(lock, [this] {
+      return !m_queue.empty() || this->isInflightGuardClosed();
+    });
   }
 
-  if (this->isGateClosed()) {
+  if (this->isInflightGuardClosed()) {
     return {};
   }
 

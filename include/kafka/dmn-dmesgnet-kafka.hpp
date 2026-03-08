@@ -59,7 +59,7 @@ public:
   ~Dmn_DMesgNet_Kafka() noexcept;
 
   Dmn_DMesgNet_Kafka(const Dmn_DMesgNet_Kafka &obj) = delete;
-  const Dmn_DMesgNet_Kafka &operator=(const Dmn_DMesgNet_Kafka &obj) = delete;
+  Dmn_DMesgNet_Kafka &operator=(const Dmn_DMesgNet_Kafka &obj) = delete;
   Dmn_DMesgNet_Kafka(Dmn_DMesgNet_Kafka &&obj) = delete;
   Dmn_DMesgNet_Kafka &operator=(Dmn_DMesgNet_Kafka &&obj) = delete;
 

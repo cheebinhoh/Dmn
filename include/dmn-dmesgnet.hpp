@@ -104,7 +104,7 @@ public:
   virtual ~Dmn_DMesgNet() noexcept;
 
   Dmn_DMesgNet(const Dmn_DMesgNet &obj) = delete;
-  const Dmn_DMesgNet &operator=(const Dmn_DMesgNet &obj) = delete;
+  Dmn_DMesgNet &operator=(const Dmn_DMesgNet &obj) = delete;
   Dmn_DMesgNet(Dmn_DMesgNet &&obj) = delete;
   Dmn_DMesgNet &operator=(Dmn_DMesgNet &&obj) = delete;
 

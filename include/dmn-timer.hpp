@@ -53,7 +53,7 @@ public:
   virtual ~Dmn_Timer() noexcept;
 
   Dmn_Timer(const Dmn_Timer &obj) = delete;
-  const Dmn_Timer &operator=(const Dmn_Timer &obj) = delete;
+  Dmn_Timer &operator=(const Dmn_Timer &obj) = delete;
   Dmn_Timer(Dmn_Timer &&obj) = delete;
   Dmn_Timer &operator=(Dmn_Timer &&obj) = delete;
 
