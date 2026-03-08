@@ -337,8 +337,8 @@ auto Dmn_BlockingQueue_Lf<T>::calc_epoch_index(uint64_t epochId) -> uint64_t {
 
 template <typename T>
 void Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight(void *arg) {
-  auto *ticket_sp =
-      static_cast<std::shared_ptr<Dmn_Inflight_Guard::Inflight_Ticket> *>(arg);
+  auto *ticket_sp = static_cast<
+      std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket> *>(arg);
 
   (*ticket_sp).reset();
 }
