@@ -19,21 +19,41 @@ class Dmn_Inflight_Guard {
   public:
     Inflight_Ticket(Dmn_Inflight_Guard *inflightguard)
         : m_inflightguard{inflightguard} {
+      if (m_inflightguard->isGateClosed()) {
+        throw std::runtime_error(
+            "fail to acquire Inflight_Ticket, it is shutting down");
+      }
 
       m_inflightguard->m_inflight_count.fetch_add(1, std::memory_order_release);
+      if (m_inflightguard->isGateClosed()) {
+        m_inflightguard->m_inflight_count.fetch_sub(1,
+                                                    std::memory_order_release);
+        m_inflightguard->m_inflight_count.notify_all();
+
+        throw std::runtime_error(
+            "fail to acquire Inflight_Ticket, it is shutting down");
+      }
+
+      m_entered = true;
 
       m_inflightguard->enterGateFnc();
     }
 
     virtual ~Inflight_Ticket() {
+      if (!m_entered) {
+        return;
+      }
+
       m_inflightguard->leaveGateFnc();
 
+      m_entered = false;
       m_inflightguard->m_inflight_count.fetch_sub(1, std::memory_order_release);
       m_inflightguard->m_inflight_count.notify_all();
     }
 
   private:
     Dmn_Inflight_Guard *m_inflightguard{};
+    bool m_entered{false};
   };
 
 public:
@@ -63,6 +83,8 @@ protected:
   virtual void enterGateFnc() {}
 
   virtual void leaveGateFnc() {}
+
+  virtual auto isGateClosed() -> bool { return false; }
 
   auto inflight_count() -> uint64_t {
     return m_inflight_count.load(std::memory_order_acquire);
