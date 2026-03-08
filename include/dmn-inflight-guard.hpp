@@ -9,9 +9,9 @@
 #define DMN_INFLIGHT_GUARD_HPP_
 
 #include <atomic>
-#include <cstddef>
+#include <cstdint>
 #include <memory>
-
+#include <stdexcept>
 namespace dmn {
 
 class Dmn_Inflight_Guard {

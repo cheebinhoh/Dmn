@@ -170,6 +170,7 @@ public:
    *
    * Non-blocking and signals waiting consumers.
    *
+   * @param item The value to push (rvalue reference, will be moved from).
    */
   virtual void push(T &&item) override;
 
