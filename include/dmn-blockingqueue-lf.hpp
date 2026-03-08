@@ -283,7 +283,6 @@ private:
   std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
   std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
 
-  std::atomic<std::uint64_t> m_in_flight{0};
   std::atomic<std::uint64_t> m_in_flight_total{0};
   std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_BlockingQueue_Lf
