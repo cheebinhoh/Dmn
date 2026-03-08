@@ -12,9 +12,12 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <variant> // std::monostate
+
 namespace dmn {
 
-class Dmn_Inflight_Guard {
+template <class T = std::monostate> class Dmn_Inflight_Guard {
+public:
   class Inflight_Ticket {
   public:
     Inflight_Ticket(Dmn_Inflight_Guard *inflightguard)
@@ -37,7 +40,7 @@ class Dmn_Inflight_Guard {
       m_entered = true;
 
       try {
-        m_inflightguard->enterGateFnc();
+        m_value = m_inflightguard->enterGateFnc();
       } catch (...) {
         // Roll back the in-flight count and notify waiters if enterGateFnc
         // throws.
@@ -48,26 +51,34 @@ class Dmn_Inflight_Guard {
       }
     }
 
-    virtual ~Inflight_Ticket() {
+    virtual ~Inflight_Ticket() noexcept {
       if (!m_entered) {
         return;
       }
 
-      m_inflightguard->leaveGateFnc();
+      try {
+        m_inflightguard->leaveGateFnc(m_value);
+      } catch (...) {
+        // Swallow exceptions to uphold noexcept and ensure proper teardown.
+      }
 
       m_entered = false;
       m_inflightguard->m_inflight_count.fetch_sub(1, std::memory_order_release);
       m_inflightguard->m_inflight_count.notify_all();
     }
 
+    explicit operator bool() const noexcept { return m_entered; }
+
+    virtual auto getValue() const -> const T & final { return m_value; }
+
   private:
     Dmn_Inflight_Guard *m_inflightguard{};
     bool m_entered{false};
+    T m_value{}; // std::monostate{} when "no payload"
   };
 
-public:
   Dmn_Inflight_Guard() {};
-  virtual ~Dmn_Inflight_Guard() { waitForEmptyInflight(); };
+  virtual ~Dmn_Inflight_Guard() noexcept { waitForEmptyInflight(); };
 
   Dmn_Inflight_Guard(const Dmn_Inflight_Guard &obj) = delete;
   const Dmn_Inflight_Guard &operator=(const Dmn_Inflight_Guard &obj) = delete;
@@ -89,11 +100,11 @@ public:
   }
 
 protected:
-  virtual void enterGateFnc() {}
-
-  virtual void leaveGateFnc() {}
+  virtual auto enterGateFnc() -> T { return T{}; }
 
   virtual auto isGateClosed() -> bool { return false; }
+
+  virtual void leaveGateFnc(const T &) noexcept {}
 
   auto inflight_count() -> uint64_t {
     return m_inflight_count.load(std::memory_order_acquire);

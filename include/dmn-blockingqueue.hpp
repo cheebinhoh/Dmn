@@ -113,7 +113,7 @@ namespace dmn {
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
-                          Dmn_Inflight_Guard {
+                          private Dmn_Inflight_Guard<> {
 public:
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
