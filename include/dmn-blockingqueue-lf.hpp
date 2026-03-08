@@ -379,6 +379,9 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
   auto end = std::chrono::high_resolution_clock::now() +
              std::chrono::microseconds(timeout);
 
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &scope_lifetime_extender);
+
   do {
     auto data = popOptional(false);
     if (data) {
@@ -389,6 +392,8 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
   } while (false == m_shutdown_flag.test(std::memory_order_acquire) &&
            res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
+
+  DMN_PROC_CLEANUP_POP(0);
 
   return res;
 }
