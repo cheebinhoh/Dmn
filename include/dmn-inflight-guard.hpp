@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-inflight-guard.hpp
- * @brief Thread-safe FIFO blocking queue for passing items between threads.
+ * @brief RAII-based guard for tracking in-flight operations.
  */
 
 #ifndef DMN_INFLIGHT_GUARD_HPP_

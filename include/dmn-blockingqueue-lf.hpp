@@ -220,10 +220,10 @@ private:
    * @brief Derive the epoch index (base of epoch id) to reference into queue's
    *        epoch blocks.
    *
-   * @param epoch_id The epoch id
+   * @param epochId The epoch id
    * @return The derived epoch index into queue's epoch blocks.
    */
-  static uint64_t calc_epoch_index(uint64_t epoch_id);
+  static uint64_t calc_epoch_index(uint64_t epochId);
 
   /**
    * @brief Free the chain of nodes based on templatized next field, and

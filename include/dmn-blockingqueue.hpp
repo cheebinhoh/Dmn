@@ -243,7 +243,7 @@ Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
 template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
   stop();
 
-  // make sure that all api call within the inflight gaurd exits.
+  // make sure that all api call within the inflight guard exits.
   waitForEmptyInflight();
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
