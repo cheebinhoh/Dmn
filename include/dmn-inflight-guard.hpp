@@ -104,7 +104,7 @@ protected:
 
   virtual auto isGateClosed() -> bool { return false; }
 
-  virtual void leaveGateFnc(const T &) {}
+  virtual void leaveGateFnc(const T &) noexcept {}
 
   auto inflight_count() -> uint64_t {
     return m_inflight_count.load(std::memory_order_acquire);

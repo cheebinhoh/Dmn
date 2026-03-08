@@ -212,7 +212,7 @@ protected:
 
   virtual auto isGateClosed() -> bool override;
 
-  virtual void leaveGateFnc(const uint64_t &) override;
+  virtual void leaveGateFnc(const uint64_t &) noexcept override;
 
 private:
   static void cleanup_thunk_inflight(void *arg);
@@ -675,7 +675,8 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::isGateClosed() -> bool {
 }
 
 template <typename T>
-void Dmn_BlockingQueue_Lf<T>::leaveGateFnc(const uint64_t &epochIndex) {
+void Dmn_BlockingQueue_Lf<T>::leaveGateFnc(
+    const uint64_t &epochIndex) noexcept {
   // acq_rel: acquire synchronizes with the registration fetch_add so that
   // shared state is visible; release ensures all operations performed under
   // this guard are visible to any thread that observes the count reaching
