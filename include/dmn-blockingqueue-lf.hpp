@@ -40,8 +40,8 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
    * Epoch based Reclamation logic
    *
    * The following parameters control Epoch based reclamation logic
-   * for the pop out node with InFlightGuard. Each pop or push call is
-   * guarded by InFlightGuard.
+   * for the pop out node with Dmn_Inflight_Guard. Each pop or push call is
+   * guarded by Dmn_Inflight_Guard.
    *
    * The queue maintains global epoch data in m_epochData which contains
    * the epoch id and the last timepoint where epoch id is updated. Instead
@@ -51,14 +51,14 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
    * value in m_epochData's m_in_flight_total, both the m_in_flight_total
    * and m_id is moved forward (aka the epoch is moved).
    *
-   * Each InFlightGuard entered will derive the m_epochIndex based on
-   * current m_epochData.m_id, and each m_id is grouped by s_epochIdScale,
-   * for example if s_epochIdScale is 2, then m_id 0, 1 is one group, 2, 3
-   * is another group, then the (m_id / s_epochIdScale) is modular divided
-   * by s_epochDataSize, i.e. (m_id / s_epochIdScale) % s_epochDataSize, and the
-   * value is an m_epochIndex in the api call's InFlightGuard that will
-   * be used to reference to the entry in the queue's global m_epochReclaimNode
-   * and m_epochInFlightCount.
+   * Each Dmn_Inflight_Guard entered will derive the value (which is served
+   * as epochIndex) based on current m_epochData.m_id, and each m_id is grouped
+   * by s_epochIdScale, for example if s_epochIdScale is 2, then m_id 0, 1 is
+   * one group, 2, 3 is another group, then the (m_id / s_epochIdScale) is
+   * modular divided by s_epochDataSize, i.e. (m_id / s_epochIdScale) %
+   * s_epochDataSize, and the value is an epochIndex in the api call's
+   * Dmn_Inflight_Guard that will be used to reference to the entry in the
+   * queue's global m_epochReclaimNode and m_epochInFlightCount.
    *
    * The m_epochReclaimNode maintains a list of retired nodes parked under
    * the epoch and waiting to be deleted when the number of in-flight API calls
@@ -66,7 +66,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
    * epoch.
    *
    * Note that the m_epochData.m_id is a running counter, but multiple
-   * consecutive m_id will be derived into a same m_epochIndex that is used to
+   * consecutive m_id will be derived into a same epochIndex that is used to
    * reference the entry in the m_epochReclaimNode and m_epochInFlightCount.
    *
    * Such design allows us to have configuration in time (s_epochTimeScale) and
@@ -171,7 +171,7 @@ public:
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
-   *        Note that waitForEmpty is not guarded by InFlightGuard, so only
+   *        Note that waitForEmpty is not guarded by Dmn_Inflight_Guard, so only
    *        call this method from the thread that owns the queue.
    *
    * @return The total number of items that have been passed through the
