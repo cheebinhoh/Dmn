@@ -217,7 +217,12 @@ protected:
    */
   virtual void stop() override;
 
-protected:
+  /**
+   * @brief Return true if the queue is stop (m_shutdown_flag is true), or flase
+   *        otherwise.
+   *
+   * @return true or false that the queue is shutdown.
+   */
   auto isGateClosed() -> bool override;
 
 private:

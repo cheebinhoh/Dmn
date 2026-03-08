@@ -39,8 +39,10 @@ class Dmn_Inflight_Guard {
       try {
         m_inflightguard->enterGateFnc();
       } catch (...) {
-        // Roll back the in-flight count and notify waiters if enterGateFnc throws.
-        m_inflightguard->m_inflight_count.fetch_sub(1, std::memory_order_release);
+        // Roll back the in-flight count and notify waiters if enterGateFnc
+        // throws.
+        m_inflightguard->m_inflight_count.fetch_sub(1,
+                                                    std::memory_order_release);
         m_inflightguard->m_inflight_count.notify_all();
         throw;
       }
