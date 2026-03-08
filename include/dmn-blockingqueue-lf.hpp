@@ -463,20 +463,22 @@ auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
-  if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error(
-        "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
-  }
+  auto scope_lifetime_extender = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &scope_lifetime_extender);
 
   // Preserve the original preference for noexcept-move (otherwise copy).
   pushImpl(std::move_if_noexcept(item));
+
+  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
-  if (m_shutdown_flag.test(std::memory_order_acquire)) {
-    throw std::runtime_error(
-        "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
-  }
+  auto scope_lifetime_extender = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &scope_lifetime_extender);
 
   if (move) {
     // Preserve the original preference for noexcept-move (otherwise copy).
@@ -484,16 +486,13 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
   } else {
     pushImpl(item); // copy
   }
+
+  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
-  auto scope_lifetime_extender = this->enterInflightGate();
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &scope_lifetime_extender);
-
   Node *newNode = new Node;
 
   newNode->m_data = std::forward<U>(item);
@@ -543,8 +542,6 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
     // we only require atomicity for the increment, not additional ordering.
     m_total_push_count.fetch_add(1, std::memory_order_relaxed);
   }
-
-  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
