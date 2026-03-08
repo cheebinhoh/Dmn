@@ -51,7 +51,7 @@ public:
       }
     }
 
-    virtual ~Inflight_Ticket() {
+    virtual ~Inflight_Ticket() noexcept {
       if (!m_entered) {
         return;
       }
@@ -65,7 +65,7 @@ public:
 
     explicit operator bool() const noexcept { return m_entered; }
 
-    virtual auto getValue() -> T final { return m_value; }
+    virtual auto getValue() const -> const T & final { return m_value; }
 
   private:
     Dmn_Inflight_Guard *m_inflightguard{};
@@ -74,7 +74,7 @@ public:
   };
 
   Dmn_Inflight_Guard() {};
-  virtual ~Dmn_Inflight_Guard() { waitForEmptyInflight(); };
+  virtual ~Dmn_Inflight_Guard() noexcept { waitForEmptyInflight(); };
 
   Dmn_Inflight_Guard(const Dmn_Inflight_Guard &obj) = delete;
   const Dmn_Inflight_Guard &operator=(const Dmn_Inflight_Guard &obj) = delete;
