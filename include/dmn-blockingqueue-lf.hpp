@@ -196,10 +196,10 @@ protected:
    * @return An optional containing the data from the head of the queue, or
    *         std::nullopt if the queue is empty and wait is false.
    */
-  virtual auto
-  popOptional(bool wait,
-              std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
-                  inflightTicket) -> std::optional<T>;
+  virtual auto popOptional(
+      bool wait,
+      const std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
+          &inflightTicket) -> std::optional<T>;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
@@ -409,8 +409,9 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popOptional(
-    bool wait, std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
-                   inflightTicket) -> std::optional<T> {
+    bool wait,
+    const std::shared_ptr<Dmn_Inflight_Guard<uint64_t>::Inflight_Ticket>
+        &inflightTicket) -> std::optional<T> {
   std::optional<T> res{};
 
   while (true) {
