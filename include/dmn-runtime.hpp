@@ -111,6 +111,7 @@
 #include <queue>
 #include <stack>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <type_traits>
