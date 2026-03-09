@@ -101,6 +101,7 @@
 #include <coroutine>
 #include <csignal>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <exception>
 #include <functional>
