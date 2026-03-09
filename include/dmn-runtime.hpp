@@ -183,18 +183,20 @@ concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
 template <typename F>
 concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
 
+namespace detail {
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
-void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl *);
+void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **);
 
 void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *,
                                              TimePoint tp);
 
 void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
                                            SecInt sec, NSecInt nsec);
+} // namespace detail
 
 /**
  * Dmn_Runtime_Manager
@@ -372,7 +374,7 @@ private:
   // Pointer to the platform-specific implementation (PIMPL).
   // Owned and managed by Dmn_Runtime_Manager; created and destroyed
   // in the corresponding implementation file (dmn-runtime.cpp).
-  Dmn_Runtime_Manager_Impl *m_pimpl{};
+  detail::Dmn_Runtime_Manager_Impl *m_pimpl{};
 
   // the id of the singleton asynchronous thread context.
   std::thread::id m_asyncThreadId{};
@@ -391,7 +393,7 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
 
-  m_pimpl = Dmn_Runtime_Manager_Impl_create();
+  m_pimpl = detail::Dmn_Runtime_Manager_Impl_create();
 
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
@@ -434,9 +436,7 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
   assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
 
   if (m_pimpl) {
-    Dmn_Runtime_Manager_Impl_destroy(m_pimpl);
-    delete m_pimpl;
-    m_pimpl = nullptr;
+    detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
   }
 
   // it is important that we wait for all Dmn_Runtime_Job and its companion
@@ -906,7 +906,7 @@ void Dmn_Runtime_Manager<QueueType>::runRuntimeJobExecutor() {
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::setNextTimerAt(TimePoint tp) {
-  Dmn_Runtime_Manager_Impl_setNextTimerAt(this->m_pimpl, tp);
+  detail::Dmn_Runtime_Manager_Impl_setNextTimerAt(this->m_pimpl, tp);
 }
 
 /**
@@ -918,7 +918,7 @@ void Dmn_Runtime_Manager<QueueType>::setNextTimerAt(TimePoint tp) {
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::setNextTimer(SecInt sec, NSecInt nsec) {
-  Dmn_Runtime_Manager_Impl_setNextTimer(m_pimpl, sec, nsec);
+  detail::Dmn_Runtime_Manager_Impl_setNextTimer(m_pimpl, sec, nsec);
 }
 
 } // namespace dmn

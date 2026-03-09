@@ -22,6 +22,8 @@
 
 namespace dmn {
 
+namespace detail {
+
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl {
 #ifdef _POSIX_TIMERS
@@ -37,7 +39,7 @@ struct Dmn_Runtime_Manager_Impl {
  *        depending on the compile feature set available, and initialize the
  *        timer to be 0 (not runnable). Note that the ownership of the returned
  *        object is passed to caller whose it is responsible to call
- *        Dmn_Runtime_Manager_Impl_destroy and free the object (two steps).
+ *        Dmn_Runtime_Manager_Impl_destroy to free the object.
  *
  * @return The newly created and 0 initialized timer.
  */
@@ -67,23 +69,25 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
 }
 
 /**
- * @brief Destroy the implementation's timer details without freeing the object.
+ * @brief Destroy the implementation's timer details and freeing the object.
  *
  * @param impl The pointer to the implementation detail object.
  */
-void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl *impl) {
-  assert(impl);
+void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **impl_ptr) {
+  assert(impl_ptr);
+  assert(*impl_ptr);
 
-  Dmn_Runtime_Manager_Impl_setNextTimer(impl, 0, 0);
+  Dmn_Runtime_Manager_Impl_setNextTimer(*impl_ptr, 0, 0);
 
 #ifdef _POSIX_TIMERS
-  if (impl->m_timer_created) {
+  if ((*impl_ptr)->m_timer_created) {
     // Ignore errors in destructor; cannot throw from noexcept destructor.
-    (void)timer_delete(impl->m_timerid);
+    (void)timer_delete((*impl_ptr)->m_timerid);
   }
 #endif
 
-  impl->m_timer_created = false;
+  (*impl_ptr)->m_timer_created = false;
+  (*impl_ptr) = nullptr;
 }
 
 /**
@@ -159,5 +163,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *impl,
   }
 #endif
 }
+
+} // namespace detail
 
 } // namespace dmn
