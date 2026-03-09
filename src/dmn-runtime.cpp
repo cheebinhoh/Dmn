@@ -41,7 +41,8 @@ struct Dmn_Runtime_Manager_Impl {
  *        transferred to the caller, who is responsible for calling
  *        Dmn_Runtime_Manager_Impl_destroy to free the object.
  *
- * @return The newly created and 0 initialized timer.
+ * @return A pointer to the newly created Dmn_Runtime_Manager_Impl
+ *         implementation object whose timer is initialized to 0 (not runnable).
  */
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   auto *impl = new Dmn_Runtime_Manager_Impl;

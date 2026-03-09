@@ -678,8 +678,8 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
 
   if (m_pimpl) {
     this->setNextTimer(
-        0, 0); // disable timer though m_signalWaitProc shall already done so
-               // but if it is crashed, we still disable timer.
+        0, 0); // disable timer, though m_signalWaitProc should already have
+               // done so; if it has crashed, we still disable the timer here.
   }
 }
 
