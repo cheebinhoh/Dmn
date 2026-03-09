@@ -106,6 +106,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <pthread.h>
 #include <queue>
 #include <stack>
 #include <stdexcept>
