@@ -101,11 +101,15 @@
 #include <utility>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
 
-template <typename T = std::string> class Dmn_Pub : public Dmn_Async<> {
+template <typename T = std::string,
+          template <class> class QueueType = Dmn_BlockingQueue>
+class Dmn_Pub : public Dmn_Async<QueueType> {
 public:
   /**
    * Subscriber interface for receiving items published by Dmn_Pub<T>.
@@ -121,7 +125,7 @@ public:
    *   its publisher (if still registered) and wait for pending asynchronous
    *   tasks to complete before returning.
    */
-  class Dmn_Sub : public Dmn_Async {
+  class Dmn_Sub : public Dmn_Async<QueueType> {
   public:
     explicit Dmn_Sub(ssize_t replayQuantity = -1)
         : m_replayQuantity{replayQuantity} {}
@@ -222,7 +226,13 @@ public:
    * @return std::shared_ptr<U> pointing to the instance of class U.
    */
   template <typename U, class... X>
-  auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
+  auto registerSubscriber(X &&...arg) -> std::shared_ptr<U> {
+    auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
+
+    registerSubscriber(subSp);
+
+    return subSp;
+  }
 
   /**
    * registerSubscriber
@@ -238,7 +248,36 @@ public:
    *
    * @param sub shared pointer of object to be claimed by Dmn_Pub.
    */
-  void registerSubscriber(std::shared_ptr<Dmn_Sub> sub);
+  void registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    if (this == sub->m_pub) {
+      return;
+    }
+
+    assert(nullptr == sub->m_pub ||
+           "The subscriber has been registered with another publisher");
+
+    sub->m_pub = this;
+    m_subscribers.push_back(sub);
+
+    // resend the data items that the registered subscriber
+    // miss.
+    size_t numberOfItemsToBeSkipped = 0;
+    if (sub->m_replayQuantity > 0 &&
+        m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
+      numberOfItemsToBeSkipped =
+          m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
+    }
+
+    for (auto &item : m_buffer) {
+      if (numberOfItemsToBeSkipped > 0) {
+        numberOfItemsToBeSkipped--;
+      } else {
+        sub->notifyInternal(item);
+      }
+    }
+  }
 
   /**
    * unregisterSubscriber
@@ -284,7 +323,8 @@ private:
 }; // class Dmn_Pub
 
 // class Dmn_Pub::Dmn_Sub
-template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
+template <typename T, template <class> class QueueType>
+Dmn_Pub<T, QueueType>::Dmn_Sub::~Dmn_Sub() noexcept try {
   if (m_pub) {
     m_pub->unregisterSubscriber(this);
   }
@@ -293,18 +333,20 @@ template <typename T> Dmn_Pub<T>::Dmn_Sub::~Dmn_Sub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::Dmn_Sub::notifyInternal(const T &item) {
+template <typename T, template <class> class QueueType>
+void Dmn_Pub<T, QueueType>::Dmn_Sub::notifyInternal(const T &item) {
   DMN_ASYNC_CALL_WITH_CAPTURE({ this->notify(item); }, this, item);
 }
 
 // class Dmn_Pub
-template <typename T>
-Dmn_Pub<T>::Dmn_Pub(std::string_view name, size_t capacity,
-                    Dmn_Pub_Filter_Task filter_fn)
-    : Dmn_Async(name), m_name{name}, m_capacity{capacity},
+template <typename T, template <class> class QueueType>
+Dmn_Pub<T, QueueType>::Dmn_Pub(std::string_view name, size_t capacity,
+                               Dmn_Pub_Filter_Task filter_fn)
+    : Dmn_Async<QueueType>(name), m_name{name}, m_capacity{capacity},
       m_filter_fn{filter_fn} {}
 
-template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
+template <typename T, template <class> class QueueType>
+Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   for (auto &sub : m_subscribers) {
@@ -317,7 +359,8 @@ template <typename T> Dmn_Pub<T>::~Dmn_Pub() noexcept try {
   return;
 }
 
-template <typename T> void Dmn_Pub<T>::publish(const T &item, bool block) {
+template <typename T, template <class> class QueueType>
+void Dmn_Pub<T, QueueType>::publish(const T &item, bool block) {
   if (block) {
     auto waitHandler = this->addExecTaskWithWait(
         [this, &item]() -> void { this->publishInternal(item); });
@@ -328,7 +371,8 @@ template <typename T> void Dmn_Pub<T>::publish(const T &item, bool block) {
   }
 }
 
-template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
+template <typename T, template <class> class QueueType>
+void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
   /* Though through Dmn_Async (parent class), we have a mean to
    * guarantee that only one thread is executing the core logic
    * and manipulate the m_subscribers state in a singleton asynchronous
@@ -370,49 +414,8 @@ template <typename T> void Dmn_Pub<T>::publishInternal(const T &item) {
   }
 } // method publishInternal()
 
-template <typename T>
-template <typename U, class... X>
-auto Dmn_Pub<T>::registerSubscriber(X &&...arg) -> std::shared_ptr<U> {
-  auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
-
-  registerSubscriber(subSp);
-
-  return subSp;
-}
-
-template <typename T>
-void Dmn_Pub<T>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
-  std::unique_lock<std::mutex> lock(m_mutex);
-
-  if (this == sub->m_pub) {
-    return;
-  }
-
-  assert(nullptr == sub->m_pub ||
-         "The subscriber has been registered with another publisher");
-
-  sub->m_pub = this;
-  m_subscribers.push_back(sub);
-
-  // resend the data items that the registered subscriber
-  // miss.
-  size_t numberOfItemsToBeSkipped = 0;
-  if (sub->m_replayQuantity > 0 &&
-      m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
-    numberOfItemsToBeSkipped =
-        m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
-  }
-
-  for (auto &item : m_buffer) {
-    if (numberOfItemsToBeSkipped > 0) {
-      numberOfItemsToBeSkipped--;
-    } else {
-      sub->notifyInternal(item);
-    }
-  }
-}
-
-template <typename T> void Dmn_Pub<T>::unregisterSubscriber(Dmn_Sub *sub) {
+template <typename T, template <class> class QueueType>
+void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   if (nullptr != sub->m_pub) {
