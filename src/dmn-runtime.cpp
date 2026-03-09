@@ -90,6 +90,8 @@ void Dmn_Runtime_Manager_Impl_destroy(
   try {
     Dmn_Runtime_Manager_Impl_setNextTimer(*impl_ptr, 0, 0);
   } catch (...) {
+    // catch and ignore the exception as runtime is shutting down.
+    // catch, so we still proceed to free the object
   }
 
 #ifdef _POSIX_TIMERS

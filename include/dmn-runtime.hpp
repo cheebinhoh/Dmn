@@ -394,8 +394,6 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
 
-  m_pimpl = detail::Dmn_Runtime_Manager_Impl_create();
-
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
   m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
@@ -427,6 +425,9 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
       }
     }
   };
+
+  // create m_pimpl as last step
+  m_pimpl = detail::Dmn_Runtime_Manager_Impl_create();
 }
 
 template <template <class> class QueueType>
