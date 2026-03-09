@@ -62,8 +62,32 @@
  * Implementation Notes
  * --------------------
  * - This header defines the public API, supporting types, and inline templates.
- *   The implementation of member functions is provided in the corresponding
- *   source file(s).
+ *   The implementation of Dmn_Runtime_Manager_Impl is provided in the
+ *   corresponding source file(s).
+ * - Constructor: registers default SIGTERM/SIGINT handlers that call
+ *   exitMainLoop().
+ * - addJob(): enqueue Dmn_Runtime_Job objects into the appropriate priority
+ *   buffer, the enterMainLoop() method will start the job executor to process
+ *   enqueued jobs.
+ * - runRuntimeJobExecutor(): dequeues and executes one job per
+ *   priority level in order (high → medium → low), then schedules
+ *   itself again if there are more jobs to be executed.
+ * - addRuntimeJobToCoroutineSchedulerContext(): adds runtime job and its
+ *   coroutine task to the scheduler context, so that it will be picked up and
+ *   executed by the coroutine scheduler.
+ * - runRuntimeCoroutineScheduler(): retrieves the scheduled job (and
+ *   corresponding coroutine task) and executes it in the singleton asynchronous
+ *   thread context.
+ * - enterMainLoop(): enables all priority queues, starts the signal-wait thread
+ *   which calls sigwait() and dispatches to registered handlers via async
+ *   context, then blocks until exitMainLoop() is called.
+ * - runPriorToCreateInstance(): masks SIGALRM, SIGINT, SIGTERM,
+ *   SIGQUIT and SIGHUP before any threads are created so that all
+ *   descendant threads inherit the same signal mask and signals are
+ *   delivered only to the dedicated signal-wait thread.
+ * - SIGALRM timer is set to the next due TimedJob and rearm whenever change
+ *   is needed.
+
  */
 
 #ifndef DMN_RUNTIME_HPP_
@@ -161,6 +185,16 @@ concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
 
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
+
+auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
+
+void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl *);
+
+void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *,
+                                             TimePoint tp);
+
+void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
+                                           SecInt sec, NSecInt nsec);
 
 /**
  * Dmn_Runtime_Manager
@@ -337,7 +371,7 @@ private:
 
   // Wrap platform specific implementation behind this unique ptr object
   // So that specific part of it is within dmn-runtime.cpp
-  std::unique_ptr<Dmn_Runtime_Manager_Impl> m_pimpl{};
+  Dmn_Runtime_Manager_Impl *m_pimpl{};
 
   // the id of the singleton asynchronous thread context.
   std::thread::id m_asyncThreadId{};
@@ -346,38 +380,76 @@ private:
    * Static members for singleton management
    * - s_mask: signal mask applied during singleton creation.
    */
-  static sigset_t s_mask;
+  inline static sigset_t s_mask{};
 }; // class Dmn_Runtime_Manager
 
-/**
- * @brief The method creates a TaskFncType object based on if the input
- *        fnc type uses coroutine or not.
- *
- * @param fnc is either TaskFncType or FncType.
- *
- * @return The TaskFncType for callable coroutine task function.
- */
 template <template <class> class QueueType>
-template <typename F>
-  requires IsValidJobFnc<F>
-auto Dmn_Runtime_Manager<QueueType>::createJobTaskFnc(F &&fnc)
-    -> Dmn_Runtime_Job::TaskFncType {
-  Dmn_Runtime_Job::TaskFncType taskFnc{};
+Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
+    : Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>{},
+      Dmn_Async<QueueType>{"Dmn_Runtime_Manager"},
+      m_mask{Dmn_Runtime_Manager::s_mask} {
+  this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
 
-  if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
-                                      const Dmn_Runtime_Job &>) {
-    // User gave us a coroutine: use it directly
-    taskFnc = std::forward<F>(fnc);
-  } else {
-    // User gave us a void function: wrap it
-    taskFnc = [f = std::forward<F>(fnc)](
-                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
-      f(j);
-      co_return;
-    };
+  m_pimpl = std::move(Dmn_Runtime_Manager_Impl_create());
+
+  // default, these signal handler hooks will be executed in the singleton
+  // asynchronous context right after externally registered signal handler hooks
+  m_signal_handler_hooks[SIGTERM] = [this]([[maybe_unused]] int signo) -> void {
+    this->exitMainLoop();
+  };
+
+  m_signal_handler_hooks[SIGINT] = [this]([[maybe_unused]] int signo) -> void {
+    this->exitMainLoop();
+  };
+
+  m_signal_handler_hooks[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
+    assert(isRunInAsyncThread());
+
+    if (m_timedQueue.empty()) {
+      return;
+    }
+
+    const TimePoint &tp = std::chrono::steady_clock::now();
+    while (!m_timedQueue.empty()) {
+      const auto &job = m_timedQueue.top();
+      if (tp >= job.m_due) {
+        this->addJob(job.m_fnc, job.m_priority, job.m_onErrorFnc);
+
+        m_timedQueue.pop();
+      } else {
+        this->setNextTimerAt(job.m_due);
+
+        break;
+      }
+    }
+  };
+}
+
+template <template <class> class QueueType>
+Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
+  exitMainLoop();
+
+  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
+  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
+
+  if (m_pimpl) {
+    Dmn_Runtime_Manager_Impl_destroy(m_pimpl);
+
+    m_pimpl = {};
   }
 
-  return taskFnc;
+  // it is important that we wait for all Dmn_Runtime_Job and its companion
+  // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
+  // coroutine frame needs to be deleted prior to the destruction of
+  // Dmn_Runtime_Manager.
+
+  this->waitForEmpty();
+
+  assert(this->m_sched_job.empty());
+  assert(this->m_sched_task.empty());
+} catch (...) {
+  // explicit return to resolve exception as destructor must be noexcept
+  return;
 }
 
 template <template <class> class QueueType>
@@ -435,6 +507,417 @@ void Dmn_Runtime_Manager<QueueType>::addTimedJob(
     this->m_timedQueue.push(std::move(rjob));
     this->setNextTimerAt(this->m_timedQueue.top().m_due);
   });
+}
+
+/**
+ * @brief The method will execute the job in runtime coroutine context.
+ *
+ * @param job The job to be run in the runtime context
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::addRuntimeJobToCoroutineSchedulerContext(
+    Dmn_Runtime_Job &&job) {
+  assert(isRunInAsyncThread());
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
+
+  try {
+    auto task = job.m_fnc(job);
+    this->m_sched_task.push(std::move(task));
+    this->m_sched_job.push(std::move(job));
+  } catch (...) {
+    if (job.m_onErrorFnc) {
+      std::exception_ptr ep = std::current_exception();
+
+      job.m_onErrorFnc(ep);
+    }
+
+    throw;
+  }
+
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
+}
+
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::clearSignalHandlerHook(int signo) {
+  this->addExecTask(
+      [this, signo]() mutable { this->clearSignalHandlerHookInternal(signo); });
+}
+
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::clearSignalHandlerHookInternal(int signo) {
+  assert(isRunInAsyncThread());
+
+  auto it = m_signal_handler_hooks_external.find(signo);
+  if (m_signal_handler_hooks_external.end() != it) {
+    it->second.clear();
+  }
+}
+
+/**
+ * @brief The method creates a TaskFncType object based on if the input
+ *        fnc type uses coroutine or not.
+ *
+ * @param fnc is either TaskFncType or FncType.
+ *
+ * @return The TaskFncType for callable coroutine task function.
+ */
+template <template <class> class QueueType>
+template <typename F>
+  requires IsValidJobFnc<F>
+auto Dmn_Runtime_Manager<QueueType>::createJobTaskFnc(F &&fnc)
+    -> Dmn_Runtime_Job::TaskFncType {
+  Dmn_Runtime_Job::TaskFncType taskFnc{};
+
+  if constexpr (std::is_invocable_r_v<Dmn_Runtime_Task, F,
+                                      const Dmn_Runtime_Job &>) {
+    // User gave us a coroutine: use it directly
+    taskFnc = std::forward<F>(fnc);
+  } else {
+    // User gave us a void function: wrap it
+    taskFnc = [f = std::forward<F>(fnc)](
+                  const Dmn_Runtime_Job &j) mutable -> Dmn_Runtime_Task {
+      f(j);
+      co_return;
+    };
+  }
+
+  return taskFnc;
+}
+
+/**
+ * @brief The method will schedule job and dispatch it as a coroutine task.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
+  Dmn_Runtime_Job::Priority state{}; // not high, not medium, not low
+
+  assert(isRunInAsyncThread());
+  assert(this->m_sched_job.size() == this->m_sched_task.size());
+
+  if (!this->m_sched_job.empty()) {
+    state = this->m_sched_job.top().m_priority;
+  }
+
+  try {
+    if (state != Dmn_Runtime_Job::Priority::kHigh) {
+      auto item = m_highQueue.popNoWait();
+
+      if (item) {
+        this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+      } else if (state != Dmn_Runtime_Job::Priority::kMedium) {
+        item = m_mediumQueue.popNoWait();
+
+        if (item) {
+          this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+        } else if (state != Dmn_Runtime_Job::Priority::kLow) {
+
+          item = m_lowQueue.popNoWait();
+          if (item) {
+            this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
+          }
+        }
+      }
+    }
+
+    assert(this->m_sched_job.size() == this->m_sched_task.size());
+
+    auto jobsCountInScheduler = this->m_sched_job.size();
+
+    if (jobsCountInScheduler > 0) {
+      bool done = this->runRuntimeCoroutineScheduler();
+
+      if (!done) {
+        assert(!this->m_sched_job.empty());
+        assert(!this->m_sched_task.empty());
+        assert(this->m_sched_job.size() == jobsCountInScheduler);
+
+        this->runRuntimeJobExecutor();
+      } else if (this->m_sched_job.size() < jobsCountInScheduler &&
+                 this->m_jobs_count.fetch_sub(1) > 1) {
+        this->runRuntimeJobExecutor();
+      } else {
+        assert(this->m_sched_job.empty());
+        assert(this->m_sched_task.empty());
+        assert(0 == m_jobs_count.load(std::memory_order_acquire));
+      }
+    }
+  } catch (...) {
+    if (this->m_jobs_count.fetch_sub(1) > 1) {
+      this->runRuntimeJobExecutor();
+    }
+  }
+}
+
+/**
+ * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
+ *        (usually the mainthread) to the main() function to be continued.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
+  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_atomic_flag.clear(std::memory_order_release);
+    m_main_exit_atomic_flag.notify_all();
+
+    // set the last timer, so that signalWaitProc gradefully exit.
+    this->setNextTimer(0, 10000);
+
+    // after set the main loop enter (false) and exit (true) flag, we just
+    // have to wait for signalWaitProc to gradefully exit as it is triggered
+    // at fixed interval before we clear the timer.
+    if (m_signalWaitProc) {
+      m_signalWaitProc->wait();
+      m_signalWaitProc = {};
+    }
+  }
+
+  if (m_pimpl) {
+    this->setNextTimer(
+        0, 0); // disable timer though m_signalWaitProc shall already done so
+               // but if it is crashed, we still disable timer.
+  }
+}
+
+/**
+ * @brief The method will enter the Dmn_Runtime_Manager mainloop, and wait
+ *        for runtime loop to be exited. this is usually called by the main()
+ *        method.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
+  // If there are already pending jobs (e.g., from a prior run), ensure the
+  // runtime job executor is started so the system does not remain idle.
+  bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
+
+  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
+    assert(false && "Error: enter main loop twice without exit");
+
+    throw std::runtime_error("Error: enter main loop twice without exit");
+  }
+
+  m_main_exit_atomic_flag.clear(std::memory_order_release);
+  m_main_enter_atomic_flag.notify_all();
+  Dmn_Proc::yield();
+
+  m_signalWaitProc = std::make_unique<Dmn_Proc>(
+      "DmnRuntimeManager_SignalWait", [this]() -> void {
+        while (true) {
+          int signo{};
+          int err{};
+
+          err = sigwait(&m_mask, &signo);
+          if (err) {
+            throw std::runtime_error("Error in sigwait: " +
+                                     std::system_category().message(err));
+          }
+
+          if (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
+            break;
+          } else {
+            this->addExecTask([this, signo]() {
+              this->execSignalHandlerHookInternal(signo);
+            });
+          }
+        }
+      });
+
+  if (!m_signalWaitProc->exec()) {
+    throw std::runtime_error(
+        "Failed to start DmnRuntimeManager_SignalWait task");
+  }
+
+  if (startJobExecutor) {
+    this->runRuntimeJobExecutor();
+  }
+
+  while (!m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
+    m_main_exit_atomic_flag.wait(false, std::memory_order_acquire);
+  }
+}
+
+/**
+ * @brief The method executes the signal handlers in the singleton
+ *        asynchronous thread context.
+ *
+ * @param signo signal number that is raised
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
+  assert(isRunInAsyncThread());
+
+  auto ext_hooks = m_signal_handler_hooks_external.find(signo);
+  if (m_signal_handler_hooks_external.end() != ext_hooks) {
+    for (auto &fnc : ext_hooks->second) {
+      fnc(signo);
+    }
+  }
+
+  auto hook = m_signal_handler_hooks.find(signo);
+  if (m_signal_handler_hooks.end() != hook) {
+    hook->second(signo);
+  }
+}
+
+/**
+ * @brief The method returns true or false if it is called within the runtime
+ *        singleton asynchronous thread context.
+ *
+ * @return True or false
+ */
+template <template <class> class QueueType>
+auto Dmn_Runtime_Manager<QueueType>::isRunInAsyncThread() -> bool {
+  return std::this_thread::get_id() == m_asyncThreadId;
+}
+
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::registerSignalHandlerHook(
+    int signo, SignalHandlerHook &&hook) {
+  this->addExecTask([this, signo, hook = std::move(hook)]() mutable {
+    this->registerSignalHandlerHookInternal(signo, std::move(hook));
+  });
+}
+
+/**
+ * @brief The method registers external signal handler hook function for the
+ *        signal number. The hook functions are executed before default internal
+ *        handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and
+ *        SIGSTOP can NOT be handled.
+ *
+ *        This is a private method to be called in the Dmn_Runtime_Manager
+ *        instance asynchronous thread context.
+ *
+ * @param signo The POSIX signal number
+ * @param hook  The signal handler hook function to be called when the signal is
+ *              raised.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::registerSignalHandlerHookInternal(
+    int signo, SignalHandlerHook &&hook) {
+  assert(isRunInAsyncThread());
+
+  auto &extHandlerHooks = m_signal_handler_hooks_external[signo];
+  extHandlerHooks.push_back(std::move(hook));
+}
+
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::runPriorToCreateInstance() {
+  // Mask signals before creating any threads so they are blocked
+  // in all subsequently created threads (avoids races).
+  sigset_t old_mask{};
+  int err{};
+
+  sigemptyset(&Dmn_Runtime_Manager::s_mask);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGALRM);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGINT);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGTERM);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
+  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
+
+  err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
+  if (0 != err) {
+    throw std::runtime_error("Error in pthread_sigmask: " +
+                             std::string{strerror(err)});
+  }
+}
+
+/**
+ * @brief Coroutine task scheduler entry point.
+ *
+ *        Resumes the top scheduled task until it either completes or reaches
+ *        a suspension point. Returns true when the task has finished
+ *        execution and has been removed from the scheduler and false when
+ *        the task has been suspended and remains scheduled to be resumed later.
+ *
+ * @return true if the top task has completed and been removed from the
+ *         scheduler; false if the task has suspended and remains in the
+ *         scheduler to be resumed later.
+ */
+template <template <class> class QueueType>
+auto Dmn_Runtime_Manager<QueueType>::runRuntimeCoroutineScheduler() -> bool {
+  bool complete{true};
+
+  assert(isRunInAsyncThread());
+  assert(this->m_sched_task.size() > 0);
+  assert(this->m_sched_job.size() > 0);
+  assert(this->m_sched_task.size() == this->m_sched_job.size());
+
+  const Dmn_Runtime_Job &runningJob = this->m_sched_job.top();
+
+  auto &task = this->m_sched_task.top();
+
+  try {
+    if (task.isValid()) {
+      // runtime jobs must complete before returning to scheduler; suspension is
+      // only used for intra-job yielding and will be resumed immediately.
+      do {
+        task.m_handle.resume();
+
+        if (task.m_handle.done()) {
+          auto &ep = task.m_handle.promise().m_except;
+          if (ep && runningJob.m_onErrorFnc) {
+            std::rethrow_exception(ep);
+          }
+
+          break;
+        } else {
+          assert(!this->m_sched_job.empty());
+          assert(!this->m_sched_task.empty());
+
+          complete = false;
+          break;
+        }
+      } while (true);
+    }
+  } catch (...) {
+    try {
+      if (runningJob.m_onErrorFnc) {
+        std::exception_ptr ep = std::current_exception();
+
+        runningJob.m_onErrorFnc(ep);
+      }
+    } catch (...) {
+      // ignore it.
+    }
+  }
+
+  if (complete) {
+    this->m_sched_task.pop();
+    this->m_sched_job.pop();
+  }
+
+  return complete;
+}
+
+/**
+ * @brief The method runs the job executor in the singleton asynchronous thread
+ *        context.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::runRuntimeJobExecutor() {
+  this->addExecTask([this]() -> void { this->execRuntimeJobInternal(); });
+}
+
+/**
+ * @brief The method sets the next scheduled timer (SIGALRM) according to the
+ *        timepoint. If the timepoint is in now or the past, SIGALRM is
+ *        scheduled after 10us.
+
+ * @param tp The timepoint after that the timer (SIGALRM) will be triggered.
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::setNextTimerAt(TimePoint tp) {
+  Dmn_Runtime_Manager_Impl_setNextTimerAt(this->m_pimpl, tp);
+}
+
+/**
+ * @brief The method sets the next scheduled timer (SIGALRM) after seconds +
+ *        nanoseconds.
+ *
+ * @param sec The seconds after that to run the timer (SIGALRM)
+ * @param nsec The nanoseconds after that to run the timer (SIGALRM)
+ */
+template <template <class> class QueueType>
+void Dmn_Runtime_Manager<QueueType>::setNextTimer(SecInt sec, NSecInt nsec) {
+  Dmn_Runtime_Manager_Impl_setNextTimer(m_pimpl, sec, nsec);
 }
 
 } // namespace dmn
