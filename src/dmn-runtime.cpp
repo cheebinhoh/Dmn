@@ -54,6 +54,8 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   sev.sigev_signo = SIGALRM;
   int err = timer_create(CLOCK_MONOTONIC, &sev, &(impl->m_timerid));
   if (-1 == err) {
+    delete impl;
+
     throw std::runtime_error("Error in timer_create: " +
                              std::system_category().message(errno));
   }
