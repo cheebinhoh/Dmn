@@ -68,8 +68,7 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   try {
     Dmn_Runtime_Manager_Impl_setNextTimer(impl, 0, 0);
   } catch (...) {
-    delete impl;
-    impl = nullptr;
+    Dmn_Runtime_Manager_Impl_destroy(&impl);
 
     throw;
   }
