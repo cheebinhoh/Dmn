@@ -120,6 +120,7 @@
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue-lf.hpp"
 #include "dmn-blockingqueue.hpp"
+#include "dmn-proc.hpp"
 #include "dmn-singleton.hpp"
 
 #include "dmn-runtime-task.hpp"

@@ -38,7 +38,7 @@ struct Dmn_Runtime_Manager_Impl {
  * @brief Create the Dmn_Runtime_Manager_Impl object and its timer details
  *        depending on the compile feature set available, and initialize the
  *        timer to be 0 (not runnable). Note that the ownership of the returned
- *        object is passed to caller whose it is responsible to call
+ *        object is passed to the caller, who is responsible for calling
  *        Dmn_Runtime_Manager_Impl_destroy to free the object.
  *
  * @return The newly created and 0 initialized timer.
@@ -80,7 +80,7 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
 /**
  * @brief Destroy the implementation's timer details and freeing the object.
  *
- * @param impl The pointer to the implementation detail object.
+ * @param impl_ptr The pointer to the implementation detail object.
  */
 void Dmn_Runtime_Manager_Impl_destroy(
     Dmn_Runtime_Manager_Impl **impl_ptr) noexcept {
