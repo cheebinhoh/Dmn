@@ -58,6 +58,9 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-runtime
                       dmn-test-runtime-2
                       dmn-test-runtime-3
+                      dmn-test-runtime-queue-lf
+                      dmn-test-runtime-queue-lf-2
+                      dmn-test-runtime-queue-lf-3
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-teepipe

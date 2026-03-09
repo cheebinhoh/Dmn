@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   // 2. Define the range [100, 500]
   std::uniform_int_distribution<> distr(100, 500);
 
-  auto inst = dmn::Dmn_Runtime_Manager::createInstance();
+  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
   int count{};
 
   dmn::Dmn_Runtime_Job::FncType timedJob{};

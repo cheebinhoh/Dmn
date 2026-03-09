@@ -19,6 +19,7 @@
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-runtime.hpp"
 
 int main(int argc, char *argv[]) {
@@ -30,21 +31,20 @@ int main(int argc, char *argv[]) {
   // 2. Define the range [100, 500]
   std::uniform_int_distribution<> distr(100, 500);
 
-  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto inst =
+      dmn::Dmn_Runtime_Manager<dmn::Dmn_BlockingQueue_Lf>::createInstance();
   int count{};
 
-  dmn::Dmn_Runtime_Job::TaskFncType timedJob{};
-  timedJob = [&inst, &count, &timedJob](const auto &) -> dmn::Dmn_Runtime_Task {
+  dmn::Dmn_Runtime_Job::FncType timedJob{};
+  timedJob = [&inst, &count, &timedJob](const auto &) {
     std::cout << "********* handle timerjob: " << count << "\n";
-    if (count >= 7) {
+    if (count >= 5) {
       inst->exitMainLoop();
     } else {
       count++;
       inst->addTimedJob(timedJob, std::chrono::seconds(5),
                         dmn::Dmn_Runtime_Job::Priority::kHigh);
     }
-
-    co_return;
   };
 
   inst->addTimedJob(timedJob, std::chrono::seconds(5),
@@ -60,16 +60,13 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i < 2; i++) {
           inst->addJob(
-              [&highRun, &mediumRun,
-               &lowRun](const auto &) -> dmn::Dmn_Runtime_Task {
+              [&highRun, &mediumRun, &lowRun](const auto &) {
                 EXPECT_TRUE(0 == lowRun);
                 EXPECT_TRUE(0 == mediumRun);
 
                 std::cout << "** high job\n";
                 highRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-
-                co_return;
               },
               dmn::Dmn_Runtime_Job::Priority::kHigh);
 
@@ -81,13 +78,11 @@ int main(int argc, char *argv[]) {
         std::cout << "after procHigh to add job\n";
       }};
 
-  bool hasExcept{};
   dmn::Dmn_Proc procLow{
-      "lowjob",
-      [&inst, &lowRun, &distr, &gen, &highRun, &mediumRun, &hasExcept]() {
+      "lowjob", [&inst, &lowRun, &distr, &gen, &highRun, &mediumRun]() {
         std::cout << "procLow to add job\n";
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
           inst->addJob(
               [&lowRun, &highRun,
                &mediumRun](const auto &) -> dmn::Dmn_Runtime_Task {
@@ -97,29 +92,9 @@ int main(int argc, char *argv[]) {
                 lowRun++;
                 std::this_thread::sleep_for(std::chrono::seconds(3));
 
-                if (3 == lowRun) {
-                  std::cout << "********* throw\n";
-                  throw std::runtime_error("Error in lowRun to 3");
-                }
-
                 co_return;
               },
-              dmn::Dmn_Runtime_Job::Priority::kLow,
-              [&hasExcept](std::exception_ptr &p) {
-                if (!p) {
-
-                } else {
-                  try {
-                    std::rethrow_exception(p);
-                  } catch (const std::exception &e) {
-                    hasExcept = true;
-                    std::cout << "******* exception: " << e.what() << "\n";
-                  } catch (...) {
-                    hasExcept = true;
-                    throw;
-                  }
-                }
-              });
+              dmn::Dmn_Runtime_Job::Priority::kLow);
 
           int random_ms = distr(gen);
           dmn::Dmn_Proc::yield();
@@ -172,11 +147,10 @@ int main(int argc, char *argv[]) {
   inst->enterMainLoop();
 
   EXPECT_TRUE((sigAlrmCalled));
-  EXPECT_TRUE((3 == lowRun));
+  EXPECT_TRUE((2 == lowRun));
   EXPECT_TRUE((2 == mediumRun));
   EXPECT_TRUE((2 == highRun));
-  EXPECT_TRUE((7 == count));
-  EXPECT_TRUE((hasExcept));
+  EXPECT_TRUE((5 == count));
 
   return RUN_ALL_TESTS();
 }

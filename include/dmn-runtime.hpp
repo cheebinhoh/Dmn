@@ -93,6 +93,7 @@
 #include <vector>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-blockingqueue.hpp"
 #include "dmn-singleton.hpp"
 
@@ -191,8 +192,10 @@ struct Dmn_Runtime_Manager_Impl;
  *  - Timed jobs use absolute microsecond timestamps to avoid cumulative drift
  *    from repeated short-duration sleeps.
  */
-class Dmn_Runtime_Manager : public Dmn_Singleton<Dmn_Runtime_Manager>,
-                            private Dmn_Async<> {
+template <template <class> class QueueType = Dmn_BlockingQueue>
+class Dmn_Runtime_Manager
+    : public Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>,
+      private Dmn_Async<QueueType> {
 public:
   using SignalHandlerHook = std::function<void(int signo)>;
 
@@ -311,9 +314,9 @@ private:
       m_signal_handler_hooks_external{}; // external handler hooks
 
   // Per-priority immediate job queues
-  Dmn_BlockingQueue<Dmn_Runtime_Job> m_highQueue{};
-  Dmn_BlockingQueue<Dmn_Runtime_Job> m_lowQueue{};
-  Dmn_BlockingQueue<Dmn_Runtime_Job> m_mediumQueue{};
+  QueueType<Dmn_Runtime_Job> m_highQueue{};
+  QueueType<Dmn_Runtime_Job> m_lowQueue{};
+  QueueType<Dmn_Runtime_Job> m_mediumQueue{};
 
   // Min-heap of timed jobs (earliest timestamp at top)
   std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,
@@ -354,9 +357,10 @@ private:
  *
  * @return The TaskFncType for callable coroutine task function.
  */
+template <template <class> class QueueType>
 template <typename F>
   requires IsValidJobFnc<F>
-auto Dmn_Runtime_Manager::createJobTaskFnc(F &&fnc)
+auto Dmn_Runtime_Manager<QueueType>::createJobTaskFnc(F &&fnc)
     -> Dmn_Runtime_Job::TaskFncType {
   Dmn_Runtime_Job::TaskFncType taskFnc{};
 
@@ -376,10 +380,12 @@ auto Dmn_Runtime_Manager::createJobTaskFnc(F &&fnc)
   return taskFnc;
 }
 
+template <template <class> class QueueType>
 template <typename F>
   requires IsValidJobFnc<F>
-void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
-                                 Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
+void Dmn_Runtime_Manager<QueueType>::addJob(
+    F &&fnc, Dmn_Runtime_Job::Priority priority,
+    Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
   Dmn_Runtime_Job rjob{.m_priority = priority,
                        .m_fnc =
                            std::move(createJobTaskFnc(std::forward<F>(fnc))),
@@ -409,9 +415,10 @@ void Dmn_Runtime_Manager::addJob(F &&fnc, Dmn_Runtime_Job::Priority priority,
   }
 }
 
+template <template <class> class QueueType>
 template <typename F, class Rep, class Period>
   requires IsValidJobFnc<F>
-void Dmn_Runtime_Manager::addTimedJob(
+void Dmn_Runtime_Manager<QueueType>::addTimedJob(
     F &&fnc, std::chrono::duration<Rep, Period> duration,
     Dmn_Runtime_Job::Priority priority,
     Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {
