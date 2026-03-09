@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-runtime.cpp
+ * @file dmn-test-runtime-queue-lf.cpp
  * @brief The unit test for dmn-runtime module.
  */
 
