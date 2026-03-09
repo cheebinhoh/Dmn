@@ -663,12 +663,12 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
     m_main_enter_atomic_flag.clear(std::memory_order_release);
     m_main_exit_atomic_flag.notify_all();
 
-    // set the last timer, so that signalWaitProc gradefully exit.
+    // set the last timer, so that signalWaitProc gracefully exit.
     this->setNextTimer(0, 10000);
 
-    // after set the main loop enter (false) and exit (true) flag, we just
-    // have to wait for signalWaitProc to gradefully exit as it is triggered
-    // at fixed interval before we clear the timer.
+    // after setting the main loop enter (false) and exit (true) flags, we just
+    // have to wait for signalWaitProc to gracefully exit as it is triggered
+    // at fixed intervals before we clear the timer.
     if (m_signalWaitProc) {
       m_signalWaitProc->wait();
       m_signalWaitProc = {};

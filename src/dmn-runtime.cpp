@@ -37,8 +37,8 @@ struct Dmn_Runtime_Manager_Impl {
 /**
  * @brief Create the Dmn_Runtime_Manager_Impl object and its timer details
  *        depending on the compile feature set available, and initialize the
- *        timer to be 0 (not runnable). Note that the ownership of the returned
- *        object is passed to the caller, who is responsible for calling
+ *        timer to be 0 (not runnable). Ownership of the returned object is
+ *        transferred to the caller, who is responsible for calling
  *        Dmn_Runtime_Manager_Impl_destroy to free the object.
  *
  * @return The newly created and 0 initialized timer.
