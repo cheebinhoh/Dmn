@@ -23,7 +23,7 @@
 #include "dmn.hpp"
 
 int main(int argc, char *argv[]) {
-  auto inst = dmn::Dmn_Runtime_Manager::createInstance();
+  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
 
   // for TESTING
   dmn::Dmn_Proc proc{

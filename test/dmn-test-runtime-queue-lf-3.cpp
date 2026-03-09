@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-runtime.cpp
+ * @file dmn-test-runtime-queue-lf-3.cpp
  * @brief The unit test for dmn-runtime module.
  */
 
@@ -19,6 +19,7 @@
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-runtime.hpp"
 
 int main(int argc, char *argv[]) {
@@ -30,7 +31,8 @@ int main(int argc, char *argv[]) {
   // 2. Define the range [100, 500]
   std::uniform_int_distribution<> distr(100, 500);
 
-  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto inst =
+      dmn::Dmn_Runtime_Manager<dmn::Dmn_BlockingQueue_Lf>::createInstance();
   int count{};
 
   dmn::Dmn_Runtime_Job::TaskFncType timedJob{};

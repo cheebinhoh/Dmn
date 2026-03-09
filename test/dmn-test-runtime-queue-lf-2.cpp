@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-runtime.cpp
+ * @file dmn-test-runtime-queue-lf-2.cpp
  * @brief The unit test for dmn-runtime module.
  */
 
@@ -18,13 +18,15 @@
 #include <sys/time.h>
 
 #include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-runtime.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto inst =
+      dmn::Dmn_Runtime_Manager<dmn::Dmn_BlockingQueue_Lf>::createInstance();
 
   dmn::Dmn_Runtime_Job::TaskFncType timedJob{};
   timedJob = [&inst](const auto &) -> dmn::Dmn_Runtime_Task {
