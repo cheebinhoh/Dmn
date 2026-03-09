@@ -369,8 +369,9 @@ private:
   std::stack<Dmn_Runtime_Job> m_sched_job{};
   std::stack<Dmn_Runtime_Task> m_sched_task{};
 
-  // Wrap platform specific implementation behind this unique ptr object
-  // So that specific part of it is within dmn-runtime.cpp
+  // Pointer to the platform-specific implementation (PIMPL).
+  // Owned and managed by Dmn_Runtime_Manager; created and destroyed
+  // in the corresponding implementation file (dmn-runtime.cpp).
   Dmn_Runtime_Manager_Impl *m_pimpl{};
 
   // the id of the singleton asynchronous thread context.
@@ -390,7 +391,7 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
       m_mask{Dmn_Runtime_Manager::s_mask} {
   this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
 
-  m_pimpl = std::move(Dmn_Runtime_Manager_Impl_create());
+  m_pimpl = Dmn_Runtime_Manager_Impl_create();
 
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
@@ -434,8 +435,8 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
 
   if (m_pimpl) {
     Dmn_Runtime_Manager_Impl_destroy(m_pimpl);
-
-    m_pimpl = {};
+    delete m_pimpl;
+    m_pimpl = nullptr;
   }
 
   // it is important that we wait for all Dmn_Runtime_Job and its companion
