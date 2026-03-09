@@ -190,7 +190,7 @@ struct Dmn_Runtime_Manager_Impl;
 
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
-void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **);
+void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **) noexcept;
 
 void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *,
                                              TimePoint tp);

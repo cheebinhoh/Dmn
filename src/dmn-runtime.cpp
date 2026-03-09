@@ -65,7 +65,14 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   impl->m_timer_created = true;
 #endif
 
-  Dmn_Runtime_Manager_Impl_setNextTimer(impl, 0, 0);
+  try {
+    Dmn_Runtime_Manager_Impl_setNextTimer(impl, 0, 0);
+  } catch (...) {
+    delete impl;
+    impl = nullptr;
+
+    throw;
+  }
 
   return impl;
 }
@@ -75,11 +82,15 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
  *
  * @param impl The pointer to the implementation detail object.
  */
-void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **impl_ptr) {
+void Dmn_Runtime_Manager_Impl_destroy(
+    Dmn_Runtime_Manager_Impl **impl_ptr) noexcept {
   assert(impl_ptr);
   assert(*impl_ptr);
 
-  Dmn_Runtime_Manager_Impl_setNextTimer(*impl_ptr, 0, 0);
+  try {
+    Dmn_Runtime_Manager_Impl_setNextTimer(*impl_ptr, 0, 0);
+  } catch (...) {
+  }
 
 #ifdef _POSIX_TIMERS
   if ((*impl_ptr)->m_timer_created) {
@@ -89,6 +100,8 @@ void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **impl_ptr) {
 #endif
 
   (*impl_ptr)->m_timer_created = false;
+
+  delete *impl_ptr;
   (*impl_ptr) = nullptr;
 }
 
