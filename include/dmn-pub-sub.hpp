@@ -226,13 +226,7 @@ public:
    * @return std::shared_ptr<U> pointing to the instance of class U.
    */
   template <typename U, class... X>
-  auto registerSubscriber(X &&...arg) -> std::shared_ptr<U> {
-    auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
-
-    registerSubscriber(subSp);
-
-    return subSp;
-  }
+  auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
 
   /**
    * registerSubscriber
@@ -248,36 +242,7 @@ public:
    *
    * @param sub shared pointer of object to be claimed by Dmn_Pub.
    */
-  void registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
-    std::unique_lock<std::mutex> lock(m_mutex);
-
-    if (this == sub->m_pub) {
-      return;
-    }
-
-    assert(nullptr == sub->m_pub ||
-           "The subscriber has been registered with another publisher");
-
-    sub->m_pub = this;
-    m_subscribers.push_back(sub);
-
-    // resend the data items that the registered subscriber
-    // miss.
-    size_t numberOfItemsToBeSkipped = 0;
-    if (sub->m_replayQuantity > 0 &&
-        m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
-      numberOfItemsToBeSkipped =
-          m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
-    }
-
-    for (auto &item : m_buffer) {
-      if (numberOfItemsToBeSkipped > 0) {
-        numberOfItemsToBeSkipped--;
-      } else {
-        sub->notifyInternal(item);
-      }
-    }
-  }
+  void registerSubscriber(std::shared_ptr<Dmn_Sub> sub);
 
   /**
    * unregisterSubscriber
@@ -413,6 +378,49 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
     }
   }
 } // method publishInternal()
+
+template <typename T, template <class> class QueueType>
+void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
+  std::unique_lock<std::mutex> lock(m_mutex);
+
+  if (this == sub->m_pub) {
+    return;
+  }
+
+  assert(nullptr == sub->m_pub ||
+         "The subscriber has been registered with another publisher");
+
+  sub->m_pub = this;
+  m_subscribers.push_back(sub);
+
+  // resend the data items that the registered subscriber
+  // miss.
+  size_t numberOfItemsToBeSkipped = 0;
+  if (sub->m_replayQuantity > 0 &&
+      m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
+    numberOfItemsToBeSkipped =
+        m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
+  }
+
+  for (auto &item : m_buffer) {
+    if (numberOfItemsToBeSkipped > 0) {
+      numberOfItemsToBeSkipped--;
+    } else {
+      sub->notifyInternal(item);
+    }
+  }
+}
+
+template <typename T, template <class> class QueueType>
+template <typename U, class... X>
+auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
+    -> std::shared_ptr<U> {
+  auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
+
+  registerSubscriber(subSp);
+
+  return subSp;
+}
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
