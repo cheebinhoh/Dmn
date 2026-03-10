@@ -443,19 +443,19 @@ void Dmn_DMesg::closeHandler(
   const Dmn_DMesgHandler *const handler_ptr = handler.get();
   handler = {};
 
-  DMN_ASYNC_CALL_WITH_CAPTURE(
-      {
-        auto iter =
-            std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
-                                 [handler_ptr](const auto &handler) -> bool {
-                                   return handler.get() == handler_ptr;
-                                 });
+  auto waitHandler = this->addExecTaskWithWait([this, handler_ptr]() -> void {
+    auto iter =
+        std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
+                             [handler_ptr](const auto &handler) -> bool {
+                               return handler.get() == handler_ptr;
+                             });
 
-        if (iter != m_handlers.end()) {
-          m_handlers.erase(iter);
-        }
-      },
-      this, handler_ptr);
+    if (iter != m_handlers.end()) {
+      m_handlers.erase(iter);
+    }
+  });
+
+  waitHandler->wait();
 }
 
 auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
