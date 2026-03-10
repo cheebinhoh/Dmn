@@ -77,7 +77,7 @@ public:
    * @param asyncProcessFn  The functor callback to process each notified
    *                        DMesgPb message
    *
-   * @return newly created handler
+   * @return a handler proxy to newly created handler.
    */
   template <class... U> auto openHandler(U &&...arg) -> Dmn_DMesg::HandlerType {
     return m_dmesgnet->openHandler(std::forward<U>(arg)...);
