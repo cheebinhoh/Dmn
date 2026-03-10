@@ -532,16 +532,16 @@ public:
    * asynchronously in the publisher's singleton async context so that handler
    * construction remains lock-free for fast paths.
    *
-   * @return shared_ptr to the newly created handler.
+   * @return the handler proxy to internal shared_ptr handler registered
+   *         with DMesg.
    */
   template <class... U> auto openHandler(U &&...arg) -> HandlerType;
 
   /**
    * @brief Unregister and free the provided handler.
    *
-   * @param handlerToClose Shared pointer reference to the handler to close.
-   *                       The handler will be removed from internal lists and
-   *                       the shared_ptr will be reset by the caller.
+   * @param handlerToClose the internal handler will be reset upon return from
+   *                       this method.
    */
   void closeHandler(HandlerType &handlerToClose);
 
