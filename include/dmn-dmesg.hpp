@@ -493,12 +493,12 @@ public:
     friend class Dmn_DMesg;
 
   public:
-    std::shared_ptr<Dmn_DMesgHandler> operator->() {
-      if (m_handler.expired()) {
+    std::shared_ptr<Dmn_DMesgHandler> operator->() const {
+      auto handler = m_handler.lock();
+      if (!handler) {
         throw std::runtime_error("handler has been closed");
       }
-
-      return m_handler.lock();
+      return handler;
     }
 
     void reset() { m_handler.reset(); }
