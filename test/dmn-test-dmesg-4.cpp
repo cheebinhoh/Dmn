@@ -27,7 +27,8 @@ int main(int argc, char *argv[]) {
 
     int cnt{1};
 
-    auto dmesg_handle = dmesg.openHandler(
+    dmn::Dmn_DMesg::HandlerType dmesg_handle{};
+    dmesg_handle = dmesg.openHandler(
         "handler", false, [](const dmn::DMesgPb &msg) { return true; },
         [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) mutable {
           std::cout << msg.ShortDebugString() << "\n";
