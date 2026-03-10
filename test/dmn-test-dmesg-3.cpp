@@ -22,48 +22,52 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
-  std::string data1{};
-  std::string data2{};
+  {
+    dmn::Dmn_DMesg dmesg{"dmesg"};
+    std::string data1{};
+    std::string data2{};
 
-  auto dmesg_handle1 = dmesg.openHandler(
-      "handler1", nullptr, [&data1](const dmn::DMesgPb &dmesgpb) -> void {
-        data1 = dmesgpb.body().message();
-      });
-  EXPECT_TRUE(dmesg_handle1);
+    auto dmesg_handle1 = dmesg.openHandler(
+        "handler1", nullptr, [&data1](const dmn::DMesgPb &dmesgpb) -> void {
+          data1 = dmesgpb.body().message();
+        });
+    EXPECT_TRUE(dmesg_handle1);
 
-  auto dmesg_handle2 = dmesg.openHandler(
-      "handler2", nullptr, [&data2](const dmn::DMesgPb &dmesgpb) -> void {
-        data2 = dmesgpb.body().message();
-      });
+    auto dmesg_handle2 = dmesg.openHandler(
+        "handler2", nullptr, [&data2](const dmn::DMesgPb &dmesgpb) -> void {
+          data2 = dmesgpb.body().message();
+        });
 
-  EXPECT_TRUE(dmesg_handle2);
+    EXPECT_TRUE(dmesg_handle2);
 
-  auto dmesg_handle3 = dmesg.openHandler("handler3");
-  EXPECT_TRUE(dmesg_handle3);
+    auto dmesg_handle3 = dmesg.openHandler("handler3");
+    EXPECT_TRUE(dmesg_handle3);
 
-  dmn::DMesgPb dmesgpb{};
-  dmesgpb.set_topic("counter sync");
-  dmesgpb.set_type(dmn::DMesgTypePb::message);
+    dmn::DMesgPb dmesgpb{};
+    dmesgpb.set_topic("counter sync");
+    dmesgpb.set_type(dmn::DMesgTypePb::message);
 
-  std::string data{"Hello dmesg async"};
-  dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
-  dmesgpb_body->set_message(data);
+    std::string data{"Hello dmesg async"};
+    dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+    dmesgpb_body->set_message(data);
 
-  dmesg_handle3->write(dmesgpb);
+    dmesg_handle3->write(dmesgpb);
 
-  dmn::Dmn_Proc::yield();
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+    dmn::Dmn_Proc::yield();
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  std::cout << "after wait for data to sync\n";
+    std::cout << "after wait for data to sync\n";
 
-  dmesg.waitForEmpty();
-  dmesg.closeHandler(dmesg_handle1);
-  dmesg.closeHandler(dmesg_handle2);
-  dmesg.closeHandler(dmesg_handle3);
+    dmesg.waitForEmpty();
+    dmesg.closeHandler(dmesg_handle1);
+    dmesg.closeHandler(dmesg_handle2);
+    dmesg.closeHandler(dmesg_handle3);
 
-  EXPECT_TRUE(data == data1);
-  EXPECT_TRUE(data == data2);
+    EXPECT_TRUE(data == data1);
+    EXPECT_TRUE(data == data2);
+  }
+
+  google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();
 }

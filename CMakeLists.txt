@@ -22,7 +22,14 @@ enable_testing()
 # set build options
 option(BUILD_NDEBUG "build without debug" OFF)
 option(BUILD_KAFKA_TEST "build with kafka test" ON)
+option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 
+if (ENABLE_VALGRIND)
+  find_program(VALGRIND_EXECUTABLE valgrind)
+  if (NOT VALGRIND_EXECUTABLE)
+    message(FATAL_ERROR "ENABLE_VALGRIND=ON but valgrind was not found in PATH")
+  endif()
+endif()
 
 # include cmake macro and fetch dependent modules
 include(CMakeMacro.cmake)

@@ -22,45 +22,49 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  {
+    dmn::Dmn_DMesg dmesg{"dmesg"};
 
-  auto dmesg_write_handle = dmesg.openHandler("writeHandler");
-  EXPECT_TRUE(dmesg_write_handle);
+    auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+    EXPECT_TRUE(dmesg_write_handle);
 
-  auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
+    auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
 
-  dmn::DMesgPb dmesgpb1{};
-  dmesgpb1.set_topic("id1");
-  dmesgpb1.set_runningcounter(99);
-  dmesgpb1.set_sourceidentifier("unknown");
-  dmesgpb1.set_type(dmn::DMesgTypePb::message);
+    dmn::DMesgPb dmesgpb1{};
+    dmesgpb1.set_topic("id1");
+    dmesgpb1.set_runningcounter(99);
+    dmesgpb1.set_sourceidentifier("unknown");
+    dmesgpb1.set_type(dmn::DMesgTypePb::message);
 
-  dmn::DMesgBodyPb *dmesgpb_body1 = dmesgpb1.mutable_body();
-  dmesgpb_body1->set_message("message string 1");
+    dmn::DMesgBodyPb *dmesgpb_body1 = dmesgpb1.mutable_body();
+    dmesgpb_body1->set_message("message string 1");
 
-  dmn::DMesgPb dmesgpb2{};
-  dmesgpb2.set_topic("id1");
-  dmesgpb2.set_runningcounter(99);
-  dmesgpb2.set_sourceidentifier("unknown");
-  dmesgpb2.set_type(dmn::DMesgTypePb::message);
+    dmn::DMesgPb dmesgpb2{};
+    dmesgpb2.set_topic("id1");
+    dmesgpb2.set_runningcounter(99);
+    dmesgpb2.set_sourceidentifier("unknown");
+    dmesgpb2.set_type(dmn::DMesgTypePb::message);
 
-  dmn::DMesgBodyPb *dmesgpb_body2 = dmesgpb2.mutable_body();
-  dmesgpb_body2->set_message("message string 2");
+    dmn::DMesgBodyPb *dmesgpb_body2 = dmesgpb2.mutable_body();
+    dmesgpb_body2->set_message("message string 2");
 
-  dmn::Dmn_Proc::yield();
+    dmn::Dmn_Proc::yield();
 
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-  std::cout << "after sleep 3 seconds\n";
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::cout << "after sleep 3 seconds\n";
 
-  dmesg_write_handle->write(dmesgpb1);
-  dmesg_write_handle->write(dmesgpb2);
+    dmesg_write_handle->write(dmesgpb1);
+    dmesg_write_handle->write(dmesgpb2);
 
-  dmesg.waitForEmpty();
+    dmesg.waitForEmpty();
 
-  std::cout << "after sleep 5 seconds\n";
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::cout << "after sleep 5 seconds\n";
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  dmesg.closeHandler(dmesg_write_handle);
+    dmesg.closeHandler(dmesg_write_handle);
+  }
+
+  google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();
 }

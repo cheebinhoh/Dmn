@@ -26,88 +26,91 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  // reader
-  dmn::Dmn_Kafka::ConfigType read_configs_other{};
-  read_configs_other["bootstrap.servers"] = "localhost:9092";
-  //  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
-  //  read_configs_other["sasl.password"] =
-  //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  //  read_configs_other["security.protocol"] = "SASL_SSL";
-  //  read_configs_other["sasl.mechanisms"] = "PLAIN";
-  read_configs_other["group.id"] = "dmesg_other";
-  read_configs_other["auto.offset.reset"] = "earliest";
-  read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
-  read_configs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
+  {
+    // reader
+    dmn::Dmn_Kafka::ConfigType read_configs_other{};
+    read_configs_other["bootstrap.servers"] = "localhost:9092";
+    //  read_configs_other["sasl.username"] = "ICCN4A57TNKONPQ3";
+    //  read_configs_other["sasl.password"] =
+    //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+    //  read_configs_other["security.protocol"] = "SASL_SSL";
+    //  read_configs_other["sasl.mechanisms"] = "PLAIN";
+    read_configs_other["group.id"] = "dmesg_other";
+    read_configs_other["auto.offset.reset"] = "earliest";
+    read_configs_other[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
+    read_configs_other[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-  dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
-                                read_configs_other};
+    dmn::Dmn_Kafka consumer_other{dmn::Dmn_Kafka::Role::kConsumer,
+                                  read_configs_other};
 
-  // dmesgnet1
-  // writer for DMesgNet
-  dmn::Dmn_Kafka::ConfigType configs{};
-  configs["bootstrap.servers"] = "localhost:9092";
-  //  configs["sasl.username"] = "ICCN4A57TNKONPQ3";
-  //  configs["sasl.password"] =
-  //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
-  //  configs["security.protocol"] = "SASL_SSL";
-  //  configs["sasl.mechanisms"] = "PLAIN";
+    // dmesgnet1
+    // writer for DMesgNet
+    dmn::Dmn_Kafka::ConfigType configs{};
+    configs["bootstrap.servers"] = "localhost:9092";
+    //  configs["sasl.username"] = "ICCN4A57TNKONPQ3";
+    //  configs["sasl.password"] =
+    //      "Fz6AqWg1WCBqkBV2FX2FD/9iBNbs1qHM5Po12iaVn6OMVKZm8WhH4W20IaZTTEcV";
+    //  configs["security.protocol"] = "SASL_SSL";
+    //  configs["sasl.mechanisms"] = "PLAIN";
 
-  // dmesgnet1
-  const dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
+    // dmesgnet1
+    const dmn::Dmn_DMesgNet_Kafka dmesgnet1{"dmesg1", configs};
 
-  // dmesgnet2
-  const dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
+    // dmesgnet2
+    const dmn::Dmn_DMesgNet_Kafka dmesgnet2{"dmesg2", configs};
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  // consume prior messages from topic.
-  dmn::DMesgPb dmesgpb_read{};
-  std::map<std::string, std::string> node_list{};
-  std::map<std::string, std::string> master_list{};
-  int n{};
-  while (n < 10000) {
-    auto data_read = consumer_other.read();
-    if (data_read) {
-      dmesgpb_read.ParseFromString(*data_read);
+    // consume prior messages from topic.
+    dmn::DMesgPb dmesgpb_read{};
+    std::map<std::string, std::string> node_list{};
+    std::map<std::string, std::string> master_list{};
+    int n{};
+    while (n < 10000) {
+      auto data_read = consumer_other.read();
+      if (data_read) {
+        dmesgpb_read.ParseFromString(*data_read);
 
-      int i = 0;
-      while (i < dmesgpb_read.body().sys().nodelist().size()) {
-        auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
-        node_list[dmesgpb_read.body().sys().self().identifier()] = id;
-        i++;
-      }
+        int i = 0;
+        while (i < dmesgpb_read.body().sys().nodelist().size()) {
+          auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+          node_list[dmesgpb_read.body().sys().self().identifier()] = id;
+          i++;
+        }
 
-      EXPECT_TRUE(i <= 1);
+        EXPECT_TRUE(i <= 1);
 
-      master_list[dmesgpb_read.body().sys().self().identifier()] =
-          dmesgpb_read.body().sys().self().masteridentifier();
+        master_list[dmesgpb_read.body().sys().self().identifier()] =
+            dmesgpb_read.body().sys().self().masteridentifier();
 
-      if (node_list.size() == 2) {
-        std::string master{};
-        bool ok{true};
+        if (node_list.size() == 2) {
+          std::string master{};
+          bool ok{true};
 
-        for (auto &mp : master_list) {
-          if (!master.empty()) {
-            if (master != mp.second) {
-              ok = false;
-              break;
+          for (auto &mp : master_list) {
+            if (!master.empty()) {
+              if (master != mp.second) {
+                ok = false;
+                break;
+              }
             }
+
+            master = mp.second;
           }
 
-          master = mp.second;
-        }
-
-        if (ok) {
-          std::cout << "all checked\n";
-          break;
+          if (ok) {
+            std::cout << "all checked\n";
+            break;
+          }
         }
       }
+
+      n++;
     }
 
-    n++;
+    EXPECT_TRUE(n < 10000);
   }
-
-  EXPECT_TRUE(n < 10000);
+  google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();
 }
