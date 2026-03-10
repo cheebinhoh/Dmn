@@ -126,7 +126,45 @@ endif()
 if (ENABLE_VALGRIND)
   add_custom_target(valgrind-check
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L valgrind
-    DEPENDS dmn # optional: keep or remove
+    DEPENDS
+      dmn-test-async
+      dmn-test-async-queue-lf
+      dmn-test-blockingqueue
+      dmn-test-blockingqueue-2
+      dmn-test-blockingqueue-3
+      dmn-test-blockingqueue-4
+      dmn-test-blockingqueue-5
+      dmn-test-blockingqueue-lf-1
+      dmn-test-blockingqueue-lf-2
+      dmn-test-blockingqueue-lf-3
+      dmn-test-blockingqueue-lf-4
+      dmn-test-blockingqueue-lf-5
+      dmn-test-blockingqueue-lf-6
+      dmn-test-blockingqueue-lf-7
+      dmn-test-blockingqueue-perf-1
+      dmn-test-blockingqueue-perf-2
+      dmn-test-dmesg-pb
+      dmn-test-dmesg-pb-util
+      dmn-test-inflight-guard
+      dmn-test-io
+      dmn-test-pipe
+      dmn-test-pipe-2
+      dmn-test-pipe-3
+      dmn-test-pipe-queue-lf
+      dmn-test-pipe-queue-lf-2
+      dmn-test-pipe-queue-lf-3
+      dmn-test-pub-sub
+      dmn-test-pub-sub-queue-lf
+      dmn-test-runtime
+      dmn-test-runtime-2
+      dmn-test-runtime-3
+      dmn-test-runtime-queue-lf
+      dmn-test-runtime-queue-lf-2
+      dmn-test-runtime-queue-lf-3
+      dmn-test-singleton
+      dmn-test-socket
+      dmn-test-teepipe
+      dmn-test-timer
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
 endif()

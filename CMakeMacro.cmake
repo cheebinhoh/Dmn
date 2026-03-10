@@ -34,8 +34,8 @@ endmacro()
 
 macro(ADD_TEST_VALGRIND_EXECUTABLE ...)
   foreach (arg ${ARGN})
-    message("adding test executable ${arg} for valgrind")
     if (ENABLE_VALGRIND)
+      message(STATUS "adding test executable ${arg} for valgrind")
       add_test(
         NAME valgrind-${arg}
         COMMAND
