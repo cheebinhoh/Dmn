@@ -440,9 +440,9 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
     return;
   }
 
-  inhandler->m_owner = nullptr;
-
   this->unregisterSubscriber(inhandler->m_sub.get());
+
+  inhandler->m_owner = nullptr;
 
   const Dmn_DMesgHandler *const handler_ptr = inhandler.get();
 
