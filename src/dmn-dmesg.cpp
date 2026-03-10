@@ -435,11 +435,16 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
 }
 
 void Dmn_DMesg::closeHandler(HandlerType &handler) {
-  this->unregisterSubscriber(handler->m_sub.get());
-  handler->m_owner = nullptr;
+  auto inhandler = handler.m_handler.lock();
+  if (!inhandler) {
+    return;
+  }
 
-  const Dmn_DMesgHandler *const handler_ptr = handler.m_handler.lock().get();
-  handler.m_handler.reset();
+  inhandler->m_owner = nullptr;
+
+  this->unregisterSubscriber(inhandler->m_sub.get());
+
+  const Dmn_DMesgHandler *const handler_ptr = inhandler.get();
 
   auto waitHandler = this->addExecTaskWithWait([this, handler_ptr]() -> void {
     auto iter =
@@ -454,6 +459,8 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
   });
 
   waitHandler->wait();
+
+  handler.m_handler.reset();
 }
 
 auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
