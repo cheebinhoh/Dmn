@@ -24,27 +24,27 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  auto dmesg = std::make_unique<dmn::Dmn_DMesg>("dmesg");
   auto topic1_write_handler =
-      dmesg.openHandler("topic1_write_handler", "topic1");
+      dmesg->openHandler("topic1_write_handler", "topic1");
   auto topic2_write_handler =
-      dmesg.openHandler("topic2_write_handler", "topic2");
+      dmesg->openHandler("topic2_write_handler", "topic2");
 
   dmn::DMesgPb dmesgpb_topic1_read{};
   auto topic1_read_handler =
-      dmesg.openHandler("topic1_read_handler", "topic1", nullptr,
-                        [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) -> void {
-                          std::cout << "read topic1\n";
-                          dmesgpb_topic1_read = std::move(dmesgpb);
-                        });
+      dmesg->openHandler("topic1_read_handler", "topic1", nullptr,
+                         [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) -> void {
+                           std::cout << "read topic1\n";
+                           dmesgpb_topic1_read = std::move(dmesgpb);
+                         });
 
   dmn::DMesgPb dmesgpb_topic2_read{};
   auto topic2_read_handler =
-      dmesg.openHandler("topic2_read_handler", "topic2", nullptr,
-                        [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) -> void {
-                          std::cout << "read topic2\n";
-                          dmesgpb_topic2_read = std::move(dmesgpb);
-                        });
+      dmesg->openHandler("topic2_read_handler", "topic2", nullptr,
+                         [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) -> void {
+                           std::cout << "read topic2\n";
+                           dmesgpb_topic2_read = std::move(dmesgpb);
+                         });
   dmn::DMesgPb dmesgpb{};
   dmesgpb.set_type(dmn::DMesgTypePb::message);
 
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE("topic2" == dmesgpb_topic2_read.topic());
   EXPECT_TRUE("Hello topic2" == dmesgpb_topic2_read.body().message());
 
+  dmesg = {};
   google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();
