@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     neightbor_node2->set_identifier("id4");
     neightbor_node2->set_masteridentifier("id3");
     neightbor_node2->mutable_initializedtimestamp()->set_seconds(tv.tv_sec);
-    neightbor_node1->mutable_initializedtimestamp()->set_nanos(tv.tv_usec *
+    neightbor_node2->mutable_initializedtimestamp()->set_nanos(tv.tv_usec *
                                                                1000);
 
     EXPECT_TRUE(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);

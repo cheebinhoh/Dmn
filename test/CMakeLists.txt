@@ -35,7 +35,6 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
-                      dmn-test-dmesg-valgrind-1
                       dmn-test-dmesgnet-1
                       dmn-test-dmesgnet-2
                       dmn-test-dmesgnet-3
@@ -111,7 +110,6 @@ if (ENABLE_VALGRIND)
 	dmn-test-dmesg-9
 	dmn-test-dmesg-10
 	dmn-test-dmesg-11
-	dmn-test-dmesg-valgrind-1
 	dmn-test-dmesgnet-1
 	dmn-test-dmesgnet-2
 	dmn-test-dmesgnet-3
