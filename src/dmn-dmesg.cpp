@@ -429,8 +429,7 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
               }},
       m_name{name} {}
 
-Dmn_DMesg::~Dmn_DMesg() noexcept try {
-} catch (...) {
+Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
