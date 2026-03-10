@@ -489,6 +489,28 @@ public:
     std::atomic_flag m_after_initial_playback{};
   }; // class Dmn_DMesgHandler
 
+  class Dmn_DMesgHandlerProxy {
+    friend class Dmn_DMesg;
+
+  public:
+    std::shared_ptr<Dmn_DMesgHandler> operator->() {
+      if (m_handler.expired()) {
+        throw std::runtime_error("handler has been closed");
+      }
+
+      return m_handler.lock();
+    }
+
+    void reset() { m_handler.reset(); }
+
+    explicit operator bool() const noexcept { return !m_handler.expired(); }
+
+  private:
+    std::weak_ptr<Dmn_DMesgHandler> m_handler{};
+  };
+
+  using HandlerType = Dmn_DMesgHandlerProxy;
+
   /**
    * @brief Construct a Dmn_DMesg publisher instance.
    *
@@ -512,8 +534,7 @@ public:
    *
    * @return shared_ptr to the newly created handler.
    */
-  template <class... U>
-  auto openHandler(U &&...arg) -> std::shared_ptr<Dmn_DMesgHandler>;
+  template <class... U> auto openHandler(U &&...arg) -> HandlerType;
 
   /**
    * @brief Unregister and free the provided handler.
@@ -522,7 +543,7 @@ public:
    *                       The handler will be removed from internal lists and
    *                       the shared_ptr will be reset by the caller.
    */
-  void closeHandler(std::shared_ptr<Dmn_DMesgHandler> &handlerToClose);
+  void closeHandler(HandlerType &handlerToClose);
 
   /**
    * @brief Get the topic last message or nullptr if no message for the topic.
@@ -622,9 +643,7 @@ private:
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 
-template <class... U>
-auto Dmn_DMesg::openHandler(U &&...arg)
-    -> std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> {
+template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   // This function:
   //  - constructs a handler
   //  - registers the handler as a subscriber
@@ -637,8 +656,12 @@ auto Dmn_DMesg::openHandler(U &&...arg)
   // The use of the publisher's singleton async context keeps most operations
   // mutex-free for the hot paths (publish/notify).
 
+  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
+
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
+
+  handlerProxy.m_handler = handler;
 
   /* The topic filter is executed within the DMesg singleton asynchronous
    * thread context, but the filter value is maintained per Dmn_DMesgHandler.
@@ -649,8 +672,6 @@ auto Dmn_DMesg::openHandler(U &&...arg)
       this->registerSubscriber<Dmn_DMesgHandler::Dmn_DMesgHandlerSub>();
   handler->m_sub->m_owner = handler.get();
 
-  auto handler_ret = handler;
-
   DMN_ASYNC_CALL_WITH_CAPTURE(
       {
         this->m_handlers.push_back(handler);
@@ -659,7 +680,7 @@ auto Dmn_DMesg::openHandler(U &&...arg)
       },
       this, handler);
 
-  return handler_ret;
+  return handlerProxy;
 }
 
 } // namespace dmn

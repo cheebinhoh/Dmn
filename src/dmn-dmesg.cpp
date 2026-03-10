@@ -434,13 +434,12 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
   return;
 }
 
-void Dmn_DMesg::closeHandler(
-    std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> &handler) {
+void Dmn_DMesg::closeHandler(HandlerType &handler) {
   this->unregisterSubscriber(handler->m_sub.get());
   handler->m_owner = nullptr;
 
-  const Dmn_DMesgHandler *const handler_ptr = handler.get();
-  handler = {};
+  const Dmn_DMesgHandler *const handler_ptr = handler.m_handler.lock().get();
+  handler.m_handler.reset();
 
   auto waitHandler = this->addExecTaskWithWait([this, handler_ptr]() -> void {
     auto iter =
