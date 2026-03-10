@@ -32,23 +32,21 @@ macro(ADD_TEST_EXECUTABLE ...)
   endforeach()
 endmacro()
 
-macro(ADD_TEST_VALGRIND_EXECUTABLE ...)
+macro(ADD_TEST_VALGRIND ...)
   foreach (arg ${ARGN})
-    if (ENABLE_VALGRIND)
-      message(STATUS "adding test executable ${arg} for valgrind")
-      add_test(
-        NAME valgrind-${arg}
-        COMMAND
-          ${VALGRIND_EXECUTABLE}
-          --quiet
-          --error-exitcode=42
-          --leak-check=full
-          --show-leak-kinds=all
-          --track-origins=yes
-          $<TARGET_FILE:${arg}>
-      )
-      set_tests_properties(valgrind-${arg} PROPERTIES LABELS "valgrind")
-    endif()
+    message(STATUS "adding test executable ${arg} for valgrind")
+    add_test(
+      NAME valgrind-${arg}
+      COMMAND
+        ${VALGRIND_EXECUTABLE}
+        --quiet
+        --error-exitcode=42
+        --leak-check=full
+        --show-leak-kinds=all
+        --track-origins=yes
+        $<TARGET_FILE:${arg}>
+    )
+    set_tests_properties(valgrind-${arg} PROPERTIES LABELS "valgrind")
   endforeach()
 endmacro()
 
