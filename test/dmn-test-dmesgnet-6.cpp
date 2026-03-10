@@ -74,205 +74,207 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
+  {
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
 
-  auto read_from_write_1 = write_1;
-  auto write_to_read_1 = read_1;
+    auto read_from_write_1 = write_1;
+    auto write_to_read_1 = read_1;
 
-  auto read_from_write_2 = write_2;
-  auto write_to_read_2 = read_2;
+    auto read_from_write_2 = write_2;
+    auto write_to_read_2 = read_2;
 
-  dmn::DMesgPb dmesgpb1{};
-  dmn::DMesgPb dmesgpb1_body{};
-  dmn::DMesgPb dmesgpb1_sys{};
-  dmn::Dmn_Proc dmesg1_to_dmesg2{
-      "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, &dmesgpb1,
-                           &dmesgpb1_body, &dmesgpb1_sys]() {
-        static bool print{};
-        static bool dup{};
+    dmn::DMesgPb dmesgpb1{};
+    dmn::DMesgPb dmesgpb1_body{};
+    dmn::DMesgPb dmesgpb1_sys{};
+    dmn::Dmn_Proc dmesg1_to_dmesg2{
+        "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, &dmesgpb1,
+                             &dmesgpb1_body, &dmesgpb1_sys]() {
+          static bool print{};
+          static bool dup{};
 
-        while (true) {
-          auto data = read_from_write_1->read();
-          if (!data) {
-            break;
-          }
+          while (true) {
+            auto data = read_from_write_1->read();
+            if (!data) {
+              break;
+            }
 
-          dmesgpb1.ParseFromString(*data);
-          if (dmesgpb1.type() == dmn::DMesgTypePb::sys) {
-            dmesgpb1_sys = dmesgpb1;
+            dmesgpb1.ParseFromString(*data);
+            if (dmesgpb1.type() == dmn::DMesgTypePb::sys) {
+              dmesgpb1_sys = dmesgpb1;
 
-            if (!print) {
-              std::cout << "*** 1 to 2 sys: " << dmesgpb1_sys.ShortDebugString()
+              if (!print) {
+                std::cout << "*** 1 to 2 sys: "
+                          << dmesgpb1_sys.ShortDebugString() << "\n";
+                print = true;
+              }
+            } else if (dmesgpb1.conflict()) {
+              std::cout << "dmesg1 to dmesg2: conflict: "
+                        << dmesgpb1.ShortDebugString() << "\n";
+            } else {
+              dmesgpb1_body = dmesgpb1;
+
+              std::cout << "*** 1 to 2: " << dmesgpb1_body.ShortDebugString()
                         << "\n";
-              print = true;
+
+              if (!dup) {
+                auto copied = *data;
+                write_to_read_2->write(copied);
+                dup = true;
+
+                std::cout << "****** send dup\n";
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+                std::cout << "****** after send dup\n";
+
+                dmn::DMesgPb dmesgpb2{};
+                dmesgpb2.ParseFromString(*data);
+
+                std::string str{"Hello dmesg async dup"};
+                dmn::DMesgBodyPb *dmesgpb_body = dmesgpb2.mutable_body();
+                dmesgpb_body->set_message(str);
+
+                std::string dupString{};
+                dmesgpb2.SerializeToString(&dupString);
+                *data = dupString;
+              }
             }
-          } else if (dmesgpb1.conflict()) {
-            std::cout << "dmesg1 to dmesg2: conflict: "
-                      << dmesgpb1.ShortDebugString() << "\n";
-          } else {
-            dmesgpb1_body = dmesgpb1;
 
-            std::cout << "*** 1 to 2: " << dmesgpb1_body.ShortDebugString()
-                      << "\n";
+            write_to_read_2->write(*data);
+          }
+        }};
 
-            if (!dup) {
-              auto copied = *data;
-              write_to_read_2->write(copied);
-              dup = true;
+    dmn::DMesgPb dmesgpb2{};
+    dmn::DMesgPb dmesgpb2_body{};
+    dmn::DMesgPb dmesgpb2_force{};
+    dmn::DMesgPb dmesgpb2_sys{};
+    dmn::Dmn_Proc dmesg2_to_dmesg1{
+        "dmesg2_to_dmesg1", [read_from_write_2, write_to_read_1, &dmesgpb2,
+                             &dmesgpb2_body, &dmesgpb2_force, &dmesgpb2_sys]() {
+          static bool print{};
 
-              std::cout << "****** send dup\n";
-              std::this_thread::sleep_for(std::chrono::seconds(3));
-              std::cout << "****** after send dup\n";
-
-              dmn::DMesgPb dmesgpb2{};
-              dmesgpb2.ParseFromString(*data);
-
-              std::string str{"Hello dmesg async dup"};
-              dmn::DMesgBodyPb *dmesgpb_body = dmesgpb2.mutable_body();
-              dmesgpb_body->set_message(str);
-
-              std::string dupString{};
-              dmesgpb2.SerializeToString(&dupString);
-              *data = dupString;
+          while (true) {
+            auto data = read_from_write_2->read();
+            if (!data) {
+              break;
             }
-          }
 
-          write_to_read_2->write(*data);
-        }
-      }};
+            dmesgpb2.ParseFromString(*data);
+            if (dmesgpb2.type() == dmn::DMesgTypePb::sys) {
+              dmesgpb2_sys = dmesgpb2;
 
-  dmn::DMesgPb dmesgpb2{};
-  dmn::DMesgPb dmesgpb2_body{};
-  dmn::DMesgPb dmesgpb2_force{};
-  dmn::DMesgPb dmesgpb2_sys{};
-  dmn::Dmn_Proc dmesg2_to_dmesg1{
-      "dmesg2_to_dmesg1", [read_from_write_2, write_to_read_1, &dmesgpb2,
-                           &dmesgpb2_body, &dmesgpb2_force, &dmesgpb2_sys]() {
-        static bool print{};
+              if (!print) {
+                std::cout << "*** 2 to 1 sys: "
+                          << dmesgpb2_sys.ShortDebugString() << "\n";
+                print = true;
+              }
+            } else if (dmesgpb2.conflict()) {
+              std::cout << "dmesg1 to dmesg2: conflict: "
+                        << dmesgpb2.ShortDebugString() << "\n";
+            } else if (dmesgpb2.force() && dmesgpb2.playback()) {
+              dmesgpb2_force = dmesgpb2;
 
-        while (true) {
-          auto data = read_from_write_2->read();
-          if (!data) {
-            break;
-          }
+              std::cout << "*** 2 to 1 force: "
+                        << dmesgpb2_body.ShortDebugString() << "\n";
+            } else {
+              dmesgpb2_body = dmesgpb2;
 
-          dmesgpb2.ParseFromString(*data);
-          if (dmesgpb2.type() == dmn::DMesgTypePb::sys) {
-            dmesgpb2_sys = dmesgpb2;
-
-            if (!print) {
-              std::cout << "*** 2 to 1 sys: " << dmesgpb2_sys.ShortDebugString()
+              std::cout << "*** 2 to 1: " << dmesgpb2_body.ShortDebugString()
                         << "\n";
-              print = true;
             }
-          } else if (dmesgpb2.conflict()) {
-            std::cout << "dmesg1 to dmesg2: conflict: "
-                      << dmesgpb2.ShortDebugString() << "\n";
-          } else if (dmesgpb2.force() && dmesgpb2.playback()) {
-            dmesgpb2_force = dmesgpb2;
 
-            std::cout << "*** 2 to 1 force: "
-                      << dmesgpb2_body.ShortDebugString() << "\n";
-          } else {
-            dmesgpb2_body = dmesgpb2;
-
-            std::cout << "*** 2 to 1: " << dmesgpb2_body.ShortDebugString()
-                      << "\n";
+            write_to_read_1->write(*data);
           }
+        }};
 
-          write_to_read_1->write(*data);
-        }
-      }};
+    dmesg1_to_dmesg2.exec();
+    dmesg2_to_dmesg1.exec();
 
-  dmesg1_to_dmesg2.exec();
-  dmesg2_to_dmesg1.exec();
+    auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg2", std::move(read_2), std::move(write_2));
 
-  auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
-      "dmesg2", std::move(read_2), std::move(write_2));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1));
 
-  auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-      "dmesg1", std::move(read_1), std::move(write_1));
+    std::this_thread::sleep_for(std::chrono::seconds(15));
+    auto sys1 = dmesgpb1_sys.body().sys().self();
+    auto sys2 = dmesgpb2_sys.body().sys().self();
 
-  std::this_thread::sleep_for(std::chrono::seconds(15));
-  auto sys1 = dmesgpb1_sys.body().sys().self();
-  auto sys2 = dmesgpb2_sys.body().sys().self();
+    EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
+    EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
+    EXPECT_TRUE(("dmesg2" == sys1.masteridentifier()));
+    EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
+    EXPECT_TRUE((1 == dmesgpb1_sys.body().sys().nodelist().size()));
+    EXPECT_TRUE(
+        ("dmesg2" == dmesgpb1_sys.body().sys().nodelist().Get(0).identifier()));
+    EXPECT_TRUE((1 == dmesgpb2_sys.body().sys().nodelist().size()));
+    EXPECT_TRUE(
+        ("dmesg1" == dmesgpb2_sys.body().sys().nodelist().Get(0).identifier()));
 
-  EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
-  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
-  EXPECT_TRUE(("dmesg2" == sys1.masteridentifier()));
-  EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
-  EXPECT_TRUE((1 == dmesgpb1_sys.body().sys().nodelist().size()));
-  EXPECT_TRUE(
-      ("dmesg2" == dmesgpb1_sys.body().sys().nodelist().Get(0).identifier()));
-  EXPECT_TRUE((1 == dmesgpb2_sys.body().sys().nodelist().size()));
-  EXPECT_TRUE(
-      ("dmesg1" == dmesgpb2_sys.body().sys().nodelist().Get(0).identifier()));
+    // send data
+    dmn::DMesgPb dmesgpb{};
+    dmesgpb.set_topic("counter sync");
+    dmesgpb.set_type(dmn::DMesgTypePb::message);
+    dmesgpb.set_sourceidentifier("writehandler");
 
-  // send data
-  dmn::DMesgPb dmesgpb{};
-  dmesgpb.set_topic("counter sync");
-  dmesgpb.set_type(dmn::DMesgTypePb::message);
-  dmesgpb.set_sourceidentifier("writehandler");
+    std::string data{"Hello dmesg async"};
+    dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
+    dmesgpb_body->set_message(data);
 
-  std::string data{"Hello dmesg async"};
-  dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
-  dmesgpb_body->set_message(data);
+    auto dmesg2_read_handle =
+        dmesgnet2->openHandler("writeHandler", "counter sync");
+    EXPECT_TRUE(dmesg2_read_handle);
 
-  auto dmesg2_read_handle =
-      dmesgnet2->openHandler("writeHandler", "counter sync");
-  EXPECT_TRUE(dmesg2_read_handle);
+    auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
+    EXPECT_TRUE(dmesg_handle);
+    std::cout << "************** first write\n";
+    dmesg_handle->write(dmesgpb);
 
-  auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
-  EXPECT_TRUE(dmesg_handle);
-  std::cout << "************** first write\n";
-  dmesg_handle->write(dmesgpb);
+    std::cout << "after write data from dmesgnet1\n";
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    EXPECT_TRUE((dmesgpb1_body.topic() == "counter sync"));
 
-  std::cout << "after write data from dmesgnet1\n";
-  std::this_thread::sleep_for(std::chrono::seconds(5));
-  EXPECT_TRUE((dmesgpb1_body.topic() == "counter sync"));
+    auto dmesgdata = dmesg2_read_handle->read();
+    std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
+    EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
+    EXPECT_TRUE(((*dmesgdata).body().message() == "Hello dmesg async"));
 
-  auto dmesgdata = dmesg2_read_handle->read();
-  std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
-  EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
-  EXPECT_TRUE(((*dmesgdata).body().message() == "Hello dmesg async"));
+    EXPECT_TRUE((dmesgpb2_body.topic() == ""));
 
-  EXPECT_TRUE((dmesgpb2_body.topic() == ""));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+    dmesgnet1 = {};
+    std::cout << "after destroying 1\n";
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  dmesgnet1 = {};
-  std::cout << "after destroying 1\n";
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+    sys2 = dmesgpb2.body().sys().self();
 
-  sys2 = dmesgpb2.body().sys().self();
+    EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
+    EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
+    EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
 
-  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
-  EXPECT_TRUE(("dmesg2" == sys2.masteridentifier()));
-  EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
+    dmesgnet2 = {};
+    std::cout << "after destroying 2\n";
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  dmesgnet2 = {};
-  std::cout << "after destroying 2\n";
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+    sys2 = dmesgpb2.body().sys().self();
 
-  sys2 = dmesgpb2.body().sys().self();
+    EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Destroyed));
+    EXPECT_TRUE(("" == sys2.masteridentifier()));
+    EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
 
-  EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Destroyed));
-  EXPECT_TRUE(("" == sys2.masteridentifier()));
-  EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
-
-  EXPECT_TRUE((dmesgpb2_force.topic() == "counter sync"));
-  EXPECT_TRUE((dmesgpb2_force.force()));
-  EXPECT_TRUE((dmesgpb2_force.playback()));
+    EXPECT_TRUE((dmesgpb2_force.topic() == "counter sync"));
+    EXPECT_TRUE((dmesgpb2_force.force()));
+    EXPECT_TRUE((dmesgpb2_force.playback()));
+  }
 
   google::protobuf::ShutdownProtobufLibrary();
 

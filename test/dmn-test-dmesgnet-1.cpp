@@ -74,56 +74,57 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
-  std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-      std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
+  {
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
 
-  auto read_from_write_1 = write_1;
+    auto read_from_write_1 = write_1;
 
-  auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-      "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1));
 
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
-  bool masterpending{};
-  bool ready{};
+    bool masterpending{};
+    bool ready{};
 
-  auto dataList = read_from_write_1->read(50, 10000000L);
-  for (auto &data : dataList) {
-    dmn::DMesgPb dmesgpb{};
+    auto dataList = read_from_write_1->read(50, 10000000L);
+    for (auto &data : dataList) {
+      dmn::DMesgPb dmesgpb{};
 
-    dmesgpb.ParseFromString(data);
+      dmesgpb.ParseFromString(data);
 
-    EXPECT_TRUE((dmesgpb.type() == dmn::DMesgTypePb::sys));
+      EXPECT_TRUE((dmesgpb.type() == dmn::DMesgTypePb::sys));
 
-    auto sys = dmesgpb.body().sys().self();
-    if (sys.state() == dmn::DMesgStatePb::MasterPending) {
-      EXPECT_TRUE((!ready));
-      masterpending = true;
-    } else if (sys.state() == dmn::DMesgStatePb::Ready) {
-      EXPECT_TRUE((masterpending));
-      EXPECT_TRUE(("dmesg1" == sys.masteridentifier()));
-      ready = true;
-    }
-  }
-
-  dmesgnet1 = {};
-  size_t count{};
-  dataList = read_from_write_1->read(100, 20000000L);
-  for (auto &data : dataList) {
-    dmn::DMesgPb dmesgpb{};
-
-    dmesgpb.ParseFromString(data);
-    if (count == (dataList.size() - 1)) {
       auto sys = dmesgpb.body().sys().self();
-
-      EXPECT_TRUE((dmn::DMesgStatePb::Destroyed == sys.state()));
+      if (sys.state() == dmn::DMesgStatePb::MasterPending) {
+        EXPECT_TRUE((!ready));
+        masterpending = true;
+      } else if (sys.state() == dmn::DMesgStatePb::Ready) {
+        EXPECT_TRUE((masterpending));
+        EXPECT_TRUE(("dmesg1" == sys.masteridentifier()));
+        ready = true;
+      }
     }
 
-    count++;
-  }
+    dmesgnet1 = {};
+    size_t count{};
+    dataList = read_from_write_1->read(100, 20000000L);
+    for (auto &data : dataList) {
+      dmn::DMesgPb dmesgpb{};
 
+      dmesgpb.ParseFromString(data);
+      if (count == (dataList.size() - 1)) {
+        auto sys = dmesgpb.body().sys().self();
+
+        EXPECT_TRUE((dmn::DMesgStatePb::Destroyed == sys.state()));
+      }
+
+      count++;
+    }
+  }
   google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();

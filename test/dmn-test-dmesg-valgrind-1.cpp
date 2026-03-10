@@ -21,9 +21,11 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  {
+    dmn::Dmn_DMesg dmesg{"dmesg"};
 
-  dmesg.waitForEmpty();
+    dmesg.waitForEmpty();
+  }
 
   google::protobuf::ShutdownProtobufLibrary();
 
