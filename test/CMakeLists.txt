@@ -140,8 +140,6 @@ if (ENABLE_VALGRIND)
 	dmn-test-timer
   )
 
-
-
   ADD_TEST_VALGRIND(dmn
                       ${DMN_VALGRIND_TESTS}
   )
