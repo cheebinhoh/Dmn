@@ -32,6 +32,26 @@ macro(ADD_TEST_EXECUTABLE ...)
   endforeach()
 endmacro()
 
+macro(ADD_TEST_VALGRIND_EXECUTABLE ...)
+  foreach (arg ${ARGN})
+    message("adding test executable ${arg} for valgrind")
+    if (ENABLE_VALGRIND)
+      add_test(
+        NAME valgrind-${arg}
+        COMMAND
+          ${VALGRIND_EXECUTABLE}
+          --quiet
+          --error-exitcode=42
+          --leak-check=full
+          --show-leak-kinds=all
+          --track-origins=yes
+          $<TARGET_FILE:${arg}>
+      )
+      set_tests_properties(valgrind-${arg} PROPERTIES LABELS "valgrind")
+    endif()
+  endforeach()
+endmacro()
+
 # This macro run protoc to generate *.pb.cc and *.pb.h from a
 # proto definition file
 macro(GENERATE_PROTOBUF ...)

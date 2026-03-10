@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
       protobuf-compiler \
       tar \
       unzip \
+      valgrind \
       vim \
       wget \
       && rm -rf /var/lib/apt/lists/*
@@ -67,7 +68,7 @@ EXPOSE 9092 2181
 
 
 # Run build
-RUN mkdir build && cmake -B build && cmake --build build/
+RUN mkdir build && cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON && cmake --build build/
 
 
 # Entry point
