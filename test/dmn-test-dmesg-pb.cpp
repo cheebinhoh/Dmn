@@ -71,5 +71,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(dmesgpb_sys.body().sys().nodelist().Get(0).state() ==
               dmn::DMesgStatePb::Ready);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

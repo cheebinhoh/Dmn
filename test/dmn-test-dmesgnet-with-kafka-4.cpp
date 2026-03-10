@@ -109,5 +109,7 @@ int main(int argc, char *argv[]) {
 
   EXPECT_TRUE(n < 10000);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

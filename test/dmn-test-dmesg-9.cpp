@@ -128,5 +128,7 @@ int main(int argc, char *argv[]) {
   dmesg.closeHandler(dmesg_read_handle1);
   dmesg.closeHandler(dmesg_read_handle2);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

@@ -66,5 +66,7 @@ int main(int argc, char *argv[]) {
   dmesg.closeHandler(dmesg_handler);
   EXPECT_TRUE(3 == cnt);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

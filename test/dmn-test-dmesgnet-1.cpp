@@ -124,5 +124,7 @@ int main(int argc, char *argv[]) {
     count++;
   }
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

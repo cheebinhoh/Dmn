@@ -65,5 +65,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(data == data1);
   EXPECT_TRUE(data == data2);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

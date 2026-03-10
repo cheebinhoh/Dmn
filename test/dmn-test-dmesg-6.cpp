@@ -22,24 +22,24 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  dmn::Dmn_DMesg dmesg{"dmesg"};
+  auto dmesg = std::make_unique<dmn::Dmn_DMesg>("dmesg");
   std::string data1{};
   std::string data2{};
 
-  auto dmesg_handle1 = dmesg.openHandler(
+  auto dmesg_handle1 = dmesg->openHandler(
       "handler1", nullptr, [&data1](const dmn::DMesgPb &dmesgpb) -> void {
         data1 = dmesgpb.body().message();
       });
   EXPECT_TRUE(dmesg_handle1);
 
-  auto dmesg_handle2 = dmesg.openHandler(
+  auto dmesg_handle2 = dmesg->openHandler(
       "handler2", nullptr, [&data2](const dmn::DMesgPb &dmesgpb) -> void {
         data2 = dmesgpb.body().message();
       });
 
   EXPECT_TRUE(dmesg_handle2);
 
-  auto dmesg_handle3 = dmesg.openHandler("handler3");
+  auto dmesg_handle3 = dmesg->openHandler("handler3");
   EXPECT_TRUE(dmesg_handle3);
 
   dmn::DMesgPb dmesgpb{};
@@ -56,14 +56,14 @@ int main(int argc, char *argv[]) {
 
   std::cout << "after wait for data to sync\n";
 
-  dmesg.waitForEmpty();
+  dmesg->waitForEmpty();
 
   EXPECT_TRUE(data == data1);
   EXPECT_TRUE(data == data2);
 
   std::string data3{};
 
-  auto dmesg_handle4 = dmesg.openHandler(
+  auto dmesg_handle4 = dmesg->openHandler(
       "handler4", nullptr, [&data3](const dmn::DMesgPb &dmesgpb) -> void {
         data3 = dmesgpb.body().message();
       });
@@ -71,12 +71,15 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
   EXPECT_TRUE(data == data3);
 
-  dmesg.closeHandler(dmesg_handle1);
-  dmesg.closeHandler(dmesg_handle2);
-  dmesg.closeHandler(dmesg_handle3);
-  dmesg.closeHandler(dmesg_handle4);
+  dmesg->closeHandler(dmesg_handle1);
+  dmesg->closeHandler(dmesg_handle2);
+  dmesg->closeHandler(dmesg_handle3);
+  dmesg->closeHandler(dmesg_handle4);
 
-  dmesg.waitForEmpty();
+  dmesg->waitForEmpty();
+  dmesg = {};
+
+  google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();
 }

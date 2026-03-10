@@ -159,5 +159,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE((dmesgpb1_body_conflict.topic() == "counter sync"));
   EXPECT_TRUE((dmesgpb1_body_conflict.runningcounter() == 1));
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

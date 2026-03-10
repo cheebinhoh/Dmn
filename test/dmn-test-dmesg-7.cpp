@@ -75,5 +75,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE("topic2" == dmesgpb_topic2_read.topic());
   EXPECT_TRUE("Hello topic2" == dmesgpb_topic2_read.body().message());
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

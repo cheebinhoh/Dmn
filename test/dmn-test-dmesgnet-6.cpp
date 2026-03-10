@@ -274,5 +274,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE((dmesgpb2_force.force()));
   EXPECT_TRUE((dmesgpb2_force.playback()));
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

@@ -96,5 +96,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "DebugPrint: " << dmesgPbRead.ShortDebugString() << "\n";
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

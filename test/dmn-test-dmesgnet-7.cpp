@@ -61,5 +61,7 @@ int main(int argc, char *argv[]) {
 
   dmesgnet1.closeHandler(readHandler);
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }

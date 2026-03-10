@@ -35,6 +35,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
+                      dmn-test-dmesg-valgrind-1
                       dmn-test-dmesgnet-1
                       dmn-test-dmesgnet-2
                       dmn-test-dmesgnet-3
@@ -87,6 +88,23 @@ ADD_TEST_VALGRIND_EXECUTABLE(dmn
                       dmn-test-blockingqueue-lf-7
                       dmn-test-blockingqueue-perf-1
                       dmn-test-blockingqueue-perf-2
+                      dmn-test-dmesg-1
+                      dmn-test-dmesg-2
+                      dmn-test-dmesg-3
+                      dmn-test-dmesg-5
+                      dmn-test-dmesg-6
+                      dmn-test-dmesg-7
+                      dmn-test-dmesg-8
+                      dmn-test-dmesg-9
+                      dmn-test-dmesg-10
+                      dmn-test-dmesg-11
+                      dmn-test-dmesg-valgrind-1
+                      dmn-test-dmesgnet-1
+                      dmn-test-dmesgnet-2
+                      dmn-test-dmesgnet-3
+                      dmn-test-dmesgnet-4
+                      dmn-test-dmesgnet-5
+                      dmn-test-dmesgnet-6
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-inflight-guard

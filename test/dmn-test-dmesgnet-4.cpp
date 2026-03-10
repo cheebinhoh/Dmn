@@ -212,5 +212,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(("" == sys2.masteridentifier()));
   EXPECT_TRUE((0 == dmesgpb2.body().sys().nodelist().size()));
 
+  google::protobuf::ShutdownProtobufLibrary();
+
   return RUN_ALL_TESTS();
 }
