@@ -115,6 +115,8 @@ template <typename T = std::string>
 class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
                           private Dmn_Inflight_Guard<> {
 public:
+  using Dmn_BlockingQueue_Interface<T>::push;
+
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
   virtual ~Dmn_BlockingQueue() noexcept;

@@ -35,6 +35,12 @@ public:
   virtual void push(T &&item) = 0;
   virtual void push(T &item, bool move = true) = 0;
 
+  virtual void push(const T &item) final {
+    T copied = item;
+
+    push(std::move(copied));
+  }
+
   virtual std::uint64_t waitForEmpty() = 0;
 
 protected:

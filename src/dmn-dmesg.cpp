@@ -97,9 +97,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
           if (m_owner->m_async_process_fn) {
             m_owner->m_async_process_fn(dmesgpb);
           } else {
-            auto copiedDMesg = dmesgpb;
-            m_owner->m_buffers.push(std::move_if_noexcept(
-                copiedDMesg)); // enqueue a copied message via a local buffer
+            m_owner->m_buffers.push(dmesgpb);
           }
         }
       }
