@@ -10,8 +10,8 @@
  *   * Dmn_Pub<T>::Dmn_Sub is the subscriber interface that receives items.
  *
  * Design pattern
- * - Adaptor - it allows other subclass to be adapted as publisher or
- *             subscriber.
+ * - Adapter - it allows other subclasses to be adapted as publishers or
+ *             subscribers.
  * - Observer - it defines 1 to many dependency between objects so that when
  *              one object publishes state change, all dependent subscribers
  *              are notified.

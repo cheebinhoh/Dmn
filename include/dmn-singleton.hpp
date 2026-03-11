@@ -5,9 +5,9 @@
  * @brief Lightweight helper for implementing argumented singletons.
  *
  * Design pattern
- * Singleton - it provides global singleton instance of the class.
- * Factory method - it provides an interface to create concrete singleton
- *                  subclass object.
+ * Singleton - provides a global singleton instance of the class.
+ * Factory method - provides an interface for creating concrete singleton
+ *                  subclasses.
  *
  * This header provides a small utility class, dmn::Dmn_Singleton, which
  * exposes a single static helper method:

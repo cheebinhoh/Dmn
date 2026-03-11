@@ -23,13 +23,13 @@
  *   Dmn_Proc::yield()) in long-running loops if you expect prompt cancellation.
  *
  * Design pattern
- * Command - Implement a variance of command design pattern that allows client
- *           to submit parameterized requests as std::function object to be
- *           executed by the thread.
- * Bridge - It abstracts the underlying thread implementation from the client.
- * Decorator - It provides an alternative to subclassing for threading and
- * allows client to attach additional responsibilities or varying behavior to
- * the thread.
+ * Command - Implements a variant of the Command design pattern, allowing
+ *           clients to submit parameterized requests encapsulated as
+ *           std::function<void()> tasks executed by the thread.
+ * Bridge - Abstracts the underlying threading implementation from the client.
+ * Decorator - Provides an alternative to subclassing for threading behavior
+ *             and allows clients to attach additional responsibilities or
+ *             vary the behavior of the thread.
  *
  * Note on mutex cleanup macros:
  * The macros below wrap pthread_cleanup_push/pop for the common pattern of

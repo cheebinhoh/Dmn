@@ -2,16 +2,16 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue-interface.hpp
- * @brief Thread-safe FIFO blocking queue interfac for passing items between
+ * @brief Thread-safe FIFO blocking queue interface for passing items between
  * threads.
  *
  * Design pattern
- * - proxy : the blocking queue interface to both dmn-blockingqueue and
- *           dmn-blockingqueue-lf (lock free).
- * - bridge : the blocking queue interface is abstracted from the underlying
- *            implementation (mutex lock or lock free).
- * - interator : it abstracts the underlying implementation of aggregate object
- *               (queue).
+ * - Proxy    : the blocking queue interface to both dmn-blockingqueue and
+ *              dmn-blockingqueue-lf (lock-free).
+ * - Bridge   : the blocking queue interface is abstracted from the underlying
+ *              implementation (mutex lock or lock-free).
+ * - Iterator : it abstracts the underlying implementation of aggregate object
+ *              (queue).
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_

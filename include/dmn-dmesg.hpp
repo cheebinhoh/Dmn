@@ -13,10 +13,11 @@
  * to publish and consume DMesgPb messages.
  *
  * Design pattern
- * Proxy -
- * Composite - The Dmn_DMesg and DMesg_DMesgNet forms a composite interface via
- *             the proxy interface exposed by the Dmn_Pub and Dmn_Pub::Sub
- * classes.
+ * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
+ *            Dmn_DMesgHandler instances, offering pointer-like access while
+ *            allowing the publisher to control handler lifetime.
+ * Composite - Dmn_DMesg and DMesg_DMesgNet form a composite interface built
+ *             on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
  *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
