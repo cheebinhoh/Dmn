@@ -429,18 +429,30 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
               }},
       m_name{name} {}
 
-Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
+Dmn_DMesg::~Dmn_DMesg() noexcept try {
+  for (auto &h : m_handlers) {
+    this->unregisterSubscriber(h->m_sub.get());
+  }
+
+  this->waitForEmpty();
+} catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
 
-void Dmn_DMesg::closeHandler(
-    std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> &handler) {
-  this->unregisterSubscriber(handler->m_sub.get());
-  handler->m_owner = nullptr;
+void Dmn_DMesg::closeHandler(HandlerType &handler) {
+  auto inhandler = handler.m_handler.lock();
+  if (!inhandler) {
+    handler.m_handler.reset();
 
-  const Dmn_DMesgHandler *const handler_ptr = handler.get();
-  handler = {};
+    return;
+  }
+
+  this->unregisterSubscriber(inhandler->m_sub.get());
+
+  inhandler->m_owner = nullptr;
+
+  const Dmn_DMesgHandler *const handler_ptr = inhandler.get();
 
   auto waitHandler = this->addExecTaskWithWait([this, handler_ptr]() -> void {
     auto iter =
@@ -455,6 +467,8 @@ void Dmn_DMesg::closeHandler(
   });
 
   waitHandler->wait();
+
+  handler.m_handler.reset();
 }
 
 auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)

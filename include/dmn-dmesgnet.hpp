@@ -142,9 +142,9 @@ private:
    * Internal runtime state and helper objects.
    */
   std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};
-  std::shared_ptr<Dmn_DMesgHandler> m_subscript_handler{};
-  std::shared_ptr<Dmn_DMesgHandler> m_write_handler{};
-  std::shared_ptr<Dmn_DMesgHandler> m_sys_handler{};
+  Dmn_DMesg::HandlerType m_subscript_handler{};
+  Dmn_DMesg::HandlerType m_write_handler{};
+  Dmn_DMesg::HandlerType m_sys_handler{};
   std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timer_proc{};
 
   dmn::DMesgPb m_sys{};

@@ -93,11 +93,20 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
   m_shutdown = true;
 
-  m_write_handler.reset();
-  m_input_handler.reset();
+  // First, release the input handler and stop the input/timer procs so that
+  // no background thread can access m_write_handler after it is closed.
+  if (m_input_handler) {
+    m_input_handler.reset();
+  }
+
   m_input_proc.reset();
   m_timer_proc.reset();
 
+  // Now it is safe to close the write handler, since no thread should be
+  // using it anymore.
+  if (m_write_handler) {
+    Dmn_DMesg::closeHandler(m_write_handler);
+  }
   if (m_output_handler) {
     // it is about to destroy the Dmn_DMesgNet and free everything
     // it will send last heartbeat and reliquinsh itself as master (if

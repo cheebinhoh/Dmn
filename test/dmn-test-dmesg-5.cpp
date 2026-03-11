@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     const std::string subscribed_topic{"counter sync 1"};
 
     int cnt{0};
-    std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handler =
+    auto dmesg_handler =
         dmesg.openHandler("handler", subscribed_topic, nullptr,
                           [&cnt](const dmn::DMesgPb &msg) mutable -> void {
                             EXPECT_TRUE("counter sync 1" == msg.topic());

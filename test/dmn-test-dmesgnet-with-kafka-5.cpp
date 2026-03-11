@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     const std::string subscribed_topic{"counter sync 1"};
 
     int cnt{0};
-    std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
+    auto dmesg_handle =
         dmesgnet1.openHandler("handler1", subscribed_topic, nullptr,
                               [&cnt](const dmn::DMesgPb &msg) mutable -> void {
                                 std::cout << "read\n";

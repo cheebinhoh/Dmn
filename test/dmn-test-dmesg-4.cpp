@@ -27,21 +27,21 @@ int main(int argc, char *argv[]) {
 
     int cnt{1};
 
-    std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> dmesg_handle =
-        dmesg.openHandler(
-            "handler", false, [](const dmn::DMesgPb &msg) { return true; },
-            [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) mutable {
-              std::cout << msg.ShortDebugString() << "\n";
+    dmn::Dmn_DMesg::HandlerType dmesg_handle{};
+    dmesg_handle = dmesg.openHandler(
+        "handler", false, [](const dmn::DMesgPb &msg) { return true; },
+        [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) mutable {
+          std::cout << msg.ShortDebugString() << "\n";
 
-              dmn::DMesgPb ret{msg};
-              try {
-                dmesg_handle->write(ret);
-                cnt++;
-              } catch (...) {
-                std::cout << "except cnt: " << cnt << "\n";
-                dmesg_handle->resolveConflict();
-              }
-            });
+          dmn::DMesgPb ret{msg};
+          try {
+            dmesg_handle->write(ret);
+            cnt++;
+          } catch (...) {
+            std::cout << "except cnt: " << cnt << "\n";
+            dmesg_handle->resolveConflict();
+          }
+        });
     EXPECT_TRUE(dmesg_handle);
 
     auto dmesg_write_handle = dmesg.openHandler("writeHandler");
