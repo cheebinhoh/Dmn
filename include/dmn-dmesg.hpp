@@ -304,7 +304,7 @@ public:
 
     /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
-     *        an exception occurs.
+     *                       read fail.
      */
     auto read() -> std::optional<dmn::DMesgPb> override;
 

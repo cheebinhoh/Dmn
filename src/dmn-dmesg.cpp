@@ -95,10 +95,10 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
           m_owner->resolveConflictInternal(dmesgpb.topic());
 
           if (m_owner->m_async_process_fn) {
-            m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
+            m_owner->m_async_process_fn(dmesgpb);
           } else {
-            dmn::DMesgPb copied = dmesgpb;
-            m_owner->m_buffers.push(copied);
+            auto copiedDMesg = dmesgpb;
+            m_owner->m_buffers.push(std::move_if_noexcept(copiedDMesg)); // copy
           }
         }
       }
@@ -250,9 +250,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
 
   this->isAfterInitialPlayback();
 
-  dmn::DMesgPb mesgPb = m_buffers.pop();
-
-  return mesgPb;
+  return m_buffers.pop();
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
@@ -291,7 +289,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
 
   bool block = flags.test(kBlock);
   if (flags.test(kForce)) {
-    DMESG_PB_SET_MSG_FORCE(dmesgpb, true);
+    DMESG_PB_SET_MSG_FORCE(moved_dmesgpb, true);
   }
 
   auto waithandler =
@@ -590,8 +588,8 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
   std::string topicToBeReset{topic};
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
-      { this->resetHandlerConflictStateInternal(handler_ptr); }, this,
-      handler_ptr, topicToBeReset);
+      { this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset); },
+      this, handler_ptr, topicToBeReset);
 }
 
 void Dmn_DMesg::resetHandlerConflictStateInternal(
