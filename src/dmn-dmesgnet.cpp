@@ -93,8 +93,10 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
   m_shutdown = true;
 
-  m_write_handler.reset();
-  m_input_handler.reset();
+  if (m_write_handler) {
+    Dmn_DMesg::closeHandler(m_write_handler);
+  }
+
   m_input_proc.reset();
   m_timer_proc.reset();
 
