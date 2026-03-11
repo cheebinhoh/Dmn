@@ -9,6 +9,10 @@
  *   * Dmn_Pub<T> publishes items of type T.
  *   * Dmn_Pub<T>::Dmn_Sub is the subscriber interface that receives items.
  *
+ * Design pattern
+ * - Adaptor - it allows other subclass to be adapted as publisher or
+ *             subscriber.
+ *
  * Key design goals
  * - Simplicity: minimal API to publish, register and unregister subscribers.
  * - Correctness: clear ownership and lifetime semantics, safe cleanup on

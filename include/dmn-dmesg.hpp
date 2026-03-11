@@ -12,6 +12,12 @@
  * light-weight, IO-style handler that client code holds (via std::shared_ptr)
  * to publish and consume DMesgPb messages.
  *
+ * Design pattern
+ * Proxy -
+ * Composite - The Dmn_DMesg and DMesg_DMesgNet forms a composite interface via
+ *             the proxy interface exposed by the Dmn_Pub and Dmn_Pub::Sub
+ * classes.
+ *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
  *   the proto when extra fields are needed (no C++ subclassing required).
@@ -304,7 +310,7 @@ public:
 
     /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
-     *                       read fail.
+     *                       the read fail.
      */
     auto read() -> std::optional<dmn::DMesgPb> override;
 

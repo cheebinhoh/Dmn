@@ -98,7 +98,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
             m_owner->m_async_process_fn(dmesgpb);
           } else {
             auto copiedDMesg = dmesgpb;
-            m_owner->m_buffers.push(std::move_if_noexcept(copiedDMesg)); // copy
+            m_owner->m_buffers.push(std::move_if_noexcept(
+                copiedDMesg)); // enqueue a copied message via a local buffer
           }
         }
       }
@@ -250,7 +251,13 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
 
   this->isAfterInitialPlayback();
 
-  return m_buffers.pop();
+  try {
+    return m_buffers.pop();
+  } catch (...) {
+    // Translate queue shutdown/interruption into an empty optional to
+    // match the Dmn_Io::read() contract.
+    return std::nullopt;
+  }
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {

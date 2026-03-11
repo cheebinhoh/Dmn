@@ -4,6 +4,11 @@
  * @file dmn-singleton.hpp
  * @brief Lightweight helper for implementing argumented singletons.
  *
+ * Design pattern
+ * Singleton - it provides singleton interface.
+ * Factory method - it provides an interface to create concrete singleton
+ *                  subclass object.
+ *
  * This header provides a small utility class, dmn::Dmn_Singleton, which
  * exposes a single static helper method:
  *
