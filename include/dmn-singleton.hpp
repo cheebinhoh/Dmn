@@ -5,7 +5,7 @@
  * @brief Lightweight helper for implementing argumented singletons.
  *
  * Design pattern
- * Singleton - it provides singleton interface.
+ * Singleton - it provides global singleton instance of the class.
  * Factory method - it provides an interface to create concrete singleton
  *                  subclass object.
  *
