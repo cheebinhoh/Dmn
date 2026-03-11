@@ -429,7 +429,13 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
               }},
       m_name{name} {}
 
-Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
+Dmn_DMesg::~Dmn_DMesg() noexcept try {
+  for (auto &h : m_handlers) {
+    this->unregisterSubscriber(h->m_sub.get());
+  }
+
+  this->waitForEmpty();
+} catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
 }
