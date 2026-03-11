@@ -437,6 +437,7 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try { this->waitForEmpty(); } catch (...) {
 void Dmn_DMesg::closeHandler(HandlerType &handler) {
   auto inhandler = handler.m_handler.lock();
   if (!inhandler) {
+    handler.m_handler.reset();
     return;
   }
 
