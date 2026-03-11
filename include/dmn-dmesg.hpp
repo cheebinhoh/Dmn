@@ -484,7 +484,7 @@ public:
     Dmn_DMesg *m_owner{};
     std::shared_ptr<Dmn_DMesgHandlerSub> m_sub{};
 
-    Dmn_BlockingQueue<dmn::DMesgPb> m_buffers{};
+    std::unique_ptr<Dmn_BlockingQueue_Interface<dmn::DMesgPb>> m_buffers{};
     dmn::DMesgPb m_last_dmesgpb_sys{};
     std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
 
