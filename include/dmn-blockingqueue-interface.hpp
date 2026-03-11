@@ -35,7 +35,7 @@ public:
   virtual void push(T &&item) = 0;
   virtual void push(T &item, bool move = true) = 0;
 
-  virtual void push(const T &item) final {
+  void push(const T &item) {
     T copied = item;
 
     push(std::move(copied));
