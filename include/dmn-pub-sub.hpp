@@ -12,9 +12,9 @@
  * Design pattern
  * - Adapter - it allows other subclasses to be adapted as publishers or
  *             subscribers.
- * - Observer - it defines 1 to many dependency between objects so that when
- *              one object publishes state change, all dependent subscribers
- *              are notified.
+ * - Observer - it defines one-to-many dependencies between objects so that
+ *              when one object publishes a state change, all dependent
+ *              subscribers are notified.
  *
  * Key design goals
  * - Simplicity: minimal API to publish, register and unregister subscribers.

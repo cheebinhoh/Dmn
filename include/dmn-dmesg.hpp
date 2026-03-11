@@ -16,7 +16,7 @@
  * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
  *            Dmn_DMesgHandler instances, offering pointer-like access while
  *            allowing the publisher to control handler lifetime.
- * Composite - Dmn_DMesg and DMesg_DMesgNet form a composite interface built
+ * Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built
  *             on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
  *
  * Key responsibilities
