@@ -501,11 +501,10 @@ public:
       return handler;
     }
 
-    void reset() { m_handler.reset(); }
-
     explicit operator bool() const noexcept { return !m_handler.expired(); }
 
   private:
+    void reset() { m_handler.reset(); }
     std::weak_ptr<Dmn_DMesgHandler> m_handler{};
   };
 
