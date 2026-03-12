@@ -95,10 +95,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
           m_owner->resolveConflictInternal(dmesgpb.topic());
 
           if (m_owner->m_async_process_fn) {
-            m_owner->m_async_process_fn(std::move_if_noexcept(dmesgpb));
+            m_owner->m_async_process_fn(dmesgpb);
           } else {
-            dmn::DMesgPb copied = dmesgpb;
-            m_owner->m_buffers.push(copied);
+            m_owner->m_buffers->push(dmesgpb);
           }
         }
       }
@@ -115,6 +114,8 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : m_name{name}, m_topic{topic}, m_filter_fn{std::move(filter_fn)},
       m_async_process_fn{std::move(async_process_fn)},
       m_configs{std::move(configs)} {
+  m_buffers = std::make_unique<Dmn_BlockingQueue<dmn::DMesgPb>>();
+
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
   auto iter = m_configs.find(std::string{kHandlerConfig_IncludeSys});
   if (m_configs.end() != iter) {
@@ -250,9 +251,13 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
 
   this->isAfterInitialPlayback();
 
-  dmn::DMesgPb mesgPb = m_buffers.pop();
-
-  return mesgPb;
+  try {
+    return m_buffers->pop();
+  } catch (...) {
+    // Translate queue shutdown/interruption into an empty optional to
+    // match the Dmn_Io::read() contract.
+    return std::nullopt;
+  }
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
@@ -291,7 +296,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
 
   bool block = flags.test(kBlock);
   if (flags.test(kForce)) {
-    DMESG_PB_SET_MSG_FORCE(dmesgpb, true);
+    DMESG_PB_SET_MSG_FORCE(moved_dmesgpb, true);
   }
 
   auto waithandler =
@@ -590,8 +595,8 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
   std::string topicToBeReset{topic};
 
   DMN_ASYNC_CALL_WITH_CAPTURE(
-      { this->resetHandlerConflictStateInternal(handler_ptr); }, this,
-      handler_ptr, topicToBeReset);
+      { this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset); },
+      this, handler_ptr, topicToBeReset);
 }
 
 void Dmn_DMesg::resetHandlerConflictStateInternal(

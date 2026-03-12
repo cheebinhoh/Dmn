@@ -12,6 +12,13 @@
  * light-weight, IO-style handler that client code holds (via std::shared_ptr)
  * to publish and consume DMesgPb messages.
  *
+ * Design pattern
+ * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
+ *            Dmn_DMesgHandler instances, offering pointer-like access while
+ *            allowing the publisher to control handler lifetime.
+ * Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built
+ *             on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
+ *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
  *   the proto when extra fields are needed (no C++ subclassing required).
@@ -304,7 +311,7 @@ public:
 
     /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
-     *        an exception occurs.
+     *                       the read fails / on shutdown.
      */
     auto read() -> std::optional<dmn::DMesgPb> override;
 
@@ -477,7 +484,7 @@ public:
     Dmn_DMesg *m_owner{};
     std::shared_ptr<Dmn_DMesgHandlerSub> m_sub{};
 
-    Dmn_BlockingQueue<dmn::DMesgPb> m_buffers{};
+    std::unique_ptr<Dmn_BlockingQueue_Interface<dmn::DMesgPb>> m_buffers{};
     dmn::DMesgPb m_last_dmesgpb_sys{};
     std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
 

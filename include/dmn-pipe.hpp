@@ -222,6 +222,8 @@ Dmn_Pipe<T, QueueType>::~Dmn_Pipe() noexcept try {
   m_shutdown.store(true, std::memory_order_release);
   lock.unlock();
 
+  Dmn_Proc::stopExec();
+
   QueueType::stop();
   Dmn_Proc::wait();
 } catch (...) {

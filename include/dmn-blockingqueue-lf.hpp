@@ -144,6 +144,8 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
   };
 
 public:
+  using Dmn_BlockingQueue_Interface<T>::push;
+
   Dmn_BlockingQueue_Lf();
   Dmn_BlockingQueue_Lf(std::initializer_list<T> list);
 

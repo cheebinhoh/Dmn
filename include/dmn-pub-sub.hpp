@@ -9,6 +9,13 @@
  *   * Dmn_Pub<T> publishes items of type T.
  *   * Dmn_Pub<T>::Dmn_Sub is the subscriber interface that receives items.
  *
+ * Design pattern
+ * - Adapter - it allows other subclasses to be adapted as publishers or
+ *             subscribers.
+ * - Observer - it defines one-to-many dependencies between objects so that
+ *              when one object publishes a state change, all dependent
+ *              subscribers are notified.
+ *
  * Key design goals
  * - Simplicity: minimal API to publish, register and unregister subscribers.
  * - Correctness: clear ownership and lifetime semantics, safe cleanup on

@@ -4,6 +4,7 @@
  * @file dmn-proc.hpp
  * @brief Lightweight RAII wrapper around native pthread functionality.
  *
+ * Overview
  * This header declares Dmn_Proc, a small object-oriented wrapper that
  * encapsulates a pthread and executes a user-provided callable
  * (std::function<void()>) in a separate thread. Instead of varying behaviour
@@ -20,6 +21,15 @@
  *   blocks indefinitely without reaching a cancellation point, the thread will
  *   not terminate. Place voluntary cancellation points (e.g. calls to
  *   Dmn_Proc::yield()) in long-running loops if you expect prompt cancellation.
+ *
+ * Design pattern
+ * Command - Implements a variant of the Command design pattern, allowing
+ *           clients to submit parameterized requests encapsulated as
+ *           std::function<void()> tasks executed by the thread.
+ * Bridge - Abstracts the underlying threading implementation from the client.
+ * Decorator - Provides an alternative to subclassing for threading behavior
+ *             and allows clients to attach additional responsibilities or
+ *             vary the behavior of the thread.
  *
  * Note on mutex cleanup macros:
  * The macros below wrap pthread_cleanup_push/pop for the common pattern of
