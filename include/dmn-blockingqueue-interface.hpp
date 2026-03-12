@@ -10,8 +10,6 @@
  *              dmn-blockingqueue-lf (lock-free).
  * - Bridge   : the blocking queue interface is abstracted from the underlying
  *              implementation (mutex lock or lock-free).
- * - Iterator : it abstracts the underlying implementation of aggregate object
- *              (queue).
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_

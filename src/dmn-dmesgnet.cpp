@@ -96,8 +96,10 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   m_input_proc.reset();
   m_timer_proc.reset();
 
-  // First, release the input handler and stop the input/timer procs so that
-  // no background thread can access m_write_handler after it is closed.
+  // First, stop the input/timer procs (via the resets above) so that
+  // Dmn_Proc::stopExec() can cancel/join any background threads before
+  // we release the input handler. This ensures no background thread can
+  // access m_write_handler after it is closed.
   if (m_input_handler) {
     m_input_handler.reset();
   }
