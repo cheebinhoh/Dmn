@@ -13,15 +13,15 @@
  *
  * Move and copy behavior
  * ----------------------
- * - push(T&&): Attempts to move the provided rvalue into the queue. It uses
- *   std::move_if_noexcept to prefer move only when it is noexcept (or the
- *   type is noexcept-movable).
+ * - push(T&&): Accepts an rvalue and enqueues it with move semantics. Callers
+ *   typically use `push(std::move(item))` on an lvalue to request moving.
  *
- * - push(T&): Attempts to copy the provided lvalue into the queue.
+ * - push(T&): Accepts a non-const lvalue and enqueues it by copy. If you want
+ *   to move from an lvalue, call `push(std::move(item))` so that the rvalue
+ *   overload is selected instead.
  *
- * - push(T&, bool move=true): Pushes the provided lvalue. If `move` is true,
- *   the code will attempt to move (using move_if_noexcept), otherwise it will
- *   copy.
+ * - push(const T&): Accepts a const lvalue and always enqueues a copy of the
+ *   provided item.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
@@ -50,7 +50,7 @@ public:
     push(copied, true);
   }
 
-  void push(T &item) { push(item, false); }
+  void push(T &item) { push(item, true); }
 
   virtual std::uint64_t waitForEmpty() = 0;
 
