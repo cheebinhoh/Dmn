@@ -252,6 +252,14 @@ template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
 }
 
 template <typename T>
+void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
+  auto *ticket_sp =
+      static_cast<std::unique_ptr<Dmn_Inflight_Guard<>::Ticket> *>(arg);
+
+  (*ticket_sp).reset();
+}
+
+template <typename T>
 auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
@@ -302,6 +310,11 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
 
   Dmn_Proc::testcancel();
 
+  auto inflightTicket = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
   m_queue.emplace_back(std::forward<U>(item));
   ++m_push_count;
 
@@ -309,6 +322,8 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
 
   // Notify multi-pop waiters first (they use m_none_empty_cond).
   m_not_empty_cond.notify_one();
+
+  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T> void Dmn_BlockingQueue<T>::stop() {
@@ -399,8 +414,6 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
   auto inflightTicket = this->enterInflightGate();
 
-  std::optional<T> data{};
-
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
@@ -441,14 +454,6 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
   return ret;
 } // method popOptional()
-
-template <typename T>
-void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
-  auto *ticket_sp =
-      static_cast<std::unique_ptr<Dmn_Inflight_Guard<>::Ticket> *>(arg);
-
-  (*ticket_sp).reset();
-}
 
 } // namespace dmn
 
