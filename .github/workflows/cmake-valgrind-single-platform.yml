@@ -3,7 +3,7 @@
 name: CMake on a single platform
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
     inputs:
       reason:
         description: 'For valgrind memory check'
