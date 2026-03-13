@@ -218,6 +218,7 @@ protected:
   auto isInflightGuardClosed() -> bool override;
 
 private:
+  static void cleanup_thunk_inflight(void *arg);
   template <class U> void pushImpl(U &&item);
 
   std::deque<T> m_queue{};
@@ -256,8 +257,6 @@ auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
 }
 
 template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  [[maybe_unused]] auto scope_lifetime_extender = this->enterInflightGate();
-
   auto data = popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
@@ -396,6 +395,15 @@ template <typename T>
 auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   std::unique_lock<std::mutex> lock(m_mutex);
 
+  std::optional<T> ret{};
+
+  auto inflightTicket = this->enterInflightGate();
+
+  std::optional<T> data{};
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
   Dmn_Proc::testcancel();
 
   if (m_queue.empty()) {
@@ -413,7 +421,7 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     return {};
   }
 
-  T val = std::move_if_noexcept(m_queue.front());
+  ret = std::move_if_noexcept(m_queue.front());
   m_queue.pop_front();
 
   ++m_pop_count;
@@ -429,8 +437,18 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     m_not_empty_cond.notify_one();
   }
 
-  return std::move_if_noexcept(val);
+  DMN_PROC_CLEANUP_POP(0);
+
+  return ret;
 } // method popOptional()
+
+template <typename T>
+void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
+  auto *ticket_sp =
+      static_cast<std::unique_ptr<Dmn_Inflight_Guard<>::Ticket> *>(arg);
+
+  (*ticket_sp).reset();
+}
 
 } // namespace dmn
 

@@ -50,7 +50,7 @@ public:
     push(copied, false);
   }
 
-  void push(T &item) { push(item, true); }
+  void push(T &item) { push(item, false); }
 
   virtual std::uint64_t waitForEmpty() = 0;
 
