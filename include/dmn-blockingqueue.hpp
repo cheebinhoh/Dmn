@@ -166,27 +166,6 @@ public:
   virtual auto popNoWait() -> std::optional<T> override;
 
   /**
-   * @brief Push an rvalue into the queue (attempts move, with
-   *        move_if_noexcept).
-   *
-   * Non-blocking and signals waiting consumers.
-   *
-   * @param item The value to push (rvalue reference, will be moved from).
-   */
-  virtual void push(T &&item) override;
-
-  /**
-   * @brief Push an lvalue into the queue.
-   *
-   * If move is true, the implementation will attempt to move from the given
-   * lvalue using std::move_if_noexcept; otherwise it will copy.
-   *
-   * @param item The value to push (lvalue reference).
-   * @param move If true attempt move semantics; otherwise copy.
-   */
-  virtual void push(T &item, bool move = true) override;
-
-  /**
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
@@ -207,6 +186,17 @@ protected:
    * @return optional value popped from the front of the queue.
    */
   virtual auto popOptional(bool wait) -> std::optional<T>;
+
+  /**
+   * @brief Push an lvalue into the queue.
+   *
+   * If move is true, the implementation will attempt to move from the given
+   * lvalue using std::move_if_noexcept; otherwise it will copy.
+   *
+   * @param item The value to push (lvalue reference).
+   * @param move If true attempt move semantics; otherwise copy.
+   */
+  virtual void push(T &item, bool move) override;
 
   /**
    * @brief Signal all waiting threads to wake up and return.
@@ -279,10 +269,6 @@ template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
 template <typename T>
 auto Dmn_BlockingQueue<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
-}
-
-template <typename T> void Dmn_BlockingQueue<T>::push(T &&item) {
-  pushImpl(std::move(item));
 }
 
 /**

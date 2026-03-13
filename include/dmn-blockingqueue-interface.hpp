@@ -10,6 +10,18 @@
  *              dmn-blockingqueue-lf (lock-free).
  * - Bridge   : the blocking queue interface is abstracted from the underlying
  *              implementation (mutex lock or lock-free).
+ *
+ * Move and copy behavior
+ * ----------------------
+ * - push(T&&): Attempts to move the provided rvalue into the queue. It uses
+ *   std::move_if_noexcept to prefer move only when it is noexcept (or the
+ *   type is noexcept-movable).
+ *
+ * - push(T&): Attempts to copy the provided lvalue into the queue.
+ *
+ * - push(T&, bool move=true): Pushes the provided lvalue. If `move` is true,
+ *   the code will attempt to move (using move_if_noexcept), otherwise it will
+ *   copy.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
@@ -30,18 +42,21 @@ public:
   virtual std::vector<T> pop(std::size_t count, long timeout = 0) = 0;
   virtual std::optional<T> popNoWait() = 0;
 
-  virtual void push(T &&item) = 0;
-  virtual void push(T &item, bool move = true) = 0;
+  virtual void push(T &&item) { push(item, true); }
 
   void push(const T &item) {
     T copied = item;
 
-    push(std::move(copied));
+    push(copied, true);
   }
+
+  void push(T &item) { push(item, false); }
 
   virtual std::uint64_t waitForEmpty() = 0;
 
 protected:
+  virtual void push(T &item, bool move) = 0;
+
   virtual void stop() = 0;
 };
 
