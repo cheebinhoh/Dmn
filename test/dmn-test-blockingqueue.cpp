@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
   std::string value{"hello"};
 
-  buf->push(value);
+  buf->push(std::move(value));
   EXPECT_TRUE(value.empty());
 
   proc->exec();
@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_BlockingQueue<std::string> string_not_move_buf{};
   std::string string_to_mot_move_buf{"not move"};
-  string_not_move_buf.push(string_to_mot_move_buf, false);
+  string_not_move_buf.push(string_to_mot_move_buf);
+
   const std::string string_from_not_move_buf = string_not_move_buf.pop();
 
   EXPECT_TRUE("not move" == string_from_not_move_buf);

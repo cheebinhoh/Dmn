@@ -166,27 +166,6 @@ public:
   virtual auto popNoWait() -> std::optional<T> override;
 
   /**
-   * @brief Push an rvalue into the queue (attempts move, with
-   *        move_if_noexcept).
-   *
-   * Non-blocking and signals waiting consumers.
-   *
-   * @param item The value to push (rvalue reference, will be moved from).
-   */
-  virtual void push(T &&item) override;
-
-  /**
-   * @brief Push an lvalue into the queue.
-   *
-   * If move is true, the implementation will attempt to move from the given
-   * lvalue using std::move_if_noexcept; otherwise it will copy.
-   *
-   * @param item The value to push (lvalue reference).
-   * @param move If true attempt move semantics; otherwise copy.
-   */
-  virtual void push(T &item, bool move = true) override;
-
-  /**
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
@@ -209,6 +188,17 @@ protected:
   virtual auto popOptional(bool wait) -> std::optional<T>;
 
   /**
+   * @brief Push an lvalue into the queue.
+   *
+   * If move is true, the implementation will attempt to move from the given
+   * lvalue using std::move_if_noexcept; otherwise it will copy.
+   *
+   * @param item The value to push (lvalue reference).
+   * @param move If true attempt move semantics; otherwise copy.
+   */
+  virtual void push(T &item, bool move) override;
+
+  /**
    * @brief Signal all waiting threads to wake up and return.
    *
    * Sets the m_shutdown_flag and notifies all condition variables so
@@ -228,6 +218,7 @@ protected:
   auto isInflightGuardClosed() -> bool override;
 
 private:
+  static void cleanup_thunk_inflight(void *arg);
   template <class U> void pushImpl(U &&item);
 
   std::deque<T> m_queue{};
@@ -266,8 +257,6 @@ auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
 }
 
 template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  [[maybe_unused]] auto scope_lifetime_extender = this->enterInflightGate();
-
   auto data = popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
@@ -279,10 +268,6 @@ template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
 template <typename T>
 auto Dmn_BlockingQueue<T>::popNoWait() -> std::optional<T> {
   return popOptional(false);
-}
-
-template <typename T> void Dmn_BlockingQueue<T>::push(T &&item) {
-  pushImpl(std::move(item));
 }
 
 /**
@@ -410,6 +395,15 @@ template <typename T>
 auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   std::unique_lock<std::mutex> lock(m_mutex);
 
+  std::optional<T> ret{};
+
+  auto inflightTicket = this->enterInflightGate();
+
+  std::optional<T> data{};
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
   Dmn_Proc::testcancel();
 
   if (m_queue.empty()) {
@@ -427,7 +421,7 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     return {};
   }
 
-  T val = std::move_if_noexcept(m_queue.front());
+  ret = std::move_if_noexcept(m_queue.front());
   m_queue.pop_front();
 
   ++m_pop_count;
@@ -443,8 +437,18 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
     m_not_empty_cond.notify_one();
   }
 
-  return std::move_if_noexcept(val);
+  DMN_PROC_CLEANUP_POP(0);
+
+  return ret;
 } // method popOptional()
+
+template <typename T>
+void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
+  auto *ticket_sp =
+      static_cast<std::unique_ptr<Dmn_Inflight_Guard<>::Ticket> *>(arg);
+
+  (*ticket_sp).reset();
+}
 
 } // namespace dmn
 

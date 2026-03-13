@@ -210,33 +210,6 @@ public:
   virtual auto popNoWait() -> std::optional<T> override;
 
   /**
-   * @brief Enqueue an item (rvalue overload).
-   *
-   * @details
-   * The value is moved into the queue using a noexcept-move preference
-   * (i.e., move if it is noexcept, otherwise copy).
-   *
-   * @param item Value to enqueue.
-   *
-   * @throws std::runtime_error If the queue is shutting down.
-   */
-  virtual void push(T &&item) override;
-
-  /**
-   * @brief Enqueue an item (lvalue overload) with optional move.
-   *
-   * @details
-   * If @p move is true, the value may be moved-from (noexcept-move preferred).
-   * If @p move is false, the value is copied.
-   *
-   * @param item The value to enqueue.
-   * @param move If true, attempt to move the item; otherwise copy.
-   *
-   * @throws std::runtime_error If the queue is shutting down.
-   */
-  virtual void push(T &item, bool move = true) override;
-
-  /**
    * @brief Busy-wait until the queue becomes empty.
    *
    * @details
@@ -255,13 +228,6 @@ public:
 
 protected:
   /**
-   * @brief Signal all waiting threads to wake up and return.
-   *
-   * Sets the m_shutdown flag and gradually exit all inflight threads.
-   */
-  virtual void stop() override;
-
-  /**
    * @brief Pop the head data, and wait for it if empty and wait is true.
    *
    * @param wait True will block the caller if the queue is empty.
@@ -273,6 +239,27 @@ protected:
   virtual auto popOptional(bool wait,
                            const Inflight_Guard_Ticket &inflightTicket)
       -> std::optional<T>;
+
+  /**
+   * @brief Enqueue an item (lvalue overload) with optional move.
+   *
+   * @details
+   * If @p move is true, the value may be moved-from (noexcept-move preferred).
+   * If @p move is false, the value is copied.
+   *
+   * @param item The value to enqueue.
+   * @param move If true, attempt to move the item; otherwise copy.
+   *
+   * @throws std::runtime_error If the queue is shutting down.
+   */
+  virtual void push(T &item, bool move) override;
+
+  /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
+   */
+  virtual void stop() override;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
@@ -543,18 +530,6 @@ auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
   DMN_PROC_CLEANUP_POP(0);
 
   return data;
-}
-
-template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &&item) {
-  auto inflightTicket = this->enterInflightGate();
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &inflightTicket);
-
-  // Preserve the original preference for noexcept-move (otherwise copy).
-  pushImpl(std::move_if_noexcept(item));
-
-  DMN_PROC_CLEANUP_POP(0);
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {

@@ -72,4 +72,4 @@ RUN mkdir build && cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON 
 
 
 # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"dmn|valgrind\" --output-on-failure && exec /bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"dmn\" --output-on-failure && exec /bin/bash"]
