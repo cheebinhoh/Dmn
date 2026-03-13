@@ -306,14 +306,14 @@ template <typename T> void Dmn_BlockingQueue<T>::push(T &item, bool move) {
 template <typename T>
 template <class U>
 void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
-  std::unique_lock<std::mutex> lock(m_mutex);
-
-  Dmn_Proc::testcancel();
-
   auto inflightTicket = this->enterInflightGate();
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
                         &inflightTicket);
+
+  std::unique_lock<std::mutex> lock(m_mutex);
+
+  Dmn_Proc::testcancel();
 
   m_queue.emplace_back(std::forward<U>(item));
   ++m_push_count;
