@@ -366,6 +366,7 @@ private:
   // Atomic flags used for coordination (lightweight spin semantics)
   std::atomic_flag m_main_enter_atomic_flag{};
   std::atomic_flag m_main_exit_atomic_flag{};
+  std::atomic_flag m_sched_enter_atomic_flag{};
 
   // Number of high, medium and low priority jobs scheduled and add to
   // pending queue waiting for scheduler.
@@ -450,8 +451,6 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
   // Dmn_Runtime_Manager.
 
   this->waitForEmpty();
-
-  assert(this->m_sched_task.empty());
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
