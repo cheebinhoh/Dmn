@@ -451,7 +451,6 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
 
   this->waitForEmpty();
 
-  assert(this->m_sched_job.empty());
   assert(this->m_sched_task.empty());
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept

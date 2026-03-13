@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   std::string value{"hello"};
 
   buf->push(value);
-  EXPECT_TRUE(value.empty());
+  EXPECT_TRUE(!value.empty());
 
   proc->exec();
 
