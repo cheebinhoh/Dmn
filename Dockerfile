@@ -70,6 +70,7 @@ EXPOSE 9092 2181
 # Run build
 RUN mkdir build && cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON && cmake --build build/
 
+ENV CTEST_LABEL=dmn
 
 # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"dmn\" --output-on-failure && exec /bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" --output-on-failure && exec /bin/bash"]
