@@ -47,7 +47,7 @@ public:
   void push(const T &item) {
     T copied = item;
 
-    push(copied, true);
+    push(copied, false);
   }
 
   void push(T &item) { push(item, true); }
