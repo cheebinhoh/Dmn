@@ -38,9 +38,9 @@ template <typename T> class Dmn_BlockingQueue_Interface {
 public:
   virtual ~Dmn_BlockingQueue_Interface() = default;
 
-  virtual T pop() = 0;
-  virtual std::vector<T> pop(std::size_t count, long timeout = 0) = 0;
-  virtual std::optional<T> popNoWait() = 0;
+  virtual auto pop() -> T = 0;
+  virtual auto pop(std::size_t count, long timeout = 0) -> std::vector<T> = 0;
+  virtual auto popNoWait() -> std::optional<T> = 0;
 
   virtual void push(T &&item) { push(item, true); }
 
