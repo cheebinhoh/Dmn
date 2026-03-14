@@ -62,7 +62,7 @@ public:
    *
    * @return front item of the queue
    */
-  auto pop() -> T override;
+  auto pop() -> T;
 
   /**
    * @brief Return true or false if the m_size is zero.
@@ -77,7 +77,7 @@ public:
    *
    * @return optional item from the front of the queue
    */
-  auto popNoWait() -> std::optional<T> override;
+  auto popNoWait() -> std::optional<T>;
 
   /**
    * @brief The method will push the item into queue using move semantics
@@ -95,7 +95,7 @@ public:
    * @param item The item to be pushed into queue
    * @param move True if use move semantic or false otherwise
    */
-  void push(T &item, bool move = true) override;
+  void push(T &item, bool move = true);
 
   /**
    * @brief The method returns the number of items held in the queue now.
