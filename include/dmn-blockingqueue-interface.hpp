@@ -97,7 +97,7 @@ public:
    */
   void push(T &&item);
 
-  virtual std::uint64_t waitForEmpty() = 0;
+  virtual auto waitForEmpty() -> std::uint64_t = 0;
 
 protected:
   virtual void push(T &item, bool move) = 0;
