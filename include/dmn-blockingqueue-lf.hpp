@@ -444,7 +444,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
 
   DMN_PROC_CLEANUP_POP(0);
 
-  return std::move(*data);
+  return data;
 }
 
 template <typename T>
