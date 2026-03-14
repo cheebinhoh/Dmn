@@ -56,6 +56,19 @@ public:
   auto pop() -> T;
 
   /**
+   * @brief Remove and return up to @p count items, optionally waiting.
+   *
+   * @param count   Maximum number of items to pop.
+   * @param timeout Optional timeout in milliseconds. A value of 0 indicates
+   *                an implementation-defined behavior (such as wait
+   *                indefinitely).
+   *
+   * @return A vector containing the dequeued items (possibly fewer than
+   *         @p count, depending on availability and timeout semantics).
+   */
+  virtual auto pop(std::size_t count, long timeout = 0) -> std::vector<T> = 0;
+
+  /**
    * @brief Attempt to pop a single item without waiting.
    *
    * @return The dequeued item, or std::nullopt if the queue was empty or
