@@ -204,6 +204,10 @@ public:
   virtual auto waitForEmpty() -> uint64_t override;
 
 protected:
+  /**
+   * @brief Wrapper to internal popOptional() that requires inflight guard
+   * object.
+   */
   virtual auto popOptional(bool wait) -> std::optional<T> override;
 
   /**
@@ -234,18 +238,18 @@ protected:
   virtual void push(T &item, bool move) override;
 
   /**
-   * @brief Signal all waiting threads to wake up and return.
-   *
-   * Sets the m_shutdown flag and gradually exit all inflight threads.
-   */
-  virtual void stop() override;
-
-  /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
    *
    * @param item The item to be pushed into tail of the queue
    */
   template <class U> void pushImpl(U &&item);
+
+  /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
+   */
+  virtual void stop() override;
 
   /**
    * Delegation methods integrate the queue into Dmn_InflightGuard interface.
