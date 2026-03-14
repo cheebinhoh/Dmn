@@ -136,7 +136,7 @@ if (ENABLE_VALGRIND)
 	dmn-test-runtime-queue-lf-3
 	dmn-test-singleton
 	dmn-test-socket
-	#dmn-test-teepipe
+	# dmn-test-teepipe
 	dmn-test-timer
   )
 
