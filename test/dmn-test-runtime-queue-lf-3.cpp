@@ -172,6 +172,7 @@ int main(int argc, char *argv[]) {
 
   // alarm(5);
   inst->enterMainLoop();
+  inst.reset();
 
   EXPECT_TRUE((sigAlrmCalled));
   EXPECT_TRUE((3 == lowRun));
