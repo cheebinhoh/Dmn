@@ -114,7 +114,6 @@ int main(int argc, char *argv[]) {
   proc.exec();
 
   inst->enterMainLoop();
-
   inst.reset();
 
   EXPECT_TRUE((15 == lowCount));
