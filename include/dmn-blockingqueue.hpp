@@ -59,16 +59,6 @@
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
  *
- * Move and copy behavior
- * ----------------------
- * - push(T&&): Attempts to move the provided rvalue into the queue. It uses
- *   std::move_if_noexcept to prefer move only when it is noexcept (or the
- *   type is noexcept-movable).
- *
- * - push(T&, bool move=true): Pushes the provided lvalue. If `move` is true,
- *   the code will attempt to move (using move_if_noexcept), otherwise it will
- *   copy.
- *
  * Implementation notes
  * --------------------
  * - The queue uses an unbounded std::deque<T>. There is no programmatic
@@ -115,6 +105,7 @@ template <typename T = std::string>
 class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
                           private Dmn_Inflight_Guard<> {
 public:
+  using Dmn_BlockingQueue_Interface<T>::pop;
   using Dmn_BlockingQueue_Interface<T>::push;
 
   Dmn_BlockingQueue();
@@ -125,13 +116,6 @@ public:
   Dmn_BlockingQueue<T> &operator=(const Dmn_BlockingQueue<T> &obj) = delete;
   Dmn_BlockingQueue(Dmn_BlockingQueue<T> &&obj) = delete;
   Dmn_BlockingQueue<T> &operator=(Dmn_BlockingQueue<T> &&obj) = delete;
-
-  /**
-   * @brief Remove and return the front item from the queue, blocking if empty.
-   *
-   * @return The front item.
-   */
-  virtual auto pop() -> T override;
 
   /**
    * @brief Pop multiple items from the queue with optional timeout semantics.
@@ -156,14 +140,7 @@ public:
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
    */
-  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
-
-  /**
-   * @brief Attempt a non-blocking pop. Return std::nullopt if empty.
-   *
-   * @return optional item, or std::nullopt if the queue was empty.
-   */
-  virtual auto popNoWait() -> std::optional<T> override;
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
   /**
    * @brief Wait until the queue becomes empty and return the total number of
@@ -185,7 +162,7 @@ protected:
    *             std::nullopt immediately if empty.
    * @return optional value popped from the front of the queue.
    */
-  virtual auto popOptional(bool wait) -> std::optional<T>;
+  virtual auto popOptional(bool wait) -> std::optional<T> override;
 
   /**
    * @brief Push an lvalue into the queue.
@@ -262,20 +239,6 @@ void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
 template <typename T>
 auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
-}
-
-template <typename T> auto Dmn_BlockingQueue<T>::pop() -> T {
-  auto data = popOptional(true);
-  if (!data) {
-    throw std::runtime_error("pop is interrupted, and return without data");
-  }
-
-  return std::move(*data);
-}
-
-template <typename T>
-auto Dmn_BlockingQueue<T>::popNoWait() -> std::optional<T> {
-  return popOptional(false);
 }
 
 /**
@@ -356,7 +319,12 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   assert(count > 0);
 
+  auto inflightTicket = this->enterInflightGate();
+
   std::unique_lock<std::mutex> lock(m_mutex);
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
 
   Dmn_Proc::testcancel();
 
@@ -402,6 +370,8 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
   } else {
     m_not_empty_cond.notify_one();
   }
+
+  DMN_PROC_CLEANUP_POP(0);
 
   return ret;
 }

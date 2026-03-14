@@ -144,6 +144,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
   };
 
 public:
+  using Dmn_BlockingQueue_Interface<T>::pop;
   using Dmn_BlockingQueue_Interface<T>::push;
 
   Dmn_BlockingQueue_Lf();
@@ -156,22 +157,6 @@ public:
   operator=(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
   Dmn_BlockingQueue_Lf(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
   Dmn_BlockingQueue_Lf<T> &operator=(Dmn_BlockingQueue_Lf<T> &&obj) = delete;
-
-  /**
-   * @brief Remove and return the front item, waiting until an item is
-   * available.
-   *
-   * @details
-   * If the queue is empty, this call waits (by yielding) until either:
-   * - an item is pushed, in which case that item is removed and returned, or
-   * - shutdown begins (e.g., destructor calls @ref stop()).
-   *
-   * @return The dequeued item.
-   *
-   * @throws std::runtime_error
-   *         If shutdown begins while waiting and no item is returned.
-   */
-  virtual auto pop() -> T override;
 
   /**
    * @brief Pop up to @p count items, optionally bounded by a timeout.
@@ -199,15 +184,7 @@ public:
    * @param timeout Timeout in microseconds. 0 means wait indefinitely.
    * @return Vector of dequeued items (size in [0, count]).
    */
-  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
-
-  /**
-   * @brief Attempt to pop a single item without waiting.
-   *
-   * @return The dequeued item, or std::nullopt if the queue was empty or
-   * shutdown has detached the queue.
-   */
-  virtual auto popNoWait() -> std::optional<T> override;
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
 
   /**
    * @brief Busy-wait until the queue becomes empty.
@@ -227,6 +204,12 @@ public:
   virtual auto waitForEmpty() -> uint64_t override;
 
 protected:
+  /**
+   * @brief Wrapper to internal popOptional() that requires inflight guard
+   * object.
+   */
+  virtual auto popOptional(bool wait) -> std::optional<T> override;
+
   /**
    * @brief Pop the head data, and wait for it if empty and wait is true.
    *
@@ -255,18 +238,18 @@ protected:
   virtual void push(T &item, bool move) override;
 
   /**
-   * @brief Signal all waiting threads to wake up and return.
-   *
-   * Sets the m_shutdown flag and gradually exit all inflight threads.
-   */
-  virtual void stop() override;
-
-  /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
    *
    * @param item The item to be pushed into tail of the queue
    */
   template <class U> void pushImpl(U &&item);
+
+  /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
+   */
+  virtual void stop() override;
 
   /**
    * Delegation methods integrate the queue into Dmn_InflightGuard interface.
@@ -417,25 +400,6 @@ auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> uint64_t {
   return freeNodeChain<&Node::m_retired_next>(head);
 }
 
-template <typename T> auto Dmn_BlockingQueue_Lf<T>::pop() -> T {
-  std::optional<T> data{};
-
-  auto inflightTicket = this->enterInflightGate();
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &inflightTicket);
-
-  data = popOptional(true, inflightTicket);
-
-  DMN_PROC_CLEANUP_POP(0);
-
-  if (!data) {
-    throw std::runtime_error("pop is interrupted, and return without data");
-  }
-
-  return std::move(*data);
-}
-
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
     -> std::vector<T> {
@@ -465,6 +429,22 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
   DMN_PROC_CLEANUP_POP(0);
 
   return res;
+}
+
+template <typename T>
+auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
+  std::optional<T> data{};
+
+  auto inflightTicket = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
+  data = popOptional(wait, inflightTicket);
+
+  DMN_PROC_CLEANUP_POP(0);
+
+  return data;
 }
 
 template <typename T>
@@ -514,22 +494,6 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
   }
 
   return res;
-}
-
-template <typename T>
-auto Dmn_BlockingQueue_Lf<T>::popNoWait() -> std::optional<T> {
-  std::optional<T> data{};
-
-  auto inflightTicket = this->enterInflightGate();
-
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
-                        &inflightTicket);
-
-  data = popOptional(false, inflightTicket);
-
-  DMN_PROC_CLEANUP_POP(0);
-
-  return data;
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {

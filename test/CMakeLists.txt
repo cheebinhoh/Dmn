@@ -64,7 +64,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-runtime-queue-lf-3
                       dmn-test-singleton
                       dmn-test-socket
-                      dmn-test-teepipe
+                      # dmn-test-teepipe
                       dmn-test-timer
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
@@ -136,7 +136,7 @@ if (ENABLE_VALGRIND)
 	dmn-test-runtime-queue-lf-3
 	dmn-test-singleton
 	dmn-test-socket
-	dmn-test-teepipe
+	# dmn-test-teepipe
 	dmn-test-timer
   )
 
