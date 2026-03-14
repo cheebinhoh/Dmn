@@ -86,7 +86,7 @@ public:
    *
    * @param item The item to be pushed into queue
    */
-  void push(T &&item) override;
+  void push(T &&item);
 
   /**
    * @brief The method will push the item into queue using move semantics if

@@ -48,7 +48,6 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-limit-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
@@ -59,7 +58,6 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-teepipe.hpp
 
                  # kafka
                  ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
