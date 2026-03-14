@@ -44,7 +44,7 @@ public:
    *        available.
    *
    * @details
-   * If the queue is empty, this call waits (by yielding) until either:
+   * If the queue is empty, this call blocks or waits until either:
    * - an item is pushed, in which case that item is removed and returned, or
    * - shutdown begins, then the method throws an exception.
    *
