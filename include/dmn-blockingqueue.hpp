@@ -140,7 +140,7 @@ public:
    *         between 1 and count if a timeout occurred after at least one item
    *         was produced).
    */
-  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
    * @brief Wait until the queue becomes empty and return the total number of
