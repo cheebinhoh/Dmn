@@ -184,7 +184,7 @@ public:
    * @param timeout Timeout in microseconds. 0 means wait indefinitely.
    * @return Vector of dequeued items (size in [0, count]).
    */
-  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T>;
+  virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
    * @brief Busy-wait until the queue becomes empty.
