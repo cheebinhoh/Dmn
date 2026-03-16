@@ -3,6 +3,13 @@ on:
   push:
     branches: [ main ]
 
+  workflow_dispatch:
+    inputs: 
+      reason:
+        description: 'For doxygen documentation'
+        required: false
+        default: 'Manual update' 
+
 jobs:
   build-docs:
     runs-on: ubuntu-latest
