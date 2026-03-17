@@ -13,15 +13,13 @@
  *
  * Move and copy behavior
  * ----------------------
- * - push(T&&): Accepts an rvalue and enqueues it with move semantics. Callers
- *   typically use `push(std::move(item))` on an lvalue to request moving.
+ * - push(const T&): Accepts an lvalue (const or non-const) and enqueues it
+ *   by copy. Passing a plain lvalue such as `push(item)` will bind to this
+ *   overload and copy the item into the queue.
  *
- * - push(T&): Accepts a non-const lvalue and enqueues it by copy. If you want
- *   to move from an lvalue, call `push(std::move(item))` so that the rvalue
- *   overload is selected instead.
- *
- * - push(const T&): Accepts a const lvalue and always enqueues a copy of the
- *   provided item.
+ * - push(T&&): Accepts an rvalue and enqueues it with move semantics. To
+ *   move from an lvalue, call `push(std::move(item))` so that this rvalue
+ *   overload is selected.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
@@ -106,6 +104,14 @@ protected:
 
   virtual void pushMove(T &&item) = 0;
 
+  /**
+   * @brief Legacy hook that dispatches to pushCopy or pushMove based on @p move.
+   *
+   * @param item The item to be enqueued.
+   * @param move If true, enqueue by move; otherwise, enqueue by copy.
+   */
+  virtual void push(T &item, bool move);
+
   virtual void stop() = 0;
 };
 
@@ -129,6 +135,15 @@ template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {
   pushCopy(item);
+}
+
+template <typename T>
+void Dmn_BlockingQueue_Interface<T>::push(T &item, bool move) {
+  if (move) {
+    pushMove(std::move(item));
+  } else {
+    pushCopy(item);
+  }
 }
 
 } // namespace dmn
