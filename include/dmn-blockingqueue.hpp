@@ -261,8 +261,9 @@ template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
  * - For rvalues: moves into the deque (one construction)
  * - For lvalues: copies into the deque
  *
- * If you still want the old “move_if_noexcept” behavior for lvalues, keep that
- * logic at the public overload level (see push(T&, bool)).
+ * If you still want custom “move_if_noexcept” behavior for lvalues, keep that
+ * logic at the public overload level (for example in pushCopy/pushMove)
+ * before delegating to pushImpl.
  */
 template <typename T>
 template <class U>
