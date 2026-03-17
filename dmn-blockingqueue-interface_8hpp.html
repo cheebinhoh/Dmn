@@ -121,9 +121,8 @@ Classes</h2></td></tr>
 <h2><a class="anchor" id="autotoc_md0"></a>
 Move and copy behavior</h2>
 <ul>
-<li>push(T&amp;&amp;): Accepts an rvalue and enqueues it with move semantics. Callers typically use <code>push(std::move(item))</code> on an lvalue to request moving.</li>
-<li>push(T&amp;): Accepts a non-const lvalue and enqueues it by copy. If you want to move from an lvalue, call <code>push(std::move(item))</code> so that the rvalue overload is selected instead.</li>
-<li>push(const T&amp;): Accepts a const lvalue and always enqueues a copy of the provided item. </li>
+<li>push(const T&amp;): Accepts an lvalue (const or non-const) and enqueues it by copy. Passing a plain lvalue such as <code>push(item)</code> will bind to this overload and copy the item into the queue.</li>
+<li>push(T&amp;&amp;): Accepts an rvalue and enqueues it using move semantics when possible. Concrete implementations may employ strategies such as <code>std::move_if_noexcept</code>, which can fall back to copying for types with throwing move constructors. To move from an lvalue, call <code>push(std::move(item))</code> so that this rvalue overload is selected. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->

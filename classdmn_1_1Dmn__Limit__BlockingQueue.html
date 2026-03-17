@@ -174,6 +174,9 @@ template&lt;typename T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">auto <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">dmn::Dmn_Limit_BlockingQueue</a>&lt; T &gt;::pop </td>
@@ -182,10 +185,17 @@ template&lt;typename T &gt; </div>
           <td> -&gt; T</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>The method will pop and return front item from the queue or the caller is blocked waiting if the queue is empty. </p>
 <dl class="section return"><dt>Returns</dt><dd>front item of the queue </dd></dl>
+
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a82e4e349958fb4584d0303b6d10af3cf">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -196,6 +206,9 @@ template&lt;typename T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">auto <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">dmn::Dmn_Limit_BlockingQueue</a>&lt; T &gt;::popNoWait </td>
@@ -204,10 +217,17 @@ template&lt;typename T &gt; </div>
           <td> -&gt; std::optional&lt;T&gt;</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>The method will pop and return front item from the queue or the std::nullopt if the queue is empty. </p>
 <dl class="section return"><dt>Returns</dt><dd>optional item from the front of the queue </dd></dl>
+
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a66bfe0b3d49808c6990b96df537bfc13">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -218,6 +238,9 @@ template&lt;typename T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">dmn::Dmn_Limit_BlockingQueue</a>&lt; T &gt;::push </td>
@@ -227,6 +250,11 @@ template&lt;typename T &gt; </div>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>The method will push the item into queue using move semantics unless noexcept is false. The caller is blocked waiting if the queue is full. </p>
@@ -237,6 +265,8 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
+
 </div>
 </div>
 <a id="aec4a2c3fcff18cdba8ebd3ad5f3deda3" name="aec4a2c3fcff18cdba8ebd3ad5f3deda3"></a>
@@ -246,9 +276,6 @@ template&lt;typename T &gt; </div>
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">dmn::Dmn_Limit_BlockingQueue</a>&lt; T &gt;::push </td>
@@ -268,11 +295,6 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>The method will push the item into queue using move semantics if move is t true. The caller is blocked waiting if the queue is full. </p>
@@ -283,8 +305,6 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a5cd2c7b8834ebbbf94f2d3a60d90d428">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
 
 </div>
 </div>
