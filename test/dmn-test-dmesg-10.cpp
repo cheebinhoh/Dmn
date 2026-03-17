@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-dmesg-1.cpp
+ * @file dmn-test-dmesg-10.cpp
  * @brief The unit test that asserts that the dmn-dmesg with one publisher and
  *        two subscribers work.
  */

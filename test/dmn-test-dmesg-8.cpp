@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-dmesg-7.cpp
+ * @file dmn-test-dmesg-8.cpp
  * @brief The unit test that asserts that the dmn-dmesg with messages left in
  *        the handler will be closed properly.
  */

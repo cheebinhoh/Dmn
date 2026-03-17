@@ -1,10 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * dmn-test-dmesgnet-1.cpp
+ * @file dmn-test-dmesgnet-1.cpp
+ * @brief Unit test for Dmn_DMesgNet lifecycle and system-message behavior.
  *
- * Purpose
- * -------
  * This unit test verifies the lifecycle and system-message behavior of a
  * single Dmn_DMesgNet instance when connected to in-process I/O endpoints
  * (Dmn_Pipe). Concretely, it checks that:

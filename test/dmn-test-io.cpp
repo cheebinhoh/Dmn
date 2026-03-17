@@ -1,5 +1,9 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-io.cpp
+ * @brief Unit test for Dmn_Pipe and Dmn_Proc I/O operations including
+ * multi-threaded read/write.
  */
 
 #include <gtest/gtest.h>

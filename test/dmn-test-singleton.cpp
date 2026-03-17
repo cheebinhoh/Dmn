@@ -1,5 +1,9 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-singleton.cpp
+ * @brief Unit test for Dmn_Singleton ensuring single-instance creation and
+ * pre-create hooks.
  */
 
 #include <gtest/gtest.h>

@@ -1,10 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * Unit test: dmn-test-dmesgnet-5.cpp
+ * @file dmn-test-dmesgnet-5.cpp
+ * @brief Unit test verifying that an out-of-sync topic counter puts
+ * Dmn_DMesgNet write handlers into conflict mode.
  *
- * Purpose
- * -------
  * This test verifies that Dmn_DMesgNet instance that receives a DMesgPb
  * message that the topic counter is out of sync will put all local write
  * handlers of the Dmn_DmesgNet in conflict mode.

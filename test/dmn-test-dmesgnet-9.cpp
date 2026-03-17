@@ -1,6 +1,10 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
+ * @file dmn-test-dmesgnet-9.cpp
+ * @brief Unit test asserting that two Dmn_DMesgNet objects can exchange
+ * messages via Dmn_Socket endpoints.
+ *
  * This test programs asserts that two Dmn_DMesgNet objects can
  * one send message through a Dmn_Socket at a particular ip and port
  * and another one receive sent message through another Dmn_Socket

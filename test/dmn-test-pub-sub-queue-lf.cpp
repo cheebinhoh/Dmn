@@ -1,6 +1,10 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
+ * @file dmn-test-pub-sub-queue-lf.cpp
+ * @brief Unit test for the Dmn_Pub/Dmn_Sub publish-subscribe model using a
+ * lock-free blocking queue.
+ *
  * This test program asserts that the Dmn_Pub and Dmn_Pub::Sub model.
  */
 
