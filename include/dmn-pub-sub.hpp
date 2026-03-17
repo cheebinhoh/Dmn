@@ -134,6 +134,15 @@ public:
    */
   class Dmn_Sub : public Dmn_Async<QueueType> {
   public:
+    /**
+     * @brief Construct a subscriber with a configurable initial-replay quantity.
+     *
+     * @param replayQuantity Controls how many buffered items are replayed when
+     *   this subscriber registers with a publisher:
+     *   -  -1 (default) : replay all buffered items.
+     *   -   0           : replay none.
+     *   - > 0           : replay at most the last N buffered items.
+     */
     explicit Dmn_Sub(ssize_t replayQuantity = -1)
         : m_replayQuantity{replayQuantity} {}
     virtual ~Dmn_Sub() noexcept;
@@ -144,11 +153,11 @@ public:
     Dmn_Sub &operator=(Dmn_Sub &&obj) = delete;
 
     /**
-     * notify
+     * @brief Deliver a published item to this subscriber.
      *
-     * Called to deliver a published item to this subscriber. This method is
-     * invoked inside the subscriber's asynchronous thread context. Subclasses
-     * must implement this method to process received items.
+     * This pure-virtual callback is invoked inside the subscriber's own
+     * singleton asynchronous thread context. Subclasses must implement this
+     * method to handle received items.
      *
      * @param item The data item delivered by the publisher.
      */
@@ -158,11 +167,10 @@ public:
 
   private:
     /**
-     * notifyInternal
+     * @brief Internal: schedule delivery of @p item into this subscriber's
+     *        asynchronous context via DMN_ASYNC_CALL_WITH_CAPTURE.
      *
-     * Internal helper called by Dmn_Pub to schedule delivery into the
-     * subscriber's asynchronous context. Do not call from user code; implement
-     * notify() instead.
+     * Do not call from user code; implement notify() instead.
      *
      * @param item The data item to deliver.
      */
@@ -177,7 +185,7 @@ public:
       std::function<bool(const Dmn_Sub *const, const T &t)>;
 
   /**
-   * Constructor
+   * @brief Construct a Dmn_Pub publisher.
    *
    * @param name A human-readable name used by Dmn_Async for the publisher
    *             thread context.
@@ -198,7 +206,7 @@ public:
   Dmn_Pub &operator=(Dmn_Pub &&obj) = delete;
 
   /**
-   * publish
+   * @brief Publish an item to all registered subscribers.
    *
    * Publish an item to all registered subscribers. The publish() call is
    * non-blocking (with blocking optional) with respect to subscriber handling:
@@ -213,7 +221,7 @@ public:
   void publish(const T &item, bool block = false);
 
   /**
-   * registerSubscriber
+   * @brief Construct and register a new subscriber of type U.
    *
    * Template parameters:
    *  - U : Dmn_Sub or class type that inherits from Dmn_Sub.
@@ -236,7 +244,7 @@ public:
   auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
 
   /**
-   * registerSubscriber
+   * @brief Register an already-constructed subscriber with this publisher.
    *
    * Register a subscriber of class interface/subclass from Dmn_Sub with
    * this publisher. This method acquires an internal mutex and returns
@@ -252,7 +260,7 @@ public:
   void registerSubscriber(std::shared_ptr<Dmn_Sub> sub);
 
   /**
-   * unregisterSubscriber
+   * @brief Deregister a previously-registered subscriber.
    *
    * Deregister a previously registered subscriber. This method acquires the
    * internal mutex and returns only after the subscriber has been removed.
@@ -264,7 +272,8 @@ public:
 
 protected:
   /**
-   * publishInternal
+   * @brief Core publish implementation: update the replay buffer and dispatch
+   *        notifications to all registered subscribers.
    *
    * Core implementation that performs buffering and iterates subscribers to
    * dispatch notifications. This runs inside the publisher's asynchronous

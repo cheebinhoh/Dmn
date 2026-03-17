@@ -49,7 +49,15 @@ namespace dmn {
 
 template <typename T> class Dmn_Timer : public Dmn_Proc {
 public:
+  /**
+   * @brief Construct and immediately start the timer.
+   *
+   * @param reltime The recurring interval between callback invocations.
+   * @param fn      The callback to invoke after each interval elapses.
+   */
   Dmn_Timer(const T &reltime, std::function<void()> fn);
+
+  /// @brief Stop the timer and join the background thread.
   virtual ~Dmn_Timer() noexcept;
 
   Dmn_Timer(const Dmn_Timer &obj) = delete;

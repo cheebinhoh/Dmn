@@ -117,8 +117,22 @@ namespace dmn {
 
 template <class T = std::monostate> class Dmn_Inflight_Guard {
 public:
+  /**
+   * @brief RAII ticket that tracks a single in-flight operation.
+   *
+   * Acquiring a Ticket increments the inflight counter (and invokes
+   * enterInflightGuardFnc()). Releasing it decrements the counter (and
+   * invokes leaveInflightGuardFnc()) and notifies any thread blocked in
+   * waitForEmptyInflight().
+   */
   class Ticket {
   public:
+    /**
+     * @brief Acquire an inflight ticket, incrementing the in-flight counter.
+     *
+     * @param inflightguard Owning guard (must not be null).
+     * @throws std::runtime_error if the guard is already closed/shutting down.
+     */
     Ticket(Dmn_Inflight_Guard *inflightguard) : m_inflightguard{inflightguard} {
       assert(nullptr != m_inflightguard);
 
@@ -151,6 +165,7 @@ public:
       }
     }
 
+    /// @brief Release the ticket, decrement the in-flight counter, and notify waiters.
     virtual ~Ticket() noexcept {
       assert(nullptr != m_inflightguard);
 
@@ -174,8 +189,10 @@ public:
     Ticket(Ticket &&obj) = delete;
     Ticket &operator=(Ticket &&obj) = delete;
 
+    /// @brief Return true if the ticket was successfully acquired.
     explicit operator bool() const noexcept { return m_entered; }
 
+    /// @brief Return the per-call payload value set by enterInflightGuardFnc().
     virtual auto getValue() const -> const T & { return m_value; }
 
   private:
@@ -184,7 +201,10 @@ public:
     T m_value{}; // std::monostate{} when "no payload"
   };
 
+  /// @brief Default-construct the guard with an in-flight count of zero.
   Dmn_Inflight_Guard() = default;
+
+  /// @brief Wait for all in-flight operations to complete before destruction.
   virtual ~Dmn_Inflight_Guard() noexcept { waitForEmptyInflight(); };
 
   Dmn_Inflight_Guard(const Dmn_Inflight_Guard &obj) = delete;
@@ -192,12 +212,23 @@ public:
   Dmn_Inflight_Guard(Dmn_Inflight_Guard &&obj) = delete;
   Dmn_Inflight_Guard &operator=(Dmn_Inflight_Guard &&obj) = delete;
 
+  /**
+   * @brief Acquire a new inflight ticket; throws if the guard is closed.
+   *
+   * @return A unique_ptr to the acquired Ticket.
+   * @throws std::runtime_error if isInflightGuardClosed() returns true.
+   */
   virtual auto enterInflightGate() -> std::unique_ptr<Ticket> final {
     auto ticket = std::make_unique<Ticket>(this);
 
     return ticket;
   }
 
+  /**
+   * @brief Block until all outstanding inflight tickets have been released.
+   *
+   * Uses atomic::wait/notify_all to efficiently sleep rather than spin.
+   */
   void waitForEmptyInflight() const {
     uint64_t val{};
 
@@ -207,12 +238,16 @@ public:
   }
 
 protected:
+  /// @brief Called when a Ticket is acquired; may return a per-call payload value.
   virtual auto enterInflightGuardFnc() -> T { return T{}; }
 
+  /// @brief Return true when the guard is closed and no new tickets should be issued.
   virtual auto isInflightGuardClosed() -> bool { return false; }
 
+  /// @brief Called when a Ticket is released with the payload value from enterInflightGuardFnc().
   virtual void leaveInflightGuardFnc(const T &) noexcept {}
 
+  /// @brief Return the current number of live (in-flight) tickets.
   auto inflight_count() const -> uint64_t {
     return m_inflight_count.load(std::memory_order_acquire);
   }

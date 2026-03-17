@@ -209,6 +209,14 @@ public:
     }; // class Dmn_DMesgHandlerSub
 
   public:
+    /**
+     * @brief Bit-position indices for the WriteFlags bitset.
+     *
+     * - kDefault     : no special behaviour.
+     * - kBlock       : block until the publisher has processed the message.
+     * - kForce       : bypass the running-counter conflict check.
+     * - kMaxWriteOptions : sentinel value (do not use as a flag).
+     */
     enum WriteOptions { kDefault = 0, kBlock, kForce, kMaxWriteOptions };
     using WriteFlags = std::bitset<kMaxWriteOptions>;
 
@@ -496,6 +504,15 @@ public:
     std::atomic_flag m_after_initial_playback{};
   }; // class Dmn_DMesgHandler
 
+  /**
+   * @brief Lightweight proxy that provides pointer-like access to a
+   *        Dmn_DMesgHandler while the publisher controls handler lifetime.
+   *
+   * Dmn_DMesgHandlerProxy wraps a std::weak_ptr<Dmn_DMesgHandler>. Calling
+   * operator->() locks the weak_ptr and throws std::runtime_error if the
+   * handler has been closed. The proxy evaluates to false once the
+   * underlying handler has been destroyed or closed.
+   */
   class Dmn_DMesgHandlerProxy {
     friend class Dmn_DMesg;
 
@@ -650,17 +667,18 @@ private:
 }; // class Dmn_DMesg
 
 template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
-  // This function:
-  //  - constructs a handler
-  //  - registers the handler as a subscriber
-  //  - wires handler<->subscriber<->publisher links
-  //  - schedules an async task on the publisher's singleton async thread to:
-  //      * add the handler to the internal list
-  //      * playback last-known messages per topic
-  //      * mark handler as initialized after playback
-  //
-  // The use of the publisher's singleton async context keeps most operations
-  // mutex-free for the hot paths (publish/notify).
+  /**
+   * @brief Create, register and return a new Dmn_DMesgHandler.
+   *
+   * Constructs the handler, wires the internal subscriber link, then posts an
+   * async task to the publisher's singleton context that:
+   *  - adds the handler to the internal handler list,
+   *  - replays the last-known message for every topic (initial playback), and
+   *  - marks the handler as ready to use (setAfterInitialPlayback).
+   *
+   * @tparam U Parameter pack forwarded to Dmn_DMesgHandler constructor.
+   * @return A Dmn_DMesgHandlerProxy wrapping the newly registered handler.
+   */
 
   auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
 

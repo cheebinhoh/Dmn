@@ -1,8 +1,27 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * The Dmn_Kafka is a wrapper module to Kafka c++ interface and implement Dmn_Io
- * interface with integration to Kafka broker through Kafka c++ interface.
+ * @file kafka/dmn-kafka.hpp
+ * @brief Dmn_Kafka — a Dmn_Io<std::string> adapter for Apache Kafka.
+ *
+ * Dmn_Kafka wraps the librdkafka C library and exposes a uniform
+ * Dmn_Io<std::string> interface for both producing and consuming Kafka
+ * messages.  A single instance acts as either a producer or consumer
+ * depending on the Role argument supplied to the constructor.
+ *
+ * Configuration is supplied as a ConfigType map (std::unordered_map<std::string,
+ * std::string>).  Most keys are passed through to rd_kafka_conf_set(); three
+ * special keys are consumed by Dmn_Kafka itself and are not forwarded:
+ *  - Dmn_Kafka::Topic         — the Kafka topic to read from / write to.
+ *  - Dmn_Kafka::Key           — an alternate topic name that, if set, overrides
+ *                                the Topic value when determining which topic
+ *                                to read from / write to.
+ *  - Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.
+ *
+ * Thread-safety:
+ *  - Concurrent calls to write() are serialised internally via an atomic flag;
+ *    each write blocks until the delivery-report callback fires.
+ *  - read() is not thread-safe; use a single reader thread per instance.
  */
 
 #ifndef DMN_KAFKA_HPP_
@@ -23,6 +42,16 @@
 
 namespace dmn {
 
+/**
+ * @brief Apache Kafka producer/consumer that implements the Dmn_Io<std::string>
+ *        interface.
+ *
+ * Wrap librdkafka so that Kafka topics can be used as drop-in Dmn_Io endpoints.
+ * Construct with Role::kProducer to send messages or Role::kConsumer to receive
+ * them.  Both directions use the same configuration map; Dmn_Kafka-specific
+ * keys (Topic, Key, PollTimeoutMs) are extracted before the remainder is
+ * forwarded to rd_kafka_conf_set().
+ */
 class Dmn_Kafka : public dmn::Dmn_Io<std::string> {
 public:
   /**
@@ -30,7 +59,7 @@ public:
    *        to rdkafka).
    */
   const static std::string Topic;         // topic to read from or write to
-  const static std::string Key;           // the key that the topic is writen to
+  const static std::string Key;           // alternate topic name that overrides Topic
   const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
                                           // break out
 
