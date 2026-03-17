@@ -44,6 +44,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "dmn-proc.hpp"
@@ -224,18 +225,24 @@ protected:
       -> std::optional<T>;
 
   /**
-   * @brief Enqueue an item (lvalue overload) with optional move.
+   * @brief Wrapper call to pushImpl to copy and enqueue the item into the
+   *        queue.
    *
-   * @details
-   * If @p move is true, the value may be moved-from (noexcept-move preferred).
-   * If @p move is false, the value is copied.
-   *
-   * @param item The value to enqueue.
-   * @param move If true, attempt to move the item; otherwise copy.
-   *
-   * @throws std::runtime_error If the queue is shutting down.
+   * @param item The item to be enqueued.
+   * @throws std::runtime_error if the queue is shutting down when the push
+   *         operation is attempted.
    */
-  virtual void push(T &item, bool move) override;
+  void pushCopy(const T &item) override;
+
+  /**
+   * @brief Wrapper call to pushImpl to move and enqueue the item into the
+   *        queue.
+   *
+   * @param item The item to be enqueued.
+   * @throws std::runtime_error if the queue is shutting down when the push
+   *         operation is attempted.
+   */
+  void pushMove(T &&item) override;
 
   /**
    * @brief Push the item into the tail of the queue (move or copy semantics).
@@ -496,18 +503,24 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
   return res;
 }
 
-template <typename T> void Dmn_BlockingQueue_Lf<T>::push(T &item, bool move) {
+template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
   auto inflightTicket = this->enterInflightGate();
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  if (move) {
-    // Preserve the original preference for noexcept-move (otherwise copy).
-    pushImpl(std::move_if_noexcept(item));
-  } else {
-    pushImpl(item); // copy
-  }
+  pushImpl(item); // copy
+
+  DMN_PROC_CLEANUP_POP(0);
+}
+
+template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
+  auto inflightTicket = this->enterInflightGate();
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
+
+  pushImpl(std::move(item)); // move if noexcept, else copy
 
   DMN_PROC_CLEANUP_POP(0);
 }

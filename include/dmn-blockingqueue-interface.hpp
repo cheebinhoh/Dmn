@@ -13,15 +13,15 @@
  *
  * Move and copy behavior
  * ----------------------
- * - push(T&&): Accepts an rvalue and enqueues it with move semantics. Callers
- *   typically use `push(std::move(item))` on an lvalue to request moving.
+ * - push(const T&): Accepts an lvalue (const or non-const) and enqueues it
+ *   by copy. Passing a plain lvalue such as `push(item)` will bind to this
+ *   overload and copy the item into the queue.
  *
- * - push(T&): Accepts a non-const lvalue and enqueues it by copy. If you want
- *   to move from an lvalue, call `push(std::move(item))` so that the rvalue
- *   overload is selected instead.
- *
- * - push(const T&): Accepts a const lvalue and always enqueues a copy of the
- *   provided item.
+ * - push(T&&): Accepts an rvalue and enqueues it using move semantics when
+ *   possible. Concrete implementations may employ strategies such as
+ *   `std::move_if_noexcept`, which can fall back to copying for types with
+ *   throwing move constructors. To move from an lvalue, call
+ *   `push(std::move(item))` so that this rvalue overload is selected.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
@@ -54,7 +54,7 @@ public:
    * @throws std::runtime_error
    *         If shutdown begins while waiting and no item is returned.
    */
-  auto pop() -> T;
+  virtual auto pop() -> T final;
 
   /**
    * @brief Remove and return up to @p count items, optionally waiting.
@@ -75,34 +75,39 @@ public:
    * @return The dequeued item, or std::nullopt if the queue was empty or
    *         shutdown has detached the queue.
    */
-  auto popNoWait() -> std::optional<T>;
-
-  /**
-   * @brief Copy and enqueue the lvalue item into the tail of the queue.
-   *
-   * @param item The lvalue item to be enqueued.
-   */
-  void push(T &item);
+  virtual auto popNoWait() -> std::optional<T> final;
 
   /**
    * @brief Copy and enqueue the const lvalue item into the tail of the queue.
    *
    * @param item The const lvalue item to be enqueued.
    */
-  void push(const T &item);
+  virtual void push(const T &item) final;
 
   /**
-   * @brief Move and enqueue the rvalue item into the tail of the queue.
+   * @brief Enqueue an rvalue item into the tail of the queue, preferring move
+   *        semantics.
    *
-   * @param item The rvalue item to be enqueued.
+   * @param item The rvalue item to be enqueued. Implementations may
+   *        internally fall back to copying (e.g., when using
+   *        std::move_if_noexcept for types with throwing move constructors).
    */
-  void push(T &&item);
+  virtual void push(T &&item) final;
 
+  /**
+   * @brief Wait until the queue becomes empty and return the total number of
+   *        items that have passed through the queue.
+   *
+   * @return The total number of items that have been passed through the queue.
+   */
   virtual auto waitForEmpty() -> std::uint64_t = 0;
 
 protected:
-  virtual void push(T &item, bool move) = 0;
   virtual auto popOptional(bool wait) -> std::optional<T> = 0;
+
+  virtual void pushCopy(const T &item) = 0;
+
+  virtual void pushMove(T &&item) = 0;
 
   virtual void stop() = 0;
 };
@@ -122,17 +127,11 @@ auto Dmn_BlockingQueue_Interface<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
-  push(item, true);
+  pushMove(std::move(item));
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {
-  T copied = item;
-
-  push(copied, false);
-}
-
-template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &item) {
-  push(item, false);
+  pushCopy(item);
 }
 
 } // namespace dmn

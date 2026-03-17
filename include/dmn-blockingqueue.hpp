@@ -86,6 +86,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "dmn-proc.hpp"
@@ -165,15 +166,20 @@ protected:
   virtual auto popOptional(bool wait) -> std::optional<T> override;
 
   /**
-   * @brief Push an lvalue into the queue.
+   * @brief Wrapper call to pushImpl to copy and enqueue the item into the
+   *        queue.
    *
-   * If move is true, the implementation will attempt to move from the given
-   * lvalue using std::move_if_noexcept; otherwise it will copy.
-   *
-   * @param item The value to push (lvalue reference).
-   * @param move If true attempt move semantics; otherwise copy.
+   * @param item The item to be enqueued.
    */
-  virtual void push(T &item, bool move) override;
+  void pushCopy(const T &item) override;
+
+  /**
+   * @brief Wrapper call to pushImpl to move and enqueue the item into the
+   *        queue.
+   *
+   * @param item The item to be enqueued.
+   */
+  void pushMove(T &&item) override;
 
   /**
    * @brief Signal all waiting threads to wake up and return.
@@ -196,6 +202,7 @@ protected:
 
 private:
   static void cleanup_thunk_inflight(void *arg);
+
   template <class U> void pushImpl(U &&item);
 
   std::deque<T> m_queue{};
@@ -241,20 +248,12 @@ auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
 
-/**
- * @brief Push an lvalue into the queue, optionally moving-from it.
- *
- * Keeps the original semantics:
- * - move=true  -> move_if_noexcept(item)
- * - move=false -> copy item
- */
-template <typename T> void Dmn_BlockingQueue<T>::push(T &item, bool move) {
-  if (move) {
-    // Preserve the original preference for noexcept-move (otherwise copy).
-    pushImpl(std::move_if_noexcept(item));
-  } else {
-    pushImpl(item); // copy
-  }
+template <typename T> void Dmn_BlockingQueue<T>::pushCopy(const T &item) {
+  pushImpl(item); // copy
+}
+
+template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
+  pushImpl(std::move(item)); // move
 }
 
 /**
@@ -263,8 +262,9 @@ template <typename T> void Dmn_BlockingQueue<T>::push(T &item, bool move) {
  * - For rvalues: moves into the deque (one construction)
  * - For lvalues: copies into the deque
  *
- * If you still want the old “move_if_noexcept” behavior for lvalues, keep that
- * logic at the public overload level (see push(T&, bool)).
+ * If you still want custom “move_if_noexcept” behavior for lvalues, keep that
+ * logic at the public overload level (for example in pushCopy/pushMove)
+ * before delegating to pushImpl.
  */
 template <typename T>
 template <class U>
