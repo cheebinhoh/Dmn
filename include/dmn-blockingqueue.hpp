@@ -86,6 +86,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "dmn-proc.hpp"
@@ -252,7 +253,7 @@ template <typename T> void Dmn_BlockingQueue<T>::pushCopy(const T &item) {
 }
 
 template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
-  pushImpl(std::move(item)); // move
+  pushImpl(std::move_if_noexcept(item)); // move
 }
 
 /**

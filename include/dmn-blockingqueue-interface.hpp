@@ -105,7 +105,8 @@ protected:
   virtual void pushMove(T &&item) = 0;
 
   /**
-   * @brief Legacy hook that dispatches to pushCopy or pushMove based on @p move.
+   * @brief Legacy hook that dispatches to pushCopy or pushMove based on @p
+   * move.
    *
    * @param item The item to be enqueued.
    * @param move If true, enqueue by move; otherwise, enqueue by copy.
