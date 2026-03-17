@@ -106,7 +106,7 @@ Inheritance diagram for dmn::Dmn_DMesg:</div>
   <img src="classdmn_1_1Dmn__DMesg.png" usemap="#dmn::Dmn_5FDMesg_map" alt=""/>
   <map id="dmn::Dmn_5FDMesg_map" name="dmn::Dmn_5FDMesg_map">
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="1090,224,1807,248"/>
-<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="1090,168,1807,192"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="1090,168,1807,192"/>
 <area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; T, QueueType &gt;" shape="rect" coords="1090,112,1807,136"/>
 <area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="363,56,1080,80"/>
 <area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="1090,56,1807,80"/>
@@ -123,7 +123,6 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume dmn::DMesgPb messages. It implements Dmn_Io&lt;DMesgPb&gt;.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight proxy that provides pointer-like access to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> while the publisher controls handler lifetime.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
@@ -185,7 +184,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a43e3fef6207b48bb8dc34d44fdc7930b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
 <tr class="memitem:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9d64b2532b52140b295e08108ed8dad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={})</td></tr>
-<tr class="memdesc:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> publisher.  <br /></td></tr>
 <tr class="separator:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03d7f38a7e8882e51262710c4248c2cb inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a03d7f38a7e8882e51262710c4248c2cb"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;obj)=delete</td></tr>
@@ -200,20 +198,16 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a82fec3a9de320410f9853ad7707555ee inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const dmn::DMesgPb &amp;item, bool block=false)</td></tr>
-<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
-<tr class="memdesc:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct and register a new subscriber of type U.  <br /></td></tr>
 <tr class="separator:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a4c12fab34e0278df727ba76930a2b7ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac">registerSubscriber</a> (std::shared_ptr&lt; Dmn_Sub &gt; sub)</td></tr>
-<tr class="memdesc:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register an already-constructed subscriber with this publisher.  <br /></td></tr>
 <tr class="separator:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9bbf3609dbd2726eccee295b5b6604da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da">unregisterSubscriber</a> (Dmn_Sub *sub)</td></tr>
-<tr class="memdesc:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deregister a previously-registered subscriber.  <br /></td></tr>
 <tr class="separator:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Async"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Async')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async&lt; QueueType &gt;</a></td></tr>
 <tr class="memitem:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a7b3c978d0e9d4279212ad420c629cf5c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async</a> (std::string_view name=&quot;&quot;)</td></tr>
-<tr class="memdesc:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> helper.  <br /></td></tr>
+<tr class="memdesc:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> helper.  <br /></td></tr>
 <tr class="separator:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9affa58549aac864ed71a122148369b inherit pub_methods_classdmn_1_1Dmn__Async" id="r_ad9affa58549aac864ed71a122148369b"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async</b> (const <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj)=delete</td></tr>
@@ -242,13 +236,9 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 <tr class="memdesc:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Same as <a class="el" href="classdmn_1_1Dmn__Async.html#a8c83719eacf487b78c76b93e07959e1a" title="Schedule a task to run after the given duration has elapsed.">addExecTaskAfter()</a>, but returns a task wait object so the caller can block until the scheduled task finishes.  <br /></td></tr>
 <tr class="separator:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Pipe"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Pipe')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a></td></tr>
-<tr class="memitem:a0b8e952a277c68325b96c64608451a4c inherit pub_methods_classdmn_1_1Dmn__Pipe" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c">Dmn_Pipe</a> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
-<tr class="memdesc:a0b8e952a277c68325b96c64608451a4c inherit pub_methods_classdmn_1_1Dmn__Pipe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>, optionally starting a background processing thread.  <br /></td></tr>
+<tr class="memitem:a0b8e952a277c68325b96c64608451a4c inherit pub_methods_classdmn_1_1Dmn__Pipe" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top">
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
 <tr class="separator:a0b8e952a277c68325b96c64608451a4c inherit pub_methods_classdmn_1_1Dmn__Pipe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bb79f728f7ea508565600ceb0e1ed95 inherit pub_methods_classdmn_1_1Dmn__Pipe" id="r_a9bb79f728f7ea508565600ceb0e1ed95"><td class="memItemLeft" align="right" valign="top">
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () noexcept</td></tr>
-<tr class="memdesc:a9bb79f728f7ea508565600ceb0e1ed95 inherit pub_methods_classdmn_1_1Dmn__Pipe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the background processing thread (if any) and drain the queue. <br /></td></tr>
-<tr class="separator:a9bb79f728f7ea508565600ceb0e1ed95 inherit pub_methods_classdmn_1_1Dmn__Pipe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b0ea1743998b84fceb3645cc4c7c38a inherit pub_methods_classdmn_1_1Dmn__Pipe" id="r_a1b0ea1743998b84fceb3645cc4c7c38a"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (const <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt; T, QueueType &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:a1b0ea1743998b84fceb3645cc4c7c38a inherit pub_methods_classdmn_1_1Dmn__Pipe"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -314,6 +304,10 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () n
 <tr class="memitem:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ae186a99dbfb75edb26c410972af428a4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4">push</a> (T &amp;&amp;item) final</td></tr>
 <tr class="memdesc:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classdmn_1_1Dmn__Io"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Io')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io&lt; T &gt;</a></td></tr>
+<tr class="memitem:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
+<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="separator:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Proc"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Proc')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
 <tr class="memitem:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view name, const Dmn_Proc::Task &amp;fnc={})</td></tr>
 <tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
@@ -367,11 +361,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:a34bd45668411eff973892aa865d4fbab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post an async action that resets a handler's conflict state in the publisher's singleton async thread context.  <br /></td></tr>
 <tr class="separator:a34bd45668411eff973892aa865d4fbab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const T &amp;item, bool block=false)</td></tr>
-<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
 <tr class="memitem:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub" id="r_a991e2091744fb33652ee7dc6fc3f862d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">publishInternal</a> (const dmn::DMesgPb &amp;item)</td></tr>
-<tr class="memdesc:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core publish implementation: update the replay buffer and dispatch notifications to all registered subscribers.  <br /></td></tr>
 <tr class="separator:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__BlockingQueue"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__BlockingQueue')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; T &gt;</a></td></tr>
 <tr class="memitem:a4f53e58973a337776d3ddc1bc4075f02 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a4f53e58973a337776d3ddc1bc4075f02"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a4f53e58973a337776d3ddc1bc4075f02">popOptional</a> (bool wait) -&gt; std::optional&lt; T &gt; override</td></tr>
@@ -502,11 +494,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Return the cache of last topic message. </p>
-<p>Return a reference to the per-topic last-message cache.</p>
-<dl class="section return"><dt>Returns</dt><dd>The cache of last topic messages.</dd></dl>
-<p>This virtual method allows <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> to substitute its own per-topic cache (m_topic_last_dmesgpb in the subclass) so that heartbeat messages sent to the network use the most-recent state even after reconciliation.</p>
-<p>Must be called from within the <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> serialisation context.</p>
-<dl class="section return"><dt>Returns</dt><dd>Reference to the map from topic string to the last DMesgPb for that topic. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The cache of last topic messages. </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d">dmn::Dmn_DMesgNet</a>.</p>
 
@@ -560,19 +548,6 @@ template&lt;class... U&gt; </div>
 <p>Create, register and return a new <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a>. </p>
 <p>This template forwards its arguments to the <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> constructor. Registration and the initial playback of last-known messages are performed asynchronously in the publisher's singleton async context so that handler construction remains lock-free for fast paths.</p>
 <dl class="section return"><dt>Returns</dt><dd>the handler proxy to internal shared_ptr handler registered with DMesg. </dd></dl>
-<p>Create, register and return a new <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a>.</p>
-<p>Constructs the handler, wires the internal subscriber link, then posts an async task to the publisher's singleton context that:</p><ul>
-<li>adds the handler to the internal handler list,</li>
-<li>replays the last-known message for every topic (initial playback), and</li>
-<li>marks the handler as ready to use (setAfterInitialPlayback).</li>
-</ul>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">U</td><td>Parameter pack forwarded to <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> constructor. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html" title="Lightweight proxy that provides pointer-like access to a Dmn_DMesgHandler while the publisher control...">Dmn_DMesgHandlerProxy</a> wrapping the newly registered handler.</dd></dl>
 
 </div>
 </div>
@@ -609,9 +584,8 @@ template&lt;class... U&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Publish an item to all registered subscribers. </p>
-<p>Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers.">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.</p>
+<p>publish</p>
+<p>Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to publish. </td></tr>
@@ -635,7 +609,7 @@ template&lt;class... U&gt; </div>
           <td class="memname">void dmn::Dmn_DMesg::publishInternal </td>
           <td>(</td>
           <td class="paramtype">const dmn::DMesgPb &amp;&#160;</td>
-          <td class="paramname"><em>dmesgpb</em></td><td>)</td>
+          <td class="paramname"><em>dmesgPb</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -647,29 +621,12 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Publish a normal DMesgPb to subscribers. </p>
-<p>Core publish path with conflict detection and running-counter management.</p>
 <p>Conflict detection:</p><ul>
 <li>If the incoming message's topic running counter is older than the publisher's recorded counter for that topic, it indicates the writer is out-of-sync. In that case, only the writer's handler is placed into a conflict state; its future writes will be rejected until the client resolves the conflict.</li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dmesgPb</td><td>The message to be published.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>For each non-playback message this method:</p><ol type="1">
-<li>Checks whether the originating handler is already in conflict; if so and force is not set, the message is silently dropped.</li>
-<li>Computes the expected next running counter for the topic.<ul>
-<li>If the incoming counter is stale (&lt; expected) or the message already carries conflict=true, the message is re-published with conflict=true and the source handler is placed in conflict state.</li>
-<li>Otherwise the running counter is advanced, the message is cached as the last value for the topic, and it is forwarded to all subscribers via <a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d" title="Core publish implementation: update the replay buffer and dispatch notifications to all registered su...">Dmn_Pub::publishInternal()</a>.</li>
-</ul>
-</li>
-</ol>
-<p>Playback messages bypass conflict checks and are forwarded unchanged.</p>
-<p>Must be called from within the <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> serialisation context.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">dmesgpb</td><td>The message to publish. </td></tr>
+    <tr><td class="paramname">dmesgPb</td><td>The message to be published. </td></tr>
   </table>
   </dd>
 </dl>
@@ -701,18 +658,9 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Publish a system message via the async context. </p>
-<p>Publish a system-type DMesgPb message, advancing the sys running counter.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dmesgpb_sys</td><td>The system message to publish.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>System messages (type == DMesgTypePb::sys) use a dedicated publish path that unconditionally advances the topic running counter without conflict detection. This is used for cluster heartbeat / election messages that must always be delivered to all subscribers regardless of ordering conflicts.</p>
-<p>Must be called from within the <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> serialisation context.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">dmesgpb_sys</td><td>The system message to publish (topic must equal kDMesgSysIdentifier and type must be sys). </td></tr>
+    <tr><td class="paramname">dmesgpb_sys</td><td>The system message to publish. </td></tr>
   </table>
   </dd>
 </dl>

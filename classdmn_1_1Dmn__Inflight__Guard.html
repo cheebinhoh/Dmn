@@ -107,10 +107,11 @@ Inheritance diagram for dmn::Dmn_Inflight_Guard&lt; T &gt;:</div>
 <area href="classdmn_1_1Dmn__BlockingQueue.html" alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="727,56,1444,80"/>
 <area href="classdmn_1_1Dmn__BlockingQueue.html" alt="dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;" shape="rect" coords="1454,56,2171,80"/>
 <area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="2181,56,2898,80"/>
+<area href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface." alt="dmn::Dmn_Kafka" shape="rect" coords="2908,56,3625,80"/>
 <area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;" shape="rect" coords="0,112,717,136"/>
 <area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; T, QueueType &gt;" shape="rect" coords="2181,112,2898,136"/>
 <area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="1817,168,2534,192"/>
-<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="2544,168,3261,192"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="2544,168,3261,192"/>
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="1817,224,2534,248"/>
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="2544,224,3261,248"/>
 <area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="3271,224,3988,248"/>
@@ -122,19 +123,10 @@ Inheritance diagram for dmn::Dmn_Inflight_Guard&lt; T &gt;:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">RAII ticket that tracks a single in-flight operation.  <a href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7909de1d851ff4bf881f2bb692d70005" id="r_a7909de1d851ff4bf881f2bb692d70005"><td class="memItemLeft" align="right" valign="top"><a id="a7909de1d851ff4bf881f2bb692d70005" name="a7909de1d851ff4bf881f2bb692d70005"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Inflight_Guard</b> ()=default</td></tr>
-<tr class="memdesc:a7909de1d851ff4bf881f2bb692d70005"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default-construct the guard with an in-flight count of zero. <br /></td></tr>
-<tr class="separator:a7909de1d851ff4bf881f2bb692d70005"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfd0b42b09ab5a127b4b9be26323ac62" id="r_acfd0b42b09ab5a127b4b9be26323ac62"><td class="memItemLeft" align="right" valign="top"><a id="acfd0b42b09ab5a127b4b9be26323ac62" name="acfd0b42b09ab5a127b4b9be26323ac62"></a>
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Inflight_Guard</b> () noexcept</td></tr>
-<tr class="memdesc:acfd0b42b09ab5a127b4b9be26323ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for all in-flight operations to complete before destruction. <br /></td></tr>
-<tr class="separator:acfd0b42b09ab5a127b4b9be26323ac62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae13011fc5cfbd5a608f2d934296e3227" id="r_ae13011fc5cfbd5a608f2d934296e3227"><td class="memItemLeft" align="right" valign="top"><a id="ae13011fc5cfbd5a608f2d934296e3227" name="ae13011fc5cfbd5a608f2d934296e3227"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Inflight_Guard</b> (const <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> &amp;obj)=delete</td></tr>
 <tr class="separator:ae13011fc5cfbd5a608f2d934296e3227"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,66 +139,27 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Inflight_Guar
 <tr class="memitem:aef5d5c79aac45e8d355b6cb39ce70661" id="r_aef5d5c79aac45e8d355b6cb39ce70661"><td class="memItemLeft" align="right" valign="top"><a id="aef5d5c79aac45e8d355b6cb39ce70661" name="aef5d5c79aac45e8d355b6cb39ce70661"></a>
 <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:aef5d5c79aac45e8d355b6cb39ce70661"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a308aad8716a84e809168fbe6523f3b43" id="r_a308aad8716a84e809168fbe6523f3b43"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a308aad8716a84e809168fbe6523f3b43">enterInflightGate</a> () -&gt; std::unique_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a> &gt; final</td></tr>
-<tr class="memdesc:a308aad8716a84e809168fbe6523f3b43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire a new inflight ticket; throws if the guard is closed.  <br /></td></tr>
+<tr class="memitem:a308aad8716a84e809168fbe6523f3b43" id="r_a308aad8716a84e809168fbe6523f3b43"><td class="memItemLeft" align="right" valign="top"><a id="a308aad8716a84e809168fbe6523f3b43" name="a308aad8716a84e809168fbe6523f3b43"></a>
+virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>enterInflightGate</b> () -&gt; std::unique_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a> &gt; final</td></tr>
 <tr class="separator:a308aad8716a84e809168fbe6523f3b43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5fe10555ae74a78356e964913b0c903e" id="r_a5fe10555ae74a78356e964913b0c903e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a5fe10555ae74a78356e964913b0c903e">waitForEmptyInflight</a> () const</td></tr>
-<tr class="memdesc:a5fe10555ae74a78356e964913b0c903e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block until all outstanding inflight tickets have been released.  <br /></td></tr>
+<tr class="memitem:a5fe10555ae74a78356e964913b0c903e" id="r_a5fe10555ae74a78356e964913b0c903e"><td class="memItemLeft" align="right" valign="top"><a id="a5fe10555ae74a78356e964913b0c903e" name="a5fe10555ae74a78356e964913b0c903e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>waitForEmptyInflight</b> () const</td></tr>
 <tr class="separator:a5fe10555ae74a78356e964913b0c903e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a24e998e357f8385b4d44198e8e46899c" id="r_a24e998e357f8385b4d44198e8e46899c"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c">enterInflightGuardFnc</a> () -&gt; T</td></tr>
-<tr class="memdesc:a24e998e357f8385b4d44198e8e46899c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when a <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a> is acquired; may return a per-call payload value.  <br /></td></tr>
 <tr class="separator:a24e998e357f8385b4d44198e8e46899c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7d62f329a07cc1d1af87946bf19181a" id="r_af7d62f329a07cc1d1af87946bf19181a"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#af7d62f329a07cc1d1af87946bf19181a">isInflightGuardClosed</a> () -&gt; bool</td></tr>
-<tr class="memdesc:af7d62f329a07cc1d1af87946bf19181a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true when the guard is closed and no new tickets should be issued.  <br /></td></tr>
 <tr class="separator:af7d62f329a07cc1d1af87946bf19181a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33db0bcc282fa1be3266116a74831d54" id="r_a33db0bcc282fa1be3266116a74831d54"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a33db0bcc282fa1be3266116a74831d54">leaveInflightGuardFnc</a> (const T &amp;) noexcept</td></tr>
-<tr class="memdesc:a33db0bcc282fa1be3266116a74831d54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when a <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a> is released with the payload value from <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called when a Ticket is acquired; may return a per-call payload value.">enterInflightGuardFnc()</a>.  <br /></td></tr>
+<tr class="memitem:a33db0bcc282fa1be3266116a74831d54" id="r_a33db0bcc282fa1be3266116a74831d54"><td class="memItemLeft" align="right" valign="top"><a id="a33db0bcc282fa1be3266116a74831d54" name="a33db0bcc282fa1be3266116a74831d54"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>leaveInflightGuardFnc</b> (const T &amp;) noexcept</td></tr>
 <tr class="separator:a33db0bcc282fa1be3266116a74831d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4491b8ad21f8f3595a329f53e8f62b7" id="r_aa4491b8ad21f8f3595a329f53e8f62b7"><td class="memItemLeft" align="right" valign="top"><a id="aa4491b8ad21f8f3595a329f53e8f62b7" name="aa4491b8ad21f8f3595a329f53e8f62b7"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>inflight_count</b> () const -&gt; uint64_t</td></tr>
-<tr class="memdesc:aa4491b8ad21f8f3595a329f53e8f62b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current number of live (in-flight) tickets. <br /></td></tr>
 <tr class="separator:aa4491b8ad21f8f3595a329f53e8f62b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a308aad8716a84e809168fbe6523f3b43" name="a308aad8716a84e809168fbe6523f3b43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a308aad8716a84e809168fbe6523f3b43">&#9670;&#160;</a></span>enterInflightGate()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T  = std::monostate&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::enterInflightGate </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> -&gt; std::unique_ptr&lt;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a>&gt;</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">final</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Acquire a new inflight ticket; throws if the guard is closed. </p>
-<dl class="section return"><dt>Returns</dt><dd>A unique_ptr to the acquired <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a>. </dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::runtime_error</td><td>if <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#af7d62f329a07cc1d1af87946bf19181a" title="Return true when the guard is closed and no new tickets should be issued.">isInflightGuardClosed()</a> returns true. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a24e998e357f8385b4d44198e8e46899c" name="a24e998e357f8385b4d44198e8e46899c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a24e998e357f8385b4d44198e8e46899c">&#9670;&#160;</a></span>enterInflightGuardFnc()</h2>
 
@@ -231,8 +184,6 @@ template&lt;class T  = std::monostate&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Called when a <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a> is acquired; may return a per-call payload value. </p>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a06ef41db026b53a793dbbd88d1b90e23">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>.</p>
 
@@ -263,71 +214,7 @@ template&lt;class T  = std::monostate&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Return true when the guard is closed and no new tickets should be issued. </p>
-
-<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a963df5c8bfbbcca508972626967b42f5">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a33db0bcc282fa1be3266116a74831d54" name="a33db0bcc282fa1be3266116a74831d54"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a33db0bcc282fa1be3266116a74831d54">&#9670;&#160;</a></span>leaveInflightGuardFnc()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T  = std::monostate&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::leaveInflightGuardFnc </td>
-          <td>(</td>
-          <td class="paramtype">const T &amp;&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Called when a <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a> is released with the payload value from <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called when a Ticket is acquired; may return a per-call payload value.">enterInflightGuardFnc()</a>. </p>
-
-<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#ac011cad688dacdeb7e08401eed50d026">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a5fe10555ae74a78356e964913b0c903e" name="a5fe10555ae74a78356e964913b0c903e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5fe10555ae74a78356e964913b0c903e">&#9670;&#160;</a></span>waitForEmptyInflight()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T  = std::monostate&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::waitForEmptyInflight </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Block until all outstanding inflight tickets have been released. </p>
-<p>Uses atomic::wait/notify_all to efficiently sleep rather than spin. </p>
+<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
 
 </div>
 </div>

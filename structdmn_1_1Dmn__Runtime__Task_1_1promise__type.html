@@ -97,61 +97,40 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task_1_1pro
   <div class="headertitle"><div class="title">dmn::Dmn_Runtime_Task::promise_type Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>Coroutine promise type required by the C++20 coroutine machinery.  
- <a href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html">FinalAwaiter</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Custom final awaiter that resumes the registered continuation.  <a href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a9d82a54e67fd1e89ac17885c99baa91a" id="r_a9d82a54e67fd1e89ac17885c99baa91a"><td class="memItemLeft" align="right" valign="top"><a id="a9d82a54e67fd1e89ac17885c99baa91a" name="a9d82a54e67fd1e89ac17885c99baa91a"></a>
 <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a>&#160;</td><td class="memItemRight" valign="bottom"><b>get_return_object</b> ()</td></tr>
-<tr class="memdesc:a9d82a54e67fd1e89ac17885c99baa91a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a> wrapper that represents this frame. <br /></td></tr>
 <tr class="separator:a9d82a54e67fd1e89ac17885c99baa91a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9739b6473072dcb1cce22bb9f8c82e3d" id="r_a9739b6473072dcb1cce22bb9f8c82e3d"><td class="memItemLeft" align="right" valign="top"><a id="a9739b6473072dcb1cce22bb9f8c82e3d" name="a9739b6473072dcb1cce22bb9f8c82e3d"></a>
 std::suspend_always&#160;</td><td class="memItemRight" valign="bottom"><b>initial_suspend</b> ()</td></tr>
-<tr class="memdesc:a9739b6473072dcb1cce22bb9f8c82e3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Suspend the coroutine immediately on creation. <br /></td></tr>
 <tr class="separator:a9739b6473072dcb1cce22bb9f8c82e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8a1ce29a2e664497f3c87ab152b9876" id="r_ae8a1ce29a2e664497f3c87ab152b9876"><td class="memItemLeft" align="right" valign="top"><a id="ae8a1ce29a2e664497f3c87ab152b9876" name="ae8a1ce29a2e664497f3c87ab152b9876"></a>
 <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html">FinalAwaiter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>final_suspend</b> () noexcept</td></tr>
-<tr class="memdesc:ae8a1ce29a2e664497f3c87ab152b9876"><td class="mdescLeft">&#160;</td><td class="mdescRight">Suspend at the end and resume any waiting continuation. <br /></td></tr>
 <tr class="separator:ae8a1ce29a2e664497f3c87ab152b9876"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5cbef2514804377925a4755cfa1b0c0b" id="r_a5cbef2514804377925a4755cfa1b0c0b"><td class="memItemLeft" align="right" valign="top"><a id="a5cbef2514804377925a4755cfa1b0c0b" name="a5cbef2514804377925a4755cfa1b0c0b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>unhandled_exception</b> ()</td></tr>
-<tr class="memdesc:a5cbef2514804377925a4755cfa1b0c0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Capture any exception thrown inside the coroutine body. <br /></td></tr>
 <tr class="separator:a5cbef2514804377925a4755cfa1b0c0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6505eb9ba38c8743034dcf7dcacef6cf" id="r_a6505eb9ba38c8743034dcf7dcacef6cf"><td class="memItemLeft" align="right" valign="top"><a id="a6505eb9ba38c8743034dcf7dcacef6cf" name="a6505eb9ba38c8743034dcf7dcacef6cf"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>return_void</b> ()</td></tr>
-<tr class="memdesc:a6505eb9ba38c8743034dcf7dcacef6cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the coroutine body executes a plain <code>co_return</code>. <br /></td></tr>
 <tr class="separator:a6505eb9ba38c8743034dcf7dcacef6cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a46964a6fbf9318465bc3b4aae126705d" id="r_a46964a6fbf9318465bc3b4aae126705d"><td class="memItemLeft" align="right" valign="top"><a id="a46964a6fbf9318465bc3b4aae126705d" name="a46964a6fbf9318465bc3b4aae126705d"></a>
 std::coroutine_handle&#160;</td><td class="memItemRight" valign="bottom"><b>m_continuation</b></td></tr>
-<tr class="memdesc:a46964a6fbf9318465bc3b4aae126705d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coroutine to resume on completion. <br /></td></tr>
 <tr class="separator:a46964a6fbf9318465bc3b4aae126705d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5fe28938629c068bda3482b3558c8f5" id="r_ad5fe28938629c068bda3482b3558c8f5"><td class="memItemLeft" align="right" valign="top"><a id="ad5fe28938629c068bda3482b3558c8f5" name="ad5fe28938629c068bda3482b3558c8f5"></a>
 std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_except</b> {}</td></tr>
-<tr class="memdesc:ad5fe28938629c068bda3482b3558c8f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exception thrown by the coroutine body (if any). <br /></td></tr>
 <tr class="separator:ad5fe28938629c068bda3482b3558c8f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Coroutine promise type required by the C++20 coroutine machinery. </p>
-<p>Satisfies the requirements of a coroutine promise object:</p><ul>
-<li><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a9d82a54e67fd1e89ac17885c99baa91a" title="Create the Dmn_Runtime_Task wrapper that represents this frame.">get_return_object()</a> wraps the frame handle in a <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a>.</li>
-<li><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a9739b6473072dcb1cce22bb9f8c82e3d" title="Suspend the coroutine immediately on creation.">initial_suspend()</a> suspends immediately so the scheduler controls first execution.</li>
-<li><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#ae8a1ce29a2e664497f3c87ab152b9876" title="Suspend at the end and resume any waiting continuation.">final_suspend()</a> uses a custom <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html" title="Custom final awaiter that resumes the registered continuation.">FinalAwaiter</a> to resume a registered continuation (if any) when the coroutine body finishes.</li>
-<li><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a5cbef2514804377925a4755cfa1b0c0b" title="Capture any exception thrown inside the coroutine body.">unhandled_exception()</a> stores the exception for later re-throw by <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#ac74d9c7dc51ccaf7c5139bf5e09934f9" title="Re-throw any exception captured by the task, or return normally.">Awaiter::await_resume()</a>. </li>
-</ul>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a></li>
 </ul>
 </div><!-- contents -->

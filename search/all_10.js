@@ -1,10 +1,6 @@
 var searchData=
 [
-  ['testcancel_0',['testcancel',['../classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f',1,'dmn::Dmn_Proc']]],
-  ['thread‑safety_20signal‑safety_20notes_1',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md14',1,'']]],
-  ['threading_20memory_20order_20notes_2',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md9',1,'']]],
-  ['ticket_3',['ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html',1,'dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket'],['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38',1,'dmn::Dmn_Inflight_Guard::Ticket::Ticket()']]],
-  ['timedjobcomparator_4',['TimedJobComparator',['../structdmn_1_1TimedJobComparator.html',1,'dmn']]],
-  ['timeout_20semantics_5',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'']]],
-  ['topic_6',['Topic',['../classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48',1,'dmn::Dmn_Kafka']]]
+  ['unregistersubscriber_0',['unregisterSubscriber',['../classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da',1,'dmn::Dmn_Pub']]],
+  ['usage_20guidelines_1',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md11',1,'']]],
+  ['usage_20summary_2',['Usage Summary',['../dmn-runtime_8hpp.html#autotoc_md15',1,'']]]
 ];

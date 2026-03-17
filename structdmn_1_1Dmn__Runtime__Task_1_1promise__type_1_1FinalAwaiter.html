@@ -95,66 +95,19 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task_1_1pro
   <div class="headertitle"><div class="title">dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>Custom final awaiter that resumes the registered continuation.  
- <a href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:acf6a16171900cb5eb02a67236f800347" id="r_acf6a16171900cb5eb02a67236f800347"><td class="memItemLeft" align="right" valign="top"><a id="acf6a16171900cb5eb02a67236f800347" name="acf6a16171900cb5eb02a67236f800347"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>await_ready</b> () const noexcept</td></tr>
-<tr class="memdesc:acf6a16171900cb5eb02a67236f800347"><td class="mdescLeft">&#160;</td><td class="mdescRight">Never ready so await_suspend is always called. <br /></td></tr>
 <tr class="separator:acf6a16171900cb5eb02a67236f800347"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afeb0d6d09fe9764ac28cadfca42cee9e" id="r_afeb0d6d09fe9764ac28cadfca42cee9e"><td class="memItemLeft" align="right" valign="top">std::coroutine_handle&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#afeb0d6d09fe9764ac28cadfca42cee9e">await_suspend</a> (std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt; h) const noexcept</td></tr>
-<tr class="memdesc:afeb0d6d09fe9764ac28cadfca42cee9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resume the continuation (awaiting coroutine) if one is set.  <br /></td></tr>
-<tr class="separator:afeb0d6d09fe9764ac28cadfca42cee9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40adc33f1cc8ca4d48e841c730db36c9" id="r_a40adc33f1cc8ca4d48e841c730db36c9"><td class="memItemLeft" align="right" valign="top"><a id="a40adc33f1cc8ca4d48e841c730db36c9" name="a40adc33f1cc8ca4d48e841c730db36c9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>await_suspend</b> (std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt; h) const noexcept</td></tr>
+<tr class="separator:a40adc33f1cc8ca4d48e841c730db36c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6b02b12087889555e7f814d58da733d" id="r_ab6b02b12087889555e7f814d58da733d"><td class="memItemLeft" align="right" valign="top"><a id="ab6b02b12087889555e7f814d58da733d" name="ab6b02b12087889555e7f814d58da733d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>await_resume</b> () const noexcept</td></tr>
-<tr class="memdesc:ab6b02b12087889555e7f814d58da733d"><td class="mdescLeft">&#160;</td><td class="mdescRight">No value to retrieve after final suspension. <br /></td></tr>
 <tr class="separator:ab6b02b12087889555e7f814d58da733d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Custom final awaiter that resumes the registered continuation. </p>
-<p>When the coroutine body finishes (or returns), <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#ae8a1ce29a2e664497f3c87ab152b9876" title="Suspend at the end and resume any waiting continuation.">final_suspend()</a> returns this awaiter. <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#afeb0d6d09fe9764ac28cadfca42cee9e" title="Resume the continuation (awaiting coroutine) if one is set.">await_suspend()</a> uses symmetric transfer to resume the coroutine that is awaiting this task (stored in m_continuation), which avoids unbounded stack growth from recursive resumes. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="afeb0d6d09fe9764ac28cadfca42cee9e" name="afeb0d6d09fe9764ac28cadfca42cee9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afeb0d6d09fe9764ac28cadfca42cee9e">&#9670;&#160;</a></span>await_suspend()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::coroutine_handle dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter::await_suspend </td>
-          <td>(</td>
-          <td class="paramtype">std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt;&#160;</td>
-          <td class="paramname"><em>h</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Resume the continuation (awaiting coroutine) if one is set. </p>
-<p>Implements symmetric transfer by returning the continuation handle to the coroutine runtime instead of calling resume() directly.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">h</td><td>Handle to the finishing coroutine. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Handle of the continuation to resume, or an empty handle if there is no continuation. </dd></dl>
-
-</div>
-</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a></li>
 </ul>

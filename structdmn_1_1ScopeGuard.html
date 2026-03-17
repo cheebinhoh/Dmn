@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('structdmn_1_1ScopeGuard.html',''); ini
 </div><!--header-->
 <div class="contents">
 
-<p>Minimal RAII scope-exit guard (analogous to the proposed std::scope_exit).  
+<p>The type to support scope guard (like std::scope_exit in proposed c++ standard).  
  <a href="structdmn_1_1ScopeGuard.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-util_8hpp_source.html">dmn-util.hpp</a>&gt;</code></p>
@@ -109,14 +109,7 @@ F&#160;</td><td class="memItemRight" valign="bottom"><b>f</b></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename F&gt;<br />
-struct dmn::ScopeGuard&lt; F &gt;</div><p>Minimal RAII scope-exit guard (analogous to the proposed std::scope_exit). </p>
-<p>The stored functor <code>f</code> is called unconditionally in the destructor. Intended for use via <a class="el" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e" title="Factory for ScopeGuard: constructs and returns a guard that calls f when the returned guard goes out ...">make_scope_guard()</a> so the compiler can deduce <code>F</code>.</p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">F</td><td>Callable type (e.g. lambda) invoked on scope exit. </td></tr>
-  </table>
-  </dd>
-</dl>
+struct dmn::ScopeGuard&lt; F &gt;</div><p>The type to support scope guard (like std::scope_exit in proposed c++ standard). </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-util_8hpp_source.html">dmn-util.hpp</a></li>
 </ul>

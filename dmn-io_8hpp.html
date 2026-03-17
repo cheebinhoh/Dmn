@@ -115,6 +115,7 @@ Classes</h2></td></tr>
 <li>read(): Returns the next available item wrapped in std::optional&lt;T&gt;. The call is expected to block until data becomes available in the normal case. If the underlying data source reaches end-of-stream (for example EOF or a closed pipe) the function returns std::nullopt to signal that no further data will be delivered. Concrete implementations may use timeouts or non-blocking strategies when appropriate, but callers should rely on std::nullopt to detect end-of-stream.</li>
 <li>write(T &amp;item): Takes an lvalue reference. This overload does not take ownership of the provided object; implementations SHOULD copy the value if they need to retain it.</li>
 <li>write(T &amp;&amp;item): Takes an rvalue reference. Implementations SHOULD move from the item when possible to avoid unnecessary copies.</li>
+<li>shutdown(): Provides a hook that specific concrete io subclass can impose specific shutdown process to free the resources which otherwise will be leak (like kafka consumer thread).</li>
 </ul>
 <p>Thread-safety:</p><ul>
 <li>The interface itself does not mandate any concurrency guarantees. If an implementation is safe to call from multiple threads concurrently, it MUST document those guarantees. </li>

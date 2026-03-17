@@ -33,7 +33,8 @@ var hierarchy =
       [ "dmn::Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ]
+      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
+      [ "dmn::Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html", null ]
     ] ],
     [ "dmn::Dmn_Inflight_Guard< uint64_t >", "classdmn_1_1Dmn__Inflight__Guard.html", [
       [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ]

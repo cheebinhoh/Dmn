@@ -96,11 +96,6 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHa
   <div class="headertitle"><div class="title">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>Lightweight proxy that provides pointer-like access to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> while the publisher controls handler lifetime.  
- <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -117,10 +112,7 @@ Friends</h2></td></tr>
 class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></tr>
 <tr class="separator:a94de5d946f7e793e37bb9322a14a68ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Lightweight proxy that provides pointer-like access to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> while the publisher controls handler lifetime. </p>
-<p><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html" title="Lightweight proxy that provides pointer-like access to a Dmn_DMesgHandler while the publisher control...">Dmn_DMesgHandlerProxy</a> wraps a std::weak_ptr&lt;Dmn_DMesgHandler&gt;. Calling operator-&gt;() locks the weak_ptr and throws std::runtime_error if the handler has been closed. The proxy evaluates to false once the underlying handler has been destroyed or closed. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a></li>
 </ul>
 </div><!-- contents -->

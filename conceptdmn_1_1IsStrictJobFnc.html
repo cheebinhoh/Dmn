@@ -92,11 +92,6 @@ $(document).ready(function(){initNavTree('conceptdmn_1_1IsStrictJobFnc.html','')
   <div class="headertitle"><div class="title">dmn::IsStrictJobFnc Concept Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>Concept satisfied when <code>F</code> is callable with <code>Args</code> and returns either <code>void</code> or <code>Dmn_Runtime_Task</code>.  
-<a href="conceptdmn_1_1IsStrictJobFnc.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> F, <span class="keyword">typename</span>... Args&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptdmn_1_1IsStrictJobFnc.html">dmn::IsStrictJobFnc</a> =  <span class="keyword">requires</span>(F &amp;&amp;f, Args &amp;&amp;...args) {</div>
@@ -108,17 +103,8 @@ $(document).ready(function(){initNavTree('conceptdmn_1_1IsStrictJobFnc.html','')
 <div class="line">    std::invoke(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</div>
 <div class="line">  } -&gt; std::same_as&lt;Dmn_Runtime_Task&gt;;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconceptdmn_1_1IsStrictJobFnc_html"><div class="ttname"><a href="conceptdmn_1_1IsStrictJobFnc.html">dmn::IsStrictJobFnc</a></div><div class="ttdoc">Concept satisfied when F is callable with Args and returns either void or Dmn_Runtime_Task.</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:180</div></div>
-</div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Concept satisfied when <code>F</code> is callable with <code>Args</code> and returns either <code>void</code> or <code>Dmn_Runtime_Task</code>. </p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">F</td><td>The callable type to test. </td></tr>
-    <tr><td class="paramname">Args</td><td>Argument types to invoke <code>F</code> with. </td></tr>
-  </table>
-  </dd>
-</dl>
-</div></div><!-- contents -->
+<div class="ttc" id="aconceptdmn_1_1IsStrictJobFnc_html"><div class="ttname"><a href="conceptdmn_1_1IsStrictJobFnc.html">dmn::IsStrictJobFnc</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:176</div></div>
+</div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

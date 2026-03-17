@@ -95,21 +95,12 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Inflight__Guard_1_1Ti
   <div class="headertitle"><div class="title">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>RAII ticket that tracks a single in-flight operation.  
- <a href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ac47def854a5c0c079fbd7b5997a34b38" id="r_ac47def854a5c0c079fbd7b5997a34b38"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38">Ticket</a> (<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *inflightguard)</td></tr>
-<tr class="memdesc:ac47def854a5c0c079fbd7b5997a34b38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire an inflight ticket, incrementing the in-flight counter.  <br /></td></tr>
+<tr class="memitem:ac47def854a5c0c079fbd7b5997a34b38" id="r_ac47def854a5c0c079fbd7b5997a34b38"><td class="memItemLeft" align="right" valign="top"><a id="ac47def854a5c0c079fbd7b5997a34b38" name="ac47def854a5c0c079fbd7b5997a34b38"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Ticket</b> (<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *inflightguard)</td></tr>
 <tr class="separator:ac47def854a5c0c079fbd7b5997a34b38"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1c6f33a98ce90972522a4391d2ab3ce" id="r_aa1c6f33a98ce90972522a4391d2ab3ce"><td class="memItemLeft" align="right" valign="top"><a id="aa1c6f33a98ce90972522a4391d2ab3ce" name="aa1c6f33a98ce90972522a4391d2ab3ce"></a>
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Ticket</b> () noexcept</td></tr>
-<tr class="memdesc:aa1c6f33a98ce90972522a4391d2ab3ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release the ticket, decrement the in-flight counter, and notify waiters. <br /></td></tr>
-<tr class="separator:aa1c6f33a98ce90972522a4391d2ab3ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada85f8a44c2050cd200cc45c7b05967f" id="r_ada85f8a44c2050cd200cc45c7b05967f"><td class="memItemLeft" align="right" valign="top"><a id="ada85f8a44c2050cd200cc45c7b05967f" name="ada85f8a44c2050cd200cc45c7b05967f"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Ticket</b> (const <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a> &amp;obj)=delete</td></tr>
 <tr class="separator:ada85f8a44c2050cd200cc45c7b05967f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,60 +115,11 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Ticket</b> () noe
 <tr class="separator:a5f5b2494eeca3dd166c719ca08b54bf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7730b8763ff4eaae7a5444d237458a8" id="r_ad7730b8763ff4eaae7a5444d237458a8"><td class="memItemLeft" align="right" valign="top"><a id="ad7730b8763ff4eaae7a5444d237458a8" name="ad7730b8763ff4eaae7a5444d237458a8"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator bool</b> () const noexcept</td></tr>
-<tr class="memdesc:ad7730b8763ff4eaae7a5444d237458a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true if the ticket was successfully acquired. <br /></td></tr>
 <tr class="separator:ad7730b8763ff4eaae7a5444d237458a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaed878ca236fe1211f59cdddad1de18a" id="r_aaed878ca236fe1211f59cdddad1de18a"><td class="memItemLeft" align="right" valign="top"><a id="aaed878ca236fe1211f59cdddad1de18a" name="aaed878ca236fe1211f59cdddad1de18a"></a>
 virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>getValue</b> () const -&gt; const T &amp;</td></tr>
-<tr class="memdesc:aaed878ca236fe1211f59cdddad1de18a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the per-call payload value set by <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called when a Ticket is acquired; may return a per-call payload value.">enterInflightGuardFnc()</a>. <br /></td></tr>
 <tr class="separator:aaed878ca236fe1211f59cdddad1de18a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class T = std::monostate&gt;<br />
-class dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</div><p>RAII ticket that tracks a single in-flight operation. </p>
-<p>Acquiring a <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII ticket that tracks a single in-flight operation.">Ticket</a> increments the inflight counter (and invokes <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called when a Ticket is acquired; may return a per-call payload value.">enterInflightGuardFnc()</a>). Releasing it decrements the counter (and invokes <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a33db0bcc282fa1be3266116a74831d54" title="Called when a Ticket is released with the payload value from enterInflightGuardFnc().">leaveInflightGuardFnc()</a>) and notifies any thread blocked in <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a5fe10555ae74a78356e964913b0c903e" title="Block until all outstanding inflight tickets have been released.">waitForEmptyInflight()</a>. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ac47def854a5c0c079fbd7b5997a34b38" name="ac47def854a5c0c079fbd7b5997a34b38"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac47def854a5c0c079fbd7b5997a34b38">&#9670;&#160;</a></span>Ticket()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T  = std::monostate&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::Ticket::Ticket </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *&#160;</td>
-          <td class="paramname"><em>inflightguard</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Acquire an inflight ticket, incrementing the in-flight counter. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">inflightguard</td><td>Owning guard (must not be null). </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">std::runtime_error</td><td>if the guard is already closed/shutting down. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a></li>
 </ul>

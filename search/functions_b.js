@@ -1,13 +1,14 @@
 var searchData=
 [
-  ['pop_0',['pop',['../classdmn_1_1Dmn__BlockingQueue__Interface.html#a850d46e7aab6bd15cdc057389e20036f',1,'dmn::Dmn_BlockingQueue_Interface::pop()'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a2c69dfa5fe6aab130f85d476034531a7',1,'dmn::Dmn_BlockingQueue_Lf::pop()'],['../classdmn_1_1Dmn__BlockingQueue.html#a458b3e2dc07635412d7675a5e2af6b72',1,'dmn::Dmn_BlockingQueue::pop()'],['../classdmn_1_1Dmn__BlockingQueue__Interface.html#a82e4e349958fb4584d0303b6d10af3cf',1,'dmn::Dmn_BlockingQueue_Interface::pop() -&gt; T final']]],
-  ['popnowait_1',['popNoWait',['../classdmn_1_1Dmn__BlockingQueue__Interface.html#a66bfe0b3d49808c6990b96df537bfc13',1,'dmn::Dmn_BlockingQueue_Interface']]],
-  ['popoptional_2',['popoptional',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067',1,'dmn::Dmn_BlockingQueue_Lf::popOptional(bool wait) -&gt; std::optional&lt; T &gt; override'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#aa7467de9cc9f93c6d6c8305b8ba03542',1,'dmn::Dmn_BlockingQueue_Lf::popOptional(bool wait, const Inflight_Guard_Ticket &amp;inflightTicket) -&gt; std::optional&lt; T &gt;'],['../classdmn_1_1Dmn__BlockingQueue.html#a4f53e58973a337776d3ddc1bc4075f02',1,'dmn::Dmn_BlockingQueue::popOptional()']]],
-  ['publish_3',['publish',['../classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225',1,'dmn::Dmn_Pub::publish()'],['../classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225',1,'dmn::Dmn_DMesg::publish(const T &amp;item, bool block=false)']]],
-  ['publishinternal_4',['publishinternal',['../classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9',1,'dmn::Dmn_DMesg::publishInternal()'],['../classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d',1,'dmn::Dmn_Pub::publishInternal()']]],
-  ['publishsysinternal_5',['publishSysInternal',['../classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4',1,'dmn::Dmn_DMesg']]],
-  ['push_6',['push',['../classdmn_1_1Dmn__BlockingQueue__Interface.html#a4c90f3e805be7b106dd36de0cdb7b040',1,'dmn::Dmn_BlockingQueue_Interface::push(const T &amp;item) final'],['../classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4',1,'dmn::Dmn_BlockingQueue_Interface::push(T &amp;&amp;item) final']]],
-  ['pushcopy_7',['pushcopy',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#ae738544dd427b145dbd3bf0f51f33761',1,'dmn::Dmn_BlockingQueue_Lf::pushCopy()'],['../classdmn_1_1Dmn__BlockingQueue.html#ad6b04479c55b8ce50838d360e1a141a7',1,'dmn::Dmn_BlockingQueue::pushCopy()']]],
-  ['pushimpl_8',['pushImpl',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a941adf60c54533ef7b50b7064887b3f3',1,'dmn::Dmn_BlockingQueue_Lf']]],
-  ['pushmove_9',['pushmove',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a18753cb93024f68651ff37b478dfcfa4',1,'dmn::Dmn_BlockingQueue_Lf::pushMove()'],['../classdmn_1_1Dmn__BlockingQueue.html#a4312f0cfe2ca863278dfdb9bc1b5ffe2',1,'dmn::Dmn_BlockingQueue::pushMove()']]]
+  ['set_5fconfig_0',['set_config',['../dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51',1,'dmn']]],
+  ['setconflictcallbacktask_1',['setConflictCallbackTask',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
+  ['setstate_2',['setState',['../classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974',1,'dmn::Dmn_Proc']]],
+  ['settask_3',['setTask',['../classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d',1,'dmn::Dmn_Proc']]],
+  ['settopicrunningcounter_4',['setTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#af5e223cd67242f61dd9d2993a2ed96f5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
+  ['settopicrunningcounterinternal_5',['setTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
+  ['shutdown_6',['shutdown',['../classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079',1,'dmn::Dmn_Io::shutdown()'],['../classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6',1,'dmn::Dmn_Kafka::shutdown()']]],
+  ['start_7',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
+  ['stop_8',['stop',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3',1,'dmn::Dmn_BlockingQueue_Lf::stop()'],['../classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d',1,'dmn::Dmn_BlockingQueue::stop()'],['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer::stop()']]],
+  ['stopexec_9',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
+  ['stringcompare_10',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]]
 ];

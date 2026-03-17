@@ -107,7 +107,7 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
 <area href="classdmn_1_1Dmn__BlockingQueue__Interface.html" alt="dmn::Dmn_BlockingQueue_Interface&lt; T &gt;" shape="rect" coords="0,0,293,24"/>
 <area href="classdmn_1_1Dmn__Inflight__Guard.html" alt="dmn::Dmn_Inflight_Guard&lt; T &gt;" shape="rect" coords="303,0,596,24"/>
 <area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="303,168,596,192"/>
-<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="606,168,899,192"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="606,168,899,192"/>
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="303,224,596,248"/>
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="606,224,899,248"/>
 <area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="909,224,1202,248"/>
@@ -118,13 +118,9 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0b8e952a277c68325b96c64608451a4c" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c">Dmn_Pipe</a> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
-<tr class="memdesc:a0b8e952a277c68325b96c64608451a4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>, optionally starting a background processing thread.  <br /></td></tr>
+<tr class="memitem:a0b8e952a277c68325b96c64608451a4c" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top"><a id="a0b8e952a277c68325b96c64608451a4c" name="a0b8e952a277c68325b96c64608451a4c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
 <tr class="separator:a0b8e952a277c68325b96c64608451a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bb79f728f7ea508565600ceb0e1ed95" id="r_a9bb79f728f7ea508565600ceb0e1ed95"><td class="memItemLeft" align="right" valign="top"><a id="a9bb79f728f7ea508565600ceb0e1ed95" name="a9bb79f728f7ea508565600ceb0e1ed95"></a>
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () noexcept</td></tr>
-<tr class="memdesc:a9bb79f728f7ea508565600ceb0e1ed95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the background processing thread (if any) and drain the queue. <br /></td></tr>
-<tr class="separator:a9bb79f728f7ea508565600ceb0e1ed95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b0ea1743998b84fceb3645cc4c7c38a" id="r_a1b0ea1743998b84fceb3645cc4c7c38a"><td class="memItemLeft" align="right" valign="top"><a id="a1b0ea1743998b84fceb3645cc4c7c38a" name="a1b0ea1743998b84fceb3645cc4c7c38a"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (const <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt; T, QueueType &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:a1b0ea1743998b84fceb3645cc4c7c38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,6 +186,10 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () n
 <tr class="memitem:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ae186a99dbfb75edb26c410972af428a4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4">push</a> (T &amp;&amp;item) final</td></tr>
 <tr class="memdesc:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classdmn_1_1Dmn__Io"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Io')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io&lt; T &gt;</a></td></tr>
+<tr class="memitem:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
+<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="separator:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Proc"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Proc')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
 <tr class="memitem:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view name, const Dmn_Proc::Task &amp;fnc={})</td></tr>
 <tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
@@ -262,69 +262,6 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 <tr class="memdesc:a07ccda9cd84f912b6af92b94fa875fba inherit pro_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops execution of the running thread.  <br /></td></tr>
 <tr class="separator:a07ccda9cd84f912b6af92b94fa875fba inherit pro_methods_classdmn_1_1Dmn__Proc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0b8e952a277c68325b96c64608451a4c" name="a0b8e952a277c68325b96c64608451a4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0b8e952a277c68325b96c64608451a4c">&#9670;&#160;</a></span>Dmn_Pipe()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T , typename QueueType &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; T, QueueType &gt;::Dmn_Pipe </td>
-          <td>(</td>
-          <td class="paramtype">std::string_view&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt; T, QueueType &gt;::Task&#160;</td>
-          <td class="paramname"><em>fn</em> = <code>{}</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>count</em> = <code>1</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">long&#160;</td>
-          <td class="paramname"><em>timeout</em> = <code>0</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>, optionally starting a background processing thread. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>Identifying name passed to the underlying <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>. </td></tr>
-    <tr><td class="paramname">fn</td><td>Optional processing task. When non-empty a background thread is started that calls readAndProcess(fn, count,
-               timeout) in a loop. </td></tr>
-    <tr><td class="paramname">count</td><td>Number of items per <a class="el" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea" title="Read the next item from the pipe and invoke the provided task.">readAndProcess()</a> batch (default 1). </td></tr>
-    <tr><td class="paramname">timeout</td><td>Timeout in microseconds per batch wait; 0 = wait forever (default 0). </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a0d38ac4b9523187ef9b492996b21d816" name="a0d38ac4b9523187ef9b492996b21d816"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d38ac4b9523187ef9b492996b21d816">&#9670;&#160;</a></span>read() <span class="overload">[1/2]</span></h2>

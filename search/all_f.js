@@ -1,19 +1,10 @@
 var searchData=
 [
-  ['scopeguard_0',['ScopeGuard',['../structdmn_1_1ScopeGuard.html',1,'dmn']]],
-  ['semantics_1',['semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'Blocking and timeout semantics'],['../dmn-blockingqueue_8hpp.html#autotoc_md4',1,'Synchronization and semantics']]],
-  ['set_5fconfig_2',['set_config',['../dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51',1,'dmn']]],
-  ['setconflictcallbacktask_3',['setConflictCallbackTask',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['setstate_4',['setState',['../classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974',1,'dmn::Dmn_Proc']]],
-  ['settask_5',['setTask',['../classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d',1,'dmn::Dmn_Proc']]],
-  ['settopicrunningcounter_6',['setTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#af5e223cd67242f61dd9d2993a2ed96f5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['settopicrunningcounterinternal_7',['setTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['shutdown_20behavior_8',['Shutdown behavior',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'']]],
-  ['signal‑safety_20notes_9',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md14',1,'']]],
-  ['start_10',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
-  ['stop_11',['stop',['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer::stop()'],['../classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d',1,'dmn::Dmn_BlockingQueue::stop()'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3',1,'dmn::Dmn_BlockingQueue_Lf::stop()']]],
-  ['stopexec_12',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
-  ['stringcompare_13',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
-  ['summary_14',['Usage Summary',['../dmn-runtime_8hpp.html#autotoc_md15',1,'']]],
-  ['synchronization_20and_20semantics_15',['Synchronization and semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md4',1,'']]]
+  ['testcancel_0',['testcancel',['../classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f',1,'dmn::Dmn_Proc']]],
+  ['thread‑safety_20signal‑safety_20notes_1',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md14',1,'']]],
+  ['threading_20memory_20order_20notes_2',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md9',1,'']]],
+  ['ticket_3',['Ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html',1,'dmn::Dmn_Inflight_Guard']]],
+  ['timedjobcomparator_4',['TimedJobComparator',['../structdmn_1_1TimedJobComparator.html',1,'dmn']]],
+  ['timeout_20semantics_5',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'']]],
+  ['topic_6',['Topic',['../classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48',1,'dmn::Dmn_Kafka']]]
 ];
