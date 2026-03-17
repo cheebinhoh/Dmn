@@ -55,9 +55,6 @@
 
 namespace dmn {
 
-using Inflight_Guard_Ticket =
-    std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
-
 /**
  * @brief Thread-safe FIFO queue.
  *
@@ -66,6 +63,9 @@ using Inflight_Guard_Ticket =
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
                              private Dmn_Inflight_Guard<uint64_t> {
+  using Inflight_Guard_Ticket =
+      std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
+
   /**
    * @name Epoch-based reclamation (implementation notes)
    *

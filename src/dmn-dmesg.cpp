@@ -62,9 +62,9 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
 /**
  * @brief Route an incoming DMesgPb message to its owning Dmn_DMesgHandler.
  *
- * This is the hot-path subscriber callback invoked by Dmn_Pub::publishInternal()
- * for every message published to the Dmn_DMesg instance.  The method applies
- * the following routing logic:
+ * This is the hot-path subscriber callback invoked by
+ * Dmn_Pub::publishInternal() for every message published to the Dmn_DMesg
+ * instance.  The method applies the following routing logic:
  *
  *  1. Conflict messages: if the message carries conflict=true, the source
  *     is not this handler, the topic matches the handler's filter, and the
@@ -85,7 +85,8 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
  *     For non-force accepted messages, after applying the source/topic/filter
  *     checks, the handler:
  *       - Updates m_topic_running_counter,
- *       - Resolves any prior conflict on that topic via resolveConflictInternal(),
+ *       - Resolves any prior conflict on that topic via
+ * resolveConflictInternal(),
  *       - Dispatches the message either via m_async_process_fn (if set) or by
  *         pushing onto m_buffers (for blocking read() callers).
  *
@@ -225,7 +226,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
 }
 
 /**
- * @brief Block the calling thread until the initial playback has been delivered.
+ * @brief Block the calling thread until the initial playback has been
+ * delivered.
  *
  * New handlers receive the last published message for each known topic as a
  * "playback" burst when they are first opened.  This method spin-waits (using
@@ -424,7 +426,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
 }
 
 /**
- * @brief Stamp, validate, and publish a DMesgPb message on behalf of the handler.
+ * @brief Stamp, validate, and publish a DMesgPb message on behalf of the
+ * handler.
  *
  * This is the serialised write path: it runs inside the handler's Dmn_Async
  * context and performs the following steps:
@@ -513,7 +516,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
 }
 
 /**
- * @brief Internal: mark the handler as being in conflict for the message's topic.
+ * @brief Internal: mark the handler as being in conflict for the message's
+ * topic.
  *
  * Records the topic in m_topic_in_conflict and, if a conflict callback has
  * been registered, schedules it asynchronously via m_sub.
@@ -717,12 +721,13 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
 }
 
 /**
- * @brief Publish a system-type DMesgPb message, advancing the sys running counter.
+ * @brief Publish a system-type DMesgPb message, advancing the sys running
+ * counter.
  *
  * System messages (type == DMesgTypePb::sys) use a dedicated publish path that
- * unconditionally advances the topic running counter without conflict detection.
- * This is used for cluster heartbeat / election messages that must always be
- * delivered to all subscribers regardless of ordering conflicts.
+ * unconditionally advances the topic running counter without conflict
+ * detection. This is used for cluster heartbeat / election messages that must
+ * always be delivered to all subscribers regardless of ordering conflicts.
  *
  * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
  *
@@ -792,7 +797,8 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
  * serialisation context.
  *
  * @param handler_ptr Pointer to the handler whose conflict should be cleared.
- * @param topic       Topic to clear, or "" to clear all conflicts on the handler.
+ * @param topic       Topic to clear, or "" to clear all conflicts on the
+ * handler.
  */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {

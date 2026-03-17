@@ -253,10 +253,12 @@ class Dmn_Runtime_Manager
 public:
   using SignalHandlerHook = std::function<void(int signo)>;
 
-  /// @brief Construct the runtime, register default SIGTERM/SIGINT/SIGALRM handlers, and create the PIMPL timer object.
+  /// @brief Construct the runtime, register default SIGTERM/SIGINT/SIGALRM
+  /// handlers, and create the PIMPL timer object.
   Dmn_Runtime_Manager();
 
-  /// @brief Destroy the runtime: exit the main loop, wait for all jobs to complete, and release the PIMPL timer object.
+  /// @brief Destroy the runtime: exit the main loop, wait for all jobs to
+  /// complete, and release the PIMPL timer object.
   virtual ~Dmn_Runtime_Manager() noexcept;
 
   Dmn_Runtime_Manager(const Dmn_Runtime_Manager &obj) = delete;
@@ -339,7 +341,8 @@ public:
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
-  /// @brief Mask SIGALRM, SIGINT, SIGTERM, SIGQUIT and SIGHUP before the singleton's async thread is created.
+  /// @brief Mask SIGALRM, SIGINT, SIGTERM, SIGQUIT and SIGHUP before the
+  /// singleton's async thread is created.
   static void runPriorToCreateInstance();
 
 private:
@@ -349,31 +352,40 @@ private:
     requires IsValidJobFnc<F>
   auto createJobTaskFnc(F &&fnc) -> Dmn_Runtime_Job::TaskFncType;
 
-  /// @brief Execute clearSignalHandlerHook() inside the singleton async context.
+  /// @brief Execute clearSignalHandlerHook() inside the singleton async
+  /// context.
   void clearSignalHandlerHookInternal(int signo);
 
-  /// @brief Dequeue and dispatch one batch of pending jobs (called from the async context).
+  /// @brief Dequeue and dispatch one batch of pending jobs (called from the
+  /// async context).
   void execRuntimeJobInternal();
 
-  /// @brief Invoke all registered hooks for @p signo inside the singleton async context.
+  /// @brief Invoke all registered hooks for @p signo inside the singleton async
+  /// context.
   void execSignalHandlerHookInternal(int signo);
 
-  /// @brief Return true when called from within the singleton async thread context.
+  /// @brief Return true when called from within the singleton async thread
+  /// context.
   auto isRunInAsyncThread() -> bool;
 
-  /// @brief Register @p hook for @p signo in the external-hook map (async context only).
+  /// @brief Register @p hook for @p signo in the external-hook map (async
+  /// context only).
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
-  /// @brief Resume the top scheduled coroutine task; return true when the task completes.
+  /// @brief Resume the top scheduled coroutine task; return true when the task
+  /// completes.
   auto runRuntimeCoroutineScheduler() -> bool;
 
-  /// @brief Post execRuntimeJobInternal() onto the singleton async execution queue.
+  /// @brief Post execRuntimeJobInternal() onto the singleton async execution
+  /// queue.
   void runRuntimeJobExecutor();
 
-  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimer with current PIMPL.
+  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimer with current
+  /// PIMPL.
   void setNextTimer(SecInt sec, NSecInt nsec);
 
-  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimerAt with current PIMPL.
+  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimerAt with current
+  /// PIMPL.
   void setNextTimerAt(TimePoint tp);
 
   /**

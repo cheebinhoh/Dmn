@@ -69,8 +69,10 @@ public:
   /**
    * @brief Construct a handle for a task that is about to be enqueued.
    *
-   * @param fnc            The callable that will be submitted for async execution.
-   * @param due_in_future  Reserved for future delayed-execution support; pass 0.
+   * @param fnc            The callable that will be submitted for async
+   * execution.
+   * @param due_in_future  Reserved for future delayed-execution support; pass
+   * 0.
    */
   Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
       : m_fnc{fnc}, m_due_in_future{due_in_future} {
@@ -84,7 +86,8 @@ public:
   Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
   Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
-  /// @brief Block until the associated async task completes; re-throws any exception thrown by the task.
+  /// @brief Block until the associated async task completes; re-throws any
+  /// exception thrown by the task.
   void wait() { m_fut.get(); }
 
 private:
@@ -96,7 +99,8 @@ private:
 };
 
 /**
- * @brief Serialises asynchronous task execution in a dedicated background thread.
+ * @brief Serialises asynchronous task execution in a dedicated background
+ * thread.
  *
  * Dmn_Async inherits from Dmn_Pipe and runs submitted tasks in order inside
  * its own processing thread. Clients use addExecTask() for fire-and-forget

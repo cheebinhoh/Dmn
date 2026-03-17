@@ -165,7 +165,8 @@ public:
       }
     }
 
-    /// @brief Release the ticket, decrement the in-flight counter, and notify waiters.
+    /// @brief Release the ticket, decrement the in-flight counter, and notify
+    /// waiters.
     virtual ~Ticket() noexcept {
       assert(nullptr != m_inflightguard);
 
@@ -238,13 +239,16 @@ public:
   }
 
 protected:
-  /// @brief Called when a Ticket is acquired; may return a per-call payload value.
+  /// @brief Called when a Ticket is acquired; may return a per-call payload
+  /// value.
   virtual auto enterInflightGuardFnc() -> T { return T{}; }
 
-  /// @brief Return true when the guard is closed and no new tickets should be issued.
+  /// @brief Return true when the guard is closed and no new tickets should be
+  /// issued.
   virtual auto isInflightGuardClosed() -> bool { return false; }
 
-  /// @brief Called when a Ticket is released with the payload value from enterInflightGuardFnc().
+  /// @brief Called when a Ticket is released with the payload value from
+  /// enterInflightGuardFnc().
   virtual void leaveInflightGuardFnc(const T &) noexcept {}
 
   /// @brief Return the current number of live (in-flight) tickets.

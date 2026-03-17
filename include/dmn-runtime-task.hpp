@@ -76,8 +76,8 @@ struct Dmn_Runtime_Task {
        * @return Handle of the continuation to resume, or an empty handle if
        *         there is no continuation.
        */
-      std::coroutine_handle<> await_suspend(
-          std::coroutine_handle<promise_type> h) const noexcept {
+      std::coroutine_handle<>
+      await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
         if (h) {
           return h.promise().m_continuation;
         }
@@ -97,8 +97,10 @@ struct Dmn_Runtime_Task {
     /// @brief Called when the coroutine body executes a plain @c co_return.
     void return_void() {}
 
-    std::coroutine_handle<> m_continuation; ///< Coroutine to resume on completion.
-    std::exception_ptr m_except{};          ///< Exception thrown by the coroutine body (if any).
+    std::coroutine_handle<>
+        m_continuation; ///< Coroutine to resume on completion.
+    std::exception_ptr
+        m_except{}; ///< Exception thrown by the coroutine body (if any).
   };
 
   /**
@@ -125,7 +127,8 @@ struct Dmn_Runtime_Task {
    * @c await_resume re-throws any stored exception.
    */
   struct Awaiter {
-    std::coroutine_handle<promise_type> m_handle; ///< Handle to the awaited task.
+    std::coroutine_handle<promise_type>
+        m_handle; ///< Handle to the awaited task.
 
     /// @brief True if the task has already finished (no suspension needed).
     bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
@@ -136,7 +139,8 @@ struct Dmn_Runtime_Task {
      * Uses symmetric transfer (returning the task's handle) to resume it
      * without growing the call stack.
      *
-     * @param awaiting Handle of the coroutine that is @c co_await-ing this task.
+     * @param awaiting Handle of the coroutine that is @c co_await-ing this
+     * task.
      * @return The task's handle to resume via symmetric transfer, or
      *         std::noop_coroutine() if the handle is null.
      */
@@ -230,7 +234,8 @@ struct Dmn_Runtime_Task {
     return m_handle ? true : false;
   }
 
-  std::coroutine_handle<promise_type> m_handle; ///< Owned coroutine frame handle.
+  std::coroutine_handle<promise_type>
+      m_handle; ///< Owned coroutine frame handle.
 };
 
 } // namespace dmn

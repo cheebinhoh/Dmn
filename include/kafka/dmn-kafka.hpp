@@ -9,9 +9,10 @@
  * messages.  A single instance acts as either a producer or consumer
  * depending on the Role argument supplied to the constructor.
  *
- * Configuration is supplied as a ConfigType map (std::unordered_map<std::string,
- * std::string>).  Most keys are passed through to rd_kafka_conf_set(); three
- * special keys are consumed by Dmn_Kafka itself and are not forwarded:
+ * Configuration is supplied as a ConfigType map
+ * (std::unordered_map<std::string, std::string>).  Most keys are passed through
+ * to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself
+ * and are not forwarded:
  *  - Dmn_Kafka::Topic         — the Kafka topic to read from / write to.
  *  - Dmn_Kafka::Key           — an alternate topic name that, if set, overrides
  *                                the Topic value when determining which topic
@@ -37,6 +38,7 @@
 
 #include "rdkafka.h"
 
+#include "dmn-inflight-guard.hpp"
 #include "dmn-io.hpp"
 #include "dmn-kafka-util.hpp"
 
@@ -52,14 +54,17 @@ namespace dmn {
  * keys (Topic, Key, PollTimeoutMs) are extracted before the remainder is
  * forwarded to rd_kafka_conf_set().
  */
-class Dmn_Kafka : public dmn::Dmn_Io<std::string> {
+class Dmn_Kafka : public dmn::Dmn_Io<std::string>,
+                  private Dmn_Inflight_Guard<> {
+  using Inflight_Guard_Ticket = std::unique_ptr<Dmn_Inflight_Guard<>::Ticket>;
+
 public:
   /**
    * @brief The configuration key specific to the Dmn_Kafka module (not directly
    *        to rdkafka).
    */
-  const static std::string Topic;         // topic to read from or write to
-  const static std::string Key;           // alternate topic name that overrides Topic
+  const static std::string Topic; // topic to read from or write to
+  const static std::string Key;   // alternate topic name that overrides Topic
   const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
                                           // break out
 
@@ -110,7 +115,17 @@ public:
    */
   void write(std::string &&item) override;
 
+  /**
+   * @brief Shutdown the Kafka RAII and prevent it from further use to
+   *        faciliate object teardown.
+   */
+  void shutdown() override;
+
 private:
+  static void cleanup_thunk_inflight(void *arg);
+
+  virtual auto isInflightGuardClosed() -> bool override;
+
   /**
    * @brief The callback for rdkafka message specific error, so it is callback
    *        for producer.
@@ -161,6 +176,8 @@ private:
   rd_kafka_resp_err_t m_kafka_err{};
 
   std::atomic_flag m_write_atomic_flag{};
+
+  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_Kafka
 
 } // namespace dmn

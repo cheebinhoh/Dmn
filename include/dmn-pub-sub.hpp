@@ -135,7 +135,8 @@ public:
   class Dmn_Sub : public Dmn_Async<QueueType> {
   public:
     /**
-     * @brief Construct a subscriber with a configurable initial-replay quantity.
+     * @brief Construct a subscriber with a configurable initial-replay
+     * quantity.
      *
      * @param replayQuantity Controls how many buffered items are replayed when
      *   this subscriber registers with a publisher:

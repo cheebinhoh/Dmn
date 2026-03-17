@@ -114,7 +114,8 @@ inline bool stringCompare(const std::string_view str1,
 }
 
 /**
- * @brief Minimal RAII scope-exit guard (analogous to the proposed std::scope_exit).
+ * @brief Minimal RAII scope-exit guard (analogous to the proposed
+ * std::scope_exit).
  *
  * The stored functor @p f is called unconditionally in the destructor.
  * Intended for use via make_scope_guard() so the compiler can deduce @p F.

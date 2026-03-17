@@ -24,6 +24,10 @@
  *  - write(T &&item): Takes an rvalue reference. Implementations SHOULD move
  *    from the item when possible to avoid unnecessary copies.
  *
+ *  - shutdown(): Provides a hook that specific concrete io subclass can
+ *    impose specific shutdown process to free the resources which otherwise
+ *    will be leak (like kafka consumer thread).
+ *
  * Thread-safety:
  *  - The interface itself does not mandate any concurrency guarantees. If an
  *    implementation is safe to call from multiple threads concurrently, it
@@ -40,7 +44,7 @@ namespace dmn {
 
 template <typename T> class Dmn_Io {
 public:
-  virtual ~Dmn_Io() noexcept = default;
+  virtual ~Dmn_Io() noexcept { shutdown(); }
 
   /**
    * @brief Read and return the next available item.
@@ -93,6 +97,12 @@ public:
    * @param item The item to write (may be moved from).
    */
   virtual void write(T &&item) = 0;
+
+  /**
+   * @brief Shutdown the io RAII and prevent it from further use to
+   *        faciliate object teardown.
+   */
+  virtual void shutdown() {}
 };
 
 } // namespace dmn
