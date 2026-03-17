@@ -366,11 +366,13 @@ void Dmn_DMesgNet::createSubscriptHandler() {
  * @brief Install the periodic heartbeat timer that drives master-election.
  *
  * Each tick sends a sys heartbeat and advances the election state machine:
- * MasterPending → Ready (self-elect) after DMN_DMESGNET_MASTERPENDING_MAX_COUNTER
- * ticks. In Ready state, if the remote master is silent for
- * DMN_DMESGNET_MASTERSYNC_MAX_COUNTER ticks, the node reverts to MasterPending.
+ * MasterPending → Ready (self-elect) after
+ * DMN_DMESGNET_MASTERPENDING_MAX_COUNTER ticks. In Ready state, if the remote
+ * master is silent for DMN_DMESGNET_MASTERSYNC_MAX_COUNTER ticks, the node
+ * reverts to MasterPending.
  *
- * If no input/output handlers are provided the node transitions directly to Ready.
+ * If no input/output handlers are provided the node transitions directly to
+ * Ready.
  */
 void Dmn_DMesgNet::createTimerProc() {
   if (m_input_handler && m_output_handler) {
@@ -463,7 +465,8 @@ void Dmn_DMesgNet::createTimerProc() {
   }
 }
 
-/** @brief Return a mutable reference to the net-layer per-topic last-message cache. */
+/** @brief Return a mutable reference to the net-layer per-topic last-message
+ * cache. */
 auto Dmn_DMesgNet::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return this->m_topic_last_dmesgpb;

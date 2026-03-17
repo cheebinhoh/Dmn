@@ -221,7 +221,8 @@ void Dmn_Kafka::cleanup_thunk_inflight(void *arg) {
 }
 
 /**
- * @brief Check whether the inflight guard has been closed (i.e. shutdown() was called).
+ * @brief Check whether the inflight guard has been closed (i.e. shutdown() was
+ * called).
  *
  * @return true if shutdown has been requested, false otherwise.
  */

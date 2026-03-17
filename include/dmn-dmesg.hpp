@@ -114,9 +114,11 @@ extern const char *const kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
-  /** @brief Callback type invoked asynchronously with a copy of each delivered message. */
+  /** @brief Callback type invoked asynchronously with a copy of each delivered
+   * message. */
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
-  /** @brief Predicate that returns false to drop an incoming message before buffering. */
+  /** @brief Predicate that returns false to drop an incoming message before
+   * buffering. */
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
   /** @brief Key/value map used to pass per-handler configuration options. */
   using HandlerConfig = std::unordered_map<std::string, std::string>;

@@ -106,7 +106,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 }
 
 // class Dmn_DMesg::Dmn_DMesgHandler
-/** @brief Full constructor: initialises all handler fields from the given arguments. */
+/** @brief Full constructor: initialises all handler fields from the given
+ * arguments. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
@@ -159,14 +160,16 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, "", std::move(filter_fn),
                        std::move(async_process_fn), std::move(configs)} {}
 
-/** @brief Delegates with kHandlerConfig_Default for the empty-topic overload. */
+/** @brief Delegates with kHandlerConfig_Default for the empty-topic overload.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
     : Dmn_DMesgHandler{name, std::move(filter_fn), std::move(async_process_fn),
                        kHandlerConfig_Default} {}
 
-/** @brief Delegates with a null async-process callback for the empty-topic overload. */
+/** @brief Delegates with a null async-process callback for the empty-topic
+ * overload. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn)
     : Dmn_DMesgHandler{name, std::move(filter_fn),
@@ -204,7 +207,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   return inConflict;
 }
 
-/** @brief Spin-waits until the initial playback of last-known messages completes. */
+/** @brief Spin-waits until the initial playback of last-known messages
+ * completes. */
 void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
   while (!m_after_initial_playback.test()) {
     m_after_initial_playback.wait(false, std::memory_order_relaxed);
@@ -251,14 +255,16 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
-/** @brief Set the playback-complete flag and wake all waiters (runs in async context). */
+/** @brief Set the playback-complete flag and wake all waiters (runs in async
+ * context). */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
   m_after_initial_playback.test_and_set(std::memory_order_relaxed);
   m_after_initial_playback.notify_all();
 }
 
 /**
- * @brief Set the running counter for @p topic from the publisher's async context.
+ * @brief Set the running counter for @p topic from the publisher's async
+ * context.
  *
  * @param topic          Topic to update.
  * @param runningCounter New counter value.
@@ -435,7 +441,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
  * @param dmesgpb Message to publish (modified in-place).
  * @param move    If true, publish via std::move_if_noexcept; otherwise copy.
  * @param block   If true, block until the publisher processes the message.
- * @throws std::runtime_error if the handler is already in conflict for the topic.
+ * @throws std::runtime_error if the handler is already in conflict for the
+ * topic.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
@@ -595,7 +602,8 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
 
 /**
  * @brief Return the last published message for @p topic, or std::nullopt if
- *        none has been published yet. The lookup is performed in the async context.
+ *        none has been published yet. The lookup is performed in the async
+ * context.
  *
  * @param topic Topic to look up.
  * @return The last DMesgPb for the topic, or std::nullopt.
@@ -618,13 +626,15 @@ auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
   return ret;
 }
 
-/** @brief Return a mutable reference to the per-topic last-message cache (no locking). */
+/** @brief Return a mutable reference to the per-topic last-message cache (no
+ * locking). */
 auto Dmn_DMesg::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return m_topic_last_dmesgpb;
 }
 
-/** @brief Re-publish each topic's last-known message with the playback flag set. */
+/** @brief Re-publish each topic's last-known message with the playback flag
+ * set. */
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
     dmn::DMesgPb msgpb = topic_dmesgpb.second;
@@ -641,7 +651,8 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
  *        to the base class for subscriber notification.
  *
  * Playback messages bypass conflict detection. For normal messages:
- *  - If the source handler is already in conflict the message is silently dropped.
+ *  - If the source handler is already in conflict the message is silently
+ * dropped.
  *  - If the incoming running counter is stale, the message is marked conflicted
  *    and the source handler is placed in conflict state.
  *  - Otherwise the global counter and last-message cache are updated.
@@ -700,7 +711,8 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
  * Unlike publishInternal(), this path does not perform conflict detection
  * and does not update the last-message cache (sys messages are special).
  *
- * @param dmesgpb_sys System message to publish; must use the sys topic and type.
+ * @param dmesgpb_sys System message to publish; must use the sys topic and
+ * type.
  */
 void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   assert(dmesgpb_sys.topic() == kDMesgSysIdentifier);
@@ -732,7 +744,8 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
   waitHandler->wait();
 }
 
-/** @brief Internal: force-republish the last cached message for @p topic (no async dispatch). */
+/** @brief Internal: force-republish the last cached message for @p topic (no
+ * async dispatch). */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
     std::string_view topic) {
   auto iter = m_topic_last_dmesgpb.find(std::string{topic});
@@ -748,7 +761,8 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
  * @brief Post an async task to reset the conflict state of a specific handler
  *        for the given topic.
  *
- * @param handler_ptr Pointer to the handler whose conflict state should be reset.
+ * @param handler_ptr Pointer to the handler whose conflict state should be
+ * reset.
  * @param topic       Topic to resolve, or "" for all topics.
  */
 void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
@@ -760,7 +774,8 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
       this, handler_ptr, topicToBeReset);
 }
 
-/** @brief Locate @p handler_ptr in the handler list and call resolveConflictInternal(). */
+/** @brief Locate @p handler_ptr in the handler list and call
+ * resolveConflictInternal(). */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
   auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),

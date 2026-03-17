@@ -195,10 +195,12 @@ namespace detail {
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
-/** @brief Allocate and initialize a platform-specific runtime implementation. */
+/** @brief Allocate and initialize a platform-specific runtime implementation.
+ */
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
-/** @brief Destroy and deallocate the platform-specific runtime implementation. */
+/** @brief Destroy and deallocate the platform-specific runtime implementation.
+ */
 void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **) noexcept;
 
 /**
@@ -348,7 +350,8 @@ public:
   static void runPriorToCreateInstance();
 
 private:
-  /** @brief Wrap a job in a coroutine task and add it to the scheduler context. */
+  /** @brief Wrap a job in a coroutine task and add it to the scheduler context.
+   */
   void addRuntimeJobToCoroutineSchedulerContext(Dmn_Runtime_Job &&job);
 
   template <typename F>
@@ -363,18 +366,21 @@ private:
   /** @brief Invoke all registered hooks for @p signo in the async context. */
   void execSignalHandlerHookInternal(int signo);
 
-  /** @brief Return true if the caller is running on the singleton async thread. */
+  /** @brief Return true if the caller is running on the singleton async thread.
+   */
   auto isRunInAsyncThread() -> bool;
 
   /** @brief Insert @p hook into the internal map for @p signo. */
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
-  /** @brief Run one iteration of the coroutine scheduler; returns true if work remains. */
+  /** @brief Run one iteration of the coroutine scheduler; returns true if work
+   * remains. */
   auto runRuntimeCoroutineScheduler() -> bool;
   /** @brief Entry point for the job executor coroutine loop. */
   void runRuntimeJobExecutor();
 
-  /** @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec nanoseconds. */
+  /** @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec
+   * nanoseconds. */
   void setNextTimer(SecInt sec, NSecInt nsec);
   /** @brief Arm the SIGALRM timer to fire at the absolute time point @p tp. */
   void setNextTimerAt(TimePoint tp);
