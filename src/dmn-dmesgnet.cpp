@@ -54,6 +54,16 @@
 
 namespace dmn {
 
+/**
+ * @brief Construct a Dmn_DMesgNet instance and start background threads.
+ *
+ * Initialises the local sys DMesgPb (identity, timestamp, MasterPending state),
+ * then creates the subscriber handler, input-reader proc, and heartbeat timer.
+ *
+ * @param name           Node identity string (also used as the handler name).
+ * @param input_handler  Dmn_Io source for inbound serialised DMesgPb strings.
+ * @param output_handler Dmn_Io sink for outbound serialised DMesgPb strings.
+ */
 Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
                            std::shared_ptr<Dmn_Io<std::string>> input_handler,
                            std::shared_ptr<Dmn_Io<std::string>> output_handler)
@@ -85,6 +95,10 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
   }
 }
 
+/**
+ * @brief Destructor: stops background procs, closes handlers, and sends a
+ *        final Destroyed heartbeat to the network output if available.
+ */
 Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   // it is important that we free up m_input_handler as if it is a
   // kafka handler, it will be continuing to be feed of incoming
@@ -153,6 +167,14 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
+/**
+ * @brief Start the background input-reader proc that reads serialised
+ *        DMesgPb strings from the input Dmn_Io, parses them, and dispatches
+ *        them as sys, conflict, force-playback, or ordinary messages.
+ *
+ * Also opens the internal write handler and the sys handler used for
+ * publishing heartbeat sys messages. Has no effect if m_input_handler is null.
+ */
 void Dmn_DMesgNet::createInputHandlerProc() {
   if (m_input_handler) {
     m_write_handler = Dmn_DMesg::openHandler(
@@ -273,6 +295,13 @@ void Dmn_DMesgNet::createInputHandlerProc() {
   }
 }
 
+/**
+ * @brief Register the subscriber handler that forwards all locally published
+ *        DMesgPb messages (including sys) to the network output Dmn_Io.
+ *
+ * Messages originating from this node's own write handler are filtered out
+ * to avoid echoing inbound network messages back to the network.
+ */
 void Dmn_DMesgNet::createSubscriptHandler() {
   auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_IncludeSys}] = "yes";
@@ -333,6 +362,16 @@ void Dmn_DMesgNet::createSubscriptHandler() {
       [](Dmn_DMesgHandler &handler, const dmn::DMesgPb) -> void {});
 }
 
+/**
+ * @brief Install the periodic heartbeat timer that drives master-election.
+ *
+ * Each tick sends a sys heartbeat and advances the election state machine:
+ * MasterPending → Ready (self-elect) after DMN_DMESGNET_MASTERPENDING_MAX_COUNTER
+ * ticks. In Ready state, if the remote master is silent for
+ * DMN_DMESGNET_MASTERSYNC_MAX_COUNTER ticks, the node reverts to MasterPending.
+ *
+ * If no input/output handlers are provided the node transitions directly to Ready.
+ */
 void Dmn_DMesgNet::createTimerProc() {
   if (m_input_handler && m_output_handler) {
     // Periodic heartbeat timer that drives master election.
@@ -424,11 +463,18 @@ void Dmn_DMesgNet::createTimerProc() {
   }
 }
 
+/** @brief Return a mutable reference to the net-layer per-topic last-message cache. */
 auto Dmn_DMesgNet::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return this->m_topic_last_dmesgpb;
 }
 
+/**
+ * @brief Flush all queued outbound messages that were deferred while the node
+ *        was not yet ready (m_ready not set).
+ *
+ * Must only be called when m_ready is set and m_output_handler is non-null.
+ */
 void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
   assert(m_ready.test());
 
@@ -450,6 +496,18 @@ void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
   }
 }
 
+/**
+ * @brief Apply a received remote sys message to the local election state.
+ *
+ * Handles the following transitions:
+ *  - MasterPending + remote Ready → adopt remote master, transition to Ready.
+ *  - Ready + known master relinquishes → revert to MasterPending.
+ *  - Ready + conflicting master claim → defer to the node with the earlier
+ *    initialised timestamp (higher seniority).
+ * Also maintains the local nodelist (add/update/remove entries).
+ *
+ * @param dmesgpb_other The remote sys DMesgPb received from the network.
+ */
 void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
   auto other = dmesgpb_other.body().sys().self();
   auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();

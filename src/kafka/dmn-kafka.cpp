@@ -46,6 +46,16 @@ const std::string Dmn_Kafka::Topic = "Dmn_Kafka.Topic";
 const std::string Dmn_Kafka::Key = "Dmn_Kafka.Key";
 const std::string Dmn_Kafka::PollTimeoutMs = "Dmn_Kafka.PollTimeoutMs";
 
+/**
+ * @brief librdkafka delivery-report callback; signals write completion.
+ *
+ * Records the delivery error code (if any) and clears m_write_atomic_flag
+ * so that the blocked write() call can return.
+ *
+ * @param kafka_handle The producer handle (unused).
+ * @param rkmessage   Delivery report for the produced message.
+ * @param opaque      Pointer to the owning Dmn_Kafka instance.
+ */
 void Dmn_Kafka::producerCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
                                  const rd_kafka_message_t *rkmessage,
                                  void *opaque) {
@@ -56,6 +66,17 @@ void Dmn_Kafka::producerCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
   obj->m_write_atomic_flag.notify_all();
 }
 
+/**
+ * @brief librdkafka generic error callback; signals write failure.
+ *
+ * Records the error code and clears m_write_atomic_flag so that any
+ * blocked write() can unblock and propagate the error.
+ *
+ * @param kafka_handle The producer/consumer handle (unused).
+ * @param err          librdkafka error code.
+ * @param reason       Human-readable reason string (unused).
+ * @param opaque       Pointer to the owning Dmn_Kafka instance.
+ */
 void Dmn_Kafka::errorCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
                               int err, [[maybe_unused]] const char *reason,
                               void *opaque) {
@@ -66,6 +87,20 @@ void Dmn_Kafka::errorCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
   obj->m_write_atomic_flag.notify_all();
 }
 
+/**
+ * @brief Construct a Dmn_Kafka producer or consumer handle.
+ *
+ * Applies all non-reserved configuration entries to a new rd_kafka_conf_t,
+ * then creates an rd_kafka_t handle of the requested role.  For consumers,
+ * the handle is subscribed to the configured topic immediately.
+ *
+ * @param role    kProducer or kConsumer.
+ * @param configs Key/value configuration map; recognised keys are
+ *                Dmn_Kafka::Topic, Dmn_Kafka::Key, Dmn_Kafka::PollTimeoutMs,
+ *                and any standard librdkafka configuration property.
+ * @throws std::runtime_error if the handle cannot be created or the
+ *         consumer subscription fails.
+ */
 Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     : m_role{role}, m_configs{configs} {
   rd_kafka_conf_t *kafka_config{};
@@ -152,6 +187,10 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
   }
 }
 
+/**
+ * @brief Destructor: shuts down the inflight guard, then closes/flushes the
+ *        Kafka handle and destroys it.
+ */
 Dmn_Kafka::~Dmn_Kafka() noexcept try {
   assert(m_kafka);
 
@@ -170,16 +209,35 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
   return;
 }
 
+/**
+ * @brief pthread cleanup handler that releases an inflight guard ticket.
+ *
+ * @param arg Pointer to the Inflight_Guard_Ticket to reset.
+ */
 void Dmn_Kafka::cleanup_thunk_inflight(void *arg) {
   auto *ticket_sp = static_cast<Inflight_Guard_Ticket *>(arg);
 
   (*ticket_sp).reset();
 }
 
+/**
+ * @brief Check whether the inflight guard has been closed (i.e. shutdown() was called).
+ *
+ * @return true if shutdown has been requested, false otherwise.
+ */
 auto Dmn_Kafka::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
 
+/**
+ * @brief Poll for the next Kafka consumer message.
+ *
+ * Blocks for up to m_poll_timeout_ms milliseconds. Returns std::nullopt on
+ * timeout, partition EOF, or if shutdown has been requested.  Non-fatal errors
+ * are logged to stderr; the error code is stored in m_kafka_err.
+ *
+ * @return The message payload string, or std::nullopt.
+ */
 auto Dmn_Kafka::read() -> std::optional<std::string> {
   std::optional<std::string> ret{};
 
@@ -226,16 +284,33 @@ auto Dmn_Kafka::read() -> std::optional<std::string> {
   return ret;
 }
 
+/**
+ * @brief Signal shutdown: set the flag and wait for all in-flight operations
+ *        to complete before returning.
+ */
 void Dmn_Kafka::shutdown() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 
   waitForEmptyInflight();
 }
 
+/** @brief Copy-write overload: delegates to write(item, move=false). */
 void Dmn_Kafka::write(std::string &item) { write(item, false); }
 
+/** @brief Move-write overload: delegates to write(item, move=true). */
 void Dmn_Kafka::write(std::string &&item) { write(item, true); }
 
+/**
+ * @brief Produce @p item to the configured Kafka topic synchronously.
+ *
+ * Serialises concurrent writers with m_write_atomic_flag, submits the
+ * message via rd_kafka_producev(), then polls until the delivery report
+ * callback clears the flag. Throws on enqueue failure or delivery error.
+ *
+ * @param item Message payload.
+ * @param move Unused; payload is always copied by librdkafka (RD_KAFKA_MSG_F_COPY).
+ * @throws std::runtime_error on enqueue or delivery failure.
+ */
 void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
   assert(Role::kProducer == m_role);
 

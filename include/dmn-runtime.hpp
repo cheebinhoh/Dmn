@@ -129,9 +129,13 @@
 
 namespace dmn {
 
+/** @brief Monotonic clock used for all timed-job scheduling. */
 using Clock = std::chrono::steady_clock;
+/** @brief Absolute time point expressed in terms of Clock. */
 using TimePoint = Clock::time_point;
+/** @brief Integer type for whole-second components of timer durations. */
 using SecInt = int64_t;
+/** @brief Integer type for nanosecond components of timer durations. */
 using NSecInt = std::chrono::nanoseconds::rep;
 
 /**
@@ -191,13 +195,26 @@ namespace detail {
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
+/** @brief Allocate and initialize a platform-specific runtime implementation. */
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
+/** @brief Destroy and deallocate the platform-specific runtime implementation. */
 void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **) noexcept;
 
+/**
+ * @brief Arm the SIGALRM timer to fire at an absolute time point.
+ *
+ * @param tp Absolute monotonic time point at which the alarm should fire.
+ */
 void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *,
                                              TimePoint tp);
 
+/**
+ * @brief Arm the SIGALRM timer to fire after the given duration.
+ *
+ * @param sec  Whole-second component of the delay.
+ * @param nsec Nanosecond component of the delay.
+ */
 void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
                                            SecInt sec, NSecInt nsec);
 } // namespace detail
@@ -319,28 +336,47 @@ public:
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
+  /**
+   * @brief Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP)
+   *        in the calling thread before the singleton instance is created.
+   *
+   * Must be called once from the main thread before any worker threads are
+   * spawned so that all descendant threads inherit the same signal mask.
+   * Masking inside the constructor would be too late because the parent
+   * Dmn_Async thread may already exist.
+   */
   static void runPriorToCreateInstance();
 
 private:
+  /** @brief Wrap a job in a coroutine task and add it to the scheduler context. */
   void addRuntimeJobToCoroutineSchedulerContext(Dmn_Runtime_Job &&job);
 
   template <typename F>
     requires IsValidJobFnc<F>
   auto createJobTaskFnc(F &&fnc) -> Dmn_Runtime_Job::TaskFncType;
 
+  /** @brief Clear all registered hooks for @p signo from the internal map. */
   void clearSignalHandlerHookInternal(int signo);
 
+  /** @brief Dequeue and execute one pending job per priority level. */
   void execRuntimeJobInternal();
+  /** @brief Invoke all registered hooks for @p signo in the async context. */
   void execSignalHandlerHookInternal(int signo);
 
+  /** @brief Return true if the caller is running on the singleton async thread. */
   auto isRunInAsyncThread() -> bool;
 
+  /** @brief Insert @p hook into the internal map for @p signo. */
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
+  /** @brief Run one iteration of the coroutine scheduler; returns true if work remains. */
   auto runRuntimeCoroutineScheduler() -> bool;
+  /** @brief Entry point for the job executor coroutine loop. */
   void runRuntimeJobExecutor();
 
+  /** @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec nanoseconds. */
   void setNextTimer(SecInt sec, NSecInt nsec);
+  /** @brief Arm the SIGALRM timer to fire at the absolute time point @p tp. */
   void setNextTimerAt(TimePoint tp);
 
   /**

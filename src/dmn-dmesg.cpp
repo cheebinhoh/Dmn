@@ -106,6 +106,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
 }
 
 // class Dmn_DMesg::Dmn_DMesgHandler
+/** @brief Full constructor: initialises all handler fields from the given arguments. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
@@ -130,6 +131,7 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
   }
 }
 
+/** @brief Delegates to the full constructor using kHandlerConfig_Default. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
@@ -137,16 +139,19 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, topic, std::move(filter_fn),
                        std::move(async_process_fn), kHandlerConfig_Default} {}
 
+/** @brief Delegates with a null async-process callback. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn)
     : Dmn_DMesgHandler{name, topic, std::move(filter_fn),
                        static_cast<AsyncProcessTask>(nullptr)} {}
 
+/** @brief Delegates with null filter and async-process callbacks. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic)
     : Dmn_DMesgHandler{name, topic, static_cast<FilterTask>(nullptr)} {}
 
+/** @brief Delegates to the full constructor with an empty topic string. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn,
@@ -154,17 +159,20 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, "", std::move(filter_fn),
                        std::move(async_process_fn), std::move(configs)} {}
 
+/** @brief Delegates with kHandlerConfig_Default for the empty-topic overload. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn)
     : Dmn_DMesgHandler{name, std::move(filter_fn), std::move(async_process_fn),
                        kHandlerConfig_Default} {}
 
+/** @brief Delegates with a null async-process callback for the empty-topic overload. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn)
     : Dmn_DMesgHandler{name, std::move(filter_fn),
                        static_cast<AsyncProcessTask>(nullptr)} {}
 
+/** @brief Minimal constructor: name only, all callbacks null, empty topic. */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
     : Dmn_DMesgHandler{name, static_cast<FilterTask>(nullptr)} {}
 
@@ -174,6 +182,13 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
   return;
 }
 
+/**
+ * @brief Posts an async task to the publisher's context to check the
+ *        conflict state, blocking until the result is available.
+ *
+ * @param topic Topic to check, or "" for any topic.
+ * @return true if the handler is in conflict for the given topic.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   bool inConflict{};
 
@@ -189,12 +204,20 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   return inConflict;
 }
 
+/** @brief Spin-waits until the initial playback of last-known messages completes. */
 void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
   while (!m_after_initial_playback.test()) {
     m_after_initial_playback.wait(false, std::memory_order_relaxed);
   }
 }
 
+/**
+ * @brief Block until the initial playback is done, then return the
+ *        per-topic running counter from the publisher's async context.
+ *
+ * @param topic Topic whose running counter is requested.
+ * @return Current running counter value for the topic.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
     -> uint64_t {
   uint64_t runningCounter{};
@@ -211,6 +234,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
   return runningCounter;
 }
 
+/** @brief Look up the running counter for @p topic directly (no locking). */
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
     std::string_view topic) -> uint64_t {
   auto iter = m_topic_running_counter.find(std::string{topic});
@@ -221,16 +245,24 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
   return iter->second;
 }
 
+/** @brief Schedule setAfterInitialPlaybackInternal() in the async context. */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
   [[maybe_unused]] auto waitHandler = m_sub->addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
+/** @brief Set the playback-complete flag and wake all waiters (runs in async context). */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
   m_after_initial_playback.test_and_set(std::memory_order_relaxed);
   m_after_initial_playback.notify_all();
 }
 
+/**
+ * @brief Set the running counter for @p topic from the publisher's async context.
+ *
+ * @param topic          Topic to update.
+ * @param runningCounter New counter value.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
     std::string_view topic, uint64_t runningCounter) {
   auto waitHandler =
@@ -241,11 +273,20 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
   waitHandler->wait();
 }
 
+/** @brief Directly update the counter map entry for @p topic (no locking). */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
     std::string_view topic, uint64_t runningCounter) {
   m_topic_running_counter[std::string{topic}] = runningCounter;
 }
 
+/**
+ * @brief Block waiting for the next DMesgPb from the internal buffer.
+ *
+ * Waits for the initial playback to complete before blocking on the
+ * buffer queue. Returns std::nullopt if the queue is shut down.
+ *
+ * @return The next message, or std::nullopt on shutdown/error.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
   assert(nullptr != m_owner);
 
@@ -260,12 +301,19 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
   }
 }
 
+/**
+ * @brief Delegate conflict resolution to the publisher's async context via
+ *        Dmn_DMesg::resetHandlerConflictState().
+ *
+ * @param topic Topic to resolve, or "" for all topics.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
   this->isAfterInitialPlayback();
 
   m_owner->resetHandlerConflictState(this, topic);
 }
 
+/** @brief Post the conflict callback update to the async context and wait. */
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
 
@@ -278,14 +326,23 @@ void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
   return;
 }
 
+/** @brief Move-write overload: delegates to write(dmesgpb, flags=kDefault). */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
   this->write(dmesgpb, false);
 }
 
+/** @brief Copy-write overload: delegates to write(dmesgpb, flags=kDefault). */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
   this->write(dmesgpb, false);
 }
 
+/**
+ * @brief Move-write with flags: moves the message and dispatches
+ *        writeDMesgInternal() in the async context.
+ *
+ * @param dmesgpb Message to publish (moved).
+ * @param flags   Bitmask of WriteOptions (kBlock, kForce).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
                                         WriteFlags flags) {
   assert(nullptr != m_owner);
@@ -306,6 +363,13 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
   waithandler->wait();
 }
 
+/**
+ * @brief Copy-write with flags: copies the message and dispatches
+ *        writeDMesgInternal() in the async context.
+ *
+ * @param dmesgpb Message to publish (copied).
+ * @param flags   Bitmask of WriteOptions (kBlock, kForce).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
                                         WriteFlags flags) {
   assert(nullptr != m_owner);
@@ -324,6 +388,13 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
   waitHandler->wait();
 }
 
+/**
+ * @brief Move-write then check for conflict; sets kBlock automatically.
+ *
+ * @param dmesgpb Message to publish (moved).
+ * @param flags   Additional WriteOptions (kForce, etc.).
+ * @return true if write succeeded without conflict, false otherwise.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
                                                         WriteFlags flags)
     -> bool {
@@ -336,6 +407,13 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
   return !this->isInConflict(topic);
 }
 
+/**
+ * @brief Copy-write then check for conflict; sets kBlock automatically.
+ *
+ * @param dmesgpb Message to publish (copied).
+ * @param flags   Additional WriteOptions (kForce, etc.).
+ * @return true if write succeeded without conflict, false otherwise.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
                                                         WriteFlags flags)
     -> bool {
@@ -348,6 +426,17 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
   return !this->isInConflict(topic);
 }
 
+/**
+ * @brief Stamp and publish the message; must be called from the async context.
+ *
+ * Sets timestamp, source identifiers, and topic (if unset), increments the
+ * per-topic running counter, then calls Dmn_Pub::publish().
+ *
+ * @param dmesgpb Message to publish (modified in-place).
+ * @param move    If true, publish via std::move_if_noexcept; otherwise copy.
+ * @param block   If true, block until the publisher processes the message.
+ * @throws std::runtime_error if the handler is already in conflict for the topic.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
@@ -388,12 +477,26 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   }
 }
 
+/**
+ * @brief Check conflict state directly (no async dispatch).
+ *
+ * @param topic Topic to check, or "" to check any topic.
+ * @return true if the handler has at least one conflicted topic (or the
+ *         specific topic is in conflict).
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
     std::string_view topic) const -> bool {
   return "" == topic ? (!m_topic_in_conflict.empty())
                      : m_topic_in_conflict.contains(std::string{topic});
 }
 
+/**
+ * @brief Remove @p topic (or all topics if empty) from the conflict set.
+ *
+ * Must be called from within the publisher's async context.
+ *
+ * @param topic Topic to clear, or "" to clear all conflicted topics.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
     std::string_view topic) {
   if ("" == topic) {
@@ -403,6 +506,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
   }
 }
 
+/**
+ * @brief Mark the topic as conflicted and schedule the conflict callback.
+ *
+ * Inserts the message's topic into the conflict set and, if a conflict
+ * callback is registered, posts it for execution on the async thread.
+ *
+ * @param dmesgpb The message that triggered the conflict.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
     const dmn::DMesgPb &dmesgpb) {
   m_topic_in_conflict.insert(dmesgpb.topic());
@@ -445,6 +556,12 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try {
   return;
 }
 
+/**
+ * @brief Unregister the handler's subscriber, clear its owner pointer, remove
+ *        it from the publisher's handler list, and reset the proxy's weak_ptr.
+ *
+ * @param handler Proxy referencing the handler to close.
+ */
 void Dmn_DMesg::closeHandler(HandlerType &handler) {
   auto inhandler = handler.m_handler.lock();
   if (!inhandler) {
@@ -476,6 +593,13 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
   handler.m_handler.reset();
 }
 
+/**
+ * @brief Return the last published message for @p topic, or std::nullopt if
+ *        none has been published yet. The lookup is performed in the async context.
+ *
+ * @param topic Topic to look up.
+ * @return The last DMesgPb for the topic, or std::nullopt.
+ */
 auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
     -> std::optional<dmn::DMesgPb> {
   std::optional<dmn::DMesgPb> ret{};
@@ -494,11 +618,13 @@ auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
   return ret;
 }
 
+/** @brief Return a mutable reference to the per-topic last-message cache (no locking). */
 auto Dmn_DMesg::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return m_topic_last_dmesgpb;
 }
 
+/** @brief Re-publish each topic's last-known message with the playback flag set. */
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
     dmn::DMesgPb msgpb = topic_dmesgpb.second;
@@ -509,6 +635,19 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   }
 }
 
+/**
+ * @brief Override of Dmn_Pub::publishInternal() that applies global conflict
+ *        detection and advances per-topic running counters before forwarding
+ *        to the base class for subscriber notification.
+ *
+ * Playback messages bypass conflict detection. For normal messages:
+ *  - If the source handler is already in conflict the message is silently dropped.
+ *  - If the incoming running counter is stale, the message is marked conflicted
+ *    and the source handler is placed in conflict state.
+ *  - Otherwise the global counter and last-message cache are updated.
+ *
+ * @param dmesgpb The message to publish.
+ */
 void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   // if it is a playback, we do not check if it is in conflict.
   if (dmesgpb.playback()) {
@@ -555,6 +694,14 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   Dmn_Pub::publishInternal(copied_dmesgpb);
 }
 
+/**
+ * @brief Publish a sys-type message, advancing only the sys-topic counter.
+ *
+ * Unlike publishInternal(), this path does not perform conflict detection
+ * and does not update the last-message cache (sys messages are special).
+ *
+ * @param dmesgpb_sys System message to publish; must use the sys topic and type.
+ */
 void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   assert(dmesgpb_sys.topic() == kDMesgSysIdentifier);
   assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
@@ -570,6 +717,12 @@ void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   m_topic_running_counter[topic] = next_running_counter;
 }
 
+/**
+ * @brief Force-publish the last known message for @p topic so all handlers
+ *        can synchronise to it, clearing their conflict state.
+ *
+ * @param topic Topic whose last message should be force-republished.
+ */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
 
   auto waitHandler = this->addExecTaskWithWait([this, topic]() -> void {
@@ -579,6 +732,7 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
   waitHandler->wait();
 }
 
+/** @brief Internal: force-republish the last cached message for @p topic (no async dispatch). */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
     std::string_view topic) {
   auto iter = m_topic_last_dmesgpb.find(std::string{topic});
@@ -590,6 +744,13 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
   }
 }
 
+/**
+ * @brief Post an async task to reset the conflict state of a specific handler
+ *        for the given topic.
+ *
+ * @param handler_ptr Pointer to the handler whose conflict state should be reset.
+ * @param topic       Topic to resolve, or "" for all topics.
+ */
 void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                           std::string_view topic) {
   std::string topicToBeReset{topic};
@@ -599,6 +760,7 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
       this, handler_ptr, topicToBeReset);
 }
 
+/** @brief Locate @p handler_ptr in the handler list and call resolveConflictInternal(). */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
   auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
