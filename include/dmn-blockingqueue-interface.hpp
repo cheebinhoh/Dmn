@@ -122,7 +122,7 @@ auto Dmn_BlockingQueue_Interface<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
-  pushMove(std::move_if_noexcept(item));
+  pushMove(std::move(item));
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {

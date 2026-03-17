@@ -520,7 +520,7 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(std::move_if_noexcept(item)); // move if noexcept, else copy
+  pushImpl(std::move(item)); // move if noexcept, else copy
 
   DMN_PROC_CLEANUP_POP(0);
 }
