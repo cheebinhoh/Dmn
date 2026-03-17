@@ -9,9 +9,6 @@ The goal of Dmn is to abstract away the complexities of networking and concurren
 * **Concurrency Control:** Distributed synchronization of read/write operations on shared datasets.
 * **Conflict Resolution:** Multi-level conflict detection and resolution strategies.
 
-## Documentation
-https://cheebinhoh.github.io/Dmn/
-
 ## Key Features
 * **Delegation-Based Design:** Implemented using the delegation pattern to ensure the library is extensible and customizable without "class proliferation."
 * **Lightweight C++:** Modern C++ implementation focused on performance and simplicity.
