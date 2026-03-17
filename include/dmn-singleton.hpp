@@ -45,6 +45,15 @@
 
 namespace dmn {
 
+/**
+ * @brief Concept satisfied when type T exposes a static void
+ *        runPriorToCreateInstance() method.
+ *
+ * When this concept is satisfied, Dmn_Singleton::createInstance() will call
+ * T::runPriorToCreateInstance() before constructing the singleton instance.
+ *
+ * @tparam T The candidate singleton type.
+ */
 template <typename T>
 concept HasStaticRunPriorToCreateInstance = requires {
   { T::runPriorToCreateInstance() } -> std::same_as<void>;
@@ -75,9 +84,9 @@ public:
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
 
 private:
-  static std::atomic<bool> s_allocated;
-  static std::shared_ptr<T> s_instance;
-  static std::once_flag s_init_once;
+  static std::atomic<bool> s_allocated; ///< True once the singleton has been constructed.
+  static std::shared_ptr<T> s_instance; ///< Shared ownership handle to the singleton instance.
+  static std::once_flag s_init_once;    ///< Guards one-time construction (see std::call_once).
 };
 
 template <typename T> std::atomic<bool> Dmn_Singleton<T>::s_allocated{false};

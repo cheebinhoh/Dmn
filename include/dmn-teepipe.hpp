@@ -119,6 +119,13 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
     friend class Dmn_TeePipe<T>;
 
   public:
+    /**
+     * @brief Construct a source with a bounded internal buffer.
+     *
+     * @param capacity Maximum number of buffered items (should be 1 in normal
+     *                 use; the conveyor reads exactly one item per cycle).
+     * @param tp       Owning Dmn_TeePipe instance (must not be null).
+     */
     Dmn_TeePipeSource(size_t capacity, Dmn_TeePipe *tp);
     virtual ~Dmn_TeePipeSource() = default;
 
@@ -147,8 +154,10 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
 
   private:
     /**
-     * Pop one element from the underlying Dmn_Limit_BlockingQueue. Returns
-     * empty optional if buffer is empty.
+     * @brief Pop one item from the internal bounded buffer.
+     *
+     * @return An optional containing the item, or std::nullopt if the buffer
+     *         is empty.
      */
     std::optional<T> read() override;
 
@@ -156,9 +165,19 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
   }; // class Dmn_TeePipeSource
 
 public:
+  /**
+   * @brief Construct a Dmn_TeePipe and start the internal conveyor thread.
+   *
+   * @param name Identifying name for this pipe and its conveyor thread.
+   * @param fn   Optional outbound processing task forwarded to Dmn_Pipe.
+   * @param pfn  Optional post-processing task invoked on the collected
+   *             vector of items (one per source) before forwarding them
+   *             to the outbound pipe.
+   */
   explicit Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
                        Dmn_TeePipe::PostProcessingTask pfn = {});
 
+  /// @brief Stop the conveyor thread before destroying synchronization primitives.
   virtual ~Dmn_TeePipe() noexcept;
 
   Dmn_TeePipe(const Dmn_TeePipe<T> &obj) = delete;
@@ -216,10 +235,12 @@ private:
   void write(T &item) override;
 
   /**
-   * The conveyor routine: repeatedly waits until at least one item from each
-   * active source is available, collects a vector<T> of those items, calls
-   * the optional m_post_processing_task_fn on the vector, then forwards each
-   * element to the outbound pipe.
+   * @brief Start the conveyor loop via Dmn_Proc::exec().
+   *
+   * Waits until all active sources have at least one item, collects one item
+   * from each, optionally runs m_post_processing_task_fn on the batch, then
+   * forwards each element to the outbound pipe. Repeats indefinitely until the
+   * conveyor thread is stopped.
    */
   void runConveyorExec();
 

@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-limit-buffer.hpp
+ * @file dmn-limit-blockingqueue.hpp
  * @brief Bounded, thread-safe FIFO queue with blocking push/pop semantics.
  *
  * This header defines Dmn_Limit_BlockingQueue<T>, a thread-safe,
@@ -46,7 +46,12 @@ namespace dmn {
 template <typename T>
 class Dmn_Limit_BlockingQueue : private Dmn_BlockingQueue<T> {
 public:
+  /** @brief Construct a bounded blocking queue with the given maximum capacity.
+   * @param capacity Maximum number of items the queue may hold simultaneously.
+   */
   explicit Dmn_Limit_BlockingQueue(size_t capacity = 1);
+
+  /// @brief Destroy the queue; frees internal resources.
   virtual ~Dmn_Limit_BlockingQueue();
 
   Dmn_Limit_BlockingQueue(const Dmn_Limit_BlockingQueue<T> &obj) = delete;
@@ -90,7 +95,7 @@ public:
 
   /**
    * @brief The method will push the item into queue using move semantics if
-   *        move is t true. The caller is blocked waiting if the queue is full.
+   *        move is true. The caller is blocked waiting if the queue is full.
    *
    * @param item The item to be pushed into queue
    * @param move True if use move semantic or false otherwise
