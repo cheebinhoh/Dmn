@@ -308,7 +308,10 @@ void Dmn_Kafka::write(std::string &&item) { write(item, true); }
  * callback clears the flag. Throws on enqueue failure or delivery error.
  *
  * @param item Message payload.
- * @param move Unused; payload is always copied by librdkafka (RD_KAFKA_MSG_F_COPY).
+ * @param move Hint indicating whether to prefer move semantics; currently
+ *             ignored because librdkafka always copies the payload internally
+ *             (RD_KAFKA_MSG_F_COPY). The parameter is retained for API
+ *             symmetry with the public write(T&&) overload.
  * @throws std::runtime_error on enqueue or delivery failure.
  */
 void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
