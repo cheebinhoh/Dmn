@@ -1,5 +1,8 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-dmesg-pb.cpp
+ * @brief Unit test for the DMesgPb protobuf message structure and field accessors.
  */
 
 #include <gtest/gtest.h>

@@ -1,6 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
+ * @file dmn-test-dmesgnet-with-kafka-4.cpp
+ * @brief Unit test for two Dmn_DMesgNet_Kafka instances joining a distributed messaging network via Kafka.
+ *
  * This test program asserts that we can have two Dmn_DMesgNet_Kafka object(s)
  * that joins in a virtual distrbuted messaging network that spans cross a
  * confluent.cloud via Dmn_Kafka I/O and rdkafka.

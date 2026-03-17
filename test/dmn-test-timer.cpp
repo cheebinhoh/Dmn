@@ -1,5 +1,8 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-timer.cpp
+ * @brief Unit test for Dmn_Timer verifying that the timer callback fires after the configured interval.
  */
 
 #include <gtest/gtest.h>

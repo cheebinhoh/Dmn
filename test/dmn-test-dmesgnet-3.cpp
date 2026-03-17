@@ -1,7 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * Unit test for Dmn_DMesgNet message sending/receiving and lifecycle events.
+ * @file dmn-test-dmesgnet-3.cpp
+ * @brief Unit test for Dmn_DMesgNet message sending, receiving, and lifecycle events.
  *
  * This test verifies that a single Dmn_DMesgNet instance can:
  * - Open a handler and send DMesg application messages.

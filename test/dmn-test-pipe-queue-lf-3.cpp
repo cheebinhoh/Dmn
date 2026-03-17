@@ -1,10 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
- * at the same ip and port.
+ * @file dmn-test-pipe-queue-lf-3.cpp
+ * @brief Unit test for chaining multiple Dmn_Pipe instances backed by lock-free blocking queues.
  */
 
 #include <gtest/gtest.h>

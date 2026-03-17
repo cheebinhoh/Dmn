@@ -1,5 +1,8 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-pipe-queue-lf.cpp
+ * @brief Unit test for Dmn_Pipe backed by a lock-free blocking queue with sequential write and ordered read.
  */
 
 #include <gtest/gtest.h>

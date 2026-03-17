@@ -1,10 +1,9 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * Unit test: dmn-test-dmesgnet-4.cpp
+ * @file dmn-test-dmesgnet-4.cpp
+ * @brief Unit test for two Dmn_DMesgNet instances communicating over a simulated network.
  *
- * Purpose
- * -------
  * This test verifies that two Dmn_DMesgNet instances can communicate over a
  * simulated network (using Dmn_Pipe and Dmn_Proc to forward serialized
  * messages). It checks:

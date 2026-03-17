@@ -1,7 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * Integration-style unit test for Dmn_DMesgNet.
+ * @file dmn-test-dmesgnet-2.cpp
+ * @brief Integration test for Dmn_DMesgNet peer-discovery and messaging between two instances.
  *
  * This test verifies a small peer-discovery / messaging scenario between two
  * Dmn_DMesgNet instances using in-memory pipes instead of real network sockets.

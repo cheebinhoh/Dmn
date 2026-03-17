@@ -1,5 +1,8 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ *
+ * @file dmn-test-kafka.cpp
+ * @brief Unit test for Dmn_Kafka producer and consumer message exchange.
  */
 
 #include <sys/time.h>
