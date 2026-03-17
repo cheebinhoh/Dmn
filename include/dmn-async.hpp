@@ -54,24 +54,14 @@
   } while (false)
 
 namespace dmn {
-/**
- * @brief Rendezvous handle returned when an asynchronous task is submitted with
- *        wait semantics.
- *
- * Calling wait() blocks until the associated task has completed in the
- * Dmn_Async singleton execution context. If the task threw an exception,
- * wait() re-throws it to the caller.
- */
+// A simple rendezvous object returned to callers that want to wait for a
+// previously submitted asynchronous task to finish. Calling wait() blocks
+// until the task has completed. If the task threw, the stored exception
+// will be rethrown to the waiter.
 class Dmn_Async_Handle {
   template <template <class> class> friend class Dmn_Async;
 
 public:
-  /**
-   * @brief Construct a handle for a task that is about to be enqueued.
-   *
-   * @param fnc            The callable that will be submitted for async execution.
-   * @param due_in_future  Reserved for future delayed-execution support; pass 0.
-   */
   Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
       : m_fnc{fnc}, m_due_in_future{due_in_future} {
     m_fut = m_p.get_future();
@@ -84,7 +74,6 @@ public:
   Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
   Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
-  /// @brief Block until the associated async task completes; re-throws any exception thrown by the task.
   void wait() { m_fut.get(); }
 
 private:
@@ -95,17 +84,6 @@ private:
   std::future<void> m_fut{};
 };
 
-/**
- * @brief Serialises asynchronous task execution in a dedicated background thread.
- *
- * Dmn_Async inherits from Dmn_Pipe and runs submitted tasks in order inside
- * its own processing thread. Clients use addExecTask() for fire-and-forget
- * dispatch and addExecTaskWithWait() when they need to synchronize with task
- * completion.
- *
- * @tparam QueueType Underlying queue template used for task storage
- *                   (default: Dmn_BlockingQueue).
- */
 template <template <class> class QueueType = Dmn_BlockingQueue>
 class Dmn_Async
     : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
