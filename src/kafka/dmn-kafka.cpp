@@ -155,6 +155,8 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
 Dmn_Kafka::~Dmn_Kafka() noexcept try {
   assert(m_kafka);
 
+  shutdown();
+
   if (Role::kConsumer == m_role) {
     rd_kafka_consumer_close(m_kafka);
   } else {
@@ -168,17 +170,38 @@ Dmn_Kafka::~Dmn_Kafka() noexcept try {
   return;
 }
 
+void Dmn_Kafka::cleanup_thunk_inflight(void *arg) {
+  auto *ticket_sp = static_cast<Inflight_Guard_Ticket *>(arg);
+
+  (*ticket_sp).reset();
+}
+
+auto Dmn_Kafka::isInflightGuardClosed() -> bool {
+  return m_shutdown_flag.test(std::memory_order_acquire);
+}
+
 auto Dmn_Kafka::read() -> std::optional<std::string> {
+  std::optional<std::string> ret{};
+
+  Inflight_Guard_Ticket inflightTicket{};
+
+  try {
+    inflightTicket = this->enterInflightGate();
+  } catch (...) {
+    return {};
+  }
+
+  DMN_PROC_CLEANUP_PUSH(&Dmn_Kafka::cleanup_thunk_inflight, &inflightTicket);
+
   rd_kafka_message_t *consumer_message{};
 
   consumer_message = rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms);
+
   Dmn_Proc::yield();
 
   if (!consumer_message) {
     return {};
   }
-
-  std::optional<std::string> ret{};
 
   // after this point, we need to free consumer_message
   if (consumer_message->err) {
@@ -198,7 +221,15 @@ auto Dmn_Kafka::read() -> std::optional<std::string> {
 
   rd_kafka_message_destroy(consumer_message);
 
+  DMN_PROC_CLEANUP_POP(0);
+
   return ret;
+}
+
+void Dmn_Kafka::shutdown() {
+  m_shutdown_flag.test_and_set(std::memory_order_release);
+
+  waitForEmptyInflight();
 }
 
 void Dmn_Kafka::write(std::string &item) { write(item, false); }

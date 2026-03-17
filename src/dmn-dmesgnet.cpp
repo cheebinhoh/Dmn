@@ -93,6 +93,10 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
   m_shutdown = true;
 
+  if (m_input_handler) {
+    m_input_handler->shutdown();
+  }
+
   m_input_proc.reset();
   m_timer_proc.reset();
 
