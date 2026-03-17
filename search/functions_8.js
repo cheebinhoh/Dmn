@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['openhandler_0',['openHandler',['../classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10',1,'dmn::Dmn_DMesg']]]
+  ['make_5fscope_5fguard_0',['make_scope_guard',['../dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e',1,'dmn']]]
 ];

@@ -108,9 +108,13 @@ Inheritance diagram for dmn::Dmn_TeePipe&lt; T &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a01afa736f3374ecca7fbd3426cef3708" id="r_a01afa736f3374ecca7fbd3426cef3708"><td class="memItemLeft" align="right" valign="top"><a id="a01afa736f3374ecca7fbd3426cef3708" name="a01afa736f3374ecca7fbd3426cef3708"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_TeePipe</b> (std::string_view name, Dmn_TeePipe::Task fn={}, Dmn_TeePipe::PostProcessingTask pfn={})</td></tr>
+<tr class="memitem:a01afa736f3374ecca7fbd3426cef3708" id="r_a01afa736f3374ecca7fbd3426cef3708"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__TeePipe.html#a01afa736f3374ecca7fbd3426cef3708">Dmn_TeePipe</a> (std::string_view name, Dmn_TeePipe::Task fn={}, Dmn_TeePipe::PostProcessingTask pfn={})</td></tr>
+<tr class="memdesc:a01afa736f3374ecca7fbd3426cef3708"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__TeePipe.html">Dmn_TeePipe</a> and start the internal conveyor thread.  <br /></td></tr>
 <tr class="separator:a01afa736f3374ecca7fbd3426cef3708"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26c659f4c05b5fa00fa9ab9cb1e9ba5f" id="r_a26c659f4c05b5fa00fa9ab9cb1e9ba5f"><td class="memItemLeft" align="right" valign="top"><a id="a26c659f4c05b5fa00fa9ab9cb1e9ba5f" name="a26c659f4c05b5fa00fa9ab9cb1e9ba5f"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_TeePipe</b> () noexcept</td></tr>
+<tr class="memdesc:a26c659f4c05b5fa00fa9ab9cb1e9ba5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the conveyor thread before destroying synchronization primitives. <br /></td></tr>
+<tr class="separator:a26c659f4c05b5fa00fa9ab9cb1e9ba5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4627974d98c8ec810725f63c69075838" id="r_a4627974d98c8ec810725f63c69075838"><td class="memItemLeft" align="right" valign="top"><a id="a4627974d98c8ec810725f63c69075838" name="a4627974d98c8ec810725f63c69075838"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_TeePipe</b> (const <a class="el" href="classdmn_1_1Dmn__TeePipe.html">Dmn_TeePipe</a>&lt; T &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:a4627974d98c8ec810725f63c69075838"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -132,6 +136,61 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af8eb6004d16be2aaf35c461d9c0a8522" id="r_af8eb6004d16be2aaf35c461d9c0a8522"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__TeePipe.html#af8eb6004d16be2aaf35c461d9c0a8522">waitForEmpty</a> () -&gt; uint64_t override</td></tr>
 <tr class="separator:af8eb6004d16be2aaf35c461d9c0a8522"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a01afa736f3374ecca7fbd3426cef3708" name="a01afa736f3374ecca7fbd3426cef3708"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01afa736f3374ecca7fbd3426cef3708">&#9670;&#160;</a></span>Dmn_TeePipe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__TeePipe.html">dmn::Dmn_TeePipe</a>&lt; T &gt;::Dmn_TeePipe </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__TeePipe.html">Dmn_TeePipe</a>&lt; T &gt;::Task&#160;</td>
+          <td class="paramname"><em>fn</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__TeePipe.html">Dmn_TeePipe</a>&lt; T &gt;::PostProcessingTask&#160;</td>
+          <td class="paramname"><em>pfn</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a <a class="el" href="classdmn_1_1Dmn__TeePipe.html">Dmn_TeePipe</a> and start the internal conveyor thread. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>Identifying name for this pipe and its conveyor thread. </td></tr>
+    <tr><td class="paramname">fn</td><td>Optional outbound processing task forwarded to <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>. </td></tr>
+    <tr><td class="paramname">pfn</td><td>Optional post-processing task invoked on the collected vector of items (one per source) before forwarding them to the outbound pipe. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a360acd8b7af1d3b733d9fcf8574bba0b" name="a360acd8b7af1d3b733d9fcf8574bba0b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a360acd8b7af1d3b733d9fcf8574bba0b">&#9670;&#160;</a></span>addDmn_TeePipeSource()</h2>

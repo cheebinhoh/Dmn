@@ -99,6 +99,9 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 <li>addExecTaskWithWait()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Async.html#aacbb4474a95af8fc28d6cb126ffafa8c">dmn::Dmn_Async&lt; QueueType &gt;</a></li>
 <li>addJob()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a8db837619ce8704ebaf68558890ee007">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
 <li>addTimedJob()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#af6b4fb9f0298ea44a1b02da969faa410">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
+<li>await_ready()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#a29ed6e1bf86ab6e480f56d55f7d163dd">dmn::Dmn_Runtime_Task::Awaiter</a>, <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#acf6a16171900cb5eb02a67236f800347">dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter</a></li>
+<li>await_resume()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#ac74d9c7dc51ccaf7c5139bf5e09934f9">dmn::Dmn_Runtime_Task::Awaiter</a>, <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#ab6b02b12087889555e7f814d58da733d">dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter</a></li>
+<li>await_suspend()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#ad9daccd07d2d1c5103760d03d4cf83c3">dmn::Dmn_Runtime_Task::Awaiter</a>, <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#afeb0d6d09fe9764ac28cadfca42cee9e">dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter</a></li>
 </ul>
 
 
@@ -111,36 +114,56 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 <h3><a id="index_d" name="index_d"></a>- d -</h3><ul>
 <li>Dmn_Async()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">dmn::Dmn_Async&lt; QueueType &gt;</a></li>
+<li>Dmn_Async_Handle()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Async__Handle.html#abbf67fc7d5425709f92fdbb71348b98b">dmn::Dmn_Async_Handle</a></li>
 <li>Dmn_DMesg()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">dmn::Dmn_DMesg</a></li>
 <li>Dmn_DMesgHandler()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a9d532e4df3f61d8dcb8d69450672fd96">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
 <li>Dmn_DMesgNet()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesgNet.html#afafa37a545a0060ec87b9ad1415a8652">dmn::Dmn_DMesgNet</a></li>
+<li>Dmn_Inflight_Guard()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a7909de1d851ff4bf881f2bb692d70005">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+<li>Dmn_Limit_BlockingQueue()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#ad26eb258941ea30aafc2e02bae290377">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a></li>
+<li>Dmn_Pipe()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a></li>
 <li>Dmn_Proc()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">dmn::Dmn_Proc</a></li>
 <li>Dmn_Pub()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">dmn::Dmn_Pub&lt; T, QueueType &gt;</a></li>
+<li>Dmn_Runtime_Manager()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a041c801237bbb507ebd750a85ab542e1">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
+<li>Dmn_Runtime_Task()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a4fc97b9128cbf791b963fafee228aa1e">dmn::Dmn_Runtime_Task</a></li>
 <li>Dmn_Socket()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Socket.html#aa7da5ee8aeaff18aa2f81472cc747b28">dmn::Dmn_Socket</a></li>
+<li>Dmn_Sub()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#ae51e3fbaeffcd472bf2fb96d06780760">dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</a></li>
+<li>Dmn_TeePipe()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__TeePipe.html#a01afa736f3374ecca7fbd3426cef3708">dmn::Dmn_TeePipe&lt; T &gt;</a></li>
+<li>Dmn_Timer()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Timer.html#a1547d3b395d9da4297861defdef5b4db">dmn::Dmn_Timer&lt; T &gt;</a></li>
 </ul>
 
 
 <h3><a id="index_e" name="index_e"></a>- e -</h3><ul>
 <li>empty()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#af916f0abd3209e5409f459b9bbfb7359">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a></li>
-<li>enterInflightGuardFnc()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a06ef41db026b53a793dbbd88d1b90e23">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a></li>
+<li>enterInflightGate()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a308aad8716a84e809168fbe6523f3b43">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+<li>enterInflightGuardFnc()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a06ef41db026b53a793dbbd88d1b90e23">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
 <li>enterMainLoop()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
 <li>exec()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">dmn::Dmn_Proc</a></li>
 <li>exitMainLoop()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
 </ul>
 
 
+<h3><a id="index_f" name="index_f"></a>- f -</h3><ul>
+<li>final_suspend()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#ae8a1ce29a2e664497f3c87ab152b9876">dmn::Dmn_Runtime_Task::promise_type</a></li>
+</ul>
+
+
 <h3><a id="index_g" name="index_g"></a>- g -</h3><ul>
+<li>get_return_object()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a9d82a54e67fd1e89ac17885c99baa91a">dmn::Dmn_Runtime_Task::promise_type</a></li>
 <li>getLastTopicCacheInternal()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">dmn::Dmn_DMesg</a>, <a class="el" href="classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d">dmn::Dmn_DMesgNet</a></li>
 <li>getState()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32">dmn::Dmn_Proc</a></li>
 <li>getTopicLastMessage()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8">dmn::Dmn_DMesg</a></li>
 <li>getTopicRunningCounter()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
 <li>getTopicRunningCounterInternal()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
+<li>getValue()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</a></li>
 </ul>
 
 
 <h3><a id="index_i" name="index_i"></a>- i -</h3><ul>
+<li>inflight_count()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#aa4491b8ad21f8f3595a329f53e8f62b7">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+<li>initial_suspend()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a9739b6473072dcb1cce22bb9f8c82e3d">dmn::Dmn_Runtime_Task::promise_type</a></li>
 <li>isInConflict()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aaea039fb7f3922c0a60b3e0b1080d7ce">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
-<li>isInflightGuardClosed()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a></li>
+<li>isInflightGuardClosed()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a963df5c8bfbbcca508972626967b42f5">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#af7d62f329a07cc1d1af87946bf19181a">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+<li>isValid()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c">dmn::Dmn_Runtime_Task</a></li>
 </ul>
 
 
@@ -152,6 +175,18 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 </ul>
 
 
+<h3><a id="index_l" name="index_l"></a>- l -</h3><ul>
+<li>leaveInflightGuardFnc()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#ac011cad688dacdeb7e08401eed50d026">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a33db0bcc282fa1be3266116a74831d54">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+</ul>
+
+
+<h3><a id="index_m" name="index_m"></a>- m -</h3><ul>
+<li>m_continuation&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a46964a6fbf9318465bc3b4aae126705d">dmn::Dmn_Runtime_Task::promise_type</a></li>
+<li>m_except&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#ad5fe28938629c068bda3482b3558c8f5">dmn::Dmn_Runtime_Task::promise_type</a></li>
+<li>m_handle&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#a3e6b1feabf8f18ea301ec77804f2311c">dmn::Dmn_Runtime_Task::Awaiter</a>, <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#aa56ba6a3ec3558937e41754a73531d57">dmn::Dmn_Runtime_Task</a></li>
+</ul>
+
+
 <h3><a id="index_n" name="index_n"></a>- n -</h3><ul>
 <li>notify()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d7f9c2b39d0dc2f2022849e03ae319c">dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</a></li>
 </ul>
@@ -159,6 +194,9 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 <h3><a id="index_o" name="index_o"></a>- o -</h3><ul>
 <li>openHandler()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">dmn::Dmn_DMesg</a></li>
+<li>operator bool()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ad7730b8763ff4eaae7a5444d237458a8">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</a></li>
+<li>operator co_await()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#ab5012c093353e07b6f81e30ba42dde88">dmn::Dmn_Runtime_Task</a></li>
+<li>operator=()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a9325cc3fefb38142e4fb01f44ec6d8b7">dmn::Dmn_Runtime_Task</a></li>
 </ul>
 
 
@@ -186,7 +224,9 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 <li>resetConflictStateWithLastTopicMessage()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">dmn::Dmn_DMesg</a></li>
 <li>resetHandlerConflictState()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">dmn::Dmn_DMesg</a></li>
 <li>resolveConflict()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
+<li>return_void()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a6505eb9ba38c8743034dcf7dcacef6cf">dmn::Dmn_Runtime_Task::promise_type</a></li>
 <li>runExec()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498">dmn::Dmn_Proc</a></li>
+<li>runPriorToCreateInstance()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
 </ul>
 
 
@@ -205,20 +245,24 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 <h3><a id="index_t" name="index_t"></a>- t -</h3><ul>
 <li>testcancel()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">dmn::Dmn_Proc</a></li>
+<li>Ticket()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</a></li>
 </ul>
 
 
 <h3><a id="index_u" name="index_u"></a>- u -</h3><ul>
+<li>unhandled_exception()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a5cbef2514804377925a4755cfa1b0c0b">dmn::Dmn_Runtime_Task::promise_type</a></li>
 <li>unregisterSubscriber()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da">dmn::Dmn_Pub&lt; T, QueueType &gt;</a></li>
 </ul>
 
 
 <h3><a id="index_w" name="index_w"></a>- w -</h3><ul>
-<li>wait()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">dmn::Dmn_Proc</a>, <a class="el" href="classdmn_1_1Dmn__TeePipe.html#ad4afbe8deb9e2f07f0be307811f3ae2c">dmn::Dmn_TeePipe&lt; T &gt;</a></li>
+<li>wait()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Async__Handle.html#ad61378749fc73a9d148d94bdbe5f3508">dmn::Dmn_Async_Handle</a>, <a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">dmn::Dmn_Proc</a>, <a class="el" href="classdmn_1_1Dmn__TeePipe.html#ad4afbe8deb9e2f07f0be307811f3ae2c">dmn::Dmn_TeePipe&lt; T &gt;</a></li>
 <li>waitForEmpty()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a1bc67c65430c90d39deaeaeff9bf2d30">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#a494cd819204ed57c2cce12342773e030">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, <a class="el" href="classdmn_1_1Dmn__TeePipe.html#af8eb6004d16be2aaf35c461d9c0a8522">dmn::Dmn_TeePipe&lt; T &gt;</a></li>
+<li>waitForEmptyInflight()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a5fe10555ae74a78356e964913b0c903e">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
 <li>write()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a0337a83e8ca585c222af6b10a23eb838">dmn::Dmn_DMesg::Dmn_DMesgHandler</a>, <a class="el" href="classdmn_1_1Dmn__Io.html#a905a7462dbbac1b9f02a1e96829014ba">dmn::Dmn_Io&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Socket.html#af28a7a0b3851ecb46ae6a4baf6c46fc5">dmn::Dmn_Socket</a></li>
 <li>writeAndCheckConflict()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a365d1155662cdc276515fe32e90aa436">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
 <li>writeDMesgInternal()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa69e6a0a2171a34c07469c422c7ceeb2">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
+<li>WriteOptions&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></li>
 </ul>
 
 
@@ -228,8 +272,16 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 
 <h3><a id="index__7E" name="index__7E"></a>- ~ -</h3><ul>
+<li>~Dmn_Inflight_Guard()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#acfd0b42b09ab5a127b4b9be26323ac62">dmn::Dmn_Inflight_Guard&lt; T &gt;</a></li>
+<li>~Dmn_Limit_BlockingQueue()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#ab240980581f71042cd4de220e8441b75">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a></li>
+<li>~Dmn_Pipe()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Pipe.html#a9bb79f728f7ea508565600ceb0e1ed95">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a></li>
 <li>~Dmn_Proc()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b">dmn::Dmn_Proc</a></li>
+<li>~Dmn_Runtime_Manager()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a4694ebd4d418b78082f6142259a1bdbf">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></li>
+<li>~Dmn_Runtime_Task()&#160;:&#160;<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#ae792abe106dfe7731610d97e3a972c58">dmn::Dmn_Runtime_Task</a></li>
 <li>~Dmn_Socket()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Socket.html#a1321d794de567003890c7e91b98e5b5e">dmn::Dmn_Socket</a></li>
+<li>~Dmn_TeePipe()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__TeePipe.html#a26c659f4c05b5fa00fa9ab9cb1e9ba5f">dmn::Dmn_TeePipe&lt; T &gt;</a></li>
+<li>~Dmn_Timer()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Timer.html#a1ff7073558731b15a3a675620e877c94">dmn::Dmn_Timer&lt; T &gt;</a></li>
+<li>~Ticket()&#160;:&#160;<a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aa1c6f33a98ce90972522a4391d2ab3ce">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

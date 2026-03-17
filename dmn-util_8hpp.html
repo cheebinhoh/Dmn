@@ -107,7 +107,7 @@ $(document).ready(function(){initNavTree('dmn-util_8hpp.html',''); initResizable
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1ScopeGuard.html">dmn::ScopeGuard&lt; F &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type to support scope guard (like std::scope_exit in proposed c++ standard).  <a href="structdmn_1_1ScopeGuard.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimal RAII scope-exit guard (analogous to the proposed std::scope_exit).  <a href="structdmn_1_1ScopeGuard.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
@@ -119,10 +119,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ae20c00ac25ccc7527fb0dd05a7defb4f" id="r_ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">dmn::stringCompare</a> (const std::string_view str1, const std::string_view str2, bool caseInsensitive=true)</td></tr>
 <tr class="memdesc:ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compare two strings for equality, optionally in a case-insensitive way.  <br /></td></tr>
 <tr class="separator:ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af827ac779dd7415084b37158de06206e" id="r_af827ac779dd7415084b37158de06206e"><td class="memTemplParams" colspan="2"><a id="af827ac779dd7415084b37158de06206e" name="af827ac779dd7415084b37158de06206e"></a>
-template&lt;typename F &gt; </td></tr>
-<tr class="memitem:af827ac779dd7415084b37158de06206e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1ScopeGuard.html">ScopeGuard</a>&lt; F &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>dmn::make_scope_guard</b> (F f)</td></tr>
-<tr class="memdesc:af827ac779dd7415084b37158de06206e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper allows the compiler to deduce the lambda type automatically. <br /></td></tr>
+<tr class="memitem:af827ac779dd7415084b37158de06206e" id="r_af827ac779dd7415084b37158de06206e"><td class="memTemplParams" colspan="2">template&lt;typename F &gt; </td></tr>
+<tr class="memitem:af827ac779dd7415084b37158de06206e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1ScopeGuard.html">ScopeGuard</a>&lt; F &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">dmn::make_scope_guard</a> (F f)</td></tr>
+<tr class="memdesc:af827ac779dd7415084b37158de06206e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for <a class="el" href="structdmn_1_1ScopeGuard.html" title="Minimal RAII scope-exit guard (analogous to the proposed std::scope_exit).">ScopeGuard</a>: constructs and returns a guard that calls <code>f</code> when the returned guard goes out of scope.  <br /></td></tr>
 <tr class="separator:af827ac779dd7415084b37158de06206e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -199,6 +198,41 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>value + 1, or 1 if value + 1 is less than 1. </dd></dl>
+
+</div>
+</div>
+<a id="af827ac779dd7415084b37158de06206e" name="af827ac779dd7415084b37158de06206e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af827ac779dd7415084b37158de06206e">&#9670;&#160;</a></span>make_scope_guard()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename F &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">ScopeGuard&lt; F &gt; dmn::make_scope_guard </td>
+          <td>(</td>
+          <td class="paramtype">F&#160;</td>
+          <td class="paramname"><em>f</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Factory for ScopeGuard: constructs and returns a guard that calls <code>f</code> when the returned guard goes out of scope. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">F</td><td>Callable type (deduced by the compiler). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">f</td><td>Functor to invoke on scope exit. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>ScopeGuard&lt;F&gt; that owns <code>f</code>. </dd></dl>
 
 </div>
 </div>

@@ -10,5 +10,7 @@ var searchData=
   ['resethandlerconflictstate_7',['resetHandlerConflictState',['../classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab',1,'dmn::Dmn_DMesg']]],
   ['resolveconflict_8',['resolveConflict',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['responsibilities_9',['Key Responsibilities',['../dmn-runtime_8hpp.html#autotoc_md13',1,'']]],
-  ['runexec_10',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]]
+  ['return_5fvoid_10',['return_void',['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a6505eb9ba38c8743034dcf7dcacef6cf',1,'dmn::Dmn_Runtime_Task::promise_type']]],
+  ['runexec_11',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]],
+  ['runpriortocreateinstance_12',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
 ];

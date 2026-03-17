@@ -5,7 +5,7 @@ var annotated_dup =
         [ "Dmn_Runtime_Manager_Impl", "structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html", null ]
       ] ],
       [ "Dmn_Async", "classdmn_1_1Dmn__Async.html", "classdmn_1_1Dmn__Async" ],
-      [ "Dmn_Async_Handle", "classdmn_1_1Dmn__Async__Handle.html", null ],
+      [ "Dmn_Async_Handle", "classdmn_1_1Dmn__Async__Handle.html", "classdmn_1_1Dmn__Async__Handle" ],
       [ "Dmn_BlockingQueue", "classdmn_1_1Dmn__BlockingQueue.html", "classdmn_1_1Dmn__BlockingQueue" ],
       [ "Dmn_BlockingQueue_Interface", "classdmn_1_1Dmn__BlockingQueue__Interface.html", "classdmn_1_1Dmn__BlockingQueue__Interface" ],
       [ "Dmn_BlockingQueue_Lf", "classdmn_1_1Dmn__BlockingQueue__Lf.html", "classdmn_1_1Dmn__BlockingQueue__Lf" ],

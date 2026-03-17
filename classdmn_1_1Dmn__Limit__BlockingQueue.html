@@ -107,9 +107,13 @@ Inheritance diagram for dmn::Dmn_Limit_BlockingQueue&lt; T &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad26eb258941ea30aafc2e02bae290377" id="r_ad26eb258941ea30aafc2e02bae290377"><td class="memItemLeft" align="right" valign="top"><a id="ad26eb258941ea30aafc2e02bae290377" name="ad26eb258941ea30aafc2e02bae290377"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Limit_BlockingQueue</b> (size_t capacity=1)</td></tr>
+<tr class="memitem:ad26eb258941ea30aafc2e02bae290377" id="r_ad26eb258941ea30aafc2e02bae290377"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#ad26eb258941ea30aafc2e02bae290377">Dmn_Limit_BlockingQueue</a> (size_t capacity=1)</td></tr>
+<tr class="memdesc:ad26eb258941ea30aafc2e02bae290377"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a bounded blocking queue with the given maximum capacity.  <br /></td></tr>
 <tr class="separator:ad26eb258941ea30aafc2e02bae290377"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab240980581f71042cd4de220e8441b75" id="r_ab240980581f71042cd4de220e8441b75"><td class="memItemLeft" align="right" valign="top"><a id="ab240980581f71042cd4de220e8441b75" name="ab240980581f71042cd4de220e8441b75"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Limit_BlockingQueue</b> ()</td></tr>
+<tr class="memdesc:ab240980581f71042cd4de220e8441b75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the queue; frees internal resources. <br /></td></tr>
+<tr class="separator:ab240980581f71042cd4de220e8441b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad5724309d588c67ec96345a98316c1a9" id="r_ad5724309d588c67ec96345a98316c1a9"><td class="memItemLeft" align="right" valign="top"><a id="ad5724309d588c67ec96345a98316c1a9" name="ad5724309d588c67ec96345a98316c1a9"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Limit_BlockingQueue</b> (const <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">Dmn_Limit_BlockingQueue</a>&lt; T &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:ad5724309d588c67ec96345a98316c1a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,7 +139,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:acc8612f37c52063b3fd4357732b8e19c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method will push the item into queue using move semantics unless noexcept is false. The caller is blocked waiting if the queue is full.  <br /></td></tr>
 <tr class="separator:acc8612f37c52063b3fd4357732b8e19c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec4a2c3fcff18cdba8ebd3ad5f3deda3" id="r_aec4a2c3fcff18cdba8ebd3ad5f3deda3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#aec4a2c3fcff18cdba8ebd3ad5f3deda3">push</a> (T &amp;item, bool move=true)</td></tr>
-<tr class="memdesc:aec4a2c3fcff18cdba8ebd3ad5f3deda3"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method will push the item into queue using move semantics if move is t true. The caller is blocked waiting if the queue is full.  <br /></td></tr>
+<tr class="memdesc:aec4a2c3fcff18cdba8ebd3ad5f3deda3"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method will push the item into queue using move semantics if move is true. The caller is blocked waiting if the queue is full.  <br /></td></tr>
 <tr class="separator:aec4a2c3fcff18cdba8ebd3ad5f3deda3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b78f484b25c7ade12b281c2e9045f10" id="r_a1b78f484b25c7ade12b281c2e9045f10"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#a1b78f484b25c7ade12b281c2e9045f10">size</a> () -&gt; size_t</td></tr>
 <tr class="memdesc:a1b78f484b25c7ade12b281c2e9045f10"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method returns the number of items held in the queue now.  <br /></td></tr>
@@ -144,6 +148,43 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a494cd819204ed57c2cce12342773e030"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method will put the client on blocking wait until the queue is empty, it returns number of items that were passed through the queue in total.  <br /></td></tr>
 <tr class="separator:a494cd819204ed57c2cce12342773e030"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="ad26eb258941ea30aafc2e02bae290377" name="ad26eb258941ea30aafc2e02bae290377"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad26eb258941ea30aafc2e02bae290377">&#9670;&#160;</a></span>Dmn_Limit_BlockingQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html">dmn::Dmn_Limit_BlockingQueue</a>&lt; T &gt;::Dmn_Limit_BlockingQueue </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>capacity</em> = <code>1</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a bounded blocking queue with the given maximum capacity. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">capacity</td><td>Maximum number of items the queue may hold simultaneously. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="af916f0abd3209e5409f459b9bbfb7359" name="af916f0abd3209e5409f459b9bbfb7359"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af916f0abd3209e5409f459b9bbfb7359">&#9670;&#160;</a></span>empty()</h2>
@@ -297,7 +338,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>The method will push the item into queue using move semantics if move is t true. The caller is blocked waiting if the queue is full. </p>
+<p>The method will push the item into queue using move semantics if move is true. The caller is blocked waiting if the queue is full. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The item to be pushed into queue </td></tr>

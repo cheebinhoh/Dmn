@@ -106,7 +106,7 @@ Inheritance diagram for dmn::Dmn_Runtime_Manager&lt; QueueType &gt;:</div>
   <img src="classdmn_1_1Dmn__Runtime__Manager.png" usemap="#dmn::Dmn_5FRuntime_5FManager_3C_20QueueType_20_3E_map" alt=""/>
   <map id="dmn::Dmn_5FRuntime_5FManager_3C_20QueueType_20_3E_map" name="dmn::Dmn_5FRuntime_5FManager_3C_20QueueType_20_3E_map">
 <area href="classdmn_1_1Dmn__Singleton.html" alt="dmn::Dmn_Singleton&lt; T &gt;" shape="rect" coords="0,0,425,24"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="435,0,860,24"/>
+<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="435,0,860,24"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -118,6 +118,14 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>SignalHandlerHook</b
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a041c801237bbb507ebd750a85ab542e1" id="r_a041c801237bbb507ebd750a85ab542e1"><td class="memItemLeft" align="right" valign="top"><a id="a041c801237bbb507ebd750a85ab542e1" name="a041c801237bbb507ebd750a85ab542e1"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_Manager</b> ()</td></tr>
+<tr class="memdesc:a041c801237bbb507ebd750a85ab542e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct the runtime, register default SIGTERM/SIGINT/SIGALRM handlers, and create the PIMPL timer object. <br /></td></tr>
+<tr class="separator:a041c801237bbb507ebd750a85ab542e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4694ebd4d418b78082f6142259a1bdbf" id="r_a4694ebd4d418b78082f6142259a1bdbf"><td class="memItemLeft" align="right" valign="top"><a id="a4694ebd4d418b78082f6142259a1bdbf" name="a4694ebd4d418b78082f6142259a1bdbf"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Runtime_Manager</b> () noexcept</td></tr>
+<tr class="memdesc:a4694ebd4d418b78082f6142259a1bdbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the runtime: exit the main loop, wait for all jobs to complete, and release the PIMPL timer object. <br /></td></tr>
+<tr class="separator:a4694ebd4d418b78082f6142259a1bdbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ddcde4c8d29e0dce39c329852b690c5" id="r_a9ddcde4c8d29e0dce39c329852b690c5"><td class="memItemLeft" align="right" valign="top"><a id="a9ddcde4c8d29e0dce39c329852b690c5" name="a9ddcde4c8d29e0dce39c329852b690c5"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_Manager</b> (const <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a9ddcde4c8d29e0dce39c329852b690c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,10 +152,10 @@ requires IsValidJobFnc&lt;F&gt;</td></tr>
 <tr class="memdesc:a3a314ec4b1088a6612eaf424113c778a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all registered handler hooks for the signal number. Note that only client registered signal handler hooks are clear.  <br /></td></tr>
 <tr class="separator:a3a314ec4b1088a6612eaf424113c778a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab9694235bcd595e812eacd6e115b1851" id="r_ab9694235bcd595e812eacd6e115b1851"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851">enterMainLoop</a> ()</td></tr>
-<tr class="memdesc:ab9694235bcd595e812eacd6e115b1851"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start processing runtime events / jobs. Blocks until <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="The method will exit the Dmn_Runtime_Manager mainloop, returns control (usually the mainthread) to th...">exitMainLoop()</a> is called or the runtime decides to stop (a signal handler hook calls exitMainLoop).  <br /></td></tr>
+<tr class="memdesc:ab9694235bcd595e812eacd6e115b1851"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start processing runtime events / jobs. Blocks until <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a> is called or the runtime decides to stop (a signal handler hook calls exitMainLoop).  <br /></td></tr>
 <tr class="separator:ab9694235bcd595e812eacd6e115b1851"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa88c4a09c5cc919f4fa2412ac8e0a7ab" id="r_aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">exitMainLoop</a> ()</td></tr>
-<tr class="memdesc:aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method will exit the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, returns control (usually the mainthread) to the main() function to be continued.  <br /></td></tr>
+<tr class="memdesc:aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the runtime to stop processing and exit the main loop.  <br /></td></tr>
 <tr class="separator:aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1907e2ef032bc22e6a52c1c114c7afe6" id="r_a1907e2ef032bc22e6a52c1c114c7afe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">registerSignalHandlerHook</a> (int signo, SignalHandlerHook &amp;&amp;hook)</td></tr>
 <tr class="memdesc:a1907e2ef032bc22e6a52c1c114c7afe6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a signal handler hook for a particular signal number. Handlers are invoked by the runtime in a safe context (not from the raw signal handler) in a singleton asynchronous thread context.  <br /></td></tr>
@@ -157,6 +165,7 @@ requires IsValidJobFnc&lt;F&gt;</td></tr>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a456083f9813654f46124a31c9d26d4a6" id="r_a456083f9813654f46124a31c9d26d4a6"><td class="memItemLeft" align="right" valign="top"><a id="a456083f9813654f46124a31c9d26d4a6" name="a456083f9813654f46124a31c9d26d4a6"></a>
 static void&#160;</td><td class="memItemRight" valign="bottom"><b>runPriorToCreateInstance</b> ()</td></tr>
+<tr class="memdesc:a456083f9813654f46124a31c9d26d4a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask SIGALRM, SIGINT, SIGTERM, SIGQUIT and SIGHUP before the singleton's async thread is created. <br /></td></tr>
 <tr class="separator:a456083f9813654f46124a31c9d26d4a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classdmn_1_1Dmn__Singleton"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classdmn_1_1Dmn__Singleton')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton&lt; T &gt;</a></td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6 inherit pub_static_methods_classdmn_1_1Dmn__Singleton" id="r_a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
@@ -167,13 +176,13 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>runPriorToCrea
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;template&lt; class &gt; class QueueType = Dmn_BlockingQueue&gt;<br />
 class dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</div><p><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></p>
-<p>A singleton runtime manager that centralizes POSIX signal handling and asynchronous job scheduling/execution. It inherits <a class="el" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a> for singleton lifecycle and privately from <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> to run an internal runtime asynchronous thread used for processing job.</p>
+<p>A singleton runtime manager that centralizes POSIX signal handling and asynchronous job scheduling/execution. It inherits <a class="el" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a> for singleton lifecycle and privately from <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> to run an internal runtime asynchronous thread used for processing job.</p>
 <p>Public API highlights:</p><ul>
 <li>addJob(fnc, priority, onErrorFnc): enqueue a job for immediate execution in the singleton asynchronous thread context.</li>
 <li>addTimedJob(fnc, duration, priority, onErrorFnc): schedule job to run after duration in the singleton asychronous thread context.</li>
 <li>registerSignalHandlerHook(signo, hook): register a handler hook to be invoked when the given signal is delivered in the singleton asychronous thread context.</li>
 <li>clearSignalHandlerHook(signo): clear all register handler hooks for the particular signo.</li>
-<li><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a> / <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="The method will exit the Dmn_Runtime_Manager mainloop, returns control (usually the mainthread) to th...">exitMainLoop()</a>: control the runtime starts processing jobs and signal handler hooks in the singleton asynchronous thread context.</li>
+<li><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a> / <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a>: control the runtime starts processing jobs and signal handler hooks in the singleton asynchronous thread context.</li>
 </ul>
 <p>Important behaviour:</p><ul>
 <li>Signals used by the runtime are blocked prior to creating the singleton so that all threads inherit the same mask. This avoids race conditions where signals could be delivered to a thread that has not yet registered or initialized handler state.</li>
@@ -338,7 +347,7 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Start processing runtime events / jobs. Blocks until <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="The method will exit the Dmn_Runtime_Manager mainloop, returns control (usually the mainthread) to th...">exitMainLoop()</a> is called or the runtime decides to stop (a signal handler hook calls exitMainLoop). </p>
+<p>Start processing runtime events / jobs. Blocks until <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a> is called or the runtime decides to stop (a signal handler hook calls exitMainLoop). </p>
 <p>The method will enter the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, and wait for runtime loop to be exited. this is usually called by the main() method. </p>
 
 </div>
@@ -360,8 +369,9 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>The method will exit the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, returns control (usually the mainthread) to the main() function to be continued. </p>
 <p>Request the runtime to stop processing and exit the main loop. </p>
+<p>The method will exit the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, returns control (usually the mainthread) to the main() function to be continued.</p>
+<p>Signals the signal-wait thread to terminate and waits for it to join. Safe to call from any thread; idempotent (subsequent calls are no-ops). </p>
 
 </div>
 </div>

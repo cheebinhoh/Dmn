@@ -10,7 +10,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-dmesgnet.hpp", "dmn-dmesgnet_8hpp.html", "dmn-dmesgnet_8hpp" ],
     [ "dmn-inflight-guard.hpp", "dmn-inflight-guard_8hpp.html", "dmn-inflight-guard_8hpp" ],
     [ "dmn-io.hpp", "dmn-io_8hpp.html", "dmn-io_8hpp" ],
-    [ "dmn-limit-blockingqueue.hpp", "dmn-limit-blockingqueue_8hpp_source.html", null ],
+    [ "dmn-limit-blockingqueue.hpp", "dmn-limit-blockingqueue_8hpp.html", "dmn-limit-blockingqueue_8hpp" ],
     [ "dmn-pipe.hpp", "dmn-pipe_8hpp.html", "dmn-pipe_8hpp" ],
     [ "dmn-proc.hpp", "dmn-proc_8hpp.html", "dmn-proc_8hpp" ],
     [ "dmn-pub-sub.hpp", "dmn-pub-sub_8hpp.html", "dmn-pub-sub_8hpp" ],

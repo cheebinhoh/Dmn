@@ -1,5 +1,11 @@
 var classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler =
 [
+    [ "WriteOptions", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912", [
+      [ "kDefault", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912af209db5c9af127690020631da5c34d63", null ],
+      [ "kBlock", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912ae2a6882bd01000640175948f0e7fd5fb", null ],
+      [ "kForce", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912a1c87c037140d4b7068b60a1f1c02c955", null ],
+      [ "kMaxWriteOptions", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912a8ef0a84f89ecf035d6eac80b13c9e8dd", null ]
+    ] ],
     [ "Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a9d532e4df3f61d8dcb8d69450672fd96", null ],
     [ "Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a96aab0d10fe20120ebf50395727a3611", null ],
     [ "Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a1d6f9e2b44d8ecf7c1628d31a1f57d41", null ],

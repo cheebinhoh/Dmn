@@ -96,11 +96,16 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Async__Handle.html','
   <div class="headertitle"><div class="title">dmn::Dmn_Async_Handle Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Rendezvous handle returned when an asynchronous task is submitted with wait semantics.  
+ <a href="classdmn_1_1Dmn__Async__Handle.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abbf67fc7d5425709f92fdbb71348b98b" id="r_abbf67fc7d5425709f92fdbb71348b98b"><td class="memItemLeft" align="right" valign="top"><a id="abbf67fc7d5425709f92fdbb71348b98b" name="abbf67fc7d5425709f92fdbb71348b98b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async_Handle</b> (std::function&lt; void()&gt; fnc, long long due_in_future=0)</td></tr>
+<tr class="memitem:abbf67fc7d5425709f92fdbb71348b98b" id="r_abbf67fc7d5425709f92fdbb71348b98b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async__Handle.html#abbf67fc7d5425709f92fdbb71348b98b">Dmn_Async_Handle</a> (std::function&lt; void()&gt; fnc, long long due_in_future=0)</td></tr>
+<tr class="memdesc:abbf67fc7d5425709f92fdbb71348b98b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a handle for a task that is about to be enqueued.  <br /></td></tr>
 <tr class="separator:abbf67fc7d5425709f92fdbb71348b98b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6e3c982b37dc966edd228ad1737eb18" id="r_ac6e3c982b37dc966edd228ad1737eb18"><td class="memItemLeft" align="right" valign="top"><a id="ac6e3c982b37dc966edd228ad1737eb18" name="ac6e3c982b37dc966edd228ad1737eb18"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async_Handle</b> (const <a class="el" href="classdmn_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj)=delete</td></tr>
@@ -116,6 +121,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a473983aeb89dc3f2f19c29e5d26653e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad61378749fc73a9d148d94bdbe5f3508" id="r_ad61378749fc73a9d148d94bdbe5f3508"><td class="memItemLeft" align="right" valign="top"><a id="ad61378749fc73a9d148d94bdbe5f3508" name="ad61378749fc73a9d148d94bdbe5f3508"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>wait</b> ()</td></tr>
+<tr class="memdesc:ad61378749fc73a9d148d94bdbe5f3508"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block until the associated async task completes; re-throws any exception thrown by the task. <br /></td></tr>
 <tr class="separator:ad61378749fc73a9d148d94bdbe5f3508"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -125,6 +131,55 @@ template&lt;template&lt; class &gt; class&gt; </td></tr>
 <tr class="memitem:a16aeeb21528cde5a419bb8764e9141fe"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Dmn_Async</b></td></tr>
 <tr class="separator:a16aeeb21528cde5a419bb8764e9141fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Rendezvous handle returned when an asynchronous task is submitted with wait semantics. </p>
+<p>Calling <a class="el" href="classdmn_1_1Dmn__Async__Handle.html#ad61378749fc73a9d148d94bdbe5f3508" title="Block until the associated async task completes; re-throws any exception thrown by the task.">wait()</a> blocks until the associated task has completed in the <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> singleton execution context. If the task threw an exception, <a class="el" href="classdmn_1_1Dmn__Async__Handle.html#ad61378749fc73a9d148d94bdbe5f3508" title="Block until the associated async task completes; re-throws any exception thrown by the task.">wait()</a> re-throws it to the caller. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="abbf67fc7d5425709f92fdbb71348b98b" name="abbf67fc7d5425709f92fdbb71348b98b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abbf67fc7d5425709f92fdbb71348b98b">&#9670;&#160;</a></span>Dmn_Async_Handle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_Async_Handle::Dmn_Async_Handle </td>
+          <td>(</td>
+          <td class="paramtype">std::function&lt; void()&gt;&#160;</td>
+          <td class="paramname"><em>fnc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long long&#160;</td>
+          <td class="paramname"><em>due_in_future</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a handle for a task that is about to be enqueued. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fnc</td><td>The callable that will be submitted for async execution. </td></tr>
+    <tr><td class="paramname">due_in_future</td><td>Reserved for future delayed-execution support; pass 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a></li>
 </ul>

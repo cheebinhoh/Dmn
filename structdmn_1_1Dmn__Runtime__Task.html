@@ -98,7 +98,7 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task.html',
 </div><!--header-->
 <div class="contents">
 
-<p>A small RAII wrapper around coroutine frame for <a class="el" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a>.  
+<p>A small RAII wrapper around coroutine frame for <a class="el" href="structdmn_1_1Dmn__Runtime__Job.html" title="Represents a unit of work scheduled and executed by the runtime.">Dmn_Runtime_Job</a>.  
  <a href="structdmn_1_1Dmn__Runtime__Task.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a>&gt;</code></p>
@@ -106,20 +106,26 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task.html',
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html" title="Awaiter returned by operator co_await to allow one coroutine to wait for this task to complete.">Awaiter</a> returned by <code>operator</code> co_await to allow one coroutine to wait for this task to complete.  <a href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coroutine promise type required by the C++20 coroutine machinery.  <a href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab5012c093353e07b6f81e30ba42dde88" id="r_ab5012c093353e07b6f81e30ba42dde88"><td class="memItemLeft" align="right" valign="top"><a id="ab5012c093353e07b6f81e30ba42dde88" name="ab5012c093353e07b6f81e30ba42dde88"></a>
-<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator co_await</b> () noexcept</td></tr>
+<tr class="memitem:ab5012c093353e07b6f81e30ba42dde88" id="r_ab5012c093353e07b6f81e30ba42dde88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#ab5012c093353e07b6f81e30ba42dde88">operator co_await</a> () noexcept</td></tr>
+<tr class="memdesc:ab5012c093353e07b6f81e30ba42dde88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return an <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html" title="Awaiter returned by operator co_await to allow one coroutine to wait for this task to complete.">Awaiter</a> so this task can be <code>co_await-ed</code>.  <br /></td></tr>
 <tr class="separator:ab5012c093353e07b6f81e30ba42dde88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1446b155c7ed6b60fe13844313d09014" id="r_a1446b155c7ed6b60fe13844313d09014"><td class="memItemLeft" align="right" valign="top"><a id="a1446b155c7ed6b60fe13844313d09014" name="a1446b155c7ed6b60fe13844313d09014"></a>
-<a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator co_await</b> () const noexcept</td></tr>
+<tr class="memitem:a1446b155c7ed6b60fe13844313d09014" id="r_a1446b155c7ed6b60fe13844313d09014"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a1446b155c7ed6b60fe13844313d09014">operator co_await</a> () const noexcept</td></tr>
+<tr class="memdesc:a1446b155c7ed6b60fe13844313d09014"><td class="mdescLeft">&#160;</td><td class="mdescRight">co_await()  <br /></td></tr>
 <tr class="separator:a1446b155c7ed6b60fe13844313d09014"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fc97b9128cbf791b963fafee228aa1e" id="r_a4fc97b9128cbf791b963fafee228aa1e"><td class="memItemLeft" align="right" valign="top"><a id="a4fc97b9128cbf791b963fafee228aa1e" name="a4fc97b9128cbf791b963fafee228aa1e"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_Task</b> (std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt; h) noexcept</td></tr>
+<tr class="memitem:ae792abe106dfe7731610d97e3a972c58" id="r_ae792abe106dfe7731610d97e3a972c58"><td class="memItemLeft" align="right" valign="top"><a id="ae792abe106dfe7731610d97e3a972c58" name="ae792abe106dfe7731610d97e3a972c58"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Runtime_Task</b> () noexcept</td></tr>
+<tr class="memdesc:ae792abe106dfe7731610d97e3a972c58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the coroutine frame on destruction. <br /></td></tr>
+<tr class="separator:ae792abe106dfe7731610d97e3a972c58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fc97b9128cbf791b963fafee228aa1e" id="r_a4fc97b9128cbf791b963fafee228aa1e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a4fc97b9128cbf791b963fafee228aa1e">Dmn_Runtime_Task</a> (std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt; h) noexcept</td></tr>
+<tr class="memdesc:a4fc97b9128cbf791b963fafee228aa1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a task that takes ownership of the given coroutine handle.  <br /></td></tr>
 <tr class="separator:a4fc97b9128cbf791b963fafee228aa1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a8bcae7c040302059d3f485d8b887b2" id="r_a4a8bcae7c040302059d3f485d8b887b2"><td class="memItemLeft" align="right" valign="top"><a id="a4a8bcae7c040302059d3f485d8b887b2" name="a4a8bcae7c040302059d3f485d8b887b2"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_Task</b> (const <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;)=delete</td></tr>
@@ -127,25 +133,222 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6a8649c113b77e3535bea89724a65a57" id="r_a6a8649c113b77e3535bea89724a65a57"><td class="memItemLeft" align="right" valign="top"><a id="a6a8649c113b77e3535bea89724a65a57" name="a6a8649c113b77e3535bea89724a65a57"></a>
 <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;)=delete</td></tr>
 <tr class="separator:a6a8649c113b77e3535bea89724a65a57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a54bb69603dba06023da1cbb5998f12" id="r_a8a54bb69603dba06023da1cbb5998f12"><td class="memItemLeft" align="right" valign="top"><a id="a8a54bb69603dba06023da1cbb5998f12" name="a8a54bb69603dba06023da1cbb5998f12"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_Task</b> (<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;other) noexcept</td></tr>
+<tr class="memitem:a8a54bb69603dba06023da1cbb5998f12" id="r_a8a54bb69603dba06023da1cbb5998f12"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a8a54bb69603dba06023da1cbb5998f12">Dmn_Runtime_Task</a> (<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;other) noexcept</td></tr>
+<tr class="memdesc:a8a54bb69603dba06023da1cbb5998f12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor: transfer ownership of the coroutine handle.  <br /></td></tr>
 <tr class="separator:a8a54bb69603dba06023da1cbb5998f12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9325cc3fefb38142e4fb01f44ec6d8b7" id="r_a9325cc3fefb38142e4fb01f44ec6d8b7"><td class="memItemLeft" align="right" valign="top"><a id="a9325cc3fefb38142e4fb01f44ec6d8b7" name="a9325cc3fefb38142e4fb01f44ec6d8b7"></a>
-<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;other) noexcept</td></tr>
+<tr class="memitem:a9325cc3fefb38142e4fb01f44ec6d8b7" id="r_a9325cc3fefb38142e4fb01f44ec6d8b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#a9325cc3fefb38142e4fb01f44ec6d8b7">operator=</a> (<a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;other) noexcept</td></tr>
+<tr class="memdesc:a9325cc3fefb38142e4fb01f44ec6d8b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment: destroy any current frame, then take ownership.  <br /></td></tr>
 <tr class="separator:a9325cc3fefb38142e4fb01f44ec6d8b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb2afb8f2429d523090c5a1678673c0c" id="r_acb2afb8f2429d523090c5a1678673c0c"><td class="memItemLeft" align="right" valign="top"><a id="acb2afb8f2429d523090c5a1678673c0c" name="acb2afb8f2429d523090c5a1678673c0c"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () const</td></tr>
+<tr class="memitem:acb2afb8f2429d523090c5a1678673c0c" id="r_acb2afb8f2429d523090c5a1678673c0c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c">isValid</a> () const</td></tr>
+<tr class="memdesc:acb2afb8f2429d523090c5a1678673c0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return whether this task holds a valid (non-null) coroutine handle.  <br /></td></tr>
 <tr class="separator:acb2afb8f2429d523090c5a1678673c0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:aa56ba6a3ec3558937e41754a73531d57" id="r_aa56ba6a3ec3558937e41754a73531d57"><td class="memItemLeft" align="right" valign="top"><a id="aa56ba6a3ec3558937e41754a73531d57" name="aa56ba6a3ec3558937e41754a73531d57"></a>
 std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>m_handle</b></td></tr>
+<tr class="memdesc:aa56ba6a3ec3558937e41754a73531d57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owned coroutine frame handle. <br /></td></tr>
 <tr class="separator:aa56ba6a3ec3558937e41754a73531d57"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A small RAII wrapper around coroutine frame for <a class="el" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a>. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<div class="textblock"><p>A small RAII wrapper around coroutine frame for <a class="el" href="structdmn_1_1Dmn__Runtime__Job.html" title="Represents a unit of work scheduled and executed by the runtime.">Dmn_Runtime_Job</a>. </p>
+<p><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a> is the coroutine return type used by <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>'s job scheduling infrastructure. It owns the coroutine frame (std::coroutine_handle) and destroys it on destruction.</p>
+<p>Lifecycle:</p><ul>
+<li>The coroutine is suspended at its first suspension point (initial_suspend returns std::suspend_always).</li>
+<li><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> resumes and schedules the handle explicitly.</li>
+<li>When the coroutine body returns, FinalAwaiter::await_suspend resumes any registered continuation (the awaiting coroutine).</li>
+</ul>
+<p>Move-only: copy is disabled to ensure unique ownership of the frame. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a4fc97b9128cbf791b963fafee228aa1e" name="a4fc97b9128cbf791b963fafee228aa1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fc97b9128cbf791b963fafee228aa1e">&#9670;&#160;</a></span>Dmn_Runtime_Task() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_Runtime_Task::Dmn_Runtime_Task </td>
+          <td>(</td>
+          <td class="paramtype">std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt;&#160;</td>
+          <td class="paramname"><em>h</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a task that takes ownership of the given coroutine handle. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">h</td><td>The coroutine handle to own (must not be null for a valid task). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a8a54bb69603dba06023da1cbb5998f12" name="a8a54bb69603dba06023da1cbb5998f12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a54bb69603dba06023da1cbb5998f12">&#9670;&#160;</a></span>Dmn_Runtime_Task() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_Runtime_Task::Dmn_Runtime_Task </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move constructor: transfer ownership of the coroutine handle. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The task to move from (left in a valid but empty state). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="acb2afb8f2429d523090c5a1678673c0c" name="acb2afb8f2429d523090c5a1678673c0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb2afb8f2429d523090c5a1678673c0c">&#9670;&#160;</a></span>isValid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dmn::Dmn_Runtime_Task::isValid </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return whether this task holds a valid (non-null) coroutine handle. </p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the handle is non-null, <code>false</code> otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="a1446b155c7ed6b60fe13844313d09014" name="a1446b155c7ed6b60fe13844313d09014"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1446b155c7ed6b60fe13844313d09014">&#9670;&#160;</a></span>operator co_await() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a> dmn::Dmn_Runtime_Task::operator co_await </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>co_await() </p>
+<p>co_await() </p>
+
+</div>
+</div>
+<a id="ab5012c093353e07b6f81e30ba42dde88" name="ab5012c093353e07b6f81e30ba42dde88"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5012c093353e07b6f81e30ba42dde88">&#9670;&#160;</a></span>operator co_await() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html">Awaiter</a> dmn::Dmn_Runtime_Task::operator co_await </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return an <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html" title="Awaiter returned by operator co_await to allow one coroutine to wait for this task to complete.">Awaiter</a> so this task can be <code>co_await-ed</code>. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html" title="Awaiter returned by operator co_await to allow one coroutine to wait for this task to complete.">Awaiter</a> wrapping this task's handle. </dd></dl>
+
+</div>
+</div>
+<a id="a9325cc3fefb38142e4fb01f44ec6d8b7" name="a9325cc3fefb38142e4fb01f44ec6d8b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9325cc3fefb38142e4fb01f44ec6d8b7">&#9670;&#160;</a></span>operator=()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp; dmn::Dmn_Runtime_Task::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move assignment: destroy any current frame, then take ownership. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The task to move from. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>*this </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a></li>
 </ul>
 </div><!-- contents -->

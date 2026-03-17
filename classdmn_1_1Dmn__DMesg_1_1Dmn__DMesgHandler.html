@@ -116,11 +116,12 @@ Inheritance diagram for dmn::Dmn_DMesg::Dmn_DMesgHandler:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aacd5917d83559b6c7810e54746390912" id="r_aacd5917d83559b6c7810e54746390912"><td class="memItemLeft" align="right" valign="top"><a id="aacd5917d83559b6c7810e54746390912" name="aacd5917d83559b6c7810e54746390912"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>WriteOptions</b> { <b>kDefault</b> = 0
+<tr class="memitem:aacd5917d83559b6c7810e54746390912" id="r_aacd5917d83559b6c7810e54746390912"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912">WriteOptions</a> { <b>kDefault</b> = 0
 , <b>kBlock</b>
 , <b>kForce</b>
 , <b>kMaxWriteOptions</b>
  }</td></tr>
+<tr class="memdesc:aacd5917d83559b6c7810e54746390912"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bit-position indices for the WriteFlags bitset.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912">More...</a><br /></td></tr>
 <tr class="separator:aacd5917d83559b6c7810e54746390912"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06c0207166e23302d5864fab86570d18" id="r_a06c0207166e23302d5864fab86570d18"><td class="memItemLeft" align="right" valign="top"><a id="a06c0207166e23302d5864fab86570d18" name="a06c0207166e23302d5864fab86570d18"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>WriteFlags</b> = std::bitset&lt; kMaxWriteOptions &gt;</td></tr>
@@ -238,7 +239,30 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgHandlerSub<
 <div class="textblock"><p><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume dmn::DMesgPb messages. It implements Dmn_Io&lt;DMesgPb&gt;. </p>
 <p>The handler composes a small nested subscriber object (Dmn_DMesgHandlerSub) that integrates with the underlying <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> infrastructure. The handler maintains its own filters, async processing callback, per-topic running counters, and a small buffer for arriving messages.</p>
 <p>Clients obtain handlers from Dmn_DMesg::openHandler(...) and release them via Dmn_DMesg::closeHandler(...). </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="aacd5917d83559b6c7810e54746390912" name="aacd5917d83559b6c7810e54746390912"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacd5917d83559b6c7810e54746390912">&#9670;&#160;</a></span>WriteOptions</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aacd5917d83559b6c7810e54746390912">dmn::Dmn_DMesg::Dmn_DMesgHandler::WriteOptions</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bit-position indices for the WriteFlags bitset. </p>
+<ul>
+<li>kDefault : no special behaviour.</li>
+<li>kBlock : block until the publisher has processed the message.</li>
+<li>kForce : bypass the running-counter conflict check.</li>
+<li>kMaxWriteOptions : sentinel value (do not use as a flag). </li>
+</ul>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9d532e4df3f61d8dcb8d69450672fd96" name="a9d532e4df3f61d8dcb8d69450672fd96"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9d532e4df3f61d8dcb8d69450672fd96">&#9670;&#160;</a></span>Dmn_DMesgHandler()</h2>
 
@@ -350,13 +374,22 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgHandlerSub<
 </div><div class="memdoc">
 
 <p>The method returns running counter of the topic. </p>
+<p>Return the handler's last-seen running counter for <code>topic</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The running counter of the topic </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The running counter of the topic</dd></dl>
+<p>Must be called from within the handler's <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> serialisation context (i.e. from a task posted to m_sub). Callers outside that context should use <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72" title="The method returns running counter of the topic.">getTopicRunningCounter()</a> which wraps this with an <a class="el" href="classdmn_1_1Dmn__Async.html#aacbb4474a95af8fc28d6cb126ffafa8c" title="Submit a task for asynchronous execution and get a task wait object.">addExecTaskWithWait()</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topic</td><td>The topic whose running counter is requested. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The stored running counter, or 0 if the topic has never been seen. </dd></dl>
 
 </div>
 </div>
@@ -514,10 +547,19 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgHandlerSub<
 </div><div class="memdoc">
 
 <p>The method sets running counter of the topic. </p>
+<p>Internal: overwrite the stored running counter for <code>topic</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic </td></tr>
-    <tr><td class="paramname">runningCounter</td><td>The running counter to be set for the topic </td></tr>
+    <tr><td class="paramname">runningCounter</td><td>The running counter to be set for the topic</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Must be called from within the handler's <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> serialisation context.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topic</td><td>The topic whose counter is to be updated. </td></tr>
+    <tr><td class="paramname">runningCounter</td><td>The new counter value to store. </td></tr>
   </table>
   </dd>
 </dl>
@@ -787,11 +829,32 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgHandlerSub<
 </div><div class="memdoc">
 
 <p>Internal write implementation used by public write(...) overloads. </p>
+<p>Stamp, validate, and publish a DMesgPb message on behalf of the handler.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dmesgPb</td><td>The message to publish. </td></tr>
     <tr><td class="paramname">move</td><td>If true, move the message; otherwise copy. </td></tr>
-    <tr><td class="paramname">block</td><td>Block waiting for the publisher to process the message. </td></tr>
+    <tr><td class="paramname">block</td><td>Block waiting for the publisher to process the message.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>This is the serialised write path: it runs inside the handler's <a class="el" href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread.">Dmn_Async</a> context and performs the following steps:</p><ol type="1">
+<li>Reject if the topic is currently in conflict (unless force=true).</li>
+<li>Fill in metadata: timestamp, source-write-handler identifier, topic (if empty and the handler has a default topic), and source identifier.</li>
+<li>Advance and stamp the per-topic running counter.</li>
+<li>Clear the conflict flag for the topic and delegate to <a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers.">Dmn_DMesg::publish()</a> (move or copy according to <code>move</code>).</li>
+</ol>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dmesgpb</td><td>The message to publish; metadata fields are filled in-place. </td></tr>
+    <tr><td class="paramname">move</td><td>If true, publish using move semantics; otherwise copy. </td></tr>
+    <tr><td class="paramname">block</td><td>If true, the publish call blocks until all subscribers have been notified.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if the topic is in conflict and force is not set. </td></tr>
   </table>
   </dd>
 </dl>

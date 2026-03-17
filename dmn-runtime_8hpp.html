@@ -137,8 +137,10 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp.html',''); initResiza
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Runtime__Job.html">dmn::Dmn_Runtime_Job</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a unit of work scheduled and executed by the runtime.  <a href="structdmn_1_1Dmn__Runtime__Job.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1TimedJobComparator.html">dmn::TimedJobComparator</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Comparator placing the earliest-due <a class="el" href="structdmn_1_1Dmn__Runtime__Job.html" title="Represents a unit of work scheduled and executed by the runtime.">Dmn_Runtime_Job</a> at the top of a std::priority_queue (min-heap by m_due timestamp).  <a href="structdmn_1_1TimedJobComparator.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager&lt; QueueType &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,8 +148,10 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
 Concepts</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptdmn_1_1IsStrictJobFnc.html">dmn::IsStrictJobFnc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Concept satisfied when <code>F</code> is callable with <code>Args</code> and returns either <code>void</code> or <code>Dmn_Runtime_Task</code>. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptdmn_1_1IsValidJobFnc.html">dmn::IsValidJobFnc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience alias: satisfied when <code>F</code> is a valid single-argument job callable accepting <code>const</code> Dmn_Runtime_Job &amp;. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
@@ -168,17 +172,17 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::NSecInt</b> = s
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a5418a6bda5ea952b0bc6ca2b5a21dff2" id="r_a5418a6bda5ea952b0bc6ca2b5a21dff2"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#a5418a6bda5ea952b0bc6ca2b5a21dff2">dmn::detail::Dmn_Runtime_Manager_Impl_create</a> () -&gt; <a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> *</td></tr>
-<tr class="memdesc:a5418a6bda5ea952b0bc6ca2b5a21dff2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the <a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> object and its timer details depending on the compile feature set available, and initialize the timer to be 0 (not runnable). Ownership of the returned object is transferred to the caller, who is responsible for calling Dmn_Runtime_Manager_Impl_destroy to free the object.  <br /></td></tr>
+<tr class="memdesc:a5418a6bda5ea952b0bc6ca2b5a21dff2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate and initialise the platform timer implementation object.  <br /></td></tr>
 <tr class="separator:a5418a6bda5ea952b0bc6ca2b5a21dff2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0e86d4bc84cab281d0276359fb72bfd" id="r_ae0e86d4bc84cab281d0276359fb72bfd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#ae0e86d4bc84cab281d0276359fb72bfd">dmn::detail::Dmn_Runtime_Manager_Impl_destroy</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> **impl_ptr) noexcept</td></tr>
-<tr class="memdesc:ae0e86d4bc84cab281d0276359fb72bfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the implementation's timer details and freeing the object.  <br /></td></tr>
-<tr class="separator:ae0e86d4bc84cab281d0276359fb72bfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aacbed8dea05bcc9893860bb9f9d8dbe1" id="r_aacbed8dea05bcc9893860bb9f9d8dbe1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#aacbed8dea05bcc9893860bb9f9d8dbe1">dmn::detail::Dmn_Runtime_Manager_Impl_setNextTimerAt</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> *impl, TimePoint tp)</td></tr>
-<tr class="memdesc:aacbed8dea05bcc9893860bb9f9d8dbe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next timer to be fired in future time point.  <br /></td></tr>
-<tr class="separator:aacbed8dea05bcc9893860bb9f9d8dbe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2b600e85abac10b9e945421074bccb1" id="r_af2b600e85abac10b9e945421074bccb1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#af2b600e85abac10b9e945421074bccb1">dmn::detail::Dmn_Runtime_Manager_Impl_setNextTimer</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> *impl, SecInt sec, NSecInt nsec)</td></tr>
-<tr class="memdesc:af2b600e85abac10b9e945421074bccb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next timer to be fired after next seconds and nanoseconds.  <br /></td></tr>
-<tr class="separator:af2b600e85abac10b9e945421074bccb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a898c3c8b0d74ffbc4d97bbd27c4e019c" id="r_a898c3c8b0d74ffbc4d97bbd27c4e019c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#a898c3c8b0d74ffbc4d97bbd27c4e019c">dmn::detail::Dmn_Runtime_Manager_Impl_destroy</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> **) noexcept</td></tr>
+<tr class="memdesc:a898c3c8b0d74ffbc4d97bbd27c4e019c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the implementation object and zero the pointer.  <br /></td></tr>
+<tr class="separator:a898c3c8b0d74ffbc4d97bbd27c4e019c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0579788c11b30cefe7d89be4f7ce0206" id="r_a0579788c11b30cefe7d89be4f7ce0206"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#a0579788c11b30cefe7d89be4f7ce0206">dmn::detail::Dmn_Runtime_Manager_Impl_setNextTimerAt</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> *, TimePoint tp)</td></tr>
+<tr class="memdesc:a0579788c11b30cefe7d89be4f7ce0206"><td class="mdescLeft">&#160;</td><td class="mdescRight">Arm the SIGALRM timer to fire at the given absolute time point.  <br /></td></tr>
+<tr class="separator:a0579788c11b30cefe7d89be4f7ce0206"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a817aef22a5c69fcb0359c774eb0c640a" id="r_a817aef22a5c69fcb0359c774eb0c640a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime_8hpp.html#a817aef22a5c69fcb0359c774eb0c640a">dmn::detail::Dmn_Runtime_Manager_Impl_setNextTimer</a> (<a class="el" href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">Dmn_Runtime_Manager_Impl</a> *, SecInt sec, NSecInt nsec)</td></tr>
+<tr class="memdesc:a817aef22a5c69fcb0359c774eb0c640a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Arm the SIGALRM timer to fire after sec seconds + nsec nanoseconds.  <br /></td></tr>
+<tr class="separator:a817aef22a5c69fcb0359c774eb0c640a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Runtime manager for centralized signal handling and asynchronous jobs. </p>
@@ -248,13 +252,14 @@ Implementation Notes</h2>
       </table>
 </div><div class="memdoc">
 
-<p>Create the Dmn_Runtime_Manager_Impl object and its timer details depending on the compile feature set available, and initialize the timer to be 0 (not runnable). Ownership of the returned object is transferred to the caller, who is responsible for calling Dmn_Runtime_Manager_Impl_destroy to free the object. </p>
+<p>Allocate and initialise the platform timer implementation object. </p>
+<p>Create the Dmn_Runtime_Manager_Impl object and its timer details depending on the compile feature set available, and initialize the timer to be 0 (not runnable). Ownership of the returned object is transferred to the caller, who is responsible for calling Dmn_Runtime_Manager_Impl_destroy to free the object.</p>
 <dl class="section return"><dt>Returns</dt><dd>A pointer to the newly created Dmn_Runtime_Manager_Impl implementation object whose timer is initialized to 0 (not runnable). </dd></dl>
 
 </div>
 </div>
-<a id="ae0e86d4bc84cab281d0276359fb72bfd" name="ae0e86d4bc84cab281d0276359fb72bfd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae0e86d4bc84cab281d0276359fb72bfd">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_destroy()</h2>
+<a id="a898c3c8b0d74ffbc4d97bbd27c4e019c" name="a898c3c8b0d74ffbc4d97bbd27c4e019c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a898c3c8b0d74ffbc4d97bbd27c4e019c">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_destroy()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,7 +282,8 @@ Implementation Notes</h2>
 </table>
 </div><div class="memdoc">
 
-<p>Destroy the implementation's timer details and freeing the object. </p>
+<p>Destroy the implementation object and zero the pointer. </p>
+<p>Destroy the implementation's timer details and freeing the object.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">impl_ptr</td><td>The pointer to the implementation detail object. </td></tr>
@@ -287,8 +293,8 @@ Implementation Notes</h2>
 
 </div>
 </div>
-<a id="af2b600e85abac10b9e945421074bccb1" name="af2b600e85abac10b9e945421074bccb1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af2b600e85abac10b9e945421074bccb1">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_setNextTimer()</h2>
+<a id="a817aef22a5c69fcb0359c774eb0c640a" name="a817aef22a5c69fcb0359c774eb0c640a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a817aef22a5c69fcb0359c774eb0c640a">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_setNextTimer()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -319,7 +325,8 @@ Implementation Notes</h2>
       </table>
 </div><div class="memdoc">
 
-<p>Set the next timer to be fired after next seconds and nanoseconds. </p>
+<p>Arm the SIGALRM timer to fire after sec seconds + nsec nanoseconds. </p>
+<p>Set the next timer to be fired after next seconds and nanoseconds.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">impl</td><td>The implementation detail object that contains timer. </td></tr>
@@ -331,8 +338,8 @@ Implementation Notes</h2>
 
 </div>
 </div>
-<a id="aacbed8dea05bcc9893860bb9f9d8dbe1" name="aacbed8dea05bcc9893860bb9f9d8dbe1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aacbed8dea05bcc9893860bb9f9d8dbe1">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_setNextTimerAt()</h2>
+<a id="a0579788c11b30cefe7d89be4f7ce0206" name="a0579788c11b30cefe7d89be4f7ce0206"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0579788c11b30cefe7d89be4f7ce0206">&#9670;&#160;</a></span>Dmn_Runtime_Manager_Impl_setNextTimerAt()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -357,7 +364,8 @@ Implementation Notes</h2>
       </table>
 </div><div class="memdoc">
 
-<p>Set the next timer to be fired in future time point. </p>
+<p>Arm the SIGALRM timer to fire at the given absolute time point. </p>
+<p>Set the next timer to be fired in future time point.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">impl</td><td>The implementation detail object that contains timer. </td></tr>

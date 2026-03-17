@@ -183,6 +183,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Construct a <a class="el" href="classdmn_1_1Dmn__Socket.html" title="Implements a socket-based Dmn_Io for std::string messages.">Dmn_Socket</a> connected to the given IPv4 address and port. </p>
+<p>Create and connect a UDP broadcast socket.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ip4</td><td>IPv4 address as a string (e.g. "127.0.0.1"). </td></tr>
@@ -193,7 +194,22 @@ Public Member Functions</h2></td></tr>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::runtime_error</td><td>on failure to create or connect the socket (implementation-defined; callers should be prepared to handle exceptions or the class may choose to set an internal error state and make <a class="el" href="classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9" title="Read data from the socket.">read()</a>/write() return/handle errors). </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>on failure to create or connect the socket (implementation-defined; callers should be prepared to handle exceptions or the class may choose to set an internal error state and make <a class="el" href="classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9" title="Read data from the socket.">read()</a>/write() return/handle errors).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Creates an AF_INET/SOCK_DGRAM socket, enables SO_BROADCAST, and (unless write_only is true) binds to the given port for receiving.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ip4</td><td>IPv4 address string (e.g. "192.168.1.255"); empty string binds/sends to INADDR_ANY. </td></tr>
+    <tr><td class="paramname">port_no</td><td>UDP port number. </td></tr>
+    <tr><td class="paramname">write_only</td><td>When true, the bind step is skipped (send-only socket).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>on socket(), setsockopt(), or bind() failure. </td></tr>
   </table>
   </dd>
 </dl>
@@ -224,6 +240,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Destroy the <a class="el" href="classdmn_1_1Dmn__Socket.html" title="Implements a socket-based Dmn_Io for std::string messages.">Dmn_Socket</a> and close the underlying socket. </p>
+<p>Close the UDP socket file descriptor.</p>
 <p>Gracefully closes the connection and releases resources. </p>
 
 </div>
@@ -253,8 +270,11 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Read data from the socket. </p>
+<p>Receive the next UDP datagram from the bound port.</p>
 <dl class="section return"><dt>Returns</dt><dd>std::optional&lt;std::string&gt; containing the received data on success, or std::nullopt to indicate EOF or an unrecoverable error.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>The exact boundary semantics (message delimiting, framing) are implementation-specific. Callers should consult the implementation or use an application-level protocol to delimit messages. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The exact boundary semantics (message delimiting, framing) are implementation-specific. Callers should consult the implementation or use an application-level protocol to delimit messages.</dd></dl>
+<p>Blocks until a datagram arrives. Returns std::nullopt on error or when the socket is closed (recv returns ≤ 0).</p>
+<dl class="section return"><dt>Returns</dt><dd>The datagram payload as a std::string, or std::nullopt on end-of-stream / error. </dd></dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
 
@@ -285,9 +305,11 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Write a string to the socket using move semantics. </p>
+<p>Move-overload: move <code>item</code> into a local string and delegate to the lvalue <a class="el" href="classdmn_1_1Dmn__Socket.html#af28a7a0b3851ecb46ae6a4baf6c46fc5" title="Write a string to the socket.">write()</a> overload.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The string to write; the implementation may move-from this parameter to avoid an extra copy. </td></tr>
+    <tr><td class="paramname">item</td><td>The string to write; the implementation may move-from this parameter to avoid an extra copy.</td></tr>
+    <tr><td class="paramname">item</td><td>The string to send (moved-from after the call). </td></tr>
   </table>
   </dd>
 </dl>
@@ -321,13 +343,27 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Write a string to the socket. </p>
+<p>Send <code>item</code> as a UDP datagram to the configured address and port.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The string to write. This overload accepts an lvalue reference and will typically copy or send the contents as-is.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>On partial writes or errors, behavior is implementation-defined: the method may retry, throw, or log and return. Callers should not assume atomicity of large writes unless the implementation documents it. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>On partial writes or errors, behavior is implementation-defined: the method may retry, throw, or log and return. Callers should not assume atomicity of large writes unless the implementation documents it.</dd></dl>
+<p>Reconstructs the destination sockaddr_in on every call (see FIXME in implementation for a potential optimization).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">item</td><td>The string payload to send. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if sendto() does not transmit all bytes. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a905a7462dbbac1b9f02a1e96829014ba">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
 

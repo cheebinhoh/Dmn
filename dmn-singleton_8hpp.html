@@ -113,6 +113,7 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="concepts" name="concepts"></a>
 Concepts</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">dmn::HasStaticRunPriorToCreateInstance</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Concept satisfied when type T exposes a static void runPriorToCreateInstance() method. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -129,7 +130,7 @@ Concepts</h2></td></tr>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Create / retrieve the singleton:</span></div>
 <div class="line"><span class="keyword">auto</span> p = dmn::MySingleton::createInstance(42, <span class="stringliteral">&quot;hello&quot;</span>);</div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:53</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:62</div></div>
 </div><!-- fragment --><p>Notes:</p><ul>
 <li>The returned type is std::shared_ptr&lt;T&gt;; ownership and lifetime semantics are therefore shared.</li>
 <li>The subclass of Singleton can implement static method that is called before the singleton instance is created to run some setup, the signature of the method is "static void T::runPriorToCreateInstance()" and must be public. </li>
