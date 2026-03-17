@@ -104,15 +104,6 @@ protected:
 
   virtual void pushMove(T &&item) = 0;
 
-  /**
-   * @brief Legacy hook that dispatches to pushCopy or pushMove based on @p
-   * move.
-   *
-   * @param item The item to be enqueued.
-   * @param move If true, enqueue by move; otherwise, enqueue by copy.
-   */
-  virtual void push(T &item, bool move);
-
   virtual void stop() = 0;
 };
 
@@ -131,20 +122,11 @@ auto Dmn_BlockingQueue_Interface<T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
-  pushMove(std::move(item));
+  pushMove(std::move_if_noexcept(item));
 }
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {
   pushCopy(item);
-}
-
-template <typename T>
-void Dmn_BlockingQueue_Interface<T>::push(T &item, bool move) {
-  if (move) {
-    pushMove(std::move(item));
-  } else {
-    pushCopy(item);
-  }
 }
 
 } // namespace dmn
