@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>My Project: include/dmn.hpp File Reference</title>
+<title>My Project: include/kafka/dmn-kafka.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,7 +63,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('dmn_8hpp.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('dmn-kafka_8hpp.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -89,49 +89,51 @@ $(document).ready(function(){initNavTree('dmn_8hpp.html',''); initResizable(); }
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">dmn.hpp File Reference</div></div>
+  <div class="summary">
+<a href="#nested-classes">Classes</a>  </div>
+  <div class="headertitle"><div class="title">dmn-kafka.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Convenience umbrella header for the Distributed Messaging Network (DMN).  
+<p>Dmn_Kafka — a <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> adapter for Apache Kafka.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-blockingqueue-interface_8hpp_source.html">dmn-blockingqueue-interface.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-blockingqueue_8hpp_source.html">dmn-blockingqueue.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-debug_8hpp_source.html">dmn-debug.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-dmesg-pb-util_8hpp_source.html">dmn-dmesg-pb-util.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;atomic&gt;</code><br />
+<code>#include &lt;expected&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;unordered_map&gt;</code><br />
+<code>#include &quot;rdkafka.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-io_8hpp_source.html">dmn-io.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-pub-sub_8hpp_source.html">dmn-pub-sub.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-singleton_8hpp_source.html">dmn-singleton.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-socket_8hpp_source.html">dmn-socket.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-timer_8hpp_source.html">dmn-timer.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-util_8hpp_source.html">dmn-util.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-dmesgnet-kafka_8hpp_source.html">kafka/dmn-dmesgnet-kafka.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-kafka-util_8hpp_source.html">kafka/dmn-kafka-util.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-kafka_8hpp_source.html">kafka/dmn-kafka.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-kafka-util_8hpp_source.html">dmn-kafka-util.hpp</a>&quot;</code><br />
 </div>
-<p><a href="dmn_8hpp_source.html">Go to the source code of this file.</a></p>
+<p><a href="dmn-kafka_8hpp_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html">dmn::Dmn_Kafka</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apache Kafka producer/consumer that implements the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface.  <a href="classdmn_1_1Dmn__Kafka.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Convenience umbrella header for the Distributed Messaging Network (DMN). </p>
+<div class="textblock"><p>Dmn_Kafka — a <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> adapter for Apache Kafka. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>This header aggregates the public headers that make up the DMN library and is provided as a single include for convenience. Including this file will pull in the full public API surface of the DMN library; for faster compilation times and tighter dependency control prefer including only the specific headers that your translation unit requires.</p>
-<ul>
-<li>Purpose: Provide a single, easy-to-use entry point to the DMN public API.</li>
-<li>Behavior: This file only forwards includes and does not introduce new symbols or definitions beyond those in the included headers.</li>
-<li>Include guard: The guard below prevents multiple inclusion across the build.</li>
+<p>Dmn_Kafka wraps the librdkafka C library and exposes a uniform <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface for both producing and consuming Kafka messages. A single instance acts as either a producer or consumer depending on the Role argument supplied to the constructor.</p>
+<p>Configuration is supplied as a ConfigType map (std::unordered_map&lt;std::string, std::string&gt;). Most keys are passed through to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself and are not forwarded:</p><ul>
+<li>Dmn_Kafka::Topic — the Kafka topic to read from / write to.</li>
+<li>Dmn_Kafka::Key — an alternate topic name that, if set, overrides the Topic value when determining which topic to read from / write to.</li>
+<li>Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.</li>
 </ul>
-<p>See the project README or the individual header documentation for more information about each component. </p>
+<p>Thread-safety:</p><ul>
+<li>Concurrent calls to write() are serialised internally via an atomic flag; each write blocks until the delivery-report callback fires.</li>
+<li>read() is not thread-safe; use a single reader thread per instance. </li>
+</ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dmn_8hpp.html">dmn.hpp</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_4686ca24dd046c131774f5a6c51fabc1.html">kafka</a></li><li class="navelem"><a class="el" href="dmn-kafka_8hpp.html">dmn-kafka.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>

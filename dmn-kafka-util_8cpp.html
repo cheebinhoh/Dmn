@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>My Project: src/dmn-kafka-receiver.cpp File Reference</title>
+<title>My Project: src/kafka/dmn-kafka-util.cpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,7 +63,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('dmn-kafka-receiver_8cpp.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('dmn-kafka-util_8cpp.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -91,36 +91,81 @@ $(document).ready(function(){initNavTree('dmn-kafka-receiver_8cpp.html',''); ini
 <div class="header">
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
-  <div class="headertitle"><div class="title">dmn-kafka-receiver.cpp File Reference</div></div>
+  <div class="headertitle"><div class="title">dmn-kafka-util.cpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Minimal stand-alone Kafka consumer example using Dmn_Kafka.  
+<p>Implementation of the librdkafka configuration helper.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;signal.h&gt;</code><br />
-<code>#include &lt;stdlib.h&gt;</code><br />
-<code>#include &lt;atomic&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="dmn-kafka-util_8hpp_source.html">kafka/dmn-kafka-util.hpp</a>&quot;</code><br />
 <code>#include &lt;cassert&gt;</code><br />
-<code>#include &lt;iostream&gt;</code><br />
-<code>#include &quot;<a class="el" href="dmn-kafka_8hpp_source.html">kafka/dmn-kafka.hpp</a>&quot;</code><br />
+<code>#include &lt;expected&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;string_view&gt;</code><br />
+<code>#include &quot;rdkafka.h&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a3c04138a5bfe5d72780bb7e82a18e627" id="r_a3c04138a5bfe5d72780bb7e82a18e627"><td class="memItemLeft" align="right" valign="top"><a id="a3c04138a5bfe5d72780bb7e82a18e627" name="a3c04138a5bfe5d72780bb7e82a18e627"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>main</b> (int argc, char **argv)</td></tr>
-<tr class="separator:a3c04138a5bfe5d72780bb7e82a18e627"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad39521e51187a6fd915fa830ffbbfb51" id="r_ad39521e51187a6fd915fa830ffbbfb51"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51">dmn::set_config</a> (rd_kafka_conf_t *conf, std::string_view key, std::string_view value) -&gt; std::expected&lt; rd_kafka_conf_res_t, std::string &gt;</td></tr>
+<tr class="memdesc:ad39521e51187a6fd915fa830ffbbfb51"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method sets kafka configuration to key value.  <br /></td></tr>
+<tr class="separator:ad39521e51187a6fd915fa830ffbbfb51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Minimal stand-alone Kafka consumer example using Dmn_Kafka. </p>
+<div class="textblock"><p>Implementation of the librdkafka configuration helper. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>This program creates a Dmn_Kafka consumer with hard-coded Confluent Cloud credentials and polls the "timer_counter" topic until a SIGINT is received, printing each consumed message to stdout. It is intended as a quick integration smoke-test / study example and should not be used in production (credentials must not be hard-coded in real deployments).</p>
-<p>Original reference: <a href="https://developer.confluent.io/get-started/c/">https://developer.confluent.io/get-started/c/</a> </p>
-</div></div><!-- contents -->
+<p>Provides set_config(), a thin wrapper around rd_kafka_conf_set() that converts the C-style output-parameter error string into a std::expected return value for idiomatic C++ error handling. </p>
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="ad39521e51187a6fd915fa830ffbbfb51" name="ad39521e51187a6fd915fa830ffbbfb51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad39521e51187a6fd915fa830ffbbfb51">&#9670;&#160;</a></span>set_config()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto dmn::set_config </td>
+          <td>(</td>
+          <td class="paramtype">rd_kafka_conf_t *&#160;</td>
+          <td class="paramname"><em>conf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> -&gt; std::expected&lt;rd_kafka_conf_res_t, std::string&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The method sets kafka configuration to key value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">conf</td><td>The rd_kafka_conf_t object to set the configuration' key value </td></tr>
+    <tr><td class="paramname">key</td><td>The configuration key </td></tr>
+    <tr><td class="paramname">value</td><td>The configuration value</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>It returns the RD_KAFKA_CONF_OK if everything is ok, else a string describing the kafka error </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dmn-kafka-receiver_8cpp.html">dmn-kafka-receiver.cpp</a></li>
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_b1f85b4500d4f866a4815ca77f1375fe.html">kafka</a></li><li class="navelem"><a class="el" href="dmn-kafka-util_8cpp.html">dmn-kafka-util.cpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>

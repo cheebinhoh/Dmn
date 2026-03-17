@@ -28,6 +28,7 @@ var hierarchy =
     [ "dmn::Dmn_BlockingQueue_Interface< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
     [ "dmn::Dmn_BlockingQueue_Interface< std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
+    [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [
       [ "dmn::Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
@@ -51,6 +52,7 @@ var hierarchy =
     ] ],
     [ "dmn::Dmn_Io< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__Io.html", null ],
     [ "dmn::Dmn_Io< std::string >", "classdmn_1_1Dmn__Io.html", [
+      [ "dmn::Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html", null ],
       [ "dmn::Dmn_Socket", "classdmn_1_1Dmn__Socket.html", null ]
     ] ],
     [ "dmn::Dmn_Proc", "classdmn_1_1Dmn__Proc.html", [

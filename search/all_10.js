@@ -5,5 +5,6 @@ var searchData=
   ['threading_20memory_20order_20notes_2',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md9',1,'']]],
   ['ticket_3',['ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html',1,'dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket'],['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38',1,'dmn::Dmn_Inflight_Guard::Ticket::Ticket()']]],
   ['timedjobcomparator_4',['TimedJobComparator',['../structdmn_1_1TimedJobComparator.html',1,'dmn']]],
-  ['timeout_20semantics_5',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'']]]
+  ['timeout_20semantics_5',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'']]],
+  ['topic_6',['Topic',['../classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48',1,'dmn::Dmn_Kafka']]]
 ];
