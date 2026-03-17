@@ -225,7 +225,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to copy and enqueue the item into the
-   * queue.
+   *        queue.
    *
    * @param item The item to be enqueued.
    */
@@ -233,7 +233,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to move and enqueue the item into the
-   * queue.
+   *        queue.
    *
    * @param item The item to be enqueued.
    */

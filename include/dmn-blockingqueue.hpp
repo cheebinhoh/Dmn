@@ -166,7 +166,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to copy and enqueue the item into the
-   * queue.
+   *        queue.
    *
    * @param item The item to be enqueued.
    */
@@ -174,7 +174,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to move and enqueue the item into the
-   * queue.
+   *        queue.
    *
    * @param item The item to be enqueued.
    */
@@ -247,20 +247,10 @@ auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
   return m_shutdown_flag.test(std::memory_order_acquire);
 }
 
-/**
- * @brief Push a lvalue into the queue by copying data.
- *
- * @item
- */
 template <typename T> void Dmn_BlockingQueue<T>::pushCopy(const T &item) {
   pushImpl(item); // copy
 }
 
-/**
- * @brief Push a rvalue into the queue by moving data.
- *
- * @item
- */
 template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
   pushImpl(std::move(item)); // move
 }
