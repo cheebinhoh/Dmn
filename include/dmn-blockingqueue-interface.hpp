@@ -17,9 +17,11 @@
  *   by copy. Passing a plain lvalue such as `push(item)` will bind to this
  *   overload and copy the item into the queue.
  *
- * - push(T&&): Accepts an rvalue and enqueues it with move semantics. To
- *   move from an lvalue, call `push(std::move(item))` so that this rvalue
- *   overload is selected.
+ * - push(T&&): Accepts an rvalue and enqueues it using move semantics when
+ *   possible. Concrete implementations may employ strategies such as
+ *   `std::move_if_noexcept`, which can fall back to copying for types with
+ *   throwing move constructors. To move from an lvalue, call
+ *   `push(std::move(item))` so that this rvalue overload is selected.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
@@ -83,9 +85,12 @@ public:
   virtual void push(const T &item) final;
 
   /**
-   * @brief Move and enqueue the rvalue item into the tail of the queue.
+   * @brief Enqueue an rvalue item into the tail of the queue, preferring move
+   *        semantics.
    *
-   * @param item The rvalue item to be enqueued.
+   * @param item The rvalue item to be enqueued. Implementations may
+   *        internally fall back to copying (e.g., when using
+   *        std::move_if_noexcept for types with throwing move constructors).
    */
   virtual void push(T &&item) final;
 
