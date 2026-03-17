@@ -109,12 +109,18 @@
 
 namespace dmn {
 
+/** @brief Identifier string for the sys topic (used by DMesgNet). */
 extern const char *const kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
+  /** @brief Callback type invoked asynchronously with a copy of each delivered
+   * message. */
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
+  /** @brief Predicate that returns false to drop an incoming message before
+   * buffering. */
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
+  /** @brief Key/value map used to pass per-handler configuration options. */
   using HandlerConfig = std::unordered_map<std::string, std::string>;
 
   /**
@@ -496,10 +502,27 @@ public:
     std::atomic_flag m_after_initial_playback{};
   }; // class Dmn_DMesgHandler
 
+  /**
+   * @brief Lightweight proxy to a Dmn_DMesgHandler instance.
+   *
+   * Wraps a std::weak_ptr<Dmn_DMesgHandler> to provide pointer-like
+   * access to the underlying handler while allowing the publisher to
+   * control handler lifetime (via closeHandler()). Clients should test
+   * the proxy's bool conversion before dereferencing to avoid exceptions.
+   *
+   * Thread-safety: The proxy itself is not thread-safe; do not share a
+   * single Dmn_DMesgHandlerProxy instance across threads.
+   */
   class Dmn_DMesgHandlerProxy {
     friend class Dmn_DMesg;
 
   public:
+    /**
+     * @brief Dereference the proxy to access the underlying handler.
+     *
+     * @return shared_ptr<Dmn_DMesgHandler> pointing to the live handler.
+     * @throws std::runtime_error if the handler has already been closed.
+     */
     std::shared_ptr<Dmn_DMesgHandler> operator->() const {
       auto handler = m_handler.lock();
       if (!handler) {
@@ -508,6 +531,12 @@ public:
       return handler;
     }
 
+    /**
+     * @brief Check whether the proxied handler is still alive.
+     *
+     * @return true if the underlying handler exists and has not been closed,
+     *         false if it has been released.
+     */
     explicit operator bool() const noexcept { return !m_handler.expired(); }
 
   private:
