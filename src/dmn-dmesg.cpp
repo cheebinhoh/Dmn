@@ -59,6 +59,29 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
   return;
 }
 
+/**
+ * @brief Route an incoming DMesgPb message to its owning Dmn_DMesgHandler.
+ *
+ * This is the hot-path subscriber callback invoked by Dmn_Pub::publishInternal()
+ * for every message published to the Dmn_DMesg instance.  The method applies
+ * the following routing logic:
+ *
+ *  1. Conflict messages: if the message carries conflict=true and the source
+ *     is not this handler and the topic matches the handler's filter, the
+ *     handler enters conflict state via throwConflictInternal().
+ *
+ *  2. Normal messages: the running counter is compared against the handler's
+ *     last seen counter for the topic.  A message is accepted when:
+ *     - Its running counter is higher (i.e. it is newer), OR
+ *     - force=true is set on the message.
+ *     Accepted messages update m_topic_running_counter, resolve any prior
+ *     conflict on that topic, and are dispatched either via
+ *     m_async_process_fn (if set) or by pushing onto m_buffers (for
+ *     blocking read() callers).
+ *     sys-type messages are additionally cached in m_last_dmesgpb_sys.
+ *
+ * @param dmesgpb The incoming protobuf message published by Dmn_DMesg.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
     const dmn::DMesgPb &dmesgpb) {
   const std::string &topic = dmesgpb.topic();
@@ -189,6 +212,15 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   return inConflict;
 }
 
+/**
+ * @brief Block the calling thread until the initial playback has been delivered.
+ *
+ * New handlers receive the last published message for each known topic as a
+ * "playback" burst when they are first opened.  This method spin-waits (using
+ * atomic::wait) until that initial burst has been marked complete by
+ * setAfterInitialPlaybackInternal(), ensuring all public API calls that depend
+ * on a consistent initial state observe messages in the correct order.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
   while (!m_after_initial_playback.test()) {
     m_after_initial_playback.wait(false, std::memory_order_relaxed);
@@ -211,6 +243,16 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
   return runningCounter;
 }
 
+/**
+ * @brief Return the handler's last-seen running counter for @p topic.
+ *
+ * Must be called from within the handler's Dmn_Async serialisation context
+ * (i.e. from a task posted to m_sub). Callers outside that context should use
+ * getTopicRunningCounter() which wraps this with an addExecTaskWithWait().
+ *
+ * @param topic The topic whose running counter is requested.
+ * @return The stored running counter, or 0 if the topic has never been seen.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
     std::string_view topic) -> uint64_t {
   auto iter = m_topic_running_counter.find(std::string{topic});
@@ -221,11 +263,24 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
   return iter->second;
 }
 
+/**
+ * @brief Signal that initial playback has completed for this handler.
+ *
+ * Posts setAfterInitialPlaybackInternal() into the handler's serialised
+ * Dmn_Async context so that the flag is set after all in-flight playback
+ * messages have been processed.  Callers blocked in isAfterInitialPlayback()
+ * are then woken via atomic::notify_all().
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
   [[maybe_unused]] auto waitHandler = m_sub->addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
+/**
+ * @brief Internal: atomically set the initial-playback flag and wake waiters.
+ *
+ * Must be called from within the handler's Dmn_Async serialisation context.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
   m_after_initial_playback.test_and_set(std::memory_order_relaxed);
   m_after_initial_playback.notify_all();
@@ -241,6 +296,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
   waitHandler->wait();
 }
 
+/**
+ * @brief Internal: overwrite the stored running counter for @p topic.
+ *
+ * Must be called from within the handler's Dmn_Async serialisation context.
+ *
+ * @param topic          The topic whose counter is to be updated.
+ * @param runningCounter The new counter value to store.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
     std::string_view topic, uint64_t runningCounter) {
   m_topic_running_counter[std::string{topic}] = runningCounter;
@@ -348,6 +411,25 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
   return !this->isInConflict(topic);
 }
 
+/**
+ * @brief Stamp, validate, and publish a DMesgPb message on behalf of the handler.
+ *
+ * This is the serialised write path: it runs inside the handler's Dmn_Async
+ * context and performs the following steps:
+ *  1. Reject if the topic is currently in conflict (unless force=true).
+ *  2. Fill in metadata: timestamp, source-write-handler identifier, topic
+ *     (if empty and the handler has a default topic), and source identifier.
+ *  3. Advance and stamp the per-topic running counter.
+ *  4. Clear the conflict flag for the topic and delegate to
+ *     Dmn_DMesg::publish() (move or copy according to @p move).
+ *
+ * @param dmesgpb The message to publish; metadata fields are filled in-place.
+ * @param move    If true, publish using move semantics; otherwise copy.
+ * @param block   If true, the publish call blocks until all subscribers have
+ *                been notified.
+ *
+ * @throws std::runtime_error if the topic is in conflict and force is not set.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
@@ -388,12 +470,27 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   }
 }
 
+/**
+ * @brief Internal: return true if the handler is in conflict for @p topic.
+ *
+ * When @p topic is empty, returns true if any topic is in conflict.
+ *
+ * @param topic Topic to check, or "" to check for any conflict.
+ * @return true if the handler has an active conflict for the given topic.
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
     std::string_view topic) const -> bool {
   return "" == topic ? (!m_topic_in_conflict.empty())
                      : m_topic_in_conflict.contains(std::string{topic});
 }
 
+/**
+ * @brief Internal: remove the conflict flag for @p topic (or all topics).
+ *
+ * When @p topic is empty, all conflict flags are cleared.
+ *
+ * @param topic Topic to clear, or "" to clear all conflicts.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
     std::string_view topic) {
   if ("" == topic) {
@@ -403,6 +500,14 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
   }
 }
 
+/**
+ * @brief Internal: mark the handler as being in conflict for the message's topic.
+ *
+ * Records the topic in m_topic_in_conflict and, if a conflict callback has
+ * been registered, schedules it asynchronously via m_sub.
+ *
+ * @param dmesgpb The conflicting message that triggered the conflict.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
     const dmn::DMesgPb &dmesgpb) {
   m_topic_in_conflict.insert(dmesgpb.topic());
@@ -494,11 +599,34 @@ auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
   return ret;
 }
 
+/**
+ * @brief Return a reference to the per-topic last-message cache.
+ *
+ * This virtual method allows Dmn_DMesgNet to substitute its own per-topic
+ * cache (m_topic_last_dmesgpb in the subclass) so that heartbeat messages
+ * sent to the network use the most-recent state even after reconciliation.
+ *
+ * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
+ *
+ * @return Reference to the map from topic string to the last DMesgPb for that
+ *         topic.
+ */
 auto Dmn_DMesg::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return m_topic_last_dmesgpb;
 }
 
+/**
+ * @brief Replay the last cached message for every known topic to newly opened
+ *        handlers.
+ *
+ * Called during handler registration (after the subscriber is attached) to
+ * ensure each handler receives the most-recent message for each topic it
+ * subscribes to.  Each replayed message has the playback flag set so that
+ * subscribers can distinguish initial-state messages from live updates.
+ *
+ * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
+ */
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
     dmn::DMesgPb msgpb = topic_dmesgpb.second;
@@ -509,6 +637,27 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   }
 }
 
+/**
+ * @brief Core publish path with conflict detection and running-counter
+ *        management.
+ *
+ * For each non-playback message this method:
+ *  1. Checks whether the originating handler is already in conflict; if so
+ *     and force is not set, the message is silently dropped.
+ *  2. Computes the expected next running counter for the topic.
+ *     - If the incoming counter is stale (< expected) or the message already
+ *       carries conflict=true, the message is re-published with conflict=true
+ *       and the source handler is placed in conflict state.
+ *     - Otherwise the running counter is advanced, the message is cached as
+ *       the last value for the topic, and it is forwarded to all subscribers
+ *       via Dmn_Pub::publishInternal().
+ *
+ * Playback messages bypass conflict checks and are forwarded unchanged.
+ *
+ * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
+ *
+ * @param dmesgpb The message to publish.
+ */
 void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   // if it is a playback, we do not check if it is in conflict.
   if (dmesgpb.playback()) {
@@ -555,6 +704,19 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
   Dmn_Pub::publishInternal(copied_dmesgpb);
 }
 
+/**
+ * @brief Publish a system-type DMesgPb message, advancing the sys running counter.
+ *
+ * System messages (type == DMesgTypePb::sys) use a dedicated publish path that
+ * unconditionally advances the topic running counter without conflict detection.
+ * This is used for cluster heartbeat / election messages that must always be
+ * delivered to all subscribers regardless of ordering conflicts.
+ *
+ * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
+ *
+ * @param dmesgpb_sys The system message to publish (topic must equal
+ *                    kDMesgSysIdentifier and type must be sys).
+ */
 void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
   assert(dmesgpb_sys.topic() == kDMesgSysIdentifier);
   assert(dmesgpb_sys.type() == dmn::DMesgTypePb::sys);
@@ -579,6 +741,17 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
   waitHandler->wait();
 }
 
+/**
+ * @brief Internal: forcibly re-publish the last known message for a topic to
+ *        reset any conflict state on that topic across all handlers.
+ *
+ * If a cached message exists for @p topic, it is re-published with force=true
+ * so that all handlers update their running counters and exit conflict state.
+ *
+ * Must be called from within the Dmn_DMesg Dmn_Async serialisation context.
+ *
+ * @param topic The topic whose conflict state should be reset.
+ */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
     std::string_view topic) {
   auto iter = m_topic_last_dmesgpb.find(std::string{topic});
@@ -599,6 +772,16 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
       this, handler_ptr, topicToBeReset);
 }
 
+/**
+ * @brief Internal: clear the conflict flag on a specific handler for @p topic.
+ *
+ * Looks up @p handler_ptr in m_handlers and calls resolveConflictInternal() on
+ * it if found.  Must be called from within the Dmn_DMesg Dmn_Async
+ * serialisation context.
+ *
+ * @param handler_ptr Pointer to the handler whose conflict should be cleared.
+ * @param topic       Topic to clear, or "" to clear all conflicts on the handler.
+ */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
   auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),

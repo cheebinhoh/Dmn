@@ -149,6 +149,24 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   return;
 }
 
+/**
+ * @brief Start the background thread that reads and routes inbound network messages.
+ *
+ * Opens a write-only handler on the local Dmn_DMesg (m_write_handler) and
+ * launches a Dmn_Proc thread (m_input_proc) that:
+ *  - Continuously reads serialised DMesgPb strings from m_input_handler.
+ *  - Discards messages whose sourcewritehandleridentifier matches this node
+ *    (echo avoidance).
+ *  - Routes each accepted message to one of four paths:
+ *    - sys   : reconciliateDMesgPbSys() — update master-election state.
+ *    - conflict: if this node is master, re-broadcasts the last known good
+ *                message for the topic with force+playback=true.
+ *    - force+playback: write with conflict-check; update local last-topic cache.
+ *    - normal: stamp sourcewritehandleridentifier, write-and-check-conflict,
+ *              cache result; on conflict re-broadcast the last good value.
+ *
+ * Does nothing if m_input_handler is null (output-only or standalone node).
+ */
 void Dmn_DMesgNet::createInputHandlerProc() {
   if (m_input_handler) {
     m_write_handler = Dmn_DMesg::openHandler(
@@ -269,6 +287,24 @@ void Dmn_DMesgNet::createInputHandlerProc() {
   }
 }
 
+/**
+ * @brief Register a subscriber on the local Dmn_DMesg that forwards every
+ *        published message to the network output handler.
+ *
+ * The subscriber (m_subscript_handler) is configured with NoTopicFilter and
+ * IncludeSys so it receives all topics including sys heartbeats.  Its filter
+ * function skips messages that this node's write handler originated (to avoid
+ * echoing inbound network traffic).
+ *
+ * The async-process callback serialises each outgoing message:
+ *  - If the node is Ready (master elected), it first flushes the pending
+ *    outbound queue (sendPendingOutboundQueueMessage()) and then sends the
+ *    message.
+ *  - Otherwise, the message is held in m_topic_outbound_pending_dmesgpb
+ *    until the node becomes Ready.
+ *
+ * Sys-type messages bypass the ready check and are always forwarded.
+ */
 void Dmn_DMesgNet::createSubscriptHandler() {
   auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_IncludeSys}] = "yes";
@@ -329,6 +365,26 @@ void Dmn_DMesgNet::createSubscriptHandler() {
       [](Dmn_DMesgHandler &handler, const dmn::DMesgPb) -> void {});
 }
 
+/**
+ * @brief Install a periodic heartbeat timer that drives master election.
+ *
+ * When both input and output handlers are present a Dmn_Timer fires every
+ * DMN_DMESGNET_HEARTBEAT_IN_NS nanoseconds:
+ *  - MasterPending state: increments m_master_pending_counter. When the
+ *    counter reaches DMN_DMESGNET_MASTERPENDING_MAX_COUNTER the node
+ *    self-elects as master, transitions to Ready, and sets m_ready.
+ *  - Ready state (following remote master): increments
+ *    m_master_sync_pending_counter. When this reaches
+ *    DMN_DMESGNET_MASTERSYNC_MAX_COUNTER the remote master is considered
+ *    dead; the node reverts to MasterPending.
+ *
+ * On each tick, the local sys heartbeat is published, and if this node is
+ * master and the neighbour count has grown, all last-known topic messages
+ * are re-broadcast as playback to synchronise newly joined nodes.
+ *
+ * If input/output handlers are absent (standalone node), the timer is
+ * skipped and the node is immediately promoted to Ready/self-master.
+ */
 void Dmn_DMesgNet::createTimerProc() {
   if (m_input_handler && m_output_handler) {
     // Periodic heartbeat timer that drives master election.
@@ -420,11 +476,34 @@ void Dmn_DMesgNet::createTimerProc() {
   }
 }
 
+/**
+ * @brief Override the base-class topic cache with the network-aware one.
+ *
+ * Dmn_DMesgNet maintains its own m_topic_last_dmesgpb which is updated by
+ * both the inbound network path and the outbound subscriber path.  This
+ * override ensures that heartbeat re-broadcasts (in createTimerProc()) and
+ * playback sends (in createInputHandlerProc()) use the network-reconciled
+ * state rather than the base-class cache.
+ *
+ * @return Reference to the Dmn_DMesgNet per-topic last-message map.
+ */
 auto Dmn_DMesgNet::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return this->m_topic_last_dmesgpb;
 }
 
+/**
+ * @brief Flush and send all messages queued in the pending outbound buffer.
+ *
+ * While the node is in MasterPending state outbound non-sys messages are
+ * buffered in m_topic_outbound_pending_dmesgpb instead of being sent.  Once
+ * the node transitions to Ready this method drains those buffers, serialises
+ * each message, and writes it to m_output_handler.  After sending, each
+ * topic's last message is updated in m_topic_last_dmesgpb.
+ *
+ * Must be called from within the Dmn_DMesgNet Dmn_Async serialisation context.
+ * Asserts that m_ready is set before processing.
+ */
 void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
   assert(m_ready.test());
 
