@@ -108,16 +108,14 @@ Inheritance diagram for dmn::Dmn_BlockingQueue_Interface&lt; T &gt;:</div>
 <area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="2181,56,2898,80"/>
 <area href="classdmn_1_1Dmn__BlockingQueue__Lf.html" title="Thread-safe FIFO queue." alt="dmn::Dmn_BlockingQueue_Lf&lt; T &gt;" shape="rect" coords="2908,56,3625,80"/>
 <area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;" shape="rect" coords="0,112,717,136"/>
-<area href="classdmn_1_1Dmn__Limit__BlockingQueue.html" alt="dmn::Dmn_Limit_BlockingQueue&lt; T &gt;" shape="rect" coords="727,112,1444,136"/>
 <area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; T, QueueType &gt;" shape="rect" coords="2181,112,2898,136"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="1454,168,2171,192"/>
-<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="2181,168,2898,192"/>
-<area href="classdmn_1_1Dmn__TeePipe.html" alt="dmn::Dmn_TeePipe&lt; T &gt;" shape="rect" coords="2908,168,3625,192"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="1454,224,2171,248"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="2181,224,2898,248"/>
-<area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="2908,224,3625,248"/>
-<area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="1454,280,2171,304"/>
-<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="1454,336,2171,360"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="1817,168,2534,192"/>
+<area href="classdmn_1_1Dmn__Async.html" title="Serialises asynchronous task execution in a dedicated background thread." alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="2544,168,3261,192"/>
+<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="1817,224,2534,248"/>
+<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="2544,224,3261,248"/>
+<area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="3271,224,3988,248"/>
+<area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="1817,280,2534,304"/>
+<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="1817,336,2534,360"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -191,8 +189,6 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-
-<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#ac600ced5c1589714a6d2e1576a819bcb">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -271,8 +267,6 @@ template&lt;typename T &gt; </div>
 
 <p>Attempt to pop a single item without waiting. </p>
 <dl class="section return"><dt>Returns</dt><dd>The dequeued item, or std::nullopt if the queue was empty or shutdown has detached the queue. </dd></dl>
-
-<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#a77b2a158eddce613fac18b1352253d50">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -375,8 +369,6 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-
-<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#acc8612f37c52063b3fd4357732b8e19c">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -497,7 +489,7 @@ template&lt;typename T &gt; </div>
 <p>Wait until the queue becomes empty and return the total number of items that have passed through the queue. </p>
 <dl class="section return"><dt>Returns</dt><dd>The total number of items that have been passed through the queue. </dd></dl>
 
-<p>Implemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Limit__BlockingQueue.html#a494cd819204ed57c2cce12342773e030">dmn::Dmn_Limit_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__TeePipe.html#af8eb6004d16be2aaf35c461d9c0a8522">dmn::Dmn_TeePipe&lt; T &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;</a>.</p>
 
 </div>
 </div>

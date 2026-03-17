@@ -6,9 +6,7 @@ var hierarchy =
       [ "dmn::Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue.html", [
         [ "dmn::Dmn_Pipe< std::shared_ptr< Dmn_Async_Handle >, Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > > >", "classdmn_1_1Dmn__Pipe.html", null ]
       ] ],
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", [
-        [ "dmn::Dmn_Limit_BlockingQueue< T >", "classdmn_1_1Dmn__Limit__BlockingQueue.html", null ]
-      ] ],
+      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", [
         [ "dmn::Dmn_Pipe< T, QueueType >", "classdmn_1_1Dmn__Pipe.html", [
@@ -21,8 +19,7 @@ var hierarchy =
             ] ],
             [ "dmn::Dmn_Pub< T, QueueType >", "classdmn_1_1Dmn__Pub.html", null ],
             [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
-          ] ],
-          [ "dmn::Dmn_TeePipe< T >", "classdmn_1_1Dmn__TeePipe.html", null ]
+          ] ]
         ] ]
       ] ],
       [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ]
