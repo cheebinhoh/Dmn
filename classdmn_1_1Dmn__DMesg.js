@@ -1,7 +1,10 @@
 var classdmn_1_1Dmn__DMesg =
 [
     [ "Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler" ],
-    [ "Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
+    [ "Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy" ],
+    [ "AsyncProcessTask", "classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95", null ],
+    [ "FilterTask", "classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2", null ],
+    [ "HandlerConfig", "classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e", null ],
     [ "KeyValueConfiguration", "classdmn_1_1Dmn__DMesg.html#a84a06f06705d551d0fe33d39e76eeab7", null ],
     [ "Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7", null ],
     [ "closeHandler", "classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7", null ],

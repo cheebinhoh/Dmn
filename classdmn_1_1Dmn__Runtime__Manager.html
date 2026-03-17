@@ -155,8 +155,8 @@ requires IsValidJobFnc&lt;F&gt;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a456083f9813654f46124a31c9d26d4a6" id="r_a456083f9813654f46124a31c9d26d4a6"><td class="memItemLeft" align="right" valign="top"><a id="a456083f9813654f46124a31c9d26d4a6" name="a456083f9813654f46124a31c9d26d4a6"></a>
-static void&#160;</td><td class="memItemRight" valign="bottom"><b>runPriorToCreateInstance</b> ()</td></tr>
+<tr class="memitem:a456083f9813654f46124a31c9d26d4a6" id="r_a456083f9813654f46124a31c9d26d4a6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">runPriorToCreateInstance</a> ()</td></tr>
+<tr class="memdesc:a456083f9813654f46124a31c9d26d4a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP) in the calling thread before the singleton instance is created.  <br /></td></tr>
 <tr class="separator:a456083f9813654f46124a31c9d26d4a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classdmn_1_1Dmn__Singleton"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classdmn_1_1Dmn__Singleton')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton&lt; T &gt;</a></td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6 inherit pub_static_methods_classdmn_1_1Dmn__Singleton" id="r_a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
@@ -401,6 +401,36 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a456083f9813654f46124a31c9d26d4a6" name="a456083f9813654f46124a31c9d26d4a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a456083f9813654f46124a31c9d26d4a6">&#9670;&#160;</a></span>runPriorToCreateInstance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class &gt; class QueueType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a>&lt; QueueType &gt;::runPriorToCreateInstance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP) in the calling thread before the singleton instance is created. </p>
+<p>Must be called once from the main thread before any worker threads are spawned so that all descendant threads inherit the same signal mask. Masking inside the constructor would be too late because the parent <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> thread may already exist. </p>
 
 </div>
 </div>

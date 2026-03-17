@@ -120,6 +120,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afafa37a545a0060ec87b9ad1415a8652" id="r_afafa37a545a0060ec87b9ad1415a8652"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet.html#afafa37a545a0060ec87b9ad1415a8652">Dmn_DMesgNet</a> (std::string_view name, std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a>&lt; std::string &gt; &gt; input_handler=nullptr, std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a>&lt; std::string &gt; &gt; output_handler=nullptr)</td></tr>
 <tr class="memdesc:afafa37a545a0060ec87b9ad1415a8652"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> constructor.  <br /></td></tr>
 <tr class="separator:afafa37a545a0060ec87b9ad1415a8652"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2eb843cb538f769b3fd18748144c255b" id="r_a2eb843cb538f769b3fd18748144c255b"><td class="memItemLeft" align="right" valign="top"><a id="a2eb843cb538f769b3fd18748144c255b" name="a2eb843cb538f769b3fd18748144c255b"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_DMesgNet</b> () noexcept</td></tr>
+<tr class="memdesc:a2eb843cb538f769b3fd18748144c255b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor: stops background procs, closes handlers, and sends a final Destroyed heartbeat to the network output if available. <br /></td></tr>
+<tr class="separator:a2eb843cb538f769b3fd18748144c255b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a558558553c681342095a4fe02aa7d9c7" id="r_a558558553c681342095a4fe02aa7d9c7"><td class="memItemLeft" align="right" valign="top"><a id="a558558553c681342095a4fe02aa7d9c7" name="a558558553c681342095a4fe02aa7d9c7"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgNet</b> (const <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a558558553c681342095a4fe02aa7d9c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -319,7 +323,7 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:aedfa359a021f1895089e958398566c66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconcile system-level information from a remote DMesgPb message.  <br /></td></tr>
 <tr class="separator:aedfa359a021f1895089e958398566c66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4506ace95796353ae1e2a4b1262d822d" id="r_a4506ace95796353ae1e2a4b1262d822d"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d">getLastTopicCacheInternal</a> () -&gt; std::unordered_map&lt; std::string, dmn::DMesgPb &gt; &amp;override</td></tr>
-<tr class="memdesc:a4506ace95796353ae1e2a4b1262d822d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the cache of last topic message.  <br /></td></tr>
+<tr class="memdesc:a4506ace95796353ae1e2a4b1262d822d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a mutable reference to the net-layer per-topic last-message cache.  <br /></td></tr>
 <tr class="separator:a4506ace95796353ae1e2a4b1262d822d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__DMesg"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__DMesg')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__DMesg.html">dmn::Dmn_DMesg</a></td></tr>
 <tr class="memitem:a896b86227c1643a79c0b5cc29f0e6be4 inherit pro_methods_classdmn_1_1Dmn__DMesg" id="r_a896b86227c1643a79c0b5cc29f0e6be4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a> (const dmn::DMesgPb &amp;dmesgpb_sys)</td></tr>
@@ -374,12 +378,15 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classdmn_1_1Dmn__DMesg"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classdmn_1_1Dmn__DMesg')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classdmn_1_1Dmn__DMesg.html">dmn::Dmn_DMesg</a></td></tr>
 <tr class="memitem:a38fd9b978f1f0be6b69199a32af66f95 inherit pub_types_classdmn_1_1Dmn__DMesg" id="r_a38fd9b978f1f0be6b69199a32af66f95"><td class="memItemLeft" align="right" valign="top">
 using&#160;</td><td class="memItemRight" valign="bottom"><b>AsyncProcessTask</b> = std::function&lt; void(dmn::DMesgPb)&gt;</td></tr>
+<tr class="memdesc:a38fd9b978f1f0be6b69199a32af66f95 inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback type invoked asynchronously with a copy of each delivered message. <br /></td></tr>
 <tr class="separator:a38fd9b978f1f0be6b69199a32af66f95 inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf0ec9191b5b3a71c01e3e025c1be2f2 inherit pub_types_classdmn_1_1Dmn__DMesg" id="r_aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="memItemLeft" align="right" valign="top">
 using&#160;</td><td class="memItemRight" valign="bottom"><b>FilterTask</b> = std::function&lt; bool(const dmn::DMesgPb &amp;)&gt;</td></tr>
+<tr class="memdesc:aaf0ec9191b5b3a71c01e3e025c1be2f2 inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicate that returns false to drop an incoming message before buffering. <br /></td></tr>
 <tr class="separator:aaf0ec9191b5b3a71c01e3e025c1be2f2 inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd97af87f1df0ac7f10a0dfe8339910e inherit pub_types_classdmn_1_1Dmn__DMesg" id="r_afd97af87f1df0ac7f10a0dfe8339910e"><td class="memItemLeft" align="right" valign="top">
 using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerConfig</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
+<tr class="memdesc:afd97af87f1df0ac7f10a0dfe8339910e inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="mdescLeft">&#160;</td><td class="mdescRight">Key/value map used to pass per-handler configuration options. <br /></td></tr>
 <tr class="separator:afd97af87f1df0ac7f10a0dfe8339910e inherit pub_types_classdmn_1_1Dmn__DMesg"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84a06f06705d551d0fe33d39e76eeab7 inherit pub_types_classdmn_1_1Dmn__DMesg" id="r_a84a06f06705d551d0fe33d39e76eeab7"><td class="memItemLeft" align="right" valign="top">
 using&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguration</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
@@ -404,7 +411,7 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 <tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f inherit pub_static_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests if the current thread should be cancelled.  <br /></td></tr>
 <tr class="separator:a8be7a6ef05b4fa9aa6d232dc5c6c669f inherit pub_static_methods_classdmn_1_1Dmn__Proc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_classdmn_1_1Dmn__DMesg"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classdmn_1_1Dmn__DMesg')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classdmn_1_1Dmn__DMesg.html">dmn::Dmn_DMesg</a></td></tr>
-<tr class="memitem:a5ed3e9088557e198060eefffae720f17 inherit pub_static_attribs_classdmn_1_1Dmn__DMesg" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top">static const HandlerConfig&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
+<tr class="memitem:a5ed3e9088557e198060eefffae720f17 inherit pub_static_attribs_classdmn_1_1Dmn__DMesg" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
 <tr class="memdesc:a5ed3e9088557e198060eefffae720f17 inherit pub_static_attribs_classdmn_1_1Dmn__DMesg"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default handler configuration values.  <br /></td></tr>
 <tr class="separator:a5ed3e9088557e198060eefffae720f17 inherit pub_static_attribs_classdmn_1_1Dmn__DMesg"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91101b99ee97e9714d8e32487984ee00 inherit pub_static_attribs_classdmn_1_1Dmn__DMesg" id="r_a91101b99ee97e9714d8e32487984ee00"><td class="memItemLeft" align="right" valign="top">static constexpr std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a91101b99ee97e9714d8e32487984ee00">kHandlerConfig_IncludeSys</a></td></tr>
@@ -456,12 +463,22 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 </div><div class="memdoc">
 
 <p><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> constructor. </p>
+<p>Construct a <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> instance and start background threads.</p>
 <p>Create a network-aware DMesg instance that can read/write serialized DMesgPb messages through <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> handlers.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Identification name for this DMesgNet instance. </td></tr>
     <tr><td class="paramname">input_handler</td><td>Optional input handler to receive inbound serialized DMesgPb messages (std::string). If nullptr, no input processing is started. </td></tr>
-    <tr><td class="paramname">output_handler</td><td>Optional output handler to send outbound serialized DMesgPb messages (std::string). If nullptr, no network sends are performed. </td></tr>
+    <tr><td class="paramname">output_handler</td><td>Optional output handler to send outbound serialized DMesgPb messages (std::string). If nullptr, no network sends are performed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Initialises the local sys DMesgPb (identity, timestamp, MasterPending state), then creates the subscriber handler, input-reader proc, and heartbeat timer.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>Node identity string (also used as the handler name). </td></tr>
+    <tr><td class="paramname">input_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> source for inbound serialised DMesgPb strings. </td></tr>
+    <tr><td class="paramname">output_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> sink for outbound serialised DMesgPb strings. </td></tr>
   </table>
   </dd>
 </dl>
@@ -492,8 +509,7 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 </table>
 </div><div class="memdoc">
 
-<p>Return the cache of last topic message. </p>
-<dl class="section return"><dt>Returns</dt><dd>The cache of last topic messages. </dd></dl>
+<p>Return a mutable reference to the net-layer per-topic last-message cache. </p>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">dmn::Dmn_DMesg</a>.</p>
 
@@ -524,10 +540,22 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 </div><div class="memdoc">
 
 <p>Reconcile system-level information from a remote DMesgPb message. </p>
+<p>Apply a received remote sys message to the local election state.</p>
 <p>This method updates local view of the cluster (master id, neighbor list, timestamps, etc.) based on information contained in dmesgpb_other. It is responsible for applying election/co-election logic (for example, when a remote node declares itself master or relinquishes mastership) and for ensuring local state stays consistent with observed remote state.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dmesgpb_other</td><td>DMesgPb message received from a remote node. </td></tr>
+    <tr><td class="paramname">dmesgpb_other</td><td>DMesgPb message received from a remote node.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Handles the following transitions:</p><ul>
+<li>MasterPending + remote Ready → adopt remote master, transition to Ready.</li>
+<li>Ready + known master relinquishes → revert to MasterPending.</li>
+<li>Ready + conflicting master claim → defer to the node with the earlier initialised timestamp (higher seniority). Also maintains the local nodelist (add/update/remove entries).</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dmesgpb_other</td><td>The remote sys DMesgPb received from the network. </td></tr>
   </table>
   </dd>
 </dl>

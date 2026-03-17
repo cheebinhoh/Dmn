@@ -123,18 +123,22 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume dmn::DMesgPb messages. It implements Dmn_Io&lt;DMesgPb&gt;.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a38fd9b978f1f0be6b69199a32af66f95" id="r_a38fd9b978f1f0be6b69199a32af66f95"><td class="memItemLeft" align="right" valign="top"><a id="a38fd9b978f1f0be6b69199a32af66f95" name="a38fd9b978f1f0be6b69199a32af66f95"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>AsyncProcessTask</b> = std::function&lt; void(dmn::DMesgPb)&gt;</td></tr>
+<tr class="memdesc:a38fd9b978f1f0be6b69199a32af66f95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback type invoked asynchronously with a copy of each delivered message. <br /></td></tr>
 <tr class="separator:a38fd9b978f1f0be6b69199a32af66f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf0ec9191b5b3a71c01e3e025c1be2f2" id="r_aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="memItemLeft" align="right" valign="top"><a id="aaf0ec9191b5b3a71c01e3e025c1be2f2" name="aaf0ec9191b5b3a71c01e3e025c1be2f2"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>FilterTask</b> = std::function&lt; bool(const dmn::DMesgPb &amp;)&gt;</td></tr>
+<tr class="memdesc:aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicate that returns false to drop an incoming message before buffering. <br /></td></tr>
 <tr class="separator:aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd97af87f1df0ac7f10a0dfe8339910e" id="r_afd97af87f1df0ac7f10a0dfe8339910e"><td class="memItemLeft" align="right" valign="top"><a id="afd97af87f1df0ac7f10a0dfe8339910e" name="afd97af87f1df0ac7f10a0dfe8339910e"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerConfig</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
+<tr class="memdesc:afd97af87f1df0ac7f10a0dfe8339910e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Key/value map used to pass per-handler configuration options. <br /></td></tr>
 <tr class="separator:afd97af87f1df0ac7f10a0dfe8339910e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84a06f06705d551d0fe33d39e76eeab7" id="r_a84a06f06705d551d0fe33d39e76eeab7"><td class="memItemLeft" align="right" valign="top"><a id="a84a06f06705d551d0fe33d39e76eeab7" name="a84a06f06705d551d0fe33d39e76eeab7"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguration</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
@@ -336,7 +340,7 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a5ed3e9088557e198060eefffae720f17" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top">static const HandlerConfig&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
+<tr class="memitem:a5ed3e9088557e198060eefffae720f17" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
 <tr class="memdesc:a5ed3e9088557e198060eefffae720f17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default handler configuration values.  <br /></td></tr>
 <tr class="separator:a5ed3e9088557e198060eefffae720f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91101b99ee97e9714d8e32487984ee00" id="r_a91101b99ee97e9714d8e32487984ee00"><td class="memItemLeft" align="right" valign="top">static constexpr std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a91101b99ee97e9714d8e32487984ee00">kHandlerConfig_IncludeSys</a></td></tr>
@@ -454,16 +458,18 @@ Additional Inherited Members</h2></td></tr>
           <td class="memname">void dmn::Dmn_DMesg::closeHandler </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> &amp;&#160;</td>
-          <td class="paramname"><em>handlerToClose</em></td><td>)</td>
+          <td class="paramname"><em>handler</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Unregister and free the provided handler. </p>
+<p>Unregister the handler's subscriber, clear its owner pointer, remove it from the publisher's handler list, and reset the proxy's weak_ptr.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">handlerToClose</td><td>the internal handler will be reset upon return from this method. </td></tr>
+    <tr><td class="paramname">handlerToClose</td><td>the internal handler will be reset upon return from this method.</td></tr>
+    <tr><td class="paramname">handler</td><td>Proxy referencing the handler to close. </td></tr>
   </table>
   </dd>
 </dl>
@@ -494,6 +500,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Return the cache of last topic message. </p>
+<p>Return a mutable reference to the per-topic last-message cache (no locking).</p>
 <dl class="section return"><dt>Returns</dt><dd>The cache of last topic messages. </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d">dmn::Dmn_DMesgNet</a>.</p>
@@ -517,13 +524,21 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get the topic last message or nullptr if no message for the topic. </p>
+<p>Return the last published message for <code>topic</code>, or std::nullopt if none has been published yet. The lookup is performed in the async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>the topic that last message to be returned.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>last message of topic or nullptr if no message for such topic. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>last message of topic or nullptr if no message for such topic.</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">topic</td><td>Topic to look up. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The last DMesgPb for the topic, or std::nullopt. </dd></dl>
 
 </div>
 </div>
@@ -609,7 +624,7 @@ template&lt;class... U&gt; </div>
           <td class="memname">void dmn::Dmn_DMesg::publishInternal </td>
           <td>(</td>
           <td class="paramtype">const dmn::DMesgPb &amp;&#160;</td>
-          <td class="paramname"><em>dmesgPb</em></td><td>)</td>
+          <td class="paramname"><em>dmesgpb</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -621,12 +636,24 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Publish a normal DMesgPb to subscribers. </p>
+<p>Override of <a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">Dmn_Pub::publishInternal()</a> that applies global conflict detection and advances per-topic running counters before forwarding to the base class for subscriber notification.</p>
 <p>Conflict detection:</p><ul>
 <li>If the incoming message's topic running counter is older than the publisher's recorded counter for that topic, it indicates the writer is out-of-sync. In that case, only the writer's handler is placed into a conflict state; its future writes will be rejected until the client resolves the conflict.</li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dmesgPb</td><td>The message to be published. </td></tr>
+    <tr><td class="paramname">dmesgPb</td><td>The message to be published.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Playback messages bypass conflict detection. For normal messages:</p><ul>
+<li>If the source handler is already in conflict the message is silently dropped.</li>
+<li>If the incoming running counter is stale, the message is marked conflicted and the source handler is placed in conflict state.</li>
+<li>Otherwise the global counter and last-message cache are updated.</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dmesgpb</td><td>The message to publish. </td></tr>
   </table>
   </dd>
 </dl>
@@ -658,9 +685,17 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Publish a system message via the async context. </p>
+<p>Publish a sys-type message, advancing only the sys-topic counter.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dmesgpb_sys</td><td>The system message to publish. </td></tr>
+    <tr><td class="paramname">dmesgpb_sys</td><td>The system message to publish.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Unlike <a class="el" href="classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9" title="Publish a normal DMesgPb to subscribers.">publishInternal()</a>, this path does not perform conflict detection and does not update the last-message cache (sys messages are special).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dmesgpb_sys</td><td>System message to publish; must use the sys topic and type. </td></tr>
   </table>
   </dd>
 </dl>
@@ -684,9 +719,11 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Reset conflict state by posting last message of the topic. </p>
+<p>Force-publish the last known message for <code>topic</code> so all handlers can synchronise to it, clearing their conflict state.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>Topic to reset </td></tr>
+    <tr><td class="paramname">topic</td><td>Topic to reset</td></tr>
+    <tr><td class="paramname">topic</td><td>Topic whose last message should be force-republished. </td></tr>
   </table>
   </dd>
 </dl>
@@ -728,9 +765,12 @@ template&lt;class... U&gt; </div>
 </div><div class="memdoc">
 
 <p>Post an async action that resets a handler's conflict state in the publisher's singleton async thread context. </p>
+<p>Post an async task to reset the conflict state of a specific handler for the given topic.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">handler_ptr</td><td>Pointer to the handler whose conflict state should be reset.</td></tr>
     <tr><td class="paramname">handler_ptr</td><td>Pointer to the handler whose conflict state should be reset. </td></tr>
+    <tr><td class="paramname">topic</td><td>Topic to resolve, or "" for all topics. </td></tr>
   </table>
   </dd>
 </dl>
@@ -748,7 +788,7 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const Dmn_DMesg::HandlerConfig dmn::Dmn_DMesg::kHandlerConfig_Default = {}</td>
+          <td class="memname">const <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">Dmn_DMesg::HandlerConfig</a> dmn::Dmn_DMesg::kHandlerConfig_Default = {}</td>
         </tr>
       </table>
   </td>

@@ -96,14 +96,19 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHa
   <div class="headertitle"><div class="title">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance.  
+ <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a78a8e93f4a36e7979d702c2d83c3c342" id="r_a78a8e93f4a36e7979d702c2d83c3c342"><td class="memItemLeft" align="right" valign="top"><a id="a78a8e93f4a36e7979d702c2d83c3c342" name="a78a8e93f4a36e7979d702c2d83c3c342"></a>
-std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator-&gt;</b> () const</td></tr>
+<tr class="memitem:a78a8e93f4a36e7979d702c2d83c3c342" id="r_a78a8e93f4a36e7979d702c2d83c3c342"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">operator-&gt;</a> () const</td></tr>
+<tr class="memdesc:a78a8e93f4a36e7979d702c2d83c3c342"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dereference the proxy to access the underlying handler.  <br /></td></tr>
 <tr class="separator:a78a8e93f4a36e7979d702c2d83c3c342"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:affdbec87740aaf04a3fb56fdae3a36fd" id="r_affdbec87740aaf04a3fb56fdae3a36fd"><td class="memItemLeft" align="right" valign="top"><a id="affdbec87740aaf04a3fb56fdae3a36fd" name="affdbec87740aaf04a3fb56fdae3a36fd"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>operator bool</b> () const noexcept</td></tr>
+<tr class="memitem:affdbec87740aaf04a3fb56fdae3a36fd" id="r_affdbec87740aaf04a3fb56fdae3a36fd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#affdbec87740aaf04a3fb56fdae3a36fd">operator bool</a> () const noexcept</td></tr>
+<tr class="memdesc:affdbec87740aaf04a3fb56fdae3a36fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the proxied handler is still alive.  <br /></td></tr>
 <tr class="separator:affdbec87740aaf04a3fb56fdae3a36fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -112,6 +117,73 @@ Friends</h2></td></tr>
 class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></tr>
 <tr class="separator:a94de5d946f7e793e37bb9322a14a68ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance. </p>
+<p>Wraps a std::weak_ptr&lt;Dmn_DMesgHandler&gt; to provide pointer-like access to the underlying handler while allowing the publisher to control handler lifetime (via <a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">closeHandler()</a>). Clients should test the proxy's bool conversion before dereferencing to avoid exceptions.</p>
+<p>Thread-safety: The proxy itself is not thread-safe; do not share a single <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html" title="Lightweight proxy to a Dmn_DMesgHandler instance.">Dmn_DMesgHandlerProxy</a> instance across threads. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="affdbec87740aaf04a3fb56fdae3a36fd" name="affdbec87740aaf04a3fb56fdae3a36fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#affdbec87740aaf04a3fb56fdae3a36fd">&#9670;&#160;</a></span>operator bool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy::operator bool </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check whether the proxied handler is still alive. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the underlying handler exists and has not been closed, false if it has been released. </dd></dl>
+
+</div>
+</div>
+<a id="a78a8e93f4a36e7979d702c2d83c3c342" name="a78a8e93f4a36e7979d702c2d83c3c342"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78a8e93f4a36e7979d702c2d83c3c342">&#9670;&#160;</a></span>operator-&gt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &gt; dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy::operator-&gt; </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Dereference the proxy to access the underlying handler. </p>
+<dl class="section return"><dt>Returns</dt><dd>shared_ptr&lt;Dmn_DMesgHandler&gt; pointing to the live handler. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if the handler has already been closed. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a></li>
 </ul>

@@ -1,20 +1,14 @@
 var searchData=
 [
-  ['scopeguard_0',['ScopeGuard',['../structdmn_1_1ScopeGuard.html',1,'dmn']]],
-  ['semantics_1',['semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'Blocking and timeout semantics'],['../dmn-blockingqueue_8hpp.html#autotoc_md4',1,'Synchronization and semantics']]],
-  ['set_5fconfig_2',['set_config',['../dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51',1,'dmn']]],
-  ['setconflictcallbacktask_3',['setConflictCallbackTask',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['setstate_4',['setState',['../classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974',1,'dmn::Dmn_Proc']]],
-  ['settask_5',['setTask',['../classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d',1,'dmn::Dmn_Proc']]],
-  ['settopicrunningcounter_6',['setTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#af5e223cd67242f61dd9d2993a2ed96f5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['settopicrunningcounterinternal_7',['setTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['shutdown_8',['shutdown',['../classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079',1,'dmn::Dmn_Io::shutdown()'],['../classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6',1,'dmn::Dmn_Kafka::shutdown()']]],
-  ['shutdown_20behavior_9',['Shutdown behavior',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'']]],
-  ['signal‑safety_20notes_10',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md14',1,'']]],
-  ['start_11',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
-  ['stop_12',['stop',['../classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d',1,'dmn::Dmn_BlockingQueue::stop()'],['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer::stop()'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3',1,'dmn::Dmn_BlockingQueue_Lf::stop()']]],
-  ['stopexec_13',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
-  ['stringcompare_14',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
-  ['summary_15',['Usage Summary',['../dmn-runtime_8hpp.html#autotoc_md15',1,'']]],
-  ['synchronization_20and_20semantics_16',['Synchronization and semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md4',1,'']]]
+  ['read_0',['read',['../classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25',1,'dmn::Dmn_Io::read() -&gt; std::optional&lt; T &gt;=0'],['../classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083',1,'dmn::Dmn_Io::read(size_t count, long timeout=0) -&gt; std::vector&lt; T &gt;'],['../classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816',1,'dmn::Dmn_Pipe::read() -&gt; std::optional&lt; T &gt; override'],['../classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b',1,'dmn::Dmn_Pipe::read(size_t count, long timeout=0) -&gt; std::vector&lt; T &gt; override'],['../classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9',1,'dmn::Dmn_Socket::read()'],['../classdmn_1_1Dmn__Kafka.html#a40ef6a642adbdc8b609dac86390a6e14',1,'dmn::Dmn_Kafka::read()'],['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler::read()']]],
+  ['readandprocess_1',['readAndProcess',['../classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea',1,'dmn::Dmn_Pipe']]],
+  ['reconciliatedmesgpbsys_2',['reconciliateDMesgPbSys',['../classdmn_1_1Dmn__DMesgNet.html#aedfa359a021f1895089e958398566c66',1,'dmn::Dmn_DMesgNet']]],
+  ['registersignalhandlerhook_3',['registerSignalHandlerHook',['../classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6',1,'dmn::Dmn_Runtime_Manager']]],
+  ['registersubscriber_4',['registersubscriber',['../classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc',1,'dmn::Dmn_Pub::registerSubscriber(X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;'],['../classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac',1,'dmn::Dmn_Pub::registerSubscriber(std::shared_ptr&lt; Dmn_Sub &gt; sub)']]],
+  ['resetconflictstatewithlasttopicmessage_5',['resetConflictStateWithLastTopicMessage',['../classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b',1,'dmn::Dmn_DMesg']]],
+  ['resethandlerconflictstate_6',['resetHandlerConflictState',['../classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab',1,'dmn::Dmn_DMesg']]],
+  ['resolveconflict_7',['resolveConflict',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
+  ['responsibilities_8',['Key Responsibilities',['../dmn-runtime_8hpp.html#autotoc_md13',1,'']]],
+  ['runexec_9',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]],
+  ['runpriortocreateinstance_10',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
 ];

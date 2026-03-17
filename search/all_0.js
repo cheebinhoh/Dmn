@@ -9,5 +9,6 @@ var searchData=
   ['and_20copy_20behavior_6',['Move and copy behavior',['../dmn-blockingqueue-interface_8hpp.html#autotoc_md0',1,'']]],
   ['and_20semantics_7',['Synchronization and semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md4',1,'']]],
   ['and_20timeout_20semantics_8',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md5',1,'']]],
-  ['awaiter_9',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
+  ['asyncprocesstask_9',['AsyncProcessTask',['../classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95',1,'dmn::Dmn_DMesg']]],
+  ['awaiter_10',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
 ];
