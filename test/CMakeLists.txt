@@ -1,11 +1,5 @@
 # Copyright © 2025 Chee Bin HOH. All rights reserved.
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/teepipe-test-data-1.txt
-       DESTINATION ${CMAKE_BINARY_DIR}/test)
-
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/teepipe-test-data-2.txt
-       DESTINATION ${CMAKE_BINARY_DIR}/test)
-
 ADD_TEST_EXECUTABLE(dmn
                       dmn-test-async
                       dmn-test-async-queue-lf
@@ -64,7 +58,6 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-runtime-queue-lf-3
                       dmn-test-singleton
                       dmn-test-socket
-                      # dmn-test-teepipe
                       dmn-test-timer
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
@@ -136,7 +129,6 @@ if (ENABLE_VALGRIND)
 	dmn-test-runtime-queue-lf-3
 	dmn-test-singleton
 	dmn-test-socket
-	# dmn-test-teepipe
 	dmn-test-timer
   )
 
