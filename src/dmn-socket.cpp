@@ -43,19 +43,6 @@
 
 namespace dmn {
 
-/**
- * @brief Create and connect a UDP broadcast socket.
- *
- * Creates an AF_INET/SOCK_DGRAM socket, enables SO_BROADCAST, and (unless
- * write_only is true) binds to the given port for receiving.
- *
- * @param ip4        IPv4 address string (e.g. "192.168.1.255"); empty string
- *                   binds/sends to INADDR_ANY.
- * @param port_no    UDP port number.
- * @param write_only When true, the bind step is skipped (send-only socket).
- *
- * @throws std::runtime_error on socket(), setsockopt(), or bind() failure.
- */
 Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
     : m_ip4{ip4}, m_port_no{port_no}, m_write_only{write_only} {
   constexpr int broadcast{1};
@@ -95,22 +82,12 @@ Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
   }
 }
 
-/// @brief Close the UDP socket file descriptor.
 Dmn_Socket::~Dmn_Socket() noexcept {
   if (-1 != m_fd) {
     close(m_fd);
   }
 }
 
-/**
- * @brief Receive the next UDP datagram from the bound port.
- *
- * Blocks until a datagram arrives. Returns std::nullopt on error or when the
- * socket is closed (recv returns ≤ 0).
- *
- * @return The datagram payload as a std::string, or std::nullopt on
- *         end-of-stream / error.
- */
 auto Dmn_Socket::read() -> std::optional<std::string> {
   std::array<char, BUFSIZ> buf{};
 
@@ -126,15 +103,6 @@ auto Dmn_Socket::read() -> std::optional<std::string> {
   return string;
 }
 
-/**
- * @brief Send @p item as a UDP datagram to the configured address and port.
- *
- * Reconstructs the destination sockaddr_in on every call (see FIXME in
- * implementation for a potential optimization).
- *
- * @param item The string payload to send.
- * @throws std::runtime_error if sendto() does not transmit all bytes.
- */
 void Dmn_Socket::write(std::string &item) {
   const char *buf{item.c_str()};
   const size_t n_read{item.size()};
@@ -165,12 +133,6 @@ void Dmn_Socket::write(std::string &item) {
   }
 }
 
-/**
- * @brief Move-overload: move @p item into a local string and delegate to the
- *        lvalue write() overload.
- *
- * @param item The string to send (moved-from after the call).
- */
 void Dmn_Socket::write(std::string &&item) {
   // Move into a named local so the lvalue overload can be reused.
   std::string moved_item = std::move(item);

@@ -135,7 +135,9 @@ using SecInt = int64_t;
 using NSecInt = std::chrono::nanoseconds::rep;
 
 /**
- * @brief Represents a unit of work scheduled and executed by the runtime.
+ * Dmn_Runtime_Job
+ *
+ * Represents a unit of work that can be scheduled and executed by the runtime.
  *
  * Members:
  *  - m_priority: Priority level for scheduling (kSched, kHigh, kMedium, kLow).
@@ -159,23 +161,17 @@ struct Dmn_Runtime_Job {
   OnErrorFncType m_onErrorFnc{};
 };
 
-/**
- * @brief Comparator placing the earliest-due Dmn_Runtime_Job at the top of a
- *        std::priority_queue (min-heap by m_due timestamp).
- */
+// TimedJobComparator
+// ------------------
+// The runtime keeps timed jobs in a priority_queue. The comparator places the
+// job with the smallest (earliest) m_due at the top of the container so it
+// can be popped and executed first.
 struct TimedJobComparator {
   bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) const {
     return a.m_due > b.m_due;
   }
 };
 
-/**
- * @brief Concept satisfied when @p F is callable with @p Args and returns
- *        either @c void or @c Dmn_Runtime_Task.
- *
- * @tparam F    The callable type to test.
- * @tparam Args Argument types to invoke @p F with.
- */
 template <typename F, typename... Args>
 concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
   {
@@ -187,12 +183,6 @@ concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
   } -> std::same_as<Dmn_Runtime_Task>;
 };
 
-/**
- * @brief Convenience alias: satisfied when @p F is a valid single-argument job
- *        callable accepting @c const Dmn_Runtime_Job &.
- *
- * @tparam F The callable type to test.
- */
 // Simplified alias for your specific Job signature
 template <typename F>
 concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
@@ -201,17 +191,13 @@ namespace detail {
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
-/// @brief Allocate and initialise the platform timer implementation object.
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
-/// @brief Destroy the implementation object and zero the pointer.
 void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **) noexcept;
 
-/// @brief Arm the SIGALRM timer to fire at the given absolute time point.
 void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *,
                                              TimePoint tp);
 
-/// @brief Arm the SIGALRM timer to fire after sec seconds + nsec nanoseconds.
 void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
                                            SecInt sec, NSecInt nsec);
 } // namespace detail
@@ -253,10 +239,7 @@ class Dmn_Runtime_Manager
 public:
   using SignalHandlerHook = std::function<void(int signo)>;
 
-  /// @brief Construct the runtime, register default SIGTERM/SIGINT/SIGALRM handlers, and create the PIMPL timer object.
   Dmn_Runtime_Manager();
-
-  /// @brief Destroy the runtime: exit the main loop, wait for all jobs to complete, and release the PIMPL timer object.
   virtual ~Dmn_Runtime_Manager() noexcept;
 
   Dmn_Runtime_Manager(const Dmn_Runtime_Manager &obj) = delete;
@@ -321,10 +304,7 @@ public:
   void enterMainLoop();
 
   /**
-   * @brief Request the runtime to stop processing and exit the main loop.
-   *
-   * Signals the signal-wait thread to terminate and waits for it to join.
-   * Safe to call from any thread; idempotent (subsequent calls are no-ops).
+   * Request the runtime to stop processing and exit the main loop.
    */
   void exitMainLoop();
 
@@ -339,7 +319,6 @@ public:
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
-  /// @brief Mask SIGALRM, SIGINT, SIGTERM, SIGQUIT and SIGHUP before the singleton's async thread is created.
   static void runPriorToCreateInstance();
 
 private:
@@ -349,31 +328,19 @@ private:
     requires IsValidJobFnc<F>
   auto createJobTaskFnc(F &&fnc) -> Dmn_Runtime_Job::TaskFncType;
 
-  /// @brief Execute clearSignalHandlerHook() inside the singleton async context.
   void clearSignalHandlerHookInternal(int signo);
 
-  /// @brief Dequeue and dispatch one batch of pending jobs (called from the async context).
   void execRuntimeJobInternal();
-
-  /// @brief Invoke all registered hooks for @p signo inside the singleton async context.
   void execSignalHandlerHookInternal(int signo);
 
-  /// @brief Return true when called from within the singleton async thread context.
   auto isRunInAsyncThread() -> bool;
 
-  /// @brief Register @p hook for @p signo in the external-hook map (async context only).
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
-  /// @brief Resume the top scheduled coroutine task; return true when the task completes.
   auto runRuntimeCoroutineScheduler() -> bool;
-
-  /// @brief Post execRuntimeJobInternal() onto the singleton async execution queue.
   void runRuntimeJobExecutor();
 
-  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimer with current PIMPL.
   void setNextTimer(SecInt sec, NSecInt nsec);
-
-  /// @brief Delegate to Dmn_Runtime_Manager_Impl_setNextTimerAt with current PIMPL.
   void setNextTimerAt(TimePoint tp);
 
   /**

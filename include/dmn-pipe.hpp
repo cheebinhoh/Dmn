@@ -92,22 +92,9 @@ class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
-  /**
-   * @brief Construct a Dmn_Pipe, optionally starting a background processing
-   *        thread.
-   *
-   * @param name    Identifying name passed to the underlying Dmn_Proc.
-   * @param fn      Optional processing task. When non-empty a background
-   *                thread is started that calls readAndProcess(fn, count,
-   *                timeout) in a loop.
-   * @param count   Number of items per readAndProcess() batch (default 1).
-   * @param timeout Timeout in microseconds per batch wait; 0 = wait forever
-   *                (default 0).
-   */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0);
 
-  /// @brief Stop the background processing thread (if any) and drain the queue.
   virtual ~Dmn_Pipe() noexcept;
 
   Dmn_Pipe(const Dmn_Pipe<T, QueueType> &obj) = delete;
