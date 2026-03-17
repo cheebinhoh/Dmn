@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-kafka-protobuf.cpp
- * @brief Unit test for Dmn_Kafka with DMesgPb protobuf message serialization and deserialization.
+ * @brief Unit test for Dmn_Kafka with DMesgPb protobuf message serialization
+ * and deserialization.
  */
 
 #include <sys/time.h>

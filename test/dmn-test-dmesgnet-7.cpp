@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-7.cpp
- * @brief Unit test asserting that messages sent by one Dmn_DMesgNet node are received only by other participating nodes.
+ * @brief Unit test asserting that messages sent by one Dmn_DMesgNet node are
+ * received only by other participating nodes.
  *
  * This test program asserts that two Dmn_DMesgNet objects that
  * participates in the same network through its inbound and outbound

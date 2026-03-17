@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-pipe-queue-lf-3.cpp
- * @brief Unit test for chaining multiple Dmn_Pipe instances backed by lock-free blocking queues.
+ * @brief Unit test for chaining multiple Dmn_Pipe instances backed by lock-free
+ * blocking queues.
  */
 
 #include <gtest/gtest.h>

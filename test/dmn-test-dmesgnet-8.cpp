@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-8.cpp
- * @brief Unit test asserting that prior messages are replayed by the master when a new Dmn_DMesgNet node joins.
+ * @brief Unit test asserting that prior messages are replayed by the master
+ * when a new Dmn_DMesgNet node joins.
  *
  * This test program asserts that two Dmn_DMesgNet objects that
  * participates in the same network through its inbound and outbound

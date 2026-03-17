@@ -2,7 +2,8 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-pipe-2.cpp
- * @brief Unit test for Dmn_Pipe sequential write and ordered read with a default blocking queue.
+ * @brief Unit test for Dmn_Pipe sequential write and ordered read with a
+ * default blocking queue.
  */
 
 #include <gtest/gtest.h>

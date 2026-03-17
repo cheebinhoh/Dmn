@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-pipe-3.cpp
- * @brief Unit test for chaining multiple Dmn_Pipe instances to verify message forwarding.
+ * @brief Unit test for chaining multiple Dmn_Pipe instances to verify message
+ * forwarding.
  */
 
 #include <gtest/gtest.h>

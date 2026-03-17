@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesg-pb-util.cpp
- * @brief Unit test for the DMesgPb utility macros (DMESG_PB_SET_* and DMESG_PB_SYS_NODE_SET_*).
+ * @brief Unit test for the DMesgPb utility macros (DMESG_PB_SET_* and
+ * DMESG_PB_SYS_NODE_SET_*).
  */
 
 #include <sys/time.h>

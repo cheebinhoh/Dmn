@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-with-kafka-2.cpp
- * @brief Unit test for Dmn_DMesgNet integration with Dmn_Kafka, verifying message production and consumption via Kafka.
+ * @brief Unit test for Dmn_DMesgNet integration with Dmn_Kafka, verifying
+ * message production and consumption via Kafka.
  *
  * This test program asserts that the Dmn_DMesgNet object can integrate with
  * the external Dmn_Kafka objects that Dmn_DmesgPb message sent by Dmn_DMesgNet

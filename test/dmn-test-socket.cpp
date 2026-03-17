@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-socket.cpp
- * @brief Unit test for Dmn_Socket verifying socket-based message send and receive.
+ * @brief Unit test for Dmn_Socket verifying socket-based message send and
+ * receive.
  */
 
 #include <gtest/gtest.h>

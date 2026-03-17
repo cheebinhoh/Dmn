@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-with-kafka-1.cpp
- * @brief Unit test for Dmn_DMesgNet construction and teardown with Dmn_Kafka as I/O handlers.
+ * @brief Unit test for Dmn_DMesgNet construction and teardown with Dmn_Kafka as
+ * I/O handlers.
  *
  * This test program asserts that the Dmn_DMesgNet object can be constructed
  * with the external Dmn_Kafka objects as its input and output handler and
