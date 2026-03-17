@@ -13,7 +13,9 @@
  * std::string>).  Most keys are passed through to rd_kafka_conf_set(); three
  * special keys are consumed by Dmn_Kafka itself and are not forwarded:
  *  - Dmn_Kafka::Topic         — the Kafka topic to read from / write to.
- *  - Dmn_Kafka::Key           — the record key used when producing.
+ *  - Dmn_Kafka::Key           — an alternate topic name that, if set, overrides
+ *                                the Topic value when determining which topic
+ *                                to read from / write to.
  *  - Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.
  *
  * Thread-safety:
@@ -57,7 +59,7 @@ public:
    *        to rdkafka).
    */
   const static std::string Topic;         // topic to read from or write to
-  const static std::string Key;           // the key that the topic is writen to
+  const static std::string Key;           // alternate topic name that overrides Topic
   const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
                                           // break out
 

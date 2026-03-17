@@ -66,19 +66,31 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
  * for every message published to the Dmn_DMesg instance.  The method applies
  * the following routing logic:
  *
- *  1. Conflict messages: if the message carries conflict=true and the source
- *     is not this handler and the topic matches the handler's filter, the
- *     handler enters conflict state via throwConflictInternal().
+ *  1. Conflict messages: if the message carries conflict=true, the source
+ *     is not this handler, the topic matches the handler's filter, and the
+ *     topic already exists in m_topic_running_counter (i.e. this handler has
+ *     seen the topic before), the handler enters conflict state via
+ *     throwConflictInternal().
  *
  *  2. Normal messages: the running counter is compared against the handler's
- *     last seen counter for the topic.  A message is accepted when:
- *     - Its running counter is higher (i.e. it is newer), OR
- *     - force=true is set on the message.
- *     Accepted messages update m_topic_running_counter, resolve any prior
- *     conflict on that topic, and are dispatched either via
- *     m_async_process_fn (if set) or by pushing onto m_buffers (for
- *     blocking read() callers).
- *     sys-type messages are additionally cached in m_last_dmesgpb_sys.
+ *     last seen counter for the topic. A message is considered accepted when:
+ *       - Its running counter is higher (i.e. it is newer), OR
+ *       - force=true is set on the message.
+ *
+ *     For force=true messages, acceptance only updates
+ *     m_topic_running_counter and resolves any prior conflict on that topic
+ *     via resolveConflictInternal(). These messages are not dispatched to
+ *     m_async_process_fn and are not pushed to m_buffers.
+ *
+ *     For non-force accepted messages, after applying the source/topic/filter
+ *     checks, the handler:
+ *       - Updates m_topic_running_counter,
+ *       - Resolves any prior conflict on that topic via resolveConflictInternal(),
+ *       - Dispatches the message either via m_async_process_fn (if set) or by
+ *         pushing onto m_buffers (for blocking read() callers).
+ *
+ *     Accepted sys-type messages always update m_last_dmesgpb_sys, regardless
+ *     of whether they are dispatched or only used to update state.
  *
  * @param dmesgpb The incoming protobuf message published by Dmn_DMesg.
  */

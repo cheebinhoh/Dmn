@@ -368,8 +368,8 @@ void Dmn_DMesgNet::createSubscriptHandler() {
 /**
  * @brief Install a periodic heartbeat timer that drives master election.
  *
- * When both input and output handlers are present a Dmn_Timer fires every
- * DMN_DMESGNET_HEARTBEAT_IN_NS nanoseconds:
+ * When both input and output handlers are present (i.e. neither is null), a
+ * Dmn_Timer fires every DMN_DMESGNET_HEARTBEAT_IN_NS nanoseconds:
  *  - MasterPending state: increments m_master_pending_counter. When the
  *    counter reaches DMN_DMESGNET_MASTERPENDING_MAX_COUNTER the node
  *    self-elects as master, transitions to Ready, and sets m_ready.
@@ -382,8 +382,8 @@ void Dmn_DMesgNet::createSubscriptHandler() {
  * master and the neighbour count has grown, all last-known topic messages
  * are re-broadcast as playback to synchronise newly joined nodes.
  *
- * If input/output handlers are absent (standalone node), the timer is
- * skipped and the node is immediately promoted to Ready/self-master.
+ * If either the input or output handler is absent, the timer is skipped and
+ * the node is immediately promoted to Ready/self-master.
  */
 void Dmn_DMesgNet::createTimerProc() {
   if (m_input_handler && m_output_handler) {

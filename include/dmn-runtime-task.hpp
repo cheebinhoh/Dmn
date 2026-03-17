@@ -69,12 +69,19 @@ struct Dmn_Runtime_Task {
       /**
        * @brief Resume the continuation (awaiting coroutine) if one is set.
        *
+       * Implements symmetric transfer by returning the continuation handle
+       * to the coroutine runtime instead of calling resume() directly.
+       *
        * @param h Handle to the finishing coroutine.
+       * @return Handle of the continuation to resume, or an empty handle if
+       *         there is no continuation.
        */
-      void await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
-        if (h && h.promise().m_continuation) {
-          h.promise().m_continuation.resume();
+      std::coroutine_handle<> await_suspend(
+          std::coroutine_handle<promise_type> h) const noexcept {
+        if (h) {
+          return h.promise().m_continuation;
         }
+        return std::coroutine_handle<>{};
       }
 
       /// @brief No value to retrieve after final suspension.
