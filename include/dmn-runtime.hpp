@@ -410,6 +410,8 @@ private:
   std::atomic_flag m_main_exit_atomic_flag{};
   std::atomic_flag m_sched_enter_atomic_flag{};
 
+  std::atomic_flag m_shutdown_atomic_flag{};
+
   // Number of high, medium and low priority jobs scheduled and add to
   // pending queue waiting for scheduler.
   std::atomic<std::size_t> m_jobs_count{};
@@ -478,19 +480,21 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
 
 template <template <class> class QueueType>
 Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
+  m_shutdown_atomic_flag.test_and_set(std::memory_order_release);
+
   exitMainLoop();
 
   assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
   assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
 
-  if (m_pimpl) {
-    detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
-  }
-
   // it is important that we wait for all Dmn_Runtime_Job and its companion
   // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
   // coroutine frame needs to be deleted prior to the destruction of
   // Dmn_Runtime_Manager.
+
+  if (m_pimpl) {
+    detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
+  }
 
   this->waitForEmpty();
 } catch (...) {
@@ -702,7 +706,6 @@ template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
   if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
     m_main_enter_atomic_flag.clear(std::memory_order_release);
-    m_main_exit_atomic_flag.notify_all();
 
     // set the last timer, so that signalWaitProc gracefully exit.
     this->setNextTimer(0, 10000);
@@ -721,6 +724,8 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
         0, 0); // disable timer, though m_signalWaitProc should already have
                // done so; if it has crashed, we still disable the timer here.
   }
+
+  m_main_exit_atomic_flag.notify_all();
 }
 
 /**

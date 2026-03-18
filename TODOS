@@ -1,2 +1,8 @@
-- Add conflict detection between Dmn_DMesgNet nodes
-- Add conflict resolution protocol between Dmn_DMesgNet level
+- Refactor conflict detection between Dmn_DMesgNet nodes
+- Refactor conflict resolution protocol between Dmn_DMesgNet level
+- Add IPC stuff via wrapper Dmn_Io and allow integration into Dmn_DMesgNet
+- Add integrate the Dmn_DMesgNet to an application framework (Dmn) for reuse
+- Add service discovery wrapper to Avahi and simplify it to be a modern C++ layer
+- Integrate service discovery to the application frame (Dmn)
+- Add more refined master election and conflict detection for RAFT
+- Quorum algorithm?

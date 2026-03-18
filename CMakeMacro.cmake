@@ -32,6 +32,8 @@ macro(ADD_TEST_EXECUTABLE ...)
   endforeach()
 endmacro()
 
+
+# This macro run valgrind with the list of applications as unit test
 macro(ADD_TEST_VALGRIND ...)
   foreach (arg ${ARGN})
     message(STATUS "adding test executable ${arg} for valgrind")
@@ -49,6 +51,7 @@ macro(ADD_TEST_VALGRIND ...)
     set_tests_properties(valgrind-${arg} PROPERTIES LABELS "valgrind")
   endforeach()
 endmacro()
+
 
 # This macro run protoc to generate *.pb.cc and *.pb.h from a
 # proto definition file
