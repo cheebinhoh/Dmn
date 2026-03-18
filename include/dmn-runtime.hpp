@@ -455,10 +455,6 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
   m_signal_handler_hooks[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
     assert(isRunInAsyncThread());
 
-    if (m_shutdown_atomic_flag.test(std::memory_order_acquire)) {
-      return;
-    }
-
     if (m_timedQueue.empty()) {
       return;
     }
@@ -710,7 +706,6 @@ template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
   if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
     m_main_enter_atomic_flag.clear(std::memory_order_release);
-    m_main_exit_atomic_flag.notify_all();
 
     // set the last timer, so that signalWaitProc gracefully exit.
     this->setNextTimer(0, 10000);
@@ -729,6 +724,8 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
         0, 0); // disable timer, though m_signalWaitProc should already have
                // done so; if it has crashed, we still disable the timer here.
   }
+
+  m_main_exit_atomic_flag.notify_all();
 }
 
 /**
