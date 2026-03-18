@@ -483,16 +483,16 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
   assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
   assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
 
-  if (m_pimpl) {
-    detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
-  }
-
   // it is important that we wait for all Dmn_Runtime_Job and its companion
   // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
   // coroutine frame needs to be deleted prior to the destruction of
   // Dmn_Runtime_Manager.
 
   this->waitForEmpty();
+
+  if (m_pimpl) {
+    detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
+  }
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
