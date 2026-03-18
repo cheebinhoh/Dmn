@@ -410,6 +410,8 @@ private:
   std::atomic_flag m_main_exit_atomic_flag{};
   std::atomic_flag m_sched_enter_atomic_flag{};
 
+  std::atomic_flag m_shutdown_atomic_flag{};
+
   // Number of high, medium and low priority jobs scheduled and add to
   // pending queue waiting for scheduler.
   std::atomic<std::size_t> m_jobs_count{};
@@ -453,6 +455,10 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
   m_signal_handler_hooks[SIGALRM] = [this]([[maybe_unused]] int signo) -> void {
     assert(isRunInAsyncThread());
 
+    if (m_shutdown_atomic_flag.test(std::memory_order_acquire)) {
+      return;
+    }
+
     if (m_timedQueue.empty()) {
       return;
     }
@@ -478,6 +484,8 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
 
 template <template <class> class QueueType>
 Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
+  m_shutdown_atomic_flag.test_and_set(std::memory_order_release);
+
   exitMainLoop();
 
   assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
@@ -488,11 +496,11 @@ Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
   // coroutine frame needs to be deleted prior to the destruction of
   // Dmn_Runtime_Manager.
 
-  this->waitForEmpty();
-
   if (m_pimpl) {
     detail::Dmn_Runtime_Manager_Impl_destroy(&m_pimpl);
   }
+
+  this->waitForEmpty();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
