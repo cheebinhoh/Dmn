@@ -390,24 +390,23 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
   Dmn_Proc::testcancel();
 
   if (m_queue.empty()) {
-    if (!wait) {
-      return {};
+    if (wait) {
+      // Block until an item is available. This wait is a cancellation point.
+      m_not_empty_cond.wait(lock, [this] {
+        return !m_queue.empty() || this->isInflightGuardClosed();
+      });
+
+      if (!this->isInflightGuardClosed()) {
+        ret = std::move_if_noexcept(m_queue.front());
+        m_queue.pop_front();
+        ++m_pop_count;
+      }
     }
-
-    // Block until an item is available. This wait is a cancellation point.
-    m_not_empty_cond.wait(lock, [this] {
-      return !m_queue.empty() || this->isInflightGuardClosed();
-    });
+  } else {
+    ret = std::move_if_noexcept(m_queue.front());
+    m_queue.pop_front();
+    ++m_pop_count;
   }
-
-  if (this->isInflightGuardClosed()) {
-    return {};
-  }
-
-  ret = std::move_if_noexcept(m_queue.front());
-  m_queue.pop_front();
-
-  ++m_pop_count;
 
   bool empty = m_queue.empty();
 
