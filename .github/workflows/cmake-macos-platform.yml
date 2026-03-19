@@ -9,7 +9,7 @@ on:
         default: 'Manual run on macOS'
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 permissions:
   contents: read
