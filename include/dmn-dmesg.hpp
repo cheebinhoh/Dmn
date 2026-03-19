@@ -707,13 +707,13 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
       this->registerSubscriber<Dmn_DMesgHandler::Dmn_DMesgHandlerSub>();
   handler->m_sub->m_owner = handler.get();
 
-  DMN_ASYNC_CALL_WITH_CAPTURE(
-      {
-        this->m_handlers.push_back(handler);
-        this->playbackLastTopicDMesgPbInternal();
-        handler->setAfterInitialPlayback();
-      },
-      this, handler);
+  auto waitHandler = this->addExecTaskWithWait([this, &handler]() {
+    this->m_handlers.push_back(handler);
+    this->playbackLastTopicDMesgPbInternal();
+    handler->setAfterInitialPlayback();
+  });
+
+  waitHandler->wait();
 
   return handlerProxy;
 }
