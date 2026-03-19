@@ -23,6 +23,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install protobuf
+        run: |
+          brew install protobuf
+      - name: Install Kafka client library
+        run: |
+          brew install librdkafka
+          # Optionally install Kafka server if needed
+          brew install kafka
+
       - name: Configure CMake
         # Use -B build to create a build directory
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_KAFKA_TEST=OFF
