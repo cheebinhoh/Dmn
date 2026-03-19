@@ -23,18 +23,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Abseil
-        run: brew install abseil
+ #     - name: Install Abseil
+ #       run: brew install abseil
 
-      - name: Install protobuf
-        run: |
-          brew install protobuf
+ #     - name: Install protobuf
+ #       run: |
+ #         brew install protobuf
 
-      - name: Install Kafka client library
-        run: |
-          brew install librdkafka
-          # Optionally install Kafka server if needed
-          brew install kafka
+ #     - name: Install Kafka client library
+ #       run: |
+ #         brew install librdkafka
+ #         # Optionally install Kafka server if needed
+ #         brew install kafka
 
       - name: Configure CMake
         # Use -B build to create a build directory
