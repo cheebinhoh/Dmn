@@ -1,0 +1,37 @@
+name: CMake on macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'For macOS build and test run'
+        required: false
+        default: 'Manual run on macOS'
+
+env:
+  BUILD_TYPE: Release
+
+permissions:
+  contents: read
+
+jobs:
+  macos-build-test:
+    # Use macos-latest (currently macOS 14/15)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        # Use -B build to create a build directory
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_KAFKA_TEST=OFF
+
+      - name: Build
+        # Build the project
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        # Run ctest or your specific binary
+        run: ctest -C ${{env.BUILD_TYPE}} -L dmn

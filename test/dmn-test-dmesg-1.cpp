@@ -92,14 +92,14 @@ int main(int argc, char *argv[]) {
     dmesg_write_handle->write(dmesgpb1);
     dmesg_write_handle->write(dmesgpb2);
 
-    dmesg.waitForEmpty();
-
     std::cout << "after sleep 5 seconds\n";
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
     dmesg.closeHandler(dmesg_write_handle);
     dmesg.closeHandler(dmesg_read_handle1);
     dmesg.closeHandler(dmesg_read_handle2);
+
+    dmesg.waitForEmpty();
   }
 
   google::protobuf::ShutdownProtobufLibrary();

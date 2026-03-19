@@ -8,7 +8,7 @@ on:
       reason:
         description: 'For valgrind memory check'
         required: false
-        default: 'Manual update'
+        default: 'Manual run of valgrind memory check'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
