@@ -9,7 +9,7 @@ on:
         default: 'Manual run on macOS'
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 permissions:
   contents: read
@@ -22,6 +22,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+ #     - name: Install Abseil
+ #       run: brew install abseil
+
+ #     - name: Install protobuf
+ #       run: |
+ #         brew install protobuf
+
+ #     - name: Install Kafka client library
+ #       run: |
+ #         brew install librdkafka
+ #         # Optionally install Kafka server if needed
+ #         brew install kafka
 
       - name: Configure CMake
         # Use -B build to create a build directory
