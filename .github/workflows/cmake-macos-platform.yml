@@ -11,6 +11,9 @@ on:
 env:
   BUILD_TYPE: Release
 
+permissions:
+  contents: read
+
 jobs:
   macos-build-test:
     # Use macos-latest (currently macOS 14/15)
