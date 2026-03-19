@@ -1,12 +1,12 @@
 name: CMake on macOS
 
 on:
-  schedule:
-    - cron: '0 0 * * *' 
-  push:
-    branches: [ "main" ]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'For macOS build and test run'
+        required: false
+        default: 'Manual run on macOS'
 
 env:
   BUILD_TYPE: Release
