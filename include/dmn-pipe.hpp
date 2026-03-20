@@ -67,6 +67,11 @@
 
 #define DMN_PIPE_HPP_
 
+#include "dmn-blockingqueue-interface.hpp"
+#include "dmn-blockingqueue.hpp"
+#include "dmn-debug.hpp"
+#include "dmn-io.hpp"
+#include "dmn-proc.hpp"
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -74,12 +79,6 @@
 #include <optional>
 #include <string_view>
 #include <vector>
-
-#include "dmn-blockingqueue-interface.hpp"
-#include "dmn-blockingqueue.hpp"
-#include "dmn-debug.hpp"
-#include "dmn-io.hpp"
-#include "dmn-proc.hpp"
 
 namespace dmn {
 

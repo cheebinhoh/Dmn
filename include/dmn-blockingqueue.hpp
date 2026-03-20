@@ -349,18 +349,14 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
     });
   }
 
-  if (this->isInflightGuardClosed()) {
-    return ret;
-  }
-
   // Collect up to 'count' items (moved out).
-  do {
+  while (count > 0 && (!m_queue.empty())) {
     ret.push_back(std::move_if_noexcept(m_queue.front()));
     m_queue.pop_front();
     ++m_pop_count;
 
     count--;
-  } while (count > 0 && (!m_queue.empty()));
+  }
 
   // If queue became empty as a result of this pop, notify waitForEmpty()
   // waiters.
