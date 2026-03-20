@@ -7,6 +7,6 @@ var classdmn_1_1Dmn__BlockingQueue__Lf =
     [ "pushCopy", "classdmn_1_1Dmn__BlockingQueue__Lf.html#ae738544dd427b145dbd3bf0f51f33761", null ],
     [ "pushImpl", "classdmn_1_1Dmn__BlockingQueue__Lf.html#a941adf60c54533ef7b50b7064887b3f3", null ],
     [ "pushMove", "classdmn_1_1Dmn__BlockingQueue__Lf.html#a18753cb93024f68651ff37b478dfcfa4", null ],
-    [ "stop", "classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3", null ],
+    [ "shutdown", "classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426", null ],
     [ "waitForEmpty", "classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38", null ]
 ];

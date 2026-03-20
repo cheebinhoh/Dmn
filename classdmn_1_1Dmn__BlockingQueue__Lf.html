@@ -168,9 +168,9 @@ Inheritance diagram for dmn::Dmn_BlockingQueue_Lf&lt; T &gt;:</div>
 <tr class="memitem:a941adf60c54533ef7b50b7064887b3f3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a941adf60c54533ef7b50b7064887b3f3">pushImpl</a> (U &amp;&amp;item)</td></tr>
 <tr class="memdesc:a941adf60c54533ef7b50b7064887b3f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push the item into the tail of the queue (move or copy semantics).  <br /></td></tr>
 <tr class="separator:a941adf60c54533ef7b50b7064887b3f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a376de417b6298b1503e892975350a1d3" id="r_a376de417b6298b1503e892975350a1d3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3">stop</a> () override</td></tr>
-<tr class="memdesc:a376de417b6298b1503e892975350a1d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal all waiting threads to wake up and return.  <br /></td></tr>
-<tr class="separator:a376de417b6298b1503e892975350a1d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f8a9e7e65653655d215f36e60903426" id="r_a8f8a9e7e65653655d215f36e60903426"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426">shutdown</a> () override</td></tr>
+<tr class="memdesc:a8f8a9e7e65653655d215f36e60903426"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal all waiting threads to wake up and return.  <br /></td></tr>
+<tr class="separator:a8f8a9e7e65653655d215f36e60903426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06ef41db026b53a793dbbd88d1b90e23" id="r_a06ef41db026b53a793dbbd88d1b90e23"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a06ef41db026b53a793dbbd88d1b90e23">enterInflightGuardFnc</a> () -&gt; uint64_t override</td></tr>
 <tr class="separator:a06ef41db026b53a793dbbd88d1b90e23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a963df5c8bfbbcca508972626967b42f5" id="r_a963df5c8bfbbcca508972626967b42f5"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a963df5c8bfbbcca508972626967b42f5">isInflightGuardClosed</a> () -&gt; bool override</td></tr>
@@ -196,6 +196,14 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ae186a99dbfb75edb26c410972af428a4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4">push</a> (T &amp;&amp;item) final</td></tr>
 <tr class="memdesc:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a></td></tr>
+<tr class="memitem:a4395574eb5e1fe128a828a870403eea8 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a4395574eb5e1fe128a828a870403eea8"><td class="memItemLeft" align="right" valign="top">
+virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; bool</td></tr>
+<tr class="separator:a4395574eb5e1fe128a828a870403eea8 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a></td></tr>
+<tr class="memitem:ab41c841b0d43546f8f02db60c7f0468b inherit pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ab41c841b0d43546f8f02db60c7f0468b"><td class="memItemLeft" align="right" valign="top">
+std::atomic_flag&#160;</td><td class="memItemRight" valign="bottom"><b>m_shutdown_flag</b> {}</td></tr>
+<tr class="separator:ab41c841b0d43546f8f02db60c7f0468b inherit pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T = std::string&gt;<br />
@@ -557,8 +565,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a376de417b6298b1503e892975350a1d3" name="a376de417b6298b1503e892975350a1d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a376de417b6298b1503e892975350a1d3">&#9670;&#160;</a></span>stop()</h2>
+<a id="a8f8a9e7e65653655d215f36e60903426" name="a8f8a9e7e65653655d215f36e60903426"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f8a9e7e65653655d215f36e60903426">&#9670;&#160;</a></span>shutdown()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -569,7 +577,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">dmn::Dmn_BlockingQueue_Lf</a>&lt; T &gt;::stop </td>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">dmn::Dmn_BlockingQueue_Lf</a>&lt; T &gt;::shutdown </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -585,7 +593,7 @@ template&lt;typename T &gt; </div>
 <p>Signal all waiting threads to wake up and return. </p>
 <p>Sets the m_shutdown flag and gradually exit all inflight threads. </p>
 
-<p>Implements <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
 
 </div>
 </div>

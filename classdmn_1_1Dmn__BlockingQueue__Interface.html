@@ -92,6 +92,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BlockingQueue__Interf
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classdmn_1_1Dmn__BlockingQueue__Interface-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::Dmn_BlockingQueue_Interface&lt; T &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
@@ -148,8 +149,17 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a462dd6649377f4af5e2bafd7662d9154"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d0de17e2f0553038eb8eaa8f2423681" id="r_a1d0de17e2f0553038eb8eaa8f2423681"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a1d0de17e2f0553038eb8eaa8f2423681">pushMove</a> (T &amp;&amp;item)=0</td></tr>
 <tr class="separator:a1d0de17e2f0553038eb8eaa8f2423681"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abcaeee9ac27576da813e4de55f374b51" id="r_abcaeee9ac27576da813e4de55f374b51"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#abcaeee9ac27576da813e4de55f374b51">stop</a> ()=0</td></tr>
-<tr class="separator:abcaeee9ac27576da813e4de55f374b51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc45e58b4e16286061c1a5e7aeb09891" id="r_afc45e58b4e16286061c1a5e7aeb09891"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#afc45e58b4e16286061c1a5e7aeb09891">shutdown</a> ()</td></tr>
+<tr class="separator:afc45e58b4e16286061c1a5e7aeb09891"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4395574eb5e1fe128a828a870403eea8" id="r_a4395574eb5e1fe128a828a870403eea8"><td class="memItemLeft" align="right" valign="top"><a id="a4395574eb5e1fe128a828a870403eea8" name="a4395574eb5e1fe128a828a870403eea8"></a>
+virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; bool</td></tr>
+<tr class="separator:a4395574eb5e1fe128a828a870403eea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:ab41c841b0d43546f8f02db60c7f0468b" id="r_ab41c841b0d43546f8f02db60c7f0468b"><td class="memItemLeft" align="right" valign="top"><a id="ab41c841b0d43546f8f02db60c7f0468b" name="ab41c841b0d43546f8f02db60c7f0468b"></a>
+std::atomic_flag&#160;</td><td class="memItemRight" valign="bottom"><b>m_shutdown_flag</b> {}</td></tr>
+<tr class="separator:ab41c841b0d43546f8f02db60c7f0468b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a82e4e349958fb4584d0303b6d10af3cf" name="a82e4e349958fb4584d0303b6d10af3cf"></a>
@@ -432,8 +442,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="abcaeee9ac27576da813e4de55f374b51" name="abcaeee9ac27576da813e4de55f374b51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abcaeee9ac27576da813e4de55f374b51">&#9670;&#160;</a></span>stop()</h2>
+<a id="afc45e58b4e16286061c1a5e7aeb09891" name="afc45e58b4e16286061c1a5e7aeb09891"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc45e58b4e16286061c1a5e7aeb09891">&#9670;&#160;</a></span>shutdown()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -444,7 +454,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface</a>&lt; T &gt;::stop </td>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface</a>&lt; T &gt;::shutdown </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -452,12 +462,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">pure virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a376de417b6298b1503e892975350a1d3">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a046ee8ca9f5d317e05aa68c188b4600d">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
+<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;</a>.</p>
 
 </div>
 </div>
