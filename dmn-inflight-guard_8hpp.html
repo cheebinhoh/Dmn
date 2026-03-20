@@ -133,14 +133,14 @@ Classes</h2></td></tr>
 <p class="startli">On leaving inflight guard, leaveInflightGuardFnc(epochIndex) decrements the epoch's in-flight count and may reclaim retired nodes when safe.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Key concepts</h2>
 <ul>
 <li>"Inflight guard closed": Implemented by the derived class in isInflightGuardClosed(). It typically maps to a shutdown flag that is set in stop() / destructor. When the inflight guard is closed, enterInflightGate() throws (by design) to prevent new work from starting against a shutting-down object.</li>
 <li>"In-flight": Any operation that successfully acquired a Ticket. The ticket lifetime should cover the entire public API call (or the entire critical section that must not overlap with teardown / reclamation).</li>
 <li>Optional payload (template parameter T): The derived class can return a per-call value from enterInflightGuardFnc() that is stored inside the ticket and later passed to leaveInflightGuardFnc(). Examples include an epoch index, hazard slot, or other per-operation bookkeeping token. If you don't need a payload, use the default std::monostate.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Threading / memory-order notes</h2>
 <ul>
 <li>m_inflight_count is incremented when a ticket is constructed and decremented when it is destructed. waitForEmptyInflight() uses atomic::wait/notify_all to efficiently sleep until the count reaches zero.</li>
@@ -150,14 +150,14 @@ Threading / memory-order notes</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md10"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Exception / cancellation notes</h2>
 <ul>
 <li>enterInflightGate() may throw std::runtime_error if the inflight guard is closed.</li>
 <li>If enterInflightGuardFnc() throws, the ticket constructor rolls back the in-flight count and rethrows.</li>
 <li>Ticket::~Ticket() is noexcept and swallows exceptions thrown by leaveInflightGuardFnc() to keep teardown safe.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Usage guidelines</h2>
 <ul>
 <li>Derived classes should:<ul>

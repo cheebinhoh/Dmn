@@ -137,7 +137,7 @@ const char *const&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kDM
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DMESG publisher/subscriber wrapper using Protobuf messages. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Overview</h2>
 <p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code>dmn::DMesgPb</code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
 <p>Design pattern Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control handler lifetime. Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.</p>

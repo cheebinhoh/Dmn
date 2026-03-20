@@ -2,11 +2,10 @@ var hierarchy =
 [
     [ "dmn::Dmn_Runtime_Task::Awaiter", "structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html", null ],
     [ "dmn::Dmn_Async_Handle", "classdmn_1_1Dmn__Async__Handle.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< T >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", [
+    [ "dmn::Dmn_BlockingQueue_Interface< Derived, T >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", [
       [ "dmn::Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue.html", [
         [ "dmn::Dmn_Pipe< std::shared_ptr< Dmn_Async_Handle >, Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > > >", "classdmn_1_1Dmn__Pipe.html", null ]
       ] ],
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
       [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", [
         [ "dmn::Dmn_Pipe< T, QueueType >", "classdmn_1_1Dmn__Pipe.html", [
@@ -24,9 +23,13 @@ var hierarchy =
       ] ],
       [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ]
     ] ],
-    [ "dmn::Dmn_BlockingQueue_Interface< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
+    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >, dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
+    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< std::shared_ptr< Dmn_Async_Handle > >, std::shared_ptr< Dmn_Async_Handle > >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
+    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
+    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< T >, T >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", [
+      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ]
+    ] ],
+    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue_Lf< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
     [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [

@@ -129,13 +129,13 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Thread-safe FIFO blocking queue for passing items between threads. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md5"></a>
 Overview</h2>
 <p><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">Dmn_BlockingQueue&lt;T&gt;</a> is a thread-safe FIFO queue implementation intended for use by producer and consumer threads. Key behavioral properties:</p><ul>
 <li>push operations are non-blocking (they will not wait for consumers).</li>
 <li>pop operations may block waiting for data (either indefinitely or with a timeout, depending on the API used).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md4"></a>
+<h2><a class="anchor" id="autotoc_md6"></a>
 Synchronization and semantics</h2>
 <ul>
 <li>A mutex (m_mutex) protects the internal std::deque&lt;T&gt; m_queue and associated counters (m_push_count, m_pop_count).</li>
@@ -150,7 +150,7 @@ Synchronization and semantics</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md5"></a>
+<h2><a class="anchor" id="autotoc_md7"></a>
 Blocking and timeout semantics</h2>
 <ul>
 <li>pop(): Blocks until at least one item is available, then returns that item.</li>
@@ -171,7 +171,7 @@ Blocking and timeout semantics</h2>
 <p class="startli">Note: The timeout is interpreted as a maximum time to wait for the full <code>count</code> items (measured from the first blocking wait inside the call). A zero timeout value means "wait forever".</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md6"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Implementation notes</h2>
 <ul>
 <li>The queue uses an unbounded std::deque&lt;T&gt;. There is no programmatic limit beyond available memory and the semantics of the stored type T.</li>

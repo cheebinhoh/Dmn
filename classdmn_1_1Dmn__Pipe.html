@@ -102,18 +102,18 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
  <div class="center">
   <img src="classdmn_1_1Dmn__Pipe.png" usemap="#dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" alt=""/>
   <map id="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" name="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map">
-<area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="151,56,444,80"/>
-<area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="454,56,747,80"/>
-<area href="classdmn_1_1Dmn__Proc.html" alt="dmn::Dmn_Proc" shape="rect" coords="757,56,1050,80"/>
-<area href="classdmn_1_1Dmn__BlockingQueue__Interface.html" alt="dmn::Dmn_BlockingQueue_Interface&lt; T &gt;" shape="rect" coords="0,0,293,24"/>
-<area href="classdmn_1_1Dmn__Inflight__Guard.html" alt="dmn::Dmn_Inflight_Guard&lt; T &gt;" shape="rect" coords="303,0,596,24"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="303,168,596,192"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="606,168,899,192"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="303,224,596,248"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="606,224,899,248"/>
-<area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="909,224,1202,248"/>
-<area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="303,280,596,304"/>
-<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="303,336,596,360"/>
+<area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="253,56,750,80"/>
+<area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="760,56,1257,80"/>
+<area href="classdmn_1_1Dmn__Proc.html" alt="dmn::Dmn_Proc" shape="rect" coords="1267,56,1764,80"/>
+<area href="classdmn_1_1Dmn__BlockingQueue__Interface.html" alt="dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;" shape="rect" coords="0,0,497,24"/>
+<area href="classdmn_1_1Dmn__Inflight__Guard.html" alt="dmn::Dmn_Inflight_Guard&lt; T &gt;" shape="rect" coords="507,0,1004,24"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="507,168,1004,192"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="1014,168,1511,192"/>
+<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="507,224,1004,248"/>
+<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="1014,224,1511,248"/>
+<area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="1521,224,2018,248"/>
+<area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="507,280,1004,304"/>
+<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="507,336,1004,360"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -171,22 +171,37 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a458b3e2dc07635412d7675a5e2af6b72 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a458b3e2dc07635412d7675a5e2af6b72"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a458b3e2dc07635412d7675a5e2af6b72">pop</a> (size_t count, long timeout=0) -&gt; std::vector&lt; T &gt; override</td></tr>
 <tr class="memdesc:a458b3e2dc07635412d7675a5e2af6b72 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pop multiple items from the queue with optional timeout semantics.  <br /></td></tr>
 <tr class="separator:a458b3e2dc07635412d7675a5e2af6b72 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a></td></tr>
-<tr class="memitem:a82e4e349958fb4584d0303b6d10af3cf inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a82e4e349958fb4584d0303b6d10af3cf"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a82e4e349958fb4584d0303b6d10af3cf">pop</a> () -&gt; T final</td></tr>
-<tr class="memdesc:a82e4e349958fb4584d0303b6d10af3cf inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return the front item, waiting until an item is available.  <br /></td></tr>
-<tr class="separator:a82e4e349958fb4584d0303b6d10af3cf inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a850d46e7aab6bd15cdc057389e20036f inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a850d46e7aab6bd15cdc057389e20036f"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a850d46e7aab6bd15cdc057389e20036f">pop</a> (std::size_t count, long timeout=0) -&gt; std::vector&lt; T &gt;=0</td></tr>
-<tr class="memdesc:a850d46e7aab6bd15cdc057389e20036f inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return up to <code>count</code> items, optionally waiting.  <br /></td></tr>
-<tr class="separator:a850d46e7aab6bd15cdc057389e20036f inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66bfe0b3d49808c6990b96df537bfc13 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a66bfe0b3d49808c6990b96df537bfc13"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a66bfe0b3d49808c6990b96df537bfc13">popNoWait</a> () -&gt; std::optional&lt; T &gt; final</td></tr>
-<tr class="memdesc:a66bfe0b3d49808c6990b96df537bfc13 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to pop a single item without waiting.  <br /></td></tr>
-<tr class="separator:a66bfe0b3d49808c6990b96df537bfc13 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c90f3e805be7b106dd36de0cdb7b040 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a4c90f3e805be7b106dd36de0cdb7b040"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a4c90f3e805be7b106dd36de0cdb7b040">push</a> (const T &amp;item) final</td></tr>
-<tr class="memdesc:a4c90f3e805be7b106dd36de0cdb7b040 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy and enqueue the const lvalue item into the tail of the queue.  <br /></td></tr>
-<tr class="separator:a4c90f3e805be7b106dd36de0cdb7b040 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ae186a99dbfb75edb26c410972af428a4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ae186a99dbfb75edb26c410972af428a4">push</a> (T &amp;&amp;item) final</td></tr>
-<tr class="memdesc:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
-<tr class="separator:ae186a99dbfb75edb26c410972af428a4 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f53e58973a337776d3ddc1bc4075f02 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a4f53e58973a337776d3ddc1bc4075f02"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a4f53e58973a337776d3ddc1bc4075f02">popOptional</a> (bool wait) -&gt; std::optional&lt; T &gt; override</td></tr>
+<tr class="memdesc:a4f53e58973a337776d3ddc1bc4075f02 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal helper that optionally blocks waiting for an item.  <br /></td></tr>
+<tr class="separator:a4f53e58973a337776d3ddc1bc4075f02 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6b04479c55b8ce50838d360e1a141a7 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_ad6b04479c55b8ce50838d360e1a141a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#ad6b04479c55b8ce50838d360e1a141a7">pushCopy</a> (const T &amp;item) override</td></tr>
+<tr class="memdesc:ad6b04479c55b8ce50838d360e1a141a7 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper call to pushImpl to copy and enqueue the item into the queue.  <br /></td></tr>
+<tr class="separator:ad6b04479c55b8ce50838d360e1a141a7 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a4312f0cfe2ca863278dfdb9bc1b5ffe2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a4312f0cfe2ca863278dfdb9bc1b5ffe2">pushMove</a> (T &amp;&amp;item) override</td></tr>
+<tr class="memdesc:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper call to pushImpl to move and enqueue the item into the queue.  <br /></td></tr>
+<tr class="separator:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a28981f2f7333b8045ccd4c480035bc inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a6a28981f2f7333b8045ccd4c480035bc"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">isInflightGuardClosed</a> () -&gt; bool override</td></tr>
+<tr class="memdesc:a6a28981f2f7333b8045ccd4c480035bc inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true if the queue is stop (m_shutdown_flag is true), or false otherwise. The method is delegation of <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> module.  <br /></td></tr>
+<tr class="separator:a6a28981f2f7333b8045ccd4c480035bc inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;</a></td></tr>
+<tr class="memitem:a5f196f44cfa7edcadb95754e66f77a4e inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a5f196f44cfa7edcadb95754e66f77a4e"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a5f196f44cfa7edcadb95754e66f77a4e">pop</a> () -&gt; T final</td></tr>
+<tr class="memdesc:a5f196f44cfa7edcadb95754e66f77a4e inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return the front item, waiting until an item is available.  <br /></td></tr>
+<tr class="separator:a5f196f44cfa7edcadb95754e66f77a4e inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a253aaca0e375fdd1d86287e57d75034c inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a253aaca0e375fdd1d86287e57d75034c"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a253aaca0e375fdd1d86287e57d75034c">pop</a> (std::size_t count, long timeout=0) -&gt; std::vector&lt; T &gt;=0</td></tr>
+<tr class="memdesc:a253aaca0e375fdd1d86287e57d75034c inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return up to <code>count</code> items, optionally waiting.  <br /></td></tr>
+<tr class="separator:a253aaca0e375fdd1d86287e57d75034c inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b7ae764e732e089dcd84f6e9dc4cca1 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a8b7ae764e732e089dcd84f6e9dc4cca1"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a8b7ae764e732e089dcd84f6e9dc4cca1">popNoWait</a> () -&gt; std::optional&lt; T &gt; final</td></tr>
+<tr class="memdesc:a8b7ae764e732e089dcd84f6e9dc4cca1 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to pop a single item without waiting.  <br /></td></tr>
+<tr class="separator:a8b7ae764e732e089dcd84f6e9dc4cca1 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97ef792d27fe9c50dc525338ac942315 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a97ef792d27fe9c50dc525338ac942315"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a97ef792d27fe9c50dc525338ac942315">push</a> (const T &amp;item) final</td></tr>
+<tr class="memdesc:a97ef792d27fe9c50dc525338ac942315 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy and enqueue the const lvalue item into the tail of the queue.  <br /></td></tr>
+<tr class="separator:a97ef792d27fe9c50dc525338ac942315 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a1c46d07d334212431ca96853c7729b32"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a1c46d07d334212431ca96853c7729b32">push</a> (T &amp;&amp;item) final</td></tr>
+<tr class="memdesc:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
+<tr class="separator:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa95f290d3187f31c76f9bcbfde5c93ab inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memItemLeft" align="right" valign="top">
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; bool</td></tr>
+<tr class="separator:aa95f290d3187f31c76f9bcbfde5c93ab inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Proc"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Proc')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
 <tr class="memitem:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view name, const Dmn_Proc::Task &amp;fnc={})</td></tr>
 <tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
@@ -215,24 +230,12 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a8a1f81ce619c3aeb1ec73a82f682be76" id="r_a8a1f81ce619c3aeb1ec73a82f682be76"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76">isShutdown</a> () -&gt; bool override</td></tr>
-<tr class="separator:a8a1f81ce619c3aeb1ec73a82f682be76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a519b75b23538f20542b169a757485094" id="r_a519b75b23538f20542b169a757485094"><td class="memItemLeft" align="right" valign="top"><a id="a519b75b23538f20542b169a757485094" name="a519b75b23538f20542b169a757485094"></a>
+virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; bool</td></tr>
+<tr class="separator:a519b75b23538f20542b169a757485094"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f1a36063050f3ed79f7c6799b41d966" id="r_a6f1a36063050f3ed79f7c6799b41d966"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">shutdown</a> () override</td></tr>
 <tr class="memdesc:a6f1a36063050f3ed79f7c6799b41d966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal all waiting threads to wake up and return.  <br /></td></tr>
 <tr class="separator:a6f1a36063050f3ed79f7c6799b41d966"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_classdmn_1_1Dmn__BlockingQueue"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__BlockingQueue')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; T &gt;</a></td></tr>
-<tr class="memitem:a4f53e58973a337776d3ddc1bc4075f02 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a4f53e58973a337776d3ddc1bc4075f02"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a4f53e58973a337776d3ddc1bc4075f02">popOptional</a> (bool wait) -&gt; std::optional&lt; T &gt; override</td></tr>
-<tr class="memdesc:a4f53e58973a337776d3ddc1bc4075f02 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal helper that optionally blocks waiting for an item.  <br /></td></tr>
-<tr class="separator:a4f53e58973a337776d3ddc1bc4075f02 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad6b04479c55b8ce50838d360e1a141a7 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_ad6b04479c55b8ce50838d360e1a141a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#ad6b04479c55b8ce50838d360e1a141a7">pushCopy</a> (const T &amp;item) override</td></tr>
-<tr class="memdesc:ad6b04479c55b8ce50838d360e1a141a7 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper call to pushImpl to copy and enqueue the item into the queue.  <br /></td></tr>
-<tr class="separator:ad6b04479c55b8ce50838d360e1a141a7 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a4312f0cfe2ca863278dfdb9bc1b5ffe2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a4312f0cfe2ca863278dfdb9bc1b5ffe2">pushMove</a> (T &amp;&amp;item) override</td></tr>
-<tr class="memdesc:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper call to pushImpl to move and enqueue the item into the queue.  <br /></td></tr>
-<tr class="separator:a4312f0cfe2ca863278dfdb9bc1b5ffe2 inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a28981f2f7333b8045ccd4c480035bc inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a6a28981f2f7333b8045ccd4c480035bc"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6a28981f2f7333b8045ccd4c480035bc">isInflightGuardClosed</a> () -&gt; bool override</td></tr>
-<tr class="memdesc:a6a28981f2f7333b8045ccd4c480035bc inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true if the queue is stop (m_shutdown_flag is true), or false otherwise. The method is delegation of <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> module.  <br /></td></tr>
-<tr class="separator:a6a28981f2f7333b8045ccd4c480035bc inherit pro_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__Proc"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__Proc')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
 <tr class="memitem:a33feebb676ecff239fd5ddba024f5e32 inherit pro_methods_classdmn_1_1Dmn__Proc" id="r_a33feebb676ecff239fd5ddba024f5e32"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32">getState</a> () const -&gt; Dmn_Proc::State</td></tr>
 <tr class="memdesc:a33feebb676ecff239fd5ddba024f5e32 inherit pro_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the current state of the process.  <br /></td></tr>
@@ -263,41 +266,8 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::func
 <tr class="memitem:a8be7a6ef05b4fa9aa6d232dc5c6c669f inherit pub_static_methods_classdmn_1_1Dmn__Proc" id="r_a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">testcancel</a> ()</td></tr>
 <tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f inherit pub_static_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests if the current thread should be cancelled.  <br /></td></tr>
 <tr class="separator:a8be7a6ef05b4fa9aa6d232dc5c6c669f inherit pub_static_methods_classdmn_1_1Dmn__Proc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a></td></tr>
-<tr class="memitem:ab41c841b0d43546f8f02db60c7f0468b inherit pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_ab41c841b0d43546f8f02db60c7f0468b"><td class="memItemLeft" align="right" valign="top">
-std::atomic_flag&#160;</td><td class="memItemRight" valign="bottom"><b>m_shutdown_flag</b> {}</td></tr>
-<tr class="separator:ab41c841b0d43546f8f02db60c7f0468b inherit pro_attribs_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a8a1f81ce619c3aeb1ec73a82f682be76" name="a8a1f81ce619c3aeb1ec73a82f682be76"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8a1f81ce619c3aeb1ec73a82f682be76">&#9670;&#160;</a></span>isShutdown()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T , typename QueueType  = Dmn_BlockingQueue&lt;T&gt;&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; T, QueueType &gt;::isShutdown </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> -&gt; bool</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; T &gt;</a>.</p>
-
-</div>
-</div>
 <a id="a0d38ac4b9523187ef9b492996b21d816" name="a0d38ac4b9523187ef9b492996b21d816"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d38ac4b9523187ef9b492996b21d816">&#9670;&#160;</a></span>read() <span class="overload">[1/2]</span></h2>
 
@@ -467,7 +437,7 @@ template&lt;typename T , typename QueueType  = Dmn_BlockingQueue&lt;T&gt;&gt; </
 </div><div class="memdoc">
 
 <p>Signal all waiting threads to wake up and return. </p>
-<p>Sets the m_shutdown_flag and notifies all condition variables so that threads blocked in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a82e4e349958fb4584d0303b6d10af3cf" title="Remove and return the front item, waiting until an item is available.">pop()</a>, pop(count, timeout), or <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a> can observe the shutdown flag and return cleanly. This method is called by <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>'s destructor via the protected interface. </p>
+<p>Sets the m_shutdown_flag and notifies all condition variables so that threads blocked in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a5f196f44cfa7edcadb95754e66f77a4e" title="Remove and return the front item, waiting until an item is available.">pop()</a>, pop(count, timeout), or <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a> can observe the shutdown flag and return cleanly. This method is called by <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>'s destructor via the protected interface. </p>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
 

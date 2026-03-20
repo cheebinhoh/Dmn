@@ -262,137 +262,139 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp_source.html',''); initR
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>    <a class="code hl_class" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> *m_owner{};</div>
 <div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span>    std::shared_ptr&lt;Dmn_DMesgHandlerSub&gt; m_sub{};</div>
 <div class="line"><a id="l00492" name="l00492"></a><span class="lineno">  492</span> </div>
-<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>    std::unique_ptr&lt;Dmn_BlockingQueue_Interface&lt;dmn::DMesgPb&gt;&gt; m_buffers{};</div>
-<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>    dmn::DMesgPb m_last_dmesgpb_sys{};</div>
-<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>    std::unordered_map&lt;std::string, uint64_t&gt; m_topic_running_counter{};</div>
-<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span> </div>
-<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>    ConflictCallbackTask m_conflict_callback_fn{};</div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>    std::set&lt;std::string&gt; m_topic_in_conflict{};</div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span> </div>
-<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>    <span class="comment">// Set true after the handler has received the initial playback of</span></div>
-<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>    <span class="comment">// last-known messages for each topic.</span></div>
-<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>    std::atomic_flag m_after_initial_playback{};</div>
-<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>  }; <span class="comment">// class Dmn_DMesgHandler</span></div>
+<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>    std::unique_ptr&lt;Dmn_BlockingQueue_Interface&lt;Dmn_BlockingQueue&lt;dmn::DMesgPb&gt;,</div>
+<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>                                                dmn::DMesgPb&gt;&gt;</div>
+<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>        m_buffers{};</div>
+<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>    dmn::DMesgPb m_last_dmesgpb_sys{};</div>
+<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>    std::unordered_map&lt;std::string, uint64_t&gt; m_topic_running_counter{};</div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>    ConflictCallbackTask m_conflict_callback_fn{};</div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>    std::set&lt;std::string&gt; m_topic_in_conflict{};</div>
+<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span> </div>
+<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>    <span class="comment">// Set true after the handler has received the initial playback of</span></div>
+<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>    <span class="comment">// last-known messages for each topic.</span></div>
+<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>    std::atomic_flag m_after_initial_playback{};</div>
+<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span>  }; <span class="comment">// class Dmn_DMesgHandler</span></div>
 </div>
-<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span> </div>
-<div class="foldopen" id="foldopen00516" data-start="{" data-end="};">
-<div class="line"><a id="l00516" name="l00516"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">  516</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a> {</div>
-<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>    <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a>;</div>
-<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span> </div>
-<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>  <span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00526" data-start="{" data-end="}">
-<div class="line"><a id="l00526" name="l00526"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">  526</a></span>    std::shared_ptr&lt;Dmn_DMesgHandler&gt; <a class="code hl_function" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">operator-&gt;</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>      <span class="keyword">auto</span> handler = m_handler.lock();</div>
-<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>      <span class="keywordflow">if</span> (!handler) {</div>
-<div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;handler has been closed&quot;</span>);</div>
-<div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span>      }</div>
-<div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>      <span class="keywordflow">return</span> handler;</div>
-<div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span>    }</div>
+<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span> </div>
+<div class="foldopen" id="foldopen00518" data-start="{" data-end="};">
+<div class="line"><a id="l00518" name="l00518"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">  518</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a> {</div>
+<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>    <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a>;</div>
+<div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span> </div>
+<div class="line"><a id="l00521" name="l00521"></a><span class="lineno">  521</span>  <span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00528" data-start="{" data-end="}">
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">  528</a></span>    std::shared_ptr&lt;Dmn_DMesgHandler&gt; <a class="code hl_function" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">operator-&gt;</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>      <span class="keyword">auto</span> handler = m_handler.lock();</div>
+<div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span>      <span class="keywordflow">if</span> (!handler) {</div>
+<div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;handler has been closed&quot;</span>);</div>
+<div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span>      }</div>
+<div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span>      <span class="keywordflow">return</span> handler;</div>
+<div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span>    }</div>
 </div>
-<div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span> </div>
-<div class="line"><a id="l00540" name="l00540"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#affdbec87740aaf04a3fb56fdae3a36fd">  540</a></span>    <span class="keyword">explicit</span> <span class="keyword">operator</span> bool() const noexcept { <span class="keywordflow">return</span> !m_handler.expired(); }</div>
-<div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span> </div>
-<div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span>    <span class="keywordtype">void</span> reset() { m_handler.reset(); }</div>
-<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>    std::weak_ptr&lt;Dmn_DMesgHandler&gt; m_handler{};</div>
-<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>  };</div>
+<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span> </div>
+<div class="line"><a id="l00542" name="l00542"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#affdbec87740aaf04a3fb56fdae3a36fd">  542</a></span>    <span class="keyword">explicit</span> <span class="keyword">operator</span> bool() const noexcept { <span class="keywordflow">return</span> !m_handler.expired(); }</div>
+<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span> </div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>    <span class="keywordtype">void</span> reset() { m_handler.reset(); }</div>
+<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span>    std::weak_ptr&lt;Dmn_DMesgHandler&gt; m_handler{};</div>
+<div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>  };</div>
 </div>
-<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span> </div>
-<div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>  <span class="keyword">using </span>HandlerType = Dmn_DMesgHandlerProxy;</div>
 <div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span> </div>
-<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>  <span class="keyword">explicit</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">Dmn_DMesg</a>(std::string_view name);</div>
-<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>  <span class="keyword">virtual</span> ~Dmn_DMesg() noexcept;</div>
-<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span> </div>
-<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>  Dmn_DMesg(const Dmn_DMesg &amp;obj) = delete;</div>
-<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>  Dmn_DMesg &amp;operator=(const Dmn_DMesg &amp;obj) = delete;</div>
-<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>  Dmn_DMesg(Dmn_DMesg &amp;&amp;obj) = delete;</div>
-<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>  Dmn_DMesg &amp;operator=(Dmn_DMesg &amp;&amp;obj) = delete;</div>
-<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span> </div>
-<div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span>  template &lt;class... U&gt; auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">openHandler</a>(U &amp;&amp;...arg) -&gt; HandlerType;</div>
-<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span> </div>
-<div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7">closeHandler</a>(HandlerType &amp;handlerToClose);</div>
-<div class="line"><a id="l00582" name="l00582"></a><span class="lineno">  582</span> </div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>  auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8">getTopicLastMessage</a>(std::string_view topic)</div>
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>      -&gt; std::optional&lt;dmn::DMesgPb&gt;;</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span> </div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">resetConflictStateWithLastTopicMessage</a>(std::string_view topic);</div>
-<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span> </div>
-<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>protected:</div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  using Dmn_Pub::<a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a>;</div>
-<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span> </div>
-<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a>(const dmn::DMesgPb &amp;dmesgpb_sys);</div>
-<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span> </div>
-<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9">publishInternal</a>(const dmn::DMesgPb &amp;dmesgPb) override;</div>
-<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span> </div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>  virtual auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">getLastTopicCacheInternal</a>()</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>      -&gt; std::unordered_map&lt;std::<span class="keywordtype">string</span>, dmn::DMesgPb&gt; &amp;;</div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span> </div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">resetHandlerConflictState</a>(const Dmn_DMesgHandler *handler_ptr,</div>
-<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>                                 std::string_view = &quot;&quot;);</div>
-<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span> </div>
-<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>private:</div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>  <span class="keywordtype">void</span> playbackLastTopicDMesgPbInternal();</div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span> </div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>  <span class="keywordtype">void</span> resetConflictStateWithLastTopicMessageInternal(std::string_view topic);</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span> </div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>  <span class="keywordtype">void</span> resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr,</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>                                         std::string_view = &quot;&quot;);</div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span> </div>
-<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>  std::<span class="keywordtype">string</span> m_name{};</div>
-<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span> </div>
-<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>  std::vector&lt;std::shared_ptr&lt;Dmn_DMesgHandler&gt;&gt; m_handlers{};</div>
-<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>  std::unordered_map&lt;std::string, uint64_t&gt; m_topic_running_counter{};</div>
-<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>  std::unordered_map&lt;std::string, dmn::DMesgPb&gt; m_topic_last_dmesgpb{};</div>
-<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>}; <span class="comment">// class Dmn_DMesg</span></div>
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>  <span class="keyword">using </span>HandlerType = Dmn_DMesgHandlerProxy;</div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span> </div>
+<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>  <span class="keyword">explicit</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">Dmn_DMesg</a>(std::string_view name);</div>
+<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>  <span class="keyword">virtual</span> ~Dmn_DMesg() noexcept;</div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span> </div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>  Dmn_DMesg(const Dmn_DMesg &amp;obj) = delete;</div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>  Dmn_DMesg &amp;operator=(const Dmn_DMesg &amp;obj) = delete;</div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>  Dmn_DMesg(Dmn_DMesg &amp;&amp;obj) = delete;</div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>  Dmn_DMesg &amp;operator=(Dmn_DMesg &amp;&amp;obj) = delete;</div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span> </div>
+<div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>  template &lt;class... U&gt; auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">openHandler</a>(U &amp;&amp;...arg) -&gt; HandlerType;</div>
+<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span> </div>
+<div class="line"><a id="l00583" name="l00583"></a><span class="lineno">  583</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7">closeHandler</a>(HandlerType &amp;handlerToClose);</div>
+<div class="line"><a id="l00584" name="l00584"></a><span class="lineno">  584</span> </div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>  auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8">getTopicLastMessage</a>(std::string_view topic)</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>      -&gt; std::optional&lt;dmn::DMesgPb&gt;;</div>
+<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span> </div>
+<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">resetConflictStateWithLastTopicMessage</a>(std::string_view topic);</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span> </div>
+<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>protected:</div>
+<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>  using Dmn_Pub::<a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a>;</div>
+<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span> </div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a>(const dmn::DMesgPb &amp;dmesgpb_sys);</div>
+<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span> </div>
+<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9">publishInternal</a>(const dmn::DMesgPb &amp;dmesgPb) override;</div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span> </div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>  virtual auto <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">getLastTopicCacheInternal</a>()</div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>      -&gt; std::unordered_map&lt;std::<span class="keywordtype">string</span>, dmn::DMesgPb&gt; &amp;;</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span> </div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">resetHandlerConflictState</a>(const Dmn_DMesgHandler *handler_ptr,</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>                                 std::string_view = &quot;&quot;);</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span> </div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>private:</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>  <span class="keywordtype">void</span> playbackLastTopicDMesgPbInternal();</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span> </div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>  <span class="keywordtype">void</span> resetConflictStateWithLastTopicMessageInternal(std::string_view topic);</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span> </div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>  <span class="keywordtype">void</span> resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr,</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>                                         std::string_view = &quot;&quot;);</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span> </div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>  std::<span class="keywordtype">string</span> m_name{};</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span> </div>
+<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>  std::vector&lt;std::shared_ptr&lt;Dmn_DMesgHandler&gt;&gt; m_handlers{};</div>
+<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>  std::unordered_map&lt;std::string, uint64_t&gt; m_topic_running_counter{};</div>
+<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>  std::unordered_map&lt;std::string, dmn::DMesgPb&gt; m_topic_last_dmesgpb{};</div>
+<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>}; <span class="comment">// class Dmn_DMesg</span></div>
 </div>
-<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span> </div>
-<div class="foldopen" id="foldopen00681" data-start="{" data-end="}">
-<div class="line"><a id="l00681" name="l00681"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">  681</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt; <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">Dmn_DMesg::openHandler</a>(U &amp;&amp;...arg) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> {</div>
-<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>  <span class="comment">// This function:</span></div>
-<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>  <span class="comment">//  - constructs a handler</span></div>
-<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>  <span class="comment">//  - registers the handler as a subscriber</span></div>
-<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>  <span class="comment">//  - wires handler&lt;-&gt;subscriber&lt;-&gt;publisher links</span></div>
-<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>  <span class="comment">//  - schedules an async task on the publisher&#39;s singleton async thread to:</span></div>
-<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>  <span class="comment">//      * add the handler to the internal list</span></div>
-<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>  <span class="comment">//      * playback last-known messages per topic</span></div>
-<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>  <span class="comment">//      * mark handler as initialized after playback</span></div>
-<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>  <span class="comment">//</span></div>
-<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>  <span class="comment">// The use of the publisher&#39;s singleton async context keeps most operations</span></div>
-<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>  <span class="comment">// mutex-free for the hot paths (publish/notify).</span></div>
-<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span> </div>
-<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>  <span class="keyword">auto</span> handlerProxy = <a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesg::Dmn_DMesgHandlerProxy</a>();</div>
+<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span> </div>
+<div class="foldopen" id="foldopen00683" data-start="{" data-end="}">
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">  683</a></span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt; <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">Dmn_DMesg::openHandler</a>(U &amp;&amp;...arg) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> {</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>  <span class="comment">// This function:</span></div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>  <span class="comment">//  - constructs a handler</span></div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>  <span class="comment">//  - registers the handler as a subscriber</span></div>
+<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>  <span class="comment">//  - wires handler&lt;-&gt;subscriber&lt;-&gt;publisher links</span></div>
+<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>  <span class="comment">//  - schedules an async task on the publisher&#39;s singleton async thread to:</span></div>
+<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>  <span class="comment">//      * add the handler to the internal list</span></div>
+<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>  <span class="comment">//      * playback last-known messages per topic</span></div>
+<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>  <span class="comment">//      * mark handler as initialized after playback</span></div>
+<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>  <span class="comment">//</span></div>
+<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>  <span class="comment">// The use of the publisher&#39;s singleton async context keeps most operations</span></div>
+<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>  <span class="comment">// mutex-free for the hot paths (publish/notify).</span></div>
 <div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span> </div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>  std::shared_ptr&lt;Dmn_DMesg::Dmn_DMesgHandler&gt; handler =</div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>      std::make_shared&lt;Dmn_DMesg::Dmn_DMesgHandler&gt;(std::forward&lt;U&gt;(arg)...);</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span> </div>
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>  handlerProxy.m_handler = handler;</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>  <span class="keyword">auto</span> handlerProxy = <a class="code hl_class" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesg::Dmn_DMesgHandlerProxy</a>();</div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span> </div>
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>  std::shared_ptr&lt;Dmn_DMesg::Dmn_DMesgHandler&gt; handler =</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>      std::make_shared&lt;Dmn_DMesg::Dmn_DMesgHandler&gt;(std::forward&lt;U&gt;(arg)...);</div>
 <div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span> </div>
-<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>  <span class="comment">/* The topic filter is executed within the DMesg singleton asynchronous</span></div>
-<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span><span class="comment">   * thread context, but the filter value is maintained per Dmn_DMesgHandler.</span></div>
-<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span><span class="comment">   * This design keeps DMesg itself mutex-free while remaining thread safe.</span></div>
-<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span><span class="comment">   */</span></div>
-<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>  handler-&gt;m_owner = <span class="keyword">this</span>;</div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>  handler-&gt;m_sub =</div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>      this-&gt;registerSubscriber&lt;Dmn_DMesgHandler::Dmn_DMesgHandlerSub&gt;();</div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>  handler-&gt;m_sub-&gt;m_owner = handler.get();</div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span> </div>
-<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>  <span class="keyword">auto</span> waitHandler = this-&gt;addExecTaskWithWait([<span class="keyword">this</span>, &amp;handler]() {</div>
-<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>    this-&gt;m_handlers.push_back(handler);</div>
-<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>    this-&gt;playbackLastTopicDMesgPbInternal();</div>
-<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>    handler-&gt;setAfterInitialPlayback();</div>
-<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>  });</div>
-<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span> </div>
-<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>  waitHandler-&gt;wait();</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>  handlerProxy.m_handler = handler;</div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span> </div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>  <span class="comment">/* The topic filter is executed within the DMesg singleton asynchronous</span></div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span><span class="comment">   * thread context, but the filter value is maintained per Dmn_DMesgHandler.</span></div>
+<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span><span class="comment">   * This design keeps DMesg itself mutex-free while remaining thread safe.</span></div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span><span class="comment">   */</span></div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>  handler-&gt;m_owner = <span class="keyword">this</span>;</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>  handler-&gt;m_sub =</div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>      this-&gt;registerSubscriber&lt;Dmn_DMesgHandler::Dmn_DMesgHandlerSub&gt;();</div>
+<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>  handler-&gt;m_sub-&gt;m_owner = handler.get();</div>
+<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span> </div>
+<div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>  <span class="keyword">auto</span> waitHandler = this-&gt;addExecTaskWithWait([<span class="keyword">this</span>, &amp;handler]() {</div>
+<div class="line"><a id="l00713" name="l00713"></a><span class="lineno">  713</span>    this-&gt;m_handlers.push_back(handler);</div>
+<div class="line"><a id="l00714" name="l00714"></a><span class="lineno">  714</span>    this-&gt;playbackLastTopicDMesgPbInternal();</div>
+<div class="line"><a id="l00715" name="l00715"></a><span class="lineno">  715</span>    handler-&gt;setAfterInitialPlayback();</div>
+<div class="line"><a id="l00716" name="l00716"></a><span class="lineno">  716</span>  });</div>
 <div class="line"><a id="l00717" name="l00717"></a><span class="lineno">  717</span> </div>
-<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>  <span class="keywordflow">return</span> handlerProxy;</div>
-<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span>}</div>
+<div class="line"><a id="l00718" name="l00718"></a><span class="lineno">  718</span>  waitHandler-&gt;wait();</div>
+<div class="line"><a id="l00719" name="l00719"></a><span class="lineno">  719</span> </div>
+<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span>  <span class="keywordflow">return</span> handlerProxy;</div>
+<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>}</div>
 </div>
-<div class="line"><a id="l00720" name="l00720"></a><span class="lineno">  720</span> </div>
-<div class="line"><a id="l00721" name="l00721"></a><span class="lineno">  721</span>} <span class="comment">// namespace dmn</span></div>
 <div class="line"><a id="l00722" name="l00722"></a><span class="lineno">  722</span> </div>
-<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DMESG_HPP_</span></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy_html"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy</a></div><div class="ttdoc">Lightweight proxy to a Dmn_DMesgHandler instance.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:516</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy_html_a78a8e93f4a36e7979d702c2d83c3c342"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy::operator-&gt;</a></div><div class="ttdeci">std::shared_ptr&lt; Dmn_DMesgHandler &gt; operator-&gt;() const</div><div class="ttdoc">Dereference the proxy to access the underlying handler.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:526</div></div>
+<div class="line"><a id="l00723" name="l00723"></a><span class="lineno">  723</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span> </div>
+<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DMESG_HPP_</span></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy_html"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy</a></div><div class="ttdoc">Lightweight proxy to a Dmn_DMesgHandler instance.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:518</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy_html_a78a8e93f4a36e7979d702c2d83c3c342"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy::operator-&gt;</a></div><div class="ttdeci">std::shared_ptr&lt; Dmn_DMesgHandler &gt; operator-&gt;() const</div><div class="ttdoc">Dereference the proxy to access the underlying handler.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:528</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler_html"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></div><div class="ttdoc">Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:169</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler_html_a25821706f53d3714ee33d3456aa52b73"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73">dmn::Dmn_DMesg::Dmn_DMesgHandler::read</a></div><div class="ttdeci">auto read() -&gt; std::optional&lt; dmn::DMesgPb &gt; override</div><div class="ttdoc">Blocking read: return the next available DMesgPb or nullopt if the read fails / on shutdown.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.cpp:296</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler_html_a365d1155662cdc276515fe32e90aa436"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a365d1155662cdc276515fe32e90aa436">dmn::Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict</a></div><div class="ttdeci">auto writeAndCheckConflict(dmn::DMesgPb &amp;&amp;dmesgpb, WriteFlags flags=kDefault) -&gt; bool</div><div class="ttdoc">Publish the message and return true if no conflict, or false otherwise.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.cpp:404</div></div>
@@ -410,7 +412,7 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp_source.html',''); initR
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a18e868bdbc7a2d74542003333e0b0bec"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a18e868bdbc7a2d74542003333e0b0bec">dmn::Dmn_DMesg::kHandlerConfig_NoTopicFilter</a></div><div class="ttdeci">static constexpr std::string_view kHandlerConfig_NoTopicFilter</div><div class="ttdoc">If set to &quot;yes&quot; or &quot;1&quot;, handlers opened with this config will ignore topic filtering when reading: re...</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:148</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a213323e9a00cf6bbefd5b45fc3891225"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">dmn::Dmn_DMesg::publish</a></div><div class="ttdeci">void publish(const T &amp;item, bool block=false)</div><div class="ttdef"><b>Definition</b> dmn-pub-sub.hpp:335</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a34bd45668411eff973892aa865d4fbab"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">dmn::Dmn_DMesg::resetHandlerConflictState</a></div><div class="ttdeci">void resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr, std::string_view=&quot;&quot;)</div><div class="ttdoc">Post an async action that resets a handler's conflict state in the publisher's singleton async thread...</div><div class="ttdef"><b>Definition</b> dmn-dmesg.cpp:774</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a361f1389d565edf75b0e157e255bfc10"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">dmn::Dmn_DMesg::openHandler</a></div><div class="ttdeci">auto openHandler(U &amp;&amp;...arg) -&gt; HandlerType</div><div class="ttdoc">Create, register and return a new Dmn_DMesgHandler.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:681</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a361f1389d565edf75b0e157e255bfc10"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">dmn::Dmn_DMesg::openHandler</a></div><div class="ttdeci">auto openHandler(U &amp;&amp;...arg) -&gt; HandlerType</div><div class="ttdoc">Create, register and return a new Dmn_DMesgHandler.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:683</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a38fd9b978f1f0be6b69199a32af66f95"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">dmn::Dmn_DMesg::AsyncProcessTask</a></div><div class="ttdeci">std::function&lt; void(dmn::DMesgPb)&gt; AsyncProcessTask</div><div class="ttdoc">Callback type invoked asynchronously with a copy of each delivered message.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:119</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a43e3fef6207b48bb8dc34d44fdc7930b"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">dmn::Dmn_DMesg::resetConflictStateWithLastTopicMessage</a></div><div class="ttdeci">void resetConflictStateWithLastTopicMessage(std::string_view topic)</div><div class="ttdoc">Reset conflict state by posting last message of the topic.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.cpp:744</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a5ed3e9088557e198060eefffae720f17"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">dmn::Dmn_DMesg::kHandlerConfig_Default</a></div><div class="ttdeci">static const HandlerConfig kHandlerConfig_Default</div><div class="ttdoc">Default handler configuration values.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:133</div></div>
