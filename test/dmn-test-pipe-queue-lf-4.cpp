@@ -22,20 +22,21 @@ int main(int argc, char *argv[]) {
 
   int cnt{};
   std::atomic_flag shutdown_flag{};
-  auto pipe = std::make_unique<dmn::Dmn_Pipe<int>, dmn::Dmn_BlockingQueue_Lf<int>>(
-      "pipe", [&cnt, &shutdown_flag](int val) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+  auto pipe =
+      std::make_unique<dmn::Dmn_Pipe<int, dmn::Dmn_BlockingQueue_Lf<int>>>(
+          "pipe", [&cnt, &shutdown_flag](int val) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        EXPECT_TRUE(val == cnt);
+            EXPECT_TRUE(val == cnt);
 
-        cnt++;
-        std::cout << "read\n";
+            cnt++;
+            std::cout << "read\n";
 
-        if (5 == cnt) {
-          shutdown_flag.test_and_set(std::memory_order_release);
-          shutdown_flag.notify_all();
-        }
-      });
+            if (5 == cnt) {
+              shutdown_flag.test_and_set(std::memory_order_release);
+              shutdown_flag.notify_all();
+            }
+          });
 
   dmn::Dmn_Proc procToWrite("toWrite", [&pipe]() {
     for (int i = 0; i < 5; i++) {
