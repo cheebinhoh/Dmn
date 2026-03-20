@@ -103,26 +103,33 @@ public:
   virtual void push(T &&item) final;
 
   /**
-   * @brief Wait until the queue becomes empty and return the total number of
-   *        items that have passed through the queue.
-   *
-   * @return The total number of items that have been passed through the queue.
+   * @brief Shutdown the object and flag the m_shutdown flag.
    */
-  virtual auto waitForEmpty() -> std::uint64_t = 0;
-
-  // The following virtual methods are implemented by the subclasses.
-  virtual auto popOptional(bool wait) -> std::optional<T> = 0;
-
-  virtual void pushCopy(const T &item) = 0;
-
-  virtual void pushMove(T &&item) = 0;
-
   virtual void shutdown();
 
-  virtual auto isShutdown() -> bool {
+  // The following virtual methods are implemented by the subclasses and
+  // they form the concrete details for the methods above called by clients.
+  auto isShutdown() -> bool {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
+  virtual auto popOptional(bool wait) -> std::optional<T> {
+    return static_cast<Derived *>(this)->popOptional(wait);
+  }
+
+  virtual void pushCopy(const T &item) {
+    static_cast<Derived *>(this)->pushCopy(item);
+  }
+
+  virtual void pushMove(T &&item) {
+    static_cast<Derived *>(this)->pushMove(std::move(item));
+  }
+
+  virtual auto waitForEmpty() -> std::uint64_t {
+    return static_cast<Derived *>(this)->waitForEmpty();
+  }
+
+private:
   std::atomic_flag m_shutdown_flag{};
 };
 

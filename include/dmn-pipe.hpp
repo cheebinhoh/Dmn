@@ -187,7 +187,7 @@ public:
   auto waitForEmpty() -> uint64_t override;
 
 protected:
-  virtual auto isShutdown() -> bool override {
+  virtual auto isShutdown() -> bool {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
