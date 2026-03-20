@@ -103,12 +103,13 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
-                          private Dmn_Inflight_Guard<> {
+class Dmn_BlockingQueue
+    : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>,
+      private Dmn_Inflight_Guard<> {
 public:
-  using Dmn_BlockingQueue_Interface<T>::isShutdown;
-  using Dmn_BlockingQueue_Interface<T>::pop;
-  using Dmn_BlockingQueue_Interface<T>::push;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::isShutdown;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::pop;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::push;
 
   Dmn_BlockingQueue();
   Dmn_BlockingQueue(std::initializer_list<T> list);
@@ -156,7 +157,6 @@ public:
    */
   virtual auto waitForEmpty() -> uint64_t override;
 
-protected:
   /**
    * @brief Internal helper that optionally blocks waiting for an item.
    *
@@ -292,7 +292,7 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
 }
 
 template <typename T> void Dmn_BlockingQueue<T>::shutdown() {
-  Dmn_BlockingQueue_Interface<T>::shutdown();
+  Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::shutdown();
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();

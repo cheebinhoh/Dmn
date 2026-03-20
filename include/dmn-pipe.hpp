@@ -85,8 +85,9 @@ namespace dmn {
 template <typename T, typename QueueType = Dmn_BlockingQueue<T>>
 class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
   static_assert(
-      std::is_base_of_v<Dmn_BlockingQueue_Interface<T>, QueueType>,
-      "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<T>");
+      std::is_base_of_v<Dmn_BlockingQueue_Interface<QueueType, T>, QueueType>,
+      "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<QueueType, "
+      "T>");
 
   using Task = std::function<void(T &&)>;
 

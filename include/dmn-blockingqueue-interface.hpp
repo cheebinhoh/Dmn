@@ -6,10 +6,17 @@
  * threads.
  *
  * Design pattern
+ * --------------
  * - Proxy    : the blocking queue interface to both dmn-blockingqueue and
  *              dmn-blockingqueue-lf (lock-free).
  * - Bridge   : the blocking queue interface is abstracted from the underlying
  *              implementation (mutex lock or lock-free).
+ *
+ * Static polymorphism
+ * -------------------
+ * We use Curiously Recurring Template Pattern (CRTP) to achieve static
+ * polymorphism that effectively offsetting the runtime overheadof vtable lookup
+ * by moving the function dispatch to compile time.
  *
  * Move and copy behavior
  * ----------------------
@@ -37,7 +44,7 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_BlockingQueue_Interface {
+template <typename Derived, typename T> class Dmn_BlockingQueue_Interface {
 public:
   virtual ~Dmn_BlockingQueue_Interface() = default;
 
@@ -103,7 +110,7 @@ public:
    */
   virtual auto waitForEmpty() -> std::uint64_t = 0;
 
-protected:
+  // The following virtual methods are implemented by the subclasses.
   virtual auto popOptional(bool wait) -> std::optional<T> = 0;
 
   virtual void pushCopy(const T &item) = 0;
@@ -119,8 +126,9 @@ protected:
   std::atomic_flag m_shutdown_flag{};
 };
 
-template <typename T> auto Dmn_BlockingQueue_Interface<T>::pop() -> T {
-  auto data = popOptional(true);
+template <typename Derived, typename T>
+auto Dmn_BlockingQueue_Interface<Derived, T>::pop() -> T {
+  auto data = static_cast<Derived *>(this)->popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
   }
@@ -128,20 +136,23 @@ template <typename T> auto Dmn_BlockingQueue_Interface<T>::pop() -> T {
   return std::move(*data);
 }
 
-template <typename T>
-auto Dmn_BlockingQueue_Interface<T>::popNoWait() -> std::optional<T> {
-  return popOptional(false);
+template <typename Derived, typename T>
+auto Dmn_BlockingQueue_Interface<Derived, T>::popNoWait() -> std::optional<T> {
+  return static_cast<Derived *>(this)->popOptional(false);
 }
 
-template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
-  pushMove(std::move(item));
+template <typename Derived, typename T>
+void Dmn_BlockingQueue_Interface<Derived, T>::push(T &&item) {
+  static_cast<Derived *>(this)->pushMove(std::move(item));
 }
 
-template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {
-  pushCopy(item);
+template <typename Derived, typename T>
+void Dmn_BlockingQueue_Interface<Derived, T>::push(const T &item) {
+  static_cast<Derived *>(this)->pushCopy(item);
 }
 
-template <typename T> void Dmn_BlockingQueue_Interface<T>::shutdown() {
+template <typename Derived, typename T>
+void Dmn_BlockingQueue_Interface<Derived, T>::shutdown() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 }
 
