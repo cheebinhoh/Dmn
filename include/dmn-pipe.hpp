@@ -222,7 +222,15 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
       while (true) {
         Dmn_Proc::yield();
 
-        readAndProcess(fn, count, timeout);
+        try {
+          readAndProcess(fn, count, timeout);
+        } catch (...) {
+          if (isShutdown()) {
+            break;
+          } else {
+            throw;
+          }
+        }
 
         if (isShutdown()) {
           break;
