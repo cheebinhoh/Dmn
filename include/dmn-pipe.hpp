@@ -237,9 +237,9 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
 
 template <typename T, typename QueueType>
 Dmn_Pipe<T, QueueType>::~Dmn_Pipe() noexcept try {
-  // if (!isShutdown()) {
-  //   shutdown();
-  // }
+  if (!isShutdown()) {
+    shutdown();
+  }
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
