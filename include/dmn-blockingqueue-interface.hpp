@@ -27,6 +27,7 @@
 #ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 #define DMN_BLOCKINGQUEUE_INTERFACE_HPP_
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -109,7 +110,13 @@ protected:
 
   virtual void pushMove(T &&item) = 0;
 
-  virtual void stop() = 0;
+  virtual void shutdown();
+
+  virtual auto isShutdown() -> bool {
+    return m_shutdown_flag.test(std::memory_order_acquire);
+  }
+
+  std::atomic_flag m_shutdown_flag{};
 };
 
 template <typename T> auto Dmn_BlockingQueue_Interface<T>::pop() -> T {
@@ -132,6 +139,10 @@ template <typename T> void Dmn_BlockingQueue_Interface<T>::push(T &&item) {
 
 template <typename T> void Dmn_BlockingQueue_Interface<T>::push(const T &item) {
   pushCopy(item);
+}
+
+template <typename T> void Dmn_BlockingQueue_Interface<T>::shutdown() {
+  m_shutdown_flag.test_and_set(std::memory_order_release);
 }
 
 } // namespace dmn

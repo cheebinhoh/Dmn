@@ -106,6 +106,7 @@ template <typename T = std::string>
 class Dmn_BlockingQueue : public Dmn_BlockingQueue_Interface<T>,
                           private Dmn_Inflight_Guard<> {
 public:
+  using Dmn_BlockingQueue_Interface<T>::isShutdown;
   using Dmn_BlockingQueue_Interface<T>::pop;
   using Dmn_BlockingQueue_Interface<T>::push;
 
@@ -190,7 +191,7 @@ protected:
    * This method is called by Dmn_Pipe's destructor via the protected
    * interface.
    */
-  virtual void stop() override;
+  virtual void shutdown() override;
 
   /**
    * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
@@ -212,7 +213,6 @@ private:
       m_not_empty_cond{}; // signalled on push (multi-pop timed wait)
   uint64_t m_push_count{};
   uint64_t m_pop_count{};
-  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_BlockingQueue
 
 template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
@@ -226,7 +226,9 @@ Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
 }
 
 template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
-  stop();
+  if (!isShutdown()) {
+    shutdown();
+  }
 
   // make sure that all api call within the inflight guard exits.
   this->waitForEmptyInflight();
@@ -245,7 +247,7 @@ void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
 
 template <typename T>
 auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
-  return m_shutdown_flag.test(std::memory_order_acquire);
+  return isShutdown();
 }
 
 template <typename T> void Dmn_BlockingQueue<T>::pushCopy(const T &item) {
@@ -289,8 +291,8 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
   DMN_PROC_CLEANUP_POP(0);
 }
 
-template <typename T> void Dmn_BlockingQueue<T>::stop() {
-  m_shutdown_flag.test_and_set(std::memory_order_release);
+template <typename T> void Dmn_BlockingQueue<T>::shutdown() {
+  Dmn_BlockingQueue_Interface<T>::shutdown();
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
@@ -337,7 +339,7 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
             })) {
       // do nothing and we have what we want
     } else if (m_queue.empty()) {
-      return {};
+      // do nothing and fetch zero
     } else {
       // do nothing and fetch whatever we have
     }
@@ -347,18 +349,14 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
     });
   }
 
-  if (this->isInflightGuardClosed()) {
-    return ret;
-  }
-
   // Collect up to 'count' items (moved out).
-  do {
+  while (count > 0 && (!m_queue.empty())) {
     ret.push_back(std::move_if_noexcept(m_queue.front()));
     m_queue.pop_front();
     ++m_pop_count;
 
     count--;
-  } while (count > 0 && (!m_queue.empty()));
+  }
 
   // If queue became empty as a result of this pop, notify waitForEmpty()
   // waiters.

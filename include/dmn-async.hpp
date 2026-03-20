@@ -162,6 +162,7 @@ private:
 
 template <template <class> class QueueType>
 Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
+  BasePipe::shutdown();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;

@@ -47,4 +47,4 @@ jobs:
       - name: Test
         working-directory: ${{github.workspace}}/build
         # Run ctest or your specific binary
-        run: ctest -C ${{env.BUILD_TYPE}} -L dmn
+        run: ctest -C ${{env.BUILD_TYPE}} -L dmn -VV --output-on-failure

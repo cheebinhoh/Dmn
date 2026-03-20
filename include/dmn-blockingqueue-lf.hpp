@@ -55,9 +55,6 @@
 
 namespace dmn {
 
-using Inflight_Guard_Ticket =
-    std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
-
 /**
  * @brief Thread-safe FIFO queue.
  *
@@ -66,6 +63,9 @@ using Inflight_Guard_Ticket =
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
                              private Dmn_Inflight_Guard<uint64_t> {
+  using Inflight_Guard_Ticket =
+      std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
+
   /**
    * @name Epoch-based reclamation (implementation notes)
    *
@@ -145,6 +145,7 @@ class Dmn_BlockingQueue_Lf : public Dmn_BlockingQueue_Interface<T>,
   };
 
 public:
+  using Dmn_BlockingQueue_Interface<T>::isShutdown;
   using Dmn_BlockingQueue_Interface<T>::pop;
   using Dmn_BlockingQueue_Interface<T>::push;
 
@@ -256,7 +257,7 @@ protected:
    *
    * Sets the m_shutdown flag and gradually exit all inflight threads.
    */
-  virtual void stop() override;
+  virtual void shutdown() override;
 
   /**
    * Delegation methods integrate the queue into Dmn_InflightGuard interface.
@@ -335,7 +336,6 @@ private:
   std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
 
   std::atomic<std::uint64_t> m_in_flight_total{0};
-  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_BlockingQueue_Lf
 
 template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
@@ -363,7 +363,9 @@ Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf(std::initializer_list<T> list)
 
 template <typename T>
 Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
-  stop();
+  if (!isShutdown()) {
+    shutdown();
+  }
 
   Node *ptr = m_head.load(std::memory_order_acquire);
   freeNodeList(ptr);
@@ -429,8 +431,7 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
     } else {
       dmn::Dmn_Proc::yield();
     }
-  } while (false == m_shutdown_flag.test(std::memory_order_acquire) &&
-           res.size() < count &&
+  } while ((!isShutdown()) && res.size() < count &&
            (0 == timeout || std::chrono::high_resolution_clock::now() < end));
 
   DMN_PROC_CLEANUP_POP(0);
@@ -624,9 +625,9 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
   } while (true);
 }
 
-template <typename T> void Dmn_BlockingQueue_Lf<T>::stop() {
+template <typename T> void Dmn_BlockingQueue_Lf<T>::shutdown() {
   // 1. set shutdown flag
-  m_shutdown_flag.test_and_set(std::memory_order_release);
+  Dmn_BlockingQueue_Interface<T>::shutdown();
 
   // 2. detach m_tail and mark data as empty.
   //    Release: establishes synchronization with threads that acquire m_tail in
@@ -697,7 +698,7 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::isInflightGuardClosed() -> bool {
-  return m_shutdown_flag.test(std::memory_order_acquire);
+  return isShutdown();
 }
 
 template <typename T>
