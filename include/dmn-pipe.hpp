@@ -186,6 +186,22 @@ public:
    */
   auto waitForEmpty() -> uint64_t override;
 
+protected:
+  virtual auto isShutdown() -> bool override {
+    return m_shutdown_flag.test(std::memory_order_acquire);
+  }
+
+  virtual void shutdown() override {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_shutdown_flag.test_and_set(std::memory_order_release);
+    lock.unlock();
+
+    Dmn_Proc::stopExec();
+    QueueType::shutdown();
+
+    Dmn_Proc::wait();
+  }
+
 private:
   using QueueType::pop;
   using QueueType::popNoWait;
@@ -194,7 +210,7 @@ private:
   std::mutex m_mutex{};
   std::condition_variable m_empty_cond{};
   size_t m_count{};
-  std::atomic<bool> m_shutdown{};
+  std::atomic_flag m_shutdown_flag{};
 }; // class Dmn_Pipe
 
 template <typename T, typename QueueType>
@@ -205,9 +221,10 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
     exec([this, fn, count, timeout]() {
       while (true) {
         Dmn_Proc::yield();
+
         readAndProcess(fn, count, timeout);
 
-        if (m_shutdown.load(std::memory_order_acquire)) {
+        if (isShutdown()) {
           break;
         }
       }
@@ -217,15 +234,9 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
 
 template <typename T, typename QueueType>
 Dmn_Pipe<T, QueueType>::~Dmn_Pipe() noexcept try {
-  // stopExec is not noexcept, so we need to resolve it in destructor
-  std::unique_lock<std::mutex> lock(m_mutex);
-  m_shutdown.store(true, std::memory_order_release);
-  lock.unlock();
-
-  Dmn_Proc::stopExec();
-
-  QueueType::stop();
-  Dmn_Proc::wait();
+  if (!isShutdown()) {
+    shutdown();
+  }
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -295,8 +306,9 @@ auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
 
   Dmn_Proc::testcancel();
 
-  m_empty_cond.wait(lock,
-                    [this, inbound_count] { return m_count >= inbound_count; });
+  m_empty_cond.wait(lock, [this, inbound_count] {
+    return m_count >= inbound_count || isShutdown();
+  });
 
   return inbound_count;
 }
