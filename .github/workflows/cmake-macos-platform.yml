@@ -1,4 +1,4 @@
-name: CMake on macOS
+name: build and run on macOS platform
 
 on:
   schedule:

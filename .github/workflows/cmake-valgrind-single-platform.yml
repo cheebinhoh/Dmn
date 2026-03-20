@@ -1,4 +1,4 @@
-name: CMake with Valgrind on a single platform
+name: build and run with Valgrind on linux platform
 
 on:
   schedule:

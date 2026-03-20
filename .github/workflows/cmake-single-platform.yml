@@ -1,4 +1,4 @@
-name: CMake on linux platform
+name: build and run on linux platform
 
 on:
   schedule:
