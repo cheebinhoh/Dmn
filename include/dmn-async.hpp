@@ -6,20 +6,24 @@
  *        execution of client-provided tasks and provides optional rendezvous
  *        points for callers that need to wait for completion.
  *
- *        Usage summary:
- *        - A client can inherit from Dmn_Async or hold an instance of it.
- *        - The client passes work as a std::function<void()> to Dmn_Async's
- *          write()/addExecTask* APIs. Dmn_Async will schedule the work to be
- *          executed asynchronously, serializing execution and avoiding the
- *          need for explicit mutexes in the client API.
- *        - For callers that need to block until a submitted task finishes,
- *          use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return
- *          a Dmn_Async_Handle object whose wait() method will only return after
- *          the task has completed (and propagate exceptions thrown by the
- *          task).
+ * Design pattern
+ * --------------
+ * Adaptor - it adapts the pipe to support asynchronous task and runtime.
  *
- *        This class is useful for offloading work from fast API paths while
- *        preserving ordering and providing optional synchronization points.
+ * Usage summary
+ * -------------
+ * - A client can inherit from Dmn_Async or hold an instance of it.
+ * - The client passes work as a std::function<void()> to Dmn_Async's
+ *   write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed
+ *   asynchronously, serializing execution and avoiding the need for explicit
+ *   mutexes in the client API.
+ * - For callers that need to block until a submitted task finishes, use
+ *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
+ *   Dmn_Async_Handle object whose wait() method will only return after the task
+ *   has completed (and propagate exceptions thrown by the task).
+ *
+ * This class is useful for offloading work from fast API paths while
+ * preserving ordering and providing optional synchronization points.
  */
 
 #ifndef DMN_ASYNC_HPP_
@@ -85,9 +89,7 @@ private:
 };
 
 template <template <class> class QueueType = Dmn_BlockingQueue>
-class Dmn_Async
-    : public Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
-                      QueueType<std::shared_ptr<Dmn_Async_Handle>>> {
+class Dmn_Async {
 public:
   /**
    * @brief Construct a Dmn_Async helper.
@@ -151,18 +153,54 @@ public:
                            std::function<void()> fnc)
       -> std::shared_ptr<Dmn_Async_Handle>;
 
+  void waitForEmpty();
+
 private:
   using BasePipe = Dmn_Pipe<std::shared_ptr<Dmn_Async_Handle>,
                             QueueType<std::shared_ptr<Dmn_Async_Handle>>>;
 
-  using BasePipe::read;
-  using BasePipe::readAndProcess;
-  using BasePipe::write;
+  std::string m_name{};
+  std::unique_ptr<BasePipe> m_pipe{};
 }; // class Dmn_Async
 
 template <template <class> class QueueType>
+Dmn_Async<QueueType>::Dmn_Async(std::string_view name) : m_name{name} {
+  m_pipe = std::make_unique<BasePipe>(
+      m_name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
+        try {
+          if (task->m_due_in_future > 0) {
+            const long long now =
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    std::chrono::steady_clock::now().time_since_epoch())
+                    .count();
+
+            if (now >= task->m_due_in_future) {
+              if (task->m_fnc) {
+                task->m_fnc();
+              }
+
+              task->m_p.set_value();
+            } else {
+              this->m_pipe->write(task);
+            }
+          } else {
+            if (task->m_fnc) {
+              task->m_fnc();
+            }
+
+            task->m_p.set_value();
+          }
+        } catch (...) {
+          task->m_p.set_exception(std::current_exception());
+        }
+
+        Dmn_Proc::yield();
+      });
+}
+
+template <template <class> class QueueType>
 Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
-  BasePipe::shutdown();
+  m_pipe.reset(); // this will initialize shutdown and destroy process
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
@@ -191,44 +229,10 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
       std::make_shared<Dmn_Async_Handle>(fnc, time_in_future);
   auto task_ret = task_shared_ptr;
 
-  this->write(task_shared_ptr);
+  this->m_pipe->write(task_shared_ptr);
 
   return task_ret;
 }
-
-template <template <class> class QueueType>
-Dmn_Async<QueueType>::Dmn_Async(std::string_view name)
-    : BasePipe{
-          name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
-            try {
-              if (task->m_due_in_future > 0) {
-                const long long now =
-                    std::chrono::duration_cast<std::chrono::nanoseconds>(
-                        std::chrono::steady_clock::now().time_since_epoch())
-                        .count();
-
-                if (now >= task->m_due_in_future) {
-                  if (task->m_fnc) {
-                    task->m_fnc();
-                  }
-
-                  task->m_p.set_value();
-                } else {
-                  this->write(task);
-                }
-              } else {
-                if (task->m_fnc) {
-                  task->m_fnc();
-                }
-
-                task->m_p.set_value();
-              }
-            } catch (...) {
-              task->m_p.set_exception(std::current_exception());
-            }
-
-            Dmn_Proc::yield();
-          }} {}
 
 template <template <class> class QueueType>
 void Dmn_Async<QueueType>::addExecTask(std::function<void()> fnc) {
@@ -241,9 +245,14 @@ auto Dmn_Async<QueueType>::addExecTaskWithWait(std::function<void()> fnc)
   auto task_shared_ptr = std::make_shared<Dmn_Async_Handle>(fnc);
   auto task_ret = task_shared_ptr;
 
-  this->write(task_shared_ptr);
+  this->m_pipe->write(task_shared_ptr);
 
   return task_ret;
+}
+
+template <template <class> class QueueType>
+void Dmn_Async<QueueType>::waitForEmpty() {
+  m_pipe->waitForEmpty();
 }
 
 } // namespace dmn
