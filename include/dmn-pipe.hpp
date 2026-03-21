@@ -6,6 +6,7 @@
  *        background processing.
  *
  * Overview
+ * --------
  * - Dmn_Pipe<T, QueueType> implements a FIFO buffer that:
  *   - allows producers to write without blocking (write operations enqueue
  *     items immediately),
@@ -16,6 +17,7 @@
  *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
+ * --------------------------
  * - push/pop and internal synchronization are handled by QueueType.
  * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
@@ -25,7 +27,9 @@
  *   under the mutex.
  *
  * Read / Write semantics
+ * ----------------------
  * - write(T&) copies `item` into the pipe.
+ * - write(const T&) copies `item` into the pipe.
  * - write(T&&) moves `item` into the pipe; move will be used when the move
  *   constructor is noexcept (via QueueType::push semantics).
  * - read() blocks until the next item is available and returns it wrapped
@@ -83,7 +87,7 @@
 namespace dmn {
 
 template <typename T, typename QueueType = Dmn_BlockingQueue<T>>
-class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
+class Dmn_Pipe : public QueueType, public Dmn_Io<T>, private Dmn_Proc {
   static_assert(
       std::is_base_of_v<Dmn_BlockingQueue_Interface<QueueType, T>, QueueType>,
       "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<QueueType, "
@@ -153,7 +157,7 @@ public:
       -> size_t;
 
   /**
-   * @brief Write (copy) an item into the pipe.
+   * @brief Write (copy) a const lvalue item into the pipe.
    *
    * This call enqueues a copy of `item` into the FIFO. Writing is non-blocking;
    * any blocking behavior is determined by the underlying Dmn_BlockingQueue
@@ -161,7 +165,7 @@ public:
    *
    * @param item The data item to be copied into the pipe
    */
-  void write(T &item) override;
+  void write(const T &item) override;
 
   /**
    * @brief Write (move) an item into the pipe.
@@ -290,13 +294,13 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 }
 
 template <typename T, typename QueueType>
-void Dmn_Pipe<T, QueueType>::write(T &item) {
+void Dmn_Pipe<T, QueueType>::write(const T &item) {
   QueueType::push(item);
 }
 
 template <typename T, typename QueueType>
 void Dmn_Pipe<T, QueueType>::write(T &&item) {
-  QueueType::push(std::move_if_noexcept(item));
+  QueueType::push(std::move(item));
 }
 
 template <typename T, typename QueueType>

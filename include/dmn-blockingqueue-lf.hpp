@@ -64,6 +64,8 @@ template <typename T = std::string>
 class Dmn_BlockingQueue_Lf
     : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>,
       private Dmn_Inflight_Guard<uint64_t> {
+  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>;
+
   using Inflight_Guard_Ticket =
       std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
 
@@ -190,6 +192,13 @@ public:
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown flag and gradually exit all inflight threads.
+   */
+  virtual void shutdown() override;
+
+  /**
    * @brief Busy-wait until the queue becomes empty.
    *
    * @details
@@ -206,6 +215,7 @@ public:
    */
   virtual auto waitForEmpty() -> uint64_t override;
 
+protected:
   /**
    * @brief Wrapper to internal popOptional() that requires inflight guard
    * object.
@@ -251,13 +261,6 @@ public:
    * @param item The item to be pushed into tail of the queue
    */
   template <class U> void pushImpl(U &&item);
-
-  /**
-   * @brief Signal all waiting threads to wake up and return.
-   *
-   * Sets the m_shutdown flag and gradually exit all inflight threads.
-   */
-  virtual void shutdown() override;
 
   /**
    * Delegation methods integrate the queue into Dmn_InflightGuard interface.
@@ -731,6 +734,7 @@ void Dmn_BlockingQueue_Lf<T>::leaveInflightGuardFnc(
     }
   }
 }
+
 } // namespace dmn
 
 #endif // DMN_BLOCKINGQUEUE_LF_HPP_

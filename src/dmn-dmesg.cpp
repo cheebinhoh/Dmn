@@ -337,8 +337,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
   this->write(dmesgpb, false);
 }
 
-/** @brief Copy-write overload: delegates to write(dmesgpb, flags=kDefault). */
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
+void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb) {
   this->write(dmesgpb, false);
 }
 
@@ -376,21 +375,24 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
  * @param dmesgpb Message to publish (copied).
  * @param flags   Bitmask of WriteOptions (kBlock, kForce).
  */
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
+void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb,
                                         WriteFlags flags) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
 
+  auto copiedDmesgpb = dmesgpb;
+
   bool block = flags.test(kBlock);
   if (flags.test(kForce)) {
-    dmesgpb.set_force(true);
+    copiedDmesgpb.set_force(true);
   }
 
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &dmesgpb, block]() -> void {
-        writeDMesgInternal(dmesgpb, false, block);
+      m_sub->addExecTaskWithWait([this, &copiedDmesgpb, block]() -> void {
+        writeDMesgInternal(copiedDmesgpb, false, block);
       });
+
   waitHandler->wait();
 }
 

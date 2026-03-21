@@ -17,9 +17,9 @@
  *    may use timeouts or non-blocking strategies when appropriate, but callers
  *    should rely on std::nullopt to detect end-of-stream.
  *
- *  - write(T &item): Takes an lvalue reference. This overload does not take
- *    ownership of the provided object; implementations SHOULD copy the value
- *    if they need to retain it.
+ *  - write(const T &item): Takes a const lvalue reference. This overload does
+ *    not take ownership of the provided object; implementations SHOULD copy the
+ *    value if they need to retain it.
  *
  *  - write(T &&item): Takes an rvalue reference. Implementations SHOULD move
  *    from the item when possible to avoid unnecessary copies.
@@ -79,14 +79,11 @@ public:
   }
 
   /**
-   * @brief Write (copy) an item to the sink.
-   *
-   * The lvalue overload; implementations SHOULD copy @p item if they
-   * need to retain it beyond the call.
+   * @brief Write (copy) an item to the sink, the const lvalue.
    *
    * @param item The item to write.
    */
-  virtual void write(T &item) = 0;
+  virtual void write(const T &item) = 0;
 
   /**
    * @brief Write (move) an item to the sink.

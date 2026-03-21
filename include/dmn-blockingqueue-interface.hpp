@@ -107,12 +107,23 @@ public:
    */
   virtual void shutdown();
 
-  // The following virtual methods are implemented by the subclasses and
-  // they form the concrete details for the methods above called by clients.
+  /**
+   * @brief Caller blocks for the queue to be empty and returns the number of
+   *        items that have been processed through the queue.
+   *
+   * @return The number of items that have been processed through the queue.
+   */
+  virtual auto waitForEmpty() -> std::uint64_t {
+    return static_cast<Derived *>(this)->waitForEmpty();
+  }
+
+protected:
   auto isShutdown() -> bool {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
+  // The following virtual methods are implemented by the subclasses and
+  // they form the concrete details for the methods called by clients.
   virtual auto popOptional(bool wait) -> std::optional<T> {
     return static_cast<Derived *>(this)->popOptional(wait);
   }
@@ -123,10 +134,6 @@ public:
 
   virtual void pushMove(T &&item) {
     static_cast<Derived *>(this)->pushMove(std::move(item));
-  }
-
-  virtual auto waitForEmpty() -> std::uint64_t {
-    return static_cast<Derived *>(this)->waitForEmpty();
   }
 
 private:

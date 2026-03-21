@@ -346,12 +346,12 @@ public:
     void write(dmn::DMesgPb &&dmesgpb) override;
 
     /**
-     * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue.
+     * @brief Publish the provided const lvalue DMesgPb by copying it into the
+     * publisher queue.
      *
      * @param dmesgpb Message to publish (copied).
      */
-    void write(dmn::DMesgPb &dmesgpb) override;
+    void write(const dmn::DMesgPb &dmesgpb) override;
 
     /**
      * @brief Publish the provided DMesgPb by moving it into the publisher
@@ -371,7 +371,7 @@ public:
      * @param flags Write options: Block waiting for publisher to process the
      *              message, Force to force message without conflict check.
      */
-    void write(dmn::DMesgPb &dmesgpb, WriteFlags flags);
+    void write(const dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the message and return true if no conflict, or false

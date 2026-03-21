@@ -106,6 +106,10 @@ template <typename T = std::string>
 class Dmn_BlockingQueue
     : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>,
       private Dmn_Inflight_Guard<> {
+  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>;
+
+  using Inflight_Guard_Ticket = std::unique_ptr<Dmn_Inflight_Guard<>::Ticket>;
+
 public:
   using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::isShutdown;
   using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::pop;
@@ -146,6 +150,17 @@ public:
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
   /**
+   * @brief Signal all waiting threads to wake up and return.
+   *
+   * Sets the m_shutdown_flag and notifies all condition variables so
+   * that threads blocked in pop(), pop(count, timeout), or
+   * waitForEmpty() can observe the shutdown flag and return cleanly.
+   * This method is called by Dmn_Pipe's destructor via the protected
+   * interface.
+   */
+  virtual void shutdown() override;
+
+  /**
    * @brief Wait until the queue becomes empty and return the total number of
    *        items that have passed through the queue.
    *
@@ -157,6 +172,7 @@ public:
    */
   virtual auto waitForEmpty() -> uint64_t override;
 
+protected:
   /**
    * @brief Internal helper that optionally blocks waiting for an item.
    *
@@ -181,17 +197,6 @@ public:
    * @param item The item to be enqueued.
    */
   void pushMove(T &&item) override;
-
-  /**
-   * @brief Signal all waiting threads to wake up and return.
-   *
-   * Sets the m_shutdown_flag and notifies all condition variables so
-   * that threads blocked in pop(), pop(count, timeout), or
-   * waitForEmpty() can observe the shutdown flag and return cleanly.
-   * This method is called by Dmn_Pipe's destructor via the protected
-   * interface.
-   */
-  virtual void shutdown() override;
 
   /**
    * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
@@ -239,8 +244,7 @@ template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
 
 template <typename T>
 void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
-  auto *ticket_sp =
-      static_cast<std::unique_ptr<Dmn_Inflight_Guard<>::Ticket> *>(arg);
+  auto *ticket_sp = static_cast<Inflight_Guard_Ticket *>(arg);
 
   (*ticket_sp).reset();
 }

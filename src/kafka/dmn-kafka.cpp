@@ -295,11 +295,11 @@ void Dmn_Kafka::shutdown() {
   waitForEmptyInflight();
 }
 
-/** @brief Copy-write overload: delegates to write(item, move=false). */
-void Dmn_Kafka::write(std::string &item) { write(item, false); }
+/** @brief Copy-write overload: delegates to writeCopy(). */
+void Dmn_Kafka::write(const std::string &item) { writeCopy(item); }
 
-/** @brief Move-write overload: delegates to write(item, move=true). */
-void Dmn_Kafka::write(std::string &&item) { write(item, true); }
+/** @brief Move-write overload: delegates to writeMove(). */
+void Dmn_Kafka::write(std::string &&item) { writeCopy(item); }
 
 /**
  * @brief Produce @p item to the configured Kafka topic synchronously.
@@ -309,13 +309,9 @@ void Dmn_Kafka::write(std::string &&item) { write(item, true); }
  * callback clears the flag. Throws on enqueue failure or delivery error.
  *
  * @param item Message payload.
- * @param move Hint indicating whether to prefer move semantics; currently
- *             ignored because librdkafka always copies the payload internally
- *             (RD_KAFKA_MSG_F_COPY). The parameter is retained for API
- *             symmetry with the public write(T&&) overload.
  * @throws std::runtime_error on enqueue or delivery failure.
  */
-void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
+void Dmn_Kafka::writeCopy(const std::string &item) {
   assert(Role::kProducer == m_role);
 
   // this make sure only one thread is accessing the Dmn_Kafka write,
