@@ -379,20 +379,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
  */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
                                         WriteFlags flags) {
-  assert(nullptr != m_owner);
-
-  this->isAfterInitialPlayback();
-
-  bool block = flags.test(kBlock);
-  if (flags.test(kForce)) {
-    dmesgpb.set_force(true);
-  }
-
-  auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &dmesgpb, block]() -> void {
-        writeDMesgInternal(dmesgpb, false, block);
-      });
-  waitHandler->wait();
+  this->write(std::as_const(dmesgpb), flags);
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb,

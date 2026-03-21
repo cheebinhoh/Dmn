@@ -19,7 +19,7 @@
  *
  *  - write(const T &item): Takes a const lvalue reference. This overload does
  *    not take ownership of the provided object; implementations SHOULD copy the
- *    value if they need to retain it.
+ *    value if they need to retain or change it.
  *
  *  - write(T &item): Takes an lvalue reference and indirect to the
  *    write(const T &item).

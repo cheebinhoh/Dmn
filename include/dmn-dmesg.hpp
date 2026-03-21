@@ -367,7 +367,7 @@ public:
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue.
+     *        queue, it directs the call to const argument write version.
      *
      * @param dmesgpb Message to publish (copied).
      * @param flags Write options: Block waiting for publisher to process the
@@ -375,6 +375,14 @@ public:
      */
     void write(dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
+    /**
+     * @brief Publish the provided DMesgPb by copying it into the publisher
+     *        queue.
+     *
+     * @param dmesgpb Message to publish (copied).
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
+     */
     void write(const dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
