@@ -136,9 +136,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaf681fa67d98dcdac972802086c501ea" id="r_aaf681fa67d98dcdac972802086c501ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">readAndProcess</a> (Dmn_Pipe::Task <a class="el" href="classdmn_1_1Dmn__Async.html">fn</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">count</a>=1, <a class="el" href="classdmn_1_1Dmn__Async.html">long</a> <a class="el" href="classdmn_1_1Dmn__Async.html">timeout</a>=0) -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a></td></tr>
 <tr class="memdesc:aaf681fa67d98dcdac972802086c501ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the next item from the pipe and invoke the provided task.  <br /></td></tr>
 <tr class="separator:aaf681fa67d98dcdac972802086c501ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac61bdcfef0fe645306df57e38eaa8d90" id="r_ac61bdcfef0fe645306df57e38eaa8d90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
-<tr class="memdesc:ac61bdcfef0fe645306df57e38eaa8d90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item into the pipe.  <br /></td></tr>
-<tr class="separator:ac61bdcfef0fe645306df57e38eaa8d90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab91e60f5a827d6b611f385c060a29442" id="r_ab91e60f5a827d6b611f385c060a29442"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#ab91e60f5a827d6b611f385c060a29442">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
+<tr class="memdesc:ab91e60f5a827d6b611f385c060a29442"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item into the pipe.  <br /></td></tr>
+<tr class="separator:ab91e60f5a827d6b611f385c060a29442"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a942d0f57d69ac4f925a49cb5847f16a1" id="r_a942d0f57d69ac4f925a49cb5847f16a1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
 <tr class="memdesc:a942d0f57d69ac4f925a49cb5847f16a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (move) an item into the pipe.  <br /></td></tr>
 <tr class="separator:a942d0f57d69ac4f925a49cb5847f16a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -180,6 +180,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a1c46d07d334212431ca96853c7729b32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a1c46d07d334212431ca96853c7729b32">push</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">final</a></td></tr>
 <tr class="memdesc:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classdmn_1_1Dmn__Io"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Io')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io&lt; T &gt;</a></td></tr>
+<tr class="memitem:aaf6461217b52c2a7b398e817be18bfad inherit pub_methods_classdmn_1_1Dmn__Io" id="r_aaf6461217b52c2a7b398e817be18bfad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#aaf6461217b52c2a7b398e817be18bfad">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">final</a></td></tr>
+<tr class="memdesc:aaf6461217b52c2a7b398e817be18bfad inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item to the sink.  <br /></td></tr>
+<tr class="separator:aaf6461217b52c2a7b398e817be18bfad inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Proc"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Proc')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
 <tr class="memitem:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>={})</td></tr>
 <tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06 inherit pub_methods_classdmn_1_1Dmn__Proc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
@@ -471,8 +475,47 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 
 </div>
 </div>
+<a id="ab91e60f5a827d6b611f385c060a29442" name="ab91e60f5a827d6b611f385c060a29442"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab91e60f5a827d6b611f385c060a29442">&#9670;&#160;</a></span>write() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a> &gt;::write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&#160;</td>
+          <td class="paramname"><em>item</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write (copy) an item into the pipe. </p>
+<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer.">Dmn_BlockingQueue</a> implementation.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">item</td><td>The data item to be copied into the pipe </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">dmn::Dmn_Io&lt; T &gt;</a>.</p>
+
+</div>
+</div>
 <a id="a942d0f57d69ac4f925a49cb5847f16a1" name="a942d0f57d69ac4f925a49cb5847f16a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a942d0f57d69ac4f925a49cb5847f16a1">&#9670;&#160;</a></span>write() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a942d0f57d69ac4f925a49cb5847f16a1">&#9670;&#160;</a></span>write() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -507,45 +550,6 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">dmn::Dmn_Io&lt; T &gt;</a>.</p>
-
-</div>
-</div>
-<a id="ac61bdcfef0fe645306df57e38eaa8d90" name="ac61bdcfef0fe645306df57e38eaa8d90"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac61bdcfef0fe645306df57e38eaa8d90">&#9670;&#160;</a></span>write() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a> &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a> &gt;::write </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&#160;</td>
-          <td class="paramname"><em>item</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Write (copy) an item into the pipe. </p>
-<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer.">Dmn_BlockingQueue</a> implementation.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">item</td><td>The data item to be copied into the pipe </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a905a7462dbbac1b9f02a1e96829014ba">dmn::Dmn_Io&lt; T &gt;</a>.</p>
 
 </div>
 </div>

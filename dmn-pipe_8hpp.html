@@ -138,7 +138,7 @@ Classes</h2></td></tr>
 <li>readAndProcess() involves the caller-provided task and updates <code>m_count</code> under the mutex.</li>
 </ul>
 <p>Read / Write semantics</p><ul>
-<li>write(T&amp;) copies <code>item</code> into the pipe.</li>
+<li>write(const T&amp;) copies <code>item</code> into the pipe.</li>
 <li>write(T&amp;&amp;) moves <code>item</code> into the pipe; move will be used when the move constructor is noexcept (via QueueType::push semantics).</li>
 <li>read() blocks until the next item is available and returns it wrapped in std::optional; when the pipe is closed it returns std::nullopt.</li>
 <li>readAndProcess(fn) blocks until the next item is available or timeout and invokes the provided task with the item (moved where possible).</li>
