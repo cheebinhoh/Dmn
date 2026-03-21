@@ -366,6 +366,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
       m_sub->addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
         writeDMesgInternal(moved_dmesgpb, true, block);
       });
+
   waithandler->wait();
 }
 
@@ -775,9 +776,9 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                           std::string_view topic) {
   std::string topicToBeReset{topic};
 
-  DMN_ASYNC_CALL_WITH_CAPTURE(
-      { this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset); },
-      this, handler_ptr, topicToBeReset);
+  this->addExecTask([this, handler_ptr, topicToBeReset]() {
+    this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset);
+  });
 }
 
 /** @brief Locate @p handler_ptr in the handler list and call

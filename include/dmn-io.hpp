@@ -88,8 +88,6 @@ public:
    */
   virtual void write(T &item) = 0;
 
-  virtual void write(const T &item) {}
-
   /**
    * @brief Write (move) an item to the sink.
    *

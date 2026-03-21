@@ -307,7 +307,7 @@ Dmn_Pub<T, QueueType>::Dmn_Sub::~Dmn_Sub() noexcept try {
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::Dmn_Sub::notifyInternal(const T &item) {
-  DMN_ASYNC_CALL_WITH_CAPTURE({ this->notify(item); }, this, item);
+  this->addExecTask([this, item]() { this->notify(item); });
 }
 
 // class Dmn_Pub
@@ -339,7 +339,7 @@ void Dmn_Pub<T, QueueType>::publish(const T &item, bool block) {
 
     waitHandler->wait();
   } else {
-    DMN_ASYNC_CALL_WITH_CAPTURE({ this->publishInternal(item); }, this, item);
+    this->addExecTask([this, item]() { this->publishInternal(item); });
   }
 }
 
