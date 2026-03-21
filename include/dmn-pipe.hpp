@@ -161,7 +161,7 @@ public:
    *
    * @param item The data item to be copied into the pipe
    */
-  void write(T &item) override;
+  void write(const T &item) override;
 
   /**
    * @brief Write (move) an item into the pipe.
@@ -290,7 +290,7 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 }
 
 template <typename T, typename QueueType>
-void Dmn_Pipe<T, QueueType>::write(T &item) {
+void Dmn_Pipe<T, QueueType>::write(const T &item) {
   QueueType::push(item);
 }
 

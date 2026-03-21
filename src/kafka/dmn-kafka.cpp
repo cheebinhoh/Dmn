@@ -296,10 +296,10 @@ void Dmn_Kafka::shutdown() {
 }
 
 /** @brief Copy-write overload: delegates to write(item, move=false). */
-void Dmn_Kafka::write(std::string &item) { write(item, false); }
+void Dmn_Kafka::write(const std::string &item) { writeCopy(item); }
 
 /** @brief Move-write overload: delegates to write(item, move=true). */
-void Dmn_Kafka::write(std::string &&item) { write(item, true); }
+void Dmn_Kafka::write(std::string &&item) { writeCopy(item); }
 
 /**
  * @brief Produce @p item to the configured Kafka topic synchronously.
@@ -315,7 +315,7 @@ void Dmn_Kafka::write(std::string &&item) { write(item, true); }
  *             symmetry with the public write(T&&) overload.
  * @throws std::runtime_error on enqueue or delivery failure.
  */
-void Dmn_Kafka::write(std::string &item, [[maybe_unused]] bool move) {
+void Dmn_Kafka::writeCopy(const std::string &item) {
   assert(Role::kProducer == m_role);
 
   // this make sure only one thread is accessing the Dmn_Kafka write,

@@ -105,7 +105,7 @@ public:
    *       not assume atomicity of large writes unless the implementation
    *       documents it.
    */
-  void write(std::string &item) override;
+  void write(const std::string &item) override;
 
   /**
    * @brief Write a string to the socket using move semantics.

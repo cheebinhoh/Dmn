@@ -103,7 +103,7 @@ auto Dmn_Socket::read() -> std::optional<std::string> {
   return string;
 }
 
-void Dmn_Socket::write(std::string &item) {
+void Dmn_Socket::write(const std::string &item) {
   const char *buf{item.c_str()};
   const size_t n_read{item.size()};
   size_t n_write{};
