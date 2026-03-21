@@ -70,6 +70,8 @@ public:
 
   using ConfigType = std::unordered_map<std::string, std::string>;
 
+  using Dmn_Io<std::string>::write;
+
   enum class Role {
     kConsumer,
     kProducer,

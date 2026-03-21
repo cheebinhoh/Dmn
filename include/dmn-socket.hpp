@@ -54,6 +54,8 @@ namespace dmn {
  */
 class Dmn_Socket : public Dmn_Io<std::string> {
 public:
+  using Dmn_Io<std::string>::write;
+
   /**
    * @brief Construct a Dmn_Socket connected to the given IPv4 address and port.
    *
@@ -97,8 +99,8 @@ public:
   /**
    * @brief Write a string to the socket.
    *
-   * @param item The string to write. This overload accepts an lvalue reference
-   *             and will typically copy or send the contents as-is.
+   * @param item The string to write. This overload accepts a const lvalue
+   * reference and will typically copy the contents as-is.
    *
    * @note On partial writes or errors, behavior is implementation-defined:
    *       the method may retry, throw, or log and return. Callers should

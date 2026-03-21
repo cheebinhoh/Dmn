@@ -25,7 +25,7 @@
  *   under the mutex.
  *
  * Read / Write semantics
- * - write(T&) copies `item` into the pipe.
+ * - write(const T&) copies `item` into the pipe.
  * - write(T&&) moves `item` into the pipe; move will be used when the move
  *   constructor is noexcept (via QueueType::push semantics).
  * - read() blocks until the next item is available and returns it wrapped
@@ -92,6 +92,8 @@ class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
   using Task = std::function<void(T &&)>;
 
 public:
+  using Dmn_Io<T>::write;
+
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0);
 

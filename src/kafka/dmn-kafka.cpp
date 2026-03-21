@@ -299,7 +299,7 @@ void Dmn_Kafka::shutdown() {
 void Dmn_Kafka::write(const std::string &item) { writeCopy(item); }
 
 /** @brief Move-write overload: delegates to write(item, move=true). */
-void Dmn_Kafka::write(std::string &&item) { writeCopy(item); }
+void Dmn_Kafka::write(std::string &&item) { writeCopy(std::as_const(item)); }
 
 /**
  * @brief Produce @p item to the configured Kafka topic synchronously.
