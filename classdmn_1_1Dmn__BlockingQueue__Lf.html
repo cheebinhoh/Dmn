@@ -91,6 +91,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BlockingQueue__Lf.htm
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classdmn_1_1Dmn__BlockingQueue__Lf-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::Dmn_BlockingQueue_Lf&lt; T &gt; Class Template Reference</div></div>
 </div><!--header-->
@@ -111,6 +112,12 @@ Inheritance diagram for dmn::Dmn_BlockingQueue_Lf&lt; T &gt;:</div>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:aa7d07a0105b9ede315ec5e2a218a8f70" id="r_aa7d07a0105b9ede315ec5e2a218a8f70"><td class="memItemLeft" align="right" valign="top"><a id="aa7d07a0105b9ede315ec5e2a218a8f70" name="aa7d07a0105b9ede315ec5e2a218a8f70"></a>
+<a class="el" href="classdmn_1_1Dmn__Async.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BlockingQueue_Interface&lt; Dmn_BlockingQueue_Lf&lt; T &gt;, T &gt;</b></td></tr>
+<tr class="separator:aa7d07a0105b9ede315ec5e2a218a8f70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader">Epoch-based reclamation (implementation notes)</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p>@rationale Popped nodes cannot be immediately deleted because other threads may still be reading pointers obtained during concurrent operations. This implementation uses an epoch-based scheme coordinated by dmn::Dmn_Inflight_Guard:</p>
 <ul>
@@ -149,6 +156,9 @@ Inheritance diagram for dmn::Dmn_BlockingQueue_Lf&lt; T &gt;:</div>
 <tr class="memitem:a2c69dfa5fe6aab130f85d476034531a7" id="r_a2c69dfa5fe6aab130f85d476034531a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a2c69dfa5fe6aab130f85d476034531a7">pop</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">count</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">long</a> <a class="el" href="classdmn_1_1Dmn__Async.html">timeout</a>=0) -&gt; std::vector&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
 <tr class="memdesc:a2c69dfa5fe6aab130f85d476034531a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pop up to <code>count</code> items, optionally bounded by a timeout.  <br /></td></tr>
 <tr class="separator:a2c69dfa5fe6aab130f85d476034531a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f8a9e7e65653655d215f36e60903426" id="r_a8f8a9e7e65653655d215f36e60903426"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426">shutdown</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
+<tr class="memdesc:a8f8a9e7e65653655d215f36e60903426"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal all waiting threads to wake up and return.  <br /></td></tr>
+<tr class="separator:a8f8a9e7e65653655d215f36e60903426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01136ab99c8d9617a24b49218feeda38" id="r_a01136ab99c8d9617a24b49218feeda38"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38">waitForEmpty</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">uint64_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
 <tr class="memdesc:a01136ab99c8d9617a24b49218feeda38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Busy-wait until the queue becomes empty.  <br /></td></tr>
 <tr class="separator:a01136ab99c8d9617a24b49218feeda38"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -168,9 +178,6 @@ Inheritance diagram for dmn::Dmn_BlockingQueue_Lf&lt; T &gt;:</div>
 <tr class="memitem:a941adf60c54533ef7b50b7064887b3f3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a941adf60c54533ef7b50b7064887b3f3">pushImpl</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">U</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)</td></tr>
 <tr class="memdesc:a941adf60c54533ef7b50b7064887b3f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push the item into the tail of the queue (move or copy semantics).  <br /></td></tr>
 <tr class="separator:a941adf60c54533ef7b50b7064887b3f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8f8a9e7e65653655d215f36e60903426" id="r_a8f8a9e7e65653655d215f36e60903426"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426">shutdown</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
-<tr class="memdesc:a8f8a9e7e65653655d215f36e60903426"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal all waiting threads to wake up and return.  <br /></td></tr>
-<tr class="separator:a8f8a9e7e65653655d215f36e60903426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06ef41db026b53a793dbbd88d1b90e23" id="r_a06ef41db026b53a793dbbd88d1b90e23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a06ef41db026b53a793dbbd88d1b90e23">enterInflightGuardFnc</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">uint64_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
 <tr class="separator:a06ef41db026b53a793dbbd88d1b90e23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a963df5c8bfbbcca508972626967b42f5" id="r_a963df5c8bfbbcca508972626967b42f5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a963df5c8bfbbcca508972626967b42f5">isInflightGuardClosed</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a> <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
@@ -196,9 +203,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_a1c46d07d334212431ca96853c7729b32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a1c46d07d334212431ca96853c7729b32">push</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">final</a></td></tr>
 <tr class="memdesc:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:a1c46d07d334212431ca96853c7729b32 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa95f290d3187f31c76f9bcbfde5c93ab inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memItemLeft" align="right" valign="top">
+<tr class="inherit_header pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;</a></td></tr>
+<tr class="memitem:aa95f290d3187f31c76f9bcbfde5c93ab inherit pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface" id="r_aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
-<tr class="separator:aa95f290d3187f31c76f9bcbfde5c93ab inherit pub_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:aa95f290d3187f31c76f9bcbfde5c93ab inherit pro_methods_classdmn_1_1Dmn__BlockingQueue__Interface"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> = std::string&gt;<br />
@@ -225,7 +233,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -255,7 +263,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -285,7 +293,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -375,7 +383,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -417,7 +425,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -455,7 +463,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -487,6 +495,9 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
 <div class="memtemplate">
 template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class="el" href="classdmn_1_1Dmn__Async.html">U</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">dmn::Dmn_BlockingQueue_Lf</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::pushImpl </td>
@@ -496,6 +507,11 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class=
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Push the item into the tail of the queue (move or copy semantics). </p>
@@ -529,7 +545,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -614,7 +630,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <dl class="section warning"><dt>Warning</dt><dd>This method is not protected by the inflight/epoch guard and should not be used concurrently with arbitrary producers/consumers unless the caller can ensure safe coordination.</dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>Total number of successful pushes observed by this queue since construction. </dd></dl>
 
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;</a>.</p>
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a968f69c05f6303fbd286d25ecb987ce2">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;</a>.</p>
 
 </div>
 </div>

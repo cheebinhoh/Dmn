@@ -91,6 +91,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BlockingQueue__Interf
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classdmn_1_1Dmn__BlockingQueue__Interface-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
@@ -128,6 +129,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aff16b71f20e74577c0eb32d2c607e181" id="r_aff16b71f20e74577c0eb32d2c607e181"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#aff16b71f20e74577c0eb32d2c607e181">shutdown</a> ()</td></tr>
 <tr class="memdesc:aff16b71f20e74577c0eb32d2c607e181"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the object and flag the m_shutdown flag.  <br /></td></tr>
 <tr class="separator:aff16b71f20e74577c0eb32d2c607e181"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a968f69c05f6303fbd286d25ecb987ce2" id="r_a968f69c05f6303fbd286d25ecb987ce2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a968f69c05f6303fbd286d25ecb987ce2">waitForEmpty</a> () -&gt; std::uint64_t</td></tr>
+<tr class="memdesc:a968f69c05f6303fbd286d25ecb987ce2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Caller blocks for the queue to be empty and returns the number of items that have been processed through the queue.  <br /></td></tr>
+<tr class="separator:a968f69c05f6303fbd286d25ecb987ce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
 <tr class="memitem:aa95f290d3187f31c76f9bcbfde5c93ab" id="r_aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memItemLeft" align="right" valign="top"><a id="aa95f290d3187f31c76f9bcbfde5c93ab" name="aa95f290d3187f31c76f9bcbfde5c93ab"></a>
 <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
 <tr class="separator:aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,8 +144,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa58b081caa7003841f6bad0f9254a9ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6de466c87217a90693894762bdd39bb9" id="r_a6de466c87217a90693894762bdd39bb9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a6de466c87217a90693894762bdd39bb9">pushMove</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)</td></tr>
 <tr class="separator:a6de466c87217a90693894762bdd39bb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a968f69c05f6303fbd286d25ecb987ce2" id="r_a968f69c05f6303fbd286d25ecb987ce2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a968f69c05f6303fbd286d25ecb987ce2">waitForEmpty</a> () -&gt; std::uint64_t</td></tr>
-<tr class="separator:a968f69c05f6303fbd286d25ecb987ce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a5f196f44cfa7edcadb95754e66f77a4e" name="a5f196f44cfa7edcadb95754e66f77a4e"></a>
@@ -280,7 +285,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -382,7 +387,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -412,7 +417,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -476,6 +481,9 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Caller blocks for the queue to be empty and returns the number of items that have been processed through the queue. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of items that have been processed through the queue. </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a01136ab99c8d9617a24b49218feeda38">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>.</p>
 

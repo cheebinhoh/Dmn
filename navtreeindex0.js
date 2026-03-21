@@ -21,6 +21,7 @@ var NAVTREEINDEX0 =
 "classdmn_1_1Dmn__BlockingQueue__Interface.html#a253aaca0e375fdd1d86287e57d75034c":[1,0,0,4,1],
 "classdmn_1_1Dmn__BlockingQueue__Interface.html#a5f196f44cfa7edcadb95754e66f77a4e":[1,0,0,4,0],
 "classdmn_1_1Dmn__BlockingQueue__Interface.html#a8b7ae764e732e089dcd84f6e9dc4cca1":[1,0,0,4,2],
+"classdmn_1_1Dmn__BlockingQueue__Interface.html#a968f69c05f6303fbd286d25ecb987ce2":[1,0,0,4,6],
 "classdmn_1_1Dmn__BlockingQueue__Interface.html#a97ef792d27fe9c50dc525338ac942315":[1,0,0,4,3],
 "classdmn_1_1Dmn__BlockingQueue__Interface.html#aff16b71f20e74577c0eb32d2c607e181":[1,0,0,4,5],
 "classdmn_1_1Dmn__BlockingQueue__Lf.html":[1,0,0,5],
@@ -248,6 +249,5 @@ var NAVTREEINDEX0 =
 "pages.html":[],
 "structdmn_1_1Dmn__Runtime__Job.html":[1,0,0,15],
 "structdmn_1_1Dmn__Runtime__Task.html":[1,0,0,17],
-"structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html":[1,0,0,17,0],
-"structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html":[1,0,0,17,1]
+"structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html":[1,0,0,17,0]
 };
