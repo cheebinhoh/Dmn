@@ -130,10 +130,10 @@ Classes</h2></td></tr>
 <li>provides blocking behavior for pop() by spinning/yielding until an item becomes available (or until shutdown),</li>
 <li>uses an epoch-based reclamation mechanism (via <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>) to safely reclaim removed nodes without use-after-free.</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md3"></a>
+<h3><a class="anchor" id="autotoc_md5"></a>
 Blocking model</h3>
 <p>The queue does not use condition variables. "Blocking" means active waiting with yielding (and cancellation checks where applicable). This is suitable for scenarios where latency is prioritized and threads are expected to wake soon, but it may be inefficient for long idle waits.</p>
-<h3><a class="anchor" id="autotoc_md4"></a>
+<h3><a class="anchor" id="autotoc_md6"></a>
 Shutdown behavior</h3>
 <p>Destruction triggers shutdown. After shutdown begins:</p><ul>
 <li>push operations fail (throw),</li>

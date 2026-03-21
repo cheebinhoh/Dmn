@@ -119,43 +119,37 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType = Dmn_BlockingQueue&lt;T&gt;&gt;</div>
 <div class="foldopen" id="foldopen00086" data-start="{" data-end="};">
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html">   86</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> : <span class="keyword">public</span> QueueType, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a>&lt;T&gt;, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html">   86</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> : <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a>&lt;T&gt;, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> {</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  <span class="keyword">static_assert</span>(</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>      std::is_base_of_v&lt;Dmn_BlockingQueue_Interface&lt;QueueType, T&gt;, QueueType&gt;,</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>      std::is_base_of_v&lt;Dmn_BlockingQueue_Interface&lt;QueueType, T&gt;, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;,</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>      <span class="stringliteral">&quot;QueueType must inherit from dmn::Dmn_BlockingQueue_Interface&lt;QueueType, &quot;</span></div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>      <span class="stringliteral">&quot;T&gt;&quot;</span>);</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  <span class="keyword">using </span>Task = std::function&lt;void(T &amp;&amp;)&gt;;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  <span class="keyword">using </span>Task = std::function&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">void</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;)&gt;;</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  <span class="keyword">explicit</span> <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(std::string_view name, Dmn_Pipe::Task fn = {},</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                    <span class="keywordtype">size_t</span> count = 1, <span class="keywordtype">long</span> timeout = 0);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  <span class="keyword">explicit</span> <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(std::string_view <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">name</a>, Dmn_Pipe::Task <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fn</a> = {},</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                    <span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a> = 1, <span class="keywordtype">long</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a> = 0);</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  <span class="keyword">virtual</span> <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">~Dmn_Pipe</a>() <span class="keyword">noexcept</span>;</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Pipe&lt;T, QueueType&gt;</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="foldopen" id="foldopen00113" data-start="{" data-end="}">
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">  113</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">read</a>() -&gt; std::optional&lt;T&gt; <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">read</a>() -&gt; std::optional&lt;T&gt; <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
-<div class="foldopen" id="foldopen00139" data-start="{" data-end="}">
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">  139</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">read</a>(<span class="keywordtype">size_t</span> count, <span class="keywordtype">long</span> timeout = 0) -&gt; std::vector&lt;T&gt; <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">read</a>(<span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a>, <span class="keywordtype">long</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a> = 0) -&gt; std::vector&lt;T&gt; <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="foldopen" id="foldopen00152" data-start="{" data-end="}">
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">  152</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">readAndProcess</a>(Dmn_Pipe::Task fn, <span class="keywordtype">size_t</span> count = 1, <span class="keywordtype">long</span> timeout = 0)</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>      -&gt; size_t;</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">readAndProcess</a>(Dmn_Pipe::Task <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fn</a>, <span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a> = 1, <span class="keywordtype">long</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a> = 0)</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>      -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">size_t</a>;</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="foldopen" id="foldopen00164" data-start="{" data-end="}">
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">  164</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">write</a>(T &amp;item) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">write</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
-<div class="foldopen" id="foldopen00175" data-start="{" data-end="}">
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">  175</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">write</a>(T &amp;&amp;item) <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">write</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
-<div class="foldopen" id="foldopen00187" data-start="{" data-end="}">
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">  187</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">waitForEmpty</a>() -&gt; uint64_t <span class="keyword">override</span>;</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">waitForEmpty</a>() -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">uint64_t</a> <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><span class="keyword">protected</span>:</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>  <span class="keyword">virtual</span> <span class="keyword">auto</span> isShutdown() -&gt; <span class="keywordtype">bool</span> {</div>
@@ -164,9 +158,9 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
 <div class="foldopen" id="foldopen00194" data-start="{" data-end="}">
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">  194</a></span>  <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">shutdown</a>()<span class="keyword"> override </span>{</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    std::unique_lock&lt;std::mutex&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">lock</a>(m_mutex);</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    m_shutdown_flag.test_and_set(std::memory_order_release);</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    lock.unlock();</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">lock</a>.unlock();</div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    QueueType::shutdown();</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
@@ -184,6 +178,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>  <span class="keywordtype">size_t</span> m_count{};</div>
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>  std::atomic_flag m_shutdown_flag{};</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>}; <span class="comment">// class Dmn_Pipe</span></div>
+</div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
 <div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>Dmn_Pipe&lt;T, QueueType&gt;::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,</div>
@@ -221,102 +216,94 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00249" data-start="{" data-end="}">
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">  249</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">Dmn_Pipe&lt;T, QueueType&gt;::read</a>() -&gt; std::optional&lt;T&gt; {</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>  std::optional&lt;T&gt; data{};</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>  std::optional&lt;T&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">data</a>{};</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>  readAndProcess([&amp;data](T &amp;&amp;item) { data = std::move_if_noexcept(item); });</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>  readAndProcess([&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">data</a>](<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) { <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">data</a> = std::move_if_noexcept(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>); });</div>
 <div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span> </div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>  <span class="keywordflow">return</span> data;</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>  <span class="keywordflow">return</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">data</a>;</div>
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>}</div>
 </div>
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span> </div>
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00258" data-start="{" data-end="}">
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">  258</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">Dmn_Pipe&lt;T, QueueType&gt;::read</a>(<span class="keywordtype">size_t</span> count, <span class="keywordtype">long</span> timeout)</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">  258</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">Dmn_Pipe&lt;T, QueueType&gt;::read</a>(<span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a>, <span class="keywordtype">long</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a>)</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>    -&gt; std::vector&lt;T&gt; {</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>  std::vector&lt;T&gt; dataList{};</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>  std::vector&lt;T&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>{};</div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span> </div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>  readAndProcess([&amp;dataList](T &amp;&amp;item) { dataList.push_back(std::move(item)); },</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>                 count, timeout);</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>  readAndProcess([&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>](<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) { <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>.push_back(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>)); },</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>                 <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a>, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a>);</div>
 <div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span> </div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  <span class="keywordflow">return</span> std::move(dataList);</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  <span class="keywordflow">return</span> std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>);</div>
 <div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>}</div>
 </div>
 <div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span> </div>
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00269" data-start="{" data-end="}">
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">  269</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">Dmn_Pipe&lt;T, QueueType&gt;::readAndProcess</a>(Dmn_Pipe::Task fn, <span class="keywordtype">size_t</span> count,</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>                                            <span class="keywordtype">long</span> timeout) -&gt; <span class="keywordtype">size_t</span> {</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>  <span class="keyword">auto</span> dataList = this-&gt;pop(count, timeout);</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">  269</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">Dmn_Pipe&lt;T, QueueType&gt;::readAndProcess</a>(Dmn_Pipe::Task <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fn</a>, <span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a>,</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>                                            <span class="keywordtype">long</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a>) -&gt; <span class="keywordtype">size_t</span> {</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>  <span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a> = this-&gt;pop(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">count</a>, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">timeout</a>);</div>
 <div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span> </div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>  <span class="keywordtype">size_t</span> processedCount = dataList.size();</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>  <span class="keywordtype">size_t</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">processedCount</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>.size();</div>
 <div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span> </div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>  <span class="keywordflow">if</span> (fn) {</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;item : dataList) {</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>  <span class="keywordflow">if</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fn</a>) {</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a> : <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">dataList</a>) {</div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>      <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">Dmn_Proc::testcancel</a>();</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>      fn(std::move_if_noexcept(item));</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>      <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fn</a>(std::move_if_noexcept(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>));</div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    }</div>
 <div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>  }</div>
 <div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span> </div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>  std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>  std::unique_lock&lt;std::mutex&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">lock</a>(m_mutex);</div>
 <div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span> </div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>  m_count += processedCount;</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>  m_count += <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">processedCount</a>;</div>
 <div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span> </div>
 <div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>  m_empty_cond.notify_all();</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span> </div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>  <span class="keywordflow">return</span> processedCount;</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>  <span class="keywordflow">return</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">processedCount</a>;</div>
 <div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>}</div>
 </div>
 <div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span> </div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00293" data-start="{" data-end="}">
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">  293</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">Dmn_Pipe&lt;T, QueueType&gt;::write</a>(T &amp;item) {</div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>  QueueType::push(item);</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">  293</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">Dmn_Pipe&lt;T, QueueType&gt;::write</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) {</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>  QueueType::push(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>);</div>
 <div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>}</div>
 </div>
 <div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span> </div>
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00298" data-start="{" data-end="}">
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">  298</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">Dmn_Pipe&lt;T, QueueType&gt;::write</a>(T &amp;&amp;item) {</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>  QueueType::push(std::move_if_noexcept(item));</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">  298</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">Dmn_Pipe&lt;T, QueueType&gt;::write</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>) {</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>  QueueType::push(std::move_if_noexcept(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">item</a>));</div>
 <div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>}</div>
 </div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span> </div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00303" data-start="{" data-end="}">
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">  303</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">Dmn_Pipe&lt;T, QueueType&gt;::waitForEmpty</a>() -&gt; uint64_t {</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>  uint64_t inbound_count{};</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">  303</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">Dmn_Pipe&lt;T, QueueType&gt;::waitForEmpty</a>() -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">uint64_t</a> {</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">uint64_t</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">inbound_count</a>{};</div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span> </div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>  inbound_count = QueueType::waitForEmpty();</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">inbound_count</a> = QueueType::waitForEmpty();</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span> </div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>  std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>  std::unique_lock&lt;std::mutex&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">lock</a>(m_mutex);</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>  <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">Dmn_Proc::testcancel</a>();</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span> </div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>  m_empty_cond.wait(lock, [<span class="keyword">this</span>, inbound_count] {</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    <span class="keywordflow">return</span> m_count &gt;= inbound_count || isShutdown();</div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>  m_empty_cond.wait(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">lock</a>, [<span class="keyword">this</span>, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">inbound_count</a>] {</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>    <span class="keywordflow">return</span> m_count &gt;= <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">inbound_count</a> || isShutdown();</div>
 <div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>  });</div>
 <div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span> </div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>  <span class="keywordflow">return</span> inbound_count;</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>  <span class="keywordflow">return</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">inbound_count</a>;</div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>}</div>
-</div>
 </div>
 <div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span> </div>
 <div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>} <span class="comment">// namespace dmn</span></div>
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
 <div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="preprocessor">#endif </span><span class="comment">// DMN_PIPE_HPP_</span></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:92</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Io_html"><div class="ttname"><a href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a></div><div class="ttdef"><b>Definition</b> dmn-io.hpp:45</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a></div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:86</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_a0d38ac4b9523187ef9b492996b21d816"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">dmn::Dmn_Pipe::read</a></div><div class="ttdeci">auto read() -&gt; std::optional&lt; T &gt; override</div><div class="ttdoc">Read and return the item from the pipe.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:249</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_a1283e8a077a77b3a973c189cb50aa79b"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">dmn::Dmn_Pipe::read</a></div><div class="ttdeci">auto read(size_t count, long timeout=0) -&gt; std::vector&lt; T &gt; override</div><div class="ttdoc">Read and return the next item from the pipe.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:258</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_a6f1a36063050f3ed79f7c6799b41d966"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">dmn::Dmn_Pipe::shutdown</a></div><div class="ttdeci">virtual void shutdown() override</div><div class="ttdoc">Signal all waiting threads to wake up and return.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:194</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_a942d0f57d69ac4f925a49cb5847f16a1"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">dmn::Dmn_Pipe::write</a></div><div class="ttdeci">void write(T &amp;&amp;item) override</div><div class="ttdoc">Write (move) an item into the pipe.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:298</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_aaf681fa67d98dcdac972802086c501ea"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">dmn::Dmn_Pipe::readAndProcess</a></div><div class="ttdeci">auto readAndProcess(Dmn_Pipe::Task fn, size_t count=1, long timeout=0) -&gt; size_t</div><div class="ttdoc">Read the next item from the pipe and invoke the provided task.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:269</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_ac61bdcfef0fe645306df57e38eaa8d90"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#ac61bdcfef0fe645306df57e38eaa8d90">dmn::Dmn_Pipe::write</a></div><div class="ttdeci">void write(T &amp;item) override</div><div class="ttdoc">Write (copy) an item into the pipe.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:293</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html_ad53942562c30a1d09247433f800b8e12"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">dmn::Dmn_Pipe::waitForEmpty</a></div><div class="ttdeci">auto waitForEmpty() -&gt; uint64_t override</div><div class="ttdoc">Block until the pipe is empty and all inbound items are processed.</div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:303</div></div>

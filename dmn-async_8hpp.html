@@ -128,7 +128,12 @@ Macros</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks and provides optional rendezvous points for callers that need to wait for completion. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>Usage summary:</p><ul>
+<h2><a class="anchor" id="autotoc_md0"></a>
+Design pattern</h2>
+<p>Adaptor - it adapts the pipe to support asynchronous task and runtime.</p>
+<h2><a class="anchor" id="autotoc_md1"></a>
+Usage summary</h2>
+<ul>
 <li>A client can inherit from Dmn_Async or hold an instance of it.</li>
 <li>The client passes work as a std::function&lt;void()&gt; to Dmn_Async's write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed asynchronously, serializing execution and avoiding the need for explicit mutexes in the client API.</li>
 <li>For callers that need to block until a submitted task finishes, use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a Dmn_Async_Handle object whose wait() method will only return after the task has completed (and propagate exceptions thrown by the task).</li>

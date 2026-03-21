@@ -130,14 +130,14 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:a93d661bde0addac1e33991ddc7be574f" id="r_a93d661bde0addac1e33991ddc7be574f"><td class="memItemLeft" align="right" valign="top"><a id="a93d661bde0addac1e33991ddc7be574f" name="a93d661bde0addac1e33991ddc7be574f"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kDMesgSysIdentifier</b> = &quot;sys.dmn-dmesg&quot;</td></tr>
+<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">char</a> *<a class="el" href="classdmn_1_1Dmn__Async.html">const</a>&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kDMesgSysIdentifier</b> = &quot;sys.dmn-<a class="el" href="classdmn_1_1Dmn__Async.html">dmesg&quot;</a></td></tr>
 <tr class="memdesc:a93d661bde0addac1e33991ddc7be574f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifier string for the sys topic (used by DMesgNet). <br /></td></tr>
 <tr class="separator:a93d661bde0addac1e33991ddc7be574f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DMESG publisher/subscriber wrapper using Protobuf messages. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Overview</h2>
 <p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code>dmn::DMesgPb</code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
 <p>Design pattern Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control handler lifetime. Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.</p>

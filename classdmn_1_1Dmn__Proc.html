@@ -106,79 +106,68 @@ Inheritance diagram for dmn::Dmn_Proc:</div>
  <div class="center">
   <img src="classdmn_1_1Dmn__Proc.png" usemap="#dmn::Dmn_5FProc_map" alt=""/>
   <map id="dmn::Dmn_5FProc_map" name="dmn::Dmn_5FProc_map">
-<area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, Dmn_BlockingQueue&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;" shape="rect" coords="0,56,717,80"/>
-<area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt;, QueueType&lt; std::shared_ptr&lt; Dmn_Async_Handle &gt; &gt; &gt;" shape="rect" coords="727,56,1444,80"/>
-<area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; T, QueueType &gt;" shape="rect" coords="1817,56,2534,80"/>
-<area href="classdmn_1_1Dmn__Timer.html" alt="dmn::Dmn_Timer&lt; T &gt;" shape="rect" coords="2544,56,3261,80"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="727,112,1444,136"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue &gt;" shape="rect" coords="1454,112,2171,136"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="2181,112,2898,136"/>
-<area href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub" shape="rect" coords="727,168,1444,192"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="1454,168,2171,192"/>
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;" shape="rect" coords="2181,168,2898,192"/>
-<area href="classdmn_1_1Dmn__Runtime__Manager.html" alt="dmn::Dmn_Runtime_Manager&lt; QueueType &gt;" shape="rect" coords="2908,168,3625,192"/>
-<area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="1454,224,2171,248"/>
-<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="1454,280,2171,304"/>
+<area href="classdmn_1_1Dmn__Pipe.html" alt="dmn::Dmn_Pipe&lt; T, QueueType &gt;" shape="rect" coords="0,56,204,80"/>
+<area href="classdmn_1_1Dmn__Timer.html" alt="dmn::Dmn_Timer&lt; T &gt;" shape="rect" coords="214,56,418,80"/>
   </map>
 </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a5d1f8f0f3d1258fdd21422315bb11c73" id="r_a5d1f8f0f3d1258fdd21422315bb11c73"><td class="memItemLeft" align="right" valign="top"><a id="a5d1f8f0f3d1258fdd21422315bb11c73" name="a5d1f8f0f3d1258fdd21422315bb11c73"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::function&lt; void()&gt;</td></tr>
+<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>()&gt;</td></tr>
 <tr class="separator:a5d1f8f0f3d1258fdd21422315bb11c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afa8aab9ea455fb964b5db912357e9b06" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view name, const Dmn_Proc::Task &amp;fnc={})</td></tr>
+<tr class="memitem:afa8aab9ea455fb964b5db912357e9b06" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>={})</td></tr>
 <tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
 <tr class="separator:afa8aab9ea455fb964b5db912357e9b06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bb6b7a36df1279036ad00b6f64d769b" id="r_a2bb6b7a36df1279036ad00b6f64d769b"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b">~Dmn_Proc</a> () noexcept</td></tr>
+<tr class="memitem:a2bb6b7a36df1279036ad00b6f64d769b" id="r_a2bb6b7a36df1279036ad00b6f64d769b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b">~Dmn_Proc</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">noexcept</a></td></tr>
 <tr class="memdesc:a2bb6b7a36df1279036ad00b6f64d769b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor that ensures proper cleanup of the thread.  <br /></td></tr>
 <tr class="separator:a2bb6b7a36df1279036ad00b6f64d769b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb4e7ca8351d28393ad0efcbf713f5b1" id="r_acb4e7ca8351d28393ad0efcbf713f5b1"><td class="memItemLeft" align="right" valign="top"><a id="acb4e7ca8351d28393ad0efcbf713f5b1" name="acb4e7ca8351d28393ad0efcbf713f5b1"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Proc</b> (const <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;obj)=delete</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Proc</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
 <tr class="separator:acb4e7ca8351d28393ad0efcbf713f5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55f2ea85e64ad8fd2594628529deb462" id="r_a55f2ea85e64ad8fd2594628529deb462"><td class="memItemLeft" align="right" valign="top"><a id="a55f2ea85e64ad8fd2594628529deb462" name="a55f2ea85e64ad8fd2594628529deb462"></a>
-<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;obj)=delete</td></tr>
+<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
 <tr class="separator:a55f2ea85e64ad8fd2594628529deb462"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a363f090d3b715e785ac833fa70f2edc8" id="r_a363f090d3b715e785ac833fa70f2edc8"><td class="memItemLeft" align="right" valign="top"><a id="a363f090d3b715e785ac833fa70f2edc8" name="a363f090d3b715e785ac833fa70f2edc8"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Proc</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;obj)=delete</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Proc</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
 <tr class="separator:a363f090d3b715e785ac833fa70f2edc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2081d66a01a9514ffbc68f7a4b58f8e6" id="r_a2081d66a01a9514ffbc68f7a4b58f8e6"><td class="memItemLeft" align="right" valign="top"><a id="a2081d66a01a9514ffbc68f7a4b58f8e6" name="a2081d66a01a9514ffbc68f7a4b58f8e6"></a>
-<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;obj)=delete</td></tr>
+<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
 <tr class="separator:a2081d66a01a9514ffbc68f7a4b58f8e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa68e0b42ef052f6a66bf4d9be1af0542" id="r_aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">exec</a> (const Dmn_Proc::Task &amp;fnc={}) -&gt; bool</td></tr>
+<tr class="memitem:aa68e0b42ef052f6a66bf4d9be1af0542" id="r_aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">exec</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>={}) -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
 <tr class="memdesc:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the task with optional task replacement.  <br /></td></tr>
 <tr class="separator:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1372ff6e753f214b128883327d44a30b" id="r_a1372ff6e753f214b128883327d44a30b"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">wait</a> () -&gt; bool</td></tr>
+<tr class="memitem:a1372ff6e753f214b128883327d44a30b" id="r_a1372ff6e753f214b128883327d44a30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">wait</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
 <tr class="memdesc:a1372ff6e753f214b128883327d44a30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits for the running thread to complete execution.  <br /></td></tr>
 <tr class="separator:a1372ff6e753f214b128883327d44a30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a45fd201e765bae2c57ad30417ba1eb8c" id="r_a45fd201e765bae2c57ad30417ba1eb8c"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">yield</a> ()</td></tr>
+<tr class="memitem:a45fd201e765bae2c57ad30417ba1eb8c" id="r_a45fd201e765bae2c57ad30417ba1eb8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">yield</a> ()</td></tr>
 <tr class="memdesc:a45fd201e765bae2c57ad30417ba1eb8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Yields the current thread and allows cancellation testing.  <br /></td></tr>
 <tr class="separator:a45fd201e765bae2c57ad30417ba1eb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8be7a6ef05b4fa9aa6d232dc5c6c669f" id="r_a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">testcancel</a> ()</td></tr>
+<tr class="memitem:a8be7a6ef05b4fa9aa6d232dc5c6c669f" id="r_a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">testcancel</a> ()</td></tr>
 <tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests if the current thread should be cancelled.  <br /></td></tr>
 <tr class="separator:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a33feebb676ecff239fd5ddba024f5e32" id="r_a33feebb676ecff239fd5ddba024f5e32"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32">getState</a> () const -&gt; Dmn_Proc::State</td></tr>
+<tr class="memitem:a33feebb676ecff239fd5ddba024f5e32" id="r_a33feebb676ecff239fd5ddba024f5e32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32">getState</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> -&gt; Dmn_Proc::State</td></tr>
 <tr class="memdesc:a33feebb676ecff239fd5ddba024f5e32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the current state of the process.  <br /></td></tr>
 <tr class="separator:a33feebb676ecff239fd5ddba024f5e32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0b709f1b9dc82d20b3a1f1b43d2f974" id="r_ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974">setState</a> (Dmn_Proc::State state) -&gt; Dmn_Proc::State</td></tr>
+<tr class="memitem:ae0b709f1b9dc82d20b3a1f1b43d2f974" id="r_ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974">setState</a> (Dmn_Proc::State <a class="el" href="classdmn_1_1Dmn__Async.html">state</a>) -&gt; Dmn_Proc::State</td></tr>
 <tr class="memdesc:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a new state and returns the previous state.  <br /></td></tr>
 <tr class="separator:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a935d3058daf7f46ff4ee23d142afec9d" id="r_a935d3058daf7f46ff4ee23d142afec9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d">setTask</a> (Dmn_Proc::Task fnc)</td></tr>
+<tr class="memitem:a935d3058daf7f46ff4ee23d142afec9d" id="r_a935d3058daf7f46ff4ee23d142afec9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d">setTask</a> (Dmn_Proc::Task <a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>)</td></tr>
 <tr class="memdesc:a935d3058daf7f46ff4ee23d142afec9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a task function to be executed by the thread.  <br /></td></tr>
 <tr class="separator:a935d3058daf7f46ff4ee23d142afec9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7593c5dbccaf13f394c0f2892b14498" id="r_ad7593c5dbccaf13f394c0f2892b14498"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498">runExec</a> () -&gt; bool</td></tr>
+<tr class="memitem:ad7593c5dbccaf13f394c0f2892b14498" id="r_ad7593c5dbccaf13f394c0f2892b14498"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498">runExec</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
 <tr class="memdesc:ad7593c5dbccaf13f394c0f2892b14498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiates thread execution with the assigned task.  <br /></td></tr>
 <tr class="separator:ad7593c5dbccaf13f394c0f2892b14498"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07ccda9cd84f912b6af92b94fa875fba" id="r_a07ccda9cd84f912b6af92b94fa875fba"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba">stopExec</a> () -&gt; bool</td></tr>
+<tr class="memitem:a07ccda9cd84f912b6af92b94fa875fba" id="r_a07ccda9cd84f912b6af92b94fa875fba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba">stopExec</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
 <tr class="memdesc:a07ccda9cd84f912b6af92b94fa875fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops execution of the running thread.  <br /></td></tr>
 <tr class="separator:a07ccda9cd84f912b6af92b94fa875fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -213,7 +202,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Dmn_Proc::Task &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;&#160;</td>
           <td class="paramname"><em>fnc</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
@@ -285,11 +274,11 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::exec </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::exec </td>
           <td>(</td>
-          <td class="paramtype">const Dmn_Proc::Task &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;&#160;</td>
           <td class="paramname"><em>fnc</em> = <code>{}</code></td><td>)</td>
-          <td> -&gt; bool</td>
+          <td> -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -325,7 +314,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::getState </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::getState </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const -&gt; Dmn_Proc::State</td>
@@ -353,10 +342,10 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::runExec </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::runExec </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt; bool</td>
+          <td> -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td>
         </tr>
       </table>
   </td>
@@ -389,7 +378,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::setState </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::setState </td>
           <td>(</td>
           <td class="paramtype">Dmn_Proc::State&#160;</td>
           <td class="paramname"><em>state</em></td><td>)</td>
@@ -425,7 +414,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void dmn::Dmn_Proc::setTask </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_Proc::setTask </td>
           <td>(</td>
           <td class="paramtype">Dmn_Proc::Task&#160;</td>
           <td class="paramname"><em>fnc</em></td><td>)</td>
@@ -466,10 +455,10 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::stopExec </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::stopExec </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt; bool</td>
+          <td> -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td>
         </tr>
       </table>
   </td>
@@ -501,7 +490,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void dmn::Dmn_Proc::testcancel </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_Proc::testcancel </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -527,10 +516,10 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_Proc::wait </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_Proc::wait </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt; bool</td>
+          <td> -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -559,7 +548,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void dmn::Dmn_Proc::yield </td>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_Proc::yield </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>

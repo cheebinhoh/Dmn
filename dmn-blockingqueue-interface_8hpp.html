@@ -115,16 +115,16 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md0"></a>
+<h2><a class="anchor" id="autotoc_md2"></a>
 Design pattern</h2>
 <ul>
 <li>Proxy : the blocking queue interface to both dmn-blockingqueue and dmn-blockingqueue-lf (lock-free).</li>
 <li>Bridge : the blocking queue interface is abstracted from the underlying implementation (mutex lock or lock-free).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md1"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Static polymorphism</h2>
 <p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsetting the runtime overheadof vtable lookup by moving the function dispatch to compile time.</p>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Move and copy behavior</h2>
 <ul>
 <li>push(const T&amp;): Accepts an lvalue (const or non-const) and enqueues it by copy. Passing a plain lvalue such as <code>push(item)</code> will bind to this overload and copy the item into the queue.</li>
