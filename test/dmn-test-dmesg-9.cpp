@@ -64,8 +64,7 @@ int main(int argc, char *argv[]) {
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb1.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==
                       dmesgpb1.sourceidentifier());
-          EXPECT_TRUE(dmesgpb_read->runningcounter() ==
-                      dmesgpb1.runningcounter());
+          EXPECT_TRUE(dmesgpb_read->runningcounter() == 1);
           EXPECT_TRUE(dmesgpb_read->type() == dmesgpb1.type());
           EXPECT_TRUE(dmesgpb_read->body().message() ==
                       dmesgpb1.body().message());
@@ -79,8 +78,7 @@ int main(int argc, char *argv[]) {
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb2.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==
                       dmesgpb2.sourceidentifier());
-          EXPECT_TRUE(dmesgpb_read->runningcounter() ==
-                      dmesgpb2.runningcounter());
+          EXPECT_TRUE(dmesgpb_read->runningcounter() == 2);
           EXPECT_TRUE(dmesgpb_read->type() == dmesgpb2.type());
           EXPECT_TRUE(dmesgpb_read->body().message() ==
                       dmesgpb2.body().message());

@@ -70,6 +70,8 @@ public:
 
   using ConfigType = std::unordered_map<std::string, std::string>;
 
+  using Dmn_Io<std::string>::write;
+
   enum class Role {
     kConsumer,
     kProducer,
@@ -105,7 +107,7 @@ public:
    *
    * @param item The string to be written to the Kafka broker
    */
-  void write(std::string &item) override;
+  void write(const std::string &item) override;
 
   /**
    * @brief The method writes the message (of the topic) to Kafka broker, this
@@ -157,7 +159,7 @@ private:
    * @param item The data item to be published
    * @param move The data item is moved (if support) and then published if true
    */
-  void write(std::string &item, bool move);
+  void writeCopy(const std::string &item);
 
   /**
    * data members for constructor to instantiate the object.

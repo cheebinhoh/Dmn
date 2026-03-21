@@ -218,6 +218,8 @@ public:
     enum WriteOptions { kDefault = 0, kBlock, kForce, kMaxWriteOptions };
     using WriteFlags = std::bitset<kMaxWriteOptions>;
 
+    using Dmn_Io<dmn::DMesgPb>::write;
+
     /**
      * @brief Construct a handler that subscribes to a specific topic and
      *        optionally provides filter and async-process callbacks.
@@ -351,7 +353,7 @@ public:
      *
      * @param dmesgpb Message to publish (copied).
      */
-    void write(dmn::DMesgPb &dmesgpb) override;
+    void write(const dmn::DMesgPb &dmesgpb) override;
 
     /**
      * @brief Publish the provided DMesgPb by moving it into the publisher
@@ -365,13 +367,23 @@ public:
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue.
+     *        queue, it directs the call to const argument write version.
      *
      * @param dmesgpb Message to publish (copied).
      * @param flags Write options: Block waiting for publisher to process the
      *              message, Force to force message without conflict check.
      */
     void write(dmn::DMesgPb &dmesgpb, WriteFlags flags);
+
+    /**
+     * @brief Publish the provided DMesgPb by copying it into the publisher
+     *        queue.
+     *
+     * @param dmesgpb Message to publish (copied).
+     * @param flags Write options: Block waiting for publisher to process the
+     *              message, Force to force message without conflict check.
+     */
+    void write(const dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the message and return true if no conflict, or false

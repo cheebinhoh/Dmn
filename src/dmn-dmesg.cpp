@@ -338,7 +338,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
 }
 
 /** @brief Copy-write overload: delegates to write(dmesgpb, flags=kDefault). */
-void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb) {
+void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb) {
   this->write(dmesgpb, false);
 }
 
@@ -366,6 +366,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
       m_sub->addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
         writeDMesgInternal(moved_dmesgpb, true, block);
       });
+
   waithandler->wait();
 }
 
@@ -378,19 +379,27 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
  */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &dmesgpb,
                                         WriteFlags flags) {
+  this->write(std::as_const(dmesgpb), flags);
+}
+
+void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb,
+                                        WriteFlags flags) {
   assert(nullptr != m_owner);
 
   this->isAfterInitialPlayback();
 
+  auto copied_dmesgpb = dmesgpb;
+
   bool block = flags.test(kBlock);
   if (flags.test(kForce)) {
-    dmesgpb.set_force(true);
+    copied_dmesgpb.set_force(true);
   }
 
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &dmesgpb, block]() -> void {
-        writeDMesgInternal(dmesgpb, false, block);
+      m_sub->addExecTaskWithWait([this, &copied_dmesgpb, block]() -> void {
+        writeDMesgInternal(copied_dmesgpb, false, block);
       });
+
   waitHandler->wait();
 }
 
@@ -775,9 +784,9 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                           std::string_view topic) {
   std::string topicToBeReset{topic};
 
-  DMN_ASYNC_CALL_WITH_CAPTURE(
-      { this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset); },
-      this, handler_ptr, topicToBeReset);
+  this->addExecTask([this, handler_ptr, topicToBeReset]() {
+    this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset);
+  });
 }
 
 /** @brief Locate @p handler_ptr in the handler list and call

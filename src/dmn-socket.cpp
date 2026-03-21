@@ -103,7 +103,7 @@ auto Dmn_Socket::read() -> std::optional<std::string> {
   return string;
 }
 
-void Dmn_Socket::write(std::string &item) {
+void Dmn_Socket::write(const std::string &item) {
   const char *buf{item.c_str()};
   const size_t n_read{item.size()};
   size_t n_write{};
@@ -133,11 +133,6 @@ void Dmn_Socket::write(std::string &item) {
   }
 }
 
-void Dmn_Socket::write(std::string &&item) {
-  // Move into a named local so the lvalue overload can be reused.
-  std::string moved_item = std::move(item);
-
-  write(moved_item);
-}
+void Dmn_Socket::write(std::string &&item) { write(std::as_const(item)); }
 
 } // namespace dmn
