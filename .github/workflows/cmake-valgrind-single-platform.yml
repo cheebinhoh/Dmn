@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  docker-test:
+  linux-build-valgrind-test:
     runs-on: ubuntu-latest
 
     steps:
