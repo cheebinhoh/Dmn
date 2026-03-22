@@ -116,9 +116,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1c8cb56964ecbbd7c4cb4cb88098aa5e" id="r_a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)=0</td></tr>
 <tr class="memdesc:a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item to the sink.  <br /></td></tr>
 <tr class="separator:a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf6461217b52c2a7b398e817be18bfad" id="r_aaf6461217b52c2a7b398e817be18bfad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#aaf6461217b52c2a7b398e817be18bfad">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">final</a></td></tr>
-<tr class="memdesc:aaf6461217b52c2a7b398e817be18bfad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item to the sink.  <br /></td></tr>
-<tr class="separator:aaf6461217b52c2a7b398e817be18bfad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0439d9ebdf6bbbec7df53503a2fdb9bb" id="r_a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)=0</td></tr>
 <tr class="memdesc:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (move) an item to the sink.  <br /></td></tr>
 <tr class="separator:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -243,7 +240,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </div>
 </div>
 <a id="a1c8cb56964ecbbd7c4cb4cb88098aa5e" name="a1c8cb56964ecbbd7c4cb4cb88098aa5e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c8cb56964ecbbd7c4cb4cb88098aa5e">&#9670;&#160;</a></span>write() <span class="overload">[1/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c8cb56964ecbbd7c4cb4cb88098aa5e">&#9670;&#160;</a></span>write() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -282,7 +279,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </div>
 </div>
 <a id="a0439d9ebdf6bbbec7df53503a2fdb9bb" name="a0439d9ebdf6bbbec7df53503a2fdb9bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0439d9ebdf6bbbec7df53503a2fdb9bb">&#9670;&#160;</a></span>write() <span class="overload">[2/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0439d9ebdf6bbbec7df53503a2fdb9bb">&#9670;&#160;</a></span>write() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -317,43 +314,6 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </dl>
 
 <p>Implemented in <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aeb8d84a63a5f5709166609dfef3163c2">dmn::Dmn_DMesg::Dmn_DMesgHandler</a>, <a class="el" href="classdmn_1_1Dmn__Socket.html#a7457a741ef191b011f6bd236c717ecd3">dmn::Dmn_Socket</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#aac29707e213319956d2c129e8f2c4666">dmn::Dmn_Kafka</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>.</p>
-
-</div>
-</div>
-<a id="aaf6461217b52c2a7b398e817be18bfad" name="aaf6461217b52c2a7b398e817be18bfad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaf6461217b52c2a7b398e817be18bfad">&#9670;&#160;</a></span>write() <span class="overload">[3/3]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::write </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&#160;</td>
-          <td class="paramname"><em>item</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">final</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Write (copy) an item to the sink. </p>
-<p>The const lvalue overload; implementations SHOULD copy <code>item</code> if they need to retain it beyond the call.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">item</td><td>The item to write. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>

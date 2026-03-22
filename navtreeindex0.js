@@ -93,7 +93,6 @@ var NAVTREEINDEX0 =
 "classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e":[1,0,0,10,3],
 "classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079":[1,0,0,10,2],
 "classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25":[1,0,0,10,0],
-"classdmn_1_1Dmn__Io.html#aaf6461217b52c2a7b398e817be18bfad":[1,0,0,10,5],
 "classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083":[1,0,0,10,1],
 "classdmn_1_1Dmn__Kafka.html":[1,0,0,11],
 "classdmn_1_1Dmn__Kafka.html#a28de08efbf58ef3124f71cbed2166c47":[1,0,0,11,4],
@@ -249,5 +248,6 @@ var NAVTREEINDEX0 =
 "hierarchy.html":[1,2],
 "index.html":[],
 "pages.html":[],
-"structdmn_1_1Dmn__Runtime__Job.html":[1,0,0,15]
+"structdmn_1_1Dmn__Runtime__Job.html":[1,0,0,15],
+"structdmn_1_1Dmn__Runtime__Task.html":[1,0,0,17]
 };
