@@ -298,7 +298,7 @@ void Dmn_Pipe<T, QueueType>::write(const T &item) {
 
 template <typename T, typename QueueType>
 void Dmn_Pipe<T, QueueType>::write(T &&item) {
-  QueueType::push(std::move(item));
+  QueueType::push(std::move_if_noexcept(item));
 }
 
 template <typename T, typename QueueType>
