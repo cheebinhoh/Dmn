@@ -21,12 +21,6 @@
  *    not take ownership of the provided object; implementations SHOULD copy the
  *    value if they need to retain or change it.
  *
- *  - write(T &item): Takes an lvalue reference and indirect to the
- *    write(const T &item).
- *
- *  - write(T &&item): Takes an rvalue reference. Implementations SHOULD move
- *    from the item when possible to avoid unnecessary copies.
- *
  *  - shutdown(): Provides a hook that specific concrete io subclass can
  *    impose specific shutdown process to free the resources which otherwise
  *    will be leak (like kafka consumer thread).
@@ -91,16 +85,6 @@ public:
    * @param item The item to write.
    */
   virtual void write(const T &item) = 0;
-
-  /**
-   * @brief Write (copy) an item to the sink.
-   *
-   * The const lvalue overload; implementations SHOULD copy @p item if they
-   * need to retain it beyond the call.
-   *
-   * @param item The item to write.
-   */
-  virtual void write(T &item) final { write(std::as_const(item)); }
 
   /**
    * @brief Write (move) an item to the sink.
