@@ -430,7 +430,7 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
   do {
     auto data = popOptional(false, inflightTicket);
     if (data) {
-      res.push_back(std::move(*data));
+      res.push_back(std::move_if_noexcept(*data));
     } else {
       dmn::Dmn_Proc::yield();
     }
@@ -494,7 +494,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
       } else {
         if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
-          res = std::move(next->m_data);
+          res = std::move_if_noexcept(next->m_data);
 
           retireNode(inflightTicket->getValue(), first);
 
@@ -524,7 +524,7 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(std::move(item)); // move if noexcept, else copy
+  pushImpl(std::move_if_noexcept(item)); // move if noexcept, else copy
 
   DMN_PROC_CLEANUP_POP(0);
 }
