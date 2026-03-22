@@ -5,6 +5,7 @@
  * @brief Lightweight RAII wrapper around native pthread functionality.
  *
  * Overview
+ * --------
  * This header declares Dmn_Proc, a small object-oriented wrapper that
  * encapsulates a pthread and executes a user-provided callable
  * (std::function<void()>) in a separate thread. Instead of varying behaviour
@@ -12,7 +13,8 @@
  * thread runs — this encourages composition over inheritance and reduces the
  * proliferation of subclasses.
  *
- * Key characteristics and expectations:
+ * Key characteristics and expectations
+ * ------------------------------------
  * - RAII: Dmn_Proc attempts to cancel and join its thread in its destructor to
  *   free resources. Users should therefore ensure their task cooperates with
  *   pthread cancellation (either by reaching cancellation points or by calling
@@ -23,6 +25,7 @@
  *   Dmn_Proc::yield()) in long-running loops if you expect prompt cancellation.
  *
  * Design pattern
+ * --------------
  * Command - Implements a variant of the Command design pattern, allowing
  *           clients to submit parameterized requests encapsulated as
  *           std::function<void()> tasks executed by the thread.
@@ -31,7 +34,7 @@
  *             and allows clients to attach additional responsibilities or
  *             vary the behavior of the thread.
  *
- * Note on mutex cleanup macros:
+ * Note on mutex cleanup macros
  * The macros below wrap pthread_cleanup_push/pop for the common pattern of
  * unlocking a mutex in cleanup handlers. They are convenience macros and rely
  * on the presence of dmn::cleanupFuncToUnlockPthreadMutex.
@@ -45,30 +48,6 @@
 #include <functional>
 #include <string>
 #include <string_view>
-
-/**
- * Macro to push a pthread cleanup handler that will unlock the given mutex
- * when the thread exits or is cancelled inside the protected region.
- *
- * Usage:
- *   DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&mutex);
- *   pthread_mutex_lock(&mutex);
- *   // ... protected code ...
- *   DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP();
- *
- * The pair expands to pthread_cleanup_push/ pthread_cleanup_pop and calls
- * dmn::cleanupFuncToUnlockPthreadMutex when executed by pthread cleanup.
- */
-#define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(mutex)                            \
-  pthread_cleanup_push(&dmn::cleanupFuncToUnlockPthreadMutex, (mutex))
-
-/**
- * Macro to pop the pthread cleanup handler pushed by
- * DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP. The argument list is left variadic
- * to match typical usage patterns; we intentionally do not execute the cleanup
- * handler here (pop with 0).
- */
-#define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP(...) pthread_cleanup_pop(0)
 
 /**
  * More generic macro to wrap pthread_cleanup_push
@@ -131,7 +110,7 @@ public:
    *
    * @param name Human-readable name for diagnostics/logging.
    * @param fnc Optional task to run when exec() is called. If not provided,
-   *            a task must be provided to exec().
+   * a task must be provided to exec().
    */
   explicit Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc = {});
   virtual ~Dmn_Proc() noexcept;
