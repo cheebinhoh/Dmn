@@ -24,9 +24,6 @@
  *   a plain lvalue such as `push(item)` will bind to this overload and copy the
  *   item into the queue.
  *
- * - push(T &): Accepts an none-const lvalue and redirect the call to
- *   push(const &T).
- *
  * - push(T&&): Accepts an rvalue and enqueues it using move semantics when
  *   possible. Concrete implementations may employ strategies such as
  *   `std::move_if_noexcept`, which can fall back to copying for types with
@@ -96,13 +93,6 @@ public:
   virtual void push(const T &item) final;
 
   /**
-   * @brief Copy and enqueue the lvalue item into the tail of the queue.
-   *
-   * @param item The lvalue item to be enqueued.
-   */
-  virtual void push(T &item) final;
-
-  /**
    * @brief Enqueue an rvalue item into the tail of the queue, preferring move
    *        semantics.
    *
@@ -164,11 +154,6 @@ auto Dmn_BlockingQueue_Interface<Derived, T>::pop() -> T {
 template <typename Derived, typename T>
 auto Dmn_BlockingQueue_Interface<Derived, T>::popNoWait() -> std::optional<T> {
   return static_cast<Derived *>(this)->popOptional(false);
-}
-
-template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::push(T &item) {
-  static_cast<Derived *>(this)->pushCopy(std::as_const(item));
 }
 
 template <typename Derived, typename T>
