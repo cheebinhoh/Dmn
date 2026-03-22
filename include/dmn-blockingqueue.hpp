@@ -2,7 +2,8 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue.hpp
- * @brief Thread-safe FIFO blocking queue for passing items between threads.
+ * @brief Thread-safe FIFO blocking queue interface for passing items between
+ * threads.
  *
  * Overview
  * --------
@@ -142,10 +143,11 @@ public:
    *
    * @param count   Number of desired items (must be > 0).
    * @param timeout Timeout in microseconds for waiting for the full count.
-   *                A value of 0 means wait forever.
+   * A value of 0 means wait forever.
+   *
    * @return Vector of items (size == count on success without timeout, or
-   *         between 1 and count if a timeout occurred after at least one item
-   *         was produced).
+   * between 1 and count if a timeout occurred after at least one item was
+   * produced).
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
@@ -185,7 +187,8 @@ protected:
    * @brief Internal helper that optionally blocks waiting for an item.
    *
    * @param wait If true, block until an item is available; otherwise return
-   *             std::nullopt immediately if empty.
+   * std::nullopt immediately if empty.
+   *
    * @return optional value popped from the front of the queue.
    */
   virtual auto popOptional(bool wait) -> std::optional<T> override;
@@ -200,7 +203,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to move and enqueue the item into the
-   *  queue.
+   * queue.
    *
    * @param item The item to be enqueued.
    */

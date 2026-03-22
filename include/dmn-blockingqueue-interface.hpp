@@ -7,10 +7,8 @@
  *
  * Design pattern
  * --------------
- * - Proxy    : the blocking queue interface to both dmn-blockingqueue and
- *              dmn-blockingqueue-lf (lock-free).
- * - Bridge   : the blocking queue interface is abstracted from the underlying
- *              implementation (mutex lock or lock-free).
+ * - Bridge : the blocking queue interface is abstracted from the underlying
+ *   implementation (mutex lock or lock-free).
  *
  * Static polymorphism
  * -------------------
@@ -50,7 +48,7 @@ public:
 
   /**
    * @brief Remove and return the front item, waiting until an item is
-   *        available.
+   * available.
    *
    * @details
    * If the queue is empty, this call blocks or waits until either:
@@ -59,8 +57,8 @@ public:
    *
    * @return The dequeued item.
    *
-   * @throws std::runtime_error
-   *         If shutdown begins while waiting and no item is returned.
+   * @throws std::runtime_error If shutdown begins while waiting and no item is
+   * returned.
    */
   virtual auto pop() -> T final;
 
@@ -69,11 +67,10 @@ public:
    *
    * @param count   Maximum number of items to pop.
    * @param timeout Optional timeout in milliseconds. A value of 0 indicates
-   *                an implementation-defined behavior (such as wait
-   *                indefinitely).
+   * an implementation-defined behavior (such as wait indefinitely).
    *
-   * @return A vector containing the dequeued items (possibly fewer than
-   *         @p count, depending on availability and timeout semantics).
+   * @return A vector containing the dequeued items (possibly fewer than @p
+   * count, depending on availability and timeout semantics).
    */
   virtual auto pop(std::size_t count, long timeout = 0) -> std::vector<T> = 0;
 
@@ -81,7 +78,7 @@ public:
    * @brief Attempt to pop a single item without waiting.
    *
    * @return The dequeued item, or std::nullopt if the queue was empty or
-   *         shutdown has detached the queue.
+   * shutdown has detached the queue.
    */
   virtual auto popNoWait() -> std::optional<T> final;
 
@@ -94,23 +91,23 @@ public:
 
   /**
    * @brief Enqueue an rvalue item into the tail of the queue, preferring move
-   *        semantics.
+   * semantics.
    *
    * @param item The rvalue item to be enqueued. Implementations may
-   *        internally fall back to copying (e.g., when using
-   *        std::move_if_noexcept for types with throwing move constructors).
+   * internally fall back to copying (e.g., when using std::move_if_noexcept for
+   * types with throwing move constructors).
    */
   virtual void push(T &&item) final;
 
   /**
    * @brief Flag the m_shutdown flag and shutdown the object to prevent further
-   *        use prior to initializing the teardown.
+   * use prior to initializing the teardown.
    */
   virtual void shutdown();
 
   /**
    * @brief Caller blocks for the queue to be empty and returns the number of
-   *        items that have been processed through the queue.
+   * items that have been processed through the queue.
    *
    * @return The number of items that have been processed through the queue.
    */
