@@ -127,7 +127,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a1c46d07d334212431ca96853c7729b32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
 <tr class="separator:a1c46d07d334212431ca96853c7729b32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff16b71f20e74577c0eb32d2c607e181" id="r_aff16b71f20e74577c0eb32d2c607e181"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#aff16b71f20e74577c0eb32d2c607e181">shutdown</a> ()</td></tr>
-<tr class="memdesc:aff16b71f20e74577c0eb32d2c607e181"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the object and flag the m_shutdown flag.  <br /></td></tr>
+<tr class="memdesc:aff16b71f20e74577c0eb32d2c607e181"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag the m_shutdown flag and shutdown the object to prevent further use prior to initializing the teardown.  <br /></td></tr>
 <tr class="separator:aff16b71f20e74577c0eb32d2c607e181"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a968f69c05f6303fbd286d25ecb987ce2" id="r_a968f69c05f6303fbd286d25ecb987ce2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#a968f69c05f6303fbd286d25ecb987ce2">waitForEmpty</a> () -&gt; std::uint64_t</td></tr>
 <tr class="memdesc:a968f69c05f6303fbd286d25ecb987ce2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Caller blocks for the queue to be empty and returns the number of items that have been processed through the queue.  <br /></td></tr>
@@ -135,9 +135,9 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:aa95f290d3187f31c76f9bcbfde5c93ab" id="r_aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memItemLeft" align="right" valign="top"><a id="aa95f290d3187f31c76f9bcbfde5c93ab" name="aa95f290d3187f31c76f9bcbfde5c93ab"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
-<tr class="separator:aa95f290d3187f31c76f9bcbfde5c93ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab88d04b4a79be28da0941da757d95d52" id="r_ab88d04b4a79be28da0941da757d95d52"><td class="memItemLeft" align="right" valign="top"><a id="ab88d04b4a79be28da0941da757d95d52" name="ab88d04b4a79be28da0941da757d95d52"></a>
+<a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
+<tr class="separator:ab88d04b4a79be28da0941da757d95d52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace1603048b1c5a96e9f49450d75fc2c0" id="r_ace1603048b1c5a96e9f49450d75fc2c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#ace1603048b1c5a96e9f49450d75fc2c0">popOptional</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">bool</a> wait) -&gt; std::optional&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;</td></tr>
 <tr class="separator:ace1603048b1c5a96e9f49450d75fc2c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa58b081caa7003841f6bad0f9254a9ba" id="r_aa58b081caa7003841f6bad0f9254a9ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html#aa58b081caa7003841f6bad0f9254a9ba">pushCopy</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)</td></tr>
@@ -451,7 +451,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </table>
 </div><div class="memdoc">
 
-<p>Shutdown the object and flag the m_shutdown flag. </p>
+<p>Flag the m_shutdown flag and shutdown the object to prevent further use prior to initializing the teardown. </p>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a688fd1572c140088797cb590d92b2baf">dmn::Dmn_BlockingQueue&lt; T &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>.</p>
 

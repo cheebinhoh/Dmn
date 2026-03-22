@@ -123,11 +123,11 @@ Design pattern</h2>
 </ul>
 <h2><a class="anchor" id="autotoc_md3"></a>
 Static polymorphism</h2>
-<p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsetting the runtime overheadof vtable lookup by moving the function dispatch to compile time.</p>
+<p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsetting the runtime overhead of vtable lookup by moving the function dispatch to compile time.</p>
 <h2><a class="anchor" id="autotoc_md4"></a>
 Move and copy behavior</h2>
 <ul>
-<li>push(const T&amp;): Accepts an lvalue (const or non-const) and enqueues it by copy. Passing a plain lvalue such as <code>push(item)</code> will bind to this overload and copy the item into the queue.</li>
+<li>push(const T&amp;): Accepts a const lvalue and enqueues it by copy. Passing a plain lvalue such as <code>push(item)</code> will bind to this overload and copy the item into the queue.</li>
 <li>push(T&amp;&amp;): Accepts an rvalue and enqueues it using move semantics when possible. Concrete implementations may employ strategies such as <code>std::move_if_noexcept</code>, which can fall back to copying for types with throwing move constructors. To move from an lvalue, call <code>push(std::move(item))</code> so that this rvalue overload is selected. </li>
 </ul>
 </div></div><!-- contents -->
