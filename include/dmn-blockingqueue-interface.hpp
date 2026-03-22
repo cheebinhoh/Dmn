@@ -15,14 +15,14 @@
  * Static polymorphism
  * -------------------
  * We use Curiously Recurring Template Pattern (CRTP) to achieve static
- * polymorphism that effectively offsetting the runtime overheadof vtable lookup
- * by moving the function dispatch to compile time.
+ * polymorphism that effectively offsetting the runtime overhead of vtable
+ * lookup by moving the function dispatch to compile time.
  *
  * Move and copy behavior
  * ----------------------
- * - push(const T&): Accepts an lvalue (const or non-const) and enqueues it
- *   by copy. Passing a plain lvalue such as `push(item)` will bind to this
- *   overload and copy the item into the queue.
+ * - push(const T&): Accepts a const lvalue and enqueues it by copy. Passing
+ *   a plain lvalue such as `push(item)` will bind to this overload and copy the
+ *   item into the queue.
  *
  * - push(T&&): Accepts an rvalue and enqueues it using move semantics when
  *   possible. Concrete implementations may employ strategies such as
@@ -103,7 +103,8 @@ public:
   virtual void push(T &&item) final;
 
   /**
-   * @brief Shutdown the object and flag the m_shutdown flag.
+   * @brief Flag the m_shutdown flag and shutdown the object to prevent further
+   *        use prior to initializing the teardown.
    */
   virtual void shutdown();
 
@@ -118,7 +119,7 @@ public:
   }
 
 protected:
-  auto isShutdown() -> bool {
+  virtual auto isShutdown() -> bool {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
@@ -156,13 +157,13 @@ auto Dmn_BlockingQueue_Interface<Derived, T>::popNoWait() -> std::optional<T> {
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::push(T &&item) {
-  static_cast<Derived *>(this)->pushMove(std::move(item));
+void Dmn_BlockingQueue_Interface<Derived, T>::push(const T &item) {
+  static_cast<Derived *>(this)->pushCopy(item);
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::push(const T &item) {
-  static_cast<Derived *>(this)->pushCopy(item);
+void Dmn_BlockingQueue_Interface<Derived, T>::push(T &&item) {
+  static_cast<Derived *>(this)->pushMove(std::move(item));
 }
 
 template <typename Derived, typename T>

@@ -162,7 +162,7 @@ public:
 
   /**
    * @brief Wait until the queue becomes empty and return the total number of
-   *        items that have passed through the queue.
+   * items that have passed through the queue.
    *
    * This blocks until the queue is empty and asserts that all pushed items
    * have been popped (m_pop_count == m_push_count) before returning the
@@ -174,6 +174,14 @@ public:
 
 protected:
   /**
+   * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
+   * otherwise. The method is delegation of Dmn_Inflight_Guard module.
+   *
+   * @return true or false that the queue is shutdown.
+   */
+  auto isInflightGuardClosed() -> bool override;
+
+  /**
    * @brief Internal helper that optionally blocks waiting for an item.
    *
    * @param wait If true, block until an item is available; otherwise return
@@ -184,7 +192,7 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to copy and enqueue the item into the
-   *        queue.
+   * queue.
    *
    * @param item The item to be enqueued.
    */
@@ -192,19 +200,11 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to move and enqueue the item into the
-   *        queue.
+   *  queue.
    *
    * @param item The item to be enqueued.
    */
   void pushMove(T &&item) override;
-
-  /**
-   * @brief Return true if the queue is stop (m_shutdown_flag is true), or false
-   *        otherwise. The method is delegation of Dmn_Inflight_Guard module.
-   *
-   * @return true or false that the queue is shutdown.
-   */
-  auto isInflightGuardClosed() -> bool override;
 
 private:
   static void cleanup_thunk_inflight(void *arg);
@@ -213,9 +213,8 @@ private:
 
   std::deque<T> m_queue{};
   std::mutex m_mutex{};
-  std::condition_variable m_empty_cond{}; // signalled when queue becomes empty
-  std::condition_variable
-      m_not_empty_cond{}; // signalled on push (multi-pop timed wait)
+  std::condition_variable m_empty_cond{};
+  std::condition_variable m_not_empty_cond{};
   uint64_t m_push_count{};
   uint64_t m_pop_count{};
 }; // class Dmn_BlockingQueue
