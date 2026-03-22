@@ -47,7 +47,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg) {
  *
  * @param name Descriptive name for the process (for debugging/logging)
  * @param fnc Optional task function to be executed. Can be nullptr if task
- *            is to be set later via setTask() or exec()
+ * is to be set later via setTask() or exec()
  */
 Dmn_Proc::Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc)
     : m_name{name} {
@@ -83,7 +83,8 @@ Dmn_Proc::~Dmn_Proc() noexcept try {
  * Transitions the state from Ready to Running by calling runExec().
  *
  * @param fnc Optional new task function to execute. If provided, replaces
- *            the current task. If nullptr, executes the previously set task.
+ * the current task. If nullptr, executes the previously set task.
+ *
  * @return true if thread creation succeeded, false otherwise
  */
 auto Dmn_Proc::exec(const Dmn_Proc::Task &fnc) -> bool {
@@ -108,6 +109,7 @@ auto Dmn_Proc::getState() const -> Dmn_Proc::State { return m_state; }
  * swapping states.
  *
  * @param state The new state to set
+ *
  * @return The previous state before this call
  */
 auto Dmn_Proc::setState(State state) -> Dmn_Proc::State {
@@ -244,6 +246,7 @@ auto Dmn_Proc::runExec() -> bool {
  * the newly created thread.
  *
  * @param context Pointer to the Dmn_Proc instance managing this thread
+ *
  * @return Always returns nullptr
  * @throws std::runtime_error if cancellation setup fails
  */

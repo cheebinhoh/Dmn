@@ -6,6 +6,7 @@
  *        background processing.
  *
  * Overview
+ * --------
  * - Dmn_Pipe<T, QueueType> implements a FIFO buffer that:
  *   - allows producers to write without blocking (write operations enqueue
  *     items immediately),
@@ -16,6 +17,7 @@
  *   interface) and Dmn_Proc (optional processing thread support).
  *
  * Threading and cancellation
+ * --------------------------
  * - push/pop and internal synchronization are handled by QueueType.
  * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
@@ -25,6 +27,7 @@
  *   under the mutex.
  *
  * Read / Write semantics
+ * ----------------------
  * - write(const T&) copies `item` into the pipe.
  * - write(T&&) moves `item` into the pipe; move will be used when the move
  *   constructor is noexcept (via QueueType::push semantics).
@@ -32,7 +35,6 @@
  *   in std::optional; when the pipe is closed it returns std::nullopt.
  * - readAndProcess(fn) blocks until the next item is available or timeout
  *   and invokes the provided task with the item (moved where possible).
- *
  * - read(count, timeout) and readAndProcss(fn, count, timeout) function
  *   behaves like it counterpart without count and timeout but with the
  *   following blocking behevior
@@ -50,7 +52,6 @@
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
-
  *
  * waitForEmpty() blocks until all items that were inbound into the pipe
  * has been processed (or pop out).
@@ -133,10 +134,10 @@ public:
    *
    * @param count   Number of desired items (must be > 0).
    * @param timeout Timeout in microseconds for waiting for the full count.
-   *                A value of 0 means wait forever.
+   *
    * @return Vector of items (size == count on success without timeout, or
-   *         between 1 and count if a timeout occurred after at least one item
-   *         was produced).
+   * between 1 and count if a timeout occurred after at least one item
+   * was produced).
    */
   auto read(size_t count, long timeout = 0) -> std::vector<T> override;
 
@@ -149,6 +150,7 @@ public:
    * semantics when possible.
    *
    * @param fn The functor to process the next item popped from the pipe
+   *
    * @return The number of items read and processed.
    */
   auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0)

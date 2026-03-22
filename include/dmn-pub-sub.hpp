@@ -83,10 +83,7 @@
  * Limitations and notes
  * - Capacity <= 0 is not validated beyond construction; callers should pass a
  *   sensible positive capacity.
- * - The implementation uses mutexes and expects the Dmn_Async
- *   primitives/macros (e.g., DMN_ASYNC_CALL_WITH_CAPTURE and
- *   DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to integrate with thread/task
- *   cleanup correctly.
+ * - The implementation uses mutexes and conditional variables.
  *
  * See also
  * - dmn-async.hpp : asynchronous task execution and synchronization helpers.
