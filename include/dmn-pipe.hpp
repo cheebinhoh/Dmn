@@ -83,7 +83,7 @@
 namespace dmn {
 
 template <typename T, typename QueueType = Dmn_BlockingQueue<T>>
-class Dmn_Pipe : public QueueType, public Dmn_Io<T>, public Dmn_Proc {
+class Dmn_Pipe : public Dmn_Io<T>, private QueueType, private Dmn_Proc {
   static_assert(
       std::is_base_of_v<Dmn_BlockingQueue_Interface<QueueType, T>, QueueType>,
       "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<QueueType, "
@@ -189,7 +189,7 @@ public:
   auto waitForEmpty() -> uint64_t override;
 
 protected:
-  virtual auto isShutdown() -> bool {
+  virtual auto isShutdown() -> bool override {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 

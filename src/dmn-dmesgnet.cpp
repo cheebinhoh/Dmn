@@ -359,7 +359,8 @@ void Dmn_DMesgNet::createSubscriptHandler() {
       handlerConfig);
 
   m_subscript_handler->setConflictCallbackTask(
-      [](Dmn_DMesgHandler &handler, const dmn::DMesgPb) -> void {});
+      []([[maybe_unused]] Dmn_DMesgHandler &handler,
+         const dmn::DMesgPb) -> void {});
 }
 
 /**
