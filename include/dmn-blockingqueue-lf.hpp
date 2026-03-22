@@ -2,8 +2,8 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue-lf.hpp
- * @brief Lock-free multi-producer/multi-consumer FIFO queue with optional
- * blocking pop. This modules implements the Michael-Scott queue algorithm.
+ * @brief Thread-safe FIFO blocking queue interface for passing items between
+ * threads, it implements the Michael-Scott lock-free queue algorithm.
  *
  * @details
  * This header provides dmn::Dmn_BlockingQueue_Lf, a thread-safe FIFO queue
@@ -16,16 +16,19 @@
  *   dmn::Dmn_Inflight_Guard) to safely reclaim removed nodes without
  *   use-after-free.
  *
- * ### Blocking model
+ * Blocking model
+ * --------------
  * The queue does not use condition variables. "Blocking" means active waiting
  * with yielding (and cancellation checks where applicable). This is suitable
  * for scenarios where latency is prioritized and threads are expected to wake
- * soon, but it may be inefficient for long idle waits.
+ * soon, but it may be inefficient for long idle waits with constraints number
+ * of cpus.
  *
- * ### Shutdown behavior
+ * Shutdown behavior
+ * -----------------
  * Destruction triggers shutdown. After shutdown begins:
- * - push operations fail (throw),
- * - blocking pops are interrupted and will throw,
+ * - push operations fail (throw).
+ * - blocking pops are interrupted and will throw.
  * - non-blocking pops return empty.
  *
  * @note Memory reclamation is integrated with the inflight-guard interface;
@@ -56,7 +59,7 @@
 namespace dmn {
 
 /**
- * @brief Thread-safe FIFO queue.
+ * @brief Lock-Free Thread-safe FIFO queue.
  *
  * Template parameter T is the stored item type.
  */
@@ -80,17 +83,18 @@ class Dmn_BlockingQueue_Lf
    *
    * - Each push/pop enters an in-flight region and is assigned an epoch index.
    * - Removed nodes are placed onto a per-epoch retired list (not deleted yet).
-   * - When an epoch bucket is no longer active and its in-flight count drops to
-   *   zero, its retired nodes can be safely freed.
+   * - When an epoch retired list is no longer active (it assigned epoch's
+   *   in-flight count drops to zero), the epoch's retired nodes can be safely
+   *   freed.
    *
    * The mapping from a monotonically increasing epoch id to a bounded number of
-   * epoch buckets is controlled by:
+   * epoch buckets (referenced by epoch index) is controlled by:
    * - @ref s_epochTimeScale: how frequently the global epoch advances as a
    *   function of total in-flight API calls.
    * - @ref s_epochIdScale: how many consecutive epoch ids map to the same
-   * bucket (coarser grouping reduces churn).
+   *   bucket (coarser grouping reduces churn).
    * - @ref s_epochDataSize: number of buckets (upper bound on parked retired
-   * lists).
+   *   lists).
    *
    * This bounded-bucket design prevents unbounded growth of deferred nodes
    * while still allowing safe reclamation under concurrency.
@@ -178,15 +182,17 @@ public:
    *
    * If the timeout elapses (or shutdown begins) and at least one item was
    * dequeued, the returned vector contains the items obtained so far.
+   *
    * If no item was dequeued before timeout/shutdown, the returned vector is
    * empty.
    *
    * @warning The returned items are not guaranteed to be consecutive relative
    * to other concurrent consumers. This function only returns items
-   *          successfully dequeued by the calling thread.
+   * successfully dequeued by the calling thread.
    *
    * @param count   Maximum number of items to return (must be > 0).
    * @param timeout Timeout in microseconds. 0 means wait indefinitely.
+   *
    * @return Vector of dequeued items (size in [0, count]).
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
@@ -208,7 +214,7 @@ public:
    *
    * @warning This method is not protected by the inflight/epoch guard and
    * should not be used concurrently with arbitrary producers/consumers unless
-   *          the caller can ensure safe coordination.
+   * the caller can ensure safe coordination.
    *
    * @return Total number of successful pushes observed by this queue since
    *         construction.
@@ -228,6 +234,7 @@ protected:
    * @param wait True will block the caller if the queue is empty.
    * @param inflightTicket The inflight ticket that keeps track of epochIndex
    *                       for epoch to store deleted node.
+   *
    * @return An optional containing the data from the head of the queue, or
    *         std::nullopt if the queue is empty and wait is false.
    */
@@ -237,17 +244,17 @@ protected:
 
   /**
    * @brief Wrapper call to pushImpl to copy and enqueue the item into the
-   *        queue.
+   * queue.
    *
    * @param item The item to be enqueued.
    * @throws std::runtime_error if the queue is shutting down when the push
-   *         operation is attempted.
+   * operation is attempted.
    */
   void pushCopy(const T &item) override;
 
   /**
    * @brief Wrapper call to pushImpl to move and enqueue the item into the
-   *        queue.
+   * queue.
    *
    * @param item The item to be enqueued.
    * @throws std::runtime_error if the queue is shutting down when the push
@@ -274,18 +281,20 @@ private:
 
   /**
    * @brief Derive the epoch index (base of epoch id) to reference into queue's
-   *        epoch blocks.
+   * epoch blocks.
    *
    * @param epochId The epoch id
+   *
    * @return The derived epoch index into queue's epoch blocks.
    */
   static uint64_t calc_epoch_index(uint64_t epochId);
 
   /**
    * @brief Free the chain of nodes based on templatized next field, and
-   *        return total number of nodes freed.
+   * return total number of nodes freed.
    *
    * @param head Pointer to chain of nodes to be freed.
+   *
    * @return Total number of nodes freed.
    */
   template <std::atomic<Node *> Node::*NextField>
@@ -320,7 +329,7 @@ private:
 
   /**
    * @brief The method returns a node into epoch based reclamation
-   *        blocks, and free it later.
+   * blocks, and free it later.
    *
    * @param epochIndex Index to the epoch block to retire the node.
    * @param node Pointer to the node to be free.
