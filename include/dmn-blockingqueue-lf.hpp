@@ -99,7 +99,7 @@ class Dmn_BlockingQueue_Lf
    * This bounded-bucket design prevents unbounded growth of deferred nodes
    * while still allowing safe reclamation under concurrency.
    *
-   * @detail
+   * @details
    * The following parameters control Epoch based reclamation logic
    * for the pop out node with Dmn_Inflight_Guard. Each pop or push call is
    * guarded by Dmn_Inflight_Guard.
