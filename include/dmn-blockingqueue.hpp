@@ -56,7 +56,7 @@ namespace dmn {
  *   methods in the implementaion tree in the Bridge design pattern.
  *
  * - There are a set of composite methods that are marked as final and
- *   implementedd in term of primitive methods. Those are methods in the
+ *   implemented in term of primitive methods. Those are methods in the
  *   the abstraction tree in Bridge design pattern.
  */
 template <typename Derived, typename T> class Dmn_BlockingQueue {
