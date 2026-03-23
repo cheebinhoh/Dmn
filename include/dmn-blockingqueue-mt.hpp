@@ -1,14 +1,14 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-blockingqueue.hpp
+ * @file dmn-blockingqueue-mt.hpp
  * @brief Thread-safe FIFO blocking queue interface for passing items between
  * threads.
  *
  * Overview
  * --------
- * Dmn_BlockingQueue<T> is a thread-safe FIFO queue implementation intended for
- * use by producer and consumer threads. Key behavioral properties:
+ * Dmn_BlockingQueue_Mt<T> is a thread-safe FIFO queue implementation intended
+ * for use by producer and consumer threads. Key behavioral properties:
  *  - push operations are non-blocking (they will not wait for consumers).
  *  - pop operations may block waiting for data (either indefinitely or with a
  *    timeout, depending on the API used).
@@ -70,8 +70,8 @@
  *   incidental sharing between objects.
  */
 
-#ifndef DMN_BLOCKINGQUEUE_HPP_
-#define DMN_BLOCKINGQUEUE_HPP_
+#ifndef DMN_BLOCKINGQUEUE_MT_HPP_
+#define DMN_BLOCKINGQUEUE_MT_HPP_
 
 #include <algorithm>
 #include <atomic>
@@ -104,26 +104,27 @@ namespace dmn {
  * Template parameter T is the stored item type.
  */
 template <typename T = std::string>
-class Dmn_BlockingQueue
-    : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>,
+class Dmn_BlockingQueue_Mt
+    : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>,
       private Dmn_Inflight_Guard<> {
-  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>;
+  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>;
 
   using Inflight_Guard_Ticket = std::unique_ptr<Dmn_Inflight_Guard<>::Ticket>;
 
 public:
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::isShutdown;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::pop;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::push;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::isShutdown;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::pop;
+  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::push;
 
-  Dmn_BlockingQueue();
-  Dmn_BlockingQueue(std::initializer_list<T> list);
-  virtual ~Dmn_BlockingQueue() noexcept;
+  Dmn_BlockingQueue_Mt();
+  Dmn_BlockingQueue_Mt(std::initializer_list<T> list);
+  virtual ~Dmn_BlockingQueue_Mt() noexcept;
 
-  Dmn_BlockingQueue(const Dmn_BlockingQueue<T> &obj) = delete;
-  Dmn_BlockingQueue<T> &operator=(const Dmn_BlockingQueue<T> &obj) = delete;
-  Dmn_BlockingQueue(Dmn_BlockingQueue<T> &&obj) = delete;
-  Dmn_BlockingQueue<T> &operator=(Dmn_BlockingQueue<T> &&obj) = delete;
+  Dmn_BlockingQueue_Mt(const Dmn_BlockingQueue_Mt<T> &obj) = delete;
+  Dmn_BlockingQueue_Mt<T> &
+  operator=(const Dmn_BlockingQueue_Mt<T> &obj) = delete;
+  Dmn_BlockingQueue_Mt(Dmn_BlockingQueue_Mt<T> &&obj) = delete;
+  Dmn_BlockingQueue_Mt<T> &operator=(Dmn_BlockingQueue_Mt<T> &&obj) = delete;
 
   /**
    * @brief Pop multiple items from the queue with optional timeout semantics.
@@ -220,19 +221,20 @@ private:
   std::condition_variable m_not_empty_cond{};
   uint64_t m_push_count{};
   uint64_t m_pop_count{};
-}; // class Dmn_BlockingQueue
+}; // class Dmn_BlockingQueue_Mt
 
-template <typename T> Dmn_BlockingQueue<T>::Dmn_BlockingQueue() {}
+template <typename T> Dmn_BlockingQueue_Mt<T>::Dmn_BlockingQueue_Mt() {}
 
 template <typename T>
-Dmn_BlockingQueue<T>::Dmn_BlockingQueue(std::initializer_list<T> list)
-    : Dmn_BlockingQueue{} {
+Dmn_BlockingQueue_Mt<T>::Dmn_BlockingQueue_Mt(std::initializer_list<T> list)
+    : Dmn_BlockingQueue_Mt{} {
   for (auto data : list) {
     this->push(data);
   }
 }
 
-template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
+template <typename T>
+Dmn_BlockingQueue_Mt<T>::~Dmn_BlockingQueue_Mt() noexcept try {
   if (!isShutdown()) {
     shutdown();
   }
@@ -245,22 +247,22 @@ template <typename T> Dmn_BlockingQueue<T>::~Dmn_BlockingQueue() noexcept try {
 }
 
 template <typename T>
-void Dmn_BlockingQueue<T>::cleanup_thunk_inflight(void *arg) {
+void Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight(void *arg) {
   auto *ticket_sp = static_cast<Inflight_Guard_Ticket *>(arg);
 
   (*ticket_sp).reset();
 }
 
 template <typename T>
-auto Dmn_BlockingQueue<T>::isInflightGuardClosed() -> bool {
+auto Dmn_BlockingQueue_Mt<T>::isInflightGuardClosed() -> bool {
   return isShutdown();
 }
 
-template <typename T> void Dmn_BlockingQueue<T>::pushCopy(const T &item) {
+template <typename T> void Dmn_BlockingQueue_Mt<T>::pushCopy(const T &item) {
   pushImpl(item); // copy
 }
 
-template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
+template <typename T> void Dmn_BlockingQueue_Mt<T>::pushMove(T &&item) {
   pushImpl(std::move(item)); // move
 }
 
@@ -276,10 +278,10 @@ template <typename T> void Dmn_BlockingQueue<T>::pushMove(T &&item) {
  */
 template <typename T>
 template <class U>
-void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
+void Dmn_BlockingQueue_Mt<T>::pushImpl(U &&item) {
   auto inflightTicket = this->enterInflightGate();
 
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
   std::unique_lock<std::mutex> lock(m_mutex);
@@ -297,14 +299,14 @@ void Dmn_BlockingQueue<T>::pushImpl(U &&item) {
   DMN_PROC_CLEANUP_POP(0);
 }
 
-template <typename T> void Dmn_BlockingQueue<T>::shutdown() {
-  Dmn_BlockingQueue_Interface<Dmn_BlockingQueue<T>, T>::shutdown();
+template <typename T> void Dmn_BlockingQueue_Mt<T>::shutdown() {
+  Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::shutdown();
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
 }
 
-template <typename T> auto Dmn_BlockingQueue<T>::waitForEmpty() -> uint64_t {
+template <typename T> auto Dmn_BlockingQueue_Mt<T>::waitForEmpty() -> uint64_t {
   uint64_t inbound_count{};
 
   std::unique_lock<std::mutex> lock(m_mutex);
@@ -322,7 +324,8 @@ template <typename T> auto Dmn_BlockingQueue<T>::waitForEmpty() -> uint64_t {
 }
 
 template <typename T>
-auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
+auto Dmn_BlockingQueue_Mt<T>::pop(size_t count, long timeout)
+    -> std::vector<T> {
   std::vector<T> ret{};
 
   assert(count > 0);
@@ -331,7 +334,7 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
 
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
   Dmn_Proc::testcancel();
@@ -381,14 +384,14 @@ auto Dmn_BlockingQueue<T>::pop(size_t count, long timeout) -> std::vector<T> {
 }
 
 template <typename T>
-auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
+auto Dmn_BlockingQueue_Mt<T>::popOptional(bool wait) -> std::optional<T> {
   std::unique_lock<std::mutex> lock(m_mutex);
 
   std::optional<T> ret{};
 
   auto inflightTicket = this->enterInflightGate();
 
-  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue<T>::cleanup_thunk_inflight,
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
   Dmn_Proc::testcancel();
@@ -430,4 +433,4 @@ auto Dmn_BlockingQueue<T>::popOptional(bool wait) -> std::optional<T> {
 
 } // namespace dmn
 
-#endif // DMN_BLOCKINGQUEUE_HPP_
+#endif // DMN_BLOCKINGQUEUE_MT_HPP_

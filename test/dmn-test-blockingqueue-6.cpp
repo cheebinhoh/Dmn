@@ -14,14 +14,14 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   using namespace std::string_literals;
 
-  auto buf = std::make_unique<dmn::Dmn_BlockingQueue<std::string>>();
+  auto buf = std::make_unique<dmn::Dmn_BlockingQueue_Mt<std::string>>();
 
   auto procToShutdown = dmn::Dmn_Proc("proc", [&buf]() {
     std::this_thread::sleep_for(std::chrono::seconds(10));

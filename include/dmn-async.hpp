@@ -36,7 +36,7 @@
 #include <memory>
 #include <string_view>
 
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-pipe.hpp"
 
 // Helper macros to submit tasks with different capture styles. They call
@@ -88,7 +88,7 @@ private:
   std::future<void> m_fut{};
 };
 
-template <template <class> class QueueType = Dmn_BlockingQueue>
+template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Async {
 public:
   /**

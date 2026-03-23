@@ -14,7 +14,7 @@
 #include <thread>
 #include <vector>
 
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-proc.hpp"
 
 int main(int argc, char *argv[]) {
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
   std::uniform_int_distribution<> global_distr(1, 10);
 
-  auto queue = std::make_unique<dmn::Dmn_BlockingQueue<int>>();
+  auto queue = std::make_unique<dmn::Dmn_BlockingQueue_Mt<int>>();
 
   int count1{};
   int count2{};
