@@ -139,7 +139,7 @@ private:
 };
 
 template <typename Derived, typename T>
-auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
+inline auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
   auto data = static_cast<Derived *>(this)->popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
@@ -149,22 +149,22 @@ auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
 }
 
 template <typename Derived, typename T>
-auto Dmn_BlockingQueue<Derived, T>::popNoWait() -> std::optional<T> {
+inline auto Dmn_BlockingQueue<Derived, T>::popNoWait() -> std::optional<T> {
   return static_cast<Derived *>(this)->popOptional(false);
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue<Derived, T>::push(const T &item) {
+inline void Dmn_BlockingQueue<Derived, T>::push(const T &item) {
   static_cast<Derived *>(this)->pushCopy(item);
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue<Derived, T>::push(T &&item) {
+inline void Dmn_BlockingQueue<Derived, T>::push(T &&item) {
   static_cast<Derived *>(this)->pushMove(std::move(item));
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue<Derived, T>::shutdown() {
+inline void Dmn_BlockingQueue<Derived, T>::shutdown() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 }
 
