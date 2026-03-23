@@ -13,11 +13,12 @@
  * to publish and consume DMesgPb messages.
  *
  * Design pattern
+ * --------------
  * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
  *            Dmn_DMesgHandler instances, offering pointer-like access while
- *            allowing the publisher to control handler lifetime.
+ *            allowing the publisher to control and own handler lifetime.
  * Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built
- *             on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
+ *             on top of the Proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
  *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
@@ -108,18 +109,28 @@
 
 namespace dmn {
 
-/** @brief Identifier string for the sys topic (used by DMesgNet). */
+/**
+ * @brief Identifier string for the sys topic (used by DMesgNet).
+ */
 extern const char *const kDMesgSysIdentifier;
 
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
-  /** @brief Callback type invoked asynchronously with a copy of each delivered
-   * message. */
+  /**
+   * @brief Callback type invoked asynchronously with a copy of each delivered
+   * message.
+   */
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
-  /** @brief Predicate that returns false to drop an incoming message before
-   * buffering. */
+
+  /**
+   * @brief Predicate that returns false to drop an incoming message before
+   * buffering.
+   */
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
-  /** @brief Key/value map used to pass per-handler configuration options. */
+
+  /**
+   * @brief Key/value map used to pass per-handler configuration options.
+   */
   using HandlerConfig = std::unordered_map<std::string, std::string>;
 
   /**
@@ -133,29 +144,28 @@ public:
 
   /**
    * @brief If set to "yes" or "1", handlers opened with this config will
-   *        receive system messages (DMesgPb.message_type == "sys").
+   * receive system messages (DMesgPb.message_type == "sys").
    */
   static constexpr std::string_view kHandlerConfig_IncludeSys =
       "Handler_IncludeSys";
 
   /**
    * @brief If set to "yes" or "1", handlers opened with this config will
-   *        ignore topic filtering when reading: read() returns messages
-   *        regardless of topic value and write() will not set the message
-   *        topic automatically.
+   * ignore topic filtering when reading: read() returns messages regardless of
+   * topic value and write() will not set the message topic automatically.
    */
   static constexpr std::string_view kHandlerConfig_NoTopicFilter =
       "Handler_NoTopicFilter";
 
   /**
    * @brief Type used to represent key/value configuration entries for the
-   *        Dmn_DMesg object itself.
+   * Dmn_DMesg object itself.
    */
   using KeyValueConfiguration = std::unordered_map<std::string, std::string>;
 
   /**
    * @brief Dmn_DMesgHandler is an IO-style interface for clients to publish
-   *        and consume dmn::DMesgPb messages. It implements Dmn_Io<DMesgPb>.
+   * and consume dmn::DMesgPb messages. It implements Dmn_Io<DMesgPb>.
    *
    * The handler composes a small nested subscriber object (Dmn_DMesgHandlerSub)
    * that integrates with the underlying Dmn_Pub infrastructure. The handler
@@ -172,7 +182,7 @@ public:
 
     /**
      * @brief Internal subscriber that forwards notifications into its owning
-     *        Dmn_DMesgHandler.
+     * Dmn_DMesgHandler.
      *
      * This class is intentionally small and is used only by Dmn_DMesgHandler.
      * m_owner points to the owning handler so that notify(...) can update the
@@ -190,7 +200,7 @@ public:
 
       /**
        * @brief Called by the publisher to notify this subscriber of a new
-       *        DMesgPb message.
+       * DMesgPb message.
        *
        * Behavior summary:
        *  - Messages published by the same handler are skipped (handler does
@@ -221,15 +231,13 @@ public:
 
     /**
      * @brief Construct a handler that subscribes to a specific topic and
-     *        optionally provides filter and async-process callbacks.
+     * optionally provides filter and async-process callbacks.
      *
      * @param name             Unique name/identifier for the handler.
-     * @param topic            Topic string to subscribe/publish to (empty
-     *                         string is a valid topic).
-     * @param filter_fn        Optional filter functor: return false to drop
-     *                         a message.
-     * @param async_process_fn Optional functor to process messages
-     *                         asynchronously as they arrive.
+     * @param topic            Topic string to subscribe/publish to.
+     * @param filter_fn        Optional filter functor: return false exclude
+     * message.
+     * @param async_process_fn Optional functor to process messages.
      * @param configs          Optional handler-specific configuration.
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
@@ -244,40 +252,40 @@ public:
 
     /**
      * @brief Construct a handler with topic and a filter (no async fn),
-     *        using default configuration.
+     * using default configuration.
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
                      FilterTask filter_fn);
 
     /**
      * @brief Construct a handler with topic only (no filter, no async fn),
-     *        using default configuration.
+     * using default configuration.
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic);
 
     /**
      * @brief Construct a handler that subscribes to the empty topic with
-     *        filter and async-process callbacks and a custom configuration.
+     * filter and async-process callbacks and a custom configuration.
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
                      AsyncProcessTask async_process_fn, HandlerConfig configs);
 
     /**
      * @brief Construct a handler that subscribes to the empty topic with
-     *        filter and async-process callbacks using default configuration.
+     * filter and async-process callbacks using default configuration.
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn,
                      AsyncProcessTask async_process_fn);
 
     /**
      * @brief Construct a handler that subscribes to the empty topic with
-     *        filter only, using default configuration.
+     * filter only, using default configuration.
      */
     Dmn_DMesgHandler(std::string_view name, FilterTask filter_fn);
 
     /**
      * @brief Construct a handler with only a name; subscribes to the empty
-     *        topic with default behaviour.
+     * topic with default behaviour.
      */
     explicit Dmn_DMesgHandler(std::string_view name);
 
@@ -294,7 +302,7 @@ public:
      * @param topic the topic to check if it is in conflict, or "" any topic.
      *
      * @return True or False if the handler is in conflict state from last
-     *         written message
+     * written message
      */
     auto isInConflict(std::string_view topic = "") -> bool;
 
@@ -318,29 +326,29 @@ public:
 
     /**
      * @brief Blocking read: return the next available DMesgPb or nullopt if
-     *                       the read fails / on shutdown.
+     * the read fails / on shutdown.
      */
     auto read() -> std::optional<dmn::DMesgPb> override;
 
     /**
      * @brief Mark the handler's conflict as resolved. This posts an async task
-     *        to the publisher's singleton async thread to clear the handler's
-     *        conflict state (so the handler need not manage mutexes itself).
+     * to the publisher's singleton async thread to clear the handler's conflict
+     * state (so the handler need not manage mutexes itself).
      */
     void resolveConflict(std::string_view topic = "");
 
     /**
      * @brief Set a callback to be invoked when the handler enters a conflict
-     *        state.
+     * state.
      *
      * @param conflict_fn Callback receiving the handler and the message that
-     *                    caused the conflict.
+     * caused the conflict.
      */
     void setConflictCallbackTask(ConflictCallbackTask conflict_fn);
 
     /**
      * @brief Publish the provided DMesgPb by moving it into the publisher
-     *        queue (efficient path).
+     * queue (efficient path).
      *
      * @param dmesgpb Message to publish (moved).
      */
@@ -348,7 +356,7 @@ public:
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue.
+     * queue.
      *
      * @param dmesgpb Message to publish (copied).
      */
@@ -356,41 +364,41 @@ public:
 
     /**
      * @brief Publish the provided DMesgPb by moving it into the publisher
-     *        queue (efficient path).
+     * queue (efficient path).
      *
      * @param dmesgpb Message to publish (moved).
      * @param flags Write options: Block waiting for publisher to process the
-     *              message, Force to force message without conflict check.
+     * message, Force to force message without conflict check.
      */
     void write(dmn::DMesgPb &&dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue, it directs the call to const argument write version.
+     * queue, it directs the call to const argument write version.
      *
      * @param dmesgpb Message to publish (copied).
      * @param flags Write options: Block waiting for publisher to process the
-     *              message, Force to force message without conflict check.
+     * message, Force to force message without conflict check.
      */
     void write(dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the provided DMesgPb by copying it into the publisher
-     *        queue.
+     * queue.
      *
      * @param dmesgpb Message to publish (copied).
      * @param flags Write options: Block waiting for publisher to process the
-     *              message, Force to force message without conflict check.
+     * message, Force to force message without conflict check.
      */
     void write(const dmn::DMesgPb &dmesgpb, WriteFlags flags);
 
     /**
      * @brief Publish the message and return true if no conflict, or false
-     *        otherwise.
+     * otherwise.
      *
      * @param dmesgpb message to be publish (moved).
      * @param flags Write options: Block waiting for publisher to process the
-     *              message, Force to force message without conflict check.
+     * message, Force to force message without conflict check.
      *
      * @return True if write success without conflict or false otherwise.
      */
@@ -399,11 +407,11 @@ public:
 
     /**
      * @brief Publish the message and return true if no conflict, or false
-     *        otherwise.
+     * otherwise.
      *
      * @param dmesgpb message to be publish (copied).
      * @param flags Write options: Block waiting for publisher to process the
-     *              message, Force to force message without conflict check.
+     * message, Force to force message without conflict check.
      *
      * @return True if write success without conflict or false otherwise.
      */
@@ -445,7 +453,7 @@ public:
   private:
     /**
      * @brief Return true if the handler is currently marked in a conflict
-     *        state (atomic check) for the topic or any topic if "".
+     * state (atomic check) for the topic or any topic if "".
      *
      * @param topic the topic to check if it is in conflict, or "" any topic.
      */
@@ -453,13 +461,13 @@ public:
 
     /**
      * @brief Pause and wait until m_is_after_initial_playback is set true
-     *        (playback has been completed).
+     * (playback has been completed).
      */
     void isAfterInitialPlayback();
 
     /**
      * @brief Internal helper to mark the handler as resolved. Must be called
-     *        in the publisher's async thread context.
+     * in the publisher's async thread context.
      */
     void resolveConflictInternal(std::string_view topic);
 
@@ -477,7 +485,7 @@ public:
 
     /**
      * @brief Put the handler into conflict state and schedule the conflict
-     *        callback on the publisher's async thread.
+     * callback on the publisher's async thread.
      *
      * @param dmesgpb The message that caused the conflict.
      */
@@ -519,9 +527,10 @@ public:
    * @brief Lightweight proxy to a Dmn_DMesgHandler instance.
    *
    * Wraps a std::weak_ptr<Dmn_DMesgHandler> to provide pointer-like
-   * access to the underlying handler while allowing the publisher to
-   * control handler lifetime (via closeHandler()). Clients should test
-   * the proxy's bool conversion before dereferencing to avoid exceptions.
+   * access to the underlying handler while allowing the publisher to owns
+   * and control handler lifetime (via closeHandler()). Clients should test
+   * the proxy's bool conversion before dereferencing to avoid exceptions,
+   * otherwise an exception is thrown if the underlying handler has released.
    *
    * Thread-safety: The proxy itself is not thread-safe; do not share a
    * single Dmn_DMesgHandlerProxy instance across threads.
@@ -531,9 +540,11 @@ public:
 
   public:
     /**
-     * @brief Dereference the proxy to access the underlying handler.
+     * @brief Dereference the proxy to access the underlying handler shared
+     * pointer.
      *
      * @return shared_ptr<Dmn_DMesgHandler> pointing to the live handler.
+     *
      * @throws std::runtime_error if the handler has already been closed.
      */
     std::shared_ptr<Dmn_DMesgHandler> operator->() const {
@@ -541,6 +552,7 @@ public:
       if (!handler) {
         throw std::runtime_error("handler has been closed");
       }
+
       return handler;
     }
 
@@ -548,12 +560,13 @@ public:
      * @brief Check whether the proxied handler is still alive.
      *
      * @return true if the underlying handler exists and has not been closed,
-     *         false if it has been released.
+     * false if it has been released.
      */
     explicit operator bool() const noexcept { return !m_handler.expired(); }
 
   private:
     void reset() { m_handler.reset(); }
+
     std::weak_ptr<Dmn_DMesgHandler> m_handler{};
   };
 
@@ -581,7 +594,7 @@ public:
    * construction remains lock-free for fast paths.
    *
    * @return the handler proxy to internal shared_ptr handler registered
-   *         with DMesg.
+   * with DMesg.
    */
   template <class... U> auto openHandler(U &&...arg) -> HandlerType;
 
@@ -589,7 +602,7 @@ public:
    * @brief Unregister and free the provided handler.
    *
    * @param handlerToClose the internal handler will be reset upon return from
-   *                       this method.
+   * this method.
    */
   void closeHandler(HandlerType &handlerToClose);
 
@@ -644,10 +657,10 @@ protected:
 
   /**
    * @brief Post an async action that resets a handler's conflict state in the
-   *        publisher's singleton async thread context.
+   * publisher's singleton async thread context.
    *
    * @param handler_ptr Pointer to the handler whose conflict state should be
-   *                    reset.
+   * reset.
    */
   void resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                  std::string_view = "");
@@ -655,7 +668,7 @@ protected:
 private:
   /**
    * @brief Run in the publisher's async thread context to playback the last
-   *        message for each topic to newly registered handlers.
+   * message for each topic to newly registered handlers.
    */
   void playbackLastTopicDMesgPbInternal();
 
@@ -668,7 +681,7 @@ private:
 
   /**
    * @brief Internal helper that resets handler conflict state. Must be
-   *        executed in the publisher's async thread context.
+   * executed in the publisher's async thread context.
    *
    * @param handler_ptr Pointer to the handler.
    */
