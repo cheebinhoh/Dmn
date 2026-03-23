@@ -16,8 +16,8 @@
  *     operations from entering after shutdown has begun.
  *
  *  3) A blocking wait (waitForEmptyInflight()) that waits until all previously
- *     entered operations have left, so destructors / stop() routines can safely
- *     tear down shared state.
+ *     entered operations have left, so destructors / shutdown() routines can
+ *     safely tear down shared state.
  *
  * This module is used in two different ways in this repository:
  *
@@ -29,21 +29,21 @@
  *
  *    and the queue destructor does:
  *
- *      stop();
+ *      shutdown();
  *      this->waitForEmptyInflight();
  *
- *    This ensures that once stop() marks the queue shutdown
+ *    This ensures that once shutdown() marks the queue shutdown
  *    (isInflightGuardClosed() becomes true), no new operations can enter, and
  *    the destructor waits for all already-running calls (possibly blocked) to
- *    return before the object is destroyed. Hence the stop() should either
+ *    return before the object is destroyed. Hence the shutdown() should either
  *    force already-running calls to be returned, or those calls are timed
  *    based and will return eventually.
  *
  *  - include/dmn-blockingqueue-lf.hpp:
  *    Dmn_BlockingQueue_Lf privately inherits Dmn_Inflight_Guard<uint64_t>.
  *    Here the ticket's payload value is an "epochIndex" derived in
- *    enterInflightGuardFnc(). popOptional() then uses ticket->getValue() to
- *    retire nodes into an epoch bucket:
+ *    enterInflightGuardFnc() and then uses ticket->getValue() to retire nodes
+ *    into an epoch bucket:
  *
  *      retireNode(inflightTicket->getValue(), first);
  *
@@ -54,9 +54,9 @@
  * ------------
  * - "Inflight guard closed":
  *   Implemented by the derived class in isInflightGuardClosed(). It
- *   typically maps to a shutdown flag that is set in stop() / destructor. When
- *   the inflight guard is closed, enterInflightGate() throws (by design) to
- *   prevent new work from starting against a shutting-down object.
+ *   typically maps to a shutdown flag that is set in shutdown() / destructor.
+ *   When the inflight guard is closed, enterInflightGate() throws (by design)
+ *   to prevent new work from starting against a shutting-down object.
  *
  * - "In-flight":
  *   Any operation that successfully acquired a Ticket. The ticket
@@ -98,7 +98,7 @@
  *       per-call bookkeeping is required (e.g. epoch-based reclamation).
  * - Public APIs should acquire a ticket early (typically at the start of
  *   push/pop) and keep it alive until the function returns.
- * - stop()/destructor should close the inflight guard first, then call
+ * - shutdown()/destructor should close the inflight guard first, then call
  *   waitForEmptyInflight() before freeing shared resources that in-flight calls
  *   might touch.
  */
@@ -147,6 +147,7 @@ public:
         m_inflightguard->m_inflight_count.fetch_sub(1,
                                                     std::memory_order_acq_rel);
         m_inflightguard->m_inflight_count.notify_all();
+
         throw;
       }
     }
@@ -182,7 +183,7 @@ public:
     Dmn_Inflight_Guard *m_inflightguard{};
     bool m_entered{false};
     T m_value{}; // std::monostate{} when "no payload"
-  };
+  }; // class Ticket
 
   Dmn_Inflight_Guard() = default;
   virtual ~Dmn_Inflight_Guard() noexcept { waitForEmptyInflight(); };
@@ -198,7 +199,7 @@ public:
     return ticket;
   }
 
-  void waitForEmptyInflight() const {
+  virtual void waitForEmptyInflight() const final {
     uint64_t val{};
 
     while ((val = m_inflight_count.load(std::memory_order_acquire)) > 0) {
@@ -219,7 +220,7 @@ protected:
 
 private:
   std::atomic<std::uint64_t> m_inflight_count{};
-};
+}; // class Dmn_Inflight_Guard
 
 } // namespace dmn
 

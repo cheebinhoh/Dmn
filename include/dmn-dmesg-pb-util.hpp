@@ -45,11 +45,10 @@
 #ifndef DMN_DMESG_PB_UTIL_HPP_
 #define DMN_DMESG_PB_UTIL_HPP_
 
-#include <sys/time.h>
+#include "proto/dmn-dmesg.pb.h"
 
 #include <cassert>
-
-#include "proto/dmn-dmesg.pb.h"
+#include <sys/time.h>
 
 #define DMESG_PB_SET_TIMESTAMP_SECONDS(ts, val) (ts)->set_seconds(val)
 

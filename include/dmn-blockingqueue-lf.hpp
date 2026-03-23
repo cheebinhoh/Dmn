@@ -38,6 +38,12 @@
 #ifndef DMN_BLOCKINGQUEUE_LF_HPP_
 #define DMN_BLOCKINGQUEUE_LF_HPP_
 
+#include "dmn-blockingqueue.hpp"
+
+#include "dmn-inflight-guard.hpp"
+#include "dmn-proc.hpp"
+#include "dmn-util.hpp"
+
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -49,12 +55,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "dmn-proc.hpp"
-#include "dmn-util.hpp"
-
-#include "dmn-blockingqueue.hpp"
-#include "dmn-inflight-guard.hpp"
 
 namespace dmn {
 

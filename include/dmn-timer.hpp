@@ -38,12 +38,12 @@
 
 #define DMN_TIMER_HPP_
 
+#include "dmn-debug.hpp"
+#include "dmn-proc.hpp"
+
 #include <chrono>
 #include <functional>
 #include <thread>
-
-#include "dmn-debug.hpp"
-#include "dmn-proc.hpp"
 
 namespace dmn {
 

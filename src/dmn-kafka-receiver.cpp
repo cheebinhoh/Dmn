@@ -15,14 +15,13 @@
  *   https://developer.confluent.io/get-started/c/
  */
 
-#include <signal.h>
-#include <stdlib.h>
+#include "kafka/dmn-kafka.hpp"
 
 #include <atomic>
 #include <cassert>
 #include <iostream>
-
-#include "kafka/dmn-kafka.hpp"
+#include <signal.h>
+#include <stdlib.h>
 
 static volatile sig_atomic_t run = 1;
 

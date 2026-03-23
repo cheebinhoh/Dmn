@@ -43,9 +43,8 @@
 #ifndef DMN_PROC_HPP_
 #define DMN_PROC_HPP_
 
-#include <pthread.h>
-
 #include <functional>
+#include <pthread.h>
 #include <string>
 #include <string_view>
 

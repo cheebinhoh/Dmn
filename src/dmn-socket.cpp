@@ -25,20 +25,19 @@
 #include "dmn-socket.hpp"
 
 #include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
 #include <array>
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <netinet/in.h>
 #include <optional>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/socket.h>
 #include <system_error>
+#include <unistd.h>
 #include <utility>
 
 namespace dmn {

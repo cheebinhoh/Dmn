@@ -60,19 +60,18 @@
 #ifndef DMN_DMESGNET_HPP_
 #define DMN_DMESGNET_HPP_
 
-#include <sys/time.h>
-
-#include <atomic>
-#include <memory>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-
 #include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
 #include "dmn-io.hpp"
 #include "dmn-timer.hpp"
+
+#include <atomic>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <sys/time.h>
+#include <unordered_map>
 
 namespace dmn {
 

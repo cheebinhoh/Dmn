@@ -88,6 +88,10 @@
 #ifndef DMN_DMESG_HPP_
 #define DMN_DMESG_HPP_
 
+#include "dmn-pub-sub.hpp"
+
+#include "proto/dmn-dmesg.pb.h"
+
 #include <atomic>
 #include <bitset>
 #include <cassert>
@@ -98,14 +102,9 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/time.h>
 #include <unordered_map>
 #include <vector>
-
-#include <sys/time.h>
-
-#include "dmn-pub-sub.hpp"
-
-#include "proto/dmn-dmesg.pb.h"
 
 namespace dmn {
 

@@ -93,6 +93,11 @@
 #ifndef DMN_PUB_SUB_HPP_
 #define DMN_PUB_SUB_HPP_
 
+#include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
+#include "dmn-blockingqueue-mt.hpp"
+#include "dmn-proc.hpp"
+
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -103,11 +108,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-
-#include "dmn-async.hpp"
-#include "dmn-blockingqueue-lf.hpp"
-#include "dmn-blockingqueue-mt.hpp"
-#include "dmn-proc.hpp"
 
 namespace dmn {
 
