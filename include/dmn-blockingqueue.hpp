@@ -7,9 +7,11 @@
  *
  * Design pattern
  * --------------
- * - Bridge : the blocking queue interface is abstracted from the underlying
- *   implementation (mutex lock or lock-free), this is not a full-fledge
- *   bridge as written in gang of 5, but simplified version with CRTP template.
+ * - Degenerate Bridge : the blocking queue interface is abstracted from the
+ *   underlying implementation (mutex lock or lock-free), this is not a
+ *   full-fledge bridge as written in gang of 5, but simplified version with
+ *   CRTP template with degenerate bridge where abstraction and implemention
+ *   are in one hierarchy tree.
  *
  * Static polymorphism
  * -------------------
