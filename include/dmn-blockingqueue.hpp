@@ -8,7 +8,8 @@
  * Design pattern
  * --------------
  * - Bridge : the blocking queue interface is abstracted from the underlying
- *   implementation (mutex lock or lock-free).
+ *   implementation (mutex lock or lock-free), this is not a full-fledge
+ *   bridge as written in gang of 5, but simplified version with CRTP template.
  *
  * Static polymorphism
  * -------------------
@@ -42,6 +43,22 @@
 
 namespace dmn {
 
+/**
+ * @brief The Dmn_BlockingQueue are top tier class for both the abstraction
+ * and implementor classes in the bridge design pattern with support of CRTP
+ * to achieve static polymorphism.
+ *
+ * @details
+ * - There are a set of primitive methods to be overridden by concrete
+ *   implementation subclass, and those methods are marked as virtual without
+ *   final. Those methods are defined in this class with CRTP to achieve
+ *   static polymorphism to call to subclass overridden methods. Those are
+ *   methods in the implementaion tree in the Bridge design pattern.
+ *
+ * - There are a set of composite methods that are marked as final and
+ *   implementedd in term of primitive methods. Those are methods in the
+ *   the abstraction tree in Bridge design pattern.
+ */
 template <typename Derived, typename T> class Dmn_BlockingQueue {
 public:
   virtual ~Dmn_BlockingQueue() = default;
@@ -72,7 +89,7 @@ public:
    * @return A vector containing the dequeued items (possibly fewer than @p
    * count, depending on availability and timeout semantics).
    */
-  virtual auto pop(std::size_t count, long timeout = 0) -> std::vector<T> = 0;
+  virtual auto pop(std::size_t count, long timeout = 0) -> std::vector<T>;
 
   /**
    * @brief Attempt to pop a single item without waiting.
@@ -137,6 +154,12 @@ protected:
 private:
   std::atomic_flag m_shutdown_flag{};
 };
+
+template <typename Derived, typename T>
+inline auto Dmn_BlockingQueue<Derived, T>::pop(std::size_t count, long timeout)
+    -> std::vector<T> {
+  return static_cast<Derived *>(this)->pop(count, timeout);
+}
 
 template <typename Derived, typename T>
 inline auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
