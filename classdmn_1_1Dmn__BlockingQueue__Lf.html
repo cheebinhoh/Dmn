@@ -97,7 +97,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BlockingQueue__Lf.htm
 </div><!--header-->
 <div class="contents">
 
-<p>Thread-safe FIFO queue.  
+<p>Lock-Free Thread-safe FIFO queue.  
  <a href="classdmn_1_1Dmn__BlockingQueue__Lf.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&gt;</code></p>
@@ -123,9 +123,9 @@ Friends</h2></td></tr>
 <ul>
 <li>Each push/pop enters an in-flight region and is assigned an epoch index.</li>
 <li>Removed nodes are placed onto a per-epoch retired list (not deleted yet).</li>
-<li>When an epoch bucket is no longer active and its in-flight count drops to zero, its retired nodes can be safely freed.</li>
+<li>When an epoch retired list is no longer active (it assigned epoch's in-flight count drops to zero), the epoch's retired nodes can be safely freed.</li>
 </ul>
-<p>The mapping from a monotonically increasing epoch id to a bounded number of epoch buckets is controlled by:</p><ul>
+<p>The mapping from a monotonically increasing epoch id to a bounded number of epoch buckets (referenced by epoch index) is controlled by:</p><ul>
 <li>s_epochTimeScale: how frequently the global epoch advances as a function of total in-flight API calls.</li>
 <li>s_epochIdScale: how many consecutive epoch ids map to the same bucket (coarser grouping reduces churn).</li>
 <li>s_epochDataSize: number of buckets (upper bound on parked retired lists).</li>
@@ -210,7 +210,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> = std::string&gt;<br />
-class dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</div><p>Thread-safe FIFO queue. </p>
+class dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</div><p>Lock-Free Thread-safe FIFO queue. </p>
 <p>Template parameter T is the stored item type. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a06ef41db026b53a793dbbd88d1b90e23" name="a06ef41db026b53a793dbbd88d1b90e23"></a>
@@ -349,12 +349,13 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </ul>
 </li>
 </ul>
-<p>If the timeout elapses (or shutdown begins) and at least one item was dequeued, the returned vector contains the items obtained so far. If no item was dequeued before timeout/shutdown, the returned vector is empty.</p>
+<p>If the timeout elapses (or shutdown begins) and at least one item was dequeued, the returned vector contains the items obtained so far.</p>
+<p>If no item was dequeued before timeout/shutdown, the returned vector is empty.</p>
 <dl class="section warning"><dt>Warning</dt><dd>The returned items are not guaranteed to be consecutive relative to other concurrent consumers. This function only returns items successfully dequeued by the calling thread.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">count</td><td>Maximum number of items to return (must be &gt; 0). </td></tr>
-    <tr><td class="paramname">timeout</td><td>Timeout in microseconds. 0 means wait indefinitely. </td></tr>
+    <tr><td class="paramname">timeout</td><td>Timeout in microseconds. 0 means wait indefinitely.</td></tr>
   </table>
   </dd>
 </dl>
@@ -434,7 +435,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">wait</td><td>True will block the caller if the queue is empty. </td></tr>
-    <tr><td class="paramname">inflightTicket</td><td>The inflight ticket that keeps track of epochIndex for epoch to store deleted node. </td></tr>
+    <tr><td class="paramname">inflightTicket</td><td>The inflight ticket that keeps track of epochIndex for epoch to store deleted node.</td></tr>
   </table>
   </dd>
 </dl>

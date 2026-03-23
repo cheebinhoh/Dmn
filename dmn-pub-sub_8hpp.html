@@ -184,7 +184,7 @@ Classes</h2></td></tr>
 </ul>
 <p>Limitations and notes</p><ul>
 <li>Capacity &lt;= 0 is not validated beyond construction; callers should pass a sensible positive capacity.</li>
-<li>The implementation uses mutexes and expects the Dmn_Async primitives/macros (e.g., DMN_ASYNC_CALL_WITH_CAPTURE and DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP) to integrate with thread/task cleanup correctly.</li>
+<li>The implementation uses mutexes and conditional variables.</li>
 </ul>
 <p>See also</p><ul>
 <li><a class="el" href="dmn-async_8hpp.html" title="Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks ...">dmn-async.hpp</a> : asynchronous task execution and synchronization helpers.</li>

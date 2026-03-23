@@ -120,7 +120,9 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Dmn_Pipe: a FIFO pipe with non-blocking writers and optional background processing. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>Overview</p><ul>
+<h2><a class="anchor" id="autotoc_md16"></a>
+Overview</h2>
+<ul>
 <li>Dmn_Pipe&lt;T, QueueType&gt; implements a FIFO buffer that:<ul>
 <li>allows producers to write without blocking (write operations enqueue items immediately),</li>
 <li>allows a consumer to read items either synchronously via <code>read()</code> or by providing a processing task via <code>readAndProcess()</code> or by launching a background processing thread (using Dmn_Proc::exec).</li>
@@ -128,7 +130,9 @@ Classes</h2></td></tr>
 </li>
 <li>The class combines QueueType (storage), Dmn_Io&lt;T&gt; (I/O interface) and Dmn_Proc (optional processing thread support).</li>
 </ul>
-<p>Threading and cancellation</p><ul>
+<h2><a class="anchor" id="autotoc_md17"></a>
+Threading and cancellation</h2>
+<ul>
 <li>push/pop and internal synchronization are handled by QueueType.</li>
 <li>Dmn_Pipe adds a mutex and condition variable to:<ul>
 <li>keep a count of processed items (<code>m_count</code>), and</li>
@@ -137,7 +141,9 @@ Classes</h2></td></tr>
 </li>
 <li>readAndProcess() involves the caller-provided task and updates <code>m_count</code> under the mutex.</li>
 </ul>
-<p>Read / Write semantics</p><ul>
+<h2><a class="anchor" id="autotoc_md18"></a>
+Read / Write semantics</h2>
+<ul>
 <li>write(const T&amp;) copies <code>item</code> into the pipe.</li>
 <li>write(T&amp;&amp;) moves <code>item</code> into the pipe; move will be used when the move constructor is noexcept (via QueueType::push semantics).</li>
 <li>read() blocks until the next item is available and returns it wrapped in std::optional; when the pipe is closed it returns std::nullopt.</li>

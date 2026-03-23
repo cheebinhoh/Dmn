@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp.html',''); i
 </div><!--header-->
 <div class="contents">
 
-<p>Lock-free multi-producer/multi-consumer FIFO queue with optional blocking pop. This modules implements the Michael-Scott queue algorithm.  
+<p>Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michael-Scott lock-free queue algorithm.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;array&gt;</code><br />
 <code>#include &lt;atomic&gt;</code><br />
@@ -118,26 +118,26 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp.html',''); i
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe FIFO queue.  <a href="classdmn_1_1Dmn__BlockingQueue__Lf.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock-Free Thread-safe FIFO queue.  <a href="classdmn_1_1Dmn__BlockingQueue__Lf.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Lock-free multi-producer/multi-consumer FIFO queue with optional blocking pop. This modules implements the Michael-Scott queue algorithm. </p>
+<div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michael-Scott lock-free queue algorithm. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<p>This header provides <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html" title="Thread-safe FIFO queue.">dmn::Dmn_BlockingQueue_Lf</a>, a thread-safe FIFO queue that:</p><ul>
+<p>This header provides <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html" title="Lock-Free Thread-safe FIFO queue.">dmn::Dmn_BlockingQueue_Lf</a>, a thread-safe FIFO queue that:</p><ul>
 <li>supports multiple concurrent producers and consumers (MPMC),</li>
 <li>uses lock-free algorithms for push/pop (no mutexes in the fast path),</li>
 <li>provides blocking behavior for pop() by spinning/yielding until an item becomes available (or until shutdown),</li>
 <li>uses an epoch-based reclamation mechanism (via <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>) to safely reclaim removed nodes without use-after-free.</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md5"></a>
-Blocking model</h3>
-<p>The queue does not use condition variables. "Blocking" means active waiting with yielding (and cancellation checks where applicable). This is suitable for scenarios where latency is prioritized and threads are expected to wake soon, but it may be inefficient for long idle waits.</p>
-<h3><a class="anchor" id="autotoc_md6"></a>
-Shutdown behavior</h3>
+<h2><a class="anchor" id="autotoc_md5"></a>
+Blocking model</h2>
+<p>The queue does not use condition variables. "Blocking" means active waiting with yielding (and cancellation checks where applicable). This is suitable for scenarios where latency is prioritized and threads are expected to wake soon, but it may be inefficient for long idle waits with constraints number of cpus.</p>
+<h2><a class="anchor" id="autotoc_md6"></a>
+Shutdown behavior</h2>
 <p>Destruction triggers shutdown. After shutdown begins:</p><ul>
-<li>push operations fail (throw),</li>
-<li>blocking pops are interrupted and will throw,</li>
+<li>push operations fail (throw).</li>
+<li>blocking pops are interrupted and will throw.</li>
 <li>non-blocking pops return empty.</li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>Memory reclamation is integrated with the inflight-guard interface; callers do not need to manage hazard pointers/epochs directly. </dd></dl>

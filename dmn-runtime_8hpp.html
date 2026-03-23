@@ -187,7 +187,7 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Runtime manager for centralized signal handling and asynchronous jobs. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Overview</h2>
 <p>Dmn_Runtime_Manager provides a single, process‑wide runtime responsible for:</p><ul>
 <li>Managing POSIX signal masking, all worker threads inherit a consistent signal configuration and provide interface to add signal handler hook function(s) that are executed safely in a singleton asynchronous thread context.</li>
@@ -195,7 +195,7 @@ Overview</h2>
 <li>All jobs are scheduled, serialized and executed in a singleton asynchronous thread context by high, medium and then low priority ordering.</li>
 <li>Executing jobs scheduled through addJob() and addTimedJob() sequentially according to priority within a C++ coroutine execution model.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Key Responsibilities</h2>
 <ul>
 <li><b>Singleton lifecycle</b>: The runtime inherits from Dmn_Singleton, and Signal masking is applied before any threads are spawned so all descendant threads inherit the same mask.</li>
@@ -207,14 +207,14 @@ Key Responsibilities</h2>
 </li>
 <li><b>Efficient waiting</b>: Integrates with Dmn_Async and Dmn_Async_Wait to avoid busy‑waiting when waiting for new jobs or signals.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Thread‑Safety &amp; Signal‑Safety Notes</h2>
 <ul>
 <li>Signals are masked in runPriorToCreateInstance() before the runtime singleton asynchronous thread context is created. Masking inside the constructor would be too late because the parent class Dmn_Async singleton asynchronous thread context may already exist without any signal mask.</li>
 <li>Singleton initialization is protected by std::call_once and a static std::once_flag to prevent race conditions in Dmn_Singleton.</li>
 <li>Signal handlers avoid performing non‑async‑signal‑safe operations inside the raw signal handler but are handled through a dedicated Dmn_Proc thread as the singleton asynchronous thread context and then the attached signal handler hook function(s) are executed in the thread context.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Usage Summary</h2>
 <ul>
 <li>Create or obtain the singleton via Dmn_Singleton::createInstance().</li>
@@ -223,7 +223,7 @@ Usage Summary</h2>
 <li>Start processing job and signal handler hooks with enterMainLoop() and stop with exitMainLoop().</li>
 <li>job, timedJob and signal handler hooks are all processed in the singleton asynchronous thread context.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Implementation Notes</h2>
 <ul>
 <li>This header defines the public API, supporting types, and inline templates. The implementation of Dmn_Runtime_Manager_Impl is provided in the corresponding source file(s).</li>

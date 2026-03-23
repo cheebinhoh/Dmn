@@ -113,10 +113,6 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ab39b8519cc98e24532fa14c7289ce024" id="r_ab39b8519cc98e24532fa14c7289ce024"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#ab39b8519cc98e24532fa14c7289ce024">DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP</a>(mutex)&#160;&#160;&#160;  pthread_cleanup_push(&amp;<a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f">dmn::cleanupFuncToUnlockPthreadMutex</a>, (mutex))</td></tr>
-<tr class="separator:ab39b8519cc98e24532fa14c7289ce024"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf6e8a446775edefcd0f6ae397c9d71c" id="r_aaf6e8a446775edefcd0f6ae397c9d71c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aaf6e8a446775edefcd0f6ae397c9d71c">DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP</a>(...)&#160;&#160;&#160;pthread_cleanup_pop(0)</td></tr>
-<tr class="separator:aaf6e8a446775edefcd0f6ae397c9d71c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa633c027e6c017bcb5b8058069bc8c65" id="r_aa633c027e6c017bcb5b8058069bc8c65"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65">DMN_PROC_CLEANUP_PUSH</a>(...)&#160;&#160;&#160;pthread_cleanup_push(__VA_ARGS__)</td></tr>
 <tr class="separator:aa633c027e6c017bcb5b8058069bc8c65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7da7fe4e959340eec9466edd69fb25d" id="r_aa7da7fe4e959340eec9466edd69fb25d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d">DMN_PROC_CLEANUP_POP</a>(...)&#160;&#160;&#160;pthread_cleanup_pop(__VA_ARGS__)</td></tr>
@@ -131,13 +127,19 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight RAII wrapper around native pthread functionality. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>Overview This header declares Dmn_Proc, a small object-oriented wrapper that encapsulates a pthread and executes a user-provided callable (std::function&lt;void()&gt;) in a separate thread. Instead of varying behaviour through inheritance, Dmn_Proc accepts a task (functor/closure) that the thread runs — this encourages composition over inheritance and reduces the proliferation of subclasses.</p>
-<p>Key characteristics and expectations:</p><ul>
+<h2><a class="anchor" id="autotoc_md19"></a>
+Overview</h2>
+<p>This header declares Dmn_Proc, a small object-oriented wrapper that encapsulates a pthread and executes a user-provided callable (std::function&lt;void()&gt;) in a separate thread. Instead of varying behaviour through inheritance, Dmn_Proc accepts a task (functor/closure) that the thread runs — this encourages composition over inheritance and reduces the proliferation of subclasses.</p>
+<h2><a class="anchor" id="autotoc_md20"></a>
+Key characteristics and expectations</h2>
+<ul>
 <li>RAII: Dmn_Proc attempts to cancel and join its thread in its destructor to free resources. Users should therefore ensure their task cooperates with pthread cancellation (either by reaching cancellation points or by calling Dmn_Proc::yield() periodically inside long-running loops).</li>
 <li>Cancellation: Thread cancellation via stopExec() is synchronous: if a task blocks indefinitely without reaching a cancellation point, the thread will not terminate. Place voluntary cancellation points (e.g. calls to Dmn_Proc::yield()) in long-running loops if you expect prompt cancellation.</li>
 </ul>
-<p>Design pattern Command - Implements a variant of the Command design pattern, allowing clients to submit parameterized requests encapsulated as std::function&lt;void()&gt; tasks executed by the thread. Bridge - Abstracts the underlying threading implementation from the client. Decorator - Provides an alternative to subclassing for threading behavior and allows clients to attach additional responsibilities or vary the behavior of the thread.</p>
-<p>Note on mutex cleanup macros: The macros below wrap pthread_cleanup_push/pop for the common pattern of unlocking a mutex in cleanup handlers. They are convenience macros and rely on the presence of <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Helper function to unlock a pthread mutex during thread cancellation.">dmn::cleanupFuncToUnlockPthreadMutex</a>. </p>
+<h2><a class="anchor" id="autotoc_md21"></a>
+Design pattern</h2>
+<p>Command - Implements a variant of the Command design pattern, allowing clients to submit parameterized requests encapsulated as std::function&lt;void()&gt; tasks executed by the thread. Bridge - Abstracts the underlying threading implementation from the client. Decorator - Provides an alternative to subclassing for threading behavior and allows clients to attach additional responsibilities or vary the behavior of the thread.</p>
+<p>Note on mutex cleanup macros The macros below wrap pthread_cleanup_push/pop for the common pattern of unlocking a mutex in cleanup handlers. They are convenience macros and rely on the presence of <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Helper function to unlock a pthread mutex during thread cancellation.">dmn::cleanupFuncToUnlockPthreadMutex</a>. </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="aa7da7fe4e959340eec9466edd69fb25d" name="aa7da7fe4e959340eec9466edd69fb25d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa7da7fe4e959340eec9466edd69fb25d">&#9670;&#160;</a></span>DMN_PROC_CLEANUP_POP</h2>
@@ -174,46 +176,6 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>More generic macro to wrap pthread_cleanup_push </p>
-
-</div>
-</div>
-<a id="ab39b8519cc98e24532fa14c7289ce024" name="ab39b8519cc98e24532fa14c7289ce024"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab39b8519cc98e24532fa14c7289ce024">&#9670;&#160;</a></span>DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">mutex</td><td>)</td>
-          <td>&#160;&#160;&#160;  pthread_cleanup_push(&amp;<a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f">dmn::cleanupFuncToUnlockPthreadMutex</a>, (mutex))</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Macro to push a pthread cleanup handler that will unlock the given mutex when the thread exits or is cancelled inside the protected region.</p>
-<p>Usage: <a class="el" href="dmn-proc_8hpp.html#ab39b8519cc98e24532fa14c7289ce024">DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP(&amp;mutex)</a>; pthread_mutex_lock(&amp;mutex); // ... protected code ... <a class="el" href="dmn-proc_8hpp.html#aaf6e8a446775edefcd0f6ae397c9d71c">DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP()</a>;</p>
-<p>The pair expands to pthread_cleanup_push/ pthread_cleanup_pop and calls <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Helper function to unlock a pthread mutex during thread cancellation.">dmn::cleanupFuncToUnlockPthreadMutex</a> when executed by pthread cleanup. </p>
-
-</div>
-</div>
-<a id="aaf6e8a446775edefcd0f6ae397c9d71c" name="aaf6e8a446775edefcd0f6ae397c9d71c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaf6e8a446775edefcd0f6ae397c9d71c">&#9670;&#160;</a></span>DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMN_PROC_EXIT_PTHREAD_MUTEX_CLEANUP</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>...</em></td><td>)</td>
-          <td>&#160;&#160;&#160;pthread_cleanup_pop(0)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Macro to pop the pthread cleanup handler pushed by DMN_PROC_ENTER_PTHREAD_MUTEX_CLEANUP. The argument list is left variadic to match typical usage patterns; we intentionally do not execute the cleanup handler here (pop with 0). </p>
 
 </div>
 </div>

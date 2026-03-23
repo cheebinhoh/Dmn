@@ -122,13 +122,13 @@ Classes</h2></td></tr>
 <p>3) A blocking wait (waitForEmptyInflight()) that waits until all previously entered operations have left, so destructors / stop() routines can safely tear down shared state.</p>
 <p>This module is used in two different ways in this repository:</p>
 <ul>
-<li><p class="startli"><a class="el" href="dmn-blockingqueue_8hpp.html" title="Thread-safe FIFO blocking queue for passing items between threads.">include/dmn-blockingqueue.hpp</a>: Dmn_BlockingQueue privately inherits Dmn_Inflight_Guard&lt;&gt; (no payload). pop() creates a ticket at its public function entry:</p>
+<li><p class="startli"><a class="el" href="dmn-blockingqueue_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads.">include/dmn-blockingqueue.hpp</a>: Dmn_BlockingQueue privately inherits Dmn_Inflight_Guard&lt;&gt; (no payload). pop() creates a ticket at its public function entry:</p>
 <p class="startli">[[maybe_unused]] auto t = this-&gt;enterInflightGate();</p>
 <p class="startli">and the queue destructor does:</p>
 <p class="startli">stop(); this-&gt;waitForEmptyInflight();</p>
 <p class="startli">This ensures that once stop() marks the queue shutdown (isInflightGuardClosed() becomes true), no new operations can enter, and the destructor waits for all already-running calls (possibly blocked) to return before the object is destroyed. Hence the stop() should either force already-running calls to be returned, or those calls are timed based and will return eventually.</p>
 </li>
-<li><p class="startli"><a class="el" href="dmn-blockingqueue-lf_8hpp.html" title="Lock-free multi-producer/multi-consumer FIFO queue with optional blocking pop. This modules implement...">include/dmn-blockingqueue-lf.hpp</a>: Dmn_BlockingQueue_Lf privately inherits <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard&lt;uint64_t&gt;</a>. Here the ticket's payload value is an "epochIndex" derived in enterInflightGuardFnc(). popOptional() then uses ticket-&gt;getValue() to retire nodes into an epoch bucket:</p>
+<li><p class="startli"><a class="el" href="dmn-blockingqueue-lf_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michae...">include/dmn-blockingqueue-lf.hpp</a>: Dmn_BlockingQueue_Lf privately inherits <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard&lt;uint64_t&gt;</a>. Here the ticket's payload value is an "epochIndex" derived in enterInflightGuardFnc(). popOptional() then uses ticket-&gt;getValue() to retire nodes into an epoch bucket:</p>
 <p class="startli">retireNode(inflightTicket-&gt;getValue(), first);</p>
 <p class="startli">On leaving inflight guard, leaveInflightGuardFnc(epochIndex) decrements the epoch's in-flight count and may reclaim retired nodes when safe.</p>
 </li>

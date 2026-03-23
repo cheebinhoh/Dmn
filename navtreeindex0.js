@@ -199,11 +199,9 @@ var NAVTREEINDEX0 =
 "dmn-proc_8cpp.html":[2,0,1,6],
 "dmn-proc_8cpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f":[2,0,1,6,0],
 "dmn-proc_8hpp.html":[2,0,0,12],
-"dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f":[2,0,0,12,5],
+"dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f":[2,0,0,12,3],
 "dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65":[2,0,0,12,2],
 "dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d":[2,0,0,12,1],
-"dmn-proc_8hpp.html#aaf6e8a446775edefcd0f6ae397c9d71c":[2,0,0,12,4],
-"dmn-proc_8hpp.html#ab39b8519cc98e24532fa14c7289ce024":[2,0,0,12,3],
 "dmn-proc_8hpp_source.html":[2,0,0,12],
 "dmn-pub-sub_8hpp.html":[2,0,0,13],
 "dmn-pub-sub_8hpp_source.html":[2,0,0,13],
@@ -249,5 +247,7 @@ var NAVTREEINDEX0 =
 "index.html":[],
 "pages.html":[],
 "structdmn_1_1Dmn__Runtime__Job.html":[1,0,0,15],
-"structdmn_1_1Dmn__Runtime__Task.html":[1,0,0,17]
+"structdmn_1_1Dmn__Runtime__Task.html":[1,0,0,17],
+"structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html":[1,0,0,17,0],
+"structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html":[1,0,0,17,1]
 };
