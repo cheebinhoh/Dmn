@@ -116,7 +116,7 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : m_name{name}, m_topic{topic}, m_filter_fn{std::move(filter_fn)},
       m_async_process_fn{std::move(async_process_fn)},
       m_configs{std::move(configs)} {
-  m_buffers = std::make_unique<Dmn_BlockingQueue<dmn::DMesgPb>>();
+  m_buffers = std::make_unique<Dmn_BlockingQueue_Mt<dmn::DMesgPb>>();
 
   // set the chained of owner for composite Dmn_DMesgHandlerSub object
   auto iter = m_configs.find(std::string{kHandlerConfig_IncludeSys});

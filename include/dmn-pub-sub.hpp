@@ -106,13 +106,13 @@
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue-lf.hpp"
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-proc.hpp"
 
 namespace dmn {
 
 template <typename T = std::string,
-          template <class> class QueueType = Dmn_BlockingQueue>
+          template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Pub : public Dmn_Async<QueueType> {
 public:
   /**

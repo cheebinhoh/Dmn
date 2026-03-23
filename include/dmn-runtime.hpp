@@ -121,7 +121,7 @@
 
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue-lf.hpp"
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-singleton.hpp"
 
@@ -251,7 +251,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
  *  - Timed jobs use absolute microsecond timestamps to avoid cumulative drift
  *    from repeated short-duration sleeps.
  */
-template <template <class> class QueueType = Dmn_BlockingQueue>
+template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Runtime_Manager
     : public Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>,
       private Dmn_Async<QueueType> {

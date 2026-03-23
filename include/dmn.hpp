@@ -28,7 +28,7 @@
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue-interface.hpp"
 #include "dmn-blockingqueue-lf.hpp"
-#include "dmn-blockingqueue.hpp"
+#include "dmn-blockingqueue-mt.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"

@@ -21,8 +21,8 @@
  *
  * This module is used in two different ways in this repository:
  *
- *  - include/dmn-blockingqueue.hpp:
- *    Dmn_BlockingQueue privately inherits Dmn_Inflight_Guard<> (no payload).
+ *  - include/dmn-blockingqueue-mt.hpp:
+ *    Dmn_BlockingQueue_Mt privately inherits Dmn_Inflight_Guard<> (no payload).
  *    pop() creates a ticket at its public function entry:
  *
  *      [[maybe_unused]] auto t = this->enterInflightGate();
