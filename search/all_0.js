@@ -7,10 +7,10 @@ var searchData=
   ['addjob_4',['addJob',['../classdmn_1_1Dmn__Runtime__Manager.html#a8db837619ce8704ebaf68558890ee007',1,'dmn::Dmn_Runtime_Manager']]],
   ['addtimedjob_5',['addTimedJob',['../classdmn_1_1Dmn__Runtime__Manager.html#af6b4fb9f0298ea44a1b02da969faa410',1,'dmn::Dmn_Runtime_Manager']]],
   ['and_20cancellation_6',['Threading and cancellation',['../dmn-pipe_8hpp.html#autotoc_md17',1,'']]],
-  ['and_20copy_20behavior_7',['Move and copy behavior',['../dmn-blockingqueue-interface_8hpp.html#autotoc_md4',1,'']]],
+  ['and_20copy_20behavior_7',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]],
   ['and_20expectations_8',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md20',1,'']]],
-  ['and_20semantics_9',['Synchronization and semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md8',1,'']]],
-  ['and_20timeout_20semantics_10',['Blocking and timeout semantics',['../dmn-blockingqueue_8hpp.html#autotoc_md9',1,'']]],
+  ['and_20semantics_9',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
+  ['and_20timeout_20semantics_10',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'']]],
   ['asyncprocesstask_11',['AsyncProcessTask',['../classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95',1,'dmn::Dmn_DMesg']]],
   ['awaiter_12',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
 ];

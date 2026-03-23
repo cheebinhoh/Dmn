@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>My Project: include/dmn-blockingqueue-lf.hpp File Reference</title>
+<title>My Project: include/dmn-blockingqueue-mt.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,7 +63,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('dmn-blockingqueue-mt_8hpp.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -91,18 +91,23 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp.html',''); i
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a>  </div>
-  <div class="headertitle"><div class="title">dmn-blockingqueue-lf.hpp File Reference</div></div>
+  <div class="headertitle"><div class="title">dmn-blockingqueue-mt.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michael-Scott lock-free queue algorithm.  
+<p>Thread-safe FIFO blocking queue interface for passing items between threads.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;array&gt;</code><br />
+<div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;atomic&gt;</code><br />
 <code>#include &lt;cassert&gt;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;condition_variable&gt;</code><br />
+<code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
+<code>#include &lt;ctime&gt;</code><br />
+<code>#include &lt;deque&gt;</code><br />
 <code>#include &lt;initializer_list&gt;</code><br />
-<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
@@ -113,40 +118,71 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp.html',''); i
 <code>#include &quot;<a class="el" href="dmn-blockingqueue_8hpp_source.html">dmn-blockingqueue.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a>&quot;</code><br />
 </div>
-<p><a href="dmn-blockingqueue-lf_8hpp_source.html">Go to the source code of this file.</a></p>
+<p><a href="dmn-blockingqueue-mt_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock-Free Thread-safe FIFO queue.  <a href="classdmn_1_1Dmn__BlockingQueue__Lf.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe FIFO buffer.  <a href="classdmn_1_1Dmn__BlockingQueue__Mt.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michael-Scott lock-free queue algorithm. </p>
-<p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<p>This header provides <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html" title="Lock-Free Thread-safe FIFO queue.">dmn::Dmn_BlockingQueue_Lf</a>, a thread-safe FIFO queue that:</p><ul>
-<li>supports multiple concurrent producers and consumers (MPMC),</li>
-<li>uses lock-free algorithms for push/pop (no mutexes in the fast path),</li>
-<li>provides blocking behavior for pop() by spinning/yielding until an item becomes available (or until shutdown),</li>
-<li>uses an epoch-based reclamation mechanism (via <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>) to safely reclaim removed nodes without use-after-free.</li>
+<div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads. </p>
+<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<h2><a class="anchor" id="autotoc_md4"></a>
+Overview</h2>
+<p><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html">Dmn_BlockingQueue_Mt&lt;T&gt;</a> is a thread-safe FIFO queue implementation intended for use by producer and consumer threads. Key behavioral properties:</p><ul>
+<li>push operations are non-blocking (they will not wait for consumers).</li>
+<li>pop operations may block waiting for data (either indefinitely or with a timeout, depending on the API used).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md2"></a>
-Blocking model</h2>
-<p>The queue does not use condition variables. "Blocking" means active waiting with yielding (and cancellation checks where applicable). This is suitable for scenarios where latency is prioritized and threads are expected to wake soon, but it may be inefficient for long idle waits with constraints number of cpus.</p>
-<h2><a class="anchor" id="autotoc_md3"></a>
-Shutdown behavior</h2>
-<p>Destruction triggers shutdown. After shutdown begins:</p><ul>
-<li>push operations fail (throw).</li>
-<li>blocking pops are interrupted and will throw.</li>
-<li>non-blocking pops return empty.</li>
+<h2><a class="anchor" id="autotoc_md5"></a>
+Synchronization and semantics</h2>
+<ul>
+<li>A mutex (m_mutex) protects the internal std::deque&lt;T&gt; m_queue and associated counters (m_push_count, m_pop_count).</li>
+<li>Three condition variables are used:<ul>
+<li>m_not_empty_cond: signalled on push; used by the multi-item timed pop pop(count, timeout) to wait until the queue has at least one item or the target number of items.</li>
+<li>m_empty_cond: signalled when the queue becomes empty; used by waitForEmpty() to wait until all outstanding items have been consumed.</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>Memory reclamation is integrated with the inflight-guard interface; callers do not need to manage hazard pointers/epochs directly. </dd></dl>
+</li>
+<li>Counters:<ul>
+<li>m_push_count: incremented on every successful push. This is useful for accounting how many items have entered the buffer in total.</li>
+<li>m_pop_count: incremented on every successful pop. waitForEmpty() asserts that m_pop_count == m_push_count when returning.</li>
+</ul>
+</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md6"></a>
+Blocking and timeout semantics</h2>
+<ul>
+<li>pop(): Blocks until at least one item is available, then returns that item.</li>
+<li>popNoWait(): Non-blocking pop that returns std::nullopt if the queue is empty.</li>
+<li><p class="startli">pop(count, timeout): This function attempts to retrieve up to <code>count</code> items. Its blocking and return behavior:</p><ol type="1">
+<li>If the queue already contains &gt;= count items, it returns exactly <code>count</code> items immediately.</li>
+<li>If the queue contains 0 items, it blocks:<ul>
+<li>If timeout == 0: blocks indefinitely until at least <code>count</code> items become available (returns exactly <code>count</code>).</li>
+<li>If timeout &gt; 0: waits up to <code>timeout</code> microseconds for items.<ul>
+<li>If enough items are available before timeout, returns exactly <code>count</code> items.</li>
+<li>If the timeout expires and the queue contains at least 1 item, returns however many items are currently available (between 1 and <code>count</code>).</li>
+<li>If the timeout expires and the queue is still empty, returns no item.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p class="startli">Note: The timeout is interpreted as a maximum time to wait for the full <code>count</code> items (measured from the first blocking wait inside the call). A zero timeout value means "wait forever".</p>
+</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md7"></a>
+Implementation notes</h2>
+<ul>
+<li>The queue uses an unbounded std::deque&lt;T&gt;. There is no programmatic limit beyond available memory and the semantics of the stored type T.</li>
+<li>The class deletes copy and move constructors / assignment operators to ensure unique ownership of the synchronization primitives and avoid incidental sharing between objects. </li>
+</ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dmn-blockingqueue-lf_8hpp.html">dmn-blockingqueue-lf.hpp</a></li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>

@@ -10,30 +10,30 @@ var hierarchy =
       [ "dmn::Dmn_Pub< T, QueueType >", "classdmn_1_1Dmn__Pub.html", null ],
       [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
     ] ],
-    [ "dmn::Dmn_Async< Dmn_BlockingQueue >", "classdmn_1_1Dmn__Async.html", null ],
+    [ "dmn::Dmn_Async< Dmn_BlockingQueue_Mt >", "classdmn_1_1Dmn__Async.html", null ],
     [ "dmn::Dmn_Async< QueueType >", "classdmn_1_1Dmn__Async.html", [
       [ "dmn::Dmn_Pub< T, QueueType >::Dmn_Sub", "classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html", null ]
     ] ],
     [ "dmn::Dmn_Async_Handle", "classdmn_1_1Dmn__Async__Handle.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< Derived, T >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", [
-      [ "dmn::Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", [
+    [ "dmn::Dmn_BlockingQueue< Derived, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
+      [ "dmn::Dmn_BlockingQueue_Mt< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
+      [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ],
+      [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", [
         [ "dmn::Dmn_Pipe< T, QueueType >", "classdmn_1_1Dmn__Pipe.html", null ]
-      ] ],
-      [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ]
+      ] ]
     ] ],
-    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >, dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
-    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue< T >, T >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", [
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ]
+    [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Lf< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
+    [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< dmn::Dmn_Runtime_Job >, dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
+    [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
+    [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< T >, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
+      [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ]
     ] ],
-    [ "dmn::Dmn_BlockingQueue_Interface< Dmn_BlockingQueue_Lf< std::string >, std::string >", "classdmn_1_1Dmn__BlockingQueue__Interface.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
     [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
-      [ "dmn::Dmn_BlockingQueue< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
-      [ "dmn::Dmn_BlockingQueue< T >", "classdmn_1_1Dmn__BlockingQueue.html", null ],
+      [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
+      [ "dmn::Dmn_BlockingQueue_Mt< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
+      [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
       [ "dmn::Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html", null ]
     ] ],
     [ "dmn::Dmn_Inflight_Guard< uint64_t >", "classdmn_1_1Dmn__Inflight__Guard.html", [
@@ -59,7 +59,7 @@ var hierarchy =
     [ "dmn::Dmn_Singleton< T >", "classdmn_1_1Dmn__Singleton.html", [
       [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
     ] ],
-    [ "dmn::Dmn_Singleton< Dmn_Runtime_Manager< Dmn_BlockingQueue > >", "classdmn_1_1Dmn__Singleton.html", null ],
+    [ "dmn::Dmn_Singleton< Dmn_Runtime_Manager< Dmn_BlockingQueue_Mt > >", "classdmn_1_1Dmn__Singleton.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "structdmn_1_1ScopeGuard.html", null ],

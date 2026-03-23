@@ -122,7 +122,7 @@ Classes</h2></td></tr>
 <p>3) A blocking wait (waitForEmptyInflight()) that waits until all previously entered operations have left, so destructors / stop() routines can safely tear down shared state.</p>
 <p>This module is used in two different ways in this repository:</p>
 <ul>
-<li><p class="startli"><a class="el" href="dmn-blockingqueue_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads.">include/dmn-blockingqueue.hpp</a>: Dmn_BlockingQueue privately inherits Dmn_Inflight_Guard&lt;&gt; (no payload). pop() creates a ticket at its public function entry:</p>
+<li><p class="startli"><a class="el" href="dmn-blockingqueue-mt_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads.">include/dmn-blockingqueue-mt.hpp</a>: Dmn_BlockingQueue_Mt privately inherits Dmn_Inflight_Guard&lt;&gt; (no payload). pop() creates a ticket at its public function entry:</p>
 <p class="startli">[[maybe_unused]] auto t = this-&gt;enterInflightGate();</p>
 <p class="startli">and the queue destructor does:</p>
 <p class="startli">stop(); this-&gt;waitForEmptyInflight();</p>

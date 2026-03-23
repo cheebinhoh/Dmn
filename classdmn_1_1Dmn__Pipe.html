@@ -102,9 +102,9 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
  <div class="center">
   <img src="classdmn_1_1Dmn__Pipe.png" usemap="#dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" alt=""/>
   <map id="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" name="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map">
-<area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="0,0,204,24"/>
-<area href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue&lt; T &gt;" shape="rect" coords="214,0,418,24"/>
-<area href="classdmn_1_1Dmn__Proc.html" alt="dmn::Dmn_Proc" shape="rect" coords="428,0,632,24"/>
+<area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="0,0,211,24"/>
+<area href="classdmn_1_1Dmn__BlockingQueue__Mt.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue_Mt&lt; T &gt;" shape="rect" coords="221,0,432,24"/>
+<area href="classdmn_1_1Dmn__Proc.html" alt="dmn::Dmn_Proc" shape="rect" coords="442,0,653,24"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -159,7 +159,7 @@ Protected Member Functions</h2></td></tr>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a>  = Dmn_BlockingQueue&lt;T&gt;&gt; </div>
+template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a>  = Dmn_BlockingQueue_Mt&lt;T&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -178,7 +178,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Interface.html">dmn::Dmn_BlockingQueue_Interface&lt; Derived, T &gt;</a>.</p>
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a>.</p>
 
 </div>
 </div>
@@ -331,7 +331,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a>  = Dmn_BlockingQueue&lt;T&gt;&gt; </div>
+template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a>  = Dmn_BlockingQueue_Mt&lt;T&gt;&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -385,7 +385,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <p>The function waits until all items that were reported inbound at the time of the call have been popped and processed (i.e., <code>m_count</code> has advanced to cover them). It returns the number of items that were passed through the pipe during the wait.</p>
 <dl class="section return"><dt>Returns</dt><dd>The number of items that were passed through the pipe in total </dd></dl>
 
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6048923db1046ade426b787954759767">dmn::Dmn_BlockingQueue&lt; T &gt;</a>.</p>
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a554df36a059533063f21eeb0ea890422">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
 
 </div>
 </div>
@@ -416,7 +416,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </div><div class="memdoc">
 
 <p>Write (copy) an item into the pipe. </p>
-<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer.">Dmn_BlockingQueue</a> implementation.</p>
+<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> implementation.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be copied into the pipe </td></tr>
@@ -455,7 +455,7 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 </div><div class="memdoc">
 
 <p>Write (move) an item into the pipe. </p>
-<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Thread-safe FIFO buffer.">Dmn_BlockingQueue</a> push policy.</p>
+<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> push policy.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be moved into the pipe </td></tr>

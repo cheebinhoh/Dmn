@@ -114,13 +114,13 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp_source.html',''); ini
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-async_8hpp.html">dmn-async.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-lf_8hpp.html">dmn-blockingqueue-lf.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue_8hpp.html">dmn-blockingqueue.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="keyword">namespace </span>dmn {</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T = std::string,</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>          <span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType = Dmn_BlockingQueue&gt;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>          <span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType = Dmn_BlockingQueue_Mt&gt;</div>
 <div class="foldopen" id="foldopen00116" data-start="{" data-end="};">
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pub.html">  116</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> : <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>&lt;QueueType&gt; {</div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="keyword">public</span>:</div>
@@ -376,7 +376,7 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp_source.html',''); ini
 <div class="ttc" id="aclassdmn_1_1Dmn__Pub_html_ae9641fbad6a69692f3a9522b5e4d66cc"><div class="ttname"><a href="classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc">dmn::Dmn_Pub::registerSubscriber</a></div><div class="ttdeci">auto registerSubscriber(X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</div><div class="ttdef"><b>Definition</b> dmn-pub-sub.hpp:420</div></div>
 <div class="ttc" id="admn-async_8hpp_html"><div class="ttname"><a href="dmn-async_8hpp.html">dmn-async.hpp</a></div><div class="ttdoc">Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks ...</div></div>
 <div class="ttc" id="admn-blockingqueue-lf_8hpp_html"><div class="ttname"><a href="dmn-blockingqueue-lf_8hpp.html">dmn-blockingqueue-lf.hpp</a></div><div class="ttdoc">Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michae...</div></div>
-<div class="ttc" id="admn-blockingqueue_8hpp_html"><div class="ttname"><a href="dmn-blockingqueue_8hpp.html">dmn-blockingqueue.hpp</a></div><div class="ttdoc">Thread-safe FIFO blocking queue interface for passing items between threads.</div></div>
+<div class="ttc" id="admn-blockingqueue-mt_8hpp_html"><div class="ttname"><a href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a></div><div class="ttdoc">Thread-safe FIFO blocking queue interface for passing items between threads.</div></div>
 <div class="ttc" id="admn-proc_8hpp_html"><div class="ttname"><a href="dmn-proc_8hpp.html">dmn-proc.hpp</a></div><div class="ttdoc">Lightweight RAII wrapper around native pthread functionality.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

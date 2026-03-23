@@ -166,7 +166,7 @@ Friends</h2></td></tr>
 <tr class="separator:a3e7462434c571021cb2eb9fb9b1d56dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> = std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">template</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> QueueType = Dmn_BlockingQueue&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> = std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">template</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> QueueType = Dmn_BlockingQueue_Mt&gt;<br />
 class dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</div><p>Subscriber interface for receiving items published by Dmn_Pub&lt;T&gt;.</p>
 <p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d7f9c2b39d0dc2f2022849e03ae319c">notify(const T&amp;)</a> to handle delivered items. The notify callback will be executed inside the subscriber's own singleton asynchronous thread context (i.e., the <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a>'s <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> context).</p>
 <p>Lifetime notes:</p><ul>
@@ -179,7 +179,7 @@ class dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</div><p>Subscriber interface f
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a>  = std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">template</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> QueueType = Dmn_BlockingQueue&gt; </div>
+template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a>  = std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">template</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> QueueType = Dmn_BlockingQueue_Mt&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
