@@ -33,15 +33,6 @@
 
 #include "dmn-dmesgnet.hpp"
 
-#include <sys/time.h>
-
-#include <cassert>
-#include <chrono>
-#include <memory>
-#include <string>
-#include <string_view>
-#include <utility>
-
 #include "dmn-async.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
@@ -51,6 +42,14 @@
 
 #include "proto/dmn-dmesg-body.pb.h"
 #include "proto/dmn-dmesg-type.pb.h"
+
+#include <cassert>
+#include <chrono>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <sys/time.h>
+#include <utility>
 
 namespace dmn {
 

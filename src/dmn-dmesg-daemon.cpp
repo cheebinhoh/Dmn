@@ -15,12 +15,12 @@
  * initialisation and I/O handler wiring.
  */
 
+#include "dmn.hpp"
+
 #include <chrono>
 #include <csignal>
 #include <iostream>
 #include <thread>
-
-#include "dmn.hpp"
 
 int main(int argc, char *argv[]) {
   auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();

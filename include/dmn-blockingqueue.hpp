@@ -155,7 +155,7 @@ protected:
 
 private:
   std::atomic_flag m_shutdown_flag{};
-};
+}; // class Dmn_BlockingQueue
 
 template <typename Derived, typename T>
 inline auto Dmn_BlockingQueue<Derived, T>::pop(std::size_t count, long timeout)

@@ -27,11 +27,11 @@
 #ifndef DMN_SOCKET_HPP_
 #define DMN_SOCKET_HPP_
 
+#include "dmn-io.hpp"
+
 #include <optional>
 #include <string>
 #include <string_view>
-
-#include "dmn-io.hpp"
 
 namespace dmn {
 

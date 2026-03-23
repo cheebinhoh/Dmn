@@ -24,6 +24,14 @@
 
 #include "dmn-dmesg.hpp"
 
+#include "dmn-async.hpp"
+#include "dmn-dmesg-pb-util.hpp"
+#include "dmn-pub-sub.hpp"
+#include "dmn-util.hpp"
+
+#include "proto/dmn-dmesg-type.pb.h"
+#include "proto/dmn-dmesg.pb.h"
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -36,14 +44,6 @@
 #include <sys/time.h>
 #include <utility>
 #include <vector>
-
-#include "dmn-async.hpp"
-#include "dmn-dmesg-pb-util.hpp"
-#include "dmn-pub-sub.hpp"
-#include "dmn-util.hpp"
-
-#include "proto/dmn-dmesg-type.pb.h"
-#include "proto/dmn-dmesg.pb.h"
 
 namespace dmn {
 

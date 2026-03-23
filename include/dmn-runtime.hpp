@@ -93,6 +93,14 @@
 #ifndef DMN_RUNTIME_HPP_
 #define DMN_RUNTIME_HPP_
 
+#include "dmn-runtime-task.hpp"
+
+#include "dmn-async.hpp"
+#include "dmn-blockingqueue-lf.hpp"
+#include "dmn-blockingqueue-mt.hpp"
+#include "dmn-proc.hpp"
+#include "dmn-singleton.hpp"
+
 #include <atomic>
 #include <cassert>
 #include <cerrno>
@@ -118,14 +126,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include "dmn-async.hpp"
-#include "dmn-blockingqueue-lf.hpp"
-#include "dmn-blockingqueue-mt.hpp"
-#include "dmn-proc.hpp"
-#include "dmn-singleton.hpp"
-
-#include "dmn-runtime-task.hpp"
 
 namespace dmn {
 
@@ -406,11 +406,11 @@ private:
       m_timedQueue{};
 
   // Atomic flags used for coordination (lightweight spin semantics)
-  std::atomic_flag m_main_enter_atomic_flag{};
-  std::atomic_flag m_main_exit_atomic_flag{};
-  std::atomic_flag m_sched_enter_atomic_flag{};
+  std::atomic_flag m_main_enter_flag{};
+  std::atomic_flag m_main_exit_flag{};
+  std::atomic_flag m_sched_enter_flag{};
 
-  std::atomic_flag m_shutdown_atomic_flag{};
+  std::atomic_flag m_shutdown_flag{};
 
   // Number of high, medium and low priority jobs scheduled and add to
   // pending queue waiting for scheduler.
@@ -480,12 +480,12 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
 
 template <template <class> class QueueType>
 Dmn_Runtime_Manager<QueueType>::~Dmn_Runtime_Manager() noexcept try {
-  m_shutdown_atomic_flag.test_and_set(std::memory_order_release);
+  m_shutdown_flag.test_and_set(std::memory_order_release);
 
   exitMainLoop();
 
-  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));
-  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));
+  assert(m_main_exit_flag.test(std::memory_order_acquire));
+  assert(!m_main_enter_flag.test(std::memory_order_acquire));
 
   // it is important that we wait for all Dmn_Runtime_Job and its companion
   // Dmn_Runtime_Task to be destroyed and unwound from the stack, as the
@@ -532,7 +532,7 @@ void Dmn_Runtime_Manager<QueueType>::addJob(
   }
 
   if (m_jobs_count.fetch_add(1) == 0 &&
-      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {
+      m_main_enter_flag.test(std::memory_order_acquire)) {
     this->runRuntimeJobExecutor();
   }
 }
@@ -704,8 +704,8 @@ void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
-  if (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {
-    m_main_enter_atomic_flag.clear(std::memory_order_release);
+  if (!m_main_exit_flag.test_and_set(std::memory_order_release)) {
+    m_main_enter_flag.clear(std::memory_order_release);
 
     // set the last timer, so that signalWaitProc gracefully exit.
     this->setNextTimer(0, 10000);
@@ -725,7 +725,7 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
                // done so; if it has crashed, we still disable the timer here.
   }
 
-  m_main_exit_atomic_flag.notify_all();
+  m_main_exit_flag.notify_all();
 }
 
 /**
@@ -739,14 +739,14 @@ void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
   // runtime job executor is started so the system does not remain idle.
   bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
 
-  if (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {
+  if (m_main_enter_flag.test_and_set(std::memory_order_acquire)) {
     assert(false && "Error: enter main loop twice without exit");
 
     throw std::runtime_error("Error: enter main loop twice without exit");
   }
 
-  m_main_exit_atomic_flag.clear(std::memory_order_release);
-  m_main_enter_atomic_flag.notify_all();
+  m_main_exit_flag.clear(std::memory_order_release);
+  m_main_enter_flag.notify_all();
   Dmn_Proc::yield();
 
   m_signalWaitProc = std::make_unique<Dmn_Proc>(
@@ -761,7 +761,7 @@ void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
                                      std::system_category().message(err));
           }
 
-          if (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
+          if (m_main_exit_flag.test(std::memory_order_acquire)) {
             break;
           } else {
             this->addExecTask([this, signo]() {
@@ -780,8 +780,8 @@ void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
     this->runRuntimeJobExecutor();
   }
 
-  while (!m_main_exit_atomic_flag.test(std::memory_order_acquire)) {
-    m_main_exit_atomic_flag.wait(false, std::memory_order_acquire);
+  while (!m_main_exit_flag.test(std::memory_order_acquire)) {
+    m_main_exit_flag.wait(false, std::memory_order_acquire);
   }
 }
 

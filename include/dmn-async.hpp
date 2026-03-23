@@ -29,15 +29,16 @@
 #ifndef DMN_ASYNC_HPP_
 #define DMN_ASYNC_HPP_
 
+#include "dmn-blockingqueue-mt.hpp"
+
+#include "dmn-pipe.hpp"
+
 #include <chrono>
 #include <exception>
 #include <functional>
 #include <future>
 #include <memory>
 #include <string_view>
-
-#include "dmn-blockingqueue-mt.hpp"
-#include "dmn-pipe.hpp"
 
 // Helper macros to submit tasks with different capture styles. They call
 // write() with a small lambda that captures as requested and forwards the
