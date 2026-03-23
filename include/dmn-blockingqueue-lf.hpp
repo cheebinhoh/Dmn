@@ -53,7 +53,7 @@
 #include "dmn-proc.hpp"
 #include "dmn-util.hpp"
 
-#include "dmn-blockingqueue-interface.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-inflight-guard.hpp"
 
 namespace dmn {
@@ -65,9 +65,9 @@ namespace dmn {
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue_Lf
-    : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>,
+    : public Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>,
       private Dmn_Inflight_Guard<uint64_t> {
-  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>;
+  friend class Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>;
 
   using Inflight_Guard_Ticket =
       std::unique_ptr<Dmn_Inflight_Guard<uint64_t>::Ticket>;
@@ -152,9 +152,9 @@ class Dmn_BlockingQueue_Lf
   };
 
 public:
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>::isShutdown;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>::pop;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>::push;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::isShutdown;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::pop;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::push;
 
   Dmn_BlockingQueue_Lf();
   Dmn_BlockingQueue_Lf(std::initializer_list<T> list);
@@ -639,7 +639,7 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::shutdown() {
   // 1. set shutdown flag
-  Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Lf<T>, T>::shutdown();
+  Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::shutdown();
 
   // 2. detach m_tail and mark data as empty.
   //    Release: establishes synchronization with threads that acquire m_tail in

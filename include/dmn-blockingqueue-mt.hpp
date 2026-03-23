@@ -93,7 +93,7 @@
 #include "dmn-proc.hpp"
 #include "dmn-util.hpp"
 
-#include "dmn-blockingqueue-interface.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-inflight-guard.hpp"
 
 namespace dmn {
@@ -105,16 +105,16 @@ namespace dmn {
  */
 template <typename T = std::string>
 class Dmn_BlockingQueue_Mt
-    : public Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>,
+    : public Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>,
       private Dmn_Inflight_Guard<> {
-  friend class Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>;
+  friend class Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>;
 
   using Inflight_Guard_Ticket = std::unique_ptr<Dmn_Inflight_Guard<>::Ticket>;
 
 public:
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::isShutdown;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::pop;
-  using Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::push;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::isShutdown;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::pop;
+  using Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::push;
 
   Dmn_BlockingQueue_Mt();
   Dmn_BlockingQueue_Mt(std::initializer_list<T> list);
@@ -300,7 +300,7 @@ void Dmn_BlockingQueue_Mt<T>::pushImpl(U &&item) {
 }
 
 template <typename T> void Dmn_BlockingQueue_Mt<T>::shutdown() {
-  Dmn_BlockingQueue_Interface<Dmn_BlockingQueue_Mt<T>, T>::shutdown();
+  Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::shutdown();
 
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
