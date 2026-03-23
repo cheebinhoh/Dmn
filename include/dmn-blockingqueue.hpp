@@ -1,7 +1,7 @@
 /**
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-blockingqueue-interface.hpp
+ * @file dmn-blockingqueue.hpp
  * @brief Thread-safe FIFO blocking queue interface for passing items between
  * threads.
  *
@@ -29,8 +29,8 @@
  *   `push(std::move(item))` so that this rvalue overload is selected.
  */
 
-#ifndef DMN_BLOCKINGQUEUE_INTERFACE_HPP_
-#define DMN_BLOCKINGQUEUE_INTERFACE_HPP_
+#ifndef DMN_BLOCKINGQUEUE_HPP_
+#define DMN_BLOCKINGQUEUE_HPP_
 
 #include <atomic>
 #include <cstddef>
@@ -42,9 +42,9 @@
 
 namespace dmn {
 
-template <typename Derived, typename T> class Dmn_BlockingQueue_Interface {
+template <typename Derived, typename T> class Dmn_BlockingQueue {
 public:
-  virtual ~Dmn_BlockingQueue_Interface() = default;
+  virtual ~Dmn_BlockingQueue() = default;
 
   /**
    * @brief Remove and return the front item, waiting until an item is
@@ -139,7 +139,7 @@ private:
 };
 
 template <typename Derived, typename T>
-auto Dmn_BlockingQueue_Interface<Derived, T>::pop() -> T {
+auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
   auto data = static_cast<Derived *>(this)->popOptional(true);
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
@@ -149,25 +149,25 @@ auto Dmn_BlockingQueue_Interface<Derived, T>::pop() -> T {
 }
 
 template <typename Derived, typename T>
-auto Dmn_BlockingQueue_Interface<Derived, T>::popNoWait() -> std::optional<T> {
+auto Dmn_BlockingQueue<Derived, T>::popNoWait() -> std::optional<T> {
   return static_cast<Derived *>(this)->popOptional(false);
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::push(const T &item) {
+void Dmn_BlockingQueue<Derived, T>::push(const T &item) {
   static_cast<Derived *>(this)->pushCopy(item);
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::push(T &&item) {
+void Dmn_BlockingQueue<Derived, T>::push(T &&item) {
   static_cast<Derived *>(this)->pushMove(std::move(item));
 }
 
 template <typename Derived, typename T>
-void Dmn_BlockingQueue_Interface<Derived, T>::shutdown() {
+void Dmn_BlockingQueue<Derived, T>::shutdown() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
 }
 
 } // namespace dmn
 
-#endif // DMN_BLOCKINGQUEUE_INTERFACE_HPP_
+#endif // DMN_BLOCKINGQUEUE_HPP_

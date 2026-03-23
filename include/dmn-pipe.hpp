@@ -68,8 +68,8 @@
 
 #define DMN_PIPE_HPP_
 
-#include "dmn-blockingqueue-interface.hpp"
 #include "dmn-blockingqueue-mt.hpp"
+#include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
 #include "dmn-io.hpp"
 #include "dmn-proc.hpp"
@@ -85,10 +85,9 @@ namespace dmn {
 
 template <typename T, typename QueueType = Dmn_BlockingQueue_Mt<T>>
 class Dmn_Pipe : public Dmn_Io<T>, private QueueType, private Dmn_Proc {
-  static_assert(
-      std::is_base_of_v<Dmn_BlockingQueue_Interface<QueueType, T>, QueueType>,
-      "QueueType must inherit from dmn::Dmn_BlockingQueue_Interface<QueueType, "
-      "T>");
+  static_assert(std::is_base_of_v<Dmn_BlockingQueue<QueueType, T>, QueueType>,
+                "QueueType must inherit from dmn::Dmn_BlockingQueue<QueueType, "
+                "T>");
 
   using Task = std::function<void(T &&)>;
 
