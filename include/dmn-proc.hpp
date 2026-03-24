@@ -30,9 +30,6 @@
  *           clients to submit parameterized requests encapsulated as
  *           std::function<void()> tasks executed by the thread.
  * Bridge - Abstracts the underlying threading implementation from the client.
- * Decorator - Provides an alternative to subclassing for threading behavior
- *             and allows clients to attach additional responsibilities or
- *             vary the behavior of the thread.
  *
  * Note on mutex cleanup macros
  * The macros below wrap pthread_cleanup_push/pop for the common pattern of
@@ -61,7 +58,7 @@
 namespace dmn {
 
 /**
- * Cleanup function used with pthread_cleanup_push/pop.
+ * @brief Cleanup function used with pthread_cleanup_push/pop.
  * Expects a pointer to a pthread_mutex_t and unlocks it.
  *
  * This function is declared here so it can be used with the macros above
@@ -105,7 +102,7 @@ public:
   using Task = std::function<void()>;
 
   /**
-   * Construct a Dmn_Proc.
+   * @brief Construct a Dmn_Proc.
    *
    * @param name Human-readable name for diagnostics/logging.
    * @param fnc Optional task to run when exec() is called. If not provided,
@@ -120,27 +117,28 @@ public:
   Dmn_Proc &operator=(Dmn_Proc &&obj) = delete;
 
   /**
-   * Execute the provided task in a new asynchronous thread.
+   * @brief Execute the provided task in a new asynchronous thread.
    *
    * If fnc is empty, the previously-set task (from constructor or setTask)
    * will be used. Returns true on successful thread creation.
    *
    * @param fnc Optional task to run in the new thread.
+   *
    * @return true if the thread was started successfully.
    */
   auto exec(const Dmn_Proc::Task &fnc = {}) -> bool;
 
   /**
-   * Wait (join) for the asynchronous thread to finish.
+   * @brief Wait (join) for the asynchronous thread to finish.
    *
    * @return True if the thread was joined successfully.
    */
   auto wait() -> bool;
 
   /**
-   * Voluntarily yield execution to allow other threads to run and to create a
-   * cooperative cancellation point. Call this inside long-running loops if you
-   * expect the thread to be cancellable in a timely manner.
+   * @brief Voluntarily yield execution to allow other threads to run and to
+   * create a cooperative cancellation point. Call this inside long-running
+   * loops if you expect the thread to be cancellable in a timely manner.
    */
   static void yield();
 
