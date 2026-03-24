@@ -59,39 +59,39 @@
 
 namespace dmn {
 
-// A simple rendezvous object returned to callers that want to wait for a
-// previously submitted asynchronous task to finish. Calling wait() blocks
-// until the task has completed. If the task threw, the stored exception
-// will be rethrown to the waiter.
-class Dmn_Async_Handle {
-  template <template <class> class> friend class Dmn_Async;
-
-public:
-  Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
-      : m_fnc{fnc}, m_due_in_future{due_in_future} {
-    m_fut = m_p.get_future();
-  }
-
-  ~Dmn_Async_Handle() = default;
-
-  Dmn_Async_Handle(const Dmn_Async_Handle &obj) = delete;
-  Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;
-  Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
-  Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
-
-  void wait() { m_fut.get(); }
-
-private:
-  std::function<void()> m_fnc{};
-  long long m_due_in_future{};
-
-  std::promise<void> m_p{};
-  std::future<void> m_fut{};
-}; // class Dmn_Async_Handle
-
 template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Async {
 public:
+  // A simple rendezvous object returned to callers that want to wait for a
+  // previously submitted asynchronous task to finish. Calling wait() blocks
+  // until the task has completed. If the task threw, the stored exception
+  // will be rethrown to the waiter.
+  class Dmn_Async_Handle {
+    template <template <class> class> friend class Dmn_Async;
+
+  public:
+    Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
+        : m_fnc{fnc}, m_due_in_future{due_in_future} {
+      m_fut = m_p.get_future();
+    }
+
+    ~Dmn_Async_Handle() = default;
+
+    Dmn_Async_Handle(const Dmn_Async_Handle &obj) = delete;
+    Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;
+    Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
+    Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
+
+    void wait() { m_fut.get(); }
+
+  private:
+    std::function<void()> m_fnc{};
+    long long m_due_in_future{};
+
+    std::promise<void> m_p{};
+    std::future<void> m_fut{};
+  }; // class Dmn_Async_Handle
+
   /**
    * @brief Construct a Dmn_Async helper.
    *
@@ -172,7 +172,8 @@ private:
 template <template <class> class QueueType>
 Dmn_Async<QueueType>::Dmn_Async(std::string_view name) : m_name{name} {
   m_pipe = std::make_unique<BasePipe>(
-      m_name, [this](std::shared_ptr<Dmn_Async_Handle> task) -> void {
+      m_name,
+      [this](std::shared_ptr<Dmn_Async::Dmn_Async_Handle> task) -> void {
         try {
           if (task->m_due_in_future > 0) {
             const long long now =
@@ -224,7 +225,7 @@ template <template <class> class QueueType>
 template <class Rep, class Period>
 auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
     const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async_Handle> {
+    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async::Dmn_Async_Handle> {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
@@ -232,7 +233,7 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
   auto task_shared_ptr =
-      std::make_shared<Dmn_Async_Handle>(fnc, time_in_future);
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(fnc, time_in_future);
   auto task_ret = task_shared_ptr;
 
   this->m_pipe->write(task_shared_ptr);
@@ -247,8 +248,8 @@ void Dmn_Async<QueueType>::addExecTask(std::function<void()> fnc) {
 
 template <template <class> class QueueType>
 auto Dmn_Async<QueueType>::addExecTaskWithWait(std::function<void()> fnc)
-    -> std::shared_ptr<Dmn_Async_Handle> {
-  auto task_shared_ptr = std::make_shared<Dmn_Async_Handle>(fnc);
+    -> std::shared_ptr<Dmn_Async::Dmn_Async_Handle> {
+  auto task_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Handle>(fnc);
   auto task_ret = task_shared_ptr;
 
   this->m_pipe->write(task_shared_ptr);
