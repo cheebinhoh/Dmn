@@ -3,8 +3,8 @@
  *
  * @file dmn-async.hpp
  * @brief Header for Dmn_Async: a small helper that serializes asynchronous
- *        execution of client-provided tasks and provides optional rendezvous
- *        points for callers that need to wait for completion.
+ * execution of client-provided tasks and provides optional rendezvous points
+ * for callers that need to wait for completion.
  *
  * Design pattern
  * --------------
@@ -30,7 +30,6 @@
 #define DMN_ASYNC_HPP_
 
 #include "dmn-blockingqueue-mt.hpp"
-
 #include "dmn-pipe.hpp"
 
 #include <chrono>
@@ -59,6 +58,7 @@
   } while (false)
 
 namespace dmn {
+
 // A simple rendezvous object returned to callers that want to wait for a
 // previously submitted asynchronous task to finish. Calling wait() blocks
 // until the task has completed. If the task threw, the stored exception
@@ -87,7 +87,7 @@ private:
 
   std::promise<void> m_p{};
   std::future<void> m_fut{};
-};
+}; // class Dmn_Async_Handle
 
 template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Async {
@@ -120,8 +120,9 @@ public:
    * exception, wait() will rethrow it.
    *
    * @param fnc The task to execute asynchronously.
+   *
    * @return shared_ptr<Dmn_Async_Handle> A rendezvous object to wait for task
-   *         completion.
+   * completion.
    */
   auto addExecTaskWithWait(std::function<void()> fnc)
       -> std::shared_ptr<Dmn_Async_Handle>;
@@ -146,6 +147,7 @@ public:
    *
    * @param duration Time to wait before executing the task.
    * @param fnc The task to execute.
+   *
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
   template <class Rep, class Period>
@@ -154,6 +156,9 @@ public:
                            std::function<void()> fnc)
       -> std::shared_ptr<Dmn_Async_Handle>;
 
+  /**
+   * @brief Block until the async is empty and no task pending to be executed.
+   */
   void waitForEmpty();
 
 private:

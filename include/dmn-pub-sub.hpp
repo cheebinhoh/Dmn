@@ -5,11 +5,13 @@
  * @brief Lightweight publish/subscribe helpers built on top of Dmn_Async.
  *
  * Overview
+ * --------
  * - This header provides a small, efficient publish/subscribe utility:
  *   * Dmn_Pub<T> publishes items of type T.
  *   * Dmn_Pub<T>::Dmn_Sub is the subscriber interface that receives items.
  *
  * Design pattern
+ * --------------
  * - Adapter - it allows other subclasses to be adapted as publishers or
  *             subscribers.
  * - Observer - it defines one-to-many dependencies between objects so that
@@ -17,6 +19,7 @@
  *              subscribers are notified.
  *
  * Key design goals
+ * ----------------
  * - Simplicity: minimal API to publish, register and unregister subscribers.
  * - Correctness: clear ownership and lifetime semantics, safe cleanup on
  *   destruction.
@@ -24,6 +27,7 @@
  *   notifications inside their own Dmn_Async context.
  *
  * Threading and execution model
+ * -----------------------------
  * - Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each object has its own
  *   singleton asynchronous execution context as provided by Dmn_Async.
  * - publish(const T&) schedules a delivery task in the publisher's async
@@ -34,6 +38,7 @@
  *   subclasses and is always invoked inside the subscriber's async context.
  *
  * Synchronization
+ * ---------------
  * - A mutex (m_mutex) protects the publisher's internal state:
  *   - the subscriber list (m_subscribers) and the replay buffer (m_buffer).
  * - The mutex provides synchronous semantics for registerSubscriber() and
@@ -44,6 +49,7 @@
  *   iterating the subscriber list to schedule deliveries.
  *
  * Buffering and replay
+ * --------------------
  * - The publisher keeps a bounded history (m_buffer) of up to m_capacity
  *   recently-published items.
  * - When a subscriber registers, missed items from the buffer are replayed to
@@ -53,11 +59,13 @@
  *   - m_replayQuantity  > 0  : replay up to the last N items
  *
  * Filtering
+ * ---------
  * - An optional filter function (Dmn_Pub_Filter_Task) can be supplied at
  *   construction. If provided, the filter is invoked for each (subscriber,
  *   item) pair to decide whether that subscriber should receive the item.
  *
  * Lifetime and cleanup
+ * --------------------
  * - Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.
  * - Dmn_Sub destructor automatically unregisters from the publisher (if still
  *   registered) and waits for any pending asynchronous tasks to finish so a
@@ -69,10 +77,12 @@
  *     scheduled to subscribers from this publisher after destruction starts.
  *
  * Error handling and exception safety
+ * -----------------------------------
  * - Destructors are noexcept; exceptions thrown during cleanup are swallowed to
  *   guarantee noexcept finalization.
  *
  * Usage summary
+ * -------------
  * - Create a Dmn_Pub<T> with a name and optional capacity and filter.
  * - Derive from Dmn_Pub<T>::Dmn_Sub and implement notify(const T&).
  * - Call registerSubscriber() to register a subscriber (buffer replay occurs
@@ -81,6 +91,7 @@
  *   block=true to wait until the publish task completes.
  *
  * Limitations and notes
+ * ---------------------
  * - Capacity <= 0 is not validated beyond construction; callers should pass a
  *   sensible positive capacity.
  * - The implementation uses mutexes and conditional variables.
