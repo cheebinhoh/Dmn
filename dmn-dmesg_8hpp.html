@@ -98,7 +98,9 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp.html',''); initResizabl
 
 <p>DMESG publisher/subscriber wrapper using Protobuf messages.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;atomic&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="dmn-pub-sub_8hpp_source.html">dmn-pub-sub.hpp</a>&quot;</code><br />
+<code>#include &quot;proto/dmn-dmesg.pb.h&quot;</code><br />
+<code>#include &lt;atomic&gt;</code><br />
 <code>#include &lt;bitset&gt;</code><br />
 <code>#include &lt;cassert&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
@@ -108,11 +110,9 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp.html',''); initResizabl
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;sys/time.h&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &lt;sys/time.h&gt;</code><br />
-<code>#include &quot;<a class="el" href="dmn-pub-sub_8hpp_source.html">dmn-pub-sub.hpp</a>&quot;</code><br />
-<code>#include &quot;proto/dmn-dmesg.pb.h&quot;</code><br />
 </div>
 <p><a href="dmn-dmesg_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -140,7 +140,9 @@ Variables</h2></td></tr>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Overview</h2>
 <p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code>dmn::DMesgPb</code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
-<p>Design pattern Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control handler lifetime. Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built on top of the proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.</p>
+<h2><a class="anchor" id="autotoc_md12"></a>
+Design pattern</h2>
+<p>Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control and own handler lifetime. Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built on top of the Proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.</p>
 <p>Key responsibilities</p><ul>
 <li>Represent messages with the Protobuf type <code>dmn::DMesgPb</code>. Clients extend the proto when extra fields are needed (no C++ subclassing required).</li>
 <li>Provide an ergonomic handler API (Dmn_Io-like) for reading and writing DMesgPb messages without requiring clients to subclass publisher-specific subscriber interfaces.</li>

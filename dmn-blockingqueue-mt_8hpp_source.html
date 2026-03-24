@@ -101,28 +101,28 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-mt_8hpp_source.html'
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="preprocessor">#ifndef DMN_BLOCKINGQUEUE_MT_HPP_</span></div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#define DMN_BLOCKINGQUEUE_MT_HPP_</span></div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="preprocessor">#include &lt;condition_variable&gt;</span></div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#include &lt;cstring&gt;</span></div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#include &lt;ctime&gt;</span></div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#include &lt;deque&gt;</span></div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-util_8hpp.html">dmn-util.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue_8hpp.html">dmn-blockingqueue.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-inflight-guard_8hpp.html">dmn-inflight-guard.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue_8hpp.html">dmn-blockingqueue.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-inflight-guard_8hpp.html">dmn-inflight-guard.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-util_8hpp.html">dmn-util.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#include &lt;condition_variable&gt;</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="preprocessor">#include &lt;cstring&gt;</span></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#include &lt;ctime&gt;</span></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">#include &lt;deque&gt;</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">namespace </span>dmn {</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
@@ -408,7 +408,7 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-mt_8hpp_source.html'
 </div>
 </div>
 </div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:92</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:63</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue__Mt_html"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue__Mt.html">dmn::Dmn_BlockingQueue_Mt</a></div><div class="ttdoc">Thread-safe FIFO buffer.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue-mt.hpp:109</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue__Mt_html_a00f8a147a6000229314e9886722b0c15"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a00f8a147a6000229314e9886722b0c15">dmn::Dmn_BlockingQueue_Mt::popOptional</a></div><div class="ttdeci">virtual auto popOptional(bool wait) -&gt; std::optional&lt; T &gt; override</div><div class="ttdoc">Internal helper that optionally blocks waiting for an item.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue-mt.hpp:387</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue__Mt_html_a554df36a059533063f21eeb0ea890422"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a554df36a059533063f21eeb0ea890422">dmn::Dmn_BlockingQueue_Mt::waitForEmpty</a></div><div class="ttdeci">virtual auto waitForEmpty() -&gt; uint64_t override</div><div class="ttdoc">Wait until the queue becomes empty and return the total number of items that have passed through the ...</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue-mt.hpp:309</div></div>
@@ -424,8 +424,8 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-mt_8hpp_source.html'
 <div class="ttc" id="admn-blockingqueue_8hpp_html"><div class="ttname"><a href="dmn-blockingqueue_8hpp.html">dmn-blockingqueue.hpp</a></div><div class="ttdoc">Thread-safe FIFO blocking queue interface for passing items between threads.</div></div>
 <div class="ttc" id="admn-inflight-guard_8hpp_html"><div class="ttname"><a href="dmn-inflight-guard_8hpp.html">dmn-inflight-guard.hpp</a></div><div class="ttdoc">RAII guard + in-flight counter for safe shutdown and (optional) epoch / hazard-style bookkeeping.</div></div>
 <div class="ttc" id="admn-proc_8hpp_html"><div class="ttname"><a href="dmn-proc_8hpp.html">dmn-proc.hpp</a></div><div class="ttdoc">Lightweight RAII wrapper around native pthread functionality.</div></div>
-<div class="ttc" id="admn-proc_8hpp_html_aa633c027e6c017bcb5b8058069bc8c65"><div class="ttname"><a href="dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65">DMN_PROC_CLEANUP_PUSH</a></div><div class="ttdeci">#define DMN_PROC_CLEANUP_PUSH(...)</div><div class="ttdef"><b>Definition</b> dmn-proc.hpp:55</div></div>
-<div class="ttc" id="admn-proc_8hpp_html_aa7da7fe4e959340eec9466edd69fb25d"><div class="ttname"><a href="dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d">DMN_PROC_CLEANUP_POP</a></div><div class="ttdeci">#define DMN_PROC_CLEANUP_POP(...)</div><div class="ttdef"><b>Definition</b> dmn-proc.hpp:60</div></div>
+<div class="ttc" id="admn-proc_8hpp_html_aa633c027e6c017bcb5b8058069bc8c65"><div class="ttname"><a href="dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65">DMN_PROC_CLEANUP_PUSH</a></div><div class="ttdeci">#define DMN_PROC_CLEANUP_PUSH(...)</div><div class="ttdef"><b>Definition</b> dmn-proc.hpp:54</div></div>
+<div class="ttc" id="admn-proc_8hpp_html_aa7da7fe4e959340eec9466edd69fb25d"><div class="ttname"><a href="dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d">DMN_PROC_CLEANUP_POP</a></div><div class="ttdeci">#define DMN_PROC_CLEANUP_POP(...)</div><div class="ttdef"><b>Definition</b> dmn-proc.hpp:59</div></div>
 <div class="ttc" id="admn-util_8hpp_html"><div class="ttname"><a href="dmn-util_8hpp.html">dmn-util.hpp</a></div><div class="ttdoc">Small, header-only utility helpers used across the Dmn project.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

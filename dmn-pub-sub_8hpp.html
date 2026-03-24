@@ -97,7 +97,11 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 
 <p>Lightweight publish/subscribe helpers built on top of Dmn_Async.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-blockingqueue-mt_8hpp_source.html">dmn-blockingqueue-mt.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
+<code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;deque&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
@@ -107,10 +111,6 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
-<code>#include &quot;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-blockingqueue-mt_8hpp_source.html">dmn-blockingqueue-mt.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
 </div>
 <p><a href="dmn-pub-sub_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -124,28 +124,38 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight publish/subscribe helpers built on top of Dmn_Async. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>Overview</p><ul>
+<h2><a class="anchor" id="autotoc_md23"></a>
+Overview</h2>
+<ul>
 <li>This header provides a small, efficient publish/subscribe utility:<ul>
 <li>Dmn_Pub&lt;T&gt; publishes items of type T.</li>
 <li>Dmn_Pub&lt;T&gt;::Dmn_Sub is the subscriber interface that receives items.</li>
 </ul>
 </li>
 </ul>
-<p>Design pattern</p><ul>
+<h2><a class="anchor" id="autotoc_md24"></a>
+Design pattern</h2>
+<ul>
 <li>Adapter - it allows other subclasses to be adapted as publishers or subscribers.</li>
 <li>Observer - it defines one-to-many dependencies between objects so that when one object publishes a state change, all dependent subscribers are notified.</li>
 </ul>
-<p>Key design goals</p><ul>
+<h2><a class="anchor" id="autotoc_md25"></a>
+Key design goals</h2>
+<ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
 <li>Concurrency: deliveries occur asynchronously and subscribers process notifications inside their own Dmn_Async context.</li>
 </ul>
-<p>Threading and execution model</p><ul>
+<h2><a class="anchor" id="autotoc_md26"></a>
+Threading and execution model</h2>
+<ul>
 <li>Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's async context via Dmn_Sub::notifyInternal.</li>
 <li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked inside the subscriber's async context.</li>
 </ul>
-<p>Synchronization</p><ul>
+<h2><a class="anchor" id="autotoc_md27"></a>
+Synchronization</h2>
+<ul>
 <li>A mutex (m_mutex) protects the publisher's internal state:<ul>
 <li>the subscriber list (m_subscribers) and the replay buffer (m_buffer).</li>
 </ul>
@@ -153,7 +163,9 @@ Classes</h2></td></tr>
 <li>The mutex provides synchronous semantics for registerSubscriber() and unregisterSubscriber(): callers return only after registration state is updated and (for register) buffer replay has been enqueued to the subscriber.</li>
 <li>publishInternal locks the same mutex while updating the buffer and while iterating the subscriber list to schedule deliveries.</li>
 </ul>
-<p>Buffering and replay</p><ul>
+<h2><a class="anchor" id="autotoc_md28"></a>
+Buffering and replay</h2>
+<ul>
 <li>The publisher keeps a bounded history (m_buffer) of up to m_capacity recently-published items.</li>
 <li>When a subscriber registers, missed items from the buffer are replayed to the subscriber according to the subscriber's replay setting:<ul>
 <li>m_replayQuantity == -1 : replay all buffered items</li>
@@ -162,10 +174,14 @@ Classes</h2></td></tr>
 </ul>
 </li>
 </ul>
-<p>Filtering</p><ul>
+<h2><a class="anchor" id="autotoc_md29"></a>
+Filtering</h2>
+<ul>
 <li>An optional filter function (Dmn_Pub_Filter_Task) can be supplied at construction. If provided, the filter is invoked for each (subscriber, item) pair to decide whether that subscriber should receive the item.</li>
 </ul>
-<p>Lifetime and cleanup</p><ul>
+<h2><a class="anchor" id="autotoc_md30"></a>
+Lifetime and cleanup</h2>
+<ul>
 <li>Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.</li>
 <li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
 <li>Dmn_Pub destructor:<ul>
@@ -173,16 +189,22 @@ Classes</h2></td></tr>
 </ul>
 </li>
 </ul>
-<p>Error handling and exception safety</p><ul>
+<h2><a class="anchor" id="autotoc_md31"></a>
+Error handling and exception safety</h2>
+<ul>
 <li>Destructors are noexcept; exceptions thrown during cleanup are swallowed to guarantee noexcept finalization.</li>
 </ul>
-<p>Usage summary</p><ul>
+<h2><a class="anchor" id="autotoc_md32"></a>
+Usage summary</h2>
+<ul>
 <li>Create a Dmn_Pub&lt;T&gt; with a name and optional capacity and filter.</li>
 <li>Derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and implement notify(const T&amp;).</li>
 <li>Call registerSubscriber() to register a subscriber (buffer replay occurs synchronously as part of registration).</li>
 <li>Call publish(item) to enqueue an asynchronous publish. Optionally pass block=true to wait until the publish task completes.</li>
 </ul>
-<p>Limitations and notes</p><ul>
+<h2><a class="anchor" id="autotoc_md33"></a>
+Limitations and notes</h2>
+<ul>
 <li>Capacity &lt;= 0 is not validated beyond construction; callers should pass a sensible positive capacity.</li>
 <li>The implementation uses mutexes and conditional variables.</li>
 </ul>

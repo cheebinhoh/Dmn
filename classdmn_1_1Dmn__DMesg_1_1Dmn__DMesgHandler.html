@@ -287,9 +287,9 @@ Friends</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Unique name/identifier for the handler. </td></tr>
-    <tr><td class="paramname">topic</td><td>Topic string to subscribe/publish to (empty string is a valid topic). </td></tr>
-    <tr><td class="paramname">filter_fn</td><td>Optional filter functor: return false to drop a message. </td></tr>
-    <tr><td class="paramname">async_process_fn</td><td>Optional functor to process messages asynchronously as they arrive. </td></tr>
+    <tr><td class="paramname">topic</td><td>Topic string to subscribe/publish to. </td></tr>
+    <tr><td class="paramname">filter_fn</td><td>Optional filter functor: return false exclude message. </td></tr>
+    <tr><td class="paramname">async_process_fn</td><td>Optional functor to process messages. </td></tr>
     <tr><td class="paramname">configs</td><td>Optional handler-specific configuration. </td></tr>
   </table>
   </dd>

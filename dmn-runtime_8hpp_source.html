@@ -101,39 +101,39 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="preprocessor">#ifndef DMN_RUNTIME_HPP_</span></div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#define DMN_RUNTIME_HPP_</span></div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">#include &lt;cerrno&gt;</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="preprocessor">#include &lt;coroutine&gt;</span></div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="preprocessor">#include &lt;csignal&gt;</span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="preprocessor">#include &lt;cstring&gt;</span></div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="preprocessor">#include &lt;ctime&gt;</span></div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#include &lt;exception&gt;</span></div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="preprocessor">#include &lt;queue&gt;</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="preprocessor">#include &lt;stack&gt;</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="preprocessor">#include &lt;system_error&gt;</span></div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#include &lt;thread&gt;</span></div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-async_8hpp.html">dmn-async.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-lf_8hpp.html">dmn-blockingqueue-lf.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-singleton_8hpp.html">dmn-singleton.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-runtime-task_8hpp.html">dmn-runtime-task.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-runtime-task_8hpp.html">dmn-runtime-task.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-async_8hpp.html">dmn-async.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-lf_8hpp.html">dmn-blockingqueue-lf.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-singleton_8hpp.html">dmn-singleton.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#include &lt;cerrno&gt;</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#include &lt;coroutine&gt;</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#include &lt;csignal&gt;</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="preprocessor">#include &lt;cstring&gt;</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="preprocessor">#include &lt;ctime&gt;</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="preprocessor">#include &lt;exception&gt;</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#include &lt;pthread.h&gt;</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="preprocessor">#include &lt;queue&gt;</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#include &lt;stack&gt;</span></div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="preprocessor">#include &lt;system_error&gt;</span></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="preprocessor">#include &lt;thread&gt;</span></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="preprocessor">#include &lt;unordered_map&gt;</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span><span class="keyword">namespace </span>dmn {</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
@@ -283,11 +283,11 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>      m_timedQueue{};</div>
 <div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span> </div>
 <div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>  <span class="comment">// Atomic flags used for coordination (lightweight spin semantics)</span></div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>  std::atomic_flag m_main_enter_atomic_flag{};</div>
-<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>  std::atomic_flag m_main_exit_atomic_flag{};</div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>  std::atomic_flag m_sched_enter_atomic_flag{};</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>  std::atomic_flag m_main_enter_flag{};</div>
+<div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>  std::atomic_flag m_main_exit_flag{};</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>  std::atomic_flag m_sched_enter_flag{};</div>
 <div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span> </div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>  std::atomic_flag m_shutdown_atomic_flag{};</div>
+<div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>  std::atomic_flag m_shutdown_flag{};</div>
 <div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span> </div>
 <div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>  <span class="comment">// Number of high, medium and low priority jobs scheduled and add to</span></div>
 <div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>  <span class="comment">// pending queue waiting for scheduler.</span></div>
@@ -354,12 +354,12 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00480" name="l00480"></a><span class="lineno">  480</span> </div>
 <div class="line"><a id="l00481" name="l00481"></a><span class="lineno">  481</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00482" name="l00482"></a><span class="lineno">  482</span>Dmn_Runtime_Manager&lt;QueueType&gt;::~Dmn_Runtime_Manager() noexcept try {</div>
-<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>  m_shutdown_atomic_flag.test_and_set(std::memory_order_release);</div>
+<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>  m_shutdown_flag.test_and_set(std::memory_order_release);</div>
 <div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span> </div>
 <div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>  exitMainLoop();</div>
 <div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span> </div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>  assert(m_main_exit_atomic_flag.test(std::memory_order_acquire));</div>
-<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>  assert(!m_main_enter_atomic_flag.test(std::memory_order_acquire));</div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>  assert(m_main_exit_flag.test(std::memory_order_acquire));</div>
+<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>  assert(!m_main_enter_flag.test(std::memory_order_acquire));</div>
 <div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span> </div>
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>  <span class="comment">// it is important that we wait for all Dmn_Runtime_Job and its companion</span></div>
 <div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span>  <span class="comment">// Dmn_Runtime_Task to be destroyed and unwound from the stack, as the</span></div>
@@ -370,7 +370,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>    detail::Dmn_Runtime_Manager_Impl_destroy(&amp;m_pimpl);</div>
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>  }</div>
 <div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  this-&gt;waitForEmpty();</div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
 <div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>} <span class="keywordflow">catch</span> (...) {</div>
 <div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
 <div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>  <span class="keywordflow">return</span>;</div>
@@ -407,7 +407,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span>  }</div>
 <div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span> </div>
 <div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span>  <span class="keywordflow">if</span> (m_jobs_count.fetch_add(1) == 0 &amp;&amp;</div>
-<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>      m_main_enter_atomic_flag.test(std::memory_order_acquire)) {</div>
+<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>      m_main_enter_flag.test(std::memory_order_acquire)) {</div>
 <div class="line"><a id="l00536" name="l00536"></a><span class="lineno">  536</span>    this-&gt;runRuntimeJobExecutor();</div>
 <div class="line"><a id="l00537" name="l00537"></a><span class="lineno">  537</span>  }</div>
 <div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span>}</div>
@@ -565,8 +565,8 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="foldopen" id="foldopen00706" data-start="{" data-end="}">
 <div class="line"><a id="l00706" name="l00706"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">  706</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">Dmn_Runtime_Manager&lt;QueueType&gt;::exitMainLoop</a>() {</div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>  <span class="keywordflow">if</span> (!m_main_exit_atomic_flag.test_and_set(std::memory_order_release)) {</div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>    m_main_enter_atomic_flag.clear(std::memory_order_release);</div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>  <span class="keywordflow">if</span> (!m_main_exit_flag.test_and_set(std::memory_order_release)) {</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>    m_main_enter_flag.clear(std::memory_order_release);</div>
 <div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span> </div>
 <div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span>    <span class="comment">// set the last timer, so that signalWaitProc gracefully exit.</span></div>
 <div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>    this-&gt;setNextTimer(0, 10000);</div>
@@ -586,7 +586,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>               <span class="comment">// done so; if it has crashed, we still disable the timer here.</span></div>
 <div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>  }</div>
 <div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span> </div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>  m_main_exit_atomic_flag.notify_all();</div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>  m_main_exit_flag.notify_all();</div>
 <div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>}</div>
 </div>
 <div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span> </div>
@@ -597,14 +597,14 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>  <span class="comment">// runtime job executor is started so the system does not remain idle.</span></div>
 <div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>  <span class="keywordtype">bool</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">startJobExecutor</a> = m_jobs_count.load(std::memory_order_acquire) &gt; 0;</div>
 <div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span> </div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>  <span class="keywordflow">if</span> (m_main_enter_atomic_flag.test_and_set(std::memory_order_acquire)) {</div>
+<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>  <span class="keywordflow">if</span> (m_main_enter_flag.test_and_set(std::memory_order_acquire)) {</div>
 <div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(<span class="keyword">false</span> &amp;&amp; <span class="stringliteral">&quot;Error: enter main loop twice without exit&quot;</span>);</div>
 <div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span> </div>
 <div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>    <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Error: enter main loop twice without exit&quot;</span>);</div>
 <div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>  }</div>
 <div class="line"><a id="l00747" name="l00747"></a><span class="lineno">  747</span> </div>
-<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>  m_main_exit_atomic_flag.clear(std::memory_order_release);</div>
-<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>  m_main_enter_atomic_flag.notify_all();</div>
+<div class="line"><a id="l00748" name="l00748"></a><span class="lineno">  748</span>  m_main_exit_flag.clear(std::memory_order_release);</div>
+<div class="line"><a id="l00749" name="l00749"></a><span class="lineno">  749</span>  m_main_enter_flag.notify_all();</div>
 <div class="line"><a id="l00750" name="l00750"></a><span class="lineno">  750</span>  <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">Dmn_Proc::yield</a>();</div>
 <div class="line"><a id="l00751" name="l00751"></a><span class="lineno">  751</span> </div>
 <div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>  m_signalWaitProc = std::make_unique&lt;Dmn_Proc&gt;(</div>
@@ -619,7 +619,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>                                     std::system_category().<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">message</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>));</div>
 <div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>          }</div>
 <div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span> </div>
-<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>          <span class="keywordflow">if</span> (m_main_exit_atomic_flag.test(std::memory_order_acquire)) {</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>          <span class="keywordflow">if</span> (m_main_exit_flag.test(std::memory_order_acquire)) {</div>
 <div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>            <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>          } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>            this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>([<span class="keyword">this</span>, signo]() {</div>
@@ -638,8 +638,8 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>    this-&gt;runRuntimeJobExecutor();</div>
 <div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>  }</div>
 <div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span> </div>
-<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>  <span class="keywordflow">while</span> (!m_main_exit_atomic_flag.test(std::memory_order_acquire)) {</div>
-<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>    m_main_exit_atomic_flag.wait(<span class="keyword">false</span>, std::memory_order_acquire);</div>
+<div class="line"><a id="l00783" name="l00783"></a><span class="lineno">  783</span>  <span class="keywordflow">while</span> (!m_main_exit_flag.test(std::memory_order_acquire)) {</div>
+<div class="line"><a id="l00784" name="l00784"></a><span class="lineno">  784</span>    m_main_exit_flag.wait(<span class="keyword">false</span>, std::memory_order_acquire);</div>
 <div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>  }</div>
 <div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>}</div>
 </div>
@@ -782,10 +782,11 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00974" name="l00974"></a><span class="lineno">  974</span>} <span class="comment">// namespace dmn</span></div>
 <div class="line"><a id="l00975" name="l00975"></a><span class="lineno">  975</span> </div>
 <div class="line"><a id="l00976" name="l00976"></a><span class="lineno">  976</span><span class="preprocessor">#endif </span><span class="comment">// DMN_RUNTIME_HPP_</span></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:92</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a7f004b71018ac8eba99e16b5b3cda651"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">dmn::Dmn_Async::addExecTask</a></div><div class="ttdeci">void addExecTask(std::function&lt; void()&gt; fnc)</div><div class="ttdoc">Submit a task for asynchronous execution.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:238</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:63</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a34a8bfbd86640e3d1884d656d8433b26"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">dmn::Dmn_Async::waitForEmpty</a></div><div class="ttdeci">void waitForEmpty()</div><div class="ttdoc">Block until the async is empty and no task pending to be executed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:261</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a7f004b71018ac8eba99e16b5b3cda651"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">dmn::Dmn_Async::addExecTask</a></div><div class="ttdeci">void addExecTask(std::function&lt; void()&gt; fnc)</div><div class="ttdoc">Submit a task for asynchronous execution.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:245</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue__Mt_html"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue__Mt.html">dmn::Dmn_BlockingQueue_Mt</a></div><div class="ttdoc">Thread-safe FIFO buffer.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue-mt.hpp:109</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Proc_html_a45fd201e765bae2c57ad30417ba1eb8c"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">dmn::Dmn_Proc::yield</a></div><div class="ttdeci">static void yield()</div><div class="ttdoc">Yields the current thread and allows cancellation testing.</div><div class="ttdef"><b>Definition</b> dmn-proc.cpp:181</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Proc_html_a45fd201e765bae2c57ad30417ba1eb8c"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">dmn::Dmn_Proc::yield</a></div><div class="ttdeci">static void yield()</div><div class="ttdoc">Yields the current thread and allows cancellation testing.</div><div class="ttdef"><b>Definition</b> dmn-proc.cpp:180</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:257</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html_a1907e2ef032bc22e6a52c1c114c7afe6"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">dmn::Dmn_Runtime_Manager::registerSignalHandlerHook</a></div><div class="ttdeci">void registerSignalHandlerHook(int signo, SignalHandlerHook &amp;&amp;hook)</div><div class="ttdoc">Register a signal handler hook for a particular signal number. Handlers are invoked by the runtime in...</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:823</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html_a3a314ec4b1088a6612eaf424113c778a"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">dmn::Dmn_Runtime_Manager::clearSignalHandlerHook</a></div><div class="ttdeci">void clearSignalHandlerHook(int signo)</div><div class="ttdoc">Clear all registered handler hooks for the signal number. Note that only client registered signal han...</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:591</div></div>
@@ -808,7 +809,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="ttc" id="admn-runtime_8hpp_html_ad9fce06b7f4d912b253f7297280df759"><div class="ttname"><a href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">dmn::TimePoint</a></div><div class="ttdeci">Clock::time_point TimePoint</div><div class="ttdoc">Absolute time point expressed in terms of Clock.</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:135</div></div>
 <div class="ttc" id="admn-singleton_8hpp_html"><div class="ttname"><a href="dmn-singleton_8hpp.html">dmn-singleton.hpp</a></div><div class="ttdoc">Lightweight helper for implementing argumented singletons.</div></div>
 <div class="ttc" id="astructdmn_1_1Dmn__Runtime__Job_html"><div class="ttname"><a href="structdmn_1_1Dmn__Runtime__Job.html">dmn::Dmn_Runtime_Job</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:154</div></div>
-<div class="ttc" id="astructdmn_1_1Dmn__Runtime__Task_html"><div class="ttname"><a href="structdmn_1_1Dmn__Runtime__Task.html">dmn::Dmn_Runtime_Task</a></div><div class="ttdoc">A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.</div><div class="ttdef"><b>Definition</b> dmn-runtime-task.hpp:20</div></div>
+<div class="ttc" id="astructdmn_1_1Dmn__Runtime__Task_html"><div class="ttname"><a href="structdmn_1_1Dmn__Runtime__Task.html">dmn::Dmn_Runtime_Task</a></div><div class="ttdoc">A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.</div><div class="ttdef"><b>Definition</b> dmn-runtime-task.hpp:21</div></div>
 <div class="ttc" id="astructdmn_1_1TimedJobComparator_html"><div class="ttname"><a href="structdmn_1_1TimedJobComparator.html">dmn::TimedJobComparator</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:173</div></div>
 <div class="ttc" id="astructdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl_html"><div class="ttname"><a href="structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html">dmn::detail::Dmn_Runtime_Manager_Impl</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.cpp:28</div></div>
 </div><!-- fragment --></div><!-- contents -->

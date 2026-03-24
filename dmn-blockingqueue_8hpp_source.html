@@ -161,7 +161,7 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue_8hpp_source.html',''
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  std::atomic_flag m_shutdown_flag{};</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>};</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>}; <span class="comment">// class Dmn_BlockingQueue</span></div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Derived, <span class="keyword">typename</span> T&gt;</div>
 <div class="foldopen" id="foldopen00161" data-start="{" data-end="}">
@@ -221,7 +221,7 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue_8hpp_source.html',''
 </div>
 </div>
 </div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:92</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:63</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue_html"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue</a></div><div class="ttdoc">The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue.hpp:64</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue_html_a1e87c82f8b03427f2b19510fe82f567f"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue.html#a1e87c82f8b03427f2b19510fe82f567f">dmn::Dmn_BlockingQueue::popNoWait</a></div><div class="ttdeci">virtual auto popNoWait() -&gt; std::optional&lt; T &gt; final</div><div class="ttdoc">Attempt to pop a single item without waiting.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue.hpp:177</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue_html_a36227293543dbac3d4132b501ca78251"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue.html#a36227293543dbac3d4132b501ca78251">dmn::Dmn_BlockingQueue::push</a></div><div class="ttdeci">virtual void push(T &amp;&amp;item) final</div><div class="ttdoc">Enqueue an rvalue item into the tail of the queue, preferring move semantics.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue.hpp:187</div></div>

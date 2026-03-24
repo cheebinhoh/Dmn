@@ -101,11 +101,11 @@ $(document).ready(function(){initNavTree('dmn-socket_8hpp_source.html',''); init
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="preprocessor">#ifndef DMN_SOCKET_HPP_</span></div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">#define DMN_SOCKET_HPP_</span></div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-io_8hpp.html">dmn-io.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-io_8hpp.html">dmn-io.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">namespace </span>dmn {</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
@@ -142,12 +142,12 @@ $(document).ready(function(){initNavTree('dmn-socket_8hpp_source.html',''); init
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>} <span class="comment">// namespace dmn</span></div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="preprocessor">#endif </span><span class="comment">// DMN_SOCKET_HPP_</span></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:92</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:63</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Io_html"><div class="ttname"><a href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a></div><div class="ttdef"><b>Definition</b> dmn-io.hpp:46</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Socket_html"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html">dmn::Dmn_Socket</a></div><div class="ttdoc">Implements a socket-based Dmn_Io for std::string messages.</div><div class="ttdef"><b>Definition</b> dmn-socket.hpp:55</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a11b6524b5f47a12639aa539b2ed17241"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a11b6524b5f47a12639aa539b2ed17241">dmn::Dmn_Socket::write</a></div><div class="ttdeci">void write(const std::string &amp;item) override</div><div class="ttdoc">Write a string to the socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:106</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a1321d794de567003890c7e91b98e5b5e"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a1321d794de567003890c7e91b98e5b5e">dmn::Dmn_Socket::~Dmn_Socket</a></div><div class="ttdeci">virtual ~Dmn_Socket() noexcept</div><div class="ttdoc">Destroy the Dmn_Socket and close the underlying socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:85</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a5359a6dac73c2b0266ccfad619bb7ed9"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9">dmn::Dmn_Socket::read</a></div><div class="ttdeci">auto read() -&gt; std::optional&lt; std::string &gt; override</div><div class="ttdoc">Read data from the socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:91</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a11b6524b5f47a12639aa539b2ed17241"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a11b6524b5f47a12639aa539b2ed17241">dmn::Dmn_Socket::write</a></div><div class="ttdeci">void write(const std::string &amp;item) override</div><div class="ttdoc">Write a string to the socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:105</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a1321d794de567003890c7e91b98e5b5e"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a1321d794de567003890c7e91b98e5b5e">dmn::Dmn_Socket::~Dmn_Socket</a></div><div class="ttdeci">virtual ~Dmn_Socket() noexcept</div><div class="ttdoc">Destroy the Dmn_Socket and close the underlying socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:84</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Socket_html_a5359a6dac73c2b0266ccfad619bb7ed9"><div class="ttname"><a href="classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9">dmn::Dmn_Socket::read</a></div><div class="ttdeci">auto read() -&gt; std::optional&lt; std::string &gt; override</div><div class="ttdoc">Read data from the socket.</div><div class="ttdef"><b>Definition</b> dmn-socket.cpp:90</div></div>
 <div class="ttc" id="admn-io_8hpp_html"><div class="ttname"><a href="dmn-io_8hpp.html">dmn-io.hpp</a></div><div class="ttdoc">Generic IO interface used by the Dmn library.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

@@ -105,7 +105,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHa
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a78a8e93f4a36e7979d702c2d83c3c342" id="r_a78a8e93f4a36e7979d702c2d83c3c342"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#a78a8e93f4a36e7979d702c2d83c3c342">operator-&gt;</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">const</a></td></tr>
-<tr class="memdesc:a78a8e93f4a36e7979d702c2d83c3c342"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dereference the proxy to access the underlying handler.  <br /></td></tr>
+<tr class="memdesc:a78a8e93f4a36e7979d702c2d83c3c342"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dereference the proxy to access the underlying handler shared pointer.  <br /></td></tr>
 <tr class="separator:a78a8e93f4a36e7979d702c2d83c3c342"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affdbec87740aaf04a3fb56fdae3a36fd" id="r_affdbec87740aaf04a3fb56fdae3a36fd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#affdbec87740aaf04a3fb56fdae3a36fd">operator bool</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">noexcept</a></td></tr>
 <tr class="memdesc:affdbec87740aaf04a3fb56fdae3a36fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the proxied handler is still alive.  <br /></td></tr>
@@ -119,7 +119,7 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance. </p>
-<p>Wraps a std::weak_ptr&lt;Dmn_DMesgHandler&gt; to provide pointer-like access to the underlying handler while allowing the publisher to control handler lifetime (via <a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">closeHandler()</a>). Clients should test the proxy's bool conversion before dereferencing to avoid exceptions.</p>
+<p>Wraps a std::weak_ptr&lt;Dmn_DMesgHandler&gt; to provide pointer-like access to the underlying handler while allowing the publisher to owns and control handler lifetime (via <a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">closeHandler()</a>). Clients should test the proxy's bool conversion before dereferencing to avoid exceptions, otherwise an exception is thrown if the underlying handler has released.</p>
 <p>Thread-safety: The proxy itself is not thread-safe; do not share a single <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html" title="Lightweight proxy to a Dmn_DMesgHandler instance.">Dmn_DMesgHandlerProxy</a> instance across threads. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="affdbec87740aaf04a3fb56fdae3a36fd" name="affdbec87740aaf04a3fb56fdae3a36fd"></a>
@@ -173,8 +173,8 @@ Friends</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Dereference the proxy to access the underlying handler. </p>
-<dl class="section return"><dt>Returns</dt><dd>shared_ptr&lt;Dmn_DMesgHandler&gt; pointing to the live handler. </dd></dl>
+<p>Dereference the proxy to access the underlying handler shared pointer. </p>
+<dl class="section return"><dt>Returns</dt><dd>shared_ptr&lt;Dmn_DMesgHandler&gt; pointing to the live handler.</dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">std::runtime_error</td><td>if the handler has already been closed. </td></tr>

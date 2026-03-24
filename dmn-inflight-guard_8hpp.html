@@ -119,28 +119,28 @@ Classes</h2></td></tr>
 <p>Dmn_Inflight_Guard is a small utility intended to be inherited by a class that exposes multi-threaded APIs (e.g. queue pop/push). It provides:</p>
 <p>1) A fast in-flight operation counter that tracks how many operations have "entered" the object and not yet left.</p>
 <p>2) A shutdown guard check (via isInflightGuardClosed()) that prevents new operations from entering after shutdown has begun.</p>
-<p>3) A blocking wait (waitForEmptyInflight()) that waits until all previously entered operations have left, so destructors / stop() routines can safely tear down shared state.</p>
+<p>3) A blocking wait (waitForEmptyInflight()) that waits until all previously entered operations have left, so destructors / shutdown() routines can safely tear down shared state.</p>
 <p>This module is used in two different ways in this repository:</p>
 <ul>
 <li><p class="startli"><a class="el" href="dmn-blockingqueue-mt_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads.">include/dmn-blockingqueue-mt.hpp</a>: Dmn_BlockingQueue_Mt privately inherits Dmn_Inflight_Guard&lt;&gt; (no payload). pop() creates a ticket at its public function entry:</p>
 <p class="startli">[[maybe_unused]] auto t = this-&gt;enterInflightGate();</p>
 <p class="startli">and the queue destructor does:</p>
-<p class="startli">stop(); this-&gt;waitForEmptyInflight();</p>
-<p class="startli">This ensures that once stop() marks the queue shutdown (isInflightGuardClosed() becomes true), no new operations can enter, and the destructor waits for all already-running calls (possibly blocked) to return before the object is destroyed. Hence the stop() should either force already-running calls to be returned, or those calls are timed based and will return eventually.</p>
+<p class="startli">shutdown(); this-&gt;waitForEmptyInflight();</p>
+<p class="startli">This ensures that once shutdown() marks the queue shutdown (isInflightGuardClosed() becomes true), no new operations can enter, and the destructor waits for all already-running calls (possibly blocked) to return before the object is destroyed. Hence the shutdown() should either force already-running calls to be returned, or those calls are timed based and will return eventually.</p>
 </li>
-<li><p class="startli"><a class="el" href="dmn-blockingqueue-lf_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michae...">include/dmn-blockingqueue-lf.hpp</a>: Dmn_BlockingQueue_Lf privately inherits <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard&lt;uint64_t&gt;</a>. Here the ticket's payload value is an "epochIndex" derived in enterInflightGuardFnc(). popOptional() then uses ticket-&gt;getValue() to retire nodes into an epoch bucket:</p>
+<li><p class="startli"><a class="el" href="dmn-blockingqueue-lf_8hpp.html" title="Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michae...">include/dmn-blockingqueue-lf.hpp</a>: Dmn_BlockingQueue_Lf privately inherits <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard&lt;uint64_t&gt;</a>. Here the ticket's payload value is an "epochIndex" derived in enterInflightGuardFnc() and then uses ticket-&gt;getValue() to retire nodes into an epoch bucket:</p>
 <p class="startli">retireNode(inflightTicket-&gt;getValue(), first);</p>
 <p class="startli">On leaving inflight guard, leaveInflightGuardFnc(epochIndex) decrements the epoch's in-flight count and may reclaim retired nodes when safe.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Key concepts</h2>
 <ul>
-<li>"Inflight guard closed": Implemented by the derived class in isInflightGuardClosed(). It typically maps to a shutdown flag that is set in stop() / destructor. When the inflight guard is closed, enterInflightGate() throws (by design) to prevent new work from starting against a shutting-down object.</li>
+<li>"Inflight guard closed": Implemented by the derived class in isInflightGuardClosed(). It typically maps to a shutdown flag that is set in shutdown() / destructor. When the inflight guard is closed, enterInflightGate() throws (by design) to prevent new work from starting against a shutting-down object.</li>
 <li>"In-flight": Any operation that successfully acquired a Ticket. The ticket lifetime should cover the entire public API call (or the entire critical section that must not overlap with teardown / reclamation).</li>
 <li>Optional payload (template parameter T): The derived class can return a per-call value from enterInflightGuardFnc() that is stored inside the ticket and later passed to leaveInflightGuardFnc(). Examples include an epoch index, hazard slot, or other per-operation bookkeeping token. If you don't need a payload, use the default std::monostate.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
 Threading / memory-order notes</h2>
 <ul>
 <li>m_inflight_count is incremented when a ticket is constructed and decremented when it is destructed. waitForEmptyInflight() uses atomic::wait/notify_all to efficiently sleep until the count reaches zero.</li>
@@ -150,14 +150,14 @@ Threading / memory-order notes</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md14"></a>
+<h2><a class="anchor" id="autotoc_md15"></a>
 Exception / cancellation notes</h2>
 <ul>
 <li>enterInflightGate() may throw std::runtime_error if the inflight guard is closed.</li>
 <li>If enterInflightGuardFnc() throws, the ticket constructor rolls back the in-flight count and rethrows.</li>
 <li>Ticket::~Ticket() is noexcept and swallows exceptions thrown by leaveInflightGuardFnc() to keep teardown safe.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md15"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 Usage guidelines</h2>
 <ul>
 <li>Derived classes should:<ul>
@@ -166,7 +166,7 @@ Usage guidelines</h2>
 </ul>
 </li>
 <li>Public APIs should acquire a ticket early (typically at the start of push/pop) and keep it alive until the function returns.</li>
-<li>stop()/destructor should close the inflight guard first, then call waitForEmptyInflight() before freeing shared resources that in-flight calls might touch. </li>
+<li>shutdown()/destructor should close the inflight guard first, then call waitForEmptyInflight() before freeing shared resources that in-flight calls might touch. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->

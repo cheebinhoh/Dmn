@@ -14,7 +14,7 @@ var hierarchy =
     [ "dmn::Dmn_Async< QueueType >", "classdmn_1_1Dmn__Async.html", [
       [ "dmn::Dmn_Pub< T, QueueType >::Dmn_Sub", "classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html", null ]
     ] ],
-    [ "dmn::Dmn_Async_Handle", "classdmn_1_1Dmn__Async__Handle.html", null ],
+    [ "dmn::Dmn_Async< QueueType >::Dmn_Async_Handle", "classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html", null ],
     [ "dmn::Dmn_BlockingQueue< Derived, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
       [ "dmn::Dmn_BlockingQueue_Mt< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
       [ "dmn::Dmn_BlockingQueue_Lf< T >", "classdmn_1_1Dmn__BlockingQueue__Lf.html", null ],
