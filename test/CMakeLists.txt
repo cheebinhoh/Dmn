@@ -31,15 +31,15 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
-                  #   dmn-test-dmesgnet-1
-                  #   dmn-test-dmesgnet-2
-                  #   dmn-test-dmesgnet-3
-                  #   dmn-test-dmesgnet-4
-                  #   dmn-test-dmesgnet-5
-                  #   dmn-test-dmesgnet-6
-                  #   dmn-test-dmesgnet-7
-                  #   dmn-test-dmesgnet-8
-                  #   dmn-test-dmesgnet-9
+                      dmn-test-dmesgnet-1
+                      # dmn-test-dmesgnet-2
+                      # dmn-test-dmesgnet-3
+                      # dmn-test-dmesgnet-4
+                      # dmn-test-dmesgnet-5
+                      # dmn-test-dmesgnet-6
+                      # dmn-test-dmesgnet-7
+                      # dmn-test-dmesgnet-8
+                      # dmn-test-dmesgnet-9
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-inflight-guard
@@ -81,59 +81,59 @@ endif()
 
 if (ENABLE_VALGRIND)
   SET(DMN_VALGRIND_TESTS
-	dmn-test-async
-	dmn-test-async-queue-lf
-	dmn-test-blockingqueue
-	dmn-test-blockingqueue-2
-	dmn-test-blockingqueue-3
-	dmn-test-blockingqueue-4
-	dmn-test-blockingqueue-5
-	dmn-test-blockingqueue-lf-1
-	dmn-test-blockingqueue-lf-2
-	dmn-test-blockingqueue-lf-3
-	dmn-test-blockingqueue-lf-4
-	dmn-test-blockingqueue-lf-5
-	dmn-test-blockingqueue-lf-6
-	dmn-test-blockingqueue-lf-7
-	dmn-test-blockingqueue-perf-1
-	dmn-test-blockingqueue-perf-2
-	dmn-test-dmesg-1
-	dmn-test-dmesg-2
-	dmn-test-dmesg-3
-	dmn-test-dmesg-5
-	dmn-test-dmesg-6
-	dmn-test-dmesg-7
-	dmn-test-dmesg-8
-	dmn-test-dmesg-9
-	dmn-test-dmesg-10
-	dmn-test-dmesg-11
-	#dmn-test-dmesgnet-1
-	#dmn-test-dmesgnet-2
-	#dmn-test-dmesgnet-3
-	#dmn-test-dmesgnet-4
-	#dmn-test-dmesgnet-5
-	#dmn-test-dmesgnet-6
-	dmn-test-dmesg-pb
-	dmn-test-dmesg-pb-util
-	dmn-test-inflight-guard
-	dmn-test-io
-	dmn-test-pipe
-	dmn-test-pipe-2
-	dmn-test-pipe-3
-	dmn-test-pipe-queue-lf
-	dmn-test-pipe-queue-lf-2
-	dmn-test-pipe-queue-lf-3
-	dmn-test-pub-sub
-	dmn-test-pub-sub-queue-lf
-	dmn-test-runtime
-	dmn-test-runtime-2
-	dmn-test-runtime-3
-	dmn-test-runtime-queue-lf
-	dmn-test-runtime-queue-lf-2
-	dmn-test-runtime-queue-lf-3
-	dmn-test-singleton
-	dmn-test-socket
-	dmn-test-timer
+        dmn-test-async
+        dmn-test-async-queue-lf
+        dmn-test-blockingqueue
+        dmn-test-blockingqueue-2
+        dmn-test-blockingqueue-3
+        dmn-test-blockingqueue-4
+        dmn-test-blockingqueue-5
+        dmn-test-blockingqueue-lf-1
+        dmn-test-blockingqueue-lf-2
+        dmn-test-blockingqueue-lf-3
+        dmn-test-blockingqueue-lf-4
+        dmn-test-blockingqueue-lf-5
+        dmn-test-blockingqueue-lf-6
+        dmn-test-blockingqueue-lf-7
+        dmn-test-blockingqueue-perf-1
+        dmn-test-blockingqueue-perf-2
+        dmn-test-dmesg-1
+        dmn-test-dmesg-2
+        dmn-test-dmesg-3
+        dmn-test-dmesg-5
+        dmn-test-dmesg-6
+        dmn-test-dmesg-7
+        dmn-test-dmesg-8
+        dmn-test-dmesg-9
+        dmn-test-dmesg-10
+        dmn-test-dmesg-11
+        dmn-test-dmesgnet-1
+        # dmn-test-dmesgnet-2
+        # dmn-test-dmesgnet-3
+        # dmn-test-dmesgnet-4
+        # dmn-test-dmesgnet-5
+        # dmn-test-dmesgnet-6
+        dmn-test-dmesg-pb
+        dmn-test-dmesg-pb-util
+        dmn-test-inflight-guard
+        dmn-test-io
+        dmn-test-pipe
+        dmn-test-pipe-2
+        dmn-test-pipe-3
+        dmn-test-pipe-queue-lf
+        dmn-test-pipe-queue-lf-2
+        dmn-test-pipe-queue-lf-3
+        dmn-test-pub-sub
+        dmn-test-pub-sub-queue-lf
+        dmn-test-runtime
+        dmn-test-runtime-2
+        dmn-test-runtime-3
+        dmn-test-runtime-queue-lf
+        dmn-test-runtime-queue-lf-2
+        dmn-test-runtime-queue-lf-3
+        dmn-test-singleton
+        dmn-test-socket
+        dmn-test-timer
   )
 
   ADD_TEST_VALGRIND(dmn
