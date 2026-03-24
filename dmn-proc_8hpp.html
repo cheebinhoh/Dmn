@@ -121,7 +121,7 @@ Macros</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:aa4a7dc7c0b2ae2bd03ed185009561a7f" id="r_aa4a7dc7c0b2ae2bd03ed185009561a7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f">dmn::cleanupFuncToUnlockPthreadMutex</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">void</a> *<a class="el" href="classdmn_1_1Dmn__Async.html">arg</a>)</td></tr>
-<tr class="memdesc:aa4a7dc7c0b2ae2bd03ed185009561a7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to unlock a pthread mutex during thread cancellation.  <br /></td></tr>
+<tr class="memdesc:aa4a7dc7c0b2ae2bd03ed185009561a7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cleanup function used with pthread_cleanup_push/pop. Expects a pointer to a pthread_mutex_t and unlocks it.  <br /></td></tr>
 <tr class="separator:aa4a7dc7c0b2ae2bd03ed185009561a7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -138,8 +138,8 @@ Key characteristics and expectations</h2>
 </ul>
 <h2><a class="anchor" id="autotoc_md22"></a>
 Design pattern</h2>
-<p>Command - Implements a variant of the Command design pattern, allowing clients to submit parameterized requests encapsulated as std::function&lt;void()&gt; tasks executed by the thread. Bridge - Abstracts the underlying threading implementation from the client. Decorator - Provides an alternative to subclassing for threading behavior and allows clients to attach additional responsibilities or vary the behavior of the thread.</p>
-<p>Note on mutex cleanup macros The macros below wrap pthread_cleanup_push/pop for the common pattern of unlocking a mutex in cleanup handlers. They are convenience macros and rely on the presence of <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Helper function to unlock a pthread mutex during thread cancellation.">dmn::cleanupFuncToUnlockPthreadMutex</a>. </p>
+<p>Command - Implements a variant of the Command design pattern, allowing clients to submit parameterized requests encapsulated as std::function&lt;void()&gt; tasks executed by the thread. Bridge - Abstracts the underlying threading implementation from the client. Decorator - Provides an alternative to subclassing for adding additional responsibilities to the thread object or object that inherits the Dmn_Proc, a degenerated decorator.</p>
+<p>Note on mutex cleanup macros The macros below wrap pthread_cleanup_push/pop for the common pattern of unlocking a mutex in cleanup handlers. They are convenience macros and rely on the presence of <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Cleanup function used with pthread_cleanup_push/pop. Expects a pointer to a pthread_mutex_t and unloc...">dmn::cleanupFuncToUnlockPthreadMutex</a>. </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="aa7da7fe4e959340eec9466edd69fb25d" name="aa7da7fe4e959340eec9466edd69fb25d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa7da7fe4e959340eec9466edd69fb25d">&#9670;&#160;</a></span>DMN_PROC_CLEANUP_POP</h2>
@@ -196,8 +196,8 @@ Design pattern</h2>
       </table>
 </div><div class="memdoc">
 
-<p>Helper function to unlock a pthread mutex during thread cancellation. </p>
-<p>Cleanup function used with pthread_cleanup_push/pop. Expects a pointer to a pthread_mutex_t and unlocks it.</p>
+<p>Cleanup function used with pthread_cleanup_push/pop. Expects a pointer to a pthread_mutex_t and unlocks it. </p>
+<p>Helper function to unlock a pthread mutex during thread cancellation.</p>
 <p>This function is declared here so it can be used with the macros above and with pthread_cleanup_push/pop in implementation files.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">

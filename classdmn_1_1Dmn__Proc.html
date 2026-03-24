@@ -120,7 +120,7 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:afa8aab9ea455fb964b5db912357e9b06" id="r_afa8aab9ea455fb964b5db912357e9b06"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06">Dmn_Proc</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>={})</td></tr>
-<tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.  <br /></td></tr>
+<tr class="memdesc:afa8aab9ea455fb964b5db912357e9b06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>.  <br /></td></tr>
 <tr class="separator:afa8aab9ea455fb964b5db912357e9b06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bb6b7a36df1279036ad00b6f64d769b" id="r_a2bb6b7a36df1279036ad00b6f64d769b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b">~Dmn_Proc</a> () <a class="el" href="classdmn_1_1Dmn__Async.html">noexcept</a></td></tr>
 <tr class="memdesc:a2bb6b7a36df1279036ad00b6f64d769b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor that ensures proper cleanup of the thread.  <br /></td></tr>
@@ -138,16 +138,16 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
 <tr class="separator:a2081d66a01a9514ffbc68f7a4b58f8e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa68e0b42ef052f6a66bf4d9be1af0542" id="r_aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">exec</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Proc::Task &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>={}) -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
-<tr class="memdesc:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes the task with optional task replacement.  <br /></td></tr>
+<tr class="memdesc:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute the provided task in a new asynchronous thread.  <br /></td></tr>
 <tr class="separator:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1372ff6e753f214b128883327d44a30b" id="r_a1372ff6e753f214b128883327d44a30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">wait</a> () -&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a></td></tr>
-<tr class="memdesc:a1372ff6e753f214b128883327d44a30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits for the running thread to complete execution.  <br /></td></tr>
+<tr class="memdesc:a1372ff6e753f214b128883327d44a30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait (join) for the asynchronous thread to finish.  <br /></td></tr>
 <tr class="separator:a1372ff6e753f214b128883327d44a30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a45fd201e765bae2c57ad30417ba1eb8c" id="r_a45fd201e765bae2c57ad30417ba1eb8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">yield</a> ()</td></tr>
-<tr class="memdesc:a45fd201e765bae2c57ad30417ba1eb8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Yields the current thread and allows cancellation testing.  <br /></td></tr>
+<tr class="memdesc:a45fd201e765bae2c57ad30417ba1eb8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation point. Call this inside long-running loops if you expect the thread to be cancellable in a timely manner.  <br /></td></tr>
 <tr class="separator:a45fd201e765bae2c57ad30417ba1eb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8be7a6ef05b4fa9aa6d232dc5c6c669f" id="r_a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">testcancel</a> ()</td></tr>
 <tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests if the current thread should be cancelled.  <br /></td></tr>
@@ -176,12 +176,12 @@ Protected Member Functions</h2></td></tr>
 <p>A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in a new thread.</p>
 <p>Behaviour details:</p><ul>
 <li>Construct with an optional name and/or task. The name is stored for diagnostic purposes (no threading name APIs are invoked here).</li>
-<li><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Executes the task with optional task replacement.">exec()</a>: start the thread and run the given task (or the previously-set task from the constructor). Returns true on successful start.</li>
-<li><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b" title="Waits for the running thread to complete execution.">wait()</a>: join the thread, blocking until it completes. Returns true if the join succeeded.</li>
+<li><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a>: start the thread and run the given task (or the previously-set task from the constructor). Returns true on successful start.</li>
+<li><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b" title="Wait (join) for the asynchronous thread to finish.">wait()</a>: join the thread, blocking until it completes. Returns true if the join succeeded.</li>
 <li><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Stops execution of the running thread.">stopExec()</a>: attempt to cancel the running thread. The destructor calls <a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Stops execution of the running thread.">stopExec()</a> and then waits to join the thread — this makes the object safe to destroy without leaking the underlying pthread, but it also requires that the running task be responsive to pthread cancellation.</li>
 </ul>
 <p>Cancellation warning:</p><ul>
-<li>pthread cancellation is cooperative. If the task never reaches a cancellation point (or explicitly enables deferred cancellation without checking), cancellation will be delayed indefinitely. For loops that may run for a long time, call <a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c" title="Yields the current thread and allows cancellation testing.">Dmn_Proc::yield()</a> periodically to create cancellation points (or otherwise ensure the task calls functions that are cancellation points). </li>
+<li>pthread cancellation is cooperative. If the task never reaches a cancellation point (or explicitly enables deferred cancellation without checking), cancellation will be delayed indefinitely. For loops that may run for a long time, call <a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c" title="Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...">Dmn_Proc::yield()</a> periodically to create cancellation points (or otherwise ensure the task calls functions that are cancellation points). </li>
 </ul>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="afa8aab9ea455fb964b5db912357e9b06" name="afa8aab9ea455fb964b5db912357e9b06"></a>
@@ -218,12 +218,12 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment. </p>
-<p>Construct a <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>.</p>
+<p>Construct a <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>. </p>
+<p>Constructs a new <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance with optional task assignment.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Human-readable name for diagnostics/logging. </td></tr>
-    <tr><td class="paramname">fnc</td><td>Optional task to run when <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Executes the task with optional task replacement.">exec()</a> is called. If not provided, a task must be provided to <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Executes the task with optional task replacement.">exec()</a>.</td></tr>
+    <tr><td class="paramname">fnc</td><td>Optional task to run when <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> is called. If not provided, a task must be provided to <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a>.</td></tr>
   </table>
   </dd>
 </dl>
@@ -231,7 +231,7 @@ Protected Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Descriptive name for the process (for debugging/logging) </td></tr>
-    <tr><td class="paramname">fnc</td><td>Optional task function to be executed. Can be nullptr if task is to be set later via <a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d" title="Assigns a task function to be executed by the thread.">setTask()</a> or <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Executes the task with optional task replacement.">exec()</a> </td></tr>
+    <tr><td class="paramname">fnc</td><td>Optional task function to be executed. Can be nullptr if task is to be set later via <a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d" title="Assigns a task function to be executed by the thread.">setTask()</a> or <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -283,12 +283,12 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Executes the task with optional task replacement. </p>
-<p>Execute the provided task in a new asynchronous thread.</p>
+<p>Execute the provided task in a new asynchronous thread. </p>
+<p>Executes the task with optional task replacement.</p>
 <p>If fnc is empty, the previously-set task (from constructor or setTask) will be used. Returns true on successful thread creation.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">fnc</td><td>Optional task to run in the new thread. </td></tr>
+    <tr><td class="paramname">fnc</td><td>Optional task to run in the new thread.</td></tr>
   </table>
   </dd>
 </dl>
@@ -524,8 +524,8 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Waits for the running thread to complete execution. </p>
-<p>Wait (join) for the asynchronous thread to finish.</p>
+<p>Wait (join) for the asynchronous thread to finish. </p>
+<p>Waits for the running thread to complete execution.</p>
 <dl class="section return"><dt>Returns</dt><dd>True if the thread was joined successfully.</dd></dl>
 <p>This method performs a pthread_join to synchronously wait for thread termination. After successful join, the state transitions back to Ready.</p>
 <dl class="section return"><dt>Returns</dt><dd>true if the join succeeded (err == 0) </dd></dl>
@@ -561,8 +561,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Yields the current thread and allows cancellation testing. </p>
-<p>Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation point. Call this inside long-running loops if you expect the thread to be cancellable in a timely manner.</p>
+<p>Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation point. Call this inside long-running loops if you expect the thread to be cancellable in a timely manner. </p>
+<p>Yields the current thread and allows cancellation testing.</p>
 <p>This method combines a cancellation test with a scheduler yield, allowing other threads to run and checking for pending cancellations. </p>
 
 </div>
