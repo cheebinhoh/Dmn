@@ -139,14 +139,14 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="dmn-runtime_8hpp.html#ab870561dfa06e322c90f6c995f1666ee">  133</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime_8hpp.html#ab870561dfa06e322c90f6c995f1666ee">Clock</a> = std::chrono::steady_clock;</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno"><a class="line" href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">  135</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">TimePoint</a> = Clock::time_point;</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno"><a class="line" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">  137</a></span><span class="keyword">using </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SecInt</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">int64_t</a>;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno"><a class="line" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">  137</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">SecInt</a> = int64_t;</div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5">  139</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5">NSecInt</a> = std::chrono::nanoseconds::rep;</div>
 <div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
 <div class="foldopen" id="foldopen00154" data-start="{" data-end="};">
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno"><a class="line" href="structdmn_1_1Dmn__Runtime__Job.html">  154</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> {</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  <span class="keyword">using </span>FncType = std::function&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">void</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">j</a>)&gt;;</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  <span class="keyword">using </span>TaskFncType = std::function&lt;<a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">j</a>)&gt;;</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  <span class="keyword">using </span>OnErrorFncType = std::function&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">void</a>(std::exception_ptr &amp;)&gt;;</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  <span class="keyword">using </span>FncType = std::function&lt;void(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;j)&gt;;</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  <span class="keyword">using </span>TaskFncType = std::function&lt;<a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Task.html">Dmn_Runtime_Task</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;j)&gt;;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  <span class="keyword">using </span>OnErrorFncType = std::function&lt;void(std::exception_ptr &amp;)&gt;;</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>  <span class="keyword">enum class</span> Priority : <span class="keywordtype">int</span> { kSched = 0, kHigh = 1, kMedium, kLow };</div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
@@ -165,21 +165,21 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="comment">// can be popped and executed first.</span></div>
 <div class="foldopen" id="foldopen00173" data-start="{" data-end="};">
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno"><a class="line" href="structdmn_1_1TimedJobComparator.html">  173</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structdmn_1_1TimedJobComparator.html">TimedJobComparator</a> {</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>  <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">a</a>, <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">b</a>)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">a</a>.m_due &gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">b</a>.m_due;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>  <span class="keywordtype">bool</span> operator()(<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;a, <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;b)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    <span class="keywordflow">return</span> a.m_due &gt; b.m_due;</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>  }</div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>};</div>
 </div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span> </div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a>, <span class="keyword">typename</span>... <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Args</a>&gt;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F, <span class="keyword">typename</span>... Args&gt;</div>
 <div class="foldopen" id="foldopen00180" data-start="{" data-end="}">
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno"><a class="line" href="conceptdmn_1_1IsStrictJobFnc.html">  180</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptdmn_1_1IsStrictJobFnc.html">IsStrictJobFnc</a> = <span class="keyword">requires</span>(F &amp;&amp;f, Args &amp;&amp;...args) {</div>
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>  {</div>
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    std::invoke(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>  } -&gt; std::same_as&lt;void&gt;;</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>} || <span class="keyword">requires</span>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;f, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Args</a> &amp;&amp;...args) {</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>} || <span class="keyword">requires</span>(F &amp;&amp;f, Args &amp;&amp;...args) {</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>  {</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    std::invoke(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">args</a>)...)</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    std::invoke(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>  } -&gt; std::same_as&lt;Dmn_Runtime_Task&gt;;</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>};</div>
 </div>
@@ -203,79 +203,79 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>                                           <a class="code hl_typedef" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">SecInt</a> sec, <a class="code hl_typedef" href="dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5">NSecInt</a> nsec);</div>
 <div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>} <span class="comment">// namespace detail</span></div>
 <div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a> = <a class="code hl_class" href="classdmn_1_1Dmn__BlockingQueue__Mt.html">Dmn_BlockingQueue_Mt</a>&gt;</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType = <a class="code hl_class" href="classdmn_1_1Dmn__BlockingQueue__Mt.html">Dmn_BlockingQueue_Mt</a>&gt;</div>
 <div class="foldopen" id="foldopen00255" data-start="{" data-end="};">
 <div class="line"><a id="l00255" name="l00255"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html">  255</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></div>
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    : <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;Dmn_Runtime_Manager&lt;QueueType&gt;&gt;,</div>
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>      <span class="keyword">private</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>&lt;QueueType&gt; {</div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>  <span class="keyword">using </span>SignalHandlerHook = std::function&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">void</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>)&gt;;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>  <span class="keyword">using </span>SignalHandlerHook = std::function&lt;void(<span class="keywordtype">int</span> signo)&gt;;</div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>();</div>
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>  <span class="keyword">virtual</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">~Dmn_Runtime_Manager</a>() <span class="keyword">noexcept</span>;</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span> </div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">obj</a>) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span> </div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptdmn_1_1IsValidJobFnc.html">IsValidJobFnc&lt;F&gt;</a></div>
 <div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a8db837619ce8704ebaf68558890ee007">addJob</a>(</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>      <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>,</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>      Dmn_Runtime_Job::Priority <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a> = Dmn_Runtime_Job::Priority::kMedium,</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>      Dmn_Runtime_Job::OnErrorFncType <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a> = {});</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>      F &amp;&amp;fnc,</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});</div>
 <div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span> </div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F, <span class="keyword">class</span> Rep, <span class="keyword">class</span> Period&gt;</div>
 <div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptdmn_1_1IsValidJobFnc.html">IsValidJobFnc&lt;F&gt;</a></div>
 <div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#af6b4fb9f0298ea44a1b02da969faa410">addTimedJob</a>(</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>      <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>, std::chrono::duration&lt;Rep, Period&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">duration</a>,</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>      Dmn_Runtime_Job::Priority <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a> = Dmn_Runtime_Job::Priority::kMedium,</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>      Dmn_Runtime_Job::OnErrorFncType <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a> = {});</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>      F &amp;&amp;fnc, std::chrono::duration&lt;Rep, Period&gt; duration,</div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>      Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>      Dmn_Runtime_Job::OnErrorFncType onErrorFnc = {});</div>
 <div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span> </div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">clearSignalHandlerHook</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">clearSignalHandlerHook</a>(<span class="keywordtype">int</span> signo);</div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span> </div>
 <div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851">enterMainLoop</a>();</div>
 <div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span> </div>
 <div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">exitMainLoop</a>();</div>
 <div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">registerSignalHandlerHook</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>, SignalHandlerHook &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>);</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">registerSignalHandlerHook</a>(<span class="keywordtype">int</span> signo, SignalHandlerHook &amp;&amp;hook);</div>
 <div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span> </div>
 <div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>  <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">runPriorToCreateInstance</a>();</div>
 <div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span> </div>
 <div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>  <span class="keywordtype">void</span> addRuntimeJobToCoroutineSchedulerContext(<a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">job</a>);</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>  <span class="keywordtype">void</span> addRuntimeJobToCoroutineSchedulerContext(<a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;&amp;job);</div>
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span> </div>
 <div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
 <div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>    <span class="keyword">requires</span> <a class="code hl_concept" href="conceptdmn_1_1IsValidJobFnc.html">IsValidJobFnc&lt;F&gt;</a></div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>  <span class="keyword">auto</span> createJobTaskFnc(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>) -&gt; Dmn_Runtime_Job::TaskFncType;</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>  <span class="keyword">auto</span> createJobTaskFnc(F &amp;&amp;fnc) -&gt; Dmn_Runtime_Job::TaskFncType;</div>
 <div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span> </div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>  <span class="keywordtype">void</span> clearSignalHandlerHookInternal(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>  <span class="keywordtype">void</span> clearSignalHandlerHookInternal(<span class="keywordtype">int</span> signo);</div>
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span> </div>
 <div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>  <span class="keywordtype">void</span> execRuntimeJobInternal();</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>  <span class="keywordtype">void</span> execSignalHandlerHookInternal(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>  <span class="keywordtype">void</span> execSignalHandlerHookInternal(<span class="keywordtype">int</span> signo);</div>
 <div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span> </div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>  <span class="keyword">auto</span> isRunInAsyncThread() -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">bool</a>;</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>  <span class="keyword">auto</span> isRunInAsyncThread() -&gt; bool;</div>
 <div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span> </div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>  <span class="keywordtype">void</span> registerSignalHandlerHookInternal(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>, SignalHandlerHook &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>);</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>  <span class="keywordtype">void</span> registerSignalHandlerHookInternal(<span class="keywordtype">int</span> signo, SignalHandlerHook &amp;&amp;hook);</div>
 <div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>  <span class="keyword">auto</span> runRuntimeCoroutineScheduler() -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">bool</a>;</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>  <span class="keyword">auto</span> runRuntimeCoroutineScheduler() -&gt; bool;</div>
 <div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>  <span class="keywordtype">void</span> runRuntimeJobExecutor();</div>
 <div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span> </div>
-<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>  <span class="keywordtype">void</span> setNextTimer(<a class="code hl_typedef" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">SecInt</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sec</a>, <a class="code hl_typedef" href="dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5">NSecInt</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">nsec</a>);</div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>  <span class="keywordtype">void</span> setNextTimerAt(<a class="code hl_typedef" href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">TimePoint</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">tp</a>);</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>  <span class="keywordtype">void</span> setNextTimer(<a class="code hl_typedef" href="dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4">SecInt</a> sec, <a class="code hl_typedef" href="dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5">NSecInt</a> nsec);</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>  <span class="keywordtype">void</span> setNextTimerAt(<a class="code hl_typedef" href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">TimePoint</a> tp);</div>
 <div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
 <div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>  std::unique_ptr&lt;Dmn_Proc&gt; m_signalWaitProc{};</div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigset_t</a> m_mask{};</div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>  sigset_t m_mask{};</div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>  std::unordered_map&lt;int, SignalHandlerHook&gt;</div>
 <div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>      m_signal_handler_hooks{}; <span class="comment">// internal handler hooks</span></div>
 <div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>  std::unordered_map&lt;int, std::vector&lt;SignalHandlerHook&gt;&gt;</div>
 <div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>      m_signal_handler_hooks_external{}; <span class="comment">// external handler hooks</span></div>
 <div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span> </div>
 <div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>  <span class="comment">// Per-priority immediate job queues</span></div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType&lt;Dmn_Runtime_Job&gt;</a> m_highQueue{};</div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType&lt;Dmn_Runtime_Job&gt;</a> m_lowQueue{};</div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType&lt;Dmn_Runtime_Job&gt;</a> m_mediumQueue{};</div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  QueueType&lt;Dmn_Runtime_Job&gt; m_highQueue{};</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>  QueueType&lt;Dmn_Runtime_Job&gt; m_lowQueue{};</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  QueueType&lt;Dmn_Runtime_Job&gt; m_mediumQueue{};</div>
 <div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span> </div>
 <div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>  <span class="comment">// Min-heap of timed jobs (earliest timestamp at top)</span></div>
 <div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>  std::priority_queue&lt;Dmn_Runtime_Job, std::vector&lt;Dmn_Runtime_Job&gt;,</div>
@@ -305,13 +305,13 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>  <span class="comment">// the id of the singleton asynchronous thread context.</span></div>
 <div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>  std::thread::id m_asyncThreadId{};</div>
 <div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span> </div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>  <span class="keyword">inline</span> <span class="keyword">static</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigset_t</a> s_mask{};</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>  <span class="keyword">inline</span> <span class="keyword">static</span> sigset_t s_mask{};</div>
 <div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span>}; <span class="comment">// class Dmn_Runtime_Manager</span></div>
 </div>
 <div class="line"><a id="l00437" name="l00437"></a><span class="lineno">  437</span> </div>
-<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::Dmn_Runtime_Manager</a>()</div>
-<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>    : <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;&gt;{},</div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>    : <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>&lt;QueueType&gt;&gt;{},</div>
 <div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>      Dmn_Async&lt;QueueType&gt;{<span class="stringliteral">&quot;Dmn_Runtime_Manager&quot;</span>},</div>
 <div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span>      m_mask{Dmn_Runtime_Manager::s_mask} {</div>
 <div class="line"><a id="l00443" name="l00443"></a><span class="lineno">  443</span>  this-&gt;addExecTask([<span class="keyword">this</span>]() { m_asyncThreadId = std::this_thread::get_id(); });</div>
@@ -370,7 +370,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>    detail::Dmn_Runtime_Manager_Impl_destroy(&amp;m_pimpl);</div>
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>  }</div>
 <div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  this-&gt;waitForEmpty();</div>
 <div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>} <span class="keywordflow">catch</span> (...) {</div>
 <div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
 <div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>  <span class="keywordflow">return</span>;</div>
@@ -381,24 +381,24 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span>  <span class="keyword">requires</span> IsValidJobFnc&lt;F&gt;</div>
 <div class="foldopen" id="foldopen00508" data-start="{" data-end="}">
 <div class="line"><a id="l00508" name="l00508"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#a8db837619ce8704ebaf68558890ee007">  508</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a8db837619ce8704ebaf68558890ee007">Dmn_Runtime_Manager&lt;QueueType&gt;::addJob</a>(</div>
-<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>, Dmn_Runtime_Job::Priority <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a>,</div>
-<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>    Dmn_Runtime_Job::OnErrorFncType <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a>) {</div>
-<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>{.m_priority = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a>,</div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>    F &amp;&amp;fnc, Dmn_Runtime_Job::Priority priority,</div>
+<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>    Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {</div>
+<div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> rjob{.m_priority = priority,</div>
 <div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span>                       .m_fnc =</div>
-<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span>                           std::move(createJobTaskFnc(std::forward&lt;F&gt;(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>))),</div>
-<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>                       .m_onErrorFnc = std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a>)};</div>
+<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span>                           std::move(createJobTaskFnc(std::forward&lt;F&gt;(fnc))),</div>
+<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>                       .m_onErrorFnc = std::move(onErrorFnc)};</div>
 <div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span> </div>
-<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>  <span class="keywordflow">switch</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a>) {</div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>  <span class="keywordflow">switch</span> (priority) {</div>
 <div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>  <span class="keywordflow">case</span> Dmn_Runtime_Job::Priority::kHigh:</div>
-<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>    m_highQueue.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>));</div>
+<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>    m_highQueue.push(std::move(rjob));</div>
 <div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>    <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span> </div>
 <div class="line"><a id="l00521" name="l00521"></a><span class="lineno">  521</span>  <span class="keywordflow">case</span> Dmn_Runtime_Job::Priority::kMedium:</div>
-<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>    m_mediumQueue.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>));</div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>    m_mediumQueue.push(std::move(rjob));</div>
 <div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span>    <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span> </div>
 <div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span>  <span class="keywordflow">case</span> Dmn_Runtime_Job::Priority::kLow:</div>
-<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>    m_lowQueue.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>));</div>
+<div class="line"><a id="l00526" name="l00526"></a><span class="lineno">  526</span>    m_lowQueue.push(std::move(rjob));</div>
 <div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>    <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span> </div>
 <div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span>  <span class="keywordflow">default</span>:</div>
@@ -413,40 +413,40 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span>}</div>
 </div>
 <div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span> </div>
-<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F, <span class="keyword">class</span> Rep, <span class="keyword">class</span> Period&gt;</div>
 <div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span>  <span class="keyword">requires</span> <a class="code hl_concept" href="conceptdmn_1_1IsValidJobFnc.html">IsValidJobFnc&lt;F&gt;</a></div>
 <div class="foldopen" id="foldopen00543" data-start="{" data-end="}">
 <div class="line"><a id="l00543" name="l00543"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#af6b4fb9f0298ea44a1b02da969faa410">  543</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#af6b4fb9f0298ea44a1b02da969faa410">Dmn_Runtime_Manager&lt;QueueType&gt;::addTimedJob</a>(</div>
-<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">F</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>, std::chrono::duration&lt;Rep, Period&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">duration</a>,</div>
-<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>    Dmn_Runtime_Job::Priority <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a>,</div>
-<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span>    Dmn_Runtime_Job::OnErrorFncType <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a>) {</div>
-<div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>{.m_priority = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">priority</a>,</div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>    F &amp;&amp;fnc, std::chrono::duration&lt;Rep, Period&gt; duration,</div>
+<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>    Dmn_Runtime_Job::Priority priority,</div>
+<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span>    Dmn_Runtime_Job::OnErrorFncType onErrorFnc) {</div>
+<div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> rjob{.m_priority = priority,</div>
 <div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span>                       .m_fnc =</div>
-<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>                           std::move(createJobTaskFnc(std::forward&lt;F&gt;(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>))),</div>
-<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>                       .m_due = std::chrono::steady_clock::now() + <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">duration</a>,</div>
-<div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>                       .m_onErrorFnc = std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">onErrorFnc</a>)};</div>
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>                           std::move(createJobTaskFnc(std::forward&lt;F&gt;(fnc))),</div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>                       .m_due = std::chrono::steady_clock::now() + duration,</div>
+<div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>                       .m_onErrorFnc = std::move(onErrorFnc)};</div>
 <div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span> </div>
 <div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span>  <span class="comment">// add rjob to m_timedQueue via singleton main asynchronous thread</span></div>
-<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>([<span class="keyword">this</span>, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a> = std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>)]() {</div>
-<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(isRunInAsyncThread());</div>
+<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>  this-&gt;addExecTask([<span class="keyword">this</span>, rjob = std::move(rjob)]() {</div>
+<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>    assert(isRunInAsyncThread());</div>
 <div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span> </div>
-<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>    this-&gt;m_timedQueue.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">rjob</a>));</div>
+<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>    this-&gt;m_timedQueue.push(std::move(rjob));</div>
 <div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>    this-&gt;setNextTimerAt(this-&gt;m_timedQueue.top().m_due);</div>
 <div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>  });</div>
 <div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>}</div>
 </div>
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span> </div>
-<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00568" name="l00568"></a><span class="lineno">  568</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::addRuntimeJobToCoroutineSchedulerContext</a>(</div>
-<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>    <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">job</a>) {</div>
-<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(isRunInAsyncThread());</div>
-<div class="line"><a id="l00571" name="l00571"></a><span class="lineno">  571</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(this-&gt;m_sched_job.size() == <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">this</a>-&gt;m_sched_task.size());</div>
+<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>    <a class="code hl_struct" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a> &amp;&amp;job) {</div>
+<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span>  assert(isRunInAsyncThread());</div>
+<div class="line"><a id="l00571" name="l00571"></a><span class="lineno">  571</span>  assert(this-&gt;m_sched_job.size() == this-&gt;m_sched_task.size());</div>
 <div class="line"><a id="l00572" name="l00572"></a><span class="lineno">  572</span> </div>
 <div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span>    <span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">task</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">job</a>.m_fnc(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">job</a>);</div>
-<div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>    this-&gt;m_sched_task.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">task</a>));</div>
-<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>    this-&gt;m_sched_job.push(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">job</a>));</div>
+<div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span>    <span class="keyword">auto</span> task = job.m_fnc(job);</div>
+<div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>    this-&gt;m_sched_task.push(std::move(task));</div>
+<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>    this-&gt;m_sched_job.push(std::move(job));</div>
 <div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span>  } <span class="keywordflow">catch</span> (...) {</div>
 <div class="line"><a id="l00578" name="l00578"></a><span class="lineno">  578</span>    <span class="keywordflow">if</span> (job.m_onErrorFnc) {</div>
 <div class="line"><a id="l00579" name="l00579"></a><span class="lineno">  579</span>      std::exception_ptr ep = std::current_exception();</div>
@@ -462,19 +462,19 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span> </div>
 <div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="foldopen" id="foldopen00591" data-start="{" data-end="}">
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">  591</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">Dmn_Runtime_Manager&lt;QueueType&gt;::clearSignalHandlerHook</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>) {</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>(</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>      [<span class="keyword">this</span>, signo]() <span class="keyword">mutable</span> { this-&gt;clearSignalHandlerHookInternal(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>); });</div>
+<div class="line"><a id="l00591" name="l00591"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">  591</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a">Dmn_Runtime_Manager&lt;QueueType&gt;::clearSignalHandlerHook</a>(<span class="keywordtype">int</span> signo) {</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>  this-&gt;addExecTask(</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>      [<span class="keyword">this</span>, signo]() <span class="keyword">mutable</span> { this-&gt;clearSignalHandlerHookInternal(signo); });</div>
 <div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>}</div>
 </div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span> </div>
-<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::clearSignalHandlerHookInternal</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>) {</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(isRunInAsyncThread());</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::clearSignalHandlerHookInternal</a>(<span class="keywordtype">int</span> signo) {</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>  assert(isRunInAsyncThread());</div>
 <div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span> </div>
-<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>  <span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">it</a> = m_signal_handler_hooks_external.find(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  <span class="keywordflow">if</span> (m_signal_handler_hooks_external.end() != <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">it</a>) {</div>
-<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">it</a>-&gt;second.clear();</div>
+<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>  <span class="keyword">auto</span> it = m_signal_handler_hooks_external.find(signo);</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  <span class="keywordflow">if</span> (m_signal_handler_hooks_external.end() != it) {</div>
+<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>    it-&gt;second.clear();</div>
 <div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>  }</div>
 <div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>}</div>
 <div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span> </div>
@@ -590,15 +590,15 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>}</div>
 </div>
 <div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span> </div>
-<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00736" name="l00736"></a><span class="lineno">  736</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="foldopen" id="foldopen00737" data-start="{" data-end="}">
 <div class="line"><a id="l00737" name="l00737"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851">  737</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851">Dmn_Runtime_Manager&lt;QueueType&gt;::enterMainLoop</a>() {</div>
 <div class="line"><a id="l00738" name="l00738"></a><span class="lineno">  738</span>  <span class="comment">// If there are already pending jobs (e.g., from a prior run), ensure the</span></div>
 <div class="line"><a id="l00739" name="l00739"></a><span class="lineno">  739</span>  <span class="comment">// runtime job executor is started so the system does not remain idle.</span></div>
-<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>  <span class="keywordtype">bool</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">startJobExecutor</a> = m_jobs_count.load(std::memory_order_acquire) &gt; 0;</div>
+<div class="line"><a id="l00740" name="l00740"></a><span class="lineno">  740</span>  <span class="keywordtype">bool</span> startJobExecutor = m_jobs_count.load(std::memory_order_acquire) &gt; 0;</div>
 <div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span> </div>
 <div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span>  <span class="keywordflow">if</span> (m_main_enter_flag.test_and_set(std::memory_order_acquire)) {</div>
-<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(<span class="keyword">false</span> &amp;&amp; <span class="stringliteral">&quot;Error: enter main loop twice without exit&quot;</span>);</div>
+<div class="line"><a id="l00743" name="l00743"></a><span class="lineno">  743</span>    assert(<span class="keyword">false</span> &amp;&amp; <span class="stringliteral">&quot;Error: enter main loop twice without exit&quot;</span>);</div>
 <div class="line"><a id="l00744" name="l00744"></a><span class="lineno">  744</span> </div>
 <div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span>    <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Error: enter main loop twice without exit&quot;</span>);</div>
 <div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span>  }</div>
@@ -610,20 +610,20 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>  m_signalWaitProc = std::make_unique&lt;Dmn_Proc&gt;(</div>
 <div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>      <span class="stringliteral">&quot;DmnRuntimeManager_SignalWait&quot;</span>, [<span class="keyword">this</span>]() -&gt; <span class="keywordtype">void</span> {</div>
 <div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>        <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
-<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>          <span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>{};</div>
-<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>          <span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>{};</div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>          <span class="keywordtype">int</span> signo{};</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>          <span class="keywordtype">int</span> err{};</div>
 <div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span> </div>
-<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>          <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigwait</a>(&amp;m_mask, &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>          <span class="keywordflow">if</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>) {</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>          err = sigwait(&amp;m_mask, &amp;signo);</div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>          <span class="keywordflow">if</span> (err) {</div>
 <div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Error in sigwait: &quot;</span> +</div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>                                     std::system_category().<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">message</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>));</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>                                     std::system_category().message(err));</div>
 <div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>          }</div>
 <div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span> </div>
 <div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>          <span class="keywordflow">if</span> (m_main_exit_flag.test(std::memory_order_acquire)) {</div>
 <div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>            <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>          } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>            this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>([<span class="keyword">this</span>, signo]() {</div>
-<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>              this-&gt;execSignalHandlerHookInternal(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>            this-&gt;addExecTask([<span class="keyword">this</span>, signo]() {</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>              this-&gt;execSignalHandlerHookInternal(signo);</div>
 <div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>            });</div>
 <div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>          }</div>
 <div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>        }</div>
@@ -634,7 +634,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00776" name="l00776"></a><span class="lineno">  776</span>        <span class="stringliteral">&quot;Failed to start DmnRuntimeManager_SignalWait task&quot;</span>);</div>
 <div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span>  }</div>
 <div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span> </div>
-<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>  <span class="keywordflow">if</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">startJobExecutor</a>) {</div>
+<div class="line"><a id="l00779" name="l00779"></a><span class="lineno">  779</span>  <span class="keywordflow">if</span> (startJobExecutor) {</div>
 <div class="line"><a id="l00780" name="l00780"></a><span class="lineno">  780</span>    this-&gt;runRuntimeJobExecutor();</div>
 <div class="line"><a id="l00781" name="l00781"></a><span class="lineno">  781</span>  }</div>
 <div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span> </div>
@@ -644,14 +644,14 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span>}</div>
 </div>
 <div class="line"><a id="l00787" name="l00787"></a><span class="lineno">  787</span> </div>
-<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
-<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::execSignalHandlerHookInternal</a>(<span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>) {</div>
-<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(isRunInAsyncThread());</div>
+<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00795" name="l00795"></a><span class="lineno">  795</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::execSignalHandlerHookInternal</a>(<span class="keywordtype">int</span> signo) {</div>
+<div class="line"><a id="l00796" name="l00796"></a><span class="lineno">  796</span>  assert(isRunInAsyncThread());</div>
 <div class="line"><a id="l00797" name="l00797"></a><span class="lineno">  797</span> </div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>  <span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">ext_hooks</a> = m_signal_handler_hooks_external.find(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
-<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>  <span class="keywordflow">if</span> (m_signal_handler_hooks_external.end() != <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">ext_hooks</a>) {</div>
-<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a> : <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">ext_hooks</a>-&gt;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">second</a>) {</div>
-<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>      <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">fnc</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>);</div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span>  <span class="keyword">auto</span> ext_hooks = m_signal_handler_hooks_external.find(signo);</div>
+<div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span>  <span class="keywordflow">if</span> (m_signal_handler_hooks_external.end() != ext_hooks) {</div>
+<div class="line"><a id="l00800" name="l00800"></a><span class="lineno">  800</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;fnc : ext_hooks-&gt;second) {</div>
+<div class="line"><a id="l00801" name="l00801"></a><span class="lineno">  801</span>      fnc(signo);</div>
 <div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span>    }</div>
 <div class="line"><a id="l00803" name="l00803"></a><span class="lineno">  803</span>  }</div>
 <div class="line"><a id="l00804" name="l00804"></a><span class="lineno">  804</span> </div>
@@ -669,20 +669,20 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00822" name="l00822"></a><span class="lineno">  822</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="foldopen" id="foldopen00823" data-start="{" data-end="}">
 <div class="line"><a id="l00823" name="l00823"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">  823</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">Dmn_Runtime_Manager&lt;QueueType&gt;::registerSignalHandlerHook</a>(</div>
-<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span>    <span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>, SignalHandlerHook &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>) {</div>
-<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>([<span class="keyword">this</span>, signo, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a> = std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>)]() <span class="keyword">mutable</span> {</div>
-<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>    this-&gt;registerSignalHandlerHookInternal(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>, std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>));</div>
+<div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span>    <span class="keywordtype">int</span> signo, SignalHandlerHook &amp;&amp;hook) {</div>
+<div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>  this-&gt;addExecTask([<span class="keyword">this</span>, signo, hook = std::move(hook)]() <span class="keyword">mutable</span> {</div>
+<div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>    this-&gt;registerSignalHandlerHookInternal(signo, std::move(hook));</div>
 <div class="line"><a id="l00827" name="l00827"></a><span class="lineno">  827</span>  });</div>
 <div class="line"><a id="l00828" name="l00828"></a><span class="lineno">  828</span>}</div>
 </div>
 <div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span> </div>
-<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00843" name="l00843"></a><span class="lineno">  843</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00844" name="l00844"></a><span class="lineno">  844</span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::registerSignalHandlerHookInternal</a>(</div>
-<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>    <span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>, SignalHandlerHook &amp;&amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>) {</div>
-<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">assert</a>(isRunInAsyncThread());</div>
+<div class="line"><a id="l00845" name="l00845"></a><span class="lineno">  845</span>    <span class="keywordtype">int</span> signo, SignalHandlerHook &amp;&amp;hook) {</div>
+<div class="line"><a id="l00846" name="l00846"></a><span class="lineno">  846</span>  assert(isRunInAsyncThread());</div>
 <div class="line"><a id="l00847" name="l00847"></a><span class="lineno">  847</span> </div>
-<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>  <span class="keyword">auto</span> &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">extHandlerHooks</a> = m_signal_handler_hooks_external[<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">signo</a>];</div>
-<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">extHandlerHooks</a>.push_back(std::move(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">hook</a>));</div>
+<div class="line"><a id="l00848" name="l00848"></a><span class="lineno">  848</span>  <span class="keyword">auto</span> &amp;extHandlerHooks = m_signal_handler_hooks_external[signo];</div>
+<div class="line"><a id="l00849" name="l00849"></a><span class="lineno">  849</span>  extHandlerHooks.push_back(std::move(hook));</div>
 <div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>}</div>
 <div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span> </div>
 <div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
@@ -690,27 +690,27 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00853" name="l00853"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">  853</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">Dmn_Runtime_Manager&lt;QueueType&gt;::runPriorToCreateInstance</a>() {</div>
 <div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>  <span class="comment">// Mask signals before creating any threads so they are blocked</span></div>
 <div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>  <span class="comment">// in all subsequently created threads (avoids races).</span></div>
-<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigset_t</a> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">old_mask</a>{};</div>
-<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>  <span class="keywordtype">int</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>{};</div>
+<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>  sigset_t old_mask{};</div>
+<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>  <span class="keywordtype">int</span> err{};</div>
 <div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span> </div>
-<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigemptyset</a>(&amp;Dmn_Runtime_Manager::s_mask);</div>
-<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigaddset</a>(&amp;Dmn_Runtime_Manager::s_mask, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIGALRM</a>);</div>
-<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigaddset</a>(&amp;Dmn_Runtime_Manager::s_mask, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIGINT</a>);</div>
-<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigaddset</a>(&amp;Dmn_Runtime_Manager::s_mask, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIGTERM</a>);</div>
-<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigaddset</a>(&amp;Dmn_Runtime_Manager::s_mask, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIGQUIT</a>);</div>
-<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">sigaddset</a>(&amp;Dmn_Runtime_Manager::s_mask, <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIGHUP</a>);</div>
+<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>  sigemptyset(&amp;Dmn_Runtime_Manager::s_mask);</div>
+<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span>  sigaddset(&amp;Dmn_Runtime_Manager::s_mask, SIGALRM);</div>
+<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>  sigaddset(&amp;Dmn_Runtime_Manager::s_mask, SIGINT);</div>
+<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span>  sigaddset(&amp;Dmn_Runtime_Manager::s_mask, SIGTERM);</div>
+<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>  sigaddset(&amp;Dmn_Runtime_Manager::s_mask, SIGQUIT);</div>
+<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>  sigaddset(&amp;Dmn_Runtime_Manager::s_mask, SIGHUP);</div>
 <div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span> </div>
-<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">pthread_sigmask</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">SIG_BLOCK</a>, &amp;Dmn_Runtime_Manager::s_mask, &amp;<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">old_mask</a>);</div>
-<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>  <span class="keywordflow">if</span> (0 != <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>) {</div>
+<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>  err = pthread_sigmask(SIG_BLOCK, &amp;Dmn_Runtime_Manager::s_mask, &amp;old_mask);</div>
+<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>  <span class="keywordflow">if</span> (0 != err) {</div>
 <div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>    <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Error in pthread_sigmask: &quot;</span> +</div>
-<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>                             std::string{<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">strerror</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">err</a>)});</div>
+<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span>                             std::string{strerror(err)});</div>
 <div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span>  }</div>
 <div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span>}</div>
 </div>
 <div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span> </div>
-<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">QueueType</a>&gt;</div>
+<div class="line"><a id="l00885" name="l00885"></a><span class="lineno">  885</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00886" name="l00886"></a><span class="lineno">  886</span><span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;QueueType&gt;::runRuntimeCoroutineScheduler</a>() -&gt; <span class="keywordtype">bool</span> {</div>
-<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>  <span class="keywordtype">bool</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">complete</a>{<span class="keyword">true</span>};</div>
+<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span>  <span class="keywordtype">bool</span> complete{<span class="keyword">true</span>};</div>
 <div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span> </div>
 <div class="line"><a id="l00889" name="l00889"></a><span class="lineno">  889</span>  assert(isRunInAsyncThread());</div>
 <div class="line"><a id="l00890" name="l00890"></a><span class="lineno">  890</span>  assert(this-&gt;m_sched_task.size() &gt; 0);</div>
@@ -766,7 +766,7 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00940" name="l00940"></a><span class="lineno">  940</span> </div>
 <div class="line"><a id="l00945" name="l00945"></a><span class="lineno">  945</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
 <div class="line"><a id="l00946" name="l00946"></a><span class="lineno">  946</span><span class="keywordtype">void</span> Dmn_Runtime_Manager&lt;QueueType&gt;::runRuntimeJobExecutor() {</div>
-<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a>([<span class="keyword">this</span>]() -&gt; <span class="keywordtype">void</span> { this-&gt;execRuntimeJobInternal(); });</div>
+<div class="line"><a id="l00947" name="l00947"></a><span class="lineno">  947</span>  this-&gt;addExecTask([<span class="keyword">this</span>]() -&gt; <span class="keywordtype">void</span> { this-&gt;execRuntimeJobInternal(); });</div>
 <div class="line"><a id="l00948" name="l00948"></a><span class="lineno">  948</span>}</div>
 <div class="line"><a id="l00949" name="l00949"></a><span class="lineno">  949</span> </div>
 <div class="line"><a id="l00957" name="l00957"></a><span class="lineno">  957</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
@@ -783,8 +783,6 @@ $(document).ready(function(){initNavTree('dmn-runtime_8hpp_source.html',''); ini
 <div class="line"><a id="l00975" name="l00975"></a><span class="lineno">  975</span> </div>
 <div class="line"><a id="l00976" name="l00976"></a><span class="lineno">  976</span><span class="preprocessor">#endif </span><span class="comment">// DMN_RUNTIME_HPP_</span></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:63</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a34a8bfbd86640e3d1884d656d8433b26"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">dmn::Dmn_Async::waitForEmpty</a></div><div class="ttdeci">void waitForEmpty()</div><div class="ttdoc">Block until the async is empty and no task pending to be executed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:261</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a7f004b71018ac8eba99e16b5b3cda651"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">dmn::Dmn_Async::addExecTask</a></div><div class="ttdeci">void addExecTask(std::function&lt; void()&gt; fnc)</div><div class="ttdoc">Submit a task for asynchronous execution.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:245</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__BlockingQueue__Mt_html"><div class="ttname"><a href="classdmn_1_1Dmn__BlockingQueue__Mt.html">dmn::Dmn_BlockingQueue_Mt</a></div><div class="ttdoc">Thread-safe FIFO buffer.</div><div class="ttdef"><b>Definition</b> dmn-blockingqueue-mt.hpp:109</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Proc_html_a45fd201e765bae2c57ad30417ba1eb8c"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">dmn::Dmn_Proc::yield</a></div><div class="ttdeci">static void yield()</div><div class="ttdoc">Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...</div><div class="ttdef"><b>Definition</b> dmn-proc.cpp:180</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:257</div></div>

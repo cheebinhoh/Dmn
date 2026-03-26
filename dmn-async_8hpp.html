@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('dmn-async_8hpp.html',''); initResizabl
 </div><!--header-->
 <div class="contents">
 
-<p>Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks and provides optional rendezvous points for callers that need to wait for completion.  
+<p>Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks and provides optional rendezvous points for callers that need to wait for completion of a task.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-blockingqueue-mt_8hpp_source.html">dmn-blockingqueue-mt.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
@@ -126,7 +126,7 @@ Macros</h2></td></tr>
 <tr class="separator:abd3a6227f7d38fa67d9982785afe1fed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks and provides optional rendezvous points for callers that need to wait for completion. </p>
+<div class="textblock"><p>Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks and provides optional rendezvous points for callers that need to wait for completion of a task. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md0"></a>
 Design pattern</h2>
@@ -135,7 +135,7 @@ Design pattern</h2>
 Usage summary</h2>
 <ul>
 <li>A client can inherit from Dmn_Async or hold an instance of it.</li>
-<li>The client passes work as a std::function&lt;void()&gt; to Dmn_Async's write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed asynchronously, serializing execution and avoiding the need for explicit mutexes in the client API.</li>
+<li>The client passes work as a std::function&lt;void()&gt; to Dmn_Async's write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed asynchronously in the order of the submitted tasks and avoiding the need for explicit mutexes in the client API.</li>
 <li>For callers that need to block until a submitted task finishes, use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a Dmn_Async_Handle object whose wait() method will only return after the task has completed (and propagate exceptions thrown by the task).</li>
 </ul>
 <p>This class is useful for offloading work from fast API paths while preserving ordering and providing optional synchronization points. </p>

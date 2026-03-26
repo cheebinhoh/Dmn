@@ -123,147 +123,147 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a38fd9b978f1f0be6b69199a32af66f95" id="r_a38fd9b978f1f0be6b69199a32af66f95"><td class="memItemLeft" align="right" valign="top"><a id="a38fd9b978f1f0be6b69199a32af66f95" name="a38fd9b978f1f0be6b69199a32af66f95"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>AsyncProcessTask</b> = std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>(<a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a>)&gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>AsyncProcessTask</b> = std::function&lt; void(dmn::DMesgPb)&gt;</td></tr>
 <tr class="memdesc:a38fd9b978f1f0be6b69199a32af66f95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback type invoked asynchronously with a copy of each delivered message. <br /></td></tr>
 <tr class="separator:a38fd9b978f1f0be6b69199a32af66f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf0ec9191b5b3a71c01e3e025c1be2f2" id="r_aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="memItemLeft" align="right" valign="top"><a id="aaf0ec9191b5b3a71c01e3e025c1be2f2" name="aaf0ec9191b5b3a71c01e3e025c1be2f2"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilterTask</b> = std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a>(<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;)&gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>FilterTask</b> = std::function&lt; bool(const dmn::DMesgPb &amp;)&gt;</td></tr>
 <tr class="memdesc:aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Predicate that returns false to drop an incoming message before buffering. <br /></td></tr>
 <tr class="separator:aaf0ec9191b5b3a71c01e3e025c1be2f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd97af87f1df0ac7f10a0dfe8339910e" id="r_afd97af87f1df0ac7f10a0dfe8339910e"><td class="memItemLeft" align="right" valign="top"><a id="afd97af87f1df0ac7f10a0dfe8339910e" name="afd97af87f1df0ac7f10a0dfe8339910e"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerConfig</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerConfig</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
 <tr class="memdesc:afd97af87f1df0ac7f10a0dfe8339910e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Key/value map used to pass per-handler configuration options. <br /></td></tr>
 <tr class="separator:afd97af87f1df0ac7f10a0dfe8339910e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84a06f06705d551d0fe33d39e76eeab7" id="r_a84a06f06705d551d0fe33d39e76eeab7"><td class="memItemLeft" align="right" valign="top"><a id="a84a06f06705d551d0fe33d39e76eeab7" name="a84a06f06705d551d0fe33d39e76eeab7"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguration</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguration</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
 <tr class="memdesc:a84a06f06705d551d0fe33d39e76eeab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type used to represent key/value configuration entries for the <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> object itself. <br /></td></tr>
 <tr class="separator:a84a06f06705d551d0fe33d39e76eeab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213d37f294298f42cda7bad4bb831533" id="r_a213d37f294298f42cda7bad4bb831533"><td class="memItemLeft" align="right" valign="top"><a id="a213d37f294298f42cda7bad4bb831533" name="a213d37f294298f42cda7bad4bb831533"></a>
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerType</b> = <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerType</b> = <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
 <tr class="separator:a213d37f294298f42cda7bad4bb831533"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
 <tr class="memitem:aea3de80ecbb952267713f2dc60eae036 inherit pub_types_classdmn_1_1Dmn__Pub" id="r_aea3de80ecbb952267713f2dc60eae036"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Async.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task</b> = std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a>(<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> Dmn_Sub *<a class="el" href="classdmn_1_1Dmn__Async.html">const</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">t</a>)&gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task</b> = std::function&lt; bool(const Dmn_Sub *const, const dmn::DMesgPb &amp;t)&gt;</td></tr>
 <tr class="separator:aea3de80ecbb952267713f2dc60eae036 inherit pub_types_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a70ad3a65cf698516f1fff892eeddbdf7" id="r_a70ad3a65cf698516f1fff892eeddbdf7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">Dmn_DMesg</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>)</td></tr>
+<tr class="memitem:a70ad3a65cf698516f1fff892eeddbdf7" id="r_a70ad3a65cf698516f1fff892eeddbdf7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">Dmn_DMesg</a> (std::string_view name)</td></tr>
 <tr class="memdesc:a70ad3a65cf698516f1fff892eeddbdf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> publisher instance.  <br /></td></tr>
 <tr class="separator:a70ad3a65cf698516f1fff892eeddbdf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a487becccc14bb482e5400837b8876c24" id="r_a487becccc14bb482e5400837b8876c24"><td class="memItemLeft" align="right" valign="top"><a id="a487becccc14bb482e5400837b8876c24" name="a487becccc14bb482e5400837b8876c24"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b> (const <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a487becccc14bb482e5400837b8876c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49bf1899068924c934a9bae5adae94bc" id="r_a49bf1899068924c934a9bae5adae94bc"><td class="memItemLeft" align="right" valign="top"><a id="a49bf1899068924c934a9bae5adae94bc" name="a49bf1899068924c934a9bae5adae94bc"></a>
-<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a49bf1899068924c934a9bae5adae94bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae457217149a170f20b1ed6d886eb1124" id="r_ae457217149a170f20b1ed6d886eb1124"><td class="memItemLeft" align="right" valign="top"><a id="ae457217149a170f20b1ed6d886eb1124" name="ae457217149a170f20b1ed6d886eb1124"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b> (<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b> (<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:ae457217149a170f20b1ed6d886eb1124"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b7dc7089c9e3b2a7bf4eef235eb1ea8" id="r_a3b7dc7089c9e3b2a7bf4eef235eb1ea8"><td class="memItemLeft" align="right" valign="top"><a id="a3b7dc7089c9e3b2a7bf4eef235eb1ea8" name="a3b7dc7089c9e3b2a7bf4eef235eb1ea8"></a>
-<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a3b7dc7089c9e3b2a7bf4eef235eb1ea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a361f1389d565edf75b0e157e255bfc10" id="r_a361f1389d565edf75b0e157e255bfc10"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
-<tr class="memitem:a361f1389d565edf75b0e157e255bfc10"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">openHandler</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">U</a> &amp;&amp;...<a class="el" href="classdmn_1_1Dmn__Async.html">arg</a>) -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a></td></tr>
+<tr class="memitem:a361f1389d565edf75b0e157e255bfc10"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">openHandler</a> (U &amp;&amp;...arg) -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a></td></tr>
 <tr class="memdesc:a361f1389d565edf75b0e157e255bfc10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create, register and return a new <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a>.  <br /></td></tr>
 <tr class="separator:a361f1389d565edf75b0e157e255bfc10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8855fe9eba1a0576c8e4ba0a16095bc7" id="r_a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7">closeHandler</a> (<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">handlerToClose</a>)</td></tr>
+<tr class="memitem:a8855fe9eba1a0576c8e4ba0a16095bc7" id="r_a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7">closeHandler</a> (<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> &amp;handlerToClose)</td></tr>
 <tr class="memdesc:a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unregister and free the provided handler.  <br /></td></tr>
 <tr class="separator:a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a996d15b108694b2642d950835e75c6a8" id="r_a996d15b108694b2642d950835e75c6a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8">getTopicLastMessage</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">topic</a>) -&gt; std::optional&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &gt;</td></tr>
+<tr class="memitem:a996d15b108694b2642d950835e75c6a8" id="r_a996d15b108694b2642d950835e75c6a8"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8">getTopicLastMessage</a> (std::string_view topic) -&gt; std::optional&lt; dmn::DMesgPb &gt;</td></tr>
 <tr class="memdesc:a996d15b108694b2642d950835e75c6a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the topic last message or nullptr if no message for the topic.  <br /></td></tr>
 <tr class="separator:a996d15b108694b2642d950835e75c6a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43e3fef6207b48bb8dc34d44fdc7930b" id="r_a43e3fef6207b48bb8dc34d44fdc7930b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">resetConflictStateWithLastTopicMessage</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">topic</a>)</td></tr>
+<tr class="memitem:a43e3fef6207b48bb8dc34d44fdc7930b" id="r_a43e3fef6207b48bb8dc34d44fdc7930b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b">resetConflictStateWithLastTopicMessage</a> (std::string_view topic)</td></tr>
 <tr class="memdesc:a43e3fef6207b48bb8dc34d44fdc7930b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset conflict state by posting last message of the topic.  <br /></td></tr>
 <tr class="separator:a43e3fef6207b48bb8dc34d44fdc7930b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
-<tr class="memitem:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9d64b2532b52140b295e08108ed8dad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">Dmn_Pub</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">capacity</a>=10, Dmn_Pub_Filter_Task <a class="el" href="classdmn_1_1Dmn__Async.html">filter_fn</a>={})</td></tr>
+<tr class="memitem:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9d64b2532b52140b295e08108ed8dad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={})</td></tr>
 <tr class="separator:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03d7f38a7e8882e51262710c4248c2cb inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a03d7f38a7e8882e51262710c4248c2cb"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a03d7f38a7e8882e51262710c4248c2cb inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a713827aac4eb996fa8acdf562e851257 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a713827aac4eb996fa8acdf562e851257"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a713827aac4eb996fa8acdf562e851257 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a962d7ab1b6b32f836dfa9432d1f8c395 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a962d7ab1b6b32f836dfa9432d1f8c395"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a962d7ab1b6b32f836dfa9432d1f8c395 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82fec3a9de320410f9853ad7707555ee inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a82fec3a9de320410f9853ad7707555ee"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a82fec3a9de320410f9853ad7707555ee inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a> <a class="el" href="classdmn_1_1Dmn__Async.html">block</a>=<a class="el" href="classdmn_1_1Dmn__Async.html">false</a>)</td></tr>
+<tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const dmn::DMesgPb &amp;item, bool block=false)</td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc">registerSubscriber</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">X</a> &amp;&amp;...<a class="el" href="classdmn_1_1Dmn__Async.html">arg</a>) -&gt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">U</a> &gt;</td></tr>
+<tr class="memitem:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
 <tr class="separator:ae9641fbad6a69692f3a9522b5e4d66cc inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a4c12fab34e0278df727ba76930a2b7ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac">registerSubscriber</a> (std::shared_ptr&lt; Dmn_Sub &gt; <a class="el" href="classdmn_1_1Dmn__Async.html">sub</a>)</td></tr>
+<tr class="memitem:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a4c12fab34e0278df727ba76930a2b7ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac">registerSubscriber</a> (std::shared_ptr&lt; Dmn_Sub &gt; sub)</td></tr>
 <tr class="separator:a4c12fab34e0278df727ba76930a2b7ac inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9bbf3609dbd2726eccee295b5b6604da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da">unregisterSubscriber</a> (Dmn_Sub *<a class="el" href="classdmn_1_1Dmn__Async.html">sub</a>)</td></tr>
+<tr class="memitem:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9bbf3609dbd2726eccee295b5b6604da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da">unregisterSubscriber</a> (Dmn_Sub *sub)</td></tr>
 <tr class="separator:a9bbf3609dbd2726eccee295b5b6604da inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Async"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Async')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async&lt; QueueType &gt;</a></td></tr>
-<tr class="memitem:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a7b3c978d0e9d4279212ad420c629cf5c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async</a> (std::string_view <a class="el" href="classdmn_1_1Dmn__Async.html">name</a>=&quot;&quot;)</td></tr>
+<tr class="memitem:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a7b3c978d0e9d4279212ad420c629cf5c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async</a> (std::string_view name=&quot;&quot;)</td></tr>
 <tr class="memdesc:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> helper.  <br /></td></tr>
 <tr class="separator:a7b3c978d0e9d4279212ad420c629cf5c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9affa58549aac864ed71a122148369b inherit pub_methods_classdmn_1_1Dmn__Async" id="r_ad9affa58549aac864ed71a122148369b"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async</b> (const <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj)=delete</td></tr>
 <tr class="separator:ad9affa58549aac864ed71a122148369b inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab79a918551b5f0acd3dc182caecb013c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_ab79a918551b5f0acd3dc182caecb013c"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj)=delete</td></tr>
 <tr class="separator:ab79a918551b5f0acd3dc182caecb013c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2bfd05c3d9f013c432e915a94a3bfc3 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_ab2bfd05c3d9f013c432e915a94a3bfc3"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:ab2bfd05c3d9f013c432e915a94a3bfc3 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2e1fc215abcc1417302cf77ded9c0f0 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_ac2e1fc215abcc1417302cf77ded9c0f0"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">obj</a>)=<a class="el" href="classdmn_1_1Dmn__Async.html">delete</a></td></tr>
+<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:ac2e1fc215abcc1417302cf77ded9c0f0 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f004b71018ac8eba99e16b5b3cda651 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a7f004b71018ac8eba99e16b5b3cda651"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a> (std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>()&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>)</td></tr>
+<tr class="memitem:a7f004b71018ac8eba99e16b5b3cda651 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a7f004b71018ac8eba99e16b5b3cda651"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651">addExecTask</a> (std::function&lt; void()&gt; fnc)</td></tr>
 <tr class="memdesc:a7f004b71018ac8eba99e16b5b3cda651 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit a task for asynchronous execution.  <br /></td></tr>
 <tr class="separator:a7f004b71018ac8eba99e16b5b3cda651 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aacbb4474a95af8fc28d6cb126ffafa8c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_aacbb4474a95af8fc28d6cb126ffafa8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#aacbb4474a95af8fc28d6cb126ffafa8c">addExecTaskWithWait</a> (std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>()&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>) -&gt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &gt;</td></tr>
+<tr class="memitem:aacbb4474a95af8fc28d6cb126ffafa8c inherit pub_methods_classdmn_1_1Dmn__Async" id="r_aacbb4474a95af8fc28d6cb126ffafa8c"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#aacbb4474a95af8fc28d6cb126ffafa8c">addExecTaskWithWait</a> (std::function&lt; void()&gt; fnc) -&gt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &gt;</td></tr>
 <tr class="memdesc:aacbb4474a95af8fc28d6cb126ffafa8c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit a task for asynchronous execution and get a task wait object.  <br /></td></tr>
 <tr class="separator:aacbb4474a95af8fc28d6cb126ffafa8c inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a8c83719eacf487b78c76b93e07959e1a"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Rep</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Period</a> &gt; </td></tr>
-<tr class="memitem:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a8c83719eacf487b78c76b93e07959e1a">addExecTaskAfter</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> std::chrono::duration&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">Rep</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">Period</a> &gt; &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">duration</a>, std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>()&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>)</td></tr>
+<tr class="memitem:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a8c83719eacf487b78c76b93e07959e1a"><td class="memTemplParams" colspan="2">template&lt;class Rep , class Period &gt; </td></tr>
+<tr class="memitem:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a8c83719eacf487b78c76b93e07959e1a">addExecTaskAfter</a> (const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, std::function&lt; void()&gt; fnc)</td></tr>
 <tr class="memdesc:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Schedule a task to run after the given duration has elapsed.  <br /></td></tr>
 <tr class="separator:a8c83719eacf487b78c76b93e07959e1a inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a16e4bc9ebc701f0d7eee29dce0ed4155"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Rep</a> , <a class="el" href="classdmn_1_1Dmn__Async.html">class</a> <a class="el" href="classdmn_1_1Dmn__Async.html">Period</a> &gt; </td></tr>
-<tr class="memitem:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a16e4bc9ebc701f0d7eee29dce0ed4155">addExecTaskAfterWithWait</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> std::chrono::duration&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">Rep</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">Period</a> &gt; &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">duration</a>, std::function&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>()&gt; <a class="el" href="classdmn_1_1Dmn__Async.html">fnc</a>) -&gt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &gt;</td></tr>
+<tr class="memitem:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a16e4bc9ebc701f0d7eee29dce0ed4155"><td class="memTemplParams" colspan="2">template&lt;class Rep , class Period &gt; </td></tr>
+<tr class="memitem:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async.html#a16e4bc9ebc701f0d7eee29dce0ed4155">addExecTaskAfterWithWait</a> (const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, std::function&lt; void()&gt; fnc) -&gt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &gt;</td></tr>
 <tr class="memdesc:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Same as <a class="el" href="classdmn_1_1Dmn__Async.html#a8c83719eacf487b78c76b93e07959e1a" title="Schedule a task to run after the given duration has elapsed.">addExecTaskAfter()</a>, but returns a task wait object so the caller can block until the scheduled task finishes.  <br /></td></tr>
 <tr class="separator:a16e4bc9ebc701f0d7eee29dce0ed4155 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34a8bfbd86640e3d1884d656d8433b26 inherit pub_methods_classdmn_1_1Dmn__Async" id="r_a34a8bfbd86640e3d1884d656d8433b26"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>waitForEmpty</b> ()</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>waitForEmpty</b> ()</td></tr>
 <tr class="memdesc:a34a8bfbd86640e3d1884d656d8433b26 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block until the async is empty and no task pending to be executed. <br /></td></tr>
 <tr class="separator:a34a8bfbd86640e3d1884d656d8433b26 inherit pub_methods_classdmn_1_1Dmn__Async"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a5ed3e9088557e198060eefffae720f17" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
+<tr class="memitem:a5ed3e9088557e198060eefffae720f17" id="r_a5ed3e9088557e198060eefffae720f17"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a5ed3e9088557e198060eefffae720f17">kHandlerConfig_Default</a> = {}</td></tr>
 <tr class="memdesc:a5ed3e9088557e198060eefffae720f17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default handler configuration values.  <br /></td></tr>
 <tr class="separator:a5ed3e9088557e198060eefffae720f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91101b99ee97e9714d8e32487984ee00" id="r_a91101b99ee97e9714d8e32487984ee00"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">constexpr</a> std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a91101b99ee97e9714d8e32487984ee00">kHandlerConfig_IncludeSys</a></td></tr>
+<tr class="memitem:a91101b99ee97e9714d8e32487984ee00" id="r_a91101b99ee97e9714d8e32487984ee00"><td class="memItemLeft" align="right" valign="top">static constexpr std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a91101b99ee97e9714d8e32487984ee00">kHandlerConfig_IncludeSys</a></td></tr>
 <tr class="memdesc:a91101b99ee97e9714d8e32487984ee00"><td class="mdescLeft">&#160;</td><td class="mdescRight">If set to "yes" or "1", handlers opened with this config will receive system messages (DMesgPb.message_type == "sys").  <br /></td></tr>
 <tr class="separator:a91101b99ee97e9714d8e32487984ee00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18e868bdbc7a2d74542003333e0b0bec" id="r_a18e868bdbc7a2d74542003333e0b0bec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">static</a> <a class="el" href="classdmn_1_1Dmn__Async.html">constexpr</a> std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a18e868bdbc7a2d74542003333e0b0bec">kHandlerConfig_NoTopicFilter</a></td></tr>
+<tr class="memitem:a18e868bdbc7a2d74542003333e0b0bec" id="r_a18e868bdbc7a2d74542003333e0b0bec"><td class="memItemLeft" align="right" valign="top">static constexpr std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a18e868bdbc7a2d74542003333e0b0bec">kHandlerConfig_NoTopicFilter</a></td></tr>
 <tr class="memdesc:a18e868bdbc7a2d74542003333e0b0bec"><td class="mdescLeft">&#160;</td><td class="mdescRight">If set to "yes" or "1", handlers opened with this config will ignore topic filtering when reading: read() returns messages regardless of topic value and write() will not set the message topic automatically.  <br /></td></tr>
 <tr class="separator:a18e868bdbc7a2d74542003333e0b0bec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a896b86227c1643a79c0b5cc29f0e6be4" id="r_a896b86227c1643a79c0b5cc29f0e6be4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">dmesgpb_sys</a>)</td></tr>
+<tr class="memitem:a896b86227c1643a79c0b5cc29f0e6be4" id="r_a896b86227c1643a79c0b5cc29f0e6be4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a> (const dmn::DMesgPb &amp;dmesgpb_sys)</td></tr>
 <tr class="memdesc:a896b86227c1643a79c0b5cc29f0e6be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish a system message via the async context.  <br /></td></tr>
 <tr class="separator:a896b86227c1643a79c0b5cc29f0e6be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad483b757d043de9973b744cf85f2a7b9" id="r_ad483b757d043de9973b744cf85f2a7b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9">publishInternal</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">dmesgPb</a>) <a class="el" href="classdmn_1_1Dmn__Async.html">override</a></td></tr>
+<tr class="memitem:ad483b757d043de9973b744cf85f2a7b9" id="r_ad483b757d043de9973b744cf85f2a7b9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9">publishInternal</a> (const dmn::DMesgPb &amp;dmesgPb) override</td></tr>
 <tr class="memdesc:ad483b757d043de9973b744cf85f2a7b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish a normal DMesgPb to subscribers.  <br /></td></tr>
 <tr class="separator:ad483b757d043de9973b744cf85f2a7b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14e645b4bb04c008fa1ef0aa30face65" id="r_a14e645b4bb04c008fa1ef0aa30face65"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">getLastTopicCacheInternal</a> () -&gt; std::unordered_map&lt; std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &gt; &amp;</td></tr>
+<tr class="memitem:a14e645b4bb04c008fa1ef0aa30face65" id="r_a14e645b4bb04c008fa1ef0aa30face65"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">getLastTopicCacheInternal</a> () -&gt; std::unordered_map&lt; std::string, dmn::DMesgPb &gt; &amp;</td></tr>
 <tr class="memdesc:a14e645b4bb04c008fa1ef0aa30face65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the cache of last topic message.  <br /></td></tr>
 <tr class="separator:a14e645b4bb04c008fa1ef0aa30face65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34bd45668411eff973892aa865d4fbab" id="r_a34bd45668411eff973892aa865d4fbab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">resetHandlerConflictState</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> *<a class="el" href="classdmn_1_1Dmn__Async.html">handler_ptr</a>, std::string_view=&quot;&quot;)</td></tr>
+<tr class="memitem:a34bd45668411eff973892aa865d4fbab" id="r_a34bd45668411eff973892aa865d4fbab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab">resetHandlerConflictState</a> (const <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> *handler_ptr, std::string_view=&quot;&quot;)</td></tr>
 <tr class="memdesc:a34bd45668411eff973892aa865d4fbab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post an async action that resets a handler's conflict state in the publisher's singleton async thread context.  <br /></td></tr>
 <tr class="separator:a34bd45668411eff973892aa865d4fbab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">bool</a> <a class="el" href="classdmn_1_1Dmn__Async.html">block</a>=<a class="el" href="classdmn_1_1Dmn__Async.html">false</a>)</td></tr>
+<tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const T &amp;item, bool block=false)</td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
-<tr class="memitem:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub" id="r_a991e2091744fb33652ee7dc6fc3f862d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">publishInternal</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)</td></tr>
+<tr class="memitem:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub" id="r_a991e2091744fb33652ee7dc6fc3f862d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">publishInternal</a> (const dmn::DMesgPb &amp;item)</td></tr>
 <tr class="separator:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -309,7 +309,7 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_DMesg::closeHandler </td>
+          <td class="memname">void dmn::Dmn_DMesg::closeHandler </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> &amp;&#160;</td>
           <td class="paramname"><em>handler</em></td><td>)</td>
@@ -340,10 +340,10 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_DMesg::getLastTopicCacheInternal </td>
+          <td class="memname">auto dmn::Dmn_DMesg::getLastTopicCacheInternal </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt; std::unordered_map&lt;std::string, <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a>&gt; &amp;</td>
+          <td> -&gt; std::unordered_map&lt;std::string, dmn::DMesgPb&gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -368,11 +368,11 @@ Protected Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_DMesg::getTopicLastMessage </td>
+          <td class="memname">auto dmn::Dmn_DMesg::getTopicLastMessage </td>
           <td>(</td>
           <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>topic</em></td><td>)</td>
-          <td> -&gt; std::optional&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a>&gt;</td>
+          <td> -&gt; std::optional&lt;dmn::DMesgPb&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -405,9 +405,9 @@ Protected Member Functions</h2></td></tr>
 template&lt;class... U&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> dmn::Dmn_DMesg::openHandler </td>
+          <td class="memname">auto dmn::Dmn_DMesg::openHandler </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">U</a> &amp;&amp;...&#160;</td>
+          <td class="paramtype">U &amp;&amp;...&#160;</td>
           <td class="paramname"><em>arg</em></td><td>)</td>
           <td> -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a></td>
         </tr>
@@ -430,16 +430,16 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">QueueType</a> &gt;::publish </td>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; T, QueueType &gt;::publish </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&#160;</td>
+          <td class="paramtype">const T &amp;&#160;</td>
           <td class="paramname"><em>item</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">bool</a>&#160;</td>
-          <td class="paramname"><em>block</em> = <code><a class="el" href="classdmn_1_1Dmn__Async.html">false</a></code>&#160;</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>block</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -475,9 +475,9 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_DMesg::publishInternal </td>
+          <td class="memname">void dmn::Dmn_DMesg::publishInternal </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;&#160;</td>
+          <td class="paramtype">const dmn::DMesgPb &amp;&#160;</td>
           <td class="paramname"><em>dmesgpb</em></td><td>)</td>
           <td></td>
         </tr>
@@ -524,9 +524,9 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_DMesg::publishSysInternal </td>
+          <td class="memname">void dmn::Dmn_DMesg::publishSysInternal </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::DMesgPb</a> &amp;&#160;</td>
+          <td class="paramtype">const dmn::DMesgPb &amp;&#160;</td>
           <td class="paramname"><em>dmesgpb_sys</em></td><td>)</td>
           <td></td>
         </tr>
@@ -563,7 +563,7 @@ template&lt;class... U&gt; </div>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_DMesg::resetConflictStateWithLastTopicMessage </td>
+          <td class="memname">void dmn::Dmn_DMesg::resetConflictStateWithLastTopicMessage </td>
           <td>(</td>
           <td class="paramtype">std::string_view&#160;</td>
           <td class="paramname"><em>topic</em></td><td>)</td>
@@ -594,9 +594,9 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">void</a> dmn::Dmn_DMesg::resetHandlerConflictState </td>
+          <td class="memname">void dmn::Dmn_DMesg::resetHandlerConflictState </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> *&#160;</td>
           <td class="paramname"><em>handler_ptr</em>, </td>
         </tr>
         <tr>
@@ -642,7 +642,7 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">Dmn_DMesg::HandlerConfig</a> dmn::Dmn_DMesg::kHandlerConfig_Default = {}</td>
+          <td class="memname">const <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">Dmn_DMesg::HandlerConfig</a> dmn::Dmn_DMesg::kHandlerConfig_Default = {}</td>
         </tr>
       </table>
   </td>
@@ -670,7 +670,7 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">constexpr</a> std::string_view dmn::Dmn_DMesg::kHandlerConfig_IncludeSys</td>
+          <td class="memname">constexpr std::string_view dmn::Dmn_DMesg::kHandlerConfig_IncludeSys</td>
         </tr>
       </table>
   </td>
@@ -696,7 +696,7 @@ template&lt;class... U&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">constexpr</a> std::string_view dmn::Dmn_DMesg::kHandlerConfig_NoTopicFilter</td>
+          <td class="memname">constexpr std::string_view dmn::Dmn_DMesg::kHandlerConfig_NoTopicFilter</td>
         </tr>
       </table>
   </td>

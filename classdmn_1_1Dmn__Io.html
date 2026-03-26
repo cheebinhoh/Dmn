@@ -107,19 +107,19 @@ Inheritance diagram for dmn::Dmn_Io&lt; T &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9df6d0e4cc80d2d7f91caf70a2155e25" id="r_a9df6d0e4cc80d2d7f91caf70a2155e25"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25">read</a> () -&gt; std::optional&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;=0</td></tr>
+<tr class="memitem:a9df6d0e4cc80d2d7f91caf70a2155e25" id="r_a9df6d0e4cc80d2d7f91caf70a2155e25"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25">read</a> () -&gt; std::optional&lt; T &gt;=0</td></tr>
 <tr class="memdesc:a9df6d0e4cc80d2d7f91caf70a2155e25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read and return the next available item.  <br /></td></tr>
 <tr class="separator:a9df6d0e4cc80d2d7f91caf70a2155e25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1335492bced949742f48c2098e87083" id="r_ab1335492bced949742f48c2098e87083"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083">read</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a> <a class="el" href="classdmn_1_1Dmn__Async.html">count</a>, <a class="el" href="classdmn_1_1Dmn__Async.html">long</a> <a class="el" href="classdmn_1_1Dmn__Async.html">timeout</a>=0) -&gt; std::vector&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;</td></tr>
+<tr class="memitem:ab1335492bced949742f48c2098e87083" id="r_ab1335492bced949742f48c2098e87083"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083">read</a> (size_t count, long timeout=0) -&gt; std::vector&lt; T &gt;</td></tr>
 <tr class="memdesc:ab1335492bced949742f48c2098e87083"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read up to <code>count</code> items, optionally waiting up to <code>timeout</code> microseconds.  <br /></td></tr>
 <tr class="separator:ab1335492bced949742f48c2098e87083"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c8cb56964ecbbd7c4cb4cb88098aa5e" id="r_a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)=0</td></tr>
+<tr class="memitem:a1c8cb56964ecbbd7c4cb4cb88098aa5e" id="r_a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">write</a> (const T &amp;item)=0</td></tr>
 <tr class="memdesc:a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (copy) an item to the sink.  <br /></td></tr>
 <tr class="separator:a1c8cb56964ecbbd7c4cb4cb88098aa5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0439d9ebdf6bbbec7df53503a2fdb9bb" id="r_a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">write</a> (<a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;<a class="el" href="classdmn_1_1Dmn__Async.html">item</a>)=0</td></tr>
+<tr class="memitem:a0439d9ebdf6bbbec7df53503a2fdb9bb" id="r_a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">write</a> (T &amp;&amp;item)=0</td></tr>
 <tr class="memdesc:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (move) an item to the sink.  <br /></td></tr>
 <tr class="separator:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a896ac8daec7de1fce18a6ea889dde079" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
+<tr class="memitem:a896ac8daec7de1fce18a6ea889dde079" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
 <tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
 <tr class="separator:a896ac8daec7de1fce18a6ea889dde079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -130,16 +130,16 @@ Public Member Functions</h2></td></tr>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::read </td>
+          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; T &gt;::read </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  std::optional&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;</td>
+          <td> -&gt;  std::optional&lt; T &gt;</td>
         </tr>
       </table>
   </td>
@@ -163,27 +163,27 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">auto</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::read </td>
+          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; T &gt;::read </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">size_t</a>&#160;</td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>count</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">long</a>&#160;</td>
+          <td class="paramtype">long&#160;</td>
           <td class="paramname"><em>timeout</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td> -&gt; std::vector&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">T</a>&gt; </td>
+          <td></td><td> -&gt; std::vector&lt;T&gt; </td>
         </tr>
       </table>
   </td>
@@ -214,13 +214,13 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::shutdown </td>
+          <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; T &gt;::shutdown </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -245,15 +245,15 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::write </td>
+          <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; T &gt;::write </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">const</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&#160;</td>
+          <td class="paramtype">const T &amp;&#160;</td>
           <td class="paramname"><em>item</em></td><td>)</td>
           <td></td>
         </tr>
@@ -284,15 +284,15 @@ template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a cla
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="classdmn_1_1Dmn__Async.html">typename</a> <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">virtual</a> <a class="el" href="classdmn_1_1Dmn__Async.html">void</a> <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; <a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &gt;::write </td>
+          <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io</a>&lt; T &gt;::write </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Async.html">T</a> &amp;&amp;&#160;</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>item</em></td><td>)</td>
           <td></td>
         </tr>
