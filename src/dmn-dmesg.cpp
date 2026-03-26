@@ -198,7 +198,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   this->isAfterInitialPlayback();
 
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, topic, &inConflict]() -> void {
+      this->addExecTaskWithWait([this, topic, &inConflict]() -> void {
         inConflict = this->isInConflictInternal(topic);
       });
 
@@ -229,7 +229,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
   this->isAfterInitialPlayback();
 
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+      this->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
         runningCounter = this->getTopicRunningCounterInternal(topic);
       });
 
@@ -251,7 +251,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
 
 /** @brief Schedule setAfterInitialPlaybackInternal() in the async context. */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
-  [[maybe_unused]] auto waitHandler = m_sub->addExecTaskWithWait(
+  [[maybe_unused]] auto waitHandler = this->addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
@@ -272,7 +272,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
     std::string_view topic, uint64_t runningCounter) {
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+      this->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
         this->setTopicRunningCounterInternal(topic, runningCounter);
       });
 
@@ -323,7 +323,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
 
-  auto waitHandler = m_sub->addExecTaskWithWait([this, &conflict_fn]() -> void {
+  auto waitHandler = this->addExecTaskWithWait([this, &conflict_fn]() -> void {
     m_conflict_callback_fn = std::move(conflict_fn);
   });
 
@@ -363,7 +363,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
   }
 
   auto waithandler =
-      m_sub->addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
+      this->addExecTaskWithWait([this, &moved_dmesgpb, block]() -> void {
         writeDMesgInternal(moved_dmesgpb, true, block);
       });
 
@@ -396,7 +396,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb,
   }
 
   auto waitHandler =
-      m_sub->addExecTaskWithWait([this, &copied_dmesgpb, block]() -> void {
+      this->addExecTaskWithWait([this, &copied_dmesgpb, block]() -> void {
         writeDMesgInternal(copied_dmesgpb, false, block);
       });
 
@@ -535,7 +535,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
   m_topic_in_conflict.insert(dmesgpb.topic());
 
   if (m_conflict_callback_fn) {
-    m_sub->addExecTask([this, dmesgpb]() -> void {
+    this->addExecTask([this, dmesgpb]() -> void {
       this->m_conflict_callback_fn(*this, dmesgpb);
     });
   }

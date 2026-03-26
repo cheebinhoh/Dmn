@@ -4,7 +4,7 @@
  * @file dmn-async.hpp
  * @brief Header for Dmn_Async: a small helper that serializes asynchronous
  * execution of client-provided tasks and provides optional rendezvous points
- * for callers that need to wait for completion.
+ * for callers that need to wait for completion of a task.
  *
  * Design pattern
  * --------------
@@ -15,8 +15,8 @@
  * - A client can inherit from Dmn_Async or hold an instance of it.
  * - The client passes work as a std::function<void()> to Dmn_Async's
  *   write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed
- *   asynchronously, serializing execution and avoiding the need for explicit
- *   mutexes in the client API.
+ *   asynchronously in the order of the submitted tasks and avoiding the need
+ * for explicit mutexes in the client API.
  * - For callers that need to block until a submitted task finishes, use
  *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
  *   Dmn_Async_Handle object whose wait() method will only return after the task
@@ -121,8 +121,7 @@ public:
    *
    * @param fnc The task to execute asynchronously.
    *
-   * @return shared_ptr<Dmn_Async_Handle> A rendezvous object to wait for task
-   * completion.
+   * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
   auto addExecTaskWithWait(std::function<void()> fnc)
       -> std::shared_ptr<Dmn_Async_Handle>;
@@ -144,6 +143,14 @@ public:
   /**
    * @brief Same as addExecTaskAfter(), but returns a task wait object so the
    * caller can block until the scheduled task finishes.
+   *
+   * The task will not be executed before the duration has passed. It may not
+   * execute precisely at the moment the duration elapses (scheduling is not
+   * real-time), but execution will occur at or after the specified time.
+   *
+   * The returned shared_ptr points to a Dmn_Async_Handle; calling wait() on it
+   * will block until the submitted task has finished. If the task throws an
+   * exception, wait() will rethrow it.
    *
    * @param duration Time to wait before executing the task.
    * @param fnc The task to execute.

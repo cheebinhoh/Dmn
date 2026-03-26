@@ -140,7 +140,7 @@ public:
    *   its publisher (if still registered) and wait for pending asynchronous
    *   tasks to complete before returning.
    */
-  class Dmn_Sub : public Dmn_Async<QueueType> {
+  class Dmn_Sub {
   public:
     explicit Dmn_Sub(ssize_t replayQuantity = -1)
         : m_replayQuantity{replayQuantity} {}
@@ -315,7 +315,7 @@ Dmn_Pub<T, QueueType>::Dmn_Sub::~Dmn_Sub() noexcept try {
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::Dmn_Sub::notifyInternal(const T &item) {
-  this->addExecTask([this, item]() { this->notify(item); });
+  this->notify(item);
 }
 
 // class Dmn_Pub

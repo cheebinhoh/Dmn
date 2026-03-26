@@ -33,6 +33,8 @@
  * Decorator - Provides an alternative to subclassing for adding additional
  *             responsibilities to the thread object or object that inherits
  *             the Dmn_Proc, a degenerated decorator.
+ * Strategy - The provided callback functor serves as a mechanism for strategy
+ *            design pattern to varying the functionalities for the thread.
  *
  * Note on mutex cleanup macros
  * The macros below wrap pthread_cleanup_push/pop for the common pattern of

@@ -175,7 +175,8 @@ public:
    * Clients obtain handlers from Dmn_DMesg::openHandler(...) and release them
    * via Dmn_DMesg::closeHandler(...).
    */
-  class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb> {
+  class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb>,
+                           public Dmn_Async<Dmn_BlockingQueue_Mt> {
   private:
     using ConflictCallbackTask =
         std::function<void(Dmn_DMesgHandler &handler, const dmn::DMesgPb &)>;
