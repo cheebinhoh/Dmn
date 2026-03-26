@@ -176,7 +176,7 @@ public:
    * via Dmn_DMesg::closeHandler(...).
    */
   class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb>,
-                           public Dmn_Async<Dmn_BlockingQueue_Mt> {
+                           private Dmn_Async<Dmn_BlockingQueue_Mt> {
   private:
     using ConflictCallbackTask =
         std::function<void(Dmn_DMesgHandler &handler, const dmn::DMesgPb &)>;
