@@ -12,13 +12,13 @@ var searchData=
   ['settopicrunningcounterinternal_9',['setTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['shutdown_10',['shutdown',['../classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079',1,'dmn::Dmn_Io::shutdown()'],['../classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966',1,'dmn::Dmn_Pipe::shutdown()'],['../classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6',1,'dmn::Dmn_Kafka::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue__Mt.html#a728f2715b8ada8c21dc2170ff323c425',1,'dmn::Dmn_BlockingQueue_Mt::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426',1,'dmn::Dmn_BlockingQueue_Lf::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue.html#ad42c30b1169bb56646b90f38d45cfc6a',1,'dmn::Dmn_BlockingQueue::shutdown()']]],
   ['shutdown_20behavior_11',['Shutdown behavior',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md3',1,'']]],
-  ['signal‑safety_20notes_12',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md36',1,'']]],
+  ['signal‑safety_20notes_12',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md35',1,'']]],
   ['start_13',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
   ['static_20polymorphism_14',['Static polymorphism',['../dmn-blockingqueue_8hpp.html#autotoc_md9',1,'']]],
   ['stop_15',['stop',['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer']]],
   ['stopexec_16',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
   ['stringcompare_17',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
-  ['summary_18',['summary',['../dmn-async_8hpp.html#autotoc_md1',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md32',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md37',1,'Usage Summary']]],
+  ['summary_18',['summary',['../dmn-async_8hpp.html#autotoc_md1',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md32',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md36',1,'Usage Summary']]],
   ['synchronization_19',['Synchronization',['../dmn-pub-sub_8hpp.html#autotoc_md27',1,'']]],
   ['synchronization_20and_20semantics_20',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]]
 ];

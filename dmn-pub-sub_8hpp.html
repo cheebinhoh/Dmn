@@ -107,7 +107,6 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 <code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
-<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
@@ -144,24 +143,19 @@ Key design goals</h2>
 <ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
-<li>Concurrency: deliveries occur asynchronously and subscribers process notifications inside their own Dmn_Async context.</li>
+<li>Concurrency: deliveries occur asynchronously and subscribers process notifications</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md26"></a>
 Threading and execution model</h2>
 <ul>
-<li>Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
+<li>Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each Dmn_Sub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's async context via Dmn_Sub::notifyInternal.</li>
-<li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked inside the subscriber's async context.</li>
+<li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how it adapted notify() method being called, note that subscriber is adviced to process the notification in its context.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md27"></a>
 Synchronization</h2>
 <ul>
-<li>A mutex (m_mutex) protects the publisher's internal state:<ul>
-<li>the subscriber list (m_subscribers) and the replay buffer (m_buffer).</li>
-</ul>
-</li>
-<li>The mutex provides synchronous semantics for registerSubscriber() and unregisterSubscriber(): callers return only after registration state is updated and (for register) buffer replay has been enqueued to the subscriber.</li>
-<li>publishInternal locks the same mutex while updating the buffer and while iterating the subscriber list to schedule deliveries.</li>
+<li>It is piggy back on Dmn_Async's synchronization job queue.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md28"></a>
 Buffering and replay</h2>
@@ -184,10 +178,7 @@ Lifetime and cleanup</h2>
 <ul>
 <li>Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.</li>
 <li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
-<li>Dmn_Pub destructor:<ul>
-<li>acquires the internal mutex, nils subscribers' m_pub to avoid dangling back-references, waits for its async queue to drain, and then releases the mutex. This ensures no further deliveries will be scheduled to subscribers from this publisher after destruction starts.</li>
-</ul>
-</li>
+<li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md31"></a>
 Error handling and exception safety</h2>
@@ -201,12 +192,6 @@ Usage summary</h2>
 <li>Derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and implement notify(const T&amp;).</li>
 <li>Call registerSubscriber() to register a subscriber (buffer replay occurs synchronously as part of registration).</li>
 <li>Call publish(item) to enqueue an asynchronous publish. Optionally pass block=true to wait until the publish task completes.</li>
-</ul>
-<h2><a class="anchor" id="autotoc_md33"></a>
-Limitations and notes</h2>
-<ul>
-<li>Capacity &lt;= 0 is not validated beyond construction; callers should pass a sensible positive capacity.</li>
-<li>The implementation uses mutexes and conditional variables.</li>
 </ul>
 <p>See also</p><ul>
 <li><a class="el" href="dmn-async_8hpp.html" title="Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks ...">dmn-async.hpp</a> : asynchronous task execution and synchronization helpers.</li>

@@ -12,10 +12,9 @@ var searchData=
   ['and_20exception_20safety_9',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md31',1,'']]],
   ['and_20execution_20model_10',['Threading and execution model',['../dmn-pub-sub_8hpp.html#autotoc_md26',1,'']]],
   ['and_20expectations_11',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md21',1,'']]],
-  ['and_20notes_12',['Limitations and notes',['../dmn-pub-sub_8hpp.html#autotoc_md33',1,'']]],
-  ['and_20replay_13',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md28',1,'']]],
-  ['and_20semantics_14',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
-  ['and_20timeout_20semantics_15',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'']]],
-  ['asyncprocesstask_16',['AsyncProcessTask',['../classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95',1,'dmn::Dmn_DMesg']]],
-  ['awaiter_17',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
+  ['and_20replay_12',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md28',1,'']]],
+  ['and_20semantics_13',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
+  ['and_20timeout_20semantics_14',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'']]],
+  ['asyncprocesstask_15',['AsyncProcessTask',['../classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95',1,'dmn::Dmn_DMesg']]],
+  ['awaiter_16',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
 ];
