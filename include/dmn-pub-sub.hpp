@@ -42,14 +42,7 @@
  *
  * Synchronization
  * ---------------
- * - A mutex (m_mutex) protects the publisher's internal state:
- *   - the subscriber list (m_subscribers) and the replay buffer (m_buffer).
- * - The mutex provides synchronous semantics for registerSubscriber() and
- *   unregisterSubscriber(): callers return only after registration state is
- *   updated and (for register) buffer replay has been enqueued to the
- *   subscriber.
- * - publishInternal locks the same mutex while updating the buffer and while
- *   iterating the subscriber list to schedule deliveries.
+ * - It is piggy back on Dmn_Async's synchronization job queue.
  *
  * Buffering and replay
  * --------------------
@@ -73,11 +66,7 @@
  * - Dmn_Sub destructor automatically unregisters from the publisher (if still
  *   registered) and waits for any pending asynchronous tasks to finish so a
  *   destroyed subscriber will not receive further notifications.
- * - Dmn_Pub destructor:
- *   - acquires the internal mutex, nils subscribers' m_pub to avoid
- *     dangling back-references, waits for its async queue to drain, and then
- *     releases the mutex. This ensures no further deliveries will be
- *     scheduled to subscribers from this publisher after destruction starts.
+ * - Dmn_Pub destructor: unregister all the subscribers still dangling.
  *
  * Error handling and exception safety
  * -----------------------------------
@@ -92,12 +81,6 @@
  *   synchronously as part of registration).
  * - Call publish(item) to enqueue an asynchronous publish. Optionally pass
  *   block=true to wait until the publish task completes.
- *
- * Limitations and notes
- * ---------------------
- * - Capacity <= 0 is not validated beyond construction; callers should pass a
- *   sensible positive capacity.
- * - The implementation uses mutexes and conditional variables.
  *
  * See also
  * - dmn-async.hpp : asynchronous task execution and synchronization helpers.
@@ -118,7 +101,6 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -155,11 +137,9 @@ public:
     Dmn_Sub &operator=(Dmn_Sub &&obj) = delete;
 
     /**
-     * notify
-     *
-     * Called to deliver a published item to this subscriber. This method is
-     * invoked inside the subscriber's asynchronous thread context. Subclasses
-     * must implement this method to process received items.
+     * @brief Called to deliver a published item to this subscriber. This method
+     * is invoked inside the subscriber's asynchronous thread context.
+     * Subclasses must implement this method to process received items.
      *
      * @param item The data item delivered by the publisher.
      */
@@ -169,9 +149,7 @@ public:
 
   private:
     /**
-     * notifyInternal
-     *
-     * Internal helper called by Dmn_Pub to schedule delivery into the
+     * @brief Internal helper called by Dmn_Pub to schedule delivery into the
      * subscriber's asynchronous context. Do not call from user code; implement
      * notify() instead.
      *
@@ -188,7 +166,7 @@ public:
       std::function<bool(const Dmn_Sub *const, const T &t)>;
 
   /**
-   * Constructor
+   * @brief Constructor
    *
    * @param name A human-readable name used by Dmn_Async for the publisher
    *             thread context.
@@ -209,9 +187,7 @@ public:
   Dmn_Pub &operator=(Dmn_Pub &&obj) = delete;
 
   /**
-   * publish
-   *
-   * Publish an item to all registered subscribers. The publish() call is
+   * @brief Publish an item to all registered subscribers. The publish() call is
    * non-blocking (with blocking optional) with respect to subscriber handling:
    * it schedules the delivery in the publisher's asynchronous thread context
    * (so the caller returns quickly) while delivery to each subscriber is
@@ -224,7 +200,7 @@ public:
   void publish(const T &item, bool block = false);
 
   /**
-   * registerSubscriber
+   * @brief Register a subscriber.
    *
    * Template parameters:
    *  - U : Dmn_Sub or class type that inherits from Dmn_Sub.
@@ -232,10 +208,8 @@ public:
    *           of class U.
    *
    * Register a subscriber of class interface/subclass from Dmn_Sub with
-   * this publisher. This method acquires an internal mutex and returns
-   * only after the subscriber has been added to the publisher's subscriber
-   * list. After registration, items in the publisher's buffer are replayed
-   * to the subscriber (via notifyInternal).
+   * this publisher. After registration, items in the publisher's buffer are
+   * replayed to the subscriber (via notifyInternal).
    *
    * The immediate semantics (synchronous registration) allow callers to rely
    * on the subscriber being registered when the call returns.
@@ -247,13 +221,9 @@ public:
   auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
 
   /**
-   * registerSubscriber
-   *
-   * Register a subscriber of class interface/subclass from Dmn_Sub with
-   * this publisher. This method acquires an internal mutex and returns
-   * only after the subscriber has been added to the publisher's subscriber
-   * list. After registration, items in the publisher's buffer are replayed
-   * to the subscriber (via notifyInternal).
+   * @brief Register a subscriber of class interface/subclass from Dmn_Sub with
+   * this publisher. After registration, items in the publisher's buffer are
+   * replayed to the subscriber (via notifyInternal).
    *
    * The immediate semantics (synchronous registration) allow callers to rely
    * on the subscriber being registered when the call returns.
@@ -263,11 +233,7 @@ public:
   void registerSubscriber(std::shared_ptr<Dmn_Sub> sub);
 
   /**
-   * unregisterSubscriber
-   *
-   * Deregister a previously registered subscriber. This method acquires the
-   * internal mutex and returns only after the subscriber has been removed.
-   * If the subscriber was not registered, this is a no-op.
+   * @brief Deregister a previously registered subscriber.
    *
    * @param sub A pointer to a Dmn_Sub instance to deregister.
    */
@@ -275,12 +241,9 @@ public:
 
 protected:
   /**
-   * publishInternal
-   *
-   * Core implementation that performs buffering and iterates subscribers to
-   * dispatch notifications. This runs inside the publisher's asynchronous
-   * context (scheduled by publish()) and holds the internal mutex while
-   * manipulating state.
+   * @brief Core implementation that performs buffering and iterates subscribers
+   * to dispatch notifications. This runs inside the publisher's asynchronous
+   * context (scheduled by publish())
    *
    * Subclasses may override to customize behavior, but must honor the locking
    * and delivery expectations used by register/unregister and destructor.
@@ -297,11 +260,7 @@ private:
   size_t m_capacity{};
   Dmn_Pub_Filter_Task m_filter_fn{};
 
-  /**
-   * Internal state protected by m_mutex.
-   */
   std::deque<T> m_buffer{}; // bounded historical buffer for replay
-  std::mutex m_mutex{};     // protects subscriber list & buffer
   std::vector<std::shared_ptr<Dmn_Sub>> m_subscribers{};
 }; // class Dmn_Pub
 
@@ -367,13 +326,7 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
    * in the singleton asynchronous thread context, and which means that upon
    * returning from both API methods, the client is not guaranteed that
    * it has registered or unregistered successfully.
-   *
-   * A simple mutex will guarantee that and the penalty of mutex is small
-   * as most clients are registered upon application brought up, and only
-   * deregister upon application shutdown.
    */
-
-  std::unique_lock<std::mutex> lock(m_mutex);
 
   /* Keep the published item in circular ring buffer for
    * efficient access to playback to new subscribers whose misses the
