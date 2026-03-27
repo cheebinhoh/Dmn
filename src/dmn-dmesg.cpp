@@ -562,17 +562,11 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
       m_name{name} {}
 
 Dmn_DMesg::~Dmn_DMesg() noexcept try {
-  auto waitHandler = this->addExecTaskWithWait([this]() -> void {
-    for (auto &h : m_handlers) {
-      this->unregisterSubscriber(h->m_sub.get());
-    }
+  for (auto &h : m_handlers) {
+    this->unregisterSubscriber(h->m_sub.get());
+  }
 
-    m_handlers.clear();
-  });
-
-  waitHandler->wait();
-
-  this->waitForEmpty();
+  m_handlers.clear();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
