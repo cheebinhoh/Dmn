@@ -24,18 +24,21 @@
  * - Correctness: clear ownership and lifetime semantics, safe cleanup on
  *   destruction.
  * - Concurrency: deliveries occur asynchronously and subscribers process
- *   notifications inside their own Dmn_Async context.
+ *   notifications
  *
  * Threading and execution model
  * -----------------------------
- * - Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each object has its own
- *   singleton asynchronous execution context as provided by Dmn_Async.
+ * - Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each Dmn_Sub object has its
+ *   own singleton asynchronous execution context as provided by Dmn_Async.
  * - publish(const T&) schedules a delivery task in the publisher's async
  *   context. That task (publishInternal) performs buffering and schedules per-
  *   subscriber deliveries into each subscriber's async context via
  *   Dmn_Sub::notifyInternal.
  * - notify(const T&) is a pure virtual callback implemented by subscriber
- *   subclasses and is always invoked inside the subscriber's async context.
+ *   subclasses and is always invoked directly in async publisher context, and
+ *   it is up to subscriber to decide how it adapted notify() method being
+ *   called, note that subscriber is adviced to process the notification in
+ *   its context.
  *
  * Synchronization
  * ---------------
@@ -327,11 +330,13 @@ Dmn_Pub<T, QueueType>::Dmn_Pub(std::string_view name, size_t capacity,
 
 template <typename T, template <class> class QueueType>
 Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  auto waitHandler = this->addExecTaskWithWait([this]() -> void {
+    for (auto &sub : m_subscribers) {
+      sub->m_pub = nullptr;
+    }
+  });
 
-  for (auto &sub : m_subscribers) {
-    sub->m_pub = nullptr;
-  }
+  waitHandler->wait();
 
   this->waitForEmpty();
 } catch (...) {
@@ -396,34 +401,36 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
-  std::unique_lock<std::mutex> lock(m_mutex);
-
-  if (this == sub->m_pub) {
-    return;
-  }
-
-  assert(nullptr == sub->m_pub ||
-         "The subscriber has been registered with another publisher");
-
-  sub->m_pub = this;
-  m_subscribers.push_back(sub);
-
-  // resend the data items that the registered subscriber
-  // miss.
-  size_t numberOfItemsToBeSkipped = 0;
-  if (sub->m_replayQuantity > 0 &&
-      m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
-    numberOfItemsToBeSkipped =
-        m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
-  }
-
-  for (auto &item : m_buffer) {
-    if (numberOfItemsToBeSkipped > 0) {
-      numberOfItemsToBeSkipped--;
-    } else {
-      sub->notifyInternal(item);
+  auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
+    if (this == sub->m_pub) {
+      return;
     }
-  }
+
+    assert(nullptr == sub->m_pub ||
+           "The subscriber has been registered with another publisher");
+
+    sub->m_pub = this;
+    m_subscribers.push_back(sub);
+
+    // resend the data items that the registered subscriber
+    // miss.
+    size_t numberOfItemsToBeSkipped = 0;
+    if (sub->m_replayQuantity > 0 &&
+        m_buffer.size() > static_cast<size_t>(sub->m_replayQuantity)) {
+      numberOfItemsToBeSkipped =
+          m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
+    }
+
+    for (auto &item : m_buffer) {
+      if (numberOfItemsToBeSkipped > 0) {
+        numberOfItemsToBeSkipped--;
+      } else {
+        sub->notifyInternal(item);
+      }
+    }
+  });
+
+  waitHandler->wait();
 }
 
 template <typename T, template <class> class QueueType>
@@ -439,19 +446,21 @@ auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
-  std::unique_lock<std::mutex> lock(m_mutex);
+  auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
+    if (nullptr != sub->m_pub) {
+      assert(this == sub->m_pub ||
+             "The subscriber' registered publisher is NOT this" == nullptr);
 
-  if (nullptr != sub->m_pub) {
-    assert(this == sub->m_pub ||
-           "The subscriber' registered publisher is NOT this" == nullptr);
+      sub->m_pub = nullptr;
 
-    sub->m_pub = nullptr;
+      m_subscribers.erase(
+          std::remove_if(m_subscribers.begin(), m_subscribers.end(),
+                         [sub](auto &sp) { return sp.get() == sub; }),
+          m_subscribers.end());
+    }
+  });
 
-    m_subscribers.erase(
-        std::remove_if(m_subscribers.begin(), m_subscribers.end(),
-                       [sub](auto &sp) { return sp.get() == sub; }),
-        m_subscribers.end());
-  }
+  waitHandler->wait();
 }
 
 } // namespace dmn
