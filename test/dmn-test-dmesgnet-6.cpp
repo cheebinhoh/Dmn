@@ -189,7 +189,10 @@ int main(int argc, char *argv[]) {
                         << "\n";
             }
 
-            write_to_read_1->write(*data);
+            try {
+              write_to_read_1->write(*data);
+            } catch (...) {
+            }
           }
         }};
 
