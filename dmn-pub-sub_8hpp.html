@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 </div><!--header-->
 <div class="contents">
 
-<p>Lightweight publish/subscribe helpers built on top of Dmn_Async.  
+<p>Lightweight publish/subscribe helpers adaptor class as wrapper.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&quot;</code><br />
@@ -121,12 +121,12 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Lightweight publish/subscribe helpers built on top of Dmn_Async. </p>
+<div class="textblock"><p>Lightweight publish/subscribe helpers adaptor class as wrapper. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md23"></a>
 Overview</h2>
 <ul>
-<li>This header provides a small, efficient publish/subscribe utility:<ul>
+<li>This header provides a small, efficient publish/subscribe adaptar classes:<ul>
 <li>Dmn_Pub&lt;T&gt; publishes items of type T.</li>
 <li>Dmn_Pub&lt;T&gt;::Dmn_Sub is the subscriber interface that receives items.</li>
 </ul>
@@ -136,21 +136,21 @@ Overview</h2>
 Design pattern</h2>
 <ul>
 <li>Adapter - it allows other subclasses to be adapted as publishers or subscribers.</li>
-<li>Observer - it defines one-to-many dependencies between objects so that when one object publishes a state change, all dependent subscribers are notified.</li>
+<li>Observer - it defines one-to-many dependencies between objects so that when one object publishes a message, all dependent subscribers are notified.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md25"></a>
 Key design goals</h2>
 <ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
-<li>Concurrency: deliveries occur asynchronously and subscribers process notifications</li>
+<li>Concurrency: deliveries occur asynchronously and subscribers process notifications.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md26"></a>
 Threading and execution model</h2>
 <ul>
-<li>Both Dmn_Pub and Dmn_Sub derive from Dmn_Async. Each Dmn_Sub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
-<li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's async context via Dmn_Sub::notifyInternal.</li>
-<li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how it adapted notify() method being called, note that subscriber is adviced to process the notification in its context.</li>
+<li>The Dmn_Pub is derivade from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
+<li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's publish() method.</li>
+<li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how it adapted notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md27"></a>
 Synchronization</h2>
@@ -179,6 +179,7 @@ Lifetime and cleanup</h2>
 <li>Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.</li>
 <li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
 <li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
+<li>The Dmn_Pub and Dmn_Sub does not maintain object lifetime and ownership, these are left it to the client of the classes.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md31"></a>
 Error handling and exception safety</h2>
