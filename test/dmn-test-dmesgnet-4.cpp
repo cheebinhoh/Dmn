@@ -133,7 +133,10 @@ int main(int argc, char *argv[]) {
               dmesgpb2_body = dmesgpb2;
             }
 
-            write_to_read_1->write(*data);
+            try {
+              write_to_read_1->write(*data);
+            } catch (...) {
+            }
           }
         }};
 
