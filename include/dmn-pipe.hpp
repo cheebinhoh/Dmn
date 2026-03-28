@@ -192,17 +192,25 @@ public:
 
 protected:
   virtual auto isShutdown() -> bool override {
+    std::unique_lock<std::mutex> lock(m_mutex);
+
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
   virtual void shutdown() override {
+    if (isShutdown()) {
+      return;
+    }
+
     std::unique_lock<std::mutex> lock(m_mutex);
     m_shutdown_flag.test_and_set(std::memory_order_release);
     lock.unlock();
 
     QueueType::shutdown();
 
-    Dmn_Proc::wait();
+    if (m_hasFn) {
+      Dmn_Proc::wait();
+    }
   }
 
 private:
@@ -214,12 +222,13 @@ private:
   std::condition_variable m_empty_cond{};
   size_t m_count{};
   std::atomic_flag m_shutdown_flag{};
+  bool m_hasFn{};
 }; // class Dmn_Pipe
 
 template <typename T, typename QueueType>
 Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
                                  size_t count, long timeout)
-    : Dmn_Proc{name} {
+    : Dmn_Proc{name}, m_hasFn{nullptr != fn} {
   if (fn) {
     exec([this, fn, count, timeout]() {
       while (true) {
@@ -241,9 +250,7 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
 
 template <typename T, typename QueueType>
 Dmn_Pipe<T, QueueType>::~Dmn_Pipe() noexcept try {
-  if (!isShutdown()) {
-    shutdown();
-  }
+  shutdown();
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
   return;
