@@ -192,8 +192,6 @@ public:
 
 protected:
   virtual auto isShutdown() -> bool override {
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
@@ -202,9 +200,7 @@ protected:
       return;
     }
 
-    std::unique_lock<std::mutex> lock(m_mutex);
     m_shutdown_flag.test_and_set(std::memory_order_release);
-    lock.unlock();
 
     QueueType::shutdown();
 
