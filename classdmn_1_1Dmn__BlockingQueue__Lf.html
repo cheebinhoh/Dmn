@@ -201,7 +201,7 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memdesc:a9b21173276eb14668e55250512e6fc3e inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy and enqueue the const lvalue item into the tail of the queue.  <br /></td></tr>
 <tr class="separator:a9b21173276eb14668e55250512e6fc3e inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36227293543dbac3d4132b501ca78251 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a36227293543dbac3d4132b501ca78251"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a36227293543dbac3d4132b501ca78251">push</a> (T &amp;&amp;item) final</td></tr>
-<tr class="memdesc:a36227293543dbac3d4132b501ca78251 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
+<tr class="memdesc:a36227293543dbac3d4132b501ca78251 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue via move semantics.  <br /></td></tr>
 <tr class="separator:a36227293543dbac3d4132b501ca78251 inherit pub_methods_classdmn_1_1Dmn__BlockingQueue"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__BlockingQueue"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__BlockingQueue')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a></td></tr>
 <tr class="memitem:a13bac196cd31294a957c6a9a8d537eae inherit pro_methods_classdmn_1_1Dmn__BlockingQueue" id="r_a13bac196cd31294a957c6a9a8d537eae"><td class="memItemLeft" align="right" valign="top">
@@ -472,7 +472,7 @@ template&lt;typename T &gt; </div>
 <p>Wrapper call to pushImpl to copy and enqueue the item into the queue. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The item to be enqueued. </td></tr>
+    <tr><td class="paramname">item</td><td>The item to be enqueued.</td></tr>
   </table>
   </dd>
 </dl>
@@ -554,7 +554,7 @@ template&lt;typename T &gt; </div>
 <p>Wrapper call to pushImpl to move and enqueue the item into the queue. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The item to be enqueued. </td></tr>
+    <tr><td class="paramname">item</td><td>The item to be enqueued.</td></tr>
   </table>
   </dd>
 </dl>

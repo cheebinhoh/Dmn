@@ -129,7 +129,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a9b21173276eb14668e55250512e6fc3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy and enqueue the const lvalue item into the tail of the queue.  <br /></td></tr>
 <tr class="separator:a9b21173276eb14668e55250512e6fc3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36227293543dbac3d4132b501ca78251" id="r_a36227293543dbac3d4132b501ca78251"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a36227293543dbac3d4132b501ca78251">push</a> (T &amp;&amp;item) final</td></tr>
-<tr class="memdesc:a36227293543dbac3d4132b501ca78251"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue, preferring move semantics.  <br /></td></tr>
+<tr class="memdesc:a36227293543dbac3d4132b501ca78251"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue an rvalue item into the tail of the queue via move semantics.  <br /></td></tr>
 <tr class="separator:a36227293543dbac3d4132b501ca78251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad42c30b1169bb56646b90f38d45cfc6a" id="r_ad42c30b1169bb56646b90f38d45cfc6a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#ad42c30b1169bb56646b90f38d45cfc6a">shutdown</a> ()</td></tr>
 <tr class="memdesc:ad42c30b1169bb56646b90f38d45cfc6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flag the m_shutdown flag and shutdown the object to prevent further use prior to initializing the teardown.  <br /></td></tr>
@@ -368,10 +368,10 @@ template&lt;typename Derived , typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Enqueue an rvalue item into the tail of the queue, preferring move semantics. </p>
+<p>Enqueue an rvalue item into the tail of the queue via move semantics. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The rvalue item to be enqueued. Implementations may internally fall back to copying (e.g., when using std::move_if_noexcept for types with throwing move constructors). </td></tr>
+    <tr><td class="paramname">item</td><td>The rvalue item to be enqueued. </td></tr>
   </table>
   </dd>
 </dl>

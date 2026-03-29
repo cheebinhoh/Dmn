@@ -165,7 +165,7 @@ Usage guidelines</h2>
 <li>Optionally override enterInflightGuardFnc()/leaveInflightGuardFnc() if per-call bookkeeping is required (e.g. epoch-based reclamation).</li>
 </ul>
 </li>
-<li>Public APIs should acquire a ticket early (typically at the start of push/pop) and keep it alive until the function returns.</li>
+<li>Public APIs should acquire a ticket early (e.g. at the start of push/pop) and keep it alive until the function returns.</li>
 <li>shutdown()/destructor should close the inflight guard first, then call waitForEmptyInflight() before freeing shared resources that in-flight calls might touch. </li>
 </ul>
 </div></div><!-- contents -->
