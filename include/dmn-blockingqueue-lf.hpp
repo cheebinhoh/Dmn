@@ -679,14 +679,15 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
           if (0 == count) {
             auto ptr =
                 m_epochReclaimNode[index].load(std::memory_order_acquire);
-            if (nullptr != ptr &&
-                !m_epochReclaimNode[index].compare_exchange_strong(
-                    ptr, nullptr, std::memory_order_release,
-                    std::memory_order_acquire)) {
-              continue;
-            }
+            if (nullptr != ptr) {
+              if (!m_epochReclaimNode[index].compare_exchange_strong(
+                      ptr, nullptr, std::memory_order_release,
+                      std::memory_order_acquire)) {
+                continue;
+              }
 
-            freeRetiredNodeList(ptr);
+              freeRetiredNodeList(ptr);
+            }
           }
         }
 
@@ -729,14 +730,15 @@ void Dmn_BlockingQueue_Lf<T>::leaveInflightGuardFnc(
       do {
         auto ptr =
             m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
-        if (nullptr != ptr &&
-            !m_epochReclaimNode[epochIndex].compare_exchange_strong(
-                ptr, nullptr, std::memory_order_release,
-                std::memory_order_acquire)) {
-          continue;
-        }
+        if (nullptr != ptr) {
+          if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
+                  ptr, nullptr, std::memory_order_release,
+                  std::memory_order_acquire)) {
+            continue;
+          }
 
-        freeRetiredNodeList(ptr);
+          freeRetiredNodeList(ptr);
+        }
 
         break;
       } while (true);
