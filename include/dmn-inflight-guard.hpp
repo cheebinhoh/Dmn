@@ -96,7 +96,7 @@
  *     - Override isInflightGuardClosed() to reflect shutdown state.
  *     - Optionally override enterInflightGuardFnc()/leaveInflightGuardFnc() if
  *       per-call bookkeeping is required (e.g. epoch-based reclamation).
- * - Public APIs should acquire a ticket early (typically at the start of
+ * - Public APIs should acquire a ticket early (e.g. at the start of
  *   push/pop) and keep it alive until the function returns.
  * - shutdown()/destructor should close the inflight guard first, then call
  *   waitForEmptyInflight() before freeing shared resources that in-flight calls
@@ -214,7 +214,7 @@ protected:
 
   virtual void leaveInflightGuardFnc(const T &) noexcept {}
 
-  auto inflight_count() const -> uint64_t {
+  virtual auto inflight_count() const -> uint64_t final {
     return m_inflight_count.load(std::memory_order_acquire);
   }
 
