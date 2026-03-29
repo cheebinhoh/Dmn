@@ -109,12 +109,10 @@ public:
   virtual void push(const T &item) final;
 
   /**
-   * @brief Enqueue an rvalue item into the tail of the queue, preferring move
+   * @brief Enqueue an rvalue item into the tail of the queue via move
    * semantics.
    *
-   * @param item The rvalue item to be enqueued. Implementations may
-   * internally fall back to copying (e.g., when using std::move_if_noexcept for
-   * types with throwing move constructors).
+   * @param item The rvalue item to be enqueued.
    */
   virtual void push(T &&item) final;
 
