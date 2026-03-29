@@ -238,9 +238,6 @@ Dmn_BlockingQueue_Mt<T>::~Dmn_BlockingQueue_Mt() noexcept try {
   if (!isShutdown()) {
     shutdown();
   }
-
-  // make sure that all api call within the inflight guard exits.
-  this->waitForEmptyInflight();
 } catch (...) {
   // Destructors must be noexcept: swallow exceptions.
   return;
@@ -300,10 +297,15 @@ void Dmn_BlockingQueue_Mt<T>::pushImpl(U &&item) {
 }
 
 template <typename T> void Dmn_BlockingQueue_Mt<T>::shutdown() {
+  // 1. set shutdown flag
   Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::shutdown();
 
+  // 2. notify all the threads blocking waiting
   m_empty_cond.notify_all();
   m_not_empty_cond.notify_all();
+
+  // 3. wait for all threads that already "entered the epoch" to leave
+  this->waitForEmptyInflight();
 }
 
 template <typename T> auto Dmn_BlockingQueue_Mt<T>::waitForEmpty() -> uint64_t {
