@@ -247,6 +247,7 @@ protected:
    * queue.
    *
    * @param item The item to be enqueued.
+   *
    * @throws std::runtime_error if the queue is shutting down when the push
    * operation is attempted.
    */
@@ -257,6 +258,7 @@ protected:
    * queue.
    *
    * @param item The item to be enqueued.
+   *
    * @throws std::runtime_error if the queue is shutting down when the push
    *         operation is attempted.
    */
@@ -299,7 +301,7 @@ private:
    */
   template <std::atomic<Node *> Node::*NextField>
   static auto freeNodeChain(Node *head) -> uint64_t {
-    uint64_t cnt = 0;
+    uint64_t count = 0;
 
     while (head != nullptr) {
       Node *next = (head->*NextField).load(std::memory_order_relaxed);
@@ -307,10 +309,10 @@ private:
       delete head;
 
       head = next;
-      ++cnt;
+      ++count;
     }
 
-    return cnt;
+    return count;
   }
 
   /**
@@ -533,7 +535,7 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(std::move(item)); // move if noexcept, else copy
+  pushImpl(std::move(item)); // move
 
   DMN_PROC_CLEANUP_POP(0);
 }
