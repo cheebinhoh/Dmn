@@ -77,7 +77,7 @@
  * Usage summary
  * -------------
  * - Create a Dmn_Pub<T> with a name and optional capacity and filter.
- * - Derive from Dmn_Pub<T>::Dmn_Sub and implement notify(const T&).
+ * - Derive from Dmn_Pub<T>::Dmn_Sub and implement notify(const T&, Dmn_Pub *).
  * - Call registerSubscriber() to register a subscriber (buffer replay occurs
  *   synchronously as part of registration).
  * - Call publish(item) to enqueue an asynchronous publish. Optionally pass
@@ -116,8 +116,8 @@ public:
    * Subscriber interface for receiving items published by Dmn_Pub<T>.
    *
    * Implementors should derive from Dmn_Pub<T>::Dmn_Sub and override
-   * notify(const T&) to handle delivered items. The notify callback will be
-   * executed inside the subscriber's own singleton asynchronous thread
+   * notify(const T&, Dmn_Pub *) to handle delivered items. The notify callback
+   * will be executed inside the subscriber's own singleton asynchronous thread
    * context (i.e., the Dmn_Sub's Dmn_Async context).
    *
    * Lifetime notes:
@@ -143,8 +143,10 @@ public:
      * Subclasses must implement this method to process received items.
      *
      * @param item The data item delivered by the publisher.
+     * @param pub The pointer to the publisher (subject) that notifies the
+     * observer.
      */
-    virtual void notify(const T &item) = 0;
+    virtual void notify(const T &item, Dmn_Pub *pub = nullptr) = 0;
 
     friend class Dmn_Pub;
 
@@ -334,7 +336,7 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 
   for (auto &sub : m_subscribers) {
     if (!m_filter_fn || m_filter_fn(sub.get(), item)) {
-      sub->notify(item);
+      sub->notify(item, this);
     }
   }
 } // method publishInternal()
@@ -365,7 +367,7 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
       if (numberOfItemsToBeSkipped > 0) {
         numberOfItemsToBeSkipped--;
       } else {
-        sub->notify(item);
+        sub->notify(item, this);
       }
     }
   });
