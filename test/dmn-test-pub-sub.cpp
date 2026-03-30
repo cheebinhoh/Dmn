@@ -18,6 +18,8 @@
 
 using namespace std::string_view_literals;
 
+void *g_pub = nullptr;
+
 class Dmn_Msg_Receiver : public dmn::Dmn_Pub<std::string>::Dmn_Sub {
 public:
   Dmn_Msg_Receiver(std::string_view name, ssize_t replay = -1)
@@ -25,10 +27,12 @@ public:
 
   ~Dmn_Msg_Receiver() {}
 
-  void notify(const std::string &item) override {
+  void notify(const std::string &item,
+              dmn::Dmn_Pub<std::string> *pub) override {
     std::cout << m_name << " is notified: " << item << "\n";
 
     m_notifiedList.push_back(item);
+    EXPECT_TRUE(pub == g_pub);
   }
 
   std::vector<std::string> m_notifiedList{};
@@ -39,6 +43,8 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   dmn::Dmn_Pub<std::string> pub{"radio", 3};
+
+  g_pub = &pub;
 
   // auto rec1 = pub.registerSubscriber<Dmn_Msg_Receiver>(new
   // Dmn_Msg_Receiver{"receiver 1"});

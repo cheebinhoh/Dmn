@@ -60,7 +60,7 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
 }
 
 void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
-    const dmn::DMesgPb &dmesgpb) {
+    const dmn::DMesgPb &dmesgpb, Dmn_Pub<dmn::DMesgPb> *pub) {
   const std::string &topic = dmesgpb.topic();
   auto iter = m_owner->m_topic_running_counter.find(topic);
 

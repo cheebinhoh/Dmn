@@ -216,7 +216,8 @@ public:
        *
        * @param dmesgPb The message delivered by the publisher.
        */
-      void notify(const dmn::DMesgPb &dmesgpb) override;
+      void notify(const dmn::DMesgPb &dmesgpb,
+                  Dmn_Pub<dmn::DMesgPb> *pub) override;
 
       // m_owner is intentionally public to allow the containing Dmn_DMesg to
       // access and wire-up the subscriber. This nested class is private to the
