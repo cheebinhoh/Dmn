@@ -1,8 +1,8 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025-2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-pub-sub.hpp
- * @brief Lightweight publish/subscribe helpers adaptor class as wrapper.
+ * @brief Lightweight publish/subscribe adaptor classes as wrapper.
  *
  * Overview
  * --------
@@ -14,9 +14,10 @@
  * --------------
  * - Adapter - it allows other subclasses to be adapted as publishers or
  *             subscribers.
- * - Observer - it defines one-to-many dependencies between objects so that
+ * - Observer - it defines many-to-many dependencies between objects so that
  *              when one object publishes a message, all dependent subscribers
- *              are notified.
+ *              are notified, and a subscriber can subscribe more than one
+ *              publishers.
  *
  * Key design goals
  * ----------------
@@ -33,10 +34,10 @@
  * - publish(const T&) schedules a delivery task in the publisher's async
  *   context. That task (publishInternal) performs buffering and schedules per-
  *   subscriber deliveries into each subscriber's publish() method.
- * - notify(const T&) is a pure virtual callback implemented by subscriber
- *   subclasses and is always invoked directly in async publisher context, and
- *   it is up to subscriber to decide how it adapted notify() method being
- *   called, note that subscriber is adviced to copy the notification to
+ * - notify(const T&, Dmn_Pub *pub) is a pure virtual callback implemented by
+ *   subscriber subclasses and is always invoked directly in async publisher
+ *   context, and it is up to subscriber to decide how does the notify() method
+ *   being called, note that subscriber is adviced to copy the notification to
  *   its context before perform expensive computation.
  *
  * Synchronization
@@ -51,7 +52,7 @@
  *   the subscriber according to the subscriber's replay setting:
  *   - m_replayQuantity == -1 : replay all buffered items
  *   - m_replayQuantity == 0  : replay none
- *   - m_replayQuantity  > 0  : replay up to the last N items
+ *   - m_replayQuantity  > 0  : replay the last N items
  *
  * Filtering
  * ---------
@@ -366,12 +367,9 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
           m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
     }
 
-    for (auto &item : m_buffer) {
-      if (numberOfItemsToBeSkipped > 0) {
-        numberOfItemsToBeSkipped--;
-      } else {
-        sub->notify(item, this);
-      }
+    auto startIt = std::next(m_buffer.begin(), numberOfItemsToBeSkipped);
+    for (auto it = startIt; it != m_buffer.end(); it++) {
+      sub->notify(*it, this);
     }
   });
 
