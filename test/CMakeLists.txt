@@ -53,7 +53,9 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-pipe-queue-lf-3
                       dmn-test-pipe-queue-lf-4
                       dmn-test-pub-sub
+                      dmn-test-pub-sub-2
                       dmn-test-pub-sub-queue-lf
+                      dmn-test-pub-sub-2-queue-lf
                       dmn-test-runtime
                       dmn-test-runtime-2
                       dmn-test-runtime-3
@@ -124,7 +126,9 @@ if (ENABLE_VALGRIND)
         dmn-test-pipe-queue-lf-2
         dmn-test-pipe-queue-lf-3
         dmn-test-pub-sub
+        dmn-test-pub-sub-2
         dmn-test-pub-sub-queue-lf
+        dmn-test-pub-sub-2-queue-lf
         dmn-test-runtime
         dmn-test-runtime-2
         dmn-test-runtime-3

@@ -61,7 +61,7 @@
  *
  * Lifetime and cleanup
  * --------------------
- * - Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.
+ * - Dmn_Sub stores a back-pointer (m_pubs) to its publishers while registered.
  * - Dmn_Sub destructor automatically unregisters from the publisher (if still
  *   registered) and waits for any pending asynchronous tasks to finish so a
  *   destroyed subscriber will not receive further notifications.
@@ -121,7 +121,7 @@ public:
    * context (i.e., the Dmn_Sub's Dmn_Async context).
    *
    * Lifetime notes:
-   * - A Dmn_Sub holds a back-pointer m_pub to the publisher while it is
+   * - A Dmn_Sub holds a back-pointer m_pubs to the publisher while it is
    *   registered. The Dmn_Sub destructor will automatically unregister from
    *   its publisher (if still registered) and wait for pending asynchronous
    *   tasks to complete before returning.
@@ -153,7 +153,7 @@ public:
   private:
     ssize_t m_replayQuantity{
         -1}; // -1 resend all, 0 no resend, resend up to number
-    Dmn_Pub *m_pub{};
+    std::vector<Dmn_Pub *> m_pubs{};
   }; // class Dmn_Sub
 
   using Dmn_Pub_Filter_Task =
@@ -212,6 +212,9 @@ public:
    * @return std::shared_ptr<U> pointing to the instance of class U.
    */
   template <typename U, class... X>
+    requires(sizeof...(X) != 1 ||
+             !std::same_as<std::tuple_element_t<0, std::tuple<X...>>,
+                           std::shared_ptr<Dmn_Sub>>)
   auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
 
   /**
@@ -261,8 +264,8 @@ private:
 // class Dmn_Pub::Dmn_Sub
 template <typename T, template <class> class QueueType>
 Dmn_Pub<T, QueueType>::Dmn_Sub::~Dmn_Sub() noexcept try {
-  if (m_pub) {
-    m_pub->unregisterSubscriber(this);
+  for (auto &pub : m_pubs) {
+    pub->unregisterSubscriber(this);
   }
 } catch (...) {
   // explicit return to resolve exception as destructor must be noexcept
@@ -280,7 +283,9 @@ template <typename T, template <class> class QueueType>
 Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
   auto waitHandler = this->addExecTaskWithWait([this]() -> void {
     for (auto &sub : m_subscribers) {
-      sub->m_pub = nullptr;
+      auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+      assert(sub->m_pubs.end() != it);
+      sub->m_pubs.erase(it);
     }
   });
 
@@ -344,14 +349,12 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
   auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
-    if (this == sub->m_pub) {
+    auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+    if (it != sub->m_pubs.end()) {
       return;
     }
 
-    assert(nullptr == sub->m_pub ||
-           "The subscriber has been registered with another publisher");
-
-    sub->m_pub = this;
+    sub->m_pubs.push_back(this);
     m_subscribers.push_back(sub);
 
     // resend the data items that the registered subscriber
@@ -377,6 +380,10 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
 
 template <typename T, template <class> class QueueType>
 template <typename U, class... X>
+  requires(
+      sizeof...(X) != 1 ||
+      !std::same_as<std::tuple_element_t<0, std::tuple<X...>>,
+                    std::shared_ptr<typename Dmn_Pub<T, QueueType>::Dmn_Sub>>)
 auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
     -> std::shared_ptr<U> {
   auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
@@ -389,17 +396,15 @@ auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
   auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
-    if (nullptr != sub->m_pub) {
-      assert(this == sub->m_pub ||
-             "The subscriber' registered publisher is NOT this" == nullptr);
+    auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+    assert(it != sub->m_pubs.end());
 
-      sub->m_pub = nullptr;
+    sub->m_pubs.erase(it);
 
-      m_subscribers.erase(
-          std::remove_if(m_subscribers.begin(), m_subscribers.end(),
-                         [sub](auto &sp) { return sp.get() == sub; }),
-          m_subscribers.end());
-    }
+    m_subscribers.erase(
+        std::remove_if(m_subscribers.begin(), m_subscribers.end(),
+                       [sub](auto &sp) { return sp.get() == sub; }),
+        m_subscribers.end());
   });
 
   waitHandler->wait();
