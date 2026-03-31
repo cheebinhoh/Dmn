@@ -214,7 +214,7 @@ public:
   template <typename U, class... X>
     requires(sizeof...(X) != 1 ||
              !std::same_as<std::tuple_element_t<0, std::tuple<X...>>,
-                           std::shared_ptr<Dmn_Sub>>)
+                           std::shared_ptr<U>>)
   auto registerSubscriber(X &&...arg) -> std::shared_ptr<U>;
 
   /**
@@ -380,10 +380,9 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
 
 template <typename T, template <class> class QueueType>
 template <typename U, class... X>
-  requires(
-      sizeof...(X) != 1 ||
-      !std::same_as<std::tuple_element_t<0, std::tuple<X...>>,
-                    std::shared_ptr<typename Dmn_Pub<T, QueueType>::Dmn_Sub>>)
+  requires(sizeof...(X) != 1 ||
+           !std::same_as<std::tuple_element_t<0, std::tuple<X...>>,
+                         std::shared_ptr<U>>)
 auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
     -> std::shared_ptr<U> {
   auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
