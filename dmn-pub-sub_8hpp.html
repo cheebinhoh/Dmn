@@ -176,7 +176,7 @@ Filtering</h2>
 <h2><a class="anchor" id="autotoc_md30"></a>
 Lifetime and cleanup</h2>
 <ul>
-<li>Dmn_Sub stores a back-pointer (m_pub) to its publisher while registered.</li>
+<li>Dmn_Sub stores a back-pointer (m_pubs) to its publishers while registered.</li>
 <li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
 <li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
 <li>The Dmn_Pub and Dmn_Sub does not maintain object lifetime and ownership, these are left it to the client of the classes.</li>
@@ -190,7 +190,7 @@ Error handling and exception safety</h2>
 Usage summary</h2>
 <ul>
 <li>Create a Dmn_Pub&lt;T&gt; with a name and optional capacity and filter.</li>
-<li>Derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and implement notify(const T&amp;).</li>
+<li>Derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and implement notify(const T&amp;, Dmn_Pub *).</li>
 <li>Call registerSubscriber() to register a subscriber (buffer replay occurs synchronously as part of registration).</li>
 <li>Call publish(item) to enqueue an asynchronous publish. Optionally pass block=true to wait until the publish task completes.</li>
 </ul>

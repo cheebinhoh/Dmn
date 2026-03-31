@@ -116,9 +116,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acd72045fd62a6f3fb37ac6f59ba65a6a" id="r_acd72045fd62a6f3fb37ac6f59ba65a6a"><td class="memItemLeft" align="right" valign="top"><a id="acd72045fd62a6f3fb37ac6f59ba65a6a" name="acd72045fd62a6f3fb37ac6f59ba65a6a"></a>
 <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:acd72045fd62a6f3fb37ac6f59ba65a6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d7f9c2b39d0dc2f2022849e03ae319c" id="r_a8d7f9c2b39d0dc2f2022849e03ae319c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d7f9c2b39d0dc2f2022849e03ae319c">notify</a> (const T &amp;item)=0</td></tr>
-<tr class="memdesc:a8d7f9c2b39d0dc2f2022849e03ae319c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called to deliver a published item to this subscriber. This method is invoked inside the subscriber's asynchronous thread context. Subclasses must implement this method to process received items.  <br /></td></tr>
-<tr class="separator:a8d7f9c2b39d0dc2f2022849e03ae319c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59b33695fe315dce071a74646f5c689f" id="r_a59b33695fe315dce071a74646f5c689f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f">notify</a> (const T &amp;item, <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> *pub=nullptr)=0</td></tr>
+<tr class="memdesc:a59b33695fe315dce071a74646f5c689f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called to deliver a published item to this subscriber. This method is invoked inside the subscriber's asynchronous thread context. Subclasses must implement this method to process received items.  <br /></td></tr>
+<tr class="separator:a59b33695fe315dce071a74646f5c689f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -129,13 +129,13 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b></td></tr
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T = std::string, template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt;<br />
 class dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</div><p>Subscriber interface for receiving items published by Dmn_Pub&lt;T&gt;.</p>
-<p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d7f9c2b39d0dc2f2022849e03ae319c" title="Called to deliver a published item to this subscriber. This method is invoked inside the subscriber&#39;s...">notify(const T&amp;)</a> to handle delivered items. The notify callback will be executed inside the subscriber's own singleton asynchronous thread context (i.e., the <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a>'s <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> context).</p>
+<p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f" title="Called to deliver a published item to this subscriber. This method is invoked inside the subscriber&#39;s...">notify(const T&amp;, Dmn_Pub *)</a> to handle delivered items. The notify callback will be executed inside the subscriber's own singleton asynchronous thread context (i.e., the <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a>'s <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> context).</p>
 <p>Lifetime notes:</p><ul>
-<li>A <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> holds a back-pointer m_pub to the publisher while it is registered. The <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> destructor will automatically unregister from its publisher (if still registered) and wait for pending asynchronous tasks to complete before returning. </li>
+<li>A <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> holds a back-pointer m_pubs to the publisher while it is registered. The <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> destructor will automatically unregister from its publisher (if still registered) and wait for pending asynchronous tasks to complete before returning. </li>
 </ul>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a8d7f9c2b39d0dc2f2022849e03ae319c" name="a8d7f9c2b39d0dc2f2022849e03ae319c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d7f9c2b39d0dc2f2022849e03ae319c">&#9670;&#160;</a></span>notify()</h2>
+<a id="a59b33695fe315dce071a74646f5c689f" name="a59b33695fe315dce071a74646f5c689f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59b33695fe315dce071a74646f5c689f">&#9670;&#160;</a></span>notify()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -149,8 +149,18 @@ template&lt;typename T  = std::string, template&lt; class &gt; class QueueType =
           <td class="memname">virtual void <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; T, QueueType &gt;::Dmn_Sub::notify </td>
           <td>(</td>
           <td class="paramtype">const T &amp;&#160;</td>
-          <td class="paramname"><em>item</em></td><td>)</td>
+          <td class="paramname"><em>item</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> *&#160;</td>
+          <td class="paramname"><em>pub</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -164,6 +174,7 @@ template&lt;typename T  = std::string, template&lt; class &gt; class QueueType =
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item delivered by the publisher. </td></tr>
+    <tr><td class="paramname">pub</td><td>The pointer to the publisher (subject) that notifies the observer. </td></tr>
   </table>
   </dd>
 </dl>

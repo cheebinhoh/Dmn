@@ -4,7 +4,7 @@ var searchData=
   ['readandprocess_1',['readAndProcess',['../classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea',1,'dmn::Dmn_Pipe']]],
   ['reconciliatedmesgpbsys_2',['reconciliateDMesgPbSys',['../classdmn_1_1Dmn__DMesgNet.html#aedfa359a021f1895089e958398566c66',1,'dmn::Dmn_DMesgNet']]],
   ['registersignalhandlerhook_3',['registerSignalHandlerHook',['../classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6',1,'dmn::Dmn_Runtime_Manager']]],
-  ['registersubscriber_4',['registersubscriber',['../classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc',1,'dmn::Dmn_Pub::registerSubscriber(X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;'],['../classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac',1,'dmn::Dmn_Pub::registerSubscriber(std::shared_ptr&lt; Dmn_Sub &gt; sub)']]],
+  ['registersubscriber_4',['registersubscriber',['../classdmn_1_1Dmn__Pub.html#a58ad7b5cd1a9e12f0a0ead24da927bea',1,'dmn::Dmn_Pub::registerSubscriber(X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;'],['../classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac',1,'dmn::Dmn_Pub::registerSubscriber(std::shared_ptr&lt; Dmn_Sub &gt; sub)']]],
   ['resetconflictstatewithlasttopicmessage_5',['resetConflictStateWithLastTopicMessage',['../classdmn_1_1Dmn__DMesg.html#a43e3fef6207b48bb8dc34d44fdc7930b',1,'dmn::Dmn_DMesg']]],
   ['resethandlerconflictstate_6',['resetHandlerConflictState',['../classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab',1,'dmn::Dmn_DMesg']]],
   ['resolveconflict_7',['resolveConflict',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],

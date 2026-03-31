@@ -139,10 +139,11 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const T &amp;item, bool block=false)</td></tr>
 <tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9641fbad6a69692f3a9522b5e4d66cc" id="r_ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memTemplParams" colspan="2">template&lt;typename U , class... X&gt; </td></tr>
-<tr class="memitem:ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#ae9641fbad6a69692f3a9522b5e4d66cc">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
-<tr class="memdesc:ae9641fbad6a69692f3a9522b5e4d66cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a subscriber.  <br /></td></tr>
-<tr class="separator:ae9641fbad6a69692f3a9522b5e4d66cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58ad7b5cd1a9e12f0a0ead24da927bea" id="r_a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memTemplParams" colspan="2">template&lt;typename U , class... X&gt; <br />
+requires (sizeof...(X) != 1 || !std::same_as&lt;std::tuple_element_t&lt;0, std::tuple&lt;X...&gt;&gt;, std::shared_ptr&lt;U&gt;&gt;)</td></tr>
+<tr class="memitem:a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a58ad7b5cd1a9e12f0a0ead24da927bea">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
+<tr class="memdesc:a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a subscriber.  <br /></td></tr>
+<tr class="separator:a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c12fab34e0278df727ba76930a2b7ac" id="r_a4c12fab34e0278df727ba76930a2b7ac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a4c12fab34e0278df727ba76930a2b7ac">registerSubscriber</a> (std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &gt; sub)</td></tr>
 <tr class="memdesc:a4c12fab34e0278df727ba76930a2b7ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a subscriber of class interface/subclass from <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> with this publisher. After registration, items in the publisher's buffer are replayed to the subscriber.  <br /></td></tr>
 <tr class="separator:a4c12fab34e0278df727ba76930a2b7ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -351,15 +352,17 @@ template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
 
 </div>
 </div>
-<a id="ae9641fbad6a69692f3a9522b5e4d66cc" name="ae9641fbad6a69692f3a9522b5e4d66cc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9641fbad6a69692f3a9522b5e4d66cc">&#9670;&#160;</a></span>registerSubscriber() <span class="overload">[2/2]</span></h2>
+<a id="a58ad7b5cd1a9e12f0a0ead24da927bea" name="a58ad7b5cd1a9e12f0a0ead24da927bea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58ad7b5cd1a9e12f0a0ead24da927bea">&#9670;&#160;</a></span>registerSubscriber() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
+template&lt;typename T , template&lt; class &gt; class QueueType&gt; <br />
+requires (sizeof...(X) != 1 || !std::same_as&lt;std::tuple_element_t&lt;0, std::tuple&lt;X...&gt;&gt;, std::shared_ptr&lt;U&gt;&gt;)</div>
 <div class="memtemplate">
-template&lt;typename U , class... X&gt; </div>
+template&lt;typename U , class... X&gt; <br />
+requires (sizeof...(X) != 1 || !std::same_as&lt;std::tuple_element_t&lt;0, std::tuple&lt;X...&gt;&gt;, std::shared_ptr&lt;U&gt;&gt;)</div>
       <table class="memname">
         <tr>
           <td class="memname">auto <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; T, QueueType &gt;::registerSubscriber </td>
