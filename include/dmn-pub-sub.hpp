@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025-2026 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-pub-sub.hpp
  * @brief Lightweight publish/subscribe adaptor classes as wrapper.
