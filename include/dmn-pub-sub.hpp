@@ -329,14 +329,11 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 
   m_buffer.push_back(item);
 
-  std::size_t numOfElementToBeRemoved = 0;
   if (m_buffer.size() > m_capacity) {
-    numOfElementToBeRemoved = m_buffer.size() - m_capacity;
-  }
-
-  while (numOfElementToBeRemoved > 0 && !m_buffer.empty()) {
-    m_buffer.erase(m_buffer.begin());
-    numOfElementToBeRemoved--;
+    // Erase a range of elements from the start to the 'excess' point
+    // This performs all shifts in a single pass.
+    m_buffer.erase(m_buffer.begin(),
+                   m_buffer.begin() + (m_buffer.size() - m_capacity));
   }
 
   for (auto &sub : m_subscribers) {
