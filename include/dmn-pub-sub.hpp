@@ -62,7 +62,8 @@
  *
  * Lifetime and cleanup
  * --------------------
- * - Dmn_Sub stores a back-pointer (m_pubs) to its publishers while registered.
+ * - Dmn_Sub stores a list of back-pointer (m_pubs) to its publishers while
+ *   registered.
  * - Dmn_Sub destructor automatically unregisters from the publisher (if still
  *   registered) and waits for any pending asynchronous tasks to finish so a
  *   destroyed subscriber will not receive further notifications.
@@ -95,7 +96,6 @@
 #include "dmn-async.hpp"
 #include "dmn-blockingqueue-lf.hpp"
 #include "dmn-blockingqueue-mt.hpp"
-#include "dmn-proc.hpp"
 
 #include <algorithm>
 #include <array>
@@ -118,8 +118,7 @@ public:
    *
    * Implementors should derive from Dmn_Pub<T>::Dmn_Sub and override
    * notify(const T&, Dmn_Pub *) to handle delivered items. The notify callback
-   * will be executed inside the subscriber's own singleton asynchronous thread
-   * context (i.e., the Dmn_Sub's Dmn_Async context).
+   * is executed in the publisher's singleton asynchronous context.
    *
    * Lifetime notes:
    * - A Dmn_Sub holds a back-pointer m_pubs to the publisher while it is
@@ -140,7 +139,7 @@ public:
 
     /**
      * @brief Called to deliver a published item to this subscriber. This method
-     * is invoked inside the subscriber's asynchronous thread context.
+     * is invoked inside the publisher's asynchronous thread context.
      * Subclasses must implement this method to process received items.
      *
      * @param item The data item delivered by the publisher.
