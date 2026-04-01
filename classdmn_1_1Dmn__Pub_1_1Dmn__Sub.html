@@ -117,7 +117,7 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:acd72045fd62a6f3fb37ac6f59ba65a6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59b33695fe315dce071a74646f5c689f" id="r_a59b33695fe315dce071a74646f5c689f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f">notify</a> (const T &amp;item, <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> *pub=nullptr)=0</td></tr>
-<tr class="memdesc:a59b33695fe315dce071a74646f5c689f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called to deliver a published item to this subscriber. This method is invoked inside the subscriber's asynchronous thread context. Subclasses must implement this method to process received items.  <br /></td></tr>
+<tr class="memdesc:a59b33695fe315dce071a74646f5c689f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called to deliver a published item to this subscriber. This method is invoked inside the publisher's asynchronous thread context. Subclasses must implement this method to process received items.  <br /></td></tr>
 <tr class="separator:a59b33695fe315dce071a74646f5c689f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -129,7 +129,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b></td></tr
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T = std::string, template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt;<br />
 class dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</div><p>Subscriber interface for receiving items published by Dmn_Pub&lt;T&gt;.</p>
-<p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f" title="Called to deliver a published item to this subscriber. This method is invoked inside the subscriber&#39;s...">notify(const T&amp;, Dmn_Pub *)</a> to handle delivered items. The notify callback will be executed inside the subscriber's own singleton asynchronous thread context (i.e., the <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a>'s <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> context).</p>
+<p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f" title="Called to deliver a published item to this subscriber. This method is invoked inside the publisher&#39;s ...">notify(const T&amp;, Dmn_Pub *)</a> to handle delivered items. The notify callback is executed in the publisher's singleton asynchronous context.</p>
 <p>Lifetime notes:</p><ul>
 <li>A <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> holds a back-pointer m_pubs to the publisher while it is registered. The <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> destructor will automatically unregister from its publisher (if still registered) and wait for pending asynchronous tasks to complete before returning. </li>
 </ul>
@@ -170,7 +170,7 @@ template&lt;typename T  = std::string, template&lt; class &gt; class QueueType =
 </table>
 </div><div class="memdoc">
 
-<p>Called to deliver a published item to this subscriber. This method is invoked inside the subscriber's asynchronous thread context. Subclasses must implement this method to process received items. </p>
+<p>Called to deliver a published item to this subscriber. This method is invoked inside the publisher's asynchronous thread context. Subclasses must implement this method to process received items. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item delivered by the publisher. </td></tr>

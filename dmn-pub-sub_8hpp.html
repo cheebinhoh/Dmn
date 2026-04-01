@@ -95,12 +95,11 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 </div><!--header-->
 <div class="contents">
 
-<p>Lightweight publish/subscribe helpers adaptor class as wrapper.  
+<p>Lightweight publish/subscribe adaptor classes as wrapper.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-blockingqueue-lf_8hpp_source.html">dmn-blockingqueue-lf.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-blockingqueue-mt_8hpp_source.html">dmn-blockingqueue-mt.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;deque&gt;</code><br />
@@ -121,8 +120,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Lightweight publish/subscribe helpers adaptor class as wrapper. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<div class="textblock"><p>Lightweight publish/subscribe adaptor classes as wrapper. </p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md23"></a>
 Overview</h2>
 <ul>
@@ -136,7 +135,7 @@ Overview</h2>
 Design pattern</h2>
 <ul>
 <li>Adapter - it allows other subclasses to be adapted as publishers or subscribers.</li>
-<li>Observer - it defines one-to-many dependencies between objects so that when one object publishes a message, all dependent subscribers are notified.</li>
+<li>Observer - it defines many-to-many dependencies between objects so that when one object publishes a message, all dependent subscribers are notified, and a subscriber can subscribe more than one publishers.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md25"></a>
 Key design goals</h2>
@@ -150,7 +149,7 @@ Threading and execution model</h2>
 <ul>
 <li>The Dmn_Pub is derivade from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's publish() method.</li>
-<li>notify(const T&amp;) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how it adapted notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
+<li>notify(const T&amp;, Dmn_Pub *pub) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how does the notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md27"></a>
 Synchronization</h2>
@@ -164,7 +163,7 @@ Buffering and replay</h2>
 <li>When a subscriber registers, missed items from the buffer are replayed to the subscriber according to the subscriber's replay setting:<ul>
 <li>m_replayQuantity == -1 : replay all buffered items</li>
 <li>m_replayQuantity == 0 : replay none</li>
-<li>m_replayQuantity &gt; 0 : replay up to the last N items</li>
+<li>m_replayQuantity &gt; 0 : replay the last N items</li>
 </ul>
 </li>
 </ul>
@@ -176,7 +175,7 @@ Filtering</h2>
 <h2><a class="anchor" id="autotoc_md30"></a>
 Lifetime and cleanup</h2>
 <ul>
-<li>Dmn_Sub stores a back-pointer (m_pubs) to its publishers while registered.</li>
+<li>Dmn_Sub stores a list of back-pointer (m_pubs) to its publishers while registered.</li>
 <li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
 <li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
 <li>The Dmn_Pub and Dmn_Sub does not maintain object lifetime and ownership, these are left it to the client of the classes.</li>
