@@ -73,8 +73,8 @@ public:
   void stop();
 
 private:
-  std::function<void()> m_fn{};  ///< Callback invoked repeatedly by the timer.
-  T m_reltime{};                 ///< Interval between consecutive callback invocations.
+  std::function<void()> m_fn{}; ///< Callback invoked repeatedly by the timer.
+  T m_reltime{}; ///< Interval between consecutive callback invocations.
 }; // class Dmn_Timer
 
 template <typename T>

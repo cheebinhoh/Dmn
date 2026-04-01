@@ -214,10 +214,10 @@ protected:
    */
   static auto runFnInThreadHelper(void *context) -> void *;
 
-  const std::string m_name{};   ///< Human-readable name for diagnostics/logging.
-  Dmn_Proc::Task m_fnc{};       ///< Task to execute in the thread.
-  Dmn_Proc::State m_state{};    ///< Current lifecycle state of this object.
-  pthread_t m_th{};             ///< Native pthread handle.
+  const std::string m_name{}; ///< Human-readable name for diagnostics/logging.
+  Dmn_Proc::Task m_fnc{};     ///< Task to execute in the thread.
+  Dmn_Proc::State m_state{};  ///< Current lifecycle state of this object.
+  pthread_t m_th{};           ///< Native pthread handle.
 }; // class Dmn_Proc
 
 } // namespace dmn

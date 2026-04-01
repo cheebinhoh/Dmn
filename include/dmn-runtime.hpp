@@ -159,10 +159,11 @@ struct Dmn_Runtime_Job {
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
-  Priority m_priority{Priority::kMedium};   ///< Scheduling priority for this job.
-  TaskFncType m_fnc{};                      ///< Coroutine-returning callable that performs the work.
-  TimePoint m_due{};                        ///< Absolute time after which the job may execute.
-  OnErrorFncType m_onErrorFnc{};            ///< Optional handler called when @c m_fnc throws.
+  Priority m_priority{Priority::kMedium}; ///< Scheduling priority for this job.
+  TaskFncType m_fnc{}; ///< Coroutine-returning callable that performs the work.
+  TimePoint m_due{};   ///< Absolute time after which the job may execute.
+  OnErrorFncType
+      m_onErrorFnc{}; ///< Optional handler called when @c m_fnc throws.
 };
 
 /**
@@ -406,36 +407,49 @@ private:
   /** @brief Arm the SIGALRM timer to fire at the absolute time point @p tp. */
   void setNextTimerAt(TimePoint tp);
 
-  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};  ///< Dedicated thread running sigwait().
-  sigset_t m_mask{};                              ///< Signal mask applied to all runtime threads.
+  std::unique_ptr<Dmn_Proc>
+      m_signalWaitProc{}; ///< Dedicated thread running sigwait().
+  sigset_t m_mask{};      ///< Signal mask applied to all runtime threads.
   std::unordered_map<int, SignalHandlerHook>
-      m_signal_handler_hooks{};    ///< Internal (runtime-managed) signal handler hooks.
+      m_signal_handler_hooks{}; ///< Internal (runtime-managed) signal handler
+                                ///< hooks.
   std::unordered_map<int, std::vector<SignalHandlerHook>>
-      m_signal_handler_hooks_external{};  ///< Client-registered signal handler hooks.
+      m_signal_handler_hooks_external{}; ///< Client-registered signal handler
+                                         ///< hooks.
 
-  QueueType<Dmn_Runtime_Job> m_highQueue{};    ///< Queue for high-priority jobs.
-  QueueType<Dmn_Runtime_Job> m_lowQueue{};     ///< Queue for low-priority jobs.
-  QueueType<Dmn_Runtime_Job> m_mediumQueue{};  ///< Queue for medium-priority jobs.
+  QueueType<Dmn_Runtime_Job> m_highQueue{}; ///< Queue for high-priority jobs.
+  QueueType<Dmn_Runtime_Job> m_lowQueue{};  ///< Queue for low-priority jobs.
+  QueueType<Dmn_Runtime_Job>
+      m_mediumQueue{}; ///< Queue for medium-priority jobs.
 
   std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,
                       TimedJobComparator>
-      m_timedQueue{};  ///< Min-heap of deferred timed jobs ordered by @c m_due.
+      m_timedQueue{}; ///< Min-heap of deferred timed jobs ordered by @c m_due.
 
-  std::atomic_flag m_main_enter_flag{};   ///< Set when enterMainLoop() is entered.
-  std::atomic_flag m_main_exit_flag{};    ///< Set when exitMainLoop() is requested.
-  std::atomic_flag m_sched_enter_flag{};  ///< Set when the coroutine scheduler is active.
-  std::atomic_flag m_shutdown_flag{};     ///< Set when shutdown has been initiated.
+  std::atomic_flag
+      m_main_enter_flag{}; ///< Set when enterMainLoop() is entered.
+  std::atomic_flag
+      m_main_exit_flag{}; ///< Set when exitMainLoop() is requested.
+  std::atomic_flag
+      m_sched_enter_flag{}; ///< Set when the coroutine scheduler is active.
+  std::atomic_flag m_shutdown_flag{}; ///< Set when shutdown has been initiated.
 
-  std::atomic<std::size_t> m_jobs_count{};  ///< Number of pending jobs across all priority queues.
+  std::atomic<std::size_t>
+      m_jobs_count{}; ///< Number of pending jobs across all priority queues.
 
-  std::stack<Dmn_Runtime_Job> m_sched_job{};   ///< Coroutine-scheduler job backlog.
-  std::stack<Dmn_Runtime_Task> m_sched_task{};  ///< Coroutine handles for scheduled jobs.
+  std::stack<Dmn_Runtime_Job>
+      m_sched_job{}; ///< Coroutine-scheduler job backlog.
+  std::stack<Dmn_Runtime_Task>
+      m_sched_task{}; ///< Coroutine handles for scheduled jobs.
 
-  detail::Dmn_Runtime_Manager_Impl *m_pimpl{};  ///< Platform-specific PIMPL (owned by this object).
+  detail::Dmn_Runtime_Manager_Impl
+      *m_pimpl{}; ///< Platform-specific PIMPL (owned by this object).
 
-  std::thread::id m_asyncThreadId{};  ///< Thread ID of the singleton asynchronous context.
+  std::thread::id
+      m_asyncThreadId{}; ///< Thread ID of the singleton asynchronous context.
 
-  inline static sigset_t s_mask{};  ///< Signal mask applied to the process before singleton creation.
+  inline static sigset_t s_mask{}; ///< Signal mask applied to the process
+                                   ///< before singleton creation.
 }; // class Dmn_Runtime_Manager
 
 template <template <class> class QueueType>

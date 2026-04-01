@@ -208,7 +208,8 @@ public:
     Ticket &operator=(Ticket &&obj) = delete;
 
     /**
-     * @brief Return @c true if this ticket is actively held (entered the guard).
+     * @brief Return @c true if this ticket is actively held (entered the
+     * guard).
      */
     explicit operator bool() const noexcept { return m_entered; }
 
@@ -221,9 +222,10 @@ public:
     virtual auto getValue() const -> const T & { return m_value; }
 
   private:
-    Dmn_Inflight_Guard *m_inflightguard{};  ///< Back-pointer to the owning guard.
-    bool m_entered{false};                  ///< @c true after successful entry.
-    T m_value{};                            ///< Per-call payload; @c std::monostate{} when unused.
+    Dmn_Inflight_Guard
+        *m_inflightguard{}; ///< Back-pointer to the owning guard.
+    bool m_entered{false};  ///< @c true after successful entry.
+    T m_value{}; ///< Per-call payload; @c std::monostate{} when unused.
   }; // class Ticket
 
   Dmn_Inflight_Guard() = default;
@@ -307,7 +309,8 @@ protected:
   }
 
 private:
-  std::atomic<std::uint64_t> m_inflight_count{}; ///< Number of tickets currently held.
+  std::atomic<std::uint64_t>
+      m_inflight_count{}; ///< Number of tickets currently held.
 }; // class Dmn_Inflight_Guard
 
 } // namespace dmn

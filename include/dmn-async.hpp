@@ -137,11 +137,14 @@ public:
     void wait() { m_fut.get(); }
 
   private:
-    std::function<void()> m_fnc{};    ///< The task callable.
-    long long m_due_in_future{};       ///< Earliest execution time as a nanosecond timestamp; 0 = immediate.
+    std::function<void()> m_fnc{}; ///< The task callable.
+    long long m_due_in_future{};   ///< Earliest execution time as a nanosecond
+                                   ///< timestamp; 0 = immediate.
 
-    std::promise<void> m_p{};          ///< Promise fulfilled when the task completes (or throws).
-    std::future<void> m_fut{};         ///< Future used by wait() to block until completion.
+    std::promise<void>
+        m_p{}; ///< Promise fulfilled when the task completes (or throws).
+    std::future<void>
+        m_fut{}; ///< Future used by wait() to block until completion.
   }; // class Dmn_Async_Handle
 
   /**

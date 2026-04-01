@@ -348,16 +348,25 @@ private:
    */
   void retireNode(uint64_t epochIndex, Node *node);
 
-  std::atomic<Node *> m_head{};  ///< Head of the FIFO linked list (dummy sentinel node).
-  std::atomic<Node *> m_tail{};  ///< Tail of the FIFO linked list (last pushed node).
+  std::atomic<Node *>
+      m_head{}; ///< Head of the FIFO linked list (dummy sentinel node).
+  std::atomic<Node *>
+      m_tail{}; ///< Tail of the FIFO linked list (last pushed node).
 
-  std::atomic<std::uint64_t> m_total_push_count{};  ///< Monotonically increasing push counter.
+  std::atomic<std::uint64_t>
+      m_total_push_count{}; ///< Monotonically increasing push counter.
 
-  std::atomic<EpochData> m_epochData{};  ///< Current global epoch identifier and in-flight total.
-  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};  ///< Per-epoch in-flight call counts.
-  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};      ///< Per-epoch lists of retired nodes awaiting reclamation.
+  std::atomic<EpochData>
+      m_epochData{}; ///< Current global epoch identifier and in-flight total.
+  std::array<std::atomic<uint64_t>, s_epochDataSize>
+      m_epochInFlightCount{}; ///< Per-epoch in-flight call counts.
+  std::array<std::atomic<Node *>, s_epochDataSize>
+      m_epochReclaimNode{}; ///< Per-epoch lists of retired nodes awaiting
+                            ///< reclamation.
 
-  std::atomic<std::uint64_t> m_in_flight_total{0};  ///< Running total of all pop/push API calls (used for epoch advancement).
+  std::atomic<std::uint64_t> m_in_flight_total{
+      0}; ///< Running total of all pop/push API calls (used for epoch
+          ///< advancement).
 }; // class Dmn_BlockingQueue_Lf
 
 template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {

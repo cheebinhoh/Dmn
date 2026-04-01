@@ -55,8 +55,10 @@ struct Dmn_Runtime_Task {
 
     void return_void() {}
 
-    std::coroutine_handle<> m_continuation; ///< Handle of the awaiting coroutine (continuation).
-    std::exception_ptr m_except{};          ///< Stores any exception thrown by the coroutine body.
+    std::coroutine_handle<>
+        m_continuation; ///< Handle of the awaiting coroutine (continuation).
+    std::exception_ptr
+        m_except{}; ///< Stores any exception thrown by the coroutine body.
   };
 
   /**
@@ -74,7 +76,8 @@ struct Dmn_Runtime_Task {
    * exception.
    */
   struct Awaiter {
-    std::coroutine_handle<promise_type> m_handle; ///< Handle to the task coroutine being awaited.
+    std::coroutine_handle<promise_type>
+        m_handle; ///< Handle to the task coroutine being awaited.
 
     bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
 
@@ -159,9 +162,7 @@ struct Dmn_Runtime_Task {
    *
    * @return @c true when the internal coroutine handle is non-null.
    */
-  [[nodiscard]] bool isValid() const {
-    return m_handle ? true : false;
-  }
+  [[nodiscard]] bool isValid() const { return m_handle ? true : false; }
 
   std::coroutine_handle<promise_type> m_handle;
 };

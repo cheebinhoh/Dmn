@@ -89,9 +89,12 @@ public:
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
 
 private:
-  static std::atomic<bool> s_allocated;  ///< Flag set to @c true once the instance is allocated.
-  static std::shared_ptr<T> s_instance;  ///< Owning pointer to the singleton instance.
-  static std::once_flag s_init_once;     ///< Guards one-time initialization via std::call_once.
+  static std::atomic<bool>
+      s_allocated; ///< Flag set to @c true once the instance is allocated.
+  static std::shared_ptr<T>
+      s_instance; ///< Owning pointer to the singleton instance.
+  static std::once_flag
+      s_init_once; ///< Guards one-time initialization via std::call_once.
 };
 
 template <typename T> std::atomic<bool> Dmn_Singleton<T>::s_allocated{false};

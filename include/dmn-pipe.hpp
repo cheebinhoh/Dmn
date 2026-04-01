@@ -227,11 +227,12 @@ private:
   using QueueType::popNoWait;
   using QueueType::push;
 
-  std::mutex m_mutex{};                    ///< Protects @c m_count and condition variable.
-  std::condition_variable m_empty_cond{};  ///< Signalled when processed count reaches inbound count.
-  size_t m_count{};                        ///< Total number of items processed (popped and handled).
-  std::atomic_flag m_shutdown_flag{};      ///< Set when shutdown() is called.
-  bool m_hasFn{};                          ///< @c true when a background processing task was provided.
+  std::mutex m_mutex{}; ///< Protects @c m_count and condition variable.
+  std::condition_variable
+      m_empty_cond{}; ///< Signalled when processed count reaches inbound count.
+  size_t m_count{};   ///< Total number of items processed (popped and handled).
+  std::atomic_flag m_shutdown_flag{}; ///< Set when shutdown() is called.
+  bool m_hasFn{}; ///< @c true when a background processing task was provided.
 }; // class Dmn_Pipe
 
 template <typename T, typename QueueType>

@@ -223,12 +223,15 @@ private:
 
   template <class U> void pushImpl(U &&item);
 
-  std::deque<T> m_queue{};                       ///< The internal FIFO storage.
-  std::mutex m_mutex{};                          ///< Protects all accesses to @c m_queue and the counters.
-  std::condition_variable m_empty_cond{};        ///< Signalled when the queue becomes empty.
-  std::condition_variable m_not_empty_cond{};    ///< Signalled when an item is pushed.
-  uint64_t m_push_count{};                       ///< Number of items pushed (total inbound).
-  uint64_t m_pop_count{};                        ///< Number of items popped (total outbound).
+  std::deque<T> m_queue{}; ///< The internal FIFO storage.
+  std::mutex
+      m_mutex{}; ///< Protects all accesses to @c m_queue and the counters.
+  std::condition_variable
+      m_empty_cond{}; ///< Signalled when the queue becomes empty.
+  std::condition_variable
+      m_not_empty_cond{};  ///< Signalled when an item is pushed.
+  uint64_t m_push_count{}; ///< Number of items pushed (total inbound).
+  uint64_t m_pop_count{};  ///< Number of items popped (total outbound).
 }; // class Dmn_BlockingQueue_Mt
 
 template <typename T> Dmn_BlockingQueue_Mt<T>::Dmn_BlockingQueue_Mt() {}
@@ -282,7 +285,8 @@ template <typename T> void Dmn_BlockingQueue_Mt<T>::pushMove(T &&item) {
  * in the public overloads (@c pushCopy / @c pushMove) before delegating here.
  *
  * @tparam U  Forwarding-reference type deduced from the call site.
- * @param item The item to enqueue (moved or copied depending on value category).
+ * @param item The item to enqueue (moved or copied depending on value
+ * category).
  */
 template <typename T>
 template <class U>

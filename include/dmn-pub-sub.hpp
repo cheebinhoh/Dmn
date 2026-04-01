@@ -152,8 +152,10 @@ public:
 
   private:
     ssize_t m_replayQuantity{
-        -1}; ///< Number of buffered items to replay on registration: -1 = all, 0 = none, N = last N.
-    std::vector<Dmn_Pub *> m_pubs{};  ///< Back-pointers to publishers this subscriber is registered with.
+        -1}; ///< Number of buffered items to replay on registration: -1 = all,
+             ///< 0 = none, N = last N.
+    std::vector<Dmn_Pub *> m_pubs{}; ///< Back-pointers to publishers this
+                                     ///< subscriber is registered with.
   }; // class Dmn_Sub
 
   using Dmn_Pub_Filter_Task =
@@ -250,12 +252,14 @@ protected:
   virtual void publishInternal(const T &item);
 
 private:
-  std::string m_name{};                        ///< Human-readable name forwarded to the async context.
-  size_t m_capacity{};                         ///< Maximum number of items retained in @c m_buffer.
-  Dmn_Pub_Filter_Task m_filter_fn{};           ///< Optional per-(subscriber,item) delivery filter.
+  std::string m_name{}; ///< Human-readable name forwarded to the async context.
+  size_t m_capacity{};  ///< Maximum number of items retained in @c m_buffer.
+  Dmn_Pub_Filter_Task
+      m_filter_fn{}; ///< Optional per-(subscriber,item) delivery filter.
 
-  std::deque<T> m_buffer{};                    ///< Bounded circular history buffer for replay.
-  std::vector<std::shared_ptr<Dmn_Sub>> m_subscribers{};  ///< Currently registered subscribers.
+  std::deque<T> m_buffer{}; ///< Bounded circular history buffer for replay.
+  std::vector<std::shared_ptr<Dmn_Sub>>
+      m_subscribers{}; ///< Currently registered subscribers.
 }; // class Dmn_Pub
 
 // class Dmn_Pub::Dmn_Sub
