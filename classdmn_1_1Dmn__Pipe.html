@@ -147,9 +147,10 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a8a1f81ce619c3aeb1ec73a82f682be76" id="r_a8a1f81ce619c3aeb1ec73a82f682be76"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76">isShutdown</a> () -&gt; bool override</td></tr>
+<tr class="memdesc:a8a1f81ce619c3aeb1ec73a82f682be76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return <code>true</code> if the shutdown flag has been set on this pipe.  <br /></td></tr>
 <tr class="separator:a8a1f81ce619c3aeb1ec73a82f682be76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f1a36063050f3ed79f7c6799b41d966" id="r_a6f1a36063050f3ed79f7c6799b41d966"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">shutdown</a> () override</td></tr>
-<tr class="memdesc:a6f1a36063050f3ed79f7c6799b41d966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="memdesc:a6f1a36063050f3ed79f7c6799b41d966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate an orderly shutdown of the pipe.  <br /></td></tr>
 <tr class="separator:a6f1a36063050f3ed79f7c6799b41d966"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -178,7 +179,10 @@ template&lt;typename T , typename QueueType  = Dmn_BlockingQueue_Mt&lt;T&gt;&gt;
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a>.</p>
+<p>Return <code>true</code> if the shutdown flag has been set on this pipe. </p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966" title="Initiate an orderly shutdown of the pipe.">shutdown()</a> has been called, <code>false</code> otherwise. </dd></dl>
+
+<p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a13bac196cd31294a957c6a9a8d537eae">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a>.</p>
 
 </div>
 </div>
@@ -350,7 +354,8 @@ template&lt;typename T , typename QueueType  = Dmn_BlockingQueue_Mt&lt;T&gt;&gt;
 </table>
 </div><div class="memdoc">
 
-<p>Shutdown the io RAII and prevent it from further use to faciliate object teardown. </p>
+<p>Initiate an orderly shutdown of the pipe. </p>
+<p>Sets the shutdown flag, calls <code>QueueType::shutdown()</code> to unblock any threads waiting on the queue, and (if a background processing task was provided at construction) waits for the background thread to finish. Subsequent calls are no-ops. </p>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">dmn::Dmn_Io&lt; T &gt;</a>.</p>
 

@@ -105,69 +105,78 @@ $(document).ready(function(){initNavTree('dmn-dmesg-pb-util_8hpp.html',''); init
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a5b5173f0b19b83783dbbd41ce6326d13" id="r_a5b5173f0b19b83783dbbd41ce6326d13"><td class="memItemLeft" align="right" valign="top"><a id="a5b5173f0b19b83783dbbd41ce6326d13" name="a5b5173f0b19b83783dbbd41ce6326d13"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_TIMESTAMP_SECONDS</b>(ts,  val)&#160;&#160;&#160;(ts)-&gt;set_seconds(val)</td></tr>
-<tr class="separator:a5b5173f0b19b83783dbbd41ce6326d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49f7b3feb3d9a2ed26772d53e816f1f3" id="r_a49f7b3feb3d9a2ed26772d53e816f1f3"><td class="memItemLeft" align="right" valign="top"><a id="a49f7b3feb3d9a2ed26772d53e816f1f3" name="a49f7b3feb3d9a2ed26772d53e816f1f3"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_TIMESTAMP_NANOS</b>(ts,  val)&#160;&#160;&#160;(ts)-&gt;set_nanos(val)</td></tr>
-<tr class="separator:a49f7b3feb3d9a2ed26772d53e816f1f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2765dc1018fda571d525cac5aea794f" id="r_ac2765dc1018fda571d525cac5aea794f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#ac2765dc1018fda571d525cac5aea794f">DMESG_PB_SET_TIMESTAMP_FROM_TV</a>(ts,  tv)</td></tr>
-<tr class="separator:ac2765dc1018fda571d525cac5aea794f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe467ed7cc34d7e8476c2626ebf9936f" id="r_abe467ed7cc34d7e8476c2626ebf9936f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#abe467ed7cc34d7e8476c2626ebf9936f">DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV</a>(pb,  tv)&#160;&#160;&#160;  DMESG_PB_SET_TIMESTAMP_FROM_TV((pb).mutable_timestamp(), tv)</td></tr>
-<tr class="separator:abe467ed7cc34d7e8476c2626ebf9936f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a966a001ed4f51b874c887ddaf1ae1d92" id="r_a966a001ed4f51b874c887ddaf1ae1d92"><td class="memItemLeft" align="right" valign="top"><a id="a966a001ed4f51b874c887ddaf1ae1d92" name="a966a001ed4f51b874c887ddaf1ae1d92"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_TOPIC</b>(pb,  val)&#160;&#160;&#160;((pb).set_topic((val)))</td></tr>
-<tr class="separator:a966a001ed4f51b874c887ddaf1ae1d92"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa60aa791c8ed8915580065f90dca9d7" id="r_aaa60aa791c8ed8915580065f90dca9d7"><td class="memItemLeft" align="right" valign="top"><a id="aaa60aa791c8ed8915580065f90dca9d7" name="aaa60aa791c8ed8915580065f90dca9d7"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_CONFLICT</b>(pb,  val)&#160;&#160;&#160;((pb).set_conflict((val)))</td></tr>
-<tr class="separator:aaa60aa791c8ed8915580065f90dca9d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4e46648f2316f7f726f0cd71b59991a" id="r_ab4e46648f2316f7f726f0cd71b59991a"><td class="memItemLeft" align="right" valign="top"><a id="ab4e46648f2316f7f726f0cd71b59991a" name="ab4e46648f2316f7f726f0cd71b59991a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_RUNNINGCOUNTER</b>(pb,  val)&#160;&#160;&#160;  ((pb).set_runningcounter((val)))</td></tr>
-<tr class="separator:ab4e46648f2316f7f726f0cd71b59991a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d833d7c945c9291c88a1e80f13af73f" id="r_a7d833d7c945c9291c88a1e80f13af73f"><td class="memItemLeft" align="right" valign="top"><a id="a7d833d7c945c9291c88a1e80f13af73f" name="a7d833d7c945c9291c88a1e80f13af73f"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_SOURCEIDENTIFIER</b>(pb,  val)&#160;&#160;&#160;  ((pb).set_sourceidentifier((val)))</td></tr>
-<tr class="separator:a7d833d7c945c9291c88a1e80f13af73f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93fb155c2d0f517bc78d7ebc99abebf4" id="r_a93fb155c2d0f517bc78d7ebc99abebf4"><td class="memItemLeft" align="right" valign="top"><a id="a93fb155c2d0f517bc78d7ebc99abebf4" name="a93fb155c2d0f517bc78d7ebc99abebf4"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER</b>(pb,  val)&#160;&#160;&#160;  ((pb).set_sourcewritehandleridentifier((val)))</td></tr>
-<tr class="separator:a93fb155c2d0f517bc78d7ebc99abebf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acae9015d32e738181553cd6c203f4363" id="r_acae9015d32e738181553cd6c203f4363"><td class="memItemLeft" align="right" valign="top"><a id="acae9015d32e738181553cd6c203f4363" name="acae9015d32e738181553cd6c203f4363"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_TYPE</b>(pb,  val)&#160;&#160;&#160;((pb).set_type((val)))</td></tr>
-<tr class="separator:acae9015d32e738181553cd6c203f4363"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7f374c98c3799833ba73805ed3ab577" id="r_ae7f374c98c3799833ba73805ed3ab577"><td class="memItemLeft" align="right" valign="top"><a id="ae7f374c98c3799833ba73805ed3ab577" name="ae7f374c98c3799833ba73805ed3ab577"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_PLAYBACK</b>(pb,  val)&#160;&#160;&#160;((pb).set_playback((val)))</td></tr>
-<tr class="separator:ae7f374c98c3799833ba73805ed3ab577"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9eeba717d590ae2e4aae35a159a4466" id="r_ad9eeba717d590ae2e4aae35a159a4466"><td class="memItemLeft" align="right" valign="top"><a id="ad9eeba717d590ae2e4aae35a159a4466" name="ad9eeba717d590ae2e4aae35a159a4466"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SET_MSG_FORCE</b>(pb,  val)&#160;&#160;&#160;((pb).set_force((val)))</td></tr>
-<tr class="separator:ad9eeba717d590ae2e4aae35a159a4466"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6eee16fd7c8eda9e87f6eabd4c4c8db9" id="r_a6eee16fd7c8eda9e87f6eabd4c4c8db9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#a6eee16fd7c8eda9e87f6eabd4c4c8db9">DMESG_PB_MSG_SET_MESSAGE</a>(pb,  val)</td></tr>
-<tr class="separator:a6eee16fd7c8eda9e87f6eabd4c4c8db9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a078d400a444d56c6154a14b40dc5acd3" id="r_a078d400a444d56c6154a14b40dc5acd3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#a078d400a444d56c6154a14b40dc5acd3">DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV</a>(pb,  tv)</td></tr>
-<tr class="separator:a078d400a444d56c6154a14b40dc5acd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1dda326e9fdfbfc52f3fdb0a2dddda04" id="r_a1dda326e9fdfbfc52f3fdb0a2dddda04"><td class="memItemLeft" align="right" valign="top"><a id="a1dda326e9fdfbfc52f3fdb0a2dddda04" name="a1dda326e9fdfbfc52f3fdb0a2dddda04"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SYS_NODE_SET_IDENTIFIER</b>(node,  val)&#160;&#160;&#160;(node)-&gt;set_identifier(val)</td></tr>
-<tr class="separator:a1dda326e9fdfbfc52f3fdb0a2dddda04"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad6ffac26db628d285bfa5598a63050c5" id="r_ad6ffac26db628d285bfa5598a63050c5"><td class="memItemLeft" align="right" valign="top"><a id="ad6ffac26db628d285bfa5598a63050c5" name="ad6ffac26db628d285bfa5598a63050c5"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER</b>(node,  val)&#160;&#160;&#160;  (node)-&gt;set_masteridentifier(val)</td></tr>
-<tr class="separator:ad6ffac26db628d285bfa5598a63050c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a263697088bbba2277bada2e918df8ad4" id="r_a263697088bbba2277bada2e918df8ad4"><td class="memItemLeft" align="right" valign="top"><a id="a263697088bbba2277bada2e918df8ad4" name="a263697088bbba2277bada2e918df8ad4"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SYS_NODE_SET_STATE</b>(node,  val)&#160;&#160;&#160;(node)-&gt;set_state(val)</td></tr>
-<tr class="separator:a263697088bbba2277bada2e918df8ad4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad55aea5ff28e55a5f1eabc9e3afbe8a" id="r_aad55aea5ff28e55a5f1eabc9e3afbe8a"><td class="memItemLeft" align="right" valign="top"><a id="aad55aea5ff28e55a5f1eabc9e3afbe8a" name="aad55aea5ff28e55a5f1eabc9e3afbe8a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV</b>(node,  tv)&#160;&#160;&#160;  DMESG_PB_SET_TIMESTAMP_FROM_TV((node)-&gt;mutable_updatedtimestamp(), tv)</td></tr>
-<tr class="separator:aad55aea5ff28e55a5f1eabc9e3afbe8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa5a4a1f8d59082807223123d933da55" id="r_aaa5a4a1f8d59082807223123d933da55"><td class="memItemLeft" align="right" valign="top"><a id="aaa5a4a1f8d59082807223123d933da55" name="aaa5a4a1f8d59082807223123d933da55"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV</b>(node,  tv)&#160;&#160;&#160;  DMESG_PB_SET_TIMESTAMP_FROM_TV((node)-&gt;mutable_initializedtimestamp(), tv)</td></tr>
-<tr class="separator:aaa5a4a1f8d59082807223123d933da55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc4feb16848565f7127ac449ba589597" id="r_afc4feb16848565f7127ac449ba589597"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#afc4feb16848565f7127ac449ba589597">DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER</a>(sys,  index,  val)</td></tr>
-<tr class="separator:afc4feb16848565f7127ac449ba589597"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaad3a82d8022be08fb8c83cc6fca3e07" id="r_aaad3a82d8022be08fb8c83cc6fca3e07"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#aaad3a82d8022be08fb8c83cc6fca3e07">DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER</a>(sys,  index,  val)</td></tr>
-<tr class="separator:aaad3a82d8022be08fb8c83cc6fca3e07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a1384720a1887a945248452d0a8fc64" id="r_a7a1384720a1887a945248452d0a8fc64"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#a7a1384720a1887a945248452d0a8fc64">DMESG_PB_SYS_SET_NODELIST_ELEM_STATE</a>(sys,  index,  val)</td></tr>
-<tr class="separator:a7a1384720a1887a945248452d0a8fc64"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c20a2915501e316fe794f7b1c55d058" id="r_a1c20a2915501e316fe794f7b1c55d058"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#a1c20a2915501e316fe794f7b1c55d058">DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP</a>(sys,  index,  val)</td></tr>
-<tr class="separator:a1c20a2915501e316fe794f7b1c55d058"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a548eede1c858d31f12a509eff1ad870c" id="r_a548eede1c858d31f12a509eff1ad870c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dmesg-pb-util_8hpp.html#a548eede1c858d31f12a509eff1ad870c">DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP</a>(sys,  index,  val)</td></tr>
-<tr class="separator:a548eede1c858d31f12a509eff1ad870c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5b5173f0b19b83783dbbd41ce6326d13" id="r_ga5b5173f0b19b83783dbbd41ce6326d13"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__timestamp.html#ga5b5173f0b19b83783dbbd41ce6326d13">DMESG_PB_SET_TIMESTAMP_SECONDS</a>(ts,  val)&#160;&#160;&#160;(ts)-&gt;set_seconds(val)</td></tr>
+<tr class="memdesc:ga5b5173f0b19b83783dbbd41ce6326d13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the seconds field of a timestamp protobuf pointer.  <br /></td></tr>
+<tr class="separator:ga5b5173f0b19b83783dbbd41ce6326d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga49f7b3feb3d9a2ed26772d53e816f1f3" id="r_ga49f7b3feb3d9a2ed26772d53e816f1f3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__timestamp.html#ga49f7b3feb3d9a2ed26772d53e816f1f3">DMESG_PB_SET_TIMESTAMP_NANOS</a>(ts,  val)&#160;&#160;&#160;(ts)-&gt;set_nanos(val)</td></tr>
+<tr class="memdesc:ga49f7b3feb3d9a2ed26772d53e816f1f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the nanoseconds field of a timestamp protobuf pointer.  <br /></td></tr>
+<tr class="separator:ga49f7b3feb3d9a2ed26772d53e816f1f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac2765dc1018fda571d525cac5aea794f" id="r_gac2765dc1018fda571d525cac5aea794f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__timestamp.html#gac2765dc1018fda571d525cac5aea794f">DMESG_PB_SET_TIMESTAMP_FROM_TV</a>(ts,  tv)</td></tr>
+<tr class="memdesc:gac2765dc1018fda571d525cac5aea794f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set both seconds and nanoseconds of a timestamp from a <code>struct</code> <code>timeval</code>.  <br /></td></tr>
+<tr class="separator:gac2765dc1018fda571d525cac5aea794f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe467ed7cc34d7e8476c2626ebf9936f" id="r_gabe467ed7cc34d7e8476c2626ebf9936f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gabe467ed7cc34d7e8476c2626ebf9936f">DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV</a>(pb,  tv)&#160;&#160;&#160;  <a class="el" href="group__dmesg__pb__timestamp.html#gac2765dc1018fda571d525cac5aea794f">DMESG_PB_SET_TIMESTAMP_FROM_TV</a>((pb).mutable_timestamp(), tv)</td></tr>
+<tr class="memdesc:gabe467ed7cc34d7e8476c2626ebf9936f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the timestamp of a <code>DMesgPb</code> message from a <code>struct</code> timeval.  <br /></td></tr>
+<tr class="separator:gabe467ed7cc34d7e8476c2626ebf9936f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga966a001ed4f51b874c887ddaf1ae1d92" id="r_ga966a001ed4f51b874c887ddaf1ae1d92"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#ga966a001ed4f51b874c887ddaf1ae1d92">DMESG_PB_SET_MSG_TOPIC</a>(pb,  val)&#160;&#160;&#160;((pb).set_topic((val)))</td></tr>
+<tr class="memdesc:ga966a001ed4f51b874c887ddaf1ae1d92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the topic field of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:ga966a001ed4f51b874c887ddaf1ae1d92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaa60aa791c8ed8915580065f90dca9d7" id="r_gaaa60aa791c8ed8915580065f90dca9d7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gaaa60aa791c8ed8915580065f90dca9d7">DMESG_PB_SET_MSG_CONFLICT</a>(pb,  val)&#160;&#160;&#160;((pb).set_conflict((val)))</td></tr>
+<tr class="memdesc:gaaa60aa791c8ed8915580065f90dca9d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the conflict flag of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:gaaa60aa791c8ed8915580065f90dca9d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab4e46648f2316f7f726f0cd71b59991a" id="r_gab4e46648f2316f7f726f0cd71b59991a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gab4e46648f2316f7f726f0cd71b59991a">DMESG_PB_SET_MSG_RUNNINGCOUNTER</a>(pb,  val)&#160;&#160;&#160;  ((pb).set_runningcounter((val)))</td></tr>
+<tr class="memdesc:gab4e46648f2316f7f726f0cd71b59991a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the running counter field of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:gab4e46648f2316f7f726f0cd71b59991a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7d833d7c945c9291c88a1e80f13af73f" id="r_ga7d833d7c945c9291c88a1e80f13af73f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#ga7d833d7c945c9291c88a1e80f13af73f">DMESG_PB_SET_MSG_SOURCEIDENTIFIER</a>(pb,  val)&#160;&#160;&#160;  ((pb).set_sourceidentifier((val)))</td></tr>
+<tr class="memdesc:ga7d833d7c945c9291c88a1e80f13af73f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the source identifier field of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:ga7d833d7c945c9291c88a1e80f13af73f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga93fb155c2d0f517bc78d7ebc99abebf4" id="r_ga93fb155c2d0f517bc78d7ebc99abebf4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#ga93fb155c2d0f517bc78d7ebc99abebf4">DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER</a>(pb,  val)&#160;&#160;&#160;  ((pb).set_sourcewritehandleridentifier((val)))</td></tr>
+<tr class="memdesc:ga93fb155c2d0f517bc78d7ebc99abebf4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the source write-handler identifier field of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:ga93fb155c2d0f517bc78d7ebc99abebf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacae9015d32e738181553cd6c203f4363" id="r_gacae9015d32e738181553cd6c203f4363"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gacae9015d32e738181553cd6c203f4363">DMESG_PB_SET_MSG_TYPE</a>(pb,  val)&#160;&#160;&#160;((pb).set_type((val)))</td></tr>
+<tr class="memdesc:gacae9015d32e738181553cd6c203f4363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the type field of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:gacae9015d32e738181553cd6c203f4363"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae7f374c98c3799833ba73805ed3ab577" id="r_gae7f374c98c3799833ba73805ed3ab577"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gae7f374c98c3799833ba73805ed3ab577">DMESG_PB_SET_MSG_PLAYBACK</a>(pb,  val)&#160;&#160;&#160;((pb).set_playback((val)))</td></tr>
+<tr class="memdesc:gae7f374c98c3799833ba73805ed3ab577"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the playback flag of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:gae7f374c98c3799833ba73805ed3ab577"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad9eeba717d590ae2e4aae35a159a4466" id="r_gad9eeba717d590ae2e4aae35a159a4466"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__msg.html#gad9eeba717d590ae2e4aae35a159a4466">DMESG_PB_SET_MSG_FORCE</a>(pb,  val)&#160;&#160;&#160;((pb).set_force((val)))</td></tr>
+<tr class="memdesc:gad9eeba717d590ae2e4aae35a159a4466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the force flag of a <code>DMesgPb</code> message.  <br /></td></tr>
+<tr class="separator:gad9eeba717d590ae2e4aae35a159a4466"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6eee16fd7c8eda9e87f6eabd4c4c8db9" id="r_ga6eee16fd7c8eda9e87f6eabd4c4c8db9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__body.html#ga6eee16fd7c8eda9e87f6eabd4c4c8db9">DMESG_PB_MSG_SET_MESSAGE</a>(pb,  val)</td></tr>
+<tr class="memdesc:ga6eee16fd7c8eda9e87f6eabd4c4c8db9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the text message body of a <code>DMesgPb</code> whose type is <code>dmn::DMesgTypePb::message</code>.  <br /></td></tr>
+<tr class="separator:ga6eee16fd7c8eda9e87f6eabd4c4c8db9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga078d400a444d56c6154a14b40dc5acd3" id="r_ga078d400a444d56c6154a14b40dc5acd3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga078d400a444d56c6154a14b40dc5acd3">DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV</a>(pb,  tv)</td></tr>
+<tr class="memdesc:ga078d400a444d56c6154a14b40dc5acd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the sys sub-message timestamp from a <code>struct</code> timeval.  <br /></td></tr>
+<tr class="separator:ga078d400a444d56c6154a14b40dc5acd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1dda326e9fdfbfc52f3fdb0a2dddda04" id="r_ga1dda326e9fdfbfc52f3fdb0a2dddda04"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga1dda326e9fdfbfc52f3fdb0a2dddda04">DMESG_PB_SYS_NODE_SET_IDENTIFIER</a>(node,  val)&#160;&#160;&#160;(node)-&gt;set_identifier(val)</td></tr>
+<tr class="memdesc:ga1dda326e9fdfbfc52f3fdb0a2dddda04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the identifier field on a sys node pointer.  <br /></td></tr>
+<tr class="separator:ga1dda326e9fdfbfc52f3fdb0a2dddda04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad6ffac26db628d285bfa5598a63050c5" id="r_gad6ffac26db628d285bfa5598a63050c5"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#gad6ffac26db628d285bfa5598a63050c5">DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER</a>(node,  val)&#160;&#160;&#160;  (node)-&gt;set_masteridentifier(val)</td></tr>
+<tr class="memdesc:gad6ffac26db628d285bfa5598a63050c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the master-identifier field on a sys node pointer.  <br /></td></tr>
+<tr class="separator:gad6ffac26db628d285bfa5598a63050c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga263697088bbba2277bada2e918df8ad4" id="r_ga263697088bbba2277bada2e918df8ad4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga263697088bbba2277bada2e918df8ad4">DMESG_PB_SYS_NODE_SET_STATE</a>(node,  val)&#160;&#160;&#160;(node)-&gt;set_state(val)</td></tr>
+<tr class="memdesc:ga263697088bbba2277bada2e918df8ad4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the state field on a sys node pointer.  <br /></td></tr>
+<tr class="separator:ga263697088bbba2277bada2e918df8ad4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaad55aea5ff28e55a5f1eabc9e3afbe8a" id="r_gaad55aea5ff28e55a5f1eabc9e3afbe8a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#gaad55aea5ff28e55a5f1eabc9e3afbe8a">DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV</a>(node,  tv)&#160;&#160;&#160;  <a class="el" href="group__dmesg__pb__timestamp.html#gac2765dc1018fda571d525cac5aea794f">DMESG_PB_SET_TIMESTAMP_FROM_TV</a>((node)-&gt;mutable_updatedtimestamp(), tv)</td></tr>
+<tr class="memdesc:gaad55aea5ff28e55a5f1eabc9e3afbe8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the updated-timestamp on a sys node from a <code>struct</code> timeval.  <br /></td></tr>
+<tr class="separator:gaad55aea5ff28e55a5f1eabc9e3afbe8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaa5a4a1f8d59082807223123d933da55" id="r_gaaa5a4a1f8d59082807223123d933da55"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#gaaa5a4a1f8d59082807223123d933da55">DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV</a>(node,  tv)&#160;&#160;&#160;  <a class="el" href="group__dmesg__pb__timestamp.html#gac2765dc1018fda571d525cac5aea794f">DMESG_PB_SET_TIMESTAMP_FROM_TV</a>((node)-&gt;mutable_initializedtimestamp(), tv)</td></tr>
+<tr class="memdesc:gaaa5a4a1f8d59082807223123d933da55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the initialized-timestamp on a sys node from a <code>struct</code> timeval.  <br /></td></tr>
+<tr class="separator:gaaa5a4a1f8d59082807223123d933da55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafc4feb16848565f7127ac449ba589597" id="r_gafc4feb16848565f7127ac449ba589597"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#gafc4feb16848565f7127ac449ba589597">DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER</a>(sys,  index,  val)</td></tr>
+<tr class="memdesc:gafc4feb16848565f7127ac449ba589597"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the identifier of a node-list entry in a <code>DMesgPb</code> sys message.  <br /></td></tr>
+<tr class="separator:gafc4feb16848565f7127ac449ba589597"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaad3a82d8022be08fb8c83cc6fca3e07" id="r_gaaad3a82d8022be08fb8c83cc6fca3e07"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#gaaad3a82d8022be08fb8c83cc6fca3e07">DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER</a>(sys,  index,  val)</td></tr>
+<tr class="memdesc:gaaad3a82d8022be08fb8c83cc6fca3e07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the master identifier of a node-list entry in a <code>DMesgPb</code> sys message.  <br /></td></tr>
+<tr class="separator:gaaad3a82d8022be08fb8c83cc6fca3e07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7a1384720a1887a945248452d0a8fc64" id="r_ga7a1384720a1887a945248452d0a8fc64"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga7a1384720a1887a945248452d0a8fc64">DMESG_PB_SYS_SET_NODELIST_ELEM_STATE</a>(sys,  index,  val)</td></tr>
+<tr class="memdesc:ga7a1384720a1887a945248452d0a8fc64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the state of a node-list entry in a <code>DMesgPb</code> sys message.  <br /></td></tr>
+<tr class="separator:ga7a1384720a1887a945248452d0a8fc64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1c20a2915501e316fe794f7b1c55d058" id="r_ga1c20a2915501e316fe794f7b1c55d058"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga1c20a2915501e316fe794f7b1c55d058">DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP</a>(sys,  index,  val)</td></tr>
+<tr class="memdesc:ga1c20a2915501e316fe794f7b1c55d058"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the initialized-timestamp of a node-list entry from a <code>dmn::Timestamp</code> protobuf.  <br /></td></tr>
+<tr class="separator:ga1c20a2915501e316fe794f7b1c55d058"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga548eede1c858d31f12a509eff1ad870c" id="r_ga548eede1c858d31f12a509eff1ad870c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dmesg__pb__sys.html#ga548eede1c858d31f12a509eff1ad870c">DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP</a>(sys,  index,  val)</td></tr>
+<tr class="memdesc:ga548eede1c858d31f12a509eff1ad870c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the updated-timestamp of a node-list entry from a <code>dmn::Timestamp</code> protobuf.  <br /></td></tr>
+<tr class="separator:ga548eede1c858d31f12a509eff1ad870c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Utility macros to populate fields of the DMesg protobuf messages. </p>
@@ -187,338 +196,8 @@ Macros</h2></td></tr>
 <p>Thread-safety:</p><ul>
 <li>The macros themselves are just expansions that call protobuf mutators. Any thread-safety guarantees depend on the underlying protobuf objects and how they are synchronized by the application.</li>
 </ul>
-<p>Example: dmn::DMesgPb msg; struct timeval tv; gettimeofday(&amp;tv, nullptr); <a class="el" href="dmn-dmesg-pb-util_8hpp.html#abe467ed7cc34d7e8476c2626ebf9936f">DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(msg, tv)</a>; DMESG_PB_SET_MSG_TOPIC(msg, "my/topic"); </p>
-</div><h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="a6eee16fd7c8eda9e87f6eabd4c4c8db9" name="a6eee16fd7c8eda9e87f6eabd4c4c8db9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6eee16fd7c8eda9e87f6eabd4c4c8db9">&#9670;&#160;</a></span>DMESG_PB_MSG_SET_MESSAGE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_MSG_SET_MESSAGE</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">pb, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  <span class="keywordflow">do</span> {                                                                         \</div>
-<div class="line">    assert((pb).type() == dmn::DMesgTypePb::message);                          \</div>
-<div class="line">    ((pb).mutable_body()-&gt;set_message((val)));                                 \</div>
-<div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
-</div><!-- fragment --><p>DMesgPb message body message setters </p>
-
-</div>
-</div>
-<a id="abe467ed7cc34d7e8476c2626ebf9936f" name="abe467ed7cc34d7e8476c2626ebf9936f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe467ed7cc34d7e8476c2626ebf9936f">&#9670;&#160;</a></span>DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">pb, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">tv&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td>&#160;&#160;&#160;  DMESG_PB_SET_TIMESTAMP_FROM_TV((pb).mutable_timestamp(), tv)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>DMesgPb Message setters </p>
-
-</div>
-</div>
-<a id="ac2765dc1018fda571d525cac5aea794f" name="ac2765dc1018fda571d525cac5aea794f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac2765dc1018fda571d525cac5aea794f">&#9670;&#160;</a></span>DMESG_PB_SET_TIMESTAMP_FROM_TV</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SET_TIMESTAMP_FROM_TV</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">ts, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">tv&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  <span class="keywordflow">do</span> {                                                                         \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_SECONDS(ts, (tv).tv_sec);                           \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_NANOS(ts, (tv).tv_usec * 1000);                     \</div>
-<div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="afc4feb16848565f7127ac449ba589597" name="afc4feb16848565f7127ac449ba589597"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc4feb16848565f7127ac449ba589597">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">sys, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">index, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  DMESG_PB_SYS_NODE_SET_IDENTIFIER(                                            \</div>
-<div class="line">      ((sys).mutable_body()-&gt;mutable_sys()-&gt;mutable_nodelist((index))), val)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a1c20a2915501e316fe794f7b1c55d058" name="a1c20a2915501e316fe794f7b1c55d058"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c20a2915501e316fe794f7b1c55d058">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">sys, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">index, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  <span class="keywordflow">do</span> {                                                                         \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_SECONDS(((sys)                                      \</div>
-<div class="line">                                        .mutable_body()                        \</div>
-<div class="line">                                        -&gt;mutable_sys()                        \</div>
-<div class="line">                                        -&gt;mutable_nodelist((index))            \</div>
-<div class="line">                                        -&gt;mutable_initializedtimestamp()),     \</div>
-<div class="line">                                   (val).seconds());                           \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_NANOS(((sys)                                        \</div>
-<div class="line">                                      .mutable_body()                          \</div>
-<div class="line">                                      -&gt;mutable_sys()                          \</div>
-<div class="line">                                      -&gt;mutable_nodelist((index))              \</div>
-<div class="line">                                      -&gt;mutable_initializedtimestamp()),       \</div>
-<div class="line">                                 (val).nanos());                               \</div>
-<div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="aaad3a82d8022be08fb8c83cc6fca3e07" name="aaad3a82d8022be08fb8c83cc6fca3e07"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaad3a82d8022be08fb8c83cc6fca3e07">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">sys, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">index, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER(                                      \</div>
-<div class="line">      ((sys).mutable_body()-&gt;mutable_sys()-&gt;mutable_nodelist((index))), val)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a7a1384720a1887a945248452d0a8fc64" name="a7a1384720a1887a945248452d0a8fc64"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7a1384720a1887a945248452d0a8fc64">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_NODELIST_ELEM_STATE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_NODELIST_ELEM_STATE</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">sys, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">index, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  DMESG_PB_SYS_NODE_SET_STATE(                                                 \</div>
-<div class="line">      ((sys).mutable_body()-&gt;mutable_sys()-&gt;mutable_nodelist((index))), val)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a548eede1c858d31f12a509eff1ad870c" name="a548eede1c858d31f12a509eff1ad870c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a548eede1c858d31f12a509eff1ad870c">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">sys, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">index, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">val&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  <span class="keywordflow">do</span> {                                                                         \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_SECONDS(((sys)                                      \</div>
-<div class="line">                                        .mutable_body()                        \</div>
-<div class="line">                                        -&gt;mutable_sys()                        \</div>
-<div class="line">                                        -&gt;mutable_nodelist((index))            \</div>
-<div class="line">                                        -&gt;mutable_updatedtimestamp()),         \</div>
-<div class="line">                                   (val).seconds());                           \</div>
-<div class="line">    DMESG_PB_SET_TIMESTAMP_NANOS(((sys)                                        \</div>
-<div class="line">                                      .mutable_body()                          \</div>
-<div class="line">                                      -&gt;mutable_sys()                          \</div>
-<div class="line">                                      -&gt;mutable_nodelist((index))              \</div>
-<div class="line">                                      -&gt;mutable_updatedtimestamp()),           \</div>
-<div class="line">                                 (val).nanos());                               \</div>
-<div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a078d400a444d56c6154a14b40dc5acd3" name="a078d400a444d56c6154a14b40dc5acd3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a078d400a444d56c6154a14b40dc5acd3">&#9670;&#160;</a></span>DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">pb, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">tv&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  DMESG_PB_SET_TIMESTAMP_FROM_TV(                                              \</div>
-<div class="line">      (pb).mutable_body()-&gt;mutable_sys()-&gt;mutable_timestamp(), tv)</div>
-</div><!-- fragment --><p>DMesgPb message body sys setters </p>
-
-</div>
-</div>
-</div><!-- contents -->
+<p>Example: dmn::DMesgPb msg; struct timeval tv; gettimeofday(&amp;tv, nullptr); <a class="el" href="group__dmesg__pb__msg.html#gabe467ed7cc34d7e8476c2626ebf9936f" title="Set the timestamp of a DMesgPb message from a struct timeval.">DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(msg, tv)</a>; DMESG_PB_SET_MSG_TOPIC(msg, "my/topic"); </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

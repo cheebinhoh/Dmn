@@ -1,6 +1,6 @@
 var dmn_runtime_8hpp =
 [
-    [ "dmn::Dmn_Runtime_Job", "structdmn_1_1Dmn__Runtime__Job.html", null ],
+    [ "dmn::Dmn_Runtime_Job", "structdmn_1_1Dmn__Runtime__Job.html", "structdmn_1_1Dmn__Runtime__Job" ],
     [ "dmn::TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ],
     [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", "classdmn_1_1Dmn__Runtime__Manager" ],
     [ "dmn::IsStrictJobFnc", "conceptdmn_1_1IsStrictJobFnc.html", null ],

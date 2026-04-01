@@ -99,8 +99,8 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Async_1_1Dmn__Async__
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad4b3f2f36e2573faf89442c24c2aaded" id="r_ad4b3f2f36e2573faf89442c24c2aaded"><td class="memItemLeft" align="right" valign="top"><a id="ad4b3f2f36e2573faf89442c24c2aaded" name="ad4b3f2f36e2573faf89442c24c2aaded"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async_Handle</b> (std::function&lt; void()&gt; fnc, long long due_in_future=0)</td></tr>
+<tr class="memitem:ad4b3f2f36e2573faf89442c24c2aaded" id="r_ad4b3f2f36e2573faf89442c24c2aaded"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">Dmn_Async_Handle</a> (std::function&lt; void()&gt; fnc, long long due_in_future=0)</td></tr>
+<tr class="memdesc:ad4b3f2f36e2573faf89442c24c2aaded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a handle for the given task, optionally scheduled at a future time.  <br /></td></tr>
 <tr class="separator:ad4b3f2f36e2573faf89442c24c2aaded"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59ac64b31f75580d9e31f190d6b75d3c" id="r_a59ac64b31f75580d9e31f190d6b75d3c"><td class="memItemLeft" align="right" valign="top"><a id="a59ac64b31f75580d9e31f190d6b75d3c" name="a59ac64b31f75580d9e31f190d6b75d3c"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async_Handle</b> (const <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj)=delete</td></tr>
@@ -114,8 +114,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae94cd82769ba8ec6631df0e7765b5764" id="r_ae94cd82769ba8ec6631df0e7765b5764"><td class="memItemLeft" align="right" valign="top"><a id="ae94cd82769ba8ec6631df0e7765b5764" name="ae94cd82769ba8ec6631df0e7765b5764"></a>
 <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:ae94cd82769ba8ec6631df0e7765b5764"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abca802d6d1275e3d93c8dcec98b954cc" id="r_abca802d6d1275e3d93c8dcec98b954cc"><td class="memItemLeft" align="right" valign="top"><a id="abca802d6d1275e3d93c8dcec98b954cc" name="abca802d6d1275e3d93c8dcec98b954cc"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>wait</b> ()</td></tr>
+<tr class="memitem:abca802d6d1275e3d93c8dcec98b954cc" id="r_abca802d6d1275e3d93c8dcec98b954cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">wait</a> ()</td></tr>
+<tr class="memdesc:abca802d6d1275e3d93c8dcec98b954cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block until the associated task has finished.  <br /></td></tr>
 <tr class="separator:abca802d6d1275e3d93c8dcec98b954cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -125,6 +125,85 @@ template&lt;template&lt; class &gt; class&gt; </td></tr>
 <tr class="memitem:a16aeeb21528cde5a419bb8764e9141fe"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Dmn_Async</b></td></tr>
 <tr class="separator:a16aeeb21528cde5a419bb8764e9141fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="ad4b3f2f36e2573faf89442c24c2aaded" name="ad4b3f2f36e2573faf89442c24c2aaded"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4b3f2f36e2573faf89442c24c2aaded">&#9670;&#160;</a></span>Dmn_Async_Handle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a>&lt; QueueType &gt;::Dmn_Async_Handle::Dmn_Async_Handle </td>
+          <td>(</td>
+          <td class="paramtype">std::function&lt; void()&gt;&#160;</td>
+          <td class="paramname"><em>fnc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long long&#160;</td>
+          <td class="paramname"><em>due_in_future</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a handle for the given task, optionally scheduled at a future time. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fnc</td><td>The task callable to wrap. </td></tr>
+    <tr><td class="paramname">due_in_future</td><td>Absolute nanosecond timestamp (from <code>std::chrono::steady_clock</code>) after which the task may execute. Pass 0 (the default) for immediate execution. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="abca802d6d1275e3d93c8dcec98b954cc" name="abca802d6d1275e3d93c8dcec98b954cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abca802d6d1275e3d93c8dcec98b954cc">&#9670;&#160;</a></span>wait()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a>&lt; QueueType &gt;::Dmn_Async_Handle::wait </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Block until the associated task has finished. </p>
+<p>If the task threw an exception, it is rethrown here in the calling thread. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-async_8hpp_source.html">dmn-async.hpp</a></li>
 </ul>

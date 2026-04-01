@@ -94,6 +94,8 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Proc.html',''); initR
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-static-methods">Static Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classdmn_1_1Dmn__Proc-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::Dmn_Proc Class Reference</div></div>
 </div><!--header-->
@@ -150,26 +152,51 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a45fd201e765bae2c57ad30417ba1eb8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation point. Call this inside long-running loops if you expect the thread to be cancellable in a timely manner.  <br /></td></tr>
 <tr class="separator:a45fd201e765bae2c57ad30417ba1eb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8be7a6ef05b4fa9aa6d232dc5c6c669f" id="r_a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">testcancel</a> ()</td></tr>
-<tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests if the current thread should be cancelled.  <br /></td></tr>
+<tr class="memdesc:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Voluntarily test if the current thread has a pending cancellation request.  <br /></td></tr>
 <tr class="separator:a8be7a6ef05b4fa9aa6d232dc5c6c669f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a33feebb676ecff239fd5ddba024f5e32" id="r_a33feebb676ecff239fd5ddba024f5e32"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32">getState</a> () const -&gt; Dmn_Proc::State</td></tr>
-<tr class="memdesc:a33feebb676ecff239fd5ddba024f5e32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the current state of the process.  <br /></td></tr>
+<tr class="memdesc:a33feebb676ecff239fd5ddba024f5e32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current lifecycle state of this <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>.  <br /></td></tr>
 <tr class="separator:a33feebb676ecff239fd5ddba024f5e32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0b709f1b9dc82d20b3a1f1b43d2f974" id="r_ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974">setState</a> (Dmn_Proc::State state) -&gt; Dmn_Proc::State</td></tr>
-<tr class="memdesc:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a new state and returns the previous state.  <br /></td></tr>
+<tr class="memdesc:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transition to a new lifecycle state and return the previous one.  <br /></td></tr>
 <tr class="separator:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a935d3058daf7f46ff4ee23d142afec9d" id="r_a935d3058daf7f46ff4ee23d142afec9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d">setTask</a> (Dmn_Proc::Task fnc)</td></tr>
-<tr class="memdesc:a935d3058daf7f46ff4ee23d142afec9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a task function to be executed by the thread.  <br /></td></tr>
+<tr class="memdesc:a935d3058daf7f46ff4ee23d142afec9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign the task that will be executed when <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> is called.  <br /></td></tr>
 <tr class="separator:a935d3058daf7f46ff4ee23d142afec9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7593c5dbccaf13f394c0f2892b14498" id="r_ad7593c5dbccaf13f394c0f2892b14498"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498">runExec</a> () -&gt; bool</td></tr>
-<tr class="memdesc:ad7593c5dbccaf13f394c0f2892b14498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiates thread execution with the assigned task.  <br /></td></tr>
+<tr class="memdesc:ad7593c5dbccaf13f394c0f2892b14498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the underlying pthread and transition to <code>kRunning</code> state.  <br /></td></tr>
 <tr class="separator:ad7593c5dbccaf13f394c0f2892b14498"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07ccda9cd84f912b6af92b94fa875fba" id="r_a07ccda9cd84f912b6af92b94fa875fba"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba">stopExec</a> () -&gt; bool</td></tr>
-<tr class="memdesc:a07ccda9cd84f912b6af92b94fa875fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops execution of the running thread.  <br /></td></tr>
+<tr class="memdesc:a07ccda9cd84f912b6af92b94fa875fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the running thread and wait for it to terminate.  <br /></td></tr>
 <tr class="separator:a07ccda9cd84f912b6af92b94fa875fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-static-methods" name="pro-static-methods"></a>
+Static Protected Member Functions</h2></td></tr>
+<tr class="memitem:a93a3d80de18bc7b022d4bbf85fb394ba" id="r_a93a3d80de18bc7b022d4bbf85fb394ba"><td class="memItemLeft" align="right" valign="top">static auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a93a3d80de18bc7b022d4bbf85fb394ba">runFnInThreadHelper</a> (void *context) -&gt; void *</td></tr>
+<tr class="memdesc:a93a3d80de18bc7b022d4bbf85fb394ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static thread-entry trampoline passed to pthread_create.  <br /></td></tr>
+<tr class="separator:a93a3d80de18bc7b022d4bbf85fb394ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a8361ff9a03829a52ac8b02dbaba3475b" id="r_a8361ff9a03829a52ac8b02dbaba3475b"><td class="memItemLeft" align="right" valign="top"><a id="a8361ff9a03829a52ac8b02dbaba3475b" name="a8361ff9a03829a52ac8b02dbaba3475b"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>m_name</b> {}</td></tr>
+<tr class="memdesc:a8361ff9a03829a52ac8b02dbaba3475b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable name for diagnostics/logging. <br /></td></tr>
+<tr class="separator:a8361ff9a03829a52ac8b02dbaba3475b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb1c5429ab8b2082744cb04f887764b9" id="r_acb1c5429ab8b2082744cb04f887764b9"><td class="memItemLeft" align="right" valign="top"><a id="acb1c5429ab8b2082744cb04f887764b9" name="acb1c5429ab8b2082744cb04f887764b9"></a>
+Dmn_Proc::Task&#160;</td><td class="memItemRight" valign="bottom"><b>m_fnc</b> {}</td></tr>
+<tr class="memdesc:acb1c5429ab8b2082744cb04f887764b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Task to execute in the thread. <br /></td></tr>
+<tr class="separator:acb1c5429ab8b2082744cb04f887764b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ef7c534aabe1febb1892cd1b510caa9" id="r_a8ef7c534aabe1febb1892cd1b510caa9"><td class="memItemLeft" align="right" valign="top"><a id="a8ef7c534aabe1febb1892cd1b510caa9" name="a8ef7c534aabe1febb1892cd1b510caa9"></a>
+Dmn_Proc::State&#160;</td><td class="memItemRight" valign="bottom"><b>m_state</b> {}</td></tr>
+<tr class="memdesc:a8ef7c534aabe1febb1892cd1b510caa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current lifecycle state of this object. <br /></td></tr>
+<tr class="separator:a8ef7c534aabe1febb1892cd1b510caa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a0a6e20baaf449c37613d26f65c6e84" id="r_a9a0a6e20baaf449c37613d26f65c6e84"><td class="memItemLeft" align="right" valign="top"><a id="a9a0a6e20baaf449c37613d26f65c6e84" name="a9a0a6e20baaf449c37613d26f65c6e84"></a>
+pthread_t&#160;</td><td class="memItemRight" valign="bottom"><b>m_th</b> {}</td></tr>
+<tr class="memdesc:a9a0a6e20baaf449c37613d26f65c6e84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Native pthread handle. <br /></td></tr>
+<tr class="separator:a9a0a6e20baaf449c37613d26f65c6e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a></p>
@@ -178,7 +205,7 @@ Protected Member Functions</h2></td></tr>
 <li>Construct with an optional name and/or task. The name is stored for diagnostic purposes (no threading name APIs are invoked here).</li>
 <li><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a>: start the thread and run the given task (or the previously-set task from the constructor). Returns true on successful start.</li>
 <li><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b" title="Wait (join) for the asynchronous thread to finish.">wait()</a>: join the thread, blocking until it completes. Returns true if the join succeeded.</li>
-<li><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Stops execution of the running thread.">stopExec()</a>: attempt to cancel the running thread. The destructor calls <a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Stops execution of the running thread.">stopExec()</a> and then waits to join the thread — this makes the object safe to destroy without leaking the underlying pthread, but it also requires that the running task be responsive to pthread cancellation.</li>
+<li><a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Cancel the running thread and wait for it to terminate.">stopExec()</a>: attempt to cancel the running thread. The destructor calls <a class="el" href="classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba" title="Cancel the running thread and wait for it to terminate.">stopExec()</a> and then waits to join the thread — this makes the object safe to destroy without leaking the underlying pthread, but it also requires that the running task be responsive to pthread cancellation.</li>
 </ul>
 <p>Cancellation warning:</p><ul>
 <li>pthread cancellation is cooperative. If the task never reaches a cancellation point (or explicitly enables deferred cancellation without checking), cancellation will be delayed indefinitely. For loops that may run for a long time, call <a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c" title="Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...">Dmn_Proc::yield()</a> periodically to create cancellation points (or otherwise ensure the task calls functions that are cancellation points). </li>
@@ -231,7 +258,7 @@ Protected Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Descriptive name for the process (for debugging/logging) </td></tr>
-    <tr><td class="paramname">fnc</td><td>Optional task function to be executed. Can be nullptr if task is to be set later via <a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d" title="Assigns a task function to be executed by the thread.">setTask()</a> or <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> </td></tr>
+    <tr><td class="paramname">fnc</td><td>Optional task function to be executed. Can be nullptr if task is to be set later via <a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d" title="Assign the task that will be executed when exec() is called.">setTask()</a> or <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -293,7 +320,7 @@ Protected Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the thread was started successfully.</dd></dl>
-<p>If a new task is provided, it replaces the current task before execution. Transitions the state from Ready to Running by calling <a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498" title="Initiates thread execution with the assigned task.">runExec()</a>.</p>
+<p>If a new task is provided, it replaces the current task before execution. Transitions the state from Ready to Running by calling <a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498" title="Start the underlying pthread and transition to kRunning state.">runExec()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fnc</td><td>Optional new task function to execute. If provided, replaces the current task. If nullptr, executes the previously set task.</td></tr>
@@ -327,8 +354,11 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Retrieves the current state of the process. </p>
-<dl class="section return"><dt>Returns</dt><dd>Current State enum value (kNew, kReady, kRunning, kUnknown) </dd></dl>
+<p>Return the current lifecycle state of this <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>. </p>
+<p>Retrieves the current state of the process.</p>
+<dl class="section return"><dt>Returns</dt><dd>The current <code>State</code> enum value.</dd>
+<dd>
+Current State enum value (kNew, kReady, kRunning, kUnknown) </dd></dl>
 
 </div>
 </div>
@@ -355,13 +385,71 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Initiates thread execution with the assigned task. </p>
-<p>Internal helpers used by exec/stopExec and the thread entry routine. runExec/stopExec manage starting and stopping the underlying pthread.</p>
+<p>Start the underlying pthread and transition to <code>kRunning</code> state. </p>
+<p>Initiates thread execution with the assigned task.</p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the thread was created successfully, <code>false</code> otherwise. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if the process is not in <code>kReady</code> state.</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>Creates a new pthread and sets its state to Running. The thread is configured to accept deferred cancellations. On failure, state is reverted to previous value.</p>
 <dl class="section return"><dt>Returns</dt><dd>true if pthread_create succeeded, false otherwise </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">std::runtime_error</td><td>if process is not in Ready state </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a93a3d80de18bc7b022d4bbf85fb394ba" name="a93a3d80de18bc7b022d4bbf85fb394ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a93a3d80de18bc7b022d4bbf85fb394ba">&#9670;&#160;</a></span>runFnInThreadHelper()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto dmn::Dmn_Proc::runFnInThreadHelper </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>context</em></td><td>)</td>
+          <td> -&gt; void *</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Static thread-entry trampoline passed to pthread_create. </p>
+<p>Helper function executed in the new thread context.</p>
+<p>Sets up deferred cancellation for the new thread and then invokes the stored task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the owning <code><a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a></code> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Always <code>nullptr</code>.</dd></dl>
+<p>Sets up thread-level cancellation policy (enabled with deferred type), then executes the assigned task function. Acts as the entry point for the newly created thread.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to the <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> instance managing this thread</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Always returns nullptr </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if cancellation setup fails </td></tr>
   </table>
   </dd>
 </dl>
@@ -392,7 +480,15 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets a new state and returns the previous state. </p>
+<p>Transition to a new lifecycle state and return the previous one. </p>
+<p>Sets a new state and returns the previous state.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">state</td><td>The new state to set. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The previous <code>State</code> value before the transition.</dd></dl>
 <p>This is an atomic state transition operation. Useful for comparing and swapping states.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -428,7 +524,15 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Assigns a task function to be executed by the thread. </p>
+<p>Assign the task that will be executed when <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> is called. </p>
+<p>Assigns a task function to be executed by the thread.</p>
+<p>The process must be in <code>kNew</code> or <code>kReady</code> state. After a successful assignment the state transitions to <code>kReady</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fnc</td><td>The task function to assign. Must be a valid (non-empty) callable.</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>The process must be in either New or Ready state. After assignment, the state transitions to Ready, indicating the task is prepared for execution.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -468,7 +572,16 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Stops execution of the running thread. </p>
+<p>Cancel the running thread and wait for it to terminate. </p>
+<p>Stops execution of the running thread.</p>
+<p>If the thread is not currently running, this is a no-op and returns <code>true</code> immediately.</p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the thread was stopped (or was not running). </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if pthread_cancel fails.</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>Sends a cancellation request to the thread and waits for it to terminate. If the thread is not running, returns true (no-op on stopped process).</p>
 <dl class="section return"><dt>Returns</dt><dd>true if the thread was successfully stopped or was not running </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
@@ -503,8 +616,9 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Tests if the current thread should be cancelled. </p>
-<p>Voluntarily test if the thread is to be cancelled.</p>
+<p>Voluntarily test if the current thread has a pending cancellation request. </p>
+<p>Tests if the current thread should be cancelled.</p>
+<p>This is a deferred cancellation point: if a cancellation request is pending, the thread is terminated at this call site rather than asynchronously.</p>
 <p>This is a cancellation point. If a cancellation request is pending, the thread will be terminated at this point. </p>
 
 </div>

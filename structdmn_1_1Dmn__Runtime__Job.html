@@ -97,6 +97,9 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Job.html','
 </div><!--header-->
 <div class="contents">
 
+<p>A unit of work that can be scheduled and executed by <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></code>.  
+ <a href="structdmn_1_1Dmn__Runtime__Job.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
@@ -121,25 +124,28 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>OnErrorFncType</b> =
 Public Attributes</h2></td></tr>
 <tr class="memitem:a4fb7f04344e2d0cb0e56b46f0a04da54" id="r_a4fb7f04344e2d0cb0e56b46f0a04da54"><td class="memItemLeft" align="right" valign="top"><a id="a4fb7f04344e2d0cb0e56b46f0a04da54" name="a4fb7f04344e2d0cb0e56b46f0a04da54"></a>
 Priority&#160;</td><td class="memItemRight" valign="bottom"><b>m_priority</b> {Priority::kMedium}</td></tr>
+<tr class="memdesc:a4fb7f04344e2d0cb0e56b46f0a04da54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scheduling priority for this job. <br /></td></tr>
 <tr class="separator:a4fb7f04344e2d0cb0e56b46f0a04da54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f9c6fd92c58adfbf346057244ebb311" id="r_a6f9c6fd92c58adfbf346057244ebb311"><td class="memItemLeft" align="right" valign="top"><a id="a6f9c6fd92c58adfbf346057244ebb311" name="a6f9c6fd92c58adfbf346057244ebb311"></a>
 TaskFncType&#160;</td><td class="memItemRight" valign="bottom"><b>m_fnc</b> {}</td></tr>
+<tr class="memdesc:a6f9c6fd92c58adfbf346057244ebb311"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coroutine-returning callable that performs the work. <br /></td></tr>
 <tr class="separator:a6f9c6fd92c58adfbf346057244ebb311"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a4ac693d5a630317340b5644fea6d28" id="r_a7a4ac693d5a630317340b5644fea6d28"><td class="memItemLeft" align="right" valign="top"><a id="a7a4ac693d5a630317340b5644fea6d28" name="a7a4ac693d5a630317340b5644fea6d28"></a>
 <a class="el" href="dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759">TimePoint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_due</b> {}</td></tr>
+<tr class="memdesc:a7a4ac693d5a630317340b5644fea6d28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Absolute time after which the job may execute. <br /></td></tr>
 <tr class="separator:a7a4ac693d5a630317340b5644fea6d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87d7692bf493860f2bb85003a1c2c1f0" id="r_a87d7692bf493860f2bb85003a1c2c1f0"><td class="memItemLeft" align="right" valign="top"><a id="a87d7692bf493860f2bb85003a1c2c1f0" name="a87d7692bf493860f2bb85003a1c2c1f0"></a>
 OnErrorFncType&#160;</td><td class="memItemRight" valign="bottom"><b>m_onErrorFnc</b> {}</td></tr>
+<tr class="memdesc:a87d7692bf493860f2bb85003a1c2c1f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional handler called when <code>m_fnc</code> throws. <br /></td></tr>
 <tr class="separator:a87d7692bf493860f2bb85003a1c2c1f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="structdmn_1_1Dmn__Runtime__Job.html">Dmn_Runtime_Job</a></p>
-<p>Represents a unit of work that can be scheduled and executed by the runtime.</p>
-<p>Members:</p><ul>
-<li>m_priority: Priority level for scheduling (kSched, kHigh, kMedium, kLow).</li>
-<li>m_fnc: Callable that performs the work. It is invoked with the job metadata so the callable can inspect runtime fields if needed.</li>
-<li>m_due: TimePoint representing the absolute time (since boot/monotonic start) when the job should be executed.</li>
-<li>m_onErrorFnc: Callable for exception thrown inside m_fnc Callable. </li>
+<div class="textblock"><p>A unit of work that can be scheduled and executed by <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></code>. </p>
+<p>Each job carries:</p><ul>
+<li><code>m_priority</code> : Priority level for scheduling (<code>kSched</code>, <code>kHigh</code>, <code>kMedium</code>, or <code>kLow</code>).</li>
+<li><code>m_fnc</code> : Callable that performs the work. It is invoked with the job metadata so the callable can inspect runtime fields.</li>
+<li><code>m_due</code> : Absolute monotonic time point at which the job becomes eligible for execution (used by timed jobs).</li>
+<li><code>m_onErrorFnc</code> : Optional callable invoked when <code>m_fnc</code> throws. </li>
 </ul>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a></li>

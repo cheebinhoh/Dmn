@@ -25,6 +25,7 @@
 var NAVTREE =
 [
   [ "My Project", "index.html", [
+    [ "Topics", "topics.html", "topics" ],
     [ "Concepts", "concepts.html", "concepts" ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
@@ -50,7 +51,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html"
+"dmn-socket_8hpp_source.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

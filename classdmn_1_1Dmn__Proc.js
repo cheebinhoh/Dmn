@@ -8,5 +8,9 @@ var classdmn_1_1Dmn__Proc =
     [ "setState", "classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974", null ],
     [ "setTask", "classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d", null ],
     [ "stopExec", "classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba", null ],
-    [ "wait", "classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b", null ]
+    [ "wait", "classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b", null ],
+    [ "m_fnc", "classdmn_1_1Dmn__Proc.html#acb1c5429ab8b2082744cb04f887764b9", null ],
+    [ "m_name", "classdmn_1_1Dmn__Proc.html#a8361ff9a03829a52ac8b02dbaba3475b", null ],
+    [ "m_state", "classdmn_1_1Dmn__Proc.html#a8ef7c534aabe1febb1892cd1b510caa9", null ],
+    [ "m_th", "classdmn_1_1Dmn__Proc.html#a9a0a6e20baaf449c37613d26f65c6e84", null ]
 ];

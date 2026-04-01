@@ -5,6 +5,7 @@ var searchData=
   ['gettopiclastmessage_2',['getTopicLastMessage',['../classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8',1,'dmn::Dmn_DMesg']]],
   ['gettopicrunningcounter_3',['getTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['gettopicrunningcounterinternal_4',['getTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['goals_5',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md25',1,'']]],
-  ['guidelines_6',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md16',1,'']]]
+  ['getvalue_5',['getValue',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a',1,'dmn::Dmn_Inflight_Guard::Ticket']]],
+  ['goals_6',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md25',1,'']]],
+  ['guidelines_7',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md16',1,'']]]
 ];

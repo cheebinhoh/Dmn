@@ -95,12 +95,20 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Inflight__Guard_1_1Ti
   <div class="headertitle"><div class="title">dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>RAII guard that represents one active in-flight operation.  
+ <a href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ac47def854a5c0c079fbd7b5997a34b38" id="r_ac47def854a5c0c079fbd7b5997a34b38"><td class="memItemLeft" align="right" valign="top"><a id="ac47def854a5c0c079fbd7b5997a34b38" name="ac47def854a5c0c079fbd7b5997a34b38"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Ticket</b> (<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *inflightguard)</td></tr>
+<tr class="memitem:ac47def854a5c0c079fbd7b5997a34b38" id="r_ac47def854a5c0c079fbd7b5997a34b38"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38">Ticket</a> (<a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *inflightguard)</td></tr>
+<tr class="memdesc:ac47def854a5c0c079fbd7b5997a34b38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acquire an in-flight ticket from <code>inflightguard</code>.  <br /></td></tr>
 <tr class="separator:ac47def854a5c0c079fbd7b5997a34b38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1c6f33a98ce90972522a4391d2ab3ce" id="r_aa1c6f33a98ce90972522a4391d2ab3ce"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aa1c6f33a98ce90972522a4391d2ab3ce">~Ticket</a> () noexcept</td></tr>
+<tr class="memdesc:aa1c6f33a98ce90972522a4391d2ab3ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release the in-flight ticket.  <br /></td></tr>
+<tr class="separator:aa1c6f33a98ce90972522a4391d2ab3ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada85f8a44c2050cd200cc45c7b05967f" id="r_ada85f8a44c2050cd200cc45c7b05967f"><td class="memItemLeft" align="right" valign="top"><a id="ada85f8a44c2050cd200cc45c7b05967f" name="ada85f8a44c2050cd200cc45c7b05967f"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Ticket</b> (const <a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html">Ticket</a> &amp;obj)=delete</td></tr>
 <tr class="separator:ada85f8a44c2050cd200cc45c7b05967f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,11 +123,128 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5f5b2494eeca3dd166c719ca08b54bf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7730b8763ff4eaae7a5444d237458a8" id="r_ad7730b8763ff4eaae7a5444d237458a8"><td class="memItemLeft" align="right" valign="top"><a id="ad7730b8763ff4eaae7a5444d237458a8" name="ad7730b8763ff4eaae7a5444d237458a8"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator bool</b> () const noexcept</td></tr>
+<tr class="memdesc:ad7730b8763ff4eaae7a5444d237458a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return <code>true</code> if this ticket is actively held (entered the guard). <br /></td></tr>
 <tr class="separator:ad7730b8763ff4eaae7a5444d237458a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaed878ca236fe1211f59cdddad1de18a" id="r_aaed878ca236fe1211f59cdddad1de18a"><td class="memItemLeft" align="right" valign="top"><a id="aaed878ca236fe1211f59cdddad1de18a" name="aaed878ca236fe1211f59cdddad1de18a"></a>
-virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>getValue</b> () const -&gt; const T &amp;</td></tr>
+<tr class="memitem:aaed878ca236fe1211f59cdddad1de18a" id="r_aaed878ca236fe1211f59cdddad1de18a"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a">getValue</a> () const -&gt; const T &amp;</td></tr>
+<tr class="memdesc:aaed878ca236fe1211f59cdddad1de18a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a const reference to the per-call payload value set by <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called inside the Ticket constructor after the in-flight counter has been incremented.">enterInflightGuardFnc()</a></code>.  <br /></td></tr>
 <tr class="separator:aaed878ca236fe1211f59cdddad1de18a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;class T = std::monostate&gt;<br />
+class dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket</div><p>RAII guard that represents one active in-flight operation. </p>
+<p>Constructing a <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html" title="RAII guard that represents one active in-flight operation.">Ticket</a></code> increments the owning guard's in-flight counter and invokes <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called inside the Ticket constructor after the in-flight counter has been incremented.">enterInflightGuardFnc()</a></code> on the guard. Destroying the ticket decrements the counter and invokes <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a33db0bcc282fa1be3266116a74831d54" title="Called inside the Ticket destructor before the in-flight counter is decremented.">leaveInflightGuardFnc()</a></code>.</p>
+<p>Construction throws <code>std::runtime_error</code> if the guard is already closed (i.e., shutdown has begun).</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>Optional per-call payload type stored inside the ticket (defaults to <code>std::monostate</code> for no payload). </td></tr>
+  </table>
+  </dd>
+</dl>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="ac47def854a5c0c079fbd7b5997a34b38" name="ac47def854a5c0c079fbd7b5997a34b38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac47def854a5c0c079fbd7b5997a34b38">&#9670;&#160;</a></span>Ticket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T  = std::monostate&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::Ticket::Ticket </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> *&#160;</td>
+          <td class="paramname"><em>inflightguard</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Acquire an in-flight ticket from <code>inflightguard</code>. </p>
+<p>Increments the guard's in-flight counter and invokes <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called inside the Ticket constructor after the in-flight counter has been incremented.">enterInflightGuardFnc()</a></code>. If the guard is already closed, or becomes closed before the counter is incremented, throws <code>std::runtime_error</code> and leaves the counter unchanged.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">inflightguard</td><td>Pointer to the owning <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a></code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if the inflight guard is closed/shutting down. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aa1c6f33a98ce90972522a4391d2ab3ce" name="aa1c6f33a98ce90972522a4391d2ab3ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1c6f33a98ce90972522a4391d2ab3ce">&#9670;&#160;</a></span>~Ticket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T  = std::monostate&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::Ticket::~Ticket </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Release the in-flight ticket. </p>
+<p>Invokes <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a33db0bcc282fa1be3266116a74831d54" title="Called inside the Ticket destructor before the in-flight counter is decremented.">leaveInflightGuardFnc()</a></code> on the owning guard (swallowing any exceptions to satisfy the <code>noexcept</code> contract), then decrements the in-flight counter and notifies any threads waiting in <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a61e94f5ca657bb6e49dd830d2dc59468" title="Block until all currently active in-flight operations have released their tickets (i....">waitForEmptyInflight()</a></code>. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="aaed878ca236fe1211f59cdddad1de18a" name="aaed878ca236fe1211f59cdddad1de18a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaed878ca236fe1211f59cdddad1de18a">&#9670;&#160;</a></span>getValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T  = std::monostate&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>&lt; T &gt;::Ticket::getValue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt; const T &amp; </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return a const reference to the per-call payload value set by <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#a24e998e357f8385b4d44198e8e46899c" title="Called inside the Ticket constructor after the in-flight counter has been incremented.">enterInflightGuardFnc()</a></code>. </p>
+<dl class="section return"><dt>Returns</dt><dd>Const reference to the stored payload. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a></li>
 </ul>

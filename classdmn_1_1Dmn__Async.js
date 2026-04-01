@@ -1,6 +1,6 @@
 var classdmn_1_1Dmn__Async =
 [
-    [ "Dmn_Async_Handle", "classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html", null ],
+    [ "Dmn_Async_Handle", "classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html", "classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle" ],
     [ "Dmn_Async", "classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c", null ],
     [ "addExecTask", "classdmn_1_1Dmn__Async.html#a7f004b71018ac8eba99e16b5b3cda651", null ],
     [ "addExecTaskAfter", "classdmn_1_1Dmn__Async.html#a8c83719eacf487b78c76b93e07959e1a", null ],

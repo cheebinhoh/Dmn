@@ -140,14 +140,17 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a13bac196cd31294a957c6a9a8d537eae" id="r_a13bac196cd31294a957c6a9a8d537eae"><td class="memItemLeft" align="right" valign="top"><a id="a13bac196cd31294a957c6a9a8d537eae" name="a13bac196cd31294a957c6a9a8d537eae"></a>
-virtual auto&#160;</td><td class="memItemRight" valign="bottom"><b>isShutdown</b> () -&gt; bool</td></tr>
+<tr class="memitem:a13bac196cd31294a957c6a9a8d537eae" id="r_a13bac196cd31294a957c6a9a8d537eae"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a13bac196cd31294a957c6a9a8d537eae">isShutdown</a> () -&gt; bool</td></tr>
+<tr class="memdesc:a13bac196cd31294a957c6a9a8d537eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return <code>true</code> if the shutdown flag has been set on this queue.  <br /></td></tr>
 <tr class="separator:a13bac196cd31294a957c6a9a8d537eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b95f579fc1899d9799540ce25c7943b" id="r_a6b95f579fc1899d9799540ce25c7943b"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a6b95f579fc1899d9799540ce25c7943b">popOptional</a> (bool wait) -&gt; std::optional&lt; T &gt;</td></tr>
+<tr class="memdesc:a6b95f579fc1899d9799540ce25c7943b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return the front item, optionally blocking until one is available.  <br /></td></tr>
 <tr class="separator:a6b95f579fc1899d9799540ce25c7943b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab337404901fdbb7b2898abc660de178b" id="r_ab337404901fdbb7b2898abc660de178b"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#ab337404901fdbb7b2898abc660de178b">pushCopy</a> (const T &amp;item)</td></tr>
+<tr class="memdesc:ab337404901fdbb7b2898abc660de178b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue a copy of <code>item</code> at the tail of the queue.  <br /></td></tr>
 <tr class="separator:ab337404901fdbb7b2898abc660de178b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ea9c2f330b03945a3727b08d5c20dc7" id="r_a3ea9c2f330b03945a3727b08d5c20dc7"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a3ea9c2f330b03945a3727b08d5c20dc7">pushMove</a> (T &amp;&amp;item)</td></tr>
+<tr class="memdesc:a3ea9c2f330b03945a3727b08d5c20dc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue <code>item</code> at the tail of the queue using move semantics.  <br /></td></tr>
 <tr class="separator:a3ea9c2f330b03945a3727b08d5c20dc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -158,6 +161,38 @@ class dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</div><p>The <a class="el" href=
 <li>There are a set of composite methods that are marked as final and implemented in term of primitive methods. Those are methods in the the abstraction tree in Bridge design pattern. </li>
 </ul>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a13bac196cd31294a957c6a9a8d537eae" name="a13bac196cd31294a957c6a9a8d537eae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13bac196cd31294a957c6a9a8d537eae">&#9670;&#160;</a></span>isShutdown()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Derived , typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue</a>&lt; Derived, T &gt;::isShutdown </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> -&gt; bool </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return <code>true</code> if the shutdown flag has been set on this queue. </p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when the queue has been shut down, <code>false</code> otherwise. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>.</p>
+
+</div>
+</div>
 <a id="ac5e4917d4e2247327fc3c12ffe614fda" name="ac5e4917d4e2247327fc3c12ffe614fda"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac5e4917d4e2247327fc3c12ffe614fda">&#9670;&#160;</a></span>pop() <span class="overload">[1/2]</span></h2>
 
@@ -302,6 +337,16 @@ template&lt;typename Derived , typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Remove and return the front item, optionally blocking until one is available. </p>
+<p>Subclasses must implement this primitive. The composite public methods <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda" title="Remove and return the front item, waiting until an item is available.">pop()</a> and <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a1e87c82f8b03427f2b19510fe82f567f" title="Attempt to pop a single item without waiting.">popNoWait()</a> delegate here.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">wait</td><td>If <code>true</code>, block until an item is available; otherwise return <code>std::nullopt</code> immediately when the queue is empty. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <code>optional</code> containing the dequeued item, or <code>std::nullopt</code> if the queue is empty (when <code>wait</code> is <code>false</code>) or shutdown while waiting (when <code>wait</code> is <code>true</code>). </dd></dl>
+
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a00f8a147a6000229314e9886722b0c15">dmn::Dmn_BlockingQueue_Mt&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a00f8a147a6000229314e9886722b0c15">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a00f8a147a6000229314e9886722b0c15">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
 
 </div>
@@ -404,6 +449,15 @@ template&lt;typename Derived , typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Enqueue a copy of <code>item</code> at the tail of the queue. </p>
+<p>Subclasses must implement this primitive. The public <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a9b21173276eb14668e55250512e6fc3e" title="Copy and enqueue the const lvalue item into the tail of the queue.">push(const T&amp;)</a> overload delegates here.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">item</td><td>The item to copy into the queue. </td></tr>
+  </table>
+  </dd>
+</dl>
+
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a59e0e553d7a62b66d12ebead53bbb882">dmn::Dmn_BlockingQueue_Mt&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#ae738544dd427b145dbd3bf0f51f33761">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a59e0e553d7a62b66d12ebead53bbb882">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a59e0e553d7a62b66d12ebead53bbb882">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
 
 </div>
@@ -433,6 +487,15 @@ template&lt;typename Derived , typename T &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Enqueue <code>item</code> at the tail of the queue using move semantics. </p>
+<p>Subclasses must implement this primitive. The public <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#a36227293543dbac3d4132b501ca78251" title="Enqueue an rvalue item into the tail of the queue via move semantics.">push(T&amp;&amp;)</a> overload delegates here.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">item</td><td>The item to move into the queue. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#aabe2ae05506bc94f7b9c3c14e1cf5edd">dmn::Dmn_BlockingQueue_Mt&lt; dmn::Dmn_Runtime_Job &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a18753cb93024f68651ff37b478dfcfa4">dmn::Dmn_BlockingQueue_Lf&lt; T &gt;</a>, <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#aabe2ae05506bc94f7b9c3c14e1cf5edd">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#aabe2ae05506bc94f7b9c3c14e1cf5edd">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
 

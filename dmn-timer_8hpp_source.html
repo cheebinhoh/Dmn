@@ -127,69 +127,69 @@ $(document).ready(function(){initNavTree('dmn-timer_8hpp_source.html',''); initR
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">stop</a>();</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  std::function&lt;void()&gt; m_fn{};</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  T m_reltime{};</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>}; <span class="comment">// class Dmn_Timer</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  std::function&lt;void()&gt; m_fn{}; </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  T m_reltime{}; </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>}; <span class="comment">// class Dmn_Timer</span></div>
 </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><a class="code hl_class" href="classdmn_1_1Dmn__Timer.html">Dmn_Timer&lt;T&gt;::Dmn_Timer</a>(<span class="keyword">const</span> T &amp;reltime, std::function&lt;<span class="keywordtype">void</span>()&gt; fn)</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    : <a class="code hl_class" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>{<span class="stringliteral">&quot;timer&quot;</span>}, m_fn{fn}, m_reltime{reltime} {</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">start</a>(this-&gt;m_reltime, this-&gt;m_fn);</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>}</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; Dmn_Timer&lt;T&gt;::~Dmn_Timer() noexcept try {</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  this-&gt;stop();</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>} <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>  <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>}</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="foldopen" id="foldopen00097" data-start="{" data-end="}">
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">   97</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">Dmn_Timer&lt;T&gt;::start</a>(<span class="keyword">const</span> T &amp;reltime, std::function&lt;<span class="keywordtype">void</span>()&gt; fn) {</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  m_reltime = reltime;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  <span class="keywordflow">if</span> (fn) {</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    m_fn = fn;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  }</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  this-&gt;stop();</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  this-&gt;exec([<span class="keyword">this</span>]() {</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>      std::this_thread::sleep_for(this-&gt;m_reltime);</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>      <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">Dmn_Proc::yield</a>();</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>      <span class="keywordflow">try</span> {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">if</span> (m_fn) {</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>          this-&gt;m_fn();</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        }</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>      } <span class="keywordflow">catch</span> (<span class="keyword">const</span> std::exception &amp;e) {</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        DMN_DEBUG_PRINT(std::cerr &lt;&lt; e.what() &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>      }</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    }</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>  });</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>}</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><a class="code hl_class" href="classdmn_1_1Dmn__Timer.html">Dmn_Timer&lt;T&gt;::Dmn_Timer</a>(<span class="keyword">const</span> T &amp;reltime, std::function&lt;<span class="keywordtype">void</span>()&gt; fn)</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    : <a class="code hl_class" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a>{<span class="stringliteral">&quot;timer&quot;</span>}, m_fn{fn}, m_reltime{reltime} {</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  this-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">start</a>(this-&gt;m_reltime, this-&gt;m_fn);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>}</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; Dmn_Timer&lt;T&gt;::~Dmn_Timer() noexcept try {</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  this-&gt;stop();</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>} <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>}</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">   94</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">Dmn_Timer&lt;T&gt;::start</a>(<span class="keyword">const</span> T &amp;reltime, std::function&lt;<span class="keywordtype">void</span>()&gt; fn) {</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  m_reltime = reltime;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  <span class="keywordflow">if</span> (fn) {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    m_fn = fn;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  }</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span> </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  this-&gt;stop();</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  this-&gt;exec([<span class="keyword">this</span>]() {</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>      std::this_thread::sleep_for(this-&gt;m_reltime);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>      <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">Dmn_Proc::yield</a>();</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>      <span class="keywordflow">try</span> {</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        <span class="keywordflow">if</span> (m_fn) {</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>          this-&gt;m_fn();</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>        }</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>      } <span class="keywordflow">catch</span> (<span class="keyword">const</span> std::exception &amp;e) {</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>        DMN_DEBUG_PRINT(std::cerr &lt;&lt; e.what() &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>      }</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    }</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>  });</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>}</div>
 </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
-<div class="foldopen" id="foldopen00122" data-start="{" data-end="}">
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">  122</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">Dmn_Timer&lt;T&gt;::stop</a>() {</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>  <span class="keywordflow">try</span> {</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    this-&gt;stopExec();</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>  } <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>  }</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>}</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
+<div class="foldopen" id="foldopen00119" data-start="{" data-end="}">
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">  119</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">Dmn_Timer&lt;T&gt;::stop</a>() {</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  <span class="keywordflow">try</span> {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    this-&gt;stopExec();</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>  } <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>  }</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>}</div>
 </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="preprocessor">#endif </span><span class="comment">// DMN_TIMER_HPP_</span></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span> </div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="preprocessor">#endif </span><span class="comment">// DMN_TIMER_HPP_</span></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Proc_html"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></div><div class="ttdef"><b>Definition</b> dmn-proc.hpp:103</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Proc_html_a45fd201e765bae2c57ad30417ba1eb8c"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">dmn::Dmn_Proc::yield</a></div><div class="ttdeci">static void yield()</div><div class="ttdoc">Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...</div><div class="ttdef"><b>Definition</b> dmn-proc.cpp:180</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Timer_html"><div class="ttname"><a href="classdmn_1_1Dmn__Timer.html">dmn::Dmn_Timer</a></div><div class="ttdef"><b>Definition</b> dmn-timer.hpp:50</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Timer_html_a08682897148ecb772b5c2f872e903b5e"><div class="ttname"><a href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">dmn::Dmn_Timer::start</a></div><div class="ttdeci">void start(const T &amp;reltime, std::function&lt; void()&gt; fn={})</div><div class="ttdoc">The method starts the timer that executes fn repeatedly after every reltime interval....</div><div class="ttdef"><b>Definition</b> dmn-timer.hpp:97</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Timer_html_a4e74e70f8205d8fd2a23a30aaf2d5f4a"><div class="ttname"><a href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">dmn::Dmn_Timer::stop</a></div><div class="ttdeci">void stop()</div><div class="ttdoc">The method stops the timer.</div><div class="ttdef"><b>Definition</b> dmn-timer.hpp:122</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Timer_html_a08682897148ecb772b5c2f872e903b5e"><div class="ttname"><a href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e">dmn::Dmn_Timer::start</a></div><div class="ttdeci">void start(const T &amp;reltime, std::function&lt; void()&gt; fn={})</div><div class="ttdoc">The method starts the timer that executes fn repeatedly after every reltime interval....</div><div class="ttdef"><b>Definition</b> dmn-timer.hpp:94</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Timer_html_a4e74e70f8205d8fd2a23a30aaf2d5f4a"><div class="ttname"><a href="classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a">dmn::Dmn_Timer::stop</a></div><div class="ttdeci">void stop()</div><div class="ttdoc">The method stops the timer.</div><div class="ttdef"><b>Definition</b> dmn-timer.hpp:119</div></div>
 <div class="ttc" id="admn-debug_8hpp_html"><div class="ttname"><a href="dmn-debug_8hpp.html">dmn-debug.hpp</a></div><div class="ttdoc">Lightweight debug-print macro controlled by the preprocessor.</div></div>
 <div class="ttc" id="admn-proc_8hpp_html"><div class="ttname"><a href="dmn-proc_8hpp.html">dmn-proc.hpp</a></div><div class="ttdoc">Lightweight RAII wrapper around native pthread functionality.</div></div>
 </div><!-- fragment --></div><!-- contents -->

@@ -109,7 +109,7 @@ Inheritance diagram for dmn::Dmn_Singleton&lt; T &gt;:</div>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6" id="r_a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memTemplItemLeft" align="right" valign="top">static std::shared_ptr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">createInstance</a> (U &amp;&amp;...arg)</td></tr>
-<tr class="memdesc:a265bcf7489109bbf0d5a636e9b30dcd6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forwarding helper to create or retrieve a singleton instance for T.  <br /></td></tr>
+<tr class="memdesc:a265bcf7489109bbf0d5a636e9b30dcd6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create or retrieve the process-wide singleton instance of <code>T</code>.  <br /></td></tr>
 <tr class="separator:a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -141,23 +141,24 @@ template&lt;class... U&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Forwarding helper to create or retrieve a singleton instance for T. </p>
-<p>This method forwards the provided arguments to T type' constructor and returns the resulting std::shared_ptr&lt;T&gt;.</p>
-<p>Template parameters:</p><ul>
-<li>T : concrete singleton type that is created by <a class="el" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6" title="Forwarding helper to create or retrieve a singleton instance for T.">createInstance()</a>.</li>
-<li>U... : parameter pack of argument types to be forwarded.</li>
-</ul>
-<p>Requirements on T:</p><ul>
-<li>Optionally provide a static method that is run before T instance is created static void runPriorToCreateInstance();</li>
-<li>That method must guarantee singleton semantics (return the same instance on subsequent calls) and perform any required synchronization to be thread-safe.</li>
-</ul>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">arg</td><td>Arguments forwarded to T type constructor </td></tr>
+<p>Create or retrieve the process-wide singleton instance of <code>T</code>. </p>
+<p>Forwards the provided arguments to the constructor of <code>T</code> and stores the resulting object in a static <code>std::shared_ptr&lt;T&gt;</code>. Subsequent calls with any arguments return the same shared pointer without constructing a new object.</p>
+<p>If <code>T</code> satisfies HasStaticRunPriorToCreateInstance, <code>T::runPriorToCreateInstance()</code> is invoked exactly once, before the instance is constructed.</p>
+<p>Thread-safety is provided by <code>std::call_once</code> via a static <code>std::once_flag</code>; it is therefore safe to call <code><a class="el" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6" title="Create or retrieve the process-wide singleton instance of T.">createInstance()</a></code> concurrently from multiple threads.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>Concrete singleton type whose instance is managed here. </td></tr>
+    <tr><td class="paramname">U</td><td>Parameter pack of argument types forwarded to <code>T's</code> constructor. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::shared_ptr&lt;T&gt; pointing to the singleton instance managed by T. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">arg</td><td>Arguments forwarded to <code>T's</code> constructor (only used on the first call). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>std::shared_ptr&lt;T&gt;</code> pointing to the singleton instance. </dd></dl>
 
 </div>
 </div>

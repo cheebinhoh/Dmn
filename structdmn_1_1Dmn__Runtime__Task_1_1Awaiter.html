@@ -97,6 +97,9 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task_1_1Awa
 </div><!--header-->
 <div class="contents">
 
+<p>Minimal awaitable interface for <code><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a></code>.  
+ <a href="structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -115,12 +118,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>await_resume</b> ()</
 Public Attributes</h2></td></tr>
 <tr class="memitem:a3e6b1feabf8f18ea301ec77804f2311c" id="r_a3e6b1feabf8f18ea301ec77804f2311c"><td class="memItemLeft" align="right" valign="top"><a id="a3e6b1feabf8f18ea301ec77804f2311c" name="a3e6b1feabf8f18ea301ec77804f2311c"></a>
 std::coroutine_handle&lt; <a class="el" href="structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html">promise_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>m_handle</b></td></tr>
+<tr class="memdesc:a3e6b1feabf8f18ea301ec77804f2311c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle to the task coroutine being awaited. <br /></td></tr>
 <tr class="separator:a3e6b1feabf8f18ea301ec77804f2311c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a> is intentionally not a general-purpose awaitable type.</p>
-<p>Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler. Library consumers should normally interact with higher-level runtime abstractions instead of awaiting this type directly.</p>
-<p>However, to preserve backward compatibility for existing code that previously did <code>co_await <a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a></code>, we provide a minimal awaitable interface via <code>operator co_await</code>. This simply wires the awaiting coroutine into the task’s continuation and propagates any stored exception. </p>
+<div class="textblock"><p>Minimal awaitable interface for <code><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a></code>. </p>
+<p><code><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a></code> is intentionally not a general-purpose awaitable type. Its lifetime and execution are driven by <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a>'s</code> scheduler. Library consumers should normally interact with higher-level runtime abstractions instead of awaiting this type directly.</p>
+<p>However, to preserve backward compatibility for existing code that previously did <code>co_await</code> <code><a class="el" href="structdmn_1_1Dmn__Runtime__Task.html" title="A small RAII wrapper around coroutine frame for Dmn_Runtime_Job.">Dmn_Runtime_Task</a></code>, a minimal awaitable interface is provided via <code>operator</code> <code>co_await</code>. This simply wires the awaiting coroutine into the task's continuation and propagates any stored exception. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a></li>
 </ul>

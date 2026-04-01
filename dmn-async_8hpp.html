@@ -90,8 +90,7 @@ $(document).ready(function(){initNavTree('dmn-async_8hpp.html',''); initResizabl
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#nested-classes">Classes</a>  </div>
   <div class="headertitle"><div class="title">dmn-async.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -118,11 +117,15 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Convenience macros for submitting asynchronous tasks</div></td></tr>
 <tr class="memitem:ab4b2eb25e58bb851a4447fb7add5d9ee" id="r_ab4b2eb25e58bb851a4447fb7add5d9ee"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-async_8hpp.html#ab4b2eb25e58bb851a4447fb7add5d9ee">DMN_ASYNC_CALL_WITH_COPY_CAPTURE</a>(block)</td></tr>
+<tr class="memdesc:ab4b2eb25e58bb851a4447fb7add5d9ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit a task with copy-capture semantics (captures everything by value) to the calling <code>Dmn_Async</code> instance.  <br /></td></tr>
 <tr class="separator:ab4b2eb25e58bb851a4447fb7add5d9ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6a1ff0c80c7d2b6274c06d6ee1f2b00" id="r_ad6a1ff0c80c7d2b6274c06d6ee1f2b00"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-async_8hpp.html#ad6a1ff0c80c7d2b6274c06d6ee1f2b00">DMN_ASYNC_CALL_WITH_REF_CAPTURE</a>(block)</td></tr>
+<tr class="memdesc:ad6a1ff0c80c7d2b6274c06d6ee1f2b00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit a task with reference-capture semantics (captures everything by reference) to the calling <code>Dmn_Async</code> instance.  <br /></td></tr>
 <tr class="separator:ad6a1ff0c80c7d2b6274c06d6ee1f2b00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd3a6227f7d38fa67d9982785afe1fed" id="r_abd3a6227f7d38fa67d9982785afe1fed"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-async_8hpp.html#abd3a6227f7d38fa67d9982785afe1fed">DMN_ASYNC_CALL_WITH_CAPTURE</a>(block, ...)</td></tr>
+<tr class="memdesc:abd3a6227f7d38fa67d9982785afe1fed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit a task with a custom capture list to the calling <code>Dmn_Async</code> instance.  <br /></td></tr>
 <tr class="separator:abd3a6227f7d38fa67d9982785afe1fed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -169,6 +172,16 @@ Usage summary</h2>
 <div class="line">    this-&gt;addExecTask([__VA_ARGS__]() <span class="keyword">mutable</span> -&gt; <span class="keywordtype">void</span> { block; });             \</div>
 <div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
 </div><!-- fragment -->
+<p>Submit a task with a custom capture list to the calling <code>Dmn_Async</code> instance. </p>
+<p>Expands to a call to <code>this-&gt;addExecTask()</code> with a lambda whose capture list is provided as a variadic argument.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">block</td><td>A complete statement (the body of the lambda). </td></tr>
+    <tr><td class="paramname">...</td><td>The capture list for the lambda (e.g., <code>x</code>, <code>&amp;y</code>). </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <a id="ab4b2eb25e58bb851a4447fb7add5d9ee" name="ab4b2eb25e58bb851a4447fb7add5d9ee"></a>
@@ -190,6 +203,15 @@ Usage summary</h2>
 <div class="line">    this-&gt;addExecTask([=]() <span class="keyword">mutable</span> -&gt; <span class="keywordtype">void</span> { block; });                       \</div>
 <div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
 </div><!-- fragment -->
+<p>Submit a task with copy-capture semantics (captures everything by value) to the calling <code>Dmn_Async</code> instance. </p>
+<p>Expands to a call to <code>this-&gt;addExecTask()</code> with a lambda that captures all referenced variables by value.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">block</td><td>A complete statement (the body of the lambda). </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 <a id="ad6a1ff0c80c7d2b6274c06d6ee1f2b00" name="ad6a1ff0c80c7d2b6274c06d6ee1f2b00"></a>
@@ -211,6 +233,16 @@ Usage summary</h2>
 <div class="line">    this-&gt;addExecTask([&amp;]() <span class="keyword">mutable</span> -&gt; <span class="keywordtype">void</span> { block; });                       \</div>
 <div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
 </div><!-- fragment -->
+<p>Submit a task with reference-capture semantics (captures everything by reference) to the calling <code>Dmn_Async</code> instance. </p>
+<p>Expands to a call to <code>this-&gt;addExecTask()</code> with a lambda that captures all referenced variables by reference.</p>
+<dl class="section warning"><dt>Warning</dt><dd>The caller must ensure that all captured variables remain valid until the task executes.</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">block</td><td>A complete statement (the body of the lambda). </td></tr>
+  </table>
+  </dd>
+</dl>
+
 </div>
 </div>
 </div><!-- contents -->

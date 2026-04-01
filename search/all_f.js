@@ -12,5 +12,6 @@ var searchData=
   ['resolveconflict_9',['resolveConflict',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['responsibilities_10',['Key Responsibilities',['../dmn-runtime_8hpp.html#autotoc_md34',1,'']]],
   ['runexec_11',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]],
-  ['runpriortocreateinstance_12',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
+  ['runfninthreadhelper_12',['runFnInThreadHelper',['../classdmn_1_1Dmn__Proc.html#a93a3d80de18bc7b022d4bbf85fb394ba',1,'dmn::Dmn_Proc']]],
+  ['runpriortocreateinstance_13',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
 ];
