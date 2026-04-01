@@ -272,13 +272,23 @@ protected:
   template <class U> void pushImpl(U &&item);
 
   /**
-   * Delegation methods integrate the queue into Dmn_InflightGuard interface.
+   * Delegation methods that integrate the queue into the @c Dmn_Inflight_Guard
+   * interface.  These override the corresponding virtual methods of
+   * @c Dmn_Inflight_Guard<uint64_t> to implement epoch-based reclamation.
    */
   virtual auto enterInflightGuardFnc() -> uint64_t override;
   virtual auto isInflightGuardClosed() -> bool override;
   virtual void leaveInflightGuardFnc(const uint64_t &) noexcept override;
 
 private:
+  /**
+   * @brief pthread cleanup handler that resets the inflight-guard ticket.
+   *
+   * Registered with @c DMN_PROC_CLEANUP_PUSH to ensure the in-flight ticket
+   * is released if the thread is cancelled while inside a push/pop call.
+   *
+   * @param arg Pointer to an @c Inflight_Guard_Ticket to reset.
+   */
   static void cleanup_thunk_inflight(void *arg);
 
   /**
@@ -338,18 +348,25 @@ private:
    */
   void retireNode(uint64_t epochIndex, Node *node);
 
-  // a linked list of nodes that are maintained in FIFO and contains
-  // the data pushed into and popped out of the queue.
-  std::atomic<Node *> m_head{};
-  std::atomic<Node *> m_tail{};
+  std::atomic<Node *>
+      m_head{}; ///< Head of the FIFO linked list (dummy sentinel node).
+  std::atomic<Node *>
+      m_tail{}; ///< Tail of the FIFO linked list (last pushed node).
 
-  std::atomic<std::uint64_t> m_total_push_count{};
+  std::atomic<std::uint64_t>
+      m_total_push_count{}; ///< Monotonically increasing push counter.
 
-  std::atomic<EpochData> m_epochData{};
-  std::array<std::atomic<uint64_t>, s_epochDataSize> m_epochInFlightCount{};
-  std::array<std::atomic<Node *>, s_epochDataSize> m_epochReclaimNode{};
+  std::atomic<EpochData>
+      m_epochData{}; ///< Current global epoch identifier and in-flight total.
+  std::array<std::atomic<uint64_t>, s_epochDataSize>
+      m_epochInFlightCount{}; ///< Per-epoch in-flight call counts.
+  std::array<std::atomic<Node *>, s_epochDataSize>
+      m_epochReclaimNode{}; ///< Per-epoch lists of retired nodes awaiting
+                            ///< reclamation.
 
-  std::atomic<std::uint64_t> m_in_flight_total{0};
+  std::atomic<std::uint64_t> m_in_flight_total{
+      0}; ///< Running total of all pop/push API calls (used for epoch
+          ///< advancement).
 }; // class Dmn_BlockingQueue_Lf
 
 template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {

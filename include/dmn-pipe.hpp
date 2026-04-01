@@ -191,10 +191,23 @@ public:
   auto waitForEmpty() -> uint64_t override;
 
 protected:
+  /**
+   * @brief Return @c true if the shutdown flag has been set on this pipe.
+   *
+   * @return @c true when shutdown() has been called, @c false otherwise.
+   */
   virtual auto isShutdown() -> bool override {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
+  /**
+   * @brief Initiate an orderly shutdown of the pipe.
+   *
+   * Sets the shutdown flag, calls @c QueueType::shutdown() to unblock any
+   * threads waiting on the queue, and (if a background processing task was
+   * provided at construction) waits for the background thread to finish.
+   * Subsequent calls are no-ops.
+   */
   virtual void shutdown() override {
     if (isShutdown()) {
       return;
@@ -214,11 +227,12 @@ private:
   using QueueType::popNoWait;
   using QueueType::push;
 
-  std::mutex m_mutex{};
-  std::condition_variable m_empty_cond{};
-  size_t m_count{};
-  std::atomic_flag m_shutdown_flag{};
-  bool m_hasFn{};
+  std::mutex m_mutex{}; ///< Protects @c m_count and condition variable.
+  std::condition_variable
+      m_empty_cond{}; ///< Signalled when processed count reaches inbound count.
+  size_t m_count{};   ///< Total number of items processed (popped and handled).
+  std::atomic_flag m_shutdown_flag{}; ///< Set when shutdown() is called.
+  bool m_hasFn{}; ///< @c true when a background processing task was provided.
 }; // class Dmn_Pipe
 
 template <typename T, typename QueueType>

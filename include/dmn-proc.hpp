@@ -148,37 +148,76 @@ public:
   static void yield();
 
   /**
-   * Voluntarily test if the thread is to be cancelled.
+   * @brief Voluntarily test if the current thread has a pending cancellation
+   *        request.
+   *
+   * This is a deferred cancellation point: if a cancellation request is
+   * pending, the thread is terminated at this call site rather than
+   * asynchronously.
    */
   static void testcancel();
 
 protected:
+  /**
+   * @brief Return the current lifecycle state of this Dmn_Proc.
+   *
+   * @return The current @c State enum value.
+   */
   auto getState() const -> Dmn_Proc::State;
+
+  /**
+   * @brief Transition to a new lifecycle state and return the previous one.
+   *
+   * @param state The new state to set.
+   * @return The previous @c State value before the transition.
+   */
   auto setState(Dmn_Proc::State state) -> Dmn_Proc::State;
+
+  /**
+   * @brief Assign the task that will be executed when exec() is called.
+   *
+   * The process must be in @c kNew or @c kReady state. After a successful
+   * assignment the state transitions to @c kReady.
+   *
+   * @param fnc The task function to assign. Must be a valid (non-empty)
+   *            callable.
+   */
   void setTask(Dmn_Proc::Task fnc);
 
   /**
-   * Internal helpers used by exec/stopExec and the thread entry routine.
-   * runExec/stopExec manage starting and stopping the underlying pthread.
+   * @brief Start the underlying pthread and transition to @c kRunning state.
+   *
+   * @return @c true if the thread was created successfully, @c false otherwise.
+   * @throws std::runtime_error if the process is not in @c kReady state.
    */
   auto runExec() -> bool;
-  auto stopExec() -> bool;
-
-private:
-  static auto runFnInThreadHelper(void *context) -> void *;
 
   /**
-   * Data members:
-   * - m_name: diagnostic name for the thread/object.
-   * - m_fnc: current task to execute in the thread.
-   * - m_state: internal state machine for lifecycle management.
-   * - m_th: native pthread handle.
+   * @brief Cancel the running thread and wait for it to terminate.
+   *
+   * If the thread is not currently running, this is a no-op and returns
+   * @c true immediately.
+   *
+   * @return @c true if the thread was stopped (or was not running).
+   * @throws std::runtime_error if pthread_cancel fails.
    */
-  const std::string m_name{};
+  auto stopExec() -> bool;
 
-  Dmn_Proc::Task m_fnc{};
-  Dmn_Proc::State m_state{};
-  pthread_t m_th{};
+  /**
+   * @brief Static thread-entry trampoline passed to pthread_create.
+   *
+   * Sets up deferred cancellation for the new thread and then invokes the
+   * stored task.
+   *
+   * @param context Pointer to the owning @c Dmn_Proc instance.
+   * @return Always @c nullptr.
+   */
+  static auto runFnInThreadHelper(void *context) -> void *;
+
+  const std::string m_name{}; ///< Human-readable name for diagnostics/logging.
+  Dmn_Proc::Task m_fnc{};     ///< Task to execute in the thread.
+  Dmn_Proc::State m_state{};  ///< Current lifecycle state of this object.
+  pthread_t m_th{};           ///< Native pthread handle.
 }; // class Dmn_Proc
 
 } // namespace dmn

@@ -19,6 +19,12 @@ namespace dmn {
  * @brief A small RAII wrapper around coroutine frame for Dmn_Runtime_Job
  */
 struct Dmn_Runtime_Task {
+  /**
+   * @brief Promise type required by the C++ coroutine machinery.
+   *
+   * Controls suspension points, return value handling, and exception
+   * propagation for @c Dmn_Runtime_Task coroutines.
+   */
   struct promise_type {
     Dmn_Runtime_Task get_return_object() {
       return Dmn_Runtime_Task{
@@ -27,7 +33,10 @@ struct Dmn_Runtime_Task {
 
     std::suspend_always initial_suspend() { return {}; }
 
-    // When the task finishes, resume the "waiter"
+    /**
+     * @brief Custom final awaiter that resumes the registered continuation
+     *        (if any) when this coroutine finishes.
+     */
     struct FinalAwaiter {
       bool await_ready() const noexcept { return false; }
 
@@ -46,26 +55,29 @@ struct Dmn_Runtime_Task {
 
     void return_void() {}
 
-    std::coroutine_handle<> m_continuation; // The handle of the caller
-    std::exception_ptr m_except{};
+    std::coroutine_handle<>
+        m_continuation; ///< Handle of the awaiting coroutine (continuation).
+    std::exception_ptr
+        m_except{}; ///< Stores any exception thrown by the coroutine body.
   };
 
   /**
-   * Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
+   * @brief Minimal awaitable interface for @c Dmn_Runtime_Task.
    *
-   * Its lifetime and execution are driven by Dmn_Runtime_Manager’s scheduler.
-   * Library consumers should normally interact with higher-level runtime
-   * abstractions instead of awaiting this type directly.
+   * @c Dmn_Runtime_Task is intentionally not a general-purpose awaitable type.
+   * Its lifetime and execution are driven by @c Dmn_Runtime_Manager's
+   * scheduler.  Library consumers should normally interact with higher-level
+   * runtime abstractions instead of awaiting this type directly.
    *
    * However, to preserve backward compatibility for existing code that
-   * previously did `co_await Dmn_Runtime_Task`, we provide a minimal
-   * awaitable interface via `operator co_await`. This simply wires the
-   * awaiting coroutine into the task’s continuation and propagates any
-   * stored exception.
+   * previously did @c co_await @c Dmn_Runtime_Task, a minimal awaitable
+   * interface is provided via @c operator @c co_await.  This simply wires the
+   * awaiting coroutine into the task's continuation and propagates any stored
+   * exception.
    */
-
   struct Awaiter {
-    std::coroutine_handle<promise_type> m_handle;
+    std::coroutine_handle<promise_type>
+        m_handle; ///< Handle to the task coroutine being awaited.
 
     bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
 
@@ -106,17 +118,33 @@ struct Dmn_Runtime_Task {
     }
   }
 
-  // Construct a task that takes ownership of the given coroutine handle.
+  /**
+   * @brief Construct a task that takes ownership of the given coroutine handle.
+   *
+   * @param h Coroutine handle to take ownership of.
+   */
   explicit Dmn_Runtime_Task(std::coroutine_handle<promise_type> h) noexcept
       : m_handle(h) {}
 
   Dmn_Runtime_Task(const Dmn_Runtime_Task &) = delete;
   Dmn_Runtime_Task &operator=(const Dmn_Runtime_Task &) = delete;
 
-  // Move: transfer ownership
+  /**
+   * @brief Move constructor — transfers ownership of the coroutine handle.
+   *
+   * @param other The source task; its handle is set to @c nullptr after the
+   *              move.
+   */
   Dmn_Runtime_Task(Dmn_Runtime_Task &&other) noexcept
       : m_handle(std::exchange(other.m_handle, nullptr)) {}
 
+  /**
+   * @brief Move assignment — transfers ownership of the coroutine handle.
+   *
+   * @param other The source task; its handle is set to @c nullptr after the
+   *              move.
+   * @return Reference to @c *this.
+   */
   Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&other) noexcept {
     if (this != &other) {
       if (m_handle) {
@@ -128,10 +156,13 @@ struct Dmn_Runtime_Task {
     return *this;
   }
 
-  [[nodiscard]] bool isValid() const {
-    // Returns true if the handle points to a coroutine frame
-    return m_handle ? true : false;
-  }
+  /**
+   * @brief Return @c true if this task holds a valid (non-null) coroutine
+   *        frame.
+   *
+   * @return @c true when the internal coroutine handle is non-null.
+   */
+  [[nodiscard]] bool isValid() const { return m_handle ? true : false; }
 
   std::coroutine_handle<promise_type> m_handle;
 };

@@ -39,23 +39,59 @@
 #include <memory>
 #include <string_view>
 
-// Helper macros to submit tasks with different capture styles. They call
-// write() with a small lambda that captures as requested and forwards the
-// captured code as the task body.
+/// @name Convenience macros for submitting asynchronous tasks
+/// @{
+
+/**
+ * @def DMN_ASYNC_CALL_WITH_COPY_CAPTURE
+ * @brief Submit a task with copy-capture semantics (captures everything by
+ *        value) to the calling @c Dmn_Async instance.
+ *
+ * Expands to a call to @c this->addExecTask() with a lambda that captures
+ * all referenced variables by value.
+ *
+ * @param block A complete statement (the body of the lambda).
+ */
 #define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \
   do {                                                                         \
     this->addExecTask([=]() mutable -> void { block; });                       \
   } while (false)
 
+/**
+ * @def DMN_ASYNC_CALL_WITH_REF_CAPTURE
+ * @brief Submit a task with reference-capture semantics (captures everything
+ *        by reference) to the calling @c Dmn_Async instance.
+ *
+ * Expands to a call to @c this->addExecTask() with a lambda that captures
+ * all referenced variables by reference.
+ *
+ * @warning The caller must ensure that all captured variables remain valid
+ *          until the task executes.
+ *
+ * @param block A complete statement (the body of the lambda).
+ */
 #define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \
   do {                                                                         \
     this->addExecTask([&]() mutable -> void { block; });                       \
   } while (false)
 
+/**
+ * @def DMN_ASYNC_CALL_WITH_CAPTURE
+ * @brief Submit a task with a custom capture list to the calling @c Dmn_Async
+ *        instance.
+ *
+ * Expands to a call to @c this->addExecTask() with a lambda whose capture
+ * list is provided as a variadic argument.
+ *
+ * @param block       A complete statement (the body of the lambda).
+ * @param ...         The capture list for the lambda (e.g., @c x, @c &y).
+ */
 #define DMN_ASYNC_CALL_WITH_CAPTURE(block, ...)                                \
   do {                                                                         \
     this->addExecTask([__VA_ARGS__]() mutable -> void { block; });             \
   } while (false)
+
+/// @}
 
 namespace dmn {
 
@@ -70,6 +106,16 @@ public:
     template <template <class> class> friend class Dmn_Async;
 
   public:
+    /**
+     * @brief Construct a handle for the given task, optionally scheduled at a
+     *        future time.
+     *
+     * @param fnc           The task callable to wrap.
+     * @param due_in_future Absolute nanosecond timestamp (from
+     *                      @c std::chrono::steady_clock) after which the task
+     *                      may execute.  Pass 0 (the default) for immediate
+     *                      execution.
+     */
     Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
         : m_fnc{fnc}, m_due_in_future{due_in_future} {
       m_fut = m_p.get_future();
@@ -82,14 +128,23 @@ public:
     Dmn_Async_Handle(Dmn_Async_Handle &&obj) = delete;
     Dmn_Async_Handle &operator=(Dmn_Async_Handle &&obj) = delete;
 
+    /**
+     * @brief Block until the associated task has finished.
+     *
+     * If the task threw an exception, it is rethrown here in the calling
+     * thread.
+     */
     void wait() { m_fut.get(); }
 
   private:
-    std::function<void()> m_fnc{};
-    long long m_due_in_future{};
+    std::function<void()> m_fnc{}; ///< The task callable.
+    long long m_due_in_future{};   ///< Earliest execution time as a nanosecond
+                                   ///< timestamp; 0 = immediate.
 
-    std::promise<void> m_p{};
-    std::future<void> m_fut{};
+    std::promise<void>
+        m_p{}; ///< Promise fulfilled when the task completes (or throws).
+    std::future<void>
+        m_fut{}; ///< Future used by wait() to block until completion.
   }; // class Dmn_Async_Handle
 
   /**
