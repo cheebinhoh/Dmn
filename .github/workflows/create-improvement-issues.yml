@@ -1,0 +1,37 @@
+name: Create Improvement Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for creating improvement issues'
+        required: false
+        default: 'Create tracked improvement issues from code analysis'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure enhancement and performance labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "enhancement" --description "New feature or request" \
+            --color "a2eeef" --repo "${{ github.repository }}" 2>/dev/null || true
+          gh label create "performance" --description "Performance improvement" \
+            --color "e4e669" --repo "${{ github.repository }}" 2>/dev/null || true
+
+      - name: Create improvement issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          python3 scripts/create-improvement-issues.py
