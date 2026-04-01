@@ -139,17 +139,18 @@ using SecInt = int64_t;
 using NSecInt = std::chrono::nanoseconds::rep;
 
 /**
- * Dmn_Runtime_Job
+ * @brief A unit of work that can be scheduled and executed by
+ *        @c Dmn_Runtime_Manager.
  *
- * Represents a unit of work that can be scheduled and executed by the runtime.
- *
- * Members:
- *  - m_priority: Priority level for scheduling (kSched, kHigh, kMedium, kLow).
- *  - m_fnc: Callable that performs the work. It is invoked with the job
- *           metadata so the callable can inspect runtime fields if needed.
- *  - m_due: TimePoint representing the absolute time (since boot/monotonic
- *           start) when the job should be executed.
- *  - m_onErrorFnc: Callable for exception thrown inside m_fnc Callable.
+ * @details
+ * Each job carries:
+ *  - @c m_priority : Priority level for scheduling
+ *                    (@c kSched, @c kHigh, @c kMedium, or @c kLow).
+ *  - @c m_fnc      : Callable that performs the work.  It is invoked with the
+ *                    job metadata so the callable can inspect runtime fields.
+ *  - @c m_due      : Absolute monotonic time point at which the job becomes
+ *                    eligible for execution (used by timed jobs).
+ *  - @c m_onErrorFnc : Optional callable invoked when @c m_fnc throws.
  */
 struct Dmn_Runtime_Job {
   using FncType = std::function<void(const Dmn_Runtime_Job &j)>;
@@ -158,24 +159,32 @@ struct Dmn_Runtime_Job {
 
   enum class Priority : int { kSched = 0, kHigh = 1, kMedium, kLow };
 
-  Priority m_priority{Priority::kMedium};
-  TaskFncType m_fnc{};
-  TimePoint m_due{};
-
-  OnErrorFncType m_onErrorFnc{};
+  Priority m_priority{Priority::kMedium};   ///< Scheduling priority for this job.
+  TaskFncType m_fnc{};                      ///< Coroutine-returning callable that performs the work.
+  TimePoint m_due{};                        ///< Absolute time after which the job may execute.
+  OnErrorFncType m_onErrorFnc{};            ///< Optional handler called when @c m_fnc throws.
 };
 
-// TimedJobComparator
-// ------------------
-// The runtime keeps timed jobs in a priority_queue. The comparator places the
-// job with the smallest (earliest) m_due at the top of the container so it
-// can be popped and executed first.
+/**
+ * @brief Strict-weak-ordering comparator for @c Dmn_Runtime_Job used by
+ *        the timed-job min-heap.
+ *
+ * Places the job with the earliest (smallest) @c m_due at the top of a
+ * @c std::priority_queue so it is executed first.
+ */
 struct TimedJobComparator {
   bool operator()(const Dmn_Runtime_Job &a, const Dmn_Runtime_Job &b) const {
     return a.m_due > b.m_due;
   }
 };
 
+/**
+ * @brief Concept that checks whether invoking @p F with @p Args returns
+ *        either @c void or @c Dmn_Runtime_Task.
+ *
+ * @tparam F    The callable type to check.
+ * @tparam Args Argument types with which @p F is invoked.
+ */
 template <typename F, typename... Args>
 concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
   {
@@ -187,7 +196,15 @@ concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
   } -> std::same_as<Dmn_Runtime_Task>;
 };
 
-// Simplified alias for your specific Job signature
+/**
+ * @brief Concept that checks whether @p F is a valid job callable accepting a
+ *        single @c const @c Dmn_Runtime_Job& argument.
+ *
+ * Satisfied when @p F can be invoked with @c const @c Dmn_Runtime_Job& and
+ * returns either @c void or @c Dmn_Runtime_Task.
+ *
+ * @tparam F The callable type to validate.
+ */
 template <typename F>
 concept IsValidJobFnc = IsStrictJobFnc<F, const Dmn_Runtime_Job &>;
 
@@ -323,7 +340,11 @@ public:
   void enterMainLoop();
 
   /**
-   * Request the runtime to stop processing and exit the main loop.
+   * @brief Request the runtime to stop processing and exit the main loop.
+   *
+   * May be called from a signal handler hook or from any thread.  After this
+   * call returns, a subsequent call to @c enterMainLoop() will unblock and
+   * return to the caller.
    */
   void exitMainLoop();
 
@@ -385,54 +406,36 @@ private:
   /** @brief Arm the SIGALRM timer to fire at the absolute time point @p tp. */
   void setNextTimerAt(TimePoint tp);
 
-  /**
-   * Internal state
-   */
-  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};
-  sigset_t m_mask{};
+  std::unique_ptr<Dmn_Proc> m_signalWaitProc{};  ///< Dedicated thread running sigwait().
+  sigset_t m_mask{};                              ///< Signal mask applied to all runtime threads.
   std::unordered_map<int, SignalHandlerHook>
-      m_signal_handler_hooks{}; // internal handler hooks
+      m_signal_handler_hooks{};    ///< Internal (runtime-managed) signal handler hooks.
   std::unordered_map<int, std::vector<SignalHandlerHook>>
-      m_signal_handler_hooks_external{}; // external handler hooks
+      m_signal_handler_hooks_external{};  ///< Client-registered signal handler hooks.
 
-  // Per-priority immediate job queues
-  QueueType<Dmn_Runtime_Job> m_highQueue{};
-  QueueType<Dmn_Runtime_Job> m_lowQueue{};
-  QueueType<Dmn_Runtime_Job> m_mediumQueue{};
+  QueueType<Dmn_Runtime_Job> m_highQueue{};    ///< Queue for high-priority jobs.
+  QueueType<Dmn_Runtime_Job> m_lowQueue{};     ///< Queue for low-priority jobs.
+  QueueType<Dmn_Runtime_Job> m_mediumQueue{};  ///< Queue for medium-priority jobs.
 
-  // Min-heap of timed jobs (earliest timestamp at top)
   std::priority_queue<Dmn_Runtime_Job, std::vector<Dmn_Runtime_Job>,
                       TimedJobComparator>
-      m_timedQueue{};
+      m_timedQueue{};  ///< Min-heap of deferred timed jobs ordered by @c m_due.
 
-  // Atomic flags used for coordination (lightweight spin semantics)
-  std::atomic_flag m_main_enter_flag{};
-  std::atomic_flag m_main_exit_flag{};
-  std::atomic_flag m_sched_enter_flag{};
+  std::atomic_flag m_main_enter_flag{};   ///< Set when enterMainLoop() is entered.
+  std::atomic_flag m_main_exit_flag{};    ///< Set when exitMainLoop() is requested.
+  std::atomic_flag m_sched_enter_flag{};  ///< Set when the coroutine scheduler is active.
+  std::atomic_flag m_shutdown_flag{};     ///< Set when shutdown has been initiated.
 
-  std::atomic_flag m_shutdown_flag{};
+  std::atomic<std::size_t> m_jobs_count{};  ///< Number of pending jobs across all priority queues.
 
-  // Number of high, medium and low priority jobs scheduled and add to
-  // pending queue waiting for scheduler.
-  std::atomic<std::size_t> m_jobs_count{};
+  std::stack<Dmn_Runtime_Job> m_sched_job{};   ///< Coroutine-scheduler job backlog.
+  std::stack<Dmn_Runtime_Task> m_sched_task{};  ///< Coroutine handles for scheduled jobs.
 
-  // Small LIFO stack used by the scheduler to reorder or delay execution
-  std::stack<Dmn_Runtime_Job> m_sched_job{};
-  std::stack<Dmn_Runtime_Task> m_sched_task{};
+  detail::Dmn_Runtime_Manager_Impl *m_pimpl{};  ///< Platform-specific PIMPL (owned by this object).
 
-  // Pointer to the platform-specific implementation (PIMPL).
-  // Owned and managed by Dmn_Runtime_Manager; created and destroyed
-  // in the corresponding implementation file (dmn-runtime.cpp).
-  detail::Dmn_Runtime_Manager_Impl *m_pimpl{};
+  std::thread::id m_asyncThreadId{};  ///< Thread ID of the singleton asynchronous context.
 
-  // the id of the singleton asynchronous thread context.
-  std::thread::id m_asyncThreadId{};
-
-  /**
-   * Static members for singleton management
-   * - s_mask: signal mask applied during singleton creation.
-   */
-  inline static sigset_t s_mask{};
+  inline static sigset_t s_mask{};  ///< Signal mask applied to the process before singleton creation.
 }; // class Dmn_Runtime_Manager
 
 template <template <class> class QueueType>

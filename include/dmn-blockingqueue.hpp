@@ -133,26 +133,60 @@ public:
   }
 
 protected:
+  /**
+   * @brief Return @c true if the shutdown flag has been set on this queue.
+   *
+   * @return @c true when the queue has been shut down, @c false otherwise.
+   */
   virtual auto isShutdown() -> bool {
     return m_shutdown_flag.test(std::memory_order_acquire);
   }
 
   // The following virtual methods are implemented by the subclasses and
   // they form the concrete details for the methods called by clients.
+  /**
+   * @brief Remove and return the front item, optionally blocking until one is
+   *        available.
+   *
+   * Subclasses must implement this primitive.  The composite public methods
+   * pop() and popNoWait() delegate here.
+   *
+   * @param wait If @c true, block until an item is available; otherwise return
+   *             @c std::nullopt immediately when the queue is empty.
+   * @return An @c optional containing the dequeued item, or @c std::nullopt if
+   *         the queue is empty (when @p wait is @c false) or shutdown while
+   *         waiting (when @p wait is @c true).
+   */
   virtual auto popOptional(bool wait) -> std::optional<T> {
     return static_cast<Derived *>(this)->popOptional(wait);
   }
 
+  /**
+   * @brief Enqueue a copy of @p item at the tail of the queue.
+   *
+   * Subclasses must implement this primitive.  The public push(const T&)
+   * overload delegates here.
+   *
+   * @param item The item to copy into the queue.
+   */
   virtual void pushCopy(const T &item) {
     static_cast<Derived *>(this)->pushCopy(item);
   }
 
+  /**
+   * @brief Enqueue @p item at the tail of the queue using move semantics.
+   *
+   * Subclasses must implement this primitive.  The public push(T&&) overload
+   * delegates here.
+   *
+   * @param item The item to move into the queue.
+   */
   virtual void pushMove(T &&item) {
     static_cast<Derived *>(this)->pushMove(std::move(item));
   }
 
 private:
-  std::atomic_flag m_shutdown_flag{};
+  std::atomic_flag m_shutdown_flag{}; ///< Flag set when shutdown() is called.
 }; // class Dmn_BlockingQueue
 
 template <typename Derived, typename T>

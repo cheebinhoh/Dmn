@@ -45,6 +45,17 @@
 
 namespace dmn {
 
+/**
+ * @brief Concept that checks whether type @p T exposes a static
+ *        @c runPriorToCreateInstance() method with a @c void return type.
+ *
+ * Satisfied when @p T declares:
+ * @code
+ *   static void runPriorToCreateInstance();
+ * @endcode
+ *
+ * @tparam T The type to check.
+ */
 template <typename T>
 concept HasStaticRunPriorToCreateInstance = requires {
   { T::runPriorToCreateInstance() } -> std::same_as<void>;
@@ -53,31 +64,34 @@ concept HasStaticRunPriorToCreateInstance = requires {
 template <typename T> class Dmn_Singleton {
 public:
   /**
-   * @brief Forwarding helper to create or retrieve a singleton instance for T.
+   * @brief Create or retrieve the process-wide singleton instance of @p T.
    *
-   * This method forwards the provided arguments to T type' constructor
-   * and returns the resulting std::shared_ptr<T>.
+   * Forwards the provided arguments to the constructor of @p T and stores
+   * the resulting object in a static @c std::shared_ptr<T>.  Subsequent
+   * calls with any arguments return the same shared pointer without
+   * constructing a new object.
    *
-   * Template parameters:
-   *  - T : concrete singleton type that is created by createInstance().
-   *  - U... : parameter pack of argument types to be forwarded.
+   * If @p T satisfies @ref HasStaticRunPriorToCreateInstance,
+   * @c T::runPriorToCreateInstance() is invoked exactly once, before the
+   * instance is constructed.
    *
-   * Requirements on T:
-   *  - Optionally provide a static method that is run before T instance is
-   * created static void runPriorToCreateInstance();
-   *  - That method must guarantee singleton semantics (return the same
-   *    instance on subsequent calls) and perform any required synchronization
-   *    to be thread-safe.
+   * Thread-safety is provided by @c std::call_once via a static
+   * @c std::once_flag; it is therefore safe to call @c createInstance()
+   * concurrently from multiple threads.
    *
-   * @param arg Arguments forwarded to T type constructor
-   * @return std::shared_ptr<T> pointing to the singleton instance managed by T.
+   * @tparam T   Concrete singleton type whose instance is managed here.
+   * @tparam U   Parameter pack of argument types forwarded to @p T's
+   *             constructor.
+   * @param  arg Arguments forwarded to @p T's constructor (only used on the
+   *             first call).
+   * @return @c std::shared_ptr<T> pointing to the singleton instance.
    */
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
 
 private:
-  static std::atomic<bool> s_allocated;
-  static std::shared_ptr<T> s_instance;
-  static std::once_flag s_init_once;
+  static std::atomic<bool> s_allocated;  ///< Flag set to @c true once the instance is allocated.
+  static std::shared_ptr<T> s_instance;  ///< Owning pointer to the singleton instance.
+  static std::once_flag s_init_once;     ///< Guards one-time initialization via std::call_once.
 };
 
 template <typename T> std::atomic<bool> Dmn_Singleton<T>::s_allocated{false};

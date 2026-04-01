@@ -211,16 +211,24 @@ protected:
   void pushMove(T &&item) override;
 
 private:
+  /**
+   * @brief pthread cleanup handler that resets the inflight-guard ticket.
+   *
+   * Registered with @c DMN_PROC_CLEANUP_PUSH to ensure the in-flight ticket
+   * is released if the thread is cancelled while inside a push/pop call.
+   *
+   * @param arg Pointer to an @c Inflight_Guard_Ticket to reset.
+   */
   static void cleanup_thunk_inflight(void *arg);
 
   template <class U> void pushImpl(U &&item);
 
-  std::deque<T> m_queue{};
-  std::mutex m_mutex{};
-  std::condition_variable m_empty_cond{};
-  std::condition_variable m_not_empty_cond{};
-  uint64_t m_push_count{};
-  uint64_t m_pop_count{};
+  std::deque<T> m_queue{};                       ///< The internal FIFO storage.
+  std::mutex m_mutex{};                          ///< Protects all accesses to @c m_queue and the counters.
+  std::condition_variable m_empty_cond{};        ///< Signalled when the queue becomes empty.
+  std::condition_variable m_not_empty_cond{};    ///< Signalled when an item is pushed.
+  uint64_t m_push_count{};                       ///< Number of items pushed (total inbound).
+  uint64_t m_pop_count{};                        ///< Number of items popped (total outbound).
 }; // class Dmn_BlockingQueue_Mt
 
 template <typename T> Dmn_BlockingQueue_Mt<T>::Dmn_BlockingQueue_Mt() {}
@@ -266,12 +274,15 @@ template <typename T> void Dmn_BlockingQueue_Mt<T>::pushMove(T &&item) {
 /**
  * @brief Internal enqueue helper with perfect forwarding.
  *
- * - For rvalues: moves into the deque (one construction)
- * - For lvalues: copies into the deque
+ * @details
+ * - For rvalues: moves into the deque (one construction).
+ * - For lvalues: copies into the deque.
  *
- * If you still want custom “move_if_noexcept” behavior for lvalues, keep that
- * logic at the public overload level (for example in pushCopy/pushMove)
- * before delegating to pushImpl.
+ * If custom move-if-noexcept behaviour is needed for lvalues, keep that logic
+ * in the public overloads (@c pushCopy / @c pushMove) before delegating here.
+ *
+ * @tparam U  Forwarding-reference type deduced from the call site.
+ * @param item The item to enqueue (moved or copied depending on value category).
  */
 template <typename T>
 template <class U>

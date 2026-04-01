@@ -73,11 +73,8 @@ public:
   void stop();
 
 private:
-  /**
-   * data members for constructor to instantiate the object.
-   */
-  std::function<void()> m_fn{};
-  T m_reltime{};
+  std::function<void()> m_fn{};  ///< Callback invoked repeatedly by the timer.
+  T m_reltime{};                 ///< Interval between consecutive callback invocations.
 }; // class Dmn_Timer
 
 template <typename T>
