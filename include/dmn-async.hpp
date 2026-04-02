@@ -165,7 +165,8 @@ public:
    *
    * @param fnc The task to execute asynchronously.
    */
-  void addExecTask(std::function<void()> fnc);
+  template <typename Callable, typename... Args>
+  void addExecTask(Callable &&func, Args &&...args);
 
   /**
    * @brief Submit a task for asynchronous execution and get a task wait object.
@@ -178,7 +179,8 @@ public:
    *
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
-  auto addExecTaskWithWait(std::function<void()> fnc)
+  template <typename Callable, typename... Args>
+  auto addExecTaskWithWait(Callable &&func, Args &&...args)
       -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
@@ -304,14 +306,23 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
 }
 
 template <template <class> class QueueType>
-void Dmn_Async<QueueType>::addExecTask(std::function<void()> fnc) {
-  addExecTaskWithWait(fnc);
+template <typename Callable, typename... Args>
+void Dmn_Async<QueueType>::addExecTask(Callable &&func, Args &&...args) {
+  addExecTaskWithWait(std::forward<Callable>(func),
+                      std::forward<Args>(args)...);
 }
 
 template <template <class> class QueueType>
-auto Dmn_Async<QueueType>::addExecTaskWithWait(std::function<void()> fnc)
+template <typename Callable, typename... Args>
+auto Dmn_Async<QueueType>::addExecTaskWithWait(Callable &&func, Args &&...args)
     -> std::shared_ptr<Dmn_Async::Dmn_Async_Handle> {
-  auto task_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Handle>(fnc);
+  auto bound_task = [f = std::forward<Callable>(func),
+                     ... captured_args = std::forward<Args>(args)]() mutable {
+    std::invoke(std::move(f), std::move(captured_args)...);
+  };
+
+  auto task_shared_ptr =
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(bound_task);
   auto task_ret = task_shared_ptr;
 
   this->m_pipe->write(task_shared_ptr);
