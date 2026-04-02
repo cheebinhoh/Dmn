@@ -2,7 +2,9 @@
 
 ADD_TEST_EXECUTABLE(dmn
                       dmn-test-async
+                      dmn-test-async-2
                       dmn-test-async-queue-lf
+                      dmn-test-async-2-queue-lf
                       dmn-test-blockingqueue
                       dmn-test-blockingqueue-2
                       dmn-test-blockingqueue-3
@@ -84,7 +86,9 @@ endif()
 if (ENABLE_VALGRIND)
   SET(DMN_VALGRIND_TESTS
         dmn-test-async
+        dmn-test-async-2
         dmn-test-async-queue-lf
+        dmn-test-async-2-queue-lf
         dmn-test-blockingqueue
         dmn-test-blockingqueue-2
         dmn-test-blockingqueue-3
