@@ -16,7 +16,7 @@
  * - The client passes work as a std::function<void()> to Dmn_Async's
  *   write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed
  *   asynchronously in the order of the submitted tasks and avoiding the need
- * for explicit mutexes in the client API.
+ *   for explicit mutexes in the client API.
  * - For callers that need to block until a submitted task finishes, use
  *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
  *   Dmn_Async_Handle object whose wait() method will only return after the task
@@ -161,21 +161,24 @@ public:
   Dmn_Async &operator=(Dmn_Async &&obj) = delete;
 
   /**
-   * @brief Submit a task for asynchronous execution.
+   * @brief Submit a callable task for asynchronous execution.
    *
-   * @param fnc The task to execute asynchronously.
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments to the callable task.
    */
   template <typename Callable, typename... Args>
   void addExecTask(Callable &&func, Args &&...args);
 
   /**
-   * @brief Submit a task for asynchronous execution and get a task wait object.
+   * @brief Submit a callable task for asynchronous execution and get a task
+   * wait object.
    *
    * The returned shared_ptr points to a Dmn_Async_Handle; calling wait() on it
    * will block until the submitted task has finished. If the task throws an
    * exception, wait() will rethrow it.
    *
-   * @param fnc The task to execute asynchronously.
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments to the callable task.
    *
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
@@ -184,18 +187,20 @@ public:
       -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
-   * @brief Schedule a task to run after the given duration has elapsed.
+   * @brief Schedule a callable task to run after the given duration has
+   * elapsed.
    *
    * The task will not be executed before the duration has passed. It may not
    * execute precisely at the moment the duration elapses (scheduling is not
    * real-time), but execution will occur at or after the specified time.
    *
    * @param duration Time to wait before executing the task.
-   * @param fnc The task to execute.
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments to the callable task.
    */
-  template <class Rep, class Period>
+  template <class Rep, class Period, typename Callable, typename... Args>
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
-                        std::function<void()> fnc);
+                        Callable &&func, Args &&...args);
 
   /**
    * @brief Same as addExecTaskAfter(), but returns a task wait object so the
@@ -210,14 +215,15 @@ public:
    * exception, wait() will rethrow it.
    *
    * @param duration Time to wait before executing the task.
-   * @param fnc The task to execute.
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments to the callable task.
    *
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
-  template <class Rep, class Period>
+  template <class Rep, class Period, typename Callable, typename... Args>
   auto
   addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
-                           std::function<void()> fnc)
+                           Callable &&func, Args &&...args)
       -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
@@ -278,26 +284,32 @@ Dmn_Async<QueueType>::~Dmn_Async() noexcept try {
 }
 
 template <template <class> class QueueType>
-template <class Rep, class Period>
+template <class Rep, class Period, typename Callable, typename... Args>
 void Dmn_Async<QueueType>::addExecTaskAfter(
-    const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fnc) {
-  this->addExecTaskAfterWithWait(duration, fnc);
+    const std::chrono::duration<Rep, Period> &duration, Callable &&func,
+    Args &&...args) {
+  this->addExecTaskAfterWithWait(duration, std::forward<Callable>(func),
+                                 std::forward<Args>(args)...);
 }
 
 template <template <class> class QueueType>
-template <class Rep, class Period>
+template <class Rep, class Period, typename Callable, typename... Args>
 auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
-    const std::chrono::duration<Rep, Period> &duration,
-    std::function<void()> fnc) -> std::shared_ptr<Dmn_Async::Dmn_Async_Handle> {
+    const std::chrono::duration<Rep, Period> &duration, Callable &&func,
+    Args &&...args) -> std::shared_ptr<Dmn_Async_Handle> {
   long long time_in_future =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count() +
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
-  auto task_shared_ptr =
-      std::make_shared<Dmn_Async::Dmn_Async_Handle>(fnc, time_in_future);
+  auto bound_task = [f = std::forward<Callable>(func),
+                     ... captured_args = std::forward<Args>(args)]() mutable {
+    std::invoke(std::move(f), std::move(captured_args)...);
+  };
+
+  auto task_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Handle>(
+      std::move(bound_task), time_in_future);
   auto task_ret = task_shared_ptr;
 
   this->m_pipe->write(task_shared_ptr);
@@ -322,7 +334,7 @@ auto Dmn_Async<QueueType>::addExecTaskWithWait(Callable &&func, Args &&...args)
   };
 
   auto task_shared_ptr =
-      std::make_shared<Dmn_Async::Dmn_Async_Handle>(bound_task);
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task));
   auto task_ret = task_shared_ptr;
 
   this->m_pipe->write(task_shared_ptr);
