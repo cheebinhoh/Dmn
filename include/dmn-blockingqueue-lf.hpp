@@ -77,9 +77,10 @@ class Dmn_BlockingQueue_Lf
    *
    * @rationale
    * Popped nodes cannot be immediately deleted because other threads may still
-   * be reading pointers obtained during concurrent operations (because of
-   * lock-free). This implementation uses an epoch-based scheme coordinated by
-   * @ref dmn::Dmn_Inflight_Guard to achieve hazard-free node reclamation:
+   * be reading pointers obtained during concurrent operations, since queue
+   * operations are lock-free. This implementation uses an epoch-based scheme
+   * coordinated by @ref dmn::Dmn_Inflight_Guard to achieve hazard-free node
+   * reclamation:
    *
    * - Each push/pop enters an in-flight region and is assigned an epoch index.
    * - Removed nodes are placed onto a per-epoch retired list (not deleted yet).

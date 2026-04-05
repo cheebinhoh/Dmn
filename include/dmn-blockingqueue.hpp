@@ -52,10 +52,10 @@ namespace dmn {
  *
  * @details
  * - There are a set of primitive methods to be overridden by concrete
- *   implementation subclass, and those methods are marked as virtual (in api)
- *   without final. Those methods are defined in this class with CRTP to achieve
- *   static polymorphism to call to subclass overridden methods. Those are
- *   methods in the implementaion tree in the Bridge design pattern.
+ *   implementation subclasses, and those methods are virtual in the public API
+ *   without being final. Those methods are defined in this class with CRTP to
+ *   achieve static polymorphism to call subclass-overridden methods. Those are
+ *   methods in the implementation tree in the Bridge design pattern.
  *
  * - There are a set of composite methods that are marked as final and
  *   implemented in term of primitive methods. Those are methods in the
