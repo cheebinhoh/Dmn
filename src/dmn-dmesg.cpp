@@ -51,53 +51,45 @@ const char *const kDMesgSysIdentifier = "sys.dmn-dmesg";
 
 const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
 
-// class Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub
-Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::
-    ~Dmn_DMesgHandlerSub() noexcept try {
-} catch (...) {
-  // explicit return to resolve exception as destructor must be noexcept
-  return;
-}
-
-void Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandlerSub::notify(
-    const dmn::DMesgPb &dmesgpb, Dmn_Pub<dmn::DMesgPb> *pub) {
+void Dmn_DMesg::Dmn_DMesgHandler::notify(const dmn::DMesgPb &dmesgpb,
+                                         Dmn_Pub<dmn::DMesgPb> *) {
   const std::string &topic = dmesgpb.topic();
-  auto iter = m_owner->m_topic_running_counter.find(topic);
+  auto iter = this->m_topic_running_counter.find(topic);
 
   if (dmesgpb.conflict()) {
-    if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name &&
-        (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
-         dmesgpb.topic() == m_owner->m_topic)) {
-      if (m_owner->m_topic_running_counter.end() != iter) {
-        m_owner->throwConflictInternal(dmesgpb);
+    if (dmesgpb.sourcewritehandleridentifier() != this->m_name &&
+        (this->m_no_topic_filter || this->m_topic.empty() ||
+         dmesgpb.topic() == this->m_topic)) {
+      if (this->m_topic_running_counter.end() != iter) {
+        this->throwConflictInternal(dmesgpb);
       }
     }
   } else {
     const auto runningCounter =
-        (m_owner->m_topic_running_counter.end() != iter ? iter->second : 0);
+        (this->m_topic_running_counter.end() != iter ? iter->second : 0);
 
     if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        m_owner->m_last_dmesgpb_sys = dmesgpb;
+        this->m_last_dmesgpb_sys = dmesgpb;
       }
 
       if (dmesgpb.force()) {
-        m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-        m_owner->resolveConflictInternal(dmesgpb.topic());
-      } else if (dmesgpb.sourcewritehandleridentifier() != m_owner->m_name ||
+        this->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+        this->resolveConflictInternal(dmesgpb.topic());
+      } else if (dmesgpb.sourcewritehandleridentifier() != this->m_name ||
                  dmesgpb.type() == dmn::DMesgTypePb::sys) {
         if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
-             m_owner->m_include_dmesgpb_sys) &&
-            (m_owner->m_no_topic_filter || m_owner->m_topic.empty() ||
-             dmesgpb.topic() == m_owner->m_topic) &&
-            (!m_owner->m_filter_fn || m_owner->m_filter_fn(dmesgpb))) {
-          m_owner->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-          m_owner->resolveConflictInternal(dmesgpb.topic());
+             this->m_include_dmesgpb_sys) &&
+            (this->m_no_topic_filter || this->m_topic.empty() ||
+             dmesgpb.topic() == this->m_topic) &&
+            (!this->m_filter_fn || this->m_filter_fn(dmesgpb))) {
+          this->m_topic_running_counter[topic] = dmesgpb.runningcounter();
+          this->resolveConflictInternal(dmesgpb.topic());
 
-          if (m_owner->m_async_process_fn) {
-            m_owner->m_async_process_fn(dmesgpb);
+          if (this->m_async_process_fn) {
+            this->m_async_process_fn(dmesgpb);
           } else {
-            m_owner->m_buffers->push(dmesgpb);
+            this->m_buffers->push(dmesgpb);
           }
         }
       }
@@ -545,11 +537,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
 Dmn_DMesg::Dmn_DMesg(std::string_view name)
     : Dmn_Pub{name, 0, // Dmn_DMesg manages re-send per topic
               [](const Dmn_Sub *const sub, const dmn::DMesgPb &msg) -> bool {
-                const auto *const handler_sub = dynamic_cast<
-                    const Dmn_DMesgHandler::Dmn_DMesgHandlerSub *const>(sub);
-                assert(handler_sub != nullptr);
-
-                const Dmn_DMesgHandler *const handler = handler_sub->m_owner;
+                const auto *const handler =
+                    dynamic_cast<const Dmn_DMesgHandler *const>(sub);
+                assert(handler != nullptr);
 
                 return nullptr != handler && nullptr != handler->m_owner &&
                        ((msg.playback() &&
@@ -563,7 +553,7 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
 
 Dmn_DMesg::~Dmn_DMesg() noexcept try {
   for (auto &h : m_handlers) {
-    this->unregisterSubscriber(h->m_sub.get());
+    this->unregisterSubscriber(h.get());
   }
 
   m_handlers.clear();
@@ -588,7 +578,7 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
     return;
   }
 
-  this->unregisterSubscriber(inhandler->m_sub.get());
+  this->unregisterSubscriber(inhandler.get());
 
   inhandler->m_owner = nullptr;
 

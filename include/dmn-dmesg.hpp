@@ -33,10 +33,8 @@
  *   writes until the conflict is resolved by the client).
  *
  * Handler model and behaviour
- * - Handlers (Dmn_DMesgHandler) compose a tiny nested subscriber
- *   implementation (Dmn_DMesgHandlerSub) which connects the handler to the
- *   underlying Dmn_Pub notification system. This avoids multiple inheritance
- *   and simplifies lifetime handling.
+ * - Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with
+ *   the Dmn_Pub notification system.
  * - Handlers can:
  *     * subscribe to a specific topic (empty topic is permitted),
  *     * provide an optional filter functor to drop unwanted messages,
@@ -176,54 +174,11 @@ public:
    * via Dmn_DMesg::closeHandler(...).
    */
   class Dmn_DMesgHandler : public Dmn_Io<dmn::DMesgPb>,
+                           public dmn::Dmn_Pub<dmn::DMesgPb>::Dmn_Sub,
                            private Dmn_Async<Dmn_BlockingQueue_Mt> {
   private:
     using ConflictCallbackTask =
         std::function<void(Dmn_DMesgHandler &handler, const dmn::DMesgPb &)>;
-
-    /**
-     * @brief Internal subscriber that forwards notifications into its owning
-     * Dmn_DMesgHandler.
-     *
-     * This class is intentionally small and is used only by Dmn_DMesgHandler.
-     * m_owner points to the owning handler so that notify(...) can update the
-     * handler state (buffer, conflict detection, async processing, etc.).
-     */
-    class Dmn_DMesgHandlerSub : public dmn::Dmn_Pub<dmn::DMesgPb>::Dmn_Sub {
-    public:
-      Dmn_DMesgHandlerSub() = default;
-      virtual ~Dmn_DMesgHandlerSub() noexcept;
-
-      Dmn_DMesgHandlerSub(const Dmn_DMesgHandlerSub &obj) = delete;
-      Dmn_DMesgHandlerSub &operator=(const Dmn_DMesgHandlerSub &obj) = delete;
-      Dmn_DMesgHandlerSub(Dmn_DMesgHandlerSub &&obj) = delete;
-      Dmn_DMesgHandlerSub &operator=(Dmn_DMesgHandlerSub &&obj) = delete;
-
-      /**
-       * @brief Called by the publisher to notify this subscriber of a new
-       * DMesgPb message.
-       *
-       * Behavior summary:
-       *  - Messages published by the same handler are skipped (handler does
-       *    not re-receive its own writes), except system messages which can be
-       *    delivered based on handler configuration.
-       *  - Messages with a running counter older than the handler's last seen
-       *    counter for the topic are skipped (out-of-order / stale).
-       *  - System messages may be saved as the handler's last-known system
-       *    message.
-       *  - If configured, system messages can be queued for read() or passed
-       *    to m_async_process_fn for asynchronous handling.
-       *
-       * @param dmesgPb The message delivered by the publisher.
-       */
-      void notify(const dmn::DMesgPb &dmesgpb,
-                  Dmn_Pub<dmn::DMesgPb> *pub) override;
-
-      // m_owner is intentionally public to allow the containing Dmn_DMesg to
-      // access and wire-up the subscriber. This nested class is private to the
-      // handler and not exposed to external clients.
-      Dmn_DMesgHandler *m_owner{};
-    }; // class Dmn_DMesgHandlerSub
 
   public:
     enum WriteOptions { kDefault = 0, kBlock, kForce, kMaxWriteOptions };
@@ -420,8 +375,27 @@ public:
     auto writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
                                WriteFlags flags = kDefault) -> bool;
 
+    /**
+     * @brief Called by the publisher to notify this subscriber of a new
+     * DMesgPb message.
+     *
+     * Behavior summary:
+     *  - Messages published by the same handler are skipped (handler does
+     *    not re-receive its own writes), except system messages which can be
+     *    delivered based on handler configuration.
+     *  - Messages with a running counter older than the handler's last seen
+     *    counter for the topic are skipped (out-of-order / stale).
+     *  - System messages may be saved as the handler's last-known system
+     *    message.
+     *  - If configured, system messages can be queued for read() or passed
+     *    to m_async_process_fn for asynchronous handling.
+     *
+     * @param dmesgPb The message delivered by the publisher.
+     */
+    void notify(const dmn::DMesgPb &dmesgpb,
+                Dmn_Pub<dmn::DMesgPb> *pub) override;
+
     friend class Dmn_DMesg;
-    friend class Dmn_DMesgHandlerSub;
 
   protected:
     /**
@@ -509,7 +483,6 @@ public:
     bool m_no_topic_filter{};
 
     Dmn_DMesg *m_owner{};
-    std::shared_ptr<Dmn_DMesgHandlerSub> m_sub{};
 
     std::unique_ptr<
         Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<dmn::DMesgPb>, dmn::DMesgPb>>
@@ -724,17 +697,16 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
 
+  handler->m_owner = this;
+
+  this->registerSubscriber(handler);
+
   handlerProxy.m_handler = handler;
 
   /* The topic filter is executed within the DMesg singleton asynchronous
    * thread context, but the filter value is maintained per Dmn_DMesgHandler.
    * This design keeps DMesg itself mutex-free while remaining thread safe.
    */
-  handler->m_owner = this;
-  handler->m_sub =
-      this->registerSubscriber<Dmn_DMesgHandler::Dmn_DMesgHandlerSub>();
-  handler->m_sub->m_owner = handler.get();
-
   auto waitHandler = this->addExecTaskWithWait([this, &handler]() {
     this->m_handlers.push_back(handler);
     this->playbackLastTopicDMesgPbInternal();
