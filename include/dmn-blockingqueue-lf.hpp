@@ -492,7 +492,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
     -> std::optional<T> {
   std::optional<T> res{};
 
-  while (true) {
+  do {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
@@ -530,7 +530,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
         }
       }
     }
-  }
+  } while (true);
 
   return res;
 }
@@ -567,7 +567,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   Node *last{};
   Node *next{};
 
-  while (true) {
+  do {
     last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       delete newNode;
@@ -597,7 +597,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
                                        std::memory_order_relaxed);
       }
     }
-  }
+  } while (true);
 
   if (newNode) {
     // Release: publishes the newly linked node so consumers see it via m_tail.
@@ -612,7 +612,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
-  while (true) {
+  do {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
@@ -631,7 +631,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
 
     dmn::Dmn_Proc::testcancel();
     dmn::Dmn_Proc::yield();
-  }
+  } while (true);
 
   return m_total_push_count.load(std::memory_order_acquire);
 }
