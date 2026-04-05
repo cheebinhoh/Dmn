@@ -70,6 +70,9 @@
  *   incidental sharing between objects.
  */
 
+#ifndef DMN_BLOCKINGQUEUE_MT_HPP_
+#define DMN_BLOCKINGQUEUE_MT_HPP_
+
 #include "dmn-blockingqueue.hpp"
 
 #include "dmn-inflight-guard.hpp"
