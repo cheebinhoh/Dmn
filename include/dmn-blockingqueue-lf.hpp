@@ -101,7 +101,7 @@ class Dmn_BlockingQueue_Lf
    * while still allowing safe reclamation under concurrency.
    *
    * @details
-   * The following parameters control Epoch based reclamation logic for the pop
+   * The following parameters control epoch-based reclamation logic for the pop
    * out node with Dmn_Inflight_Guard. Each pop or push call is guarded by
    * Dmn_Inflight_Guard.
    *
