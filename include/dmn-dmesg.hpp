@@ -697,6 +697,8 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
 
+  handler->m_owner = this;
+
   this->registerSubscriber(handler);
 
   handlerProxy.m_handler = handler;
@@ -705,8 +707,6 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
    * thread context, but the filter value is maintained per Dmn_DMesgHandler.
    * This design keeps DMesg itself mutex-free while remaining thread safe.
    */
-  handler->m_owner = this;
-
   auto waitHandler = this->addExecTaskWithWait([this, &handler]() {
     this->m_handlers.push_back(handler);
     this->playbackLastTopicDMesgPbInternal();
