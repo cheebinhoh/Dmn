@@ -33,10 +33,8 @@
  *   writes until the conflict is resolved by the client).
  *
  * Handler model and behaviour
- * - Handlers (Dmn_DMesgHandler) compose a tiny nested subscriber
- *   implementation (Dmn_DMesgHandlerSub) which connects the handler to the
- *   underlying Dmn_Pub notification system. This avoids multiple inheritance
- *   and simplifies lifetime handling.
+ * - Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with
+ *   the Dmn_Pub notification system.
  * - Handlers can:
  *     * subscribe to a specific topic (empty topic is permitted),
  *     * provide an optional filter functor to drop unwanted messages,
