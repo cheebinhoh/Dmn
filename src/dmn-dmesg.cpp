@@ -52,7 +52,7 @@ const char *const kDMesgSysIdentifier = "sys.dmn-dmesg";
 const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
 
 void Dmn_DMesg::Dmn_DMesgHandler::notify(const dmn::DMesgPb &dmesgpb,
-                                         Dmn_Pub<dmn::DMesgPb> *pub) {
+                                         Dmn_Pub<dmn::DMesgPb> *) {
   const std::string &topic = dmesgpb.topic();
   auto iter = this->m_topic_running_counter.find(topic);
 
