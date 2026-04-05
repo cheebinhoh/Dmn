@@ -8,11 +8,11 @@
  * @details
  * This header provides dmn::Dmn_BlockingQueue_Lf, a thread-safe FIFO queue
  * that:
- * - supports multiple concurrent producers and consumers (MPMC),
- * - uses lock-free algorithms for push/pop (no mutexes in the fast path),
- * - provides blocking behavior for @ref pop() by spinning/yielding until an
- *   item becomes available (or until shutdown),
- * - uses an epoch-based reclamation mechanism (via @ref
+ * - it supports multiple concurrent producers and consumers (MPMC).
+ * - it uses lock-free algorithms for push/pop (no mutexes in the fast path).
+ * - it provides blocking behavior for @ref pop() by spinning/yielding until an
+ *   item becomes available (or until shutdown).
+ * - it uses an epoch-based reclamation mechanism (via @ref
  *   dmn::Dmn_Inflight_Guard) to safely reclaim removed nodes without
  *   use-after-free.
  *
@@ -77,9 +77,9 @@ class Dmn_BlockingQueue_Lf
    *
    * @rationale
    * Popped nodes cannot be immediately deleted because other threads may still
-   * be reading pointers obtained during concurrent operations. This
-   * implementation uses an epoch-based scheme coordinated by @ref
-   * dmn::Dmn_Inflight_Guard:
+   * be reading pointers obtained during concurrent operations (because of
+   * lock-free). This implementation uses an epoch-based scheme coordinated by
+   * @ref dmn::Dmn_Inflight_Guard to achieve hazard-free node reclamation:
    *
    * - Each push/pop enters an in-flight region and is assigned an epoch index.
    * - Removed nodes are placed onto a per-epoch retired list (not deleted yet).
@@ -100,17 +100,17 @@ class Dmn_BlockingQueue_Lf
    * while still allowing safe reclamation under concurrency.
    *
    * @details
-   * The following parameters control Epoch based reclamation logic
-   * for the pop out node with Dmn_Inflight_Guard. Each pop or push call is
-   * guarded by Dmn_Inflight_Guard.
+   * The following parameters control Epoch based reclamation logic for the pop
+   * out node with Dmn_Inflight_Guard. Each pop or push call is guarded by
+   * Dmn_Inflight_Guard.
    *
    * The queue maintains global epoch data in m_epochData which contains
-   * the epoch id and the last timepoint where epoch id is updated. Instead
-   * of using system time (which will be a hot path) as last time point,
-   * we use the number of pop or push call as timepoint reference, if the
-   * number of such api call is s_epochTimeScale difference from the last
-   * value in m_epochData's m_in_flight_total, both the m_in_flight_total
-   * and m_id is moved forward (aka the epoch is moved).
+   * the epoch id and the number of inflight api calls. Instead of using system
+   * time (which will be a hot path) as last time point, we use the number of
+   * pop or push call as timepoint reference, if the number of such api call is
+   * s_epochTimeScale difference from the last value in m_epochData's
+   * m_in_flight_total, both the m_in_flight_total and m_id is moved forward
+   * (aka the epoch is moved).
    *
    * Each Dmn_Inflight_Guard entered will derive the value (which is served
    * as epochIndex) based on current m_epochData.m_id, and each m_id is grouped
