@@ -8,11 +8,11 @@
  * @details
  * This header provides dmn::Dmn_BlockingQueue_Lf, a thread-safe FIFO queue
  * that:
- * - supports multiple concurrent producers and consumers (MPMC),
- * - uses lock-free algorithms for push/pop (no mutexes in the fast path),
- * - provides blocking behavior for @ref pop() by spinning/yielding until an
- *   item becomes available (or until shutdown),
- * - uses an epoch-based reclamation mechanism (via @ref
+ * - it supports multiple concurrent producers and consumers (MPMC).
+ * - it uses lock-free algorithms for push/pop (no mutexes in the fast path).
+ * - it provides blocking behavior for @ref pop() by spinning/yielding until an
+ *   item becomes available (or until shutdown).
+ * - it uses an epoch-based reclamation mechanism (via @ref
  *   dmn::Dmn_Inflight_Guard) to safely reclaim removed nodes without
  *   use-after-free.
  *
@@ -77,9 +77,10 @@ class Dmn_BlockingQueue_Lf
    *
    * @rationale
    * Popped nodes cannot be immediately deleted because other threads may still
-   * be reading pointers obtained during concurrent operations. This
-   * implementation uses an epoch-based scheme coordinated by @ref
-   * dmn::Dmn_Inflight_Guard:
+   * be reading pointers obtained during concurrent operations, since queue
+   * operations are lock-free. This implementation uses an epoch-based scheme
+   * coordinated by @ref dmn::Dmn_Inflight_Guard to achieve hazard-free node
+   * reclamation:
    *
    * - Each push/pop enters an in-flight region and is assigned an epoch index.
    * - Removed nodes are placed onto a per-epoch retired list (not deleted yet).
@@ -100,24 +101,24 @@ class Dmn_BlockingQueue_Lf
    * while still allowing safe reclamation under concurrency.
    *
    * @details
-   * The following parameters control Epoch based reclamation logic
-   * for the pop out node with Dmn_Inflight_Guard. Each pop or push call is
-   * guarded by Dmn_Inflight_Guard.
+   * The following parameters control epoch-based reclamation logic for the pop
+   * out node with Dmn_Inflight_Guard. Each pop or push call is guarded by
+   * Dmn_Inflight_Guard.
    *
    * The queue maintains global epoch data in m_epochData which contains
-   * the epoch id and the last timepoint where epoch id is updated. Instead
-   * of using system time (which will be a hot path) as last time point,
-   * we use the number of pop or push call as timepoint reference, if the
-   * number of such api call is s_epochTimeScale difference from the last
-   * value in m_epochData's m_in_flight_total, both the m_in_flight_total
-   * and m_id is moved forward (aka the epoch is moved).
+   * the epoch id and the number of in-flight API calls. Instead of using
+   * system time (which will be a hot path) as last time point, we use the
+   * number of API calls as timepoint reference, if the number of API call is
+   * s_epochTimeScale difference from the last value in m_epochData's
+   * m_in_flight_total, both the m_in_flight_total and m_id are moved forward
+   * (aka the epoch is moved).
    *
    * Each Dmn_Inflight_Guard entered will derive the value (which is served
    * as epochIndex) based on current m_epochData.m_id, and each m_id is grouped
    * by s_epochIdScale, for example if s_epochIdScale is 2, then m_id 0, 1 is
    * one group, 2, 3 is another group, then the (m_id / s_epochIdScale) is
    * modular divided by s_epochDataSize, i.e. (m_id / s_epochIdScale) %
-   * s_epochDataSize, and the value is an epochIndex in the api call's
+   * s_epochDataSize, and the value is an epochIndex in the API call's
    * Dmn_Inflight_Guard that will be used to reference to the entry in the
    * queue's global m_epochReclaimNode and m_epochInFlightCount.
    *
@@ -492,7 +493,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
     -> std::optional<T> {
   std::optional<T> res{};
 
-  while (true) {
+  do {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
@@ -530,7 +531,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
         }
       }
     }
-  }
+  } while (true);
 
   return res;
 }
@@ -567,7 +568,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   Node *last{};
   Node *next{};
 
-  while (true) {
+  do {
     last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       delete newNode;
@@ -597,7 +598,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
                                        std::memory_order_relaxed);
       }
     }
-  }
+  } while (true);
 
   if (newNode) {
     // Release: publishes the newly linked node so consumers see it via m_tail.
@@ -612,7 +613,7 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
-  while (true) {
+  do {
     Node *last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
       break;
@@ -631,7 +632,7 @@ template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
 
     dmn::Dmn_Proc::testcancel();
     dmn::Dmn_Proc::yield();
-  }
+  } while (true);
 
   return m_total_push_count.load(std::memory_order_acquire);
 }

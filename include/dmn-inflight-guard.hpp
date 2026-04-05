@@ -121,14 +121,14 @@ public:
    * @brief RAII guard that represents one active in-flight operation.
    *
    * Constructing a @c Ticket increments the owning guard's in-flight counter
-   * and invokes @c enterInflightGuardFnc() on the guard.  Destroying the
+   * and invokes @c enterInflightGuardFnc() on the guard. Destroying the
    * ticket decrements the counter and invokes @c leaveInflightGuardFnc().
    *
    * Construction throws @c std::runtime_error if the guard is already closed
    * (i.e., shutdown has begun).
    *
    * @tparam T Optional per-call payload type stored inside the ticket
-   *           (defaults to @c std::monostate for no payload).
+   * (defaults to @c std::monostate for no payload).
    */
   class Ticket {
   public:
@@ -136,7 +136,7 @@ public:
      * @brief Acquire an in-flight ticket from @p inflightguard.
      *
      * Increments the guard's in-flight counter and invokes
-     * @c enterInflightGuardFnc().  If the guard is already closed, or
+     * @c enterInflightGuardFnc(). If the guard is already closed, or
      * becomes closed before the counter is incremented, throws
      * @c std::runtime_error and leaves the counter unchanged.
      *
@@ -215,7 +215,7 @@ public:
 
     /**
      * @brief Return a const reference to the per-call payload value set by
-     *        @c enterInflightGuardFnc().
+     * @c enterInflightGuardFnc().
      *
      * @return Const reference to the stored payload.
      */
@@ -250,7 +250,7 @@ public:
 
   /**
    * @brief Block until all currently active in-flight operations have released
-   *        their tickets (i.e., the in-flight counter reaches zero).
+   * their tickets (i.e., the in-flight counter reaches zero).
    *
    * Uses @c std::atomic::wait internally to avoid busy-spinning.
    */
@@ -265,10 +265,10 @@ public:
 protected:
   /**
    * @brief Called inside the @c Ticket constructor after the in-flight counter
-   *        has been incremented.
+   * has been incremented.
    *
    * Derived classes may override this to compute and return a per-call payload
-   * value (e.g., an epoch index).  The default implementation returns a
+   * value (e.g., an epoch index). The default implementation returns a
    * default-constructed @p T.
    *
    * @return The per-call payload value stored in the ticket.
@@ -277,7 +277,7 @@ protected:
 
   /**
    * @brief Return @c true when the guard is closed and no new tickets should
-   *        be issued.
+   * be issued.
    *
    * Derived classes should override this to reflect their shutdown state.
    * The default implementation always returns @c false (never closed).
@@ -288,14 +288,14 @@ protected:
 
   /**
    * @brief Called inside the @c Ticket destructor before the in-flight counter
-   *        is decremented.
+   * is decremented.
    *
    * Derived classes may override this to act on the per-call payload value
-   * (e.g., retire reclamation nodes for the given epoch).  Must be
+   * (e.g., retire reclamation nodes for the given epoch). Must be
    * @c noexcept; any exception thrown is swallowed by the ticket destructor.
    *
    * @param value The per-call payload value that was returned by
-   *              @c enterInflightGuardFnc() when this ticket was created.
+   * @c enterInflightGuardFnc() when this ticket was created.
    */
   virtual void leaveInflightGuardFnc(const T &) noexcept {}
 
