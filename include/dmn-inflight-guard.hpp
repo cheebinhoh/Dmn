@@ -294,8 +294,8 @@ protected:
    * (e.g., retire reclamation nodes for the given epoch). Must be
    * @c noexcept; any exception thrown is swallowed by the ticket destructor.
    *
-   * @param value The per-call payload value that was returned by @c
-   * enterInflightGuardFnc() when this ticket was created.
+   * @param value The per-call payload value that was returned by
+   * @c enterInflightGuardFnc() when this ticket was created.
    */
   virtual void leaveInflightGuardFnc(const T &) noexcept {}
 
