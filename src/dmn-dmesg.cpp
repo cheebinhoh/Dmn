@@ -537,11 +537,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
 Dmn_DMesg::Dmn_DMesg(std::string_view name)
     : Dmn_Pub{name, 0, // Dmn_DMesg manages re-send per topic
               [](const Dmn_Sub *const sub, const dmn::DMesgPb &msg) -> bool {
-                const auto *const handler_sub =
+                const auto *const handler =
                     dynamic_cast<const Dmn_DMesgHandler *const>(sub);
-                assert(handler_sub != nullptr);
-
-                const Dmn_DMesgHandler *const handler = handler_sub;
+                assert(handler != nullptr);
 
                 return nullptr != handler && nullptr != handler->m_owner &&
                        ((msg.playback() &&
