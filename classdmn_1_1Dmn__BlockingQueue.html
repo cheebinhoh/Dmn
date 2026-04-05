@@ -157,7 +157,7 @@ Protected Member Functions</h2></td></tr>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Derived, typename T&gt;<br />
 class dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</div><p>The <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> are top tier class for both the abstraction and implementor classes in the bridge design pattern with support of CRTP to achieve static polymorphism. </p>
 <ul>
-<li>There are a set of primitive methods to be overridden by concrete implementation subclass, and those methods are marked as virtual without final. Those methods are defined in this class with CRTP to achieve static polymorphism to call to subclass overridden methods. Those are methods in the implementaion tree in the Bridge design pattern.</li>
+<li>There are a set of primitive methods to be overridden by concrete implementation subclasses, and those methods are virtual in the public API without being final. Those methods are defined in this class with CRTP to achieve static polymorphism to call subclass-overridden methods. Those are methods in the implementation tree in the Bridge design pattern.</li>
 <li>There are a set of composite methods that are marked as final and implemented in term of primitive methods. Those are methods in the the abstraction tree in Bridge design pattern. </li>
 </ul>
 </div><h2 class="groupheader">Member Function Documentation</h2>

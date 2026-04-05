@@ -125,10 +125,10 @@ Classes</h2></td></tr>
 <div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads, it implements the Michael-Scott lock-free queue algorithm. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <p>This header provides <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html" title="Lock-Free Thread-safe FIFO queue.">dmn::Dmn_BlockingQueue_Lf</a>, a thread-safe FIFO queue that:</p><ul>
-<li>supports multiple concurrent producers and consumers (MPMC),</li>
-<li>uses lock-free algorithms for push/pop (no mutexes in the fast path),</li>
-<li>provides blocking behavior for pop() by spinning/yielding until an item becomes available (or until shutdown),</li>
-<li>uses an epoch-based reclamation mechanism (via <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>) to safely reclaim removed nodes without use-after-free.</li>
+<li>it supports multiple concurrent producers and consumers (MPMC).</li>
+<li>it uses lock-free algorithms for push/pop (no mutexes in the fast path).</li>
+<li>it provides blocking behavior for pop() by spinning/yielding until an item becomes available (or until shutdown).</li>
+<li>it uses an epoch-based reclamation mechanism (via <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">dmn::Dmn_Inflight_Guard</a>) to safely reclaim removed nodes without use-after-free.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md2"></a>
 Blocking model</h2>
