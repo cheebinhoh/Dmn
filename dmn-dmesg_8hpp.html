@@ -150,7 +150,7 @@ Design pattern</h2>
 <li>Detect simple publish conflicts based on per-topic running counters and mark only the offending handler as "in conflict" (blocking its subsequent writes until the conflict is resolved by the client).</li>
 </ul>
 <p>Handler model and behaviour</p><ul>
-<li>Handlers (Dmn_DMesgHandler) compose a tiny nested subscriber implementation (Dmn_DMesgHandlerSub) which connects the handler to the underlying Dmn_Pub notification system. This avoids multiple inheritance and simplifies lifetime handling.</li>
+<li>Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with the Dmn_Pub notification system.</li>
 <li>Handlers can:<ul>
 <li>subscribe to a specific topic (empty topic is permitted),</li>
 <li>provide an optional filter functor to drop unwanted messages,</li>

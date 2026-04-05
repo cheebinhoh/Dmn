@@ -1,5 +1,6 @@
 var NAVTREEINDEX1 =
 {
+"dmn-socket_8hpp.html":[3,0,0,17],
 "dmn-socket_8hpp_source.html":[3,0,0,17],
 "dmn-timer_8hpp.html":[3,0,0,18],
 "dmn-timer_8hpp_source.html":[3,0,0,18],
