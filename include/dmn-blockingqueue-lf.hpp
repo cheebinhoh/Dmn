@@ -106,12 +106,12 @@ class Dmn_BlockingQueue_Lf
    * Dmn_Inflight_Guard.
    *
    * The queue maintains global epoch data in m_epochData which contains
-   * the epoch id and the number of in-flight API calls . Instead of using
+   * the epoch id and the number of in-flight API calls. Instead of using
    * system time (which will be a hot path) as last time point, we use the
-   * number of pop or push call as timepoint reference, if the number of such
-   * API call is s_epochTimeScale difference from the last value in
-   * m_epochData's m_in_flight_total, both the m_in_flight_total and m_id are
-   * moved forward (aka the epoch is moved).
+   * number of API calls as timepoint reference, if the number of API call is
+   * s_epochTimeScale difference from the last value in m_epochData's
+   * m_in_flight_total, both the m_in_flight_total and m_id are moved forward
+   * (aka the epoch is moved).
    *
    * Each Dmn_Inflight_Guard entered will derive the value (which is served
    * as epochIndex) based on current m_epochData.m_id, and each m_id is grouped
