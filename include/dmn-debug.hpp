@@ -1,5 +1,5 @@
 /**
- * Copyright ©  2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file include/dmn-debug.hpp
  * @brief Lightweight debug-print macro controlled by the preprocessor.

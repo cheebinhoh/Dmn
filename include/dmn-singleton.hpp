@@ -2,12 +2,13 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-singleton.hpp
- * @brief Lightweight helper for implementing argumented singletons.
+ * @brief Lightweight helper for implementing argument-forwarding singletons.
  *
- * Design pattern
- * Singleton - provides a global singleton instance of the class.
- * Factory method - provides an interface for creating concrete singleton
- *                  subclasses.
+ * Design patterns
+ * ---------------
+ * - Singleton     : provides a single, process-wide instance of the class.
+ * - Factory method: provides an interface for creating concrete singleton
+ *                   subclasses.
  *
  * This header provides a small utility class, dmn::Dmn_Singleton, which
  * exposes a single static helper method:
@@ -28,11 +29,12 @@
  * ```
  *
  * Notes:
- * - The returned type is std::shared_ptr<T>; ownership and lifetime semantics
- *   are therefore shared.
- * - The subclass of Singleton can implement static method that is called before
- *   the singleton instance is created to run some setup, the signature of the
- *   method is "static void T::runPriorToCreateInstance()" and must be public.
+ * - The returned type is @c std::shared_ptr<T>; ownership and lifetime
+ *   semantics are therefore shared.
+ * - A subclass of @c Dmn_Singleton may implement a public static method
+ *   @c T::runPriorToCreateInstance() that is called exactly once before the
+ *   singleton instance is constructed; use it for one-time setup that must
+ *   happen before the constructor runs.
  */
 
 #ifndef DMN_SINGLETON_HPP_

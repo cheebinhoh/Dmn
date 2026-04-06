@@ -43,19 +43,26 @@ namespace dmn {
 class Dmn_DMesgNet_Kafka {
 public:
   /**
-   * @brief The constructor method to initiate a created kafka consumer and
-   *        producer from configuration as input and output handles for the
-   *        Dmn_DMesgNet object.
+   * @brief Construct a @c Dmn_DMesgNet_Kafka by creating a Kafka consumer and
+   *        producer from @p configs and wiring them as the input and output
+   *        handlers of the underlying @c Dmn_DMesgNet.
    *
-   *        The user of the api must provide most of the kafka configuration
-   *        besides following "group.id", "auto.offset.reset", "acks",
-   *        dmn::Dmn_Kafka::Topic and dmn::Dmn_Kafka::Key which are provided
-   *        by Dmn_DMesgNet_Kafka.
+   * The caller must supply the common broker connection parameters in @p
+   * configs (e.g. @c bootstrap.servers, SASL credentials).  The following keys
+   * are set internally and must NOT be present in @p configs:
+   *  - @c "group.id"         : set to @p name.
+   *  - @c "auto.offset.reset": set to @c "earliest".
+   *  - @c "acks"             : set to @c "all".
+   *  - @c Dmn_Kafka::Topic   : set to @c "Dmn_dmesgnet".
+   *  - @c Dmn_Kafka::Key     : set to @c "Dmn_dmesgnet".
    *
-   * @param name    The name for Dmn_DMesgNet and kafka group id
-   * @param configs The Dmn_Kafka configuration
+   * @param name    Identifier used for both the @c Dmn_DMesgNet instance and
+   *                the Kafka consumer group ID.
+   * @param configs Kafka configuration entries (see above for reserved keys).
    */
   Dmn_DMesgNet_Kafka(std::string_view name, Dmn_Kafka::ConfigType configs);
+
+  /** @brief Destroy the @c Dmn_DMesgNet_Kafka and release all resources. */
   ~Dmn_DMesgNet_Kafka() noexcept;
 
   Dmn_DMesgNet_Kafka(const Dmn_DMesgNet_Kafka &obj) = delete;
@@ -64,45 +71,30 @@ public:
   Dmn_DMesgNet_Kafka &operator=(Dmn_DMesgNet_Kafka &&obj) = delete;
 
   /**
-   * @brief This method is a forwarding call to the Dmn_DMesgNet::openHandler().
+   * @brief Forward all arguments to @c Dmn_DMesgNet::openHandler() and return
+   *        the resulting handler proxy.
    *
-   * @param topics          The list of topics to be subscribed for the opened
-   *                        handler
-   * @param name            The name or unique identification to the handler
-   * @param includeDMesgSys True if the handler will be notified of DMesgPb
-   *                        sys message, default is false, which is optional.
-   * @param filterFn        The functor callback that returns false to filter
-   *                        out DMesgPB message, if no functor is provided,
-   *                        no filter is performed
-   * @param asyncProcessFn  The functor callback to process each notified
-   *                        DMesgPb message
-   *
-   * @return a handler proxy to newly created handler.
+   * @param arg Arguments forwarded verbatim to @c Dmn_DMesgNet::openHandler().
+   * @return A @c Dmn_DMesg::HandlerType proxy to the newly opened handler.
    */
   template <class... U> auto openHandler(U &&...arg) -> Dmn_DMesg::HandlerType {
     return m_dmesgnet->openHandler(std::forward<U>(arg)...);
   }
 
   /**
-   * @brief This method is a forwarding call to the
-   *        Dmn_DMesgNet::closeHandler().
+   * @brief Forward all arguments to @c Dmn_DMesgNet::closeHandler() to close
+   *        a previously opened handler.
    *
-   * @param handlerToClose The handler to be closed
+   * @param arg Arguments forwarded verbatim to @c Dmn_DMesgNet::closeHandler().
    */
   template <class... U> void closeHandler(U &&...arg) {
     m_dmesgnet->closeHandler(std::forward<U>(arg)...);
   }
 
 private:
-  /**
-   * data members for constructor to instantiate the object.
-   */
-  std::string m_name{};
-
-  /**
-   * data members for internal logic.
-   */
-  std::unique_ptr<Dmn_DMesgNet> m_dmesgnet{};
+  std::string m_name{}; ///< Instance name (also used as Kafka group ID).
+  std::unique_ptr<Dmn_DMesgNet>
+      m_dmesgnet{}; ///< Underlying network-aware DMesg node.
 }; // class Dmn_DMesgNet_Kafka
 
 } // namespace dmn

@@ -114,17 +114,27 @@ inline bool stringCompare(const std::string_view str1,
 }
 
 /**
- * @brief The type to support scope guard (like std::scope_exit in proposed
- *        c++ standard).
+ * @brief Minimal scope-guard analogous to the proposed @c std::scope_exit.
+ *
+ * Calls the stored callable @c f unconditionally when the @c ScopeGuard
+ * object goes out of scope.  Use @ref make_scope_guard to construct one with
+ * automatic type deduction.
+ *
+ * @tparam F A callable type (lambda, function pointer, or functor) invoked
+ *           with no arguments when the guard is destroyed.
  */
 template <typename F> struct ScopeGuard {
-  F f;
-  ~ScopeGuard() noexcept { f(); }
+  F f;                            ///< Callable invoked on scope exit.
+  ~ScopeGuard() noexcept { f(); } ///< Invoke @c f when the guard is destroyed.
 };
 
 /**
- * @brief This helper allows the compiler to deduce the lambda type
- *        automatically.
+ * @brief Factory function that constructs a @c ScopeGuard with automatic
+ *        callable-type deduction.
+ *
+ * @tparam F Callable type; deduced from the argument.
+ * @param  f Callable to invoke when the returned guard goes out of scope.
+ * @return A @c ScopeGuard<F> that will call @p f on destruction.
  */
 template <typename F> ScopeGuard<F> make_scope_guard(F f) {
   return ScopeGuard<F>{f};

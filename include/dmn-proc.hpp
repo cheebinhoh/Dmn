@@ -51,12 +51,20 @@
 #include <string_view>
 
 /**
- * More generic macro to wrap pthread_cleanup_push
+ * @brief Macro wrapper around @c pthread_cleanup_push.
+ *
+ * Registers a cleanup handler to be called when the current thread is
+ * cancelled or when @c DMN_PROC_CLEANUP_POP is executed.  Arguments are
+ * forwarded verbatim to @c pthread_cleanup_push.
  */
 #define DMN_PROC_CLEANUP_PUSH(...) pthread_cleanup_push(__VA_ARGS__)
 
 /**
- * More generic macro to wrap pthread_cleanup_pop
+ * @brief Macro wrapper around @c pthread_cleanup_pop.
+ *
+ * Pops the most recently pushed cleanup handler.  If the argument is
+ * non-zero, the handler is also executed.  Arguments are forwarded
+ * verbatim to @c pthread_cleanup_pop.
  */
 #define DMN_PROC_CLEANUP_POP(...) pthread_cleanup_pop(__VA_ARGS__)
 
@@ -75,10 +83,8 @@ namespace dmn {
 void cleanupFuncToUnlockPthreadMutex(void *arg);
 
 /**
- * Dmn_Proc
- *
- * A small RAII-style wrapper around pthreads that runs a user-provided task
- * (std::function<void()>) in a new thread.
+ * @brief A small RAII-style wrapper around pthreads that runs a user-provided
+ *        task (@c std::function<void()>) in a new thread.
  *
  * Behaviour details:
  * - Construct with an optional name and/or task. The name is stored for
@@ -101,7 +107,15 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
  *   are cancellation points).
  */
 class Dmn_Proc {
-  enum class State { kUnknown, kNew, kReady, kRunning };
+  /**
+   * @brief Lifecycle state of a @c Dmn_Proc instance.
+   */
+  enum class State {
+    kUnknown, ///< Invalid / post-destruction state.
+    kNew,     ///< Constructed but no task assigned yet.
+    kReady,   ///< Task assigned; ready to be started via exec().
+    kRunning, ///< Thread is running; task is executing.
+  };
 
 public:
   using Task = std::function<void()>;

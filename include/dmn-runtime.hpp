@@ -577,9 +577,14 @@ void Dmn_Runtime_Manager<QueueType>::addTimedJob(
 }
 
 /**
- * @brief The method will execute the job in runtime coroutine context.
+ * @brief Add the given job to the coroutine scheduler context so it can be
+ *        picked up and executed as a coroutine task.
  *
- * @param job The job to be run in the runtime context
+ * Must be called from within the singleton asynchronous thread context
+ * (asserted via @c isRunInAsyncThread()).
+ *
+ * @param job The runtime job to schedule; its @c m_fnc is invoked to produce
+ *            the coroutine task that will be driven by the scheduler.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::addRuntimeJobToCoroutineSchedulerContext(
@@ -621,12 +626,14 @@ void Dmn_Runtime_Manager<QueueType>::clearSignalHandlerHookInternal(int signo) {
 }
 
 /**
- * @brief The method creates a TaskFncType object based on if the input
- *        fnc type uses coroutine or not.
+ * @brief Wrap a user-supplied callable in a @c Dmn_Runtime_Job::TaskFncType.
  *
- * @param fnc is either TaskFncType or FncType.
+ * If @p fnc already returns @c Dmn_Runtime_Task it is used directly; if it
+ * returns @c void it is wrapped in a trivial coroutine adapter.
  *
- * @return The TaskFncType for callable coroutine task function.
+ * @tparam F A callable satisfying @c IsValidJobFnc.
+ * @param  fnc The callable to wrap.
+ * @return A @c TaskFncType that can be stored in a @c Dmn_Runtime_Job.
  */
 template <template <class> class QueueType>
 template <typename F>
@@ -652,7 +659,9 @@ auto Dmn_Runtime_Manager<QueueType>::createJobTaskFnc(F &&fnc)
 }
 
 /**
- * @brief The method will schedule job and dispatch it as a coroutine task.
+ * @brief Dequeue and dispatch one pending job per priority level (high →
+ *        medium → low) as a coroutine task in the singleton asynchronous
+ *        thread context.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
@@ -716,8 +725,8 @@ void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
 }
 
 /**
- * @brief The method will exit the Dmn_Runtime_Manager mainloop, returns control
- *        (usually the mainthread) to the main() function to be continued.
+ * @brief Exit the @c Dmn_Runtime_Manager main loop and return control to the
+ *        caller of @c enterMainLoop() (typically @c main()).
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
@@ -746,9 +755,12 @@ void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
 }
 
 /**
- * @brief The method will enter the Dmn_Runtime_Manager mainloop, and wait
- *        for runtime loop to be exited. this is usually called by the main()
- *        method.
+ * @brief Enter the @c Dmn_Runtime_Manager main loop and block until
+ *        @c exitMainLoop() is called.
+ *
+ * This is typically called from @c main() after the runtime has been set up.
+ * It starts the signal-wait thread and processes pending jobs until
+ * @c exitMainLoop() signals termination.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
@@ -803,10 +815,10 @@ void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
 }
 
 /**
- * @brief The method executes the signal handlers in the singleton
- *        asynchronous thread context.
+ * @brief Invoke all registered signal handler hooks for @p signo in the
+ *        singleton asynchronous thread context.
  *
- * @param signo signal number that is raised
+ * @param signo The POSIX signal number that was raised.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
@@ -826,10 +838,11 @@ void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
 }
 
 /**
- * @brief The method returns true or false if it is called within the runtime
+ * @brief Return @c true if the caller is running inside the runtime's
  *        singleton asynchronous thread context.
  *
- * @return True or false
+ * @return @c true when the calling thread is the runtime's async thread,
+ *         @c false otherwise.
  */
 template <template <class> class QueueType>
 auto Dmn_Runtime_Manager<QueueType>::isRunInAsyncThread() -> bool {
@@ -845,17 +858,17 @@ void Dmn_Runtime_Manager<QueueType>::registerSignalHandlerHook(
 }
 
 /**
- * @brief The method registers external signal handler hook function for the
- *        signal number. The hook functions are executed before default internal
- *        handler hook set up by the Dmn_Runtime_Manager. Note that SIGKILL and
- *        SIGSTOP can NOT be handled.
+ * @brief Register an external signal handler hook for @p signo (internal
+ *        helper called within the async thread context).
  *
- *        This is a private method to be called in the Dmn_Runtime_Manager
- *        instance asynchronous thread context.
+ * External hook functions are executed before the default internal handlers
+ * registered by @c Dmn_Runtime_Manager.  Note that @c SIGKILL and @c SIGSTOP
+ * cannot be handled.
  *
- * @param signo The POSIX signal number
- * @param hook  The signal handler hook function to be called when the signal is
- *              raised.
+ * Must be called from within the singleton asynchronous thread context.
+ *
+ * @param signo The POSIX signal number.
+ * @param hook  The handler hook to invoke when @p signo is raised.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::registerSignalHandlerHookInternal(
@@ -956,8 +969,8 @@ auto Dmn_Runtime_Manager<QueueType>::runRuntimeCoroutineScheduler() -> bool {
 }
 
 /**
- * @brief The method runs the job executor in the singleton asynchronous thread
- *        context.
+ * @brief Schedule a call to @c execRuntimeJobInternal() in the singleton
+ *        asynchronous thread context.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::runRuntimeJobExecutor() {
@@ -965,11 +978,11 @@ void Dmn_Runtime_Manager<QueueType>::runRuntimeJobExecutor() {
 }
 
 /**
- * @brief The method sets the next scheduled timer (SIGALRM) according to the
- *        timepoint. If the timepoint is in now or the past, SIGALRM is
- *        scheduled after 10us.
-
- * @param tp The timepoint after that the timer (SIGALRM) will be triggered.
+ * @brief Arm @c SIGALRM to fire at the given absolute @c TimePoint.
+ *
+ * If @p tp is in the past or present, the alarm is scheduled after 10 µs.
+ *
+ * @param tp The absolute monotonic time point at which @c SIGALRM should fire.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::setNextTimerAt(TimePoint tp) {
@@ -977,11 +990,10 @@ void Dmn_Runtime_Manager<QueueType>::setNextTimerAt(TimePoint tp) {
 }
 
 /**
- * @brief The method sets the next scheduled timer (SIGALRM) after seconds +
- *        nanoseconds.
+ * @brief Arm @c SIGALRM to fire after the specified seconds and nanoseconds.
  *
- * @param sec The seconds after that to run the timer (SIGALRM)
- * @param nsec The nanoseconds after that to run the timer (SIGALRM)
+ * @param sec  Seconds from now before @c SIGALRM fires.
+ * @param nsec Additional nanoseconds (added to @p sec).
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::setNextTimer(SecInt sec, NSecInt nsec) {

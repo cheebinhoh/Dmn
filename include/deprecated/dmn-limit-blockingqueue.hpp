@@ -62,89 +62,79 @@ public:
   operator=(Dmn_Limit_BlockingQueue<T> &&obj) = delete;
 
   /**
-   * @brief The method will pop and return front item from the queue or the
-   *        caller is blocked waiting if the queue is empty.
+   * @brief Pop and return the front item, blocking until one is available.
    *
-   * @return front item of the queue
+   * @return The front item of the queue.
    */
   auto pop() -> T;
 
   /**
-   * @brief Return true or false if the m_size is zero.
+   * @brief Return @c true if the queue contains no items.
    *
-   * @return True if m_size is 0 or false otherwise.
+   * @return @c true when @c m_size is 0, @c false otherwise.
    */
   auto empty() -> bool;
 
   /**
-   * @brief The method will pop and return front item from the queue or the
-   *        std::nullopt if the queue is empty.
+   * @brief Pop and return the front item without blocking.
    *
-   * @return optional item from the front of the queue
+   * @return An optional containing the front item, or @c std::nullopt if
+   *         the queue is empty.
    */
   auto popNoWait() -> std::optional<T>;
 
   /**
-   * @brief The method will push the item into queue using move semantics
-   *        unless noexcept is false. The caller is blocked waiting if the
-   *        queue is full.
+   * @brief Enqueue an rvalue item, preferring move semantics.
    *
-   * @param item The item to be pushed into queue
+   * Blocks if the queue is at maximum capacity until space becomes available.
+   *
+   * @param item The item to enqueue (moved when the move constructor is
+   *             noexcept).
    */
   void push(T &&item);
 
   /**
-   * @brief The method will push the item into queue using move semantics if
-   *        move is true. The caller is blocked waiting if the queue is full.
+   * @brief Enqueue an lvalue item, optionally using move semantics.
    *
-   * @param item The item to be pushed into queue
-   * @param move True if use move semantic or false otherwise
+   * Blocks if the queue is at maximum capacity until space becomes available.
+   *
+   * @param item The item to enqueue.
+   * @param move If @c true, move @p item into the queue; otherwise copy it.
    */
   void push(T &item, bool move = true);
 
   /**
-   * @brief The method returns the number of items held in the queue now.
+   * @brief Return a snapshot of the current number of items in the queue.
    *
-   * @return The number of items held in the queue now
+   * @return The number of items currently held in the queue.
    */
   auto size() -> size_t;
 
   /**
-   * @brief The method will put the client on blocking wait until
-   *        the queue is empty, it returns number of items that
-   *        were passed through the queue in total.
+   * @brief Block until the queue is empty and return the total number of items
+   *        that have passed through it.
    *
-   * @return The number of items that were passed through the queue
-   *         in total
+   * @return The cumulative number of items that have been pushed and popped.
    */
   auto waitForEmpty() -> uint64_t override;
 
 private:
   /**
-   * @brief The method will pop front item from the queue and return it
-   *        or block waiting for item if the queue is empty and wait is
-   *        true.
+   * @brief Internal pop helper that optionally blocks waiting for an item.
    *
-   * @param wait The caller is blocked waiting for item if queue is empty
-   *             and wait is true, otherwise returning std::nullopt
+   * @param wait If @c true, block until an item is available; if @c false,
+   *             return @c std::nullopt immediately when the queue is empty.
    *
-   * @return optional value from front item of the queue
+   * @return An optional containing the front item, or @c std::nullopt.
    */
   auto popOptional(bool wait) -> std::optional<T> override;
 
 private:
-  /**
-   * data members for constructor to instantiate the object.
-   */
-  size_t m_max_capacity{1};
-
-  /**
-   * data members for internal logic.
-   */
-  size_t m_size{0};
-  std::mutex m_mutex{};
-  std::condition_variable m_pop_cond{};
-  std::condition_variable m_push_cond{};
+  size_t m_max_capacity{1};          ///< Maximum number of items the queue may hold.
+  size_t m_size{0};                   ///< Current number of items in the queue.
+  std::mutex m_mutex{};               ///< Protects all access to @c m_size and the underlying storage.
+  std::condition_variable m_pop_cond{};  ///< Signalled when a new item is available for consumers.
+  std::condition_variable m_push_cond{}; ///< Signalled when a slot becomes available for producers.
 }; // class Dmn_Limit_BlockingQueue
 
 template <typename T>
