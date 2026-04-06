@@ -19,6 +19,7 @@
  * Usage example:
  * ```
  * struct MySingleton : public dmn::Dmn_Singleton<MySingleton> {
+ *  friend class Dmn_Singleton<MySingleton>;
  *
  *  private:
  *   MySingleton(int x, std::string s) { ... }
@@ -122,6 +123,7 @@ std::shared_ptr<T> Dmn_Singleton<T>::createInstance(U &&...arg) {
           }
 
           s_instance = std::shared_ptr<T>(new T(std::forward<U>(arg)...));
+          s_allocated.store(true, std::memory_order_release);
         },
         std::forward<U>(arg)...);
   }
