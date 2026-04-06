@@ -121,7 +121,7 @@ std::shared_ptr<T> Dmn_Singleton<T>::createInstance(U &&...arg) {
             T::runPriorToCreateInstance();
           }
 
-          s_instance = std::make_shared<T>(std::forward<U>(arg)...);
+          s_instance = std::shared_ptr<T>(new T(std::forward<U>(arg)...));
         },
         std::forward<U>(arg)...);
   }
