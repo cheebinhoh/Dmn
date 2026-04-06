@@ -66,9 +66,11 @@ public:
    * These keys are extracted from the @c ConfigType map before the remaining
    * entries are passed to @c rd_kafka_conf_set().
    */
-  const static std::string Topic;         ///< Kafka topic to read from / write to.
-  const static std::string Key;           ///< Alternate topic that overrides @c Topic when set.
-  const static std::string PollTimeoutMs; ///< Consumer poll timeout in milliseconds.
+  const static std::string Topic; ///< Kafka topic to read from / write to.
+  const static std::string
+      Key; ///< Alternate topic that overrides @c Topic when set.
+  const static std::string
+      PollTimeoutMs; ///< Consumer poll timeout in milliseconds.
 
   using ConfigType = std::unordered_map<std::string, std::string>;
 
@@ -84,7 +86,8 @@ public:
    * @brief Construct a Kafka producer or consumer with the supplied
    *        configuration.
    *
-   * @param role    Whether this instance acts as a @c kProducer or @c kConsumer.
+   * @param role    Whether this instance acts as a @c kProducer or @c
+   * kConsumer.
    * @param configs Key/value configuration map; see class documentation for
    *                the reserved Dmn_Kafka-specific keys.
    */
@@ -168,19 +171,23 @@ private:
    */
   void writeCopy(const std::string &item);
 
-  Role m_role{};           ///< Whether this instance is a producer or a consumer.
-  ConfigType m_configs{};  ///< Copy of the configuration map passed at construction.
+  Role m_role{}; ///< Whether this instance is a producer or a consumer.
+  ConfigType
+      m_configs{}; ///< Copy of the configuration map passed at construction.
 
-  std::string m_key{};           ///< Kafka message key (overrides topic when set).
-  std::string m_topic{};         ///< Kafka topic to produce to / consume from.
+  std::string m_key{};   ///< Kafka message key (overrides topic when set).
+  std::string m_topic{}; ///< Kafka topic to produce to / consume from.
   long long m_poll_timeout_ms{}; ///< Consumer poll timeout in milliseconds.
 
-  rd_kafka_t *m_kafka{};                   ///< librdkafka producer or consumer handle.
-  rd_kafka_resp_err_t m_kafka_err{};       ///< Error code set by delivery/error callbacks.
+  rd_kafka_t *m_kafka{}; ///< librdkafka producer or consumer handle.
+  rd_kafka_resp_err_t
+      m_kafka_err{}; ///< Error code set by delivery/error callbacks.
 
-  std::atomic_flag m_write_atomic_flag{};  ///< Serialises concurrent write() calls.
+  std::atomic_flag
+      m_write_atomic_flag{}; ///< Serialises concurrent write() calls.
 
-  std::atomic_flag m_shutdown_flag{};      ///< Set when shutdown() has been requested.
+  std::atomic_flag
+      m_shutdown_flag{}; ///< Set when shutdown() has been requested.
 }; // class Dmn_Kafka
 
 } // namespace dmn

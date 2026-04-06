@@ -160,31 +160,46 @@ private:
   /**
    * Constructor-initialized members.
    */
-  std::string m_name{};                                    ///< Instance name.
-  std::shared_ptr<Dmn_Io<std::string>> m_input_handler{}; ///< Inbound I/O handler.
-  std::shared_ptr<Dmn_Io<std::string>> m_output_handler{}; ///< Outbound I/O handler.
+  std::string m_name{}; ///< Instance name.
+  std::shared_ptr<Dmn_Io<std::string>>
+      m_input_handler{}; ///< Inbound I/O handler.
+  std::shared_ptr<Dmn_Io<std::string>>
+      m_output_handler{}; ///< Outbound I/O handler.
 
   /**
    * Internal runtime state and helper objects.
    */
-  std::unique_ptr<dmn::Dmn_Proc> m_input_proc{};       ///< Thread reading from @c m_input_handler.
-  Dmn_DMesg::HandlerType m_subscript_handler{};         ///< Subscriber handler for local messages.
-  Dmn_DMesg::HandlerType m_write_handler{};             ///< Handler for write operations.
-  Dmn_DMesg::HandlerType m_sys_handler{};               ///< Handler for system (heartbeat) messages.
-  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>> m_timer_proc{}; ///< Heartbeat timer.
+  std::unique_ptr<dmn::Dmn_Proc>
+      m_input_proc{}; ///< Thread reading from @c m_input_handler.
+  Dmn_DMesg::HandlerType
+      m_subscript_handler{}; ///< Subscriber handler for local messages.
+  Dmn_DMesg::HandlerType m_write_handler{}; ///< Handler for write operations.
+  Dmn_DMesg::HandlerType
+      m_sys_handler{}; ///< Handler for system (heartbeat) messages.
+  std::unique_ptr<dmn::Dmn_Timer<std::chrono::nanoseconds>>
+      m_timer_proc{}; ///< Heartbeat timer.
 
-  dmn::DMesgPb m_sys{};                    ///< Local system DMesgPb (node identity, neighbor list).
-  long long m_master_pending_counter{};    ///< Cycles spent waiting for a master acknowledgement.
-  long long m_master_sync_pending_counter{}; ///< Cycles spent waiting for master synchronisation.
-  struct timeval m_last_remote_master_timestamp{}; ///< Timestamp of the last received master heartbeat.
-  std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};           ///< Last published message per topic.
+  dmn::DMesgPb
+      m_sys{}; ///< Local system DMesgPb (node identity, neighbor list).
+  long long m_master_pending_counter{}; ///< Cycles spent waiting for a master
+                                        ///< acknowledgement.
+  long long m_master_sync_pending_counter{}; ///< Cycles spent waiting for
+                                             ///< master synchronisation.
+  struct timeval
+      m_last_remote_master_timestamp{}; ///< Timestamp of the last received
+                                        ///< master heartbeat.
+  std::unordered_map<std::string, dmn::DMesgPb>
+      m_topic_last_dmesgpb{}; ///< Last published message per topic.
   std::unordered_map<std::string, std::vector<dmn::DMesgPb>>
-      m_topic_outbound_pending_dmesgpb{}; ///< Outbound messages waiting to be sent.
+      m_topic_outbound_pending_dmesgpb{}; ///< Outbound messages waiting to be
+                                          ///< sent.
 
-  std::atomic_flag m_ready{}; ///< Set once master election has completed and this node is ready.
+  std::atomic_flag m_ready{}; ///< Set once master election has completed and
+                              ///< this node is ready.
 
-  bool m_is_master{};              ///< True when this node is the elected master.
-  long long m_number_of_neighbor{}; ///< Number of known neighbor nodes (excluding self).
+  bool m_is_master{}; ///< True when this node is the elected master.
+  long long m_number_of_neighbor{}; ///< Number of known neighbor nodes
+                                    ///< (excluding self).
 
   std::atomic<bool> m_shutdown{}; ///< True once shutdown has been requested.
 }; // class Dmn_DMesgNet

@@ -137,22 +137,27 @@ class Dmn_BlockingQueue_Lf
    * sure that we do not have a large number of retired nodes waiting to be
    * freed.
    */
-  static constexpr uint64_t s_epochTimeScale{500}; ///< API-call interval between epoch advances.
-  static constexpr uint64_t s_epochIdScale{2};     ///< Consecutive epoch IDs mapped to a single bucket.
-  static constexpr uint32_t s_epochDataSize{50};   ///< Number of epoch reclamation buckets.
+  static constexpr uint64_t s_epochTimeScale{
+      500}; ///< API-call interval between epoch advances.
+  static constexpr uint64_t s_epochIdScale{
+      2}; ///< Consecutive epoch IDs mapped to a single bucket.
+  static constexpr uint32_t s_epochDataSize{
+      50}; ///< Number of epoch reclamation buckets.
 
   /** @brief Atomically updated epoch metadata (cache-line aligned to avoid
    *         false sharing). */
   struct alignas(16) EpochData {
-    uint64_t m_in_flight_total{}; ///< Global in-flight API-call count when the current epoch started.
-    uint64_t m_id{};              ///< Monotonically increasing epoch identifier.
+    uint64_t m_in_flight_total{}; ///< Global in-flight API-call count when the
+                                  ///< current epoch started.
+    uint64_t m_id{}; ///< Monotonically increasing epoch identifier.
   };
 
   /** @brief Internal linked-list node holding a stored item. */
   struct Node {
-    T m_data{};                                    ///< The stored queue element.
-    std::atomic<Node *> m_next{nullptr};           ///< Next node in the live queue chain.
-    std::atomic<Node *> m_retired_next{nullptr};   ///< Next node in the epoch retired list.
+    T m_data{};                          ///< The stored queue element.
+    std::atomic<Node *> m_next{nullptr}; ///< Next node in the live queue chain.
+    std::atomic<Node *> m_retired_next{
+        nullptr}; ///< Next node in the epoch retired list.
   };
 
 public:

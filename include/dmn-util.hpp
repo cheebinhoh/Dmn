@@ -124,7 +124,7 @@ inline bool stringCompare(const std::string_view str1,
  *           with no arguments when the guard is destroyed.
  */
 template <typename F> struct ScopeGuard {
-  F f;                             ///< Callable invoked on scope exit.
+  F f;                            ///< Callable invoked on scope exit.
   ~ScopeGuard() noexcept { f(); } ///< Invoke @c f when the guard is destroyed.
 };
 

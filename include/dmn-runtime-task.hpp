@@ -44,14 +44,16 @@ struct Dmn_Runtime_Task {
       /** @brief Never ready — always suspend to allow continuation transfer. */
       bool await_ready() const noexcept { return false; }
 
-      /** @brief Resume the stored continuation (if any) via symmetric transfer. */
+      /** @brief Resume the stored continuation (if any) via symmetric transfer.
+       */
       void await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
         if (h && h.promise().m_continuation) {
           h.promise().m_continuation.resume();
         }
       }
 
-      /** @brief No-op: the coroutine frame is already finished at this point. */
+      /** @brief No-op: the coroutine frame is already finished at this point.
+       */
       void await_resume() const noexcept {}
     };
 

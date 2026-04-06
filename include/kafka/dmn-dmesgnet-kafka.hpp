@@ -47,9 +47,9 @@ public:
    *        producer from @p configs and wiring them as the input and output
    *        handlers of the underlying @c Dmn_DMesgNet.
    *
-   * The caller must supply the common broker connection parameters in @p configs
-   * (e.g. @c bootstrap.servers, SASL credentials).  The following keys are
-   * set internally and must NOT be present in @p configs:
+   * The caller must supply the common broker connection parameters in @p
+   * configs (e.g. @c bootstrap.servers, SASL credentials).  The following keys
+   * are set internally and must NOT be present in @p configs:
    *  - @c "group.id"         : set to @p name.
    *  - @c "auto.offset.reset": set to @c "earliest".
    *  - @c "acks"             : set to @c "all".
@@ -92,8 +92,9 @@ public:
   }
 
 private:
-  std::string m_name{};                         ///< Instance name (also used as Kafka group ID).
-  std::unique_ptr<Dmn_DMesgNet> m_dmesgnet{};  ///< Underlying network-aware DMesg node.
+  std::string m_name{}; ///< Instance name (also used as Kafka group ID).
+  std::unique_ptr<Dmn_DMesgNet>
+      m_dmesgnet{}; ///< Underlying network-aware DMesg node.
 }; // class Dmn_DMesgNet_Kafka
 
 } // namespace dmn
