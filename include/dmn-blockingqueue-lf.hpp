@@ -137,19 +137,22 @@ class Dmn_BlockingQueue_Lf
    * sure that we do not have a large number of retired nodes waiting to be
    * freed.
    */
-  static constexpr uint64_t s_epochTimeScale{500};
-  static constexpr uint64_t s_epochIdScale{2};
-  static constexpr uint32_t s_epochDataSize{50};
+  static constexpr uint64_t s_epochTimeScale{500}; ///< API-call interval between epoch advances.
+  static constexpr uint64_t s_epochIdScale{2};     ///< Consecutive epoch IDs mapped to a single bucket.
+  static constexpr uint32_t s_epochDataSize{50};   ///< Number of epoch reclamation buckets.
 
+  /** @brief Atomically updated epoch metadata (cache-line aligned to avoid
+   *         false sharing). */
   struct alignas(16) EpochData {
-    uint64_t m_in_flight_total{};
-    uint64_t m_id{};
+    uint64_t m_in_flight_total{}; ///< Global in-flight API-call count when the current epoch started.
+    uint64_t m_id{};              ///< Monotonically increasing epoch identifier.
   };
 
+  /** @brief Internal linked-list node holding a stored item. */
   struct Node {
-    T m_data{};
-    std::atomic<Node *> m_next{nullptr};
-    std::atomic<Node *> m_retired_next{nullptr};
+    T m_data{};                                    ///< The stored queue element.
+    std::atomic<Node *> m_next{nullptr};           ///< Next node in the live queue chain.
+    std::atomic<Node *> m_retired_next{nullptr};   ///< Next node in the epoch retired list.
   };
 
 public:
@@ -157,9 +160,14 @@ public:
   using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::pop;
   using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::push;
 
+  /** @brief Default constructor: initialises the sentinel head/tail node and
+   *         epoch bookkeeping structures. */
   Dmn_BlockingQueue_Lf();
+
+  /** @brief Construct and populate the queue from an initializer list. */
   Dmn_BlockingQueue_Lf(std::initializer_list<T> list);
 
+  /** @brief Destroy the queue; triggers shutdown and reclaims all nodes. */
   virtual ~Dmn_BlockingQueue_Lf() noexcept;
 
   Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &obj) = delete;
@@ -327,25 +335,29 @@ private:
   }
 
   /**
-   * @brief The method frees a chain of nodes.
+   * @brief Free all nodes in a forward-linked list via @c m_next pointers.
    *
-   * @param head The head pointer to a chain of nodes.
+   * @param head Pointer to the first node in the chain to free.
+   * @return Number of nodes freed.
    */
   auto freeNodeList(Node *head) -> uint64_t;
 
   /**
-   * @brief The method frees a chain of retired nodes.
+   * @brief Free all nodes in a retired-node list linked via
+   *        @c m_retired_next pointers.
    *
-   * @param head The head pointer to a chain of retired nodes.
+   * @param head Pointer to the first node in the retired chain to free.
+   * @return Number of nodes freed.
    */
   auto freeRetiredNodeList(Node *head) -> uint64_t;
 
   /**
-   * @brief The method returns a node into epoch based reclamation
-   * blocks, and free it later.
+   * @brief Defer deletion of @p node by placing it on the epoch's retired
+   *        list; the node is freed when the epoch's in-flight count reaches
+   *        zero.
    *
-   * @param epochIndex Index to the epoch block to retire the node.
-   * @param node Pointer to the node to be free.
+   * @param epochIndex Index of the epoch bucket to which @p node is retired.
+   * @param node       Pointer to the node to retire.
    */
   void retireNode(uint64_t epochIndex, Node *node);
 

@@ -37,7 +37,7 @@
  *   and invokes the provided task with the item (moved where possible).
  * - read(count, timeout) and readAndProcss(fn, count, timeout) function
  *   behaves like it counterpart without count and timeout but with the
- *   following blocking behevior
+ *   following blocking behavior
  *     1. If the pipe already contains >= count items, it returns exactly
  *        `count` items immediately.
  *     2. If the pipe contains 0 items, it blocks:
@@ -95,9 +95,27 @@ class Dmn_Pipe : public Dmn_Io<T>, private QueueType, private Dmn_Proc {
 public:
   using Dmn_Io<T>::write;
 
+  /**
+   * @brief Construct a Dmn_Pipe and optionally start a background processing
+   *        thread.
+   *
+   * @param name    Human-readable name forwarded to the underlying @c Dmn_Proc.
+   * @param fn      Optional processing task invoked for each item dequeued by
+   *                the background thread.  If empty, no background thread is
+   *                started and items must be consumed via read() or
+   *                readAndProcess().
+   * @param count   Number of items to dequeue per background-thread iteration.
+   *                Defaults to 1.
+   * @param timeout Timeout in microseconds passed to each pop call in the
+   *                background loop.  0 means wait indefinitely.
+   */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0);
 
+  /**
+   * @brief Destroy the pipe, stopping any background processing thread and
+   *        releasing resources.
+   */
   virtual ~Dmn_Pipe() noexcept;
 
   Dmn_Pipe(const Dmn_Pipe<T, QueueType> &obj) = delete;

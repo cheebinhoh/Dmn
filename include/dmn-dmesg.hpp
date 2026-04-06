@@ -254,29 +254,29 @@ public:
     Dmn_DMesgHandler &operator=(Dmn_DMesgHandler &&obj) = delete;
 
     /**
-     * @brief The method returns yes or not if the handler is in conflict
+     * @brief Check whether this handler is currently in a conflict state.
      *
-     * @param topic the topic to check if it is in conflict, or "" any topic.
+     * @param topic The topic to check, or an empty string to check any topic.
      *
-     * @return True or False if the handler is in conflict state from last
-     * written message
+     * @return @c true if the handler is in conflict for the given topic (or for
+     *         any topic when @p topic is empty), @c false otherwise.
      */
     auto isInConflict(std::string_view topic = "") -> bool;
 
     /**
-     * @brief The method returns running counter of the topic.
+     * @brief Return the current running counter for the given topic.
      *
-     * @param topic The topic
+     * @param topic The topic whose running counter is queried.
      *
-     * @return The running counter of the topic
+     * @return The running counter value for @p topic.
      */
     auto getTopicRunningCounter(std::string_view topic) -> uint64_t;
 
     /**
-     * @brief The method sets running counter of the topic.
+     * @brief Set the running counter for the given topic.
      *
-     * @param topic The topic
-     * @param runningCounter The running counter to be set for the topic
+     * @param topic          The topic whose running counter is to be updated.
+     * @param runningCounter The new counter value to assign.
      */
     void setTopicRunningCounter(std::string_view topic,
                                 uint64_t runningCounter);
@@ -399,19 +399,19 @@ public:
 
   protected:
     /**
-     * @brief The method returns running counter of the topic.
+     * @brief Return the running counter for the given topic (internal helper).
      *
-     * @param topic The topic
+     * @param topic The topic whose running counter is queried.
      *
-     * @return The running counter of the topic
+     * @return The running counter value for @p topic.
      */
     auto getTopicRunningCounterInternal(std::string_view topic) -> uint64_t;
 
     /**
-     * @brief The method sets running counter of the topic.
+     * @brief Set the running counter for the given topic (internal helper).
      *
-     * @param topic The topic
-     * @param runningCounter The running counter to be set for the topic
+     * @param topic          The topic whose running counter is to be updated.
+     * @param runningCounter The new counter value to assign.
      */
     void setTopicRunningCounterInternal(std::string_view topic,
                                         uint64_t runningCounter);

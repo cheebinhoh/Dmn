@@ -30,14 +30,15 @@ namespace dmn {
 constexpr size_t kKafkaErrorStringLength = 512;
 
 /**
- * @brief The method sets kafka configuration to key value.
+ * @brief Set a single configuration key/value pair on an @c rd_kafka_conf_t
+ *        object.
  *
- * @param conf  The rd_kafka_conf_t object to set the configuration' key value
- * @param key   The configuration key
- * @param value The configuration value
+ * @param conf  The @c rd_kafka_conf_t object to configure.
+ * @param key   The configuration key.
+ * @param value The configuration value.
  *
- * @return It returns the RD_KAFKA_CONF_OK if everything is ok, else a string
- *         describing the kafka error
+ * @return @c RD_KAFKA_CONF_OK wrapped in @c std::expected on success, or an
+ *         error string describing the failure.
  */
 auto set_config(rd_kafka_conf_t *conf, std::string_view key,
                 std::string_view value)

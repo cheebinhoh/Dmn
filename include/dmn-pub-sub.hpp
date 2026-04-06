@@ -6,7 +6,7 @@
  *
  * Overview
  * --------
- * - This header provides a small, efficient publish/subscribe adaptar classes:
+ * - This header provides a small, efficient publish/subscribe adaptor classes:
  *   * Dmn_Pub<T> publishes items of type T.
  *   * Dmn_Pub<T>::Dmn_Sub is the subscriber interface that receives items.
  *
@@ -29,7 +29,7 @@
  *
  * Threading and execution model
  * -----------------------------
- * - The Dmn_Pub is derivade from Dmn_Async. Each Dmn_Pub object has its
+ * - The Dmn_Pub is derived from Dmn_Async. Each Dmn_Pub object has its
  *   own singleton asynchronous execution context as provided by Dmn_Async.
  * - publish(const T&) schedules a delivery task in the publisher's async
  *   context. That task (publishInternal) performs buffering and schedules per-

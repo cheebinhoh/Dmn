@@ -60,31 +60,40 @@ class Dmn_Kafka : public dmn::Dmn_Io<std::string>,
 
 public:
   /**
-   * @brief The configuration key specific to the Dmn_Kafka module (not directly
-   *        to rdkafka).
+   * @brief Configuration keys specific to the @c Dmn_Kafka module (not
+   *        forwarded to librdkafka).
+   *
+   * These keys are extracted from the @c ConfigType map before the remaining
+   * entries are passed to @c rd_kafka_conf_set().
    */
-  const static std::string Topic; // topic to read from or write to
-  const static std::string Key;   // alternate topic name that overrides Topic
-  const static std::string PollTimeoutMs; // timeout in ms for consumer poll to
-                                          // break out
+  const static std::string Topic;         ///< Kafka topic to read from / write to.
+  const static std::string Key;           ///< Alternate topic that overrides @c Topic when set.
+  const static std::string PollTimeoutMs; ///< Consumer poll timeout in milliseconds.
 
   using ConfigType = std::unordered_map<std::string, std::string>;
 
   using Dmn_Io<std::string>::write;
 
+  /** @brief Selects whether this instance acts as a producer or a consumer. */
   enum class Role {
-    kConsumer,
-    kProducer,
+    kConsumer, ///< Consume messages from the configured Kafka topic.
+    kProducer, ///< Produce messages to the configured Kafka topic.
   };
 
   /**
-   * @brief The constructor method that creates kafka consumer or producer with
-   *        the set of configurations passed in.
+   * @brief Construct a Kafka producer or consumer with the supplied
+   *        configuration.
    *
-   * @param role    The object created acts as a kafka consumer or producer
-   * @param configs The set of key value configurations to rdkafka or Dmn_Kafka
+   * @param role    Whether this instance acts as a @c kProducer or @c kConsumer.
+   * @param configs Key/value configuration map; see class documentation for
+   *                the reserved Dmn_Kafka-specific keys.
    */
   Dmn_Kafka(Role role, ConfigType configs = {});
+
+  /**
+   * @brief Destroy the Kafka handle, flushing any pending producer messages
+   *        and closing the consumer session.
+   */
   ~Dmn_Kafka() noexcept;
 
   Dmn_Kafka(const Dmn_Kafka &obj) = delete;
@@ -93,33 +102,32 @@ public:
   Dmn_Kafka &operator=(Dmn_Kafka &&obj) = delete;
 
   /**
-   * @brief The method returns next topic' message that kafka consumer fetches
-   *        from kafka broker, or nullptr if the PollTimeoutMs is elapsed
-   *        without next message.
+   * @brief Poll for the next message from the subscribed Kafka topic.
    *
-   * @return nullptr if no message before PollTimeoutMs is elapsed, or next
-   *         message.
+   * Blocks for up to @c PollTimeoutMs milliseconds.  Returns @c std::nullopt
+   * when no message arrives within the timeout or on shutdown.
+   *
+   * @return The message payload, or @c std::nullopt on timeout or shutdown.
    */
   auto read() -> std::optional<std::string> override;
 
   /**
-   * @brief The method writes the message (of the topic) to Kafka broker.
+   * @brief Produce a message (by copy) to the configured Kafka topic.
    *
-   * @param item The string to be written to the Kafka broker
+   * @param item The message payload to send to the Kafka broker.
    */
   void write(const std::string &item) override;
 
   /**
-   * @brief The method writes the message (of the topic) to Kafka broker, this
-   *        might move the string if implementation desires and supports it.
+   * @brief Produce a message (by move) to the configured Kafka topic.
    *
-   * @param item The string to be written to the Kafka broker
+   * @param item The message payload; may be moved from.
    */
   void write(std::string &&item) override;
 
   /**
-   * @brief Shutdown the Kafka RAII and prevent it from further use to
-   *        faciliate object teardown.
+   * @brief Initiate an orderly shutdown of the Kafka instance, preventing
+   *        further use and facilitating object teardown.
    */
   void shutdown() override;
 
@@ -129,57 +137,50 @@ private:
   virtual auto isInflightGuardClosed() -> bool override;
 
   /**
-   * @brief The callback for rdkafka message specific error, so it is callback
-   *        for producer.
+   * @brief librdkafka delivery-report callback invoked after each produced
+   *        message is acknowledged (or fails) by the broker.
    *
-   * @param kafka_handle The kafka handler from kafka c++ module
-   * @param rkmessage    The kafka message sent delivered by kafka producer
-   * @param opaque       The pointer to Dmn_Kafka object
+   * @param kafka_handle The producer handle (unused).
+   * @param rkmessage    Delivery report for the produced message.
+   * @param opaque       Pointer to the owning @c Dmn_Kafka instance.
    */
   static void producerCallback(rd_kafka_t *kafka_handle,
                                const rd_kafka_message_t *rkmessage,
                                void *opaque);
 
   /**
-   * @brief The callback invoked by kafka c++ module for generic rdkafka error
-   *        (not message specific error) for producer.
+   * @brief librdkafka generic error callback invoked for non-message-specific
+   *        errors (e.g. broker connectivity issues).
    *
-   * @param kafka_handle The kafka handler from kafka c++ module
-   * @param err          The kafka error code related to deliverying the message
-   * @param reason       The kafka error code explanation in string
-   * @param opaque       The pointer to Dmn_Kafka object
+   * @param kafka_handle The producer/consumer handle (unused).
+   * @param err          librdkafka error code.
+   * @param reason       Human-readable reason string (unused).
+   * @param opaque       Pointer to the owning @c Dmn_Kafka instance.
    */
   static void errorCallback(rd_kafka_t *kafka_handle, int err,
                             const char *reason, void *opaque);
 
   /**
-   * @brief The method publishes the data item to kafka broker, the data item
-   *        is moved (if supported) if move is true, or copy otherwise.
+   * @brief Internal helper that synchronously produces @p item to the Kafka
+   *        topic and waits for the delivery report.
    *
-   * @param item The data item to be published
-   * @param move The data item is moved (if support) and then published if true
+   * @param item The message payload to produce.
    */
   void writeCopy(const std::string &item);
 
-  /**
-   * data members for constructor to instantiate the object.
-   */
-  Role m_role{};
-  ConfigType m_configs{};
+  Role m_role{};           ///< Whether this instance is a producer or a consumer.
+  ConfigType m_configs{};  ///< Copy of the configuration map passed at construction.
 
-  /**
-   * data members for internal logic.
-   */
-  std::string m_key{};
-  std::string m_topic{};
-  long long m_poll_timeout_ms{};
+  std::string m_key{};           ///< Kafka message key (overrides topic when set).
+  std::string m_topic{};         ///< Kafka topic to produce to / consume from.
+  long long m_poll_timeout_ms{}; ///< Consumer poll timeout in milliseconds.
 
-  rd_kafka_t *m_kafka{};
-  rd_kafka_resp_err_t m_kafka_err{};
+  rd_kafka_t *m_kafka{};                   ///< librdkafka producer or consumer handle.
+  rd_kafka_resp_err_t m_kafka_err{};       ///< Error code set by delivery/error callbacks.
 
-  std::atomic_flag m_write_atomic_flag{};
+  std::atomic_flag m_write_atomic_flag{};  ///< Serialises concurrent write() calls.
 
-  std::atomic_flag m_shutdown_flag{};
+  std::atomic_flag m_shutdown_flag{};      ///< Set when shutdown() has been requested.
 }; // class Dmn_Kafka
 
 } // namespace dmn

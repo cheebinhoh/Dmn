@@ -43,6 +43,15 @@
 
 namespace dmn {
 
+/**
+ * @brief Transport-agnostic interface for reading and writing values of type T.
+ *
+ * @tparam T The item type exchanged through this interface.
+ *
+ * Concrete implementations may represent files, pipes, network sockets,
+ * message queues, or other data sources and sinks.  See the file-level
+ * documentation for the full semantics of each method.
+ */
 template <typename T> class Dmn_Io {
 public:
   virtual ~Dmn_Io() noexcept { shutdown(); }
@@ -100,8 +109,8 @@ public:
   virtual void write(T &&item) = 0;
 
   /**
-   * @brief Shutdown the io RAII and prevent it from further use to
-   *        faciliate object teardown.
+   * @brief Shut down the I/O object and prevent further use to facilitate
+   *        object teardown.
    */
   virtual void shutdown() {}
 };

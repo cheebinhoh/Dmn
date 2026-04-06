@@ -49,7 +49,17 @@ namespace dmn {
 
 template <typename T> class Dmn_Timer : public Dmn_Proc {
 public:
+  /**
+   * @brief Construct and immediately start a recurring timer.
+   *
+   * @param reltime Interval between consecutive invocations of @p fn.
+   * @param fn      Callback invoked each time the interval elapses.
+   */
   Dmn_Timer(const T &reltime, std::function<void()> fn);
+
+  /**
+   * @brief Destroy the timer, stopping the background thread if it is running.
+   */
   virtual ~Dmn_Timer() noexcept;
 
   Dmn_Timer(const Dmn_Timer &obj) = delete;
@@ -58,17 +68,23 @@ public:
   Dmn_Timer &operator=(Dmn_Timer &&obj) = delete;
 
   /**
-   * @brief The method starts the timer that executes fn repeatedly after
-   *        every reltime interval. Any existing timer is stopped before
-   *        the new timer is started.
+   * @brief Start (or restart) the timer with the given interval and callback.
    *
-   * @param reltime The std::chrono::duration timer
-   * @param fn      The functor to be run by timer
+   * Any currently running timer is stopped before the new one is started.
+   * If @p fn is empty the previously set callback is retained.
+   *
+   * @param reltime Interval between consecutive callback invocations.
+   * @param fn      Optional new callback.  If empty, the existing callback
+   *                stored from construction or a previous call to start() is
+   *                reused.
    */
   void start(const T &reltime, std::function<void()> fn = {});
 
   /**
-   * @brief The method stops the timer.
+   * @brief Stop the running timer.
+   *
+   * Cancels and joins the background thread.  The timer may be restarted
+   * later by calling start().
    */
   void stop();
 
