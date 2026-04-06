@@ -99,8 +99,12 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DMesgNet__Kafka.html'
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad4fa7f7158c5dff1133b0a4ba29878ff" id="r_ad4fa7f7158c5dff1133b0a4ba29878ff"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html#ad4fa7f7158c5dff1133b0a4ba29878ff">Dmn_DMesgNet_Kafka</a> (std::string_view name, Dmn_Kafka::ConfigType configs)</td></tr>
-<tr class="memdesc:ad4fa7f7158c5dff1133b0a4ba29878ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">The constructor method to initiate a created kafka consumer and producer from configuration as input and output handles for the <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> object.  <br /></td></tr>
+<tr class="memdesc:ad4fa7f7158c5dff1133b0a4ba29878ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <code><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html">Dmn_DMesgNet_Kafka</a></code> by creating a Kafka consumer and producer from <code>configs</code> and wiring them as the input and output handlers of the underlying <code><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a></code>.  <br /></td></tr>
 <tr class="separator:ad4fa7f7158c5dff1133b0a4ba29878ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdaef6c35dff06c3bca2d61d8e73be1c" id="r_afdaef6c35dff06c3bca2d61d8e73be1c"><td class="memItemLeft" align="right" valign="top"><a id="afdaef6c35dff06c3bca2d61d8e73be1c" name="afdaef6c35dff06c3bca2d61d8e73be1c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_DMesgNet_Kafka</b> () noexcept</td></tr>
+<tr class="memdesc:afdaef6c35dff06c3bca2d61d8e73be1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the <code><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html">Dmn_DMesgNet_Kafka</a></code> and release all resources. <br /></td></tr>
+<tr class="separator:afdaef6c35dff06c3bca2d61d8e73be1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a42761825b2a1a06586d39e86a55f6536" id="r_a42761825b2a1a06586d39e86a55f6536"><td class="memItemLeft" align="right" valign="top"><a id="a42761825b2a1a06586d39e86a55f6536" name="a42761825b2a1a06586d39e86a55f6536"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgNet_Kafka</b> (const <a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html">Dmn_DMesgNet_Kafka</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a42761825b2a1a06586d39e86a55f6536"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,11 +119,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a51bdee3b6bff99cc4870a9c6cf313af9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbeed35a124f031bda19a218c227de19" id="r_abbeed35a124f031bda19a218c227de19"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
 <tr class="memitem:abbeed35a124f031bda19a218c227de19"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html#abbeed35a124f031bda19a218c227de19">openHandler</a> (U &amp;&amp;...arg) -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesg::HandlerType</a></td></tr>
-<tr class="memdesc:abbeed35a124f031bda19a218c227de19"><td class="mdescLeft">&#160;</td><td class="mdescRight">This method is a forwarding call to the <a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10" title="Create, register and return a new Dmn_DMesgHandler.">Dmn_DMesgNet::openHandler()</a>.  <br /></td></tr>
+<tr class="memdesc:abbeed35a124f031bda19a218c227de19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forward all arguments to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10" title="Create, register and return a new Dmn_DMesgHandler.">Dmn_DMesgNet::openHandler()</a></code> and return the resulting handler proxy.  <br /></td></tr>
 <tr class="separator:abbeed35a124f031bda19a218c227de19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73159e8bab3b1d351dcb6aa5e5b0ef0e" id="r_a73159e8bab3b1d351dcb6aa5e5b0ef0e"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
 <tr class="memitem:a73159e8bab3b1d351dcb6aa5e5b0ef0e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html#a73159e8bab3b1d351dcb6aa5e5b0ef0e">closeHandler</a> (U &amp;&amp;...arg)</td></tr>
-<tr class="memdesc:a73159e8bab3b1d351dcb6aa5e5b0ef0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This method is a forwarding call to the <a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">Dmn_DMesgNet::closeHandler()</a>.  <br /></td></tr>
+<tr class="memdesc:a73159e8bab3b1d351dcb6aa5e5b0ef0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forward all arguments to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">Dmn_DMesgNet::closeHandler()</a></code> to close a previously opened handler.  <br /></td></tr>
 <tr class="separator:a73159e8bab3b1d351dcb6aa5e5b0ef0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -149,12 +153,18 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>The constructor method to initiate a created kafka consumer and producer from configuration as input and output handles for the <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> object. </p>
-<p>The user of the api must provide most of the kafka configuration besides following "group.id", "auto.offset.reset", "acks", <a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="The configuration key specific to the Dmn_Kafka module (not directly to rdkafka).">dmn::Dmn_Kafka::Topic</a> and dmn::Dmn_Kafka::Key which are provided by <a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html">Dmn_DMesgNet_Kafka</a>.</p>
+<p>Construct a <code><a class="el" href="classdmn_1_1Dmn__DMesgNet__Kafka.html">Dmn_DMesgNet_Kafka</a></code> by creating a Kafka consumer and producer from <code>configs</code> and wiring them as the input and output handlers of the underlying <code><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a></code>. </p>
+<p>The caller must supply the common broker connection parameters in <code>configs</code> (e.g. <code>bootstrap.servers</code>, SASL credentials). The following keys are set internally and must NOT be present in <code>configs:</code> </p><ul>
+<li><code>"group.id"</code> : set to <code>name</code>.</li>
+<li><code>"auto.offset.reset"</code>: set to <code>"earliest"</code>.</li>
+<li><code>"acks"</code> : set to <code>"all"</code>.</li>
+<li><code><a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="Configuration keys specific to the Dmn_Kafka module (not forwarded to librdkafka).">Dmn_Kafka::Topic</a></code> : set to <code>"Dmn_dmesgnet"</code>.</li>
+<li><code><a class="el" href="classdmn_1_1Dmn__Kafka.html#a1352b4d83c6f50d066a0bb5cafd6646d" title="Alternate topic that overrides Topic when set.">Dmn_Kafka::Key</a></code> : set to <code>"Dmn_dmesgnet"</code>.</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>The name for <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> and kafka group id </td></tr>
-    <tr><td class="paramname">configs</td><td>The <a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a> configuration </td></tr>
+    <tr><td class="paramname">name</td><td>Identifier used for both the <code><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a></code> instance and the Kafka consumer group ID. </td></tr>
+    <tr><td class="paramname">configs</td><td>Kafka configuration entries (see above for reserved keys). </td></tr>
   </table>
   </dd>
 </dl>
@@ -188,10 +198,10 @@ template&lt;class... U&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>This method is a forwarding call to the <a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">Dmn_DMesgNet::closeHandler()</a>. </p>
+<p>Forward all arguments to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">Dmn_DMesgNet::closeHandler()</a></code> to close a previously opened handler. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">handlerToClose</td><td>The handler to be closed </td></tr>
+    <tr><td class="paramname">arg</td><td>Arguments forwarded verbatim to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7" title="Unregister and free the provided handler.">Dmn_DMesgNet::closeHandler()</a></code>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -224,18 +234,14 @@ template&lt;class... U&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>This method is a forwarding call to the <a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10" title="Create, register and return a new Dmn_DMesgHandler.">Dmn_DMesgNet::openHandler()</a>. </p>
+<p>Forward all arguments to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10" title="Create, register and return a new Dmn_DMesgHandler.">Dmn_DMesgNet::openHandler()</a></code> and return the resulting handler proxy. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topics</td><td>The list of topics to be subscribed for the opened handler </td></tr>
-    <tr><td class="paramname">name</td><td>The name or unique identification to the handler </td></tr>
-    <tr><td class="paramname">includeDMesgSys</td><td>True if the handler will be notified of DMesgPb sys message, default is false, which is optional. </td></tr>
-    <tr><td class="paramname">filterFn</td><td>The functor callback that returns false to filter out DMesgPB message, if no functor is provided, no filter is performed </td></tr>
-    <tr><td class="paramname">asyncProcessFn</td><td>The functor callback to process each notified DMesgPb message</td></tr>
+    <tr><td class="paramname">arg</td><td>Arguments forwarded verbatim to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10" title="Create, register and return a new Dmn_DMesgHandler.">Dmn_DMesgNet::openHandler()</a></code>. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a handler proxy to newly created handler. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code>Dmn_DMesg::HandlerType</code> proxy to the newly opened handler. </dd></dl>
 
 </div>
 </div>

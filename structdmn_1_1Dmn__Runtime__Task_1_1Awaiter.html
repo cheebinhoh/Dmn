@@ -106,12 +106,14 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__Runtime__Task_1_1Awa
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a29ed6e1bf86ab6e480f56d55f7d163dd" id="r_a29ed6e1bf86ab6e480f56d55f7d163dd"><td class="memItemLeft" align="right" valign="top"><a id="a29ed6e1bf86ab6e480f56d55f7d163dd" name="a29ed6e1bf86ab6e480f56d55f7d163dd"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>await_ready</b> () const noexcept</td></tr>
+<tr class="memdesc:a29ed6e1bf86ab6e480f56d55f7d163dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return <code>true</code> when the task has already completed (or the handle is null), so no suspension is needed. <br /></td></tr>
 <tr class="separator:a29ed6e1bf86ab6e480f56d55f7d163dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9daccd07d2d1c5103760d03d4cf83c3" id="r_ad9daccd07d2d1c5103760d03d4cf83c3"><td class="memItemLeft" align="right" valign="top"><a id="ad9daccd07d2d1c5103760d03d4cf83c3" name="ad9daccd07d2d1c5103760d03d4cf83c3"></a>
 std::coroutine_handle&#160;</td><td class="memItemRight" valign="bottom"><b>await_suspend</b> (std::coroutine_handle&lt;&gt; awaiting) const noexcept</td></tr>
 <tr class="separator:ad9daccd07d2d1c5103760d03d4cf83c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac74d9c7dc51ccaf7c5139bf5e09934f9" id="r_ac74d9c7dc51ccaf7c5139bf5e09934f9"><td class="memItemLeft" align="right" valign="top"><a id="ac74d9c7dc51ccaf7c5139bf5e09934f9" name="ac74d9c7dc51ccaf7c5139bf5e09934f9"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>await_resume</b> ()</td></tr>
+<tr class="memdesc:ac74d9c7dc51ccaf7c5139bf5e09934f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resume after task completion; rethrow any exception stored in the promise. <br /></td></tr>
 <tr class="separator:ac74d9c7dc51ccaf7c5139bf5e09934f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>

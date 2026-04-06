@@ -95,6 +95,11 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Io.html',''); initRes
   <div class="headertitle"><div class="title">dmn::Dmn_Io&lt; T &gt; Class Template Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Transport-agnostic interface for reading and writing values of type T.  
+ <a href="classdmn_1_1Dmn__Io.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="dmn-io_8hpp_source.html">dmn-io.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for dmn::Dmn_Io&lt; T &gt;:</div>
 <div class="dyncontent">
@@ -120,10 +125,20 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (move) an item to the sink.  <br /></td></tr>
 <tr class="separator:a0439d9ebdf6bbbec7df53503a2fdb9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a896ac8daec7de1fce18a6ea889dde079" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
-<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shut down the I/O object and prevent further use to facilitate object teardown.  <br /></td></tr>
 <tr class="separator:a896ac8daec7de1fce18a6ea889dde079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Function Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
+class dmn::Dmn_Io&lt; T &gt;</div><p>Transport-agnostic interface for reading and writing values of type T. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The item type exchanged through this interface.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Concrete implementations may represent files, pipes, network sockets, message queues, or other data sources and sinks. See the file-level documentation for the full semantics of each method. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a9df6d0e4cc80d2d7f91caf70a2155e25" name="a9df6d0e4cc80d2d7f91caf70a2155e25"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9df6d0e4cc80d2d7f91caf70a2155e25">&#9670;&#160;</a></span>read() <span class="overload">[1/2]</span></h2>
 
@@ -233,7 +248,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Shutdown the io RAII and prevent it from further use to faciliate object teardown. </p>
+<p>Shut down the I/O object and prevent further use to facilitate object teardown. </p>
 
 <p>Reimplemented in <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>, and <a class="el" href="classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6">dmn::Dmn_Kafka</a>.</p>
 

@@ -23,7 +23,7 @@ var annotated_dup =
       [ "Dmn_Singleton", "classdmn_1_1Dmn__Singleton.html", null ],
       [ "Dmn_Socket", "classdmn_1_1Dmn__Socket.html", "classdmn_1_1Dmn__Socket" ],
       [ "Dmn_Timer", "classdmn_1_1Dmn__Timer.html", "classdmn_1_1Dmn__Timer" ],
-      [ "ScopeGuard", "structdmn_1_1ScopeGuard.html", null ],
+      [ "ScopeGuard", "structdmn_1_1ScopeGuard.html", "structdmn_1_1ScopeGuard" ],
       [ "TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ]
     ] ]
 ];

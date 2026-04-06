@@ -230,7 +230,7 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:aedfa359a021f1895089e958398566c66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconcile system-level information from a remote DMesgPb message.  <br /></td></tr>
 <tr class="separator:aedfa359a021f1895089e958398566c66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4506ace95796353ae1e2a4b1262d822d" id="r_a4506ace95796353ae1e2a4b1262d822d"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d">getLastTopicCacheInternal</a> () -&gt; std::unordered_map&lt; std::string, dmn::DMesgPb &gt; &amp;override</td></tr>
-<tr class="memdesc:a4506ace95796353ae1e2a4b1262d822d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a mutable reference to the net-layer per-topic last-message cache.  <br /></td></tr>
+<tr class="memdesc:a4506ace95796353ae1e2a4b1262d822d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the internal per-topic last-published message cache.  <br /></td></tr>
 <tr class="separator:a4506ace95796353ae1e2a4b1262d822d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__DMesg"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__DMesg')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__DMesg.html">dmn::Dmn_DMesg</a></td></tr>
 <tr class="memitem:a896b86227c1643a79c0b5cc29f0e6be4 inherit pro_methods_classdmn_1_1Dmn__DMesg" id="r_a896b86227c1643a79c0b5cc29f0e6be4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4">publishSysInternal</a> (const dmn::DMesgPb &amp;dmesgpb_sys)</td></tr>
@@ -330,7 +330,7 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task<
 
 <p><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> constructor. </p>
 <p>Construct a <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> instance and start background threads.</p>
-<p>Create a network-aware DMesg instance that can read/write serialized DMesgPb messages through <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> handlers.</p>
+<p>Create a network-aware DMesg instance that can read/write serialized DMesgPb messages through <a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> handlers.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Identification name for this DMesgNet instance. </td></tr>
@@ -343,8 +343,8 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task<
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Node identity string (also used as the handler name). </td></tr>
-    <tr><td class="paramname">input_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> source for inbound serialised DMesgPb strings. </td></tr>
-    <tr><td class="paramname">output_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> sink for outbound serialised DMesgPb strings. </td></tr>
+    <tr><td class="paramname">input_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> source for inbound serialised DMesgPb strings. </td></tr>
+    <tr><td class="paramname">output_handler</td><td><a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> sink for outbound serialised DMesgPb strings. </td></tr>
   </table>
   </dd>
 </dl>
@@ -375,7 +375,10 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task<
 </table>
 </div><div class="memdoc">
 
-<p>Return a mutable reference to the net-layer per-topic last-message cache. </p>
+<p>Return the internal per-topic last-published message cache. </p>
+<p>Return a mutable reference to the net-layer per-topic last-message cache.</p>
+<p>Overrides <code><a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65" title="Return the cache of last topic message.">Dmn_DMesg::getLastTopicCacheInternal()</a></code> to return the network layer's own cache (<code>m_topic_last_dmesgpb</code>) rather than the base-class cache, so that heartbeat and reconciliation logic use the correct view.</p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to the network layer's topic-to-last-message map. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65">dmn::Dmn_DMesg</a>.</p>
 

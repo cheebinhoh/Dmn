@@ -115,9 +115,10 @@ Inheritance diagram for dmn::Dmn_Kafka:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ae6010e6a6ec4e20dc7c8f3b4b565d423" id="r_ae6010e6a6ec4e20dc7c8f3b4b565d423"><td class="memItemLeft" align="right" valign="top"><a id="ae6010e6a6ec4e20dc7c8f3b4b565d423" name="ae6010e6a6ec4e20dc7c8f3b4b565d423"></a>enum class &#160;</td><td class="memItemRight" valign="bottom"><b>Role</b> { <b>kConsumer</b>
-, <b>kProducer</b>
+<tr class="memitem:ae6010e6a6ec4e20dc7c8f3b4b565d423" id="r_ae6010e6a6ec4e20dc7c8f3b4b565d423"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423">Role</a> { <a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a967ffffa9aaf87c52e2c54522118083a">kConsumer</a>
+, <a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1">kProducer</a>
  }</td></tr>
+<tr class="memdesc:ae6010e6a6ec4e20dc7c8f3b4b565d423"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects whether this instance acts as a producer or a consumer.  <a href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423">More...</a><br /></td></tr>
 <tr class="separator:ae6010e6a6ec4e20dc7c8f3b4b565d423"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97eb11593d355869798bb69d01265b10" id="r_a97eb11593d355869798bb69d01265b10"><td class="memItemLeft" align="right" valign="top"><a id="a97eb11593d355869798bb69d01265b10" name="a97eb11593d355869798bb69d01265b10"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigType</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
@@ -125,12 +126,11 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigType</b> = std
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a81bd30e073b287e1ea10bef88825f553" id="r_a81bd30e073b287e1ea10bef88825f553"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a81bd30e073b287e1ea10bef88825f553">Dmn_Kafka</a> (Role role, ConfigType configs={})</td></tr>
-<tr class="memdesc:a81bd30e073b287e1ea10bef88825f553"><td class="mdescLeft">&#160;</td><td class="mdescRight">The constructor method that creates kafka consumer or producer with the set of configurations passed in.  <br /></td></tr>
+<tr class="memitem:a81bd30e073b287e1ea10bef88825f553" id="r_a81bd30e073b287e1ea10bef88825f553"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a81bd30e073b287e1ea10bef88825f553">Dmn_Kafka</a> (<a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423">Role</a> role, ConfigType configs={})</td></tr>
+<tr class="memdesc:a81bd30e073b287e1ea10bef88825f553"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a Kafka producer or consumer with the supplied configuration.  <br /></td></tr>
 <tr class="separator:a81bd30e073b287e1ea10bef88825f553"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabd914aaa127aec86d826788dc104638" id="r_aabd914aaa127aec86d826788dc104638"><td class="memItemLeft" align="right" valign="top"><a id="aabd914aaa127aec86d826788dc104638" name="aabd914aaa127aec86d826788dc104638"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Kafka</b> () noexcept</td></tr>
-<tr class="memdesc:aabd914aaa127aec86d826788dc104638"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor: shuts down the inflight guard, then closes/flushes the Kafka handle and destroys it. <br /></td></tr>
+<tr class="memitem:aabd914aaa127aec86d826788dc104638" id="r_aabd914aaa127aec86d826788dc104638"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#aabd914aaa127aec86d826788dc104638">~Dmn_Kafka</a> () noexcept</td></tr>
+<tr class="memdesc:aabd914aaa127aec86d826788dc104638"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the Kafka handle, flushing any pending producer messages and closing the consumer session.  <br /></td></tr>
 <tr class="separator:aabd914aaa127aec86d826788dc104638"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a075d4b52f4b0f387b1acd0f1b1e6f236" id="r_a075d4b52f4b0f387b1acd0f1b1e6f236"><td class="memItemLeft" align="right" valign="top"><a id="a075d4b52f4b0f387b1acd0f1b1e6f236" name="a075d4b52f4b0f387b1acd0f1b1e6f236"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Kafka</b> (const <a class="el" href="classdmn_1_1Dmn__Kafka.html">Dmn_Kafka</a> &amp;obj)=delete</td></tr>
@@ -145,16 +145,16 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classdmn_1_1Dmn__Kafka.html">Dmn_Kafka</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Kafka.html">Dmn_Kafka</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a346e3bcf4623869079158014156c969c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40ef6a642adbdc8b609dac86390a6e14" id="r_a40ef6a642adbdc8b609dac86390a6e14"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a40ef6a642adbdc8b609dac86390a6e14">read</a> () -&gt; std::optional&lt; std::string &gt; override</td></tr>
-<tr class="memdesc:a40ef6a642adbdc8b609dac86390a6e14"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method returns next topic' message that kafka consumer fetches from kafka broker, or nullptr if the PollTimeoutMs is elapsed without next message.  <br /></td></tr>
+<tr class="memdesc:a40ef6a642adbdc8b609dac86390a6e14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Poll for the next message from the subscribed Kafka topic.  <br /></td></tr>
 <tr class="separator:a40ef6a642adbdc8b609dac86390a6e14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28de08efbf58ef3124f71cbed2166c47" id="r_a28de08efbf58ef3124f71cbed2166c47"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a28de08efbf58ef3124f71cbed2166c47">write</a> (const std::string &amp;item) override</td></tr>
-<tr class="memdesc:a28de08efbf58ef3124f71cbed2166c47"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method writes the message (of the topic) to Kafka broker.  <br /></td></tr>
+<tr class="memdesc:a28de08efbf58ef3124f71cbed2166c47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produce a message (by copy) to the configured Kafka topic.  <br /></td></tr>
 <tr class="separator:a28de08efbf58ef3124f71cbed2166c47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac29707e213319956d2c129e8f2c4666" id="r_aac29707e213319956d2c129e8f2c4666"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#aac29707e213319956d2c129e8f2c4666">write</a> (std::string &amp;&amp;item) override</td></tr>
-<tr class="memdesc:aac29707e213319956d2c129e8f2c4666"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method writes the message (of the topic) to Kafka broker, this might move the string if implementation desires and supports it.  <br /></td></tr>
+<tr class="memdesc:aac29707e213319956d2c129e8f2c4666"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produce a message (by move) to the configured Kafka topic.  <br /></td></tr>
 <tr class="separator:aac29707e213319956d2c129e8f2c4666"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36f0bad5a7c7e9012bbb6547bbc763f6" id="r_a36f0bad5a7c7e9012bbb6547bbc763f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6">shutdown</a> () override</td></tr>
-<tr class="memdesc:a36f0bad5a7c7e9012bbb6547bbc763f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the Kafka RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="memdesc:a36f0bad5a7c7e9012bbb6547bbc763f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate an orderly shutdown of the Kafka instance, preventing further use and facilitating object teardown.  <br /></td></tr>
 <tr class="separator:a36f0bad5a7c7e9012bbb6547bbc763f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Io"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Io')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io&lt; std::string &gt;</a></td></tr>
 <tr class="memitem:ab1335492bced949742f48c2098e87083 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_ab1335492bced949742f48c2098e87083"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083">read</a> (size_t count, long timeout=0) -&gt; std::vector&lt; std::string &gt;</td></tr>
@@ -163,21 +163,53 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:a76d5a2e1c07f753e2c97685a28063c48" id="r_a76d5a2e1c07f753e2c97685a28063c48"><td class="memItemLeft" align="right" valign="top"><a id="a76d5a2e1c07f753e2c97685a28063c48" name="a76d5a2e1c07f753e2c97685a28063c48"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>Topic</b> = &quot;Dmn_Kafka.Topic&quot;</td></tr>
-<tr class="memdesc:a76d5a2e1c07f753e2c97685a28063c48"><td class="mdescLeft">&#160;</td><td class="mdescRight">The configuration key specific to the <a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a> module (not directly to rdkafka). <br /></td></tr>
+<tr class="memitem:a76d5a2e1c07f753e2c97685a28063c48" id="r_a76d5a2e1c07f753e2c97685a28063c48"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48">Topic</a> = &quot;Dmn_Kafka.Topic&quot;</td></tr>
+<tr class="memdesc:a76d5a2e1c07f753e2c97685a28063c48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration keys specific to the <code><a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a></code> module (not forwarded to librdkafka).  <br /></td></tr>
 <tr class="separator:a76d5a2e1c07f753e2c97685a28063c48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1352b4d83c6f50d066a0bb5cafd6646d" id="r_a1352b4d83c6f50d066a0bb5cafd6646d"><td class="memItemLeft" align="right" valign="top"><a id="a1352b4d83c6f50d066a0bb5cafd6646d" name="a1352b4d83c6f50d066a0bb5cafd6646d"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>Key</b> = &quot;Dmn_Kafka.Key&quot;</td></tr>
+<tr class="memdesc:a1352b4d83c6f50d066a0bb5cafd6646d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alternate topic that overrides <code>Topic</code> when set. <br /></td></tr>
 <tr class="separator:a1352b4d83c6f50d066a0bb5cafd6646d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a88036fbad028cb0f15183c91860c47" id="r_a5a88036fbad028cb0f15183c91860c47"><td class="memItemLeft" align="right" valign="top"><a id="a5a88036fbad028cb0f15183c91860c47" name="a5a88036fbad028cb0f15183c91860c47"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>PollTimeoutMs</b> = &quot;Dmn_Kafka.PollTimeoutMs&quot;</td></tr>
+<tr class="memdesc:a5a88036fbad028cb0f15183c91860c47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consumer poll timeout in milliseconds. <br /></td></tr>
 <tr class="separator:a5a88036fbad028cb0f15183c91860c47"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Apache Kafka producer/consumer that implements the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface. </p>
-<p>Wrap librdkafka so that Kafka topics can be used as drop-in <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> endpoints. Construct with Role::kProducer to send messages or Role::kConsumer to receive them. Both directions use the same configuration map; Dmn_Kafka-specific keys (Topic, Key, PollTimeoutMs) are extracted before the remainder is forwarded to rd_kafka_conf_set(). </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<p>Wrap librdkafka so that Kafka topics can be used as drop-in <a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> endpoints. Construct with <a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1" title="Produce messages to the configured Kafka topic.">Role::kProducer</a> to send messages or <a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a967ffffa9aaf87c52e2c54522118083a" title="Consume messages from the configured Kafka topic.">Role::kConsumer</a> to receive them. Both directions use the same configuration map; Dmn_Kafka-specific keys (Topic, Key, PollTimeoutMs) are extracted before the remainder is forwarded to rd_kafka_conf_set(). </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="ae6010e6a6ec4e20dc7c8f3b4b565d423" name="ae6010e6a6ec4e20dc7c8f3b4b565d423"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6010e6a6ec4e20dc7c8f3b4b565d423">&#9670;&#160;</a></span>Role</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423">dmn::Dmn_Kafka::Role</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Selects whether this instance acts as a producer or a consumer. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae6010e6a6ec4e20dc7c8f3b4b565d423a967ffffa9aaf87c52e2c54522118083a" name="ae6010e6a6ec4e20dc7c8f3b4b565d423a967ffffa9aaf87c52e2c54522118083a"></a>kConsumer&#160;</td><td class="fielddoc"><p>Consume messages from the configured Kafka topic. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1" name="ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1"></a>kProducer&#160;</td><td class="fielddoc"><p>Produce messages to the configured Kafka topic. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a81bd30e073b287e1ea10bef88825f553" name="a81bd30e073b287e1ea10bef88825f553"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a81bd30e073b287e1ea10bef88825f553">&#9670;&#160;</a></span>Dmn_Kafka()</h2>
 
@@ -187,7 +219,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
         <tr>
           <td class="memname">dmn::Dmn_Kafka::Dmn_Kafka </td>
           <td>(</td>
-          <td class="paramtype">Dmn_Kafka::Role&#160;</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423">Dmn_Kafka::Role</a>&#160;</td>
           <td class="paramname"><em>role</em>, </td>
         </tr>
         <tr>
@@ -204,12 +236,12 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
       </table>
 </div><div class="memdoc">
 
-<p>The constructor method that creates kafka consumer or producer with the set of configurations passed in. </p>
+<p>Construct a Kafka producer or consumer with the supplied configuration. </p>
 <p>Construct a <a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a> producer or consumer handle.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">role</td><td>The object created acts as a kafka consumer or producer </td></tr>
-    <tr><td class="paramname">configs</td><td>The set of key value configurations to rdkafka or <a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a></td></tr>
+    <tr><td class="paramname">role</td><td>Whether this instance acts as a <code>kProducer</code> or <code>kConsumer</code>. </td></tr>
+    <tr><td class="paramname">configs</td><td>Key/value configuration map; see class documentation for the reserved Dmn_Kafka-specific keys.</td></tr>
   </table>
   </dd>
 </dl>
@@ -217,7 +249,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">role</td><td>kProducer or kConsumer. </td></tr>
-    <tr><td class="paramname">configs</td><td>Key/value configuration map; recognised keys are <a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="The configuration key specific to the Dmn_Kafka module (not directly to rdkafka).">Dmn_Kafka::Topic</a>, Dmn_Kafka::Key, Dmn_Kafka::PollTimeoutMs, and any standard librdkafka configuration property. </td></tr>
+    <tr><td class="paramname">configs</td><td>Key/value configuration map; recognised keys are <a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="Configuration keys specific to the Dmn_Kafka module (not forwarded to librdkafka).">Dmn_Kafka::Topic</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a1352b4d83c6f50d066a0bb5cafd6646d" title="Alternate topic that overrides Topic when set.">Dmn_Kafka::Key</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a5a88036fbad028cb0f15183c91860c47" title="Consumer poll timeout in milliseconds.">Dmn_Kafka::PollTimeoutMs</a>, and any standard librdkafka configuration property. </td></tr>
   </table>
   </dd>
 </dl>
@@ -227,6 +259,34 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="aabd914aaa127aec86d826788dc104638" name="aabd914aaa127aec86d826788dc104638"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aabd914aaa127aec86d826788dc104638">&#9670;&#160;</a></span>~Dmn_Kafka()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_Kafka::~Dmn_Kafka </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Destroy the Kafka handle, flushing any pending producer messages and closing the consumer session. </p>
+<p>Destructor: shuts down the inflight guard, then closes/flushes the Kafka handle and destroys it. </p>
 
 </div>
 </div>
@@ -254,9 +314,10 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 </table>
 </div><div class="memdoc">
 
-<p>The method returns next topic' message that kafka consumer fetches from kafka broker, or nullptr if the PollTimeoutMs is elapsed without next message. </p>
+<p>Poll for the next message from the subscribed Kafka topic. </p>
 <p>Poll for the next Kafka consumer message.</p>
-<dl class="section return"><dt>Returns</dt><dd>nullptr if no message before PollTimeoutMs is elapsed, or next message.</dd></dl>
+<p>Blocks for up to <code>PollTimeoutMs</code> milliseconds. Returns <code>std::nullopt</code> when no message arrives within the timeout or on shutdown.</p>
+<dl class="section return"><dt>Returns</dt><dd>The message payload, or <code>std::nullopt</code> on timeout or shutdown.</dd></dl>
 <p>Blocks for up to m_poll_timeout_ms milliseconds. Returns std::nullopt on timeout, partition EOF, or if shutdown has been requested. Non-fatal errors are logged to stderr; the error code is stored in m_kafka_err.</p>
 <dl class="section return"><dt>Returns</dt><dd>The message payload string, or std::nullopt. </dd></dl>
 
@@ -287,7 +348,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 </table>
 </div><div class="memdoc">
 
-<p>Shutdown the Kafka RAII and prevent it from further use to faciliate object teardown. </p>
+<p>Initiate an orderly shutdown of the Kafka instance, preventing further use and facilitating object teardown. </p>
 <p>Signal shutdown: set the flag and wait for all in-flight operations to complete before returning. </p>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
@@ -318,11 +379,11 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 </table>
 </div><div class="memdoc">
 
-<p>The method writes the message (of the topic) to Kafka broker. </p>
+<p>Produce a message (by copy) to the configured Kafka topic. </p>
 <p>Copy-write overload: delegates to write(item, move=false).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The string to be written to the Kafka broker </td></tr>
+    <tr><td class="paramname">item</td><td>The message payload to send to the Kafka broker. </td></tr>
   </table>
   </dd>
 </dl>
@@ -355,16 +416,42 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 </table>
 </div><div class="memdoc">
 
-<p>The method writes the message (of the topic) to Kafka broker, this might move the string if implementation desires and supports it. </p>
+<p>Produce a message (by move) to the configured Kafka topic. </p>
 <p>Move-write overload: delegates to write(item, move=true).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">item</td><td>The string to be written to the Kafka broker </td></tr>
+    <tr><td class="paramname">item</td><td>The message payload; may be moved from. </td></tr>
   </table>
   </dd>
 </dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a76d5a2e1c07f753e2c97685a28063c48" name="a76d5a2e1c07f753e2c97685a28063c48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76d5a2e1c07f753e2c97685a28063c48">&#9670;&#160;</a></span>Topic</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string dmn::Dmn_Kafka::Topic = &quot;Dmn_Kafka.Topic&quot;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Configuration keys specific to the <code><a class="el" href="classdmn_1_1Dmn__Kafka.html" title="Apache Kafka producer/consumer that implements the Dmn_Io&lt;std::string&gt; interface.">Dmn_Kafka</a></code> module (not forwarded to librdkafka). </p>
+<p>These keys are extracted from the <code>ConfigType</code> map before the remaining entries are passed to <code>rd_kafka_conf_set()</code>. Kafka topic to read from / write to. </p>
 
 </div>
 </div>

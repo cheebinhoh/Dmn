@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Socket.html',''); ini
 </div><!--header-->
 <div class="contents">
 
-<p>Implements a socket-based <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> for std::string messages.  
+<p>Implements a socket-based <a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> for std::string messages.  
  <a href="classdmn_1_1Dmn__Socket.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-socket_8hpp_source.html">dmn-socket.hpp</a>&gt;</code></p>
@@ -144,11 +144,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ab1335492bced949742f48c2098e87083 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read up to <code>count</code> items, optionally waiting up to <code>timeout</code> microseconds.  <br /></td></tr>
 <tr class="separator:ab1335492bced949742f48c2098e87083 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">shutdown</a> ()</td></tr>
-<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown.  <br /></td></tr>
+<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shut down the I/O object and prevent further use to facilitate object teardown.  <br /></td></tr>
 <tr class="separator:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Implements a socket-based <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io</a> for std::string messages. </p>
+<div class="textblock"><p>Implements a socket-based <a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> for std::string messages. </p>
 <p>Provides a synchronous socket interface that conforms to the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> contract. The class manages a single file descriptor (m_fd) representing a connected TCP socket to the specified IPv4 address and port.</p>
 <p>Thread-safety: Instances are NOT inherently thread-safe. Synchronize access externally if multiple threads share an instance.</p>
 <p>Lifetime/ownership: The socket file descriptor is owned by the object and closed in the destructor. Copy and move operations are deleted to avoid accidental sharing of the descriptor. </p>

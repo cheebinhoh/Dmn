@@ -16,5 +16,8 @@ var searchData=
   ['and_20semantics_13',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
   ['and_20timeout_20semantics_14',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'']]],
   ['asyncprocesstask_15',['AsyncProcessTask',['../classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95',1,'dmn::Dmn_DMesg']]],
-  ['awaiter_16',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
+  ['await_5fready_16',['await_ready',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#a29ed6e1bf86ab6e480f56d55f7d163dd',1,'dmn::Dmn_Runtime_Task::Awaiter::await_ready()'],['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#acf6a16171900cb5eb02a67236f800347',1,'dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter::await_ready() const noexcept']]],
+  ['await_5fresume_17',['await_resume',['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#ab6b02b12087889555e7f814d58da733d',1,'dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter::await_resume()'],['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html#ac74d9c7dc51ccaf7c5139bf5e09934f9',1,'dmn::Dmn_Runtime_Task::Awaiter::await_resume()']]],
+  ['await_5fsuspend_18',['await_suspend',['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html#a40adc33f1cc8ca4d48e841c730db36c9',1,'dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter']]],
+  ['awaiter_19',['Awaiter',['../structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html',1,'dmn::Dmn_Runtime_Task']]]
 ];

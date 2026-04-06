@@ -125,7 +125,7 @@ Classes</h2></td></tr>
 <h2><a class="anchor" id="autotoc_md23"></a>
 Overview</h2>
 <ul>
-<li>This header provides a small, efficient publish/subscribe adaptar classes:<ul>
+<li>This header provides a small, efficient publish/subscribe adaptor classes:<ul>
 <li>Dmn_Pub&lt;T&gt; publishes items of type T.</li>
 <li>Dmn_Pub&lt;T&gt;::Dmn_Sub is the subscriber interface that receives items.</li>
 </ul>
@@ -147,7 +147,7 @@ Key design goals</h2>
 <h2><a class="anchor" id="autotoc_md26"></a>
 Threading and execution model</h2>
 <ul>
-<li>The Dmn_Pub is derivade from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
+<li>The Dmn_Pub is derived from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's publish() method.</li>
 <li>notify(const T&amp;, Dmn_Pub *pub) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how does the notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
 </ul>

@@ -138,9 +138,18 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BlockingQueue&lt
 <p>Note that the m_epochData.m_id is a running counter, but multiple consecutive m_id will be derived into a same epochIndex that is used to reference the entry in the m_epochReclaimNode and m_epochInFlightCount.</p>
 <p>Such design allows us to have configuration in time (s_epochTimeScale) and space (s_epochIdScale) when deriving the epochIndex where multiple calls in short proximity in time are same epoch, but uses the space factor to make sure that we do not have a large number of retired nodes waiting to be freed. </p>
 </td></tr>
+<tr class="memitem:a8f01b013d89cedd6c565128df1d10cf5" id="r_a8f01b013d89cedd6c565128df1d10cf5"><td class="memItemLeft" align="right" valign="top"><a id="a8f01b013d89cedd6c565128df1d10cf5" name="a8f01b013d89cedd6c565128df1d10cf5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BlockingQueue_Lf</b> ()</td></tr>
+<tr class="memdesc:a8f01b013d89cedd6c565128df1d10cf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor: initialises the sentinel head/tail node and epoch bookkeeping structures. <br /></td></tr>
+<tr class="separator:a8f01b013d89cedd6c565128df1d10cf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8431b8a4f89439bbfcd47dc249a4292" id="r_af8431b8a4f89439bbfcd47dc249a4292"><td class="memItemLeft" align="right" valign="top"><a id="af8431b8a4f89439bbfcd47dc249a4292" name="af8431b8a4f89439bbfcd47dc249a4292"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BlockingQueue_Lf</b> (std::initializer_list&lt; T &gt; list)</td></tr>
+<tr class="memdesc:af8431b8a4f89439bbfcd47dc249a4292"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct and populate the queue from an initializer list. <br /></td></tr>
 <tr class="separator:af8431b8a4f89439bbfcd47dc249a4292"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa20688923154394c5d20a81e1aca09e" id="r_afa20688923154394c5d20a81e1aca09e"><td class="memItemLeft" align="right" valign="top"><a id="afa20688923154394c5d20a81e1aca09e" name="afa20688923154394c5d20a81e1aca09e"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_BlockingQueue_Lf</b> () noexcept</td></tr>
+<tr class="memdesc:afa20688923154394c5d20a81e1aca09e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the queue; triggers shutdown and reclaims all nodes. <br /></td></tr>
+<tr class="separator:afa20688923154394c5d20a81e1aca09e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac421bbed2f3de3efe0d5527ea0d240d" id="r_aac421bbed2f3de3efe0d5527ea0d240d"><td class="memItemLeft" align="right" valign="top"><a id="aac421bbed2f3de3efe0d5527ea0d240d" name="aac421bbed2f3de3efe0d5527ea0d240d"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BlockingQueue_Lf</b> (const <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Lf.html">Dmn_BlockingQueue_Lf</a>&lt; T &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:aac421bbed2f3de3efe0d5527ea0d240d"><td class="memSeparator" colspan="2">&#160;</td></tr>

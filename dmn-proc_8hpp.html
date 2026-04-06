@@ -109,13 +109,16 @@ $(document).ready(function(){initNavTree('dmn-proc_8hpp.html',''); initResizable
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html">dmn::Dmn_Proc</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A small RAII-style wrapper around pthreads that runs a user-provided task (<code>std::function&lt;void()&gt;</code>) in a new thread.  <a href="classdmn_1_1Dmn__Proc.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:aa633c027e6c017bcb5b8058069bc8c65" id="r_aa633c027e6c017bcb5b8058069bc8c65"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65">DMN_PROC_CLEANUP_PUSH</a>(...)&#160;&#160;&#160;pthread_cleanup_push(__VA_ARGS__)</td></tr>
+<tr class="memdesc:aa633c027e6c017bcb5b8058069bc8c65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro wrapper around <code>pthread_cleanup_push</code>.  <br /></td></tr>
 <tr class="separator:aa633c027e6c017bcb5b8058069bc8c65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7da7fe4e959340eec9466edd69fb25d" id="r_aa7da7fe4e959340eec9466edd69fb25d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d">DMN_PROC_CLEANUP_POP</a>(...)&#160;&#160;&#160;pthread_cleanup_pop(__VA_ARGS__)</td></tr>
+<tr class="memdesc:aa7da7fe4e959340eec9466edd69fb25d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro wrapper around <code>pthread_cleanup_pop</code>.  <br /></td></tr>
 <tr class="separator:aa7da7fe4e959340eec9466edd69fb25d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
@@ -156,7 +159,9 @@ Design pattern</h2>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>More generic macro to wrap pthread_cleanup_pop </p>
+
+<p>Macro wrapper around <code>pthread_cleanup_pop</code>. </p>
+<p>Pops the most recently pushed cleanup handler. If the argument is non-zero, the handler is also executed. Arguments are forwarded verbatim to <code>pthread_cleanup_pop</code>. </p>
 
 </div>
 </div>
@@ -175,7 +180,9 @@ Design pattern</h2>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>More generic macro to wrap pthread_cleanup_push </p>
+
+<p>Macro wrapper around <code>pthread_cleanup_push</code>. </p>
+<p>Registers a cleanup handler to be called when the current thread is cancelled or when <code>DMN_PROC_CLEANUP_POP</code> is executed. Arguments are forwarded verbatim to <code>pthread_cleanup_push</code>. </p>
 
 </div>
 </div>

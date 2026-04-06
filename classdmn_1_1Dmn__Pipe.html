@@ -102,17 +102,21 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
  <div class="center">
   <img src="classdmn_1_1Dmn__Pipe.png" usemap="#dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" alt=""/>
   <map id="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map" name="dmn::Dmn_5FPipe_3C_20T_2C_20QueueType_20_3E_map">
-<area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="0,0,211,24"/>
+<area href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T." alt="dmn::Dmn_Io&lt; T &gt;" shape="rect" coords="0,0,211,24"/>
 <area href="classdmn_1_1Dmn__BlockingQueue__Mt.html" title="Thread-safe FIFO buffer." alt="dmn::Dmn_BlockingQueue_Mt&lt; T &gt;" shape="rect" coords="221,0,432,24"/>
-<area href="classdmn_1_1Dmn__Proc.html" alt="dmn::Dmn_Proc" shape="rect" coords="442,0,653,24"/>
+<area href="classdmn_1_1Dmn__Proc.html" title="A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in ..." alt="dmn::Dmn_Proc" shape="rect" coords="442,0,653,24"/>
   </map>
 </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0b8e952a277c68325b96c64608451a4c" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top"><a id="a0b8e952a277c68325b96c64608451a4c" name="a0b8e952a277c68325b96c64608451a4c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
+<tr class="memitem:a0b8e952a277c68325b96c64608451a4c" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c">Dmn_Pipe</a> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
+<tr class="memdesc:a0b8e952a277c68325b96c64608451a4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> and optionally start a background processing thread.  <br /></td></tr>
 <tr class="separator:a0b8e952a277c68325b96c64608451a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bb79f728f7ea508565600ceb0e1ed95" id="r_a9bb79f728f7ea508565600ceb0e1ed95"><td class="memItemLeft" align="right" valign="top"><a id="a9bb79f728f7ea508565600ceb0e1ed95" name="a9bb79f728f7ea508565600ceb0e1ed95"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () noexcept</td></tr>
+<tr class="memdesc:a9bb79f728f7ea508565600ceb0e1ed95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the pipe, stopping any background processing thread and releasing resources. <br /></td></tr>
+<tr class="separator:a9bb79f728f7ea508565600ceb0e1ed95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b0ea1743998b84fceb3645cc4c7c38a" id="r_a1b0ea1743998b84fceb3645cc4c7c38a"><td class="memItemLeft" align="right" valign="top"><a id="a1b0ea1743998b84fceb3645cc4c7c38a" name="a1b0ea1743998b84fceb3645cc4c7c38a"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pipe</b> (const <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt; T, QueueType &gt; &amp;obj)=delete</td></tr>
 <tr class="separator:a1b0ea1743998b84fceb3645cc4c7c38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,6 +157,68 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:a6f1a36063050f3ed79f7c6799b41d966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate an orderly shutdown of the pipe.  <br /></td></tr>
 <tr class="separator:a6f1a36063050f3ed79f7c6799b41d966"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a0b8e952a277c68325b96c64608451a4c" name="a0b8e952a277c68325b96c64608451a4c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b8e952a277c68325b96c64608451a4c">&#9670;&#160;</a></span>Dmn_Pipe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename QueueType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; T, QueueType &gt;::Dmn_Pipe </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt; T, QueueType &gt;::Task&#160;</td>
+          <td class="paramname"><em>fn</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>count</em> = <code>1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>timeout</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> and optionally start a background processing thread. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>Human-readable name forwarded to the underlying <code><a class="el" href="classdmn_1_1Dmn__Proc.html" title="A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in ...">Dmn_Proc</a></code>. </td></tr>
+    <tr><td class="paramname">fn</td><td>Optional processing task invoked for each item dequeued by the background thread. If empty, no background thread is started and items must be consumed via <a class="el" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816" title="Read and return the item from the pipe.">read()</a> or <a class="el" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea" title="Read the next item from the pipe and invoke the provided task.">readAndProcess()</a>. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of items to dequeue per background-thread iteration. Defaults to 1. </td></tr>
+    <tr><td class="paramname">timeout</td><td>Timeout in microseconds passed to each pop call in the background loop. 0 means wait indefinitely. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a8a1f81ce619c3aeb1ec73a82f682be76" name="a8a1f81ce619c3aeb1ec73a82f682be76"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8a1f81ce619c3aeb1ec73a82f682be76">&#9670;&#160;</a></span>isShutdown()</h2>

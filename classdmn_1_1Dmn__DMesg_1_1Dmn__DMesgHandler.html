@@ -166,13 +166,13 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a4615f7930290e5770bde1406d11bc45a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaea039fb7f3922c0a60b3e0b1080d7ce" id="r_aaea039fb7f3922c0a60b3e0b1080d7ce"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aaea039fb7f3922c0a60b3e0b1080d7ce">isInConflict</a> (std::string_view topic=&quot;&quot;) -&gt; bool</td></tr>
-<tr class="memdesc:aaea039fb7f3922c0a60b3e0b1080d7ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method returns yes or not if the handler is in conflict.  <br /></td></tr>
+<tr class="memdesc:aaea039fb7f3922c0a60b3e0b1080d7ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether this handler is currently in a conflict state.  <br /></td></tr>
 <tr class="separator:aaea039fb7f3922c0a60b3e0b1080d7ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47931a8d7bd1318e4c646abb59909e72" id="r_a47931a8d7bd1318e4c646abb59909e72"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72">getTopicRunningCounter</a> (std::string_view topic) -&gt; uint64_t</td></tr>
-<tr class="memdesc:a47931a8d7bd1318e4c646abb59909e72"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method returns running counter of the topic.  <br /></td></tr>
+<tr class="memdesc:a47931a8d7bd1318e4c646abb59909e72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current running counter for the given topic.  <br /></td></tr>
 <tr class="separator:a47931a8d7bd1318e4c646abb59909e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5e223cd67242f61dd9d2993a2ed96f5" id="r_af5e223cd67242f61dd9d2993a2ed96f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#af5e223cd67242f61dd9d2993a2ed96f5">setTopicRunningCounter</a> (std::string_view topic, uint64_t runningCounter)</td></tr>
-<tr class="memdesc:af5e223cd67242f61dd9d2993a2ed96f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method sets running counter of the topic.  <br /></td></tr>
+<tr class="memdesc:af5e223cd67242f61dd9d2993a2ed96f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the running counter for the given topic.  <br /></td></tr>
 <tr class="separator:af5e223cd67242f61dd9d2993a2ed96f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25821706f53d3714ee33d3456aa52b73" id="r_a25821706f53d3714ee33d3456aa52b73"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73">read</a> () -&gt; std::optional&lt; dmn::DMesgPb &gt; override</td></tr>
 <tr class="memdesc:a25821706f53d3714ee33d3456aa52b73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocking read: return the next available DMesgPb or nullopt if the read fails / on shutdown.  <br /></td></tr>
@@ -213,7 +213,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab1335492bced949742f48c2098e87083 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_a896ac8daec7de1fce18a6ea889dde079"><td class="memItemLeft" align="right" valign="top">
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>shutdown</b> ()</td></tr>
-<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the io RAII and prevent it from further use to faciliate object teardown. <br /></td></tr>
+<tr class="memdesc:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shut down the I/O object and prevent further use to facilitate object teardown. <br /></td></tr>
 <tr class="separator:a896ac8daec7de1fce18a6ea889dde079 inherit pub_methods_classdmn_1_1Dmn__Io"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</a></td></tr>
 <tr class="memitem:ae51e3fbaeffcd472bf2fb96d06780760 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub" id="r_ae51e3fbaeffcd472bf2fb96d06780760"><td class="memItemLeft" align="right" valign="top">
@@ -238,10 +238,10 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>shutdown</b> 
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:afb123e1174563ee0fee9f5f091bddad1" id="r_afb123e1174563ee0fee9f5f091bddad1"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1">getTopicRunningCounterInternal</a> (std::string_view topic) -&gt; uint64_t</td></tr>
-<tr class="memdesc:afb123e1174563ee0fee9f5f091bddad1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method returns running counter of the topic.  <br /></td></tr>
+<tr class="memdesc:afb123e1174563ee0fee9f5f091bddad1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the running counter for the given topic (internal helper).  <br /></td></tr>
 <tr class="separator:afb123e1174563ee0fee9f5f091bddad1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6144665f39980c7902700cb413f8497" id="r_aa6144665f39980c7902700cb413f8497"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497">setTopicRunningCounterInternal</a> (std::string_view topic, uint64_t runningCounter)</td></tr>
-<tr class="memdesc:aa6144665f39980c7902700cb413f8497"><td class="mdescLeft">&#160;</td><td class="mdescRight">The method sets running counter of the topic.  <br /></td></tr>
+<tr class="memdesc:aa6144665f39980c7902700cb413f8497"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the running counter for the given topic (internal helper).  <br /></td></tr>
 <tr class="separator:aa6144665f39980c7902700cb413f8497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa69e6a0a2171a34c07469c422c7ceeb2" id="r_aa69e6a0a2171a34c07469c422c7ceeb2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa69e6a0a2171a34c07469c422c7ceeb2">writeDMesgInternal</a> (dmn::DMesgPb &amp;dmesgpb, bool move, bool block=false)</td></tr>
 <tr class="memdesc:aa69e6a0a2171a34c07469c422c7ceeb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal write implementation used by public write(...) overloads.  <br /></td></tr>
@@ -585,15 +585,15 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
       </table>
 </div><div class="memdoc">
 
-<p>The method returns running counter of the topic. </p>
+<p>Return the current running counter for the given topic. </p>
 <p>Block until the initial playback is done, then return the per-topic running counter from the publisher's async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>The topic</td></tr>
+    <tr><td class="paramname">topic</td><td>The topic whose running counter is queried.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The running counter of the topic</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The running counter value for <code>topic</code>.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>Topic whose running counter is requested. </td></tr>
@@ -628,15 +628,15 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </table>
 </div><div class="memdoc">
 
-<p>The method returns running counter of the topic. </p>
+<p>Return the running counter for the given topic (internal helper). </p>
 <p>Look up the running counter for <code>topic</code> directly (no locking).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>The topic</td></tr>
+    <tr><td class="paramname">topic</td><td>The topic whose running counter is queried.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The running counter of the topic </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The running counter value for <code>topic</code>. </dd></dl>
 
 </div>
 </div>
@@ -656,15 +656,15 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
       </table>
 </div><div class="memdoc">
 
-<p>The method returns yes or not if the handler is in conflict. </p>
+<p>Check whether this handler is currently in a conflict state. </p>
 <p>Posts an async task to the publisher's context to check the conflict state, blocking until the result is available.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>the topic to check if it is in conflict, or "" any topic.</td></tr>
+    <tr><td class="paramname">topic</td><td>The topic to check, or an empty string to check any topic.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>True or False if the handler is in conflict state from last written message</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the handler is in conflict for the given topic (or for any topic when <code>topic</code> is empty), <code>false</code> otherwise.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>Topic to check, or "" for any topic. </td></tr>
@@ -837,12 +837,12 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
       </table>
 </div><div class="memdoc">
 
-<p>The method sets running counter of the topic. </p>
+<p>Set the running counter for the given topic. </p>
 <p>Set the running counter for <code>topic</code> from the publisher's async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>The topic </td></tr>
-    <tr><td class="paramname">runningCounter</td><td>The running counter to be set for the topic</td></tr>
+    <tr><td class="paramname">topic</td><td>The topic whose running counter is to be updated. </td></tr>
+    <tr><td class="paramname">runningCounter</td><td>The new counter value to assign.</td></tr>
     <tr><td class="paramname">topic</td><td>Topic to update. </td></tr>
     <tr><td class="paramname">runningCounter</td><td>New counter value. </td></tr>
   </table>
@@ -885,12 +885,12 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </table>
 </div><div class="memdoc">
 
-<p>The method sets running counter of the topic. </p>
+<p>Set the running counter for the given topic (internal helper). </p>
 <p>Directly update the counter map entry for <code>topic</code> (no locking).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">topic</td><td>The topic </td></tr>
-    <tr><td class="paramname">runningCounter</td><td>The running counter to be set for the topic </td></tr>
+    <tr><td class="paramname">topic</td><td>The topic whose running counter is to be updated. </td></tr>
+    <tr><td class="paramname">runningCounter</td><td>The new counter value to assign. </td></tr>
   </table>
   </dd>
 </dl>

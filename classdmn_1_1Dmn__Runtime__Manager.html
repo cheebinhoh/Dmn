@@ -339,7 +339,8 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
 </div><div class="memdoc">
 
 <p>Start processing runtime events / jobs. Blocks until <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a> is called or the runtime decides to stop (a signal handler hook calls exitMainLoop). </p>
-<p>The method will enter the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, and wait for runtime loop to be exited. this is usually called by the main() method. </p>
+<p>Enter the <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></code> main loop and block until <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a></code> is called.</p>
+<p>This is typically called from <code>main()</code> after the runtime has been set up. It starts the signal-wait thread and processes pending jobs until <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab" title="Request the runtime to stop processing and exit the main loop.">exitMainLoop()</a></code> signals termination. </p>
 
 </div>
 </div>
@@ -361,7 +362,7 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
 </div><div class="memdoc">
 
 <p>Request the runtime to stop processing and exit the main loop. </p>
-<p>The method will exit the <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a> mainloop, returns control (usually the mainthread) to the main() function to be continued.</p>
+<p>Exit the <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></code> main loop and return control to the caller of <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a></code> (typically <code>main()</code>).</p>
 <p>May be called from a signal handler hook or from any thread. After this call returns, a subsequent call to <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a></code> will unblock and return to the caller. </p>
 
 </div>

@@ -90,26 +90,42 @@ $(document).ready(function(){initNavTree('structdmn_1_1ScopeGuard.html',''); ini
 
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structdmn_1_1ScopeGuard-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::ScopeGuard&lt; F &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>The type to support scope guard (like std::scope_exit in proposed c++ standard).  
+<p>Minimal scope-guard analogous to the proposed <code>std::scope_exit</code>.  
  <a href="structdmn_1_1ScopeGuard.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-util_8hpp_source.html">dmn-util.hpp</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a71c350c56d9e854cf852adbba9d0bec2" id="r_a71c350c56d9e854cf852adbba9d0bec2"><td class="memItemLeft" align="right" valign="top"><a id="a71c350c56d9e854cf852adbba9d0bec2" name="a71c350c56d9e854cf852adbba9d0bec2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>~ScopeGuard</b> () noexcept</td></tr>
+<tr class="memdesc:a71c350c56d9e854cf852adbba9d0bec2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invoke <code>f</code> when the guard is destroyed. <br /></td></tr>
+<tr class="separator:a71c350c56d9e854cf852adbba9d0bec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a50a576c85ef10c9de89712438ac45464" id="r_a50a576c85ef10c9de89712438ac45464"><td class="memItemLeft" align="right" valign="top"><a id="a50a576c85ef10c9de89712438ac45464" name="a50a576c85ef10c9de89712438ac45464"></a>
 F&#160;</td><td class="memItemRight" valign="bottom"><b>f</b></td></tr>
+<tr class="memdesc:a50a576c85ef10c9de89712438ac45464"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callable invoked on scope exit. <br /></td></tr>
 <tr class="separator:a50a576c85ef10c9de89712438ac45464"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename F&gt;<br />
-struct dmn::ScopeGuard&lt; F &gt;</div><p>The type to support scope guard (like std::scope_exit in proposed c++ standard). </p>
+struct dmn::ScopeGuard&lt; F &gt;</div><p>Minimal scope-guard analogous to the proposed <code>std::scope_exit</code>. </p>
+<p>Calls the stored callable <code>f</code> unconditionally when the <code><a class="el" href="structdmn_1_1ScopeGuard.html" title="Minimal scope-guard analogous to the proposed std::scope_exit.">ScopeGuard</a></code> object goes out of scope. Use <a class="el" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">make_scope_guard</a> to construct one with automatic type deduction.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">F</td><td>A callable type (lambda, function pointer, or functor) invoked with no arguments when the guard is destroyed. </td></tr>
+  </table>
+  </dd>
+</dl>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-util_8hpp_source.html">dmn-util.hpp</a></li>
 </ul>

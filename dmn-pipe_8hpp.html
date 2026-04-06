@@ -148,7 +148,7 @@ Read / Write semantics</h2>
 <li>write(T&amp;&amp;) moves <code>item</code> into the pipe; move will be used when the move constructor is noexcept (via QueueType::push semantics).</li>
 <li>read() blocks until the next item is available and returns it wrapped in std::optional; when the pipe is closed it returns std::nullopt.</li>
 <li>readAndProcess(fn) blocks until the next item is available or timeout and invokes the provided task with the item (moved where possible).</li>
-<li><p class="startli">read(count, timeout) and readAndProcss(fn, count, timeout) function behaves like it counterpart without count and timeout but with the following blocking behevior</p><ol type="1">
+<li><p class="startli">read(count, timeout) and readAndProcss(fn, count, timeout) function behaves like it counterpart without count and timeout but with the following blocking behavior</p><ol type="1">
 <li>If the pipe already contains &gt;= count items, it returns exactly <code>count</code> items immediately.</li>
 <li>If the pipe contains 0 items, it blocks:<ul>
 <li>If timeout == 0: blocks indefinitely until at least <code>count</code> items become available (returns exactly <code>count</code>).</li>

@@ -160,7 +160,7 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:ae7d978010b314f5925ba0f8b072ecc7f" id="r_ae7d978010b314f5925ba0f8b072ecc7f"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#ae7d978010b314f5925ba0f8b072ecc7f">isInflightGuardClosed</a> () -&gt; bool override</td></tr>
-<tr class="memdesc:ae7d978010b314f5925ba0f8b072ecc7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true if the queue is stop (m_shutdown_flag is true), or false otherwise. The method is delegation of <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> module.  <br /></td></tr>
+<tr class="memdesc:ae7d978010b314f5925ba0f8b072ecc7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return <code>true</code> if the queue has been shut down (<code>m_shutdown_flag</code> is set), <code>false</code> otherwise.  <br /></td></tr>
 <tr class="separator:ae7d978010b314f5925ba0f8b072ecc7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00f8a147a6000229314e9886722b0c15" id="r_a00f8a147a6000229314e9886722b0c15"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a00f8a147a6000229314e9886722b0c15">popOptional</a> (bool wait) -&gt; std::optional&lt; T &gt; override</td></tr>
 <tr class="memdesc:a00f8a147a6000229314e9886722b0c15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal helper that optionally blocks waiting for an item.  <br /></td></tr>
@@ -212,8 +212,9 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Return true if the queue is stop (m_shutdown_flag is true), or false otherwise. The method is delegation of <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a> module. </p>
-<dl class="section return"><dt>Returns</dt><dd>true or false that the queue is shutdown. </dd></dl>
+<p>Return <code>true</code> if the queue has been shut down (<code>m_shutdown_flag</code> is set), <code>false</code> otherwise. </p>
+<p>Implements the <code><a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html">Dmn_Inflight_Guard</a></code> closed-state predicate.</p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when the queue is shut down. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Inflight__Guard.html#af7d62f329a07cc1d1af87946bf19181a">dmn::Dmn_Inflight_Guard&lt; T &gt;</a>.</p>
 
