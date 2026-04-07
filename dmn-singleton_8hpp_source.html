@@ -98,78 +98,79 @@ $(document).ready(function(){initNavTree('dmn-singleton_8hpp_source.html',''); i
 </div><!--header-->
 <div class="contents">
 <a href="dmn-singleton_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#ifndef DMN_SINGLETON_HPP_</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#define DMN_SINGLETON_HPP_</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="keyword">namespace </span>dmn {</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="foldopen" id="foldopen00062" data-start="{" data-end="}">
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">   62</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance</a> = <span class="keyword">requires</span> {</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  { T::runPriorToCreateInstance() } -&gt; std::same_as&lt;void&gt;;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>};</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#ifndef DMN_SINGLETON_HPP_</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#define DMN_SINGLETON_HPP_</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="keyword">namespace </span>dmn {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00063" data-start="{" data-end="}">
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">   63</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance</a> = <span class="keyword">requires</span> {</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  { T::runPriorToCreateInstance() } -&gt; std::same_as&lt;void&gt;;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>};</div>
 </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="foldopen" id="foldopen00066" data-start="{" data-end="};">
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html">   66</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a> {</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00091" data-start="{" data-end="}">
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">   91</a></span>  <span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt; <span class="keyword">static</span> std::shared_ptr&lt;T&gt; <a class="code hl_function" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">createInstance</a>(U &amp;&amp;...arg);</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  <span class="keyword">static</span> std::atomic&lt;bool&gt;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>      s_allocated; </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="keyword">static</span> std::shared_ptr&lt;T&gt;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>      s_instance; </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  <span class="keyword">static</span> std::once_flag</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>      s_init_once; </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>};</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::atomic&lt;bool&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton&lt;T&gt;::s_allocated</a>{<span class="keyword">false</span>};</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::once_flag Dmn_Singleton&lt;T&gt;::s_init_once{};</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::shared_ptr&lt;T&gt; Dmn_Singleton&lt;T&gt;::s_instance{};</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt;</div>
-<div class="foldopen" id="foldopen00110" data-start="{" data-end="}">
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">  110</a></span>std::shared_ptr&lt;T&gt; <a class="code hl_function" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">Dmn_Singleton&lt;T&gt;::createInstance</a>(U &amp;&amp;...arg) {</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  <span class="comment">// NOTE that the template type class is supposed to handle</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  <span class="comment">// thread-safety (example through std::once_flag) to make</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="comment">// sure that multiple threads calling createInstance is</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>  <span class="comment">// thread safe and always the singleton instance is returned.</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>  <span class="keywordflow">if</span> (!s_allocated.load()) {</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    std::call_once(</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        s_init_once,</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        [](U &amp;&amp;...arg) {</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>          <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance&lt;T&gt;</a>) {</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            T::runPriorToCreateInstance();</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>          }</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>          s_instance = std::make_shared&lt;T&gt;(std::forward&lt;U&gt;(arg)...);</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        },</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        std::forward&lt;U&gt;(arg)...);</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  }</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  <span class="keywordflow">return</span> s_instance;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>}</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="foldopen" id="foldopen00067" data-start="{" data-end="};">
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html">   67</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a> {</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00092" data-start="{" data-end="}">
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">   92</a></span>  <span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt; <span class="keyword">static</span> std::shared_ptr&lt;T&gt; <a class="code hl_function" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">createInstance</a>(U &amp;&amp;...arg);</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  <span class="keyword">static</span> std::atomic&lt;bool&gt;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>      s_allocated; </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  <span class="keyword">static</span> std::shared_ptr&lt;T&gt;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>      s_instance; </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="keyword">static</span> std::once_flag</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>      s_init_once; </div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>};</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::atomic&lt;bool&gt; <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton&lt;T&gt;::s_allocated</a>{<span class="keyword">false</span>};</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::once_flag Dmn_Singleton&lt;T&gt;::s_init_once{};</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; std::shared_ptr&lt;T&gt; Dmn_Singleton&lt;T&gt;::s_instance{};</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt;</div>
+<div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">  111</a></span>std::shared_ptr&lt;T&gt; <a class="code hl_function" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">Dmn_Singleton&lt;T&gt;::createInstance</a>(U &amp;&amp;...arg) {</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  <span class="comment">// NOTE that the template type class is supposed to handle</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="comment">// thread-safety (example through std::once_flag) to make</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>  <span class="comment">// sure that multiple threads calling createInstance is</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>  <span class="comment">// thread safe and always the singleton instance is returned.</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>  <span class="keywordflow">if</span> (!s_allocated.load()) {</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    std::call_once(</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        s_init_once,</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        [](U &amp;&amp;...arg) {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>          <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance&lt;T&gt;</a>) {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            T::runPriorToCreateInstance();</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>          }</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>          s_instance = std::shared_ptr&lt;T&gt;(<span class="keyword">new</span> T(std::forward&lt;U&gt;(arg)...));</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>          s_allocated.store(<span class="keyword">true</span>, std::memory_order_release);</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        },</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        std::forward&lt;U&gt;(arg)...);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  }</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>  <span class="keywordflow">return</span> s_instance;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>}</div>
 </div>
 </div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>} <span class="comment">// namespace dmn</span></div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span><span class="preprocessor">#endif </span><span class="comment">// DMN_SINGLETON_HPP_</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="preprocessor">#endif </span><span class="comment">// DMN_SINGLETON_HPP_</span></div>
 </div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:66</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html_a265bcf7489109bbf0d5a636e9b30dcd6"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">dmn::Dmn_Singleton::createInstance</a></div><div class="ttdeci">static std::shared_ptr&lt; T &gt; createInstance(U &amp;&amp;...arg)</div><div class="ttdoc">Create or retrieve the process-wide singleton instance of T.</div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:110</div></div>
-<div class="ttc" id="aconceptdmn_1_1HasStaticRunPriorToCreateInstance_html"><div class="ttname"><a href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">dmn::HasStaticRunPriorToCreateInstance</a></div><div class="ttdoc">Concept that checks whether type T exposes a static runPriorToCreateInstance() method with a void ret...</div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:62</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:67</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html_a265bcf7489109bbf0d5a636e9b30dcd6"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">dmn::Dmn_Singleton::createInstance</a></div><div class="ttdeci">static std::shared_ptr&lt; T &gt; createInstance(U &amp;&amp;...arg)</div><div class="ttdoc">Create or retrieve the process-wide singleton instance of T.</div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:111</div></div>
+<div class="ttc" id="aconceptdmn_1_1HasStaticRunPriorToCreateInstance_html"><div class="ttname"><a href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">dmn::HasStaticRunPriorToCreateInstance</a></div><div class="ttdoc">Concept that checks whether type T exposes a static runPriorToCreateInstance() method with a void ret...</div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:63</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

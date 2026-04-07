@@ -92,7 +92,8 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Runtime__Manager.html
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pro-static-methods">Static Protected Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classdmn_1_1Dmn__Runtime__Manager-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">dmn::Dmn_Runtime_Manager&lt; QueueType &gt; Class Template Reference</div></div>
 </div><!--header-->
@@ -153,11 +154,20 @@ requires IsValidJobFnc&lt;F&gt;</td></tr>
 <tr class="memdesc:a1907e2ef032bc22e6a52c1c114c7afe6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a signal handler hook for a particular signal number. Handlers are invoked by the runtime in a safe context (not from the raw signal handler) in a singleton asynchronous thread context.  <br /></td></tr>
 <tr class="separator:a1907e2ef032bc22e6a52c1c114c7afe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-static-methods" name="pro-static-methods"></a>
+Static Protected Member Functions</h2></td></tr>
 <tr class="memitem:a456083f9813654f46124a31c9d26d4a6" id="r_a456083f9813654f46124a31c9d26d4a6"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6">runPriorToCreateInstance</a> ()</td></tr>
 <tr class="memdesc:a456083f9813654f46124a31c9d26d4a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP) in the calling thread before the singleton instance is created.  <br /></td></tr>
 <tr class="separator:a456083f9813654f46124a31c9d26d4a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a4259b887ecc1f69faf3118839f6d2834" id="r_a4259b887ecc1f69faf3118839f6d2834"><td class="memItemLeft" align="right" valign="top"><a id="a4259b887ecc1f69faf3118839f6d2834" name="a4259b887ecc1f69faf3118839f6d2834"></a>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Singleton&lt; Dmn_Runtime_Manager&lt; QueueType &gt; &gt;</b></td></tr>
+<tr class="separator:a4259b887ecc1f69faf3118839f6d2834"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_static_methods_classdmn_1_1Dmn__Singleton"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classdmn_1_1Dmn__Singleton')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton&lt; T &gt;</a></td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6 inherit pub_static_methods_classdmn_1_1Dmn__Singleton" id="r_a265bcf7489109bbf0d5a636e9b30dcd6"><td class="memTemplParams" colspan="2">template&lt;class... U&gt; </td></tr>
 <tr class="memitem:a265bcf7489109bbf0d5a636e9b30dcd6 inherit pub_static_methods_classdmn_1_1Dmn__Singleton"><td class="memTemplItemLeft" align="right" valign="top">static std::shared_ptr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">createInstance</a> (U &amp;&amp;...arg)</td></tr>
@@ -426,7 +436,7 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
