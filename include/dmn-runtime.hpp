@@ -273,10 +273,12 @@ template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Runtime_Manager
     : public Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>,
       private Dmn_Async<QueueType> {
+
+  friend class Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>;
+
 public:
   using SignalHandlerHook = std::function<void(int signo)>;
 
-  Dmn_Runtime_Manager();
   virtual ~Dmn_Runtime_Manager() noexcept;
 
   Dmn_Runtime_Manager(const Dmn_Runtime_Manager &obj) = delete;
@@ -359,6 +361,9 @@ public:
    *              signal is raised.
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
+
+protected:
+  Dmn_Runtime_Manager();
 
   /**
    * @brief Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP)
