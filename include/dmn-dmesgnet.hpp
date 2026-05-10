@@ -185,9 +185,9 @@ private:
                                         ///< acknowledgement.
   long long m_master_sync_pending_counter{}; ///< Cycles spent waiting for
                                              ///< master synchronisation.
-  struct timeval
-      m_last_remote_master_timestamp{}; ///< Timestamp of the last received
-                                        ///< master heartbeat.
+  struct timeval m_last_remote_master_timestamp {
+  }; ///< Timestamp of the last received
+     ///< master heartbeat.
   std::unordered_map<std::string, dmn::DMesgPb>
       m_topic_last_dmesgpb{}; ///< Last published message per topic.
   std::unordered_map<std::string, std::vector<dmn::DMesgPb>>

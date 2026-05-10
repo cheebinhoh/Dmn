@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright © 2023 Chee Bin HOH. All rights reserved.
+# Copyright © 2023 - 2026 Chee Bin HOH. All rights reserved.
 #
 
 DIRS=". include src include/kafka src/kafka test"
@@ -11,6 +11,8 @@ FILE_PATTERN='*.cpp *.hpp'
 # Tab at the beginning of lines are not consistent cross IDE, it is particular
 # annoying for source files saved in visual studio kind of IDE and reopen in
 # vi.
+
+ROOT_DIR=`pwd`
 
 echo "******** check for tab character..."
 
@@ -26,10 +28,10 @@ for d in `echo ${DIRS}`; do
     fi
   done
 
-  cd - &>/dev/null
+  cd $ROOT_DIR
 done
 
-if [ "$has_invalid_tab" == "yes" ]; then
+if [ "$has_invalid_tab" = "yes" ]; then
   exit 1
 fi
 
@@ -41,17 +43,9 @@ if which clang-format &>/dev/null; then
     cd ${d};
 
     for f in `ls ${FILE_PATTERN} 2>/dev/null`; do
-      clang-format --style=LLVM ${f} > ${f}_tmp
-      if ! diff $f ${f}_tmp &>/dev/null; then
-        echo "- formatting ${f}..."
-        cp ${f}_tmp ${f}
-      fi
-
-      rm ${f}_tmp
+      clang-format -i --style=LLVM ${f}
     done
 
-    cd - &>/dev/null
+    cd $ROOT_DIR
   done
 fi
-
-
