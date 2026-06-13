@@ -171,8 +171,8 @@ public:
    *
    * @return The number of items read and processed.
    */
-  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1, long timeout = 0)
-      -> size_t;
+  auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1,
+                      long timeout = 0) -> size_t;
 
   /**
    * @brief Write (copy) an item into the pipe.
@@ -294,8 +294,8 @@ auto Dmn_Pipe<T, QueueType>::read() -> std::optional<T> {
 }
 
 template <typename T, typename QueueType>
-auto Dmn_Pipe<T, QueueType>::read(size_t count, long timeout)
-    -> std::vector<T> {
+auto Dmn_Pipe<T, QueueType>::read(size_t count,
+                                  long timeout) -> std::vector<T> {
   std::vector<T> dataList{};
 
   readAndProcess([&dataList](T &&item) { dataList.push_back(std::move(item)); },

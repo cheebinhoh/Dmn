@@ -183,8 +183,8 @@ public:
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
    */
   template <typename Callable, typename... Args>
-  auto addExecTaskWithWait(Callable &&func, Args &&...args)
-      -> std::shared_ptr<Dmn_Async_Handle>;
+  auto addExecTaskWithWait(Callable &&func,
+                           Args &&...args) -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
    * @brief Schedule a callable task to run after the given duration has
@@ -223,8 +223,8 @@ public:
   template <class Rep, class Period, typename Callable, typename... Args>
   auto
   addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
-                           Callable &&func, Args &&...args)
-      -> std::shared_ptr<Dmn_Async_Handle>;
+                           Callable &&func,
+                           Args &&...args) -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
    * @brief Block until the async is empty and no task pending to be executed.
