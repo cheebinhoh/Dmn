@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Copyright © 2026 Chee Bin HOH. All rights reserved.
+#
 
 /usr/bin/start-kafka.sh &>/dev/null &
 
