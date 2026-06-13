@@ -3,10 +3,31 @@
 # Copyright © 2023 - 2026 Chee Bin HOH. All rights reserved.
 #
 
+ROOT_DIR="."
+
+for arg in "$@"; do
+  case "$arg" in
+    --root=*)
+      ROOT_DIR="${arg#--root=}"
+      ;;
+    *)
+      echo "Usage: $0 [--root=dir]" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [ ! -d "$ROOT_DIR" ]; then
+  echo "Error: root directory '$ROOT_DIR' does not exist." >&2
+  exit 2
+fi
+
+cd "$ROOT_DIR" || exit 2
+
 DIRS=". include src include/kafka src/kafka test"
 FILE_PATTERN='*.cpp *.hpp'
 
-# extra space following newline is never intended to be checked in, so we trim it.
+# Extra space following newline is never intended to be checked in, so we trim it.
 #
 # Tab at the beginning of lines are not consistent cross IDE, it is particular
 # annoying for source files saved in visual studio kind of IDE and reopen in
@@ -36,7 +57,7 @@ if [ "$has_invalid_tab" = "yes" ]; then
 fi
 
 # clang-format the source files
-if which clang-format &>/dev/null; then
+if which clang-format >/dev/null; then
   echo "******** perform clang-format..."
 
   for d in `echo ${DIRS}`; do
@@ -48,4 +69,6 @@ if which clang-format &>/dev/null; then
 
     cd $ROOT_DIR
   done
+else
+  echo "Error: clang-format is not found, skip it..."
 fi
