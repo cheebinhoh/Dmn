@@ -172,8 +172,8 @@ $(document).ready(function(){initNavTree('dmn-dmesgnet_8hpp_source.html',''); in
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>      m_sys{}; </div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>  <span class="keywordtype">long</span> <span class="keywordtype">long</span> m_master_pending_counter{}; </div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>  <span class="keywordtype">long</span> <span class="keywordtype">long</span> m_master_sync_pending_counter{}; </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>  <span class="keyword">struct </span>timeval</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>      m_last_remote_master_timestamp{}; </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>  <span class="keyword">struct </span>timeval m_last_remote_master_timestamp {</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>  }; </div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>  std::unordered_map&lt;std::string, dmn::DMesgPb&gt;</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>      m_topic_last_dmesgpb{}; </div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>  std::unordered_map&lt;std::string, std::vector&lt;dmn::DMesgPb&gt;&gt;</div>

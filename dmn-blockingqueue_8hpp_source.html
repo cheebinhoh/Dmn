@@ -173,8 +173,8 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue_8hpp_source.html',''
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Derived, <span class="keyword">typename</span> T&gt;</div>
 <div class="foldopen" id="foldopen00193" data-start="{" data-end="}">
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__BlockingQueue.html#a9d324c91b1f2a47056ab7f80ff284c4c">  193</a></span><span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda">Dmn_BlockingQueue&lt;Derived, T&gt;::pop</a>(std::size_t count, <span class="keywordtype">long</span> timeout)</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    -&gt; std::vector&lt;T&gt; {</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__BlockingQueue.html#a9d324c91b1f2a47056ab7f80ff284c4c">  193</a></span><span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda">Dmn_BlockingQueue&lt;Derived, T&gt;::pop</a>(std::size_t count,</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>                                               <span class="keywordtype">long</span> timeout) -&gt; std::vector&lt;T&gt; {</div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>  <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>Derived *<span class="keyword">&gt;</span>(<span class="keyword">this</span>)-&gt;pop(count, timeout);</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>}</div>
 </div>

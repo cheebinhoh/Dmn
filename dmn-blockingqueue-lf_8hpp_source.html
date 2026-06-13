@@ -176,9 +176,9 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp_source.html'
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="keyword">protected</span>:</div>
 <div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>  <span class="keyword">virtual</span> <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067">popOptional</a>(<span class="keywordtype">bool</span> wait) -&gt; std::optional&lt;T&gt; <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>  <span class="keyword">virtual</span> <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067">popOptional</a>(<span class="keywordtype">bool</span> wait,</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                           <span class="keyword">const</span> Inflight_Guard_Ticket &amp;inflightTicket)</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>      -&gt; std::optional&lt;T&gt;;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>  <span class="keyword">virtual</span> <span class="keyword">auto</span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>  <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067">popOptional</a>(<span class="keywordtype">bool</span> wait,</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>              <span class="keyword">const</span> Inflight_Guard_Ticket &amp;inflightTicket) -&gt; std::optional&lt;T&gt;;</div>
 <div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#ae738544dd427b145dbd3bf0f51f33761">pushCopy</a>(<span class="keyword">const</span> T &amp;item) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span> </div>
@@ -316,8 +316,8 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp_source.html'
 <div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span> </div>
 <div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="foldopen" id="foldopen00462" data-start="{" data-end="}">
-<div class="line"><a id="l00462" name="l00462"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a2c69dfa5fe6aab130f85d476034531a7">  462</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda">Dmn_BlockingQueue_Lf&lt;T&gt;::pop</a>(<span class="keywordtype">size_t</span> count, <span class="keywordtype">long</span> timeout)</div>
-<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>    -&gt; std::vector&lt;T&gt; {</div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#a2c69dfa5fe6aab130f85d476034531a7">  462</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda">Dmn_BlockingQueue_Lf&lt;T&gt;::pop</a>(<span class="keywordtype">size_t</span> count,</div>
+<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>                                  <span class="keywordtype">long</span> timeout) -&gt; std::vector&lt;T&gt; {</div>
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>  assert(count &gt; 0);</div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span> </div>
 <div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>  <span class="keyword">auto</span> inflightTicket = this-&gt;enterInflightGate();</div>
@@ -367,8 +367,8 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue-lf_8hpp_source.html'
 <div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="foldopen" id="foldopen00508" data-start="{" data-end="}">
 <div class="line"><a id="l00508" name="l00508"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aa7467de9cc9f93c6d6c8305b8ba03542">  508</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__BlockingQueue__Lf.html#aab6cb2147147155c19171806b2543067">Dmn_BlockingQueue_Lf&lt;T&gt;::popOptional</a>(</div>
-<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>    <span class="keywordtype">bool</span> wait, <span class="keyword">const</span> Inflight_Guard_Ticket &amp;inflightTicket)</div>
-<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>    -&gt; std::optional&lt;T&gt; {</div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>    <span class="keywordtype">bool</span> wait,</div>
+<div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>    <span class="keyword">const</span> Inflight_Guard_Ticket &amp;inflightTicket) -&gt; std::optional&lt;T&gt; {</div>
 <div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>  std::optional&lt;T&gt; res{};</div>
 <div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span> </div>
 <div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span>  <span class="keywordflow">do</span> {</div>

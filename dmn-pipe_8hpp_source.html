@@ -144,8 +144,8 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">read</a>(<span class="keywordtype">size_t</span> count, <span class="keywordtype">long</span> timeout = 0) -&gt; std::vector&lt;T&gt; <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">readAndProcess</a>(Dmn_Pipe::Task fn, <span class="keywordtype">size_t</span> count = 1, <span class="keywordtype">long</span> timeout = 0)</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>      -&gt; size_t;</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">readAndProcess</a>(Dmn_Pipe::Task fn, <span class="keywordtype">size_t</span> count = 1,</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>                      <span class="keywordtype">long</span> timeout = 0) -&gt; size_t;</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#ab91e60f5a827d6b611f385c060a29442">write</a>(<span class="keyword">const</span> T &amp;item) <span class="keyword">override</span>;</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
@@ -238,8 +238,8 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span> </div>
 <div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> QueueType&gt;</div>
 <div class="foldopen" id="foldopen00297" data-start="{" data-end="}">
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">  297</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">Dmn_Pipe&lt;T, QueueType&gt;::read</a>(<span class="keywordtype">size_t</span> count, <span class="keywordtype">long</span> timeout)</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    -&gt; std::vector&lt;T&gt; {</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#a1283e8a077a77b3a973c189cb50aa79b">  297</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">Dmn_Pipe&lt;T, QueueType&gt;::read</a>(<span class="keywordtype">size_t</span> count,</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>                                  <span class="keywordtype">long</span> timeout) -&gt; std::vector&lt;T&gt; {</div>
 <div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>  std::vector&lt;T&gt; dataList{};</div>
 <div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span> </div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>  readAndProcess([&amp;dataList](T &amp;&amp;item) { dataList.push_back(std::move(item)); },</div>
