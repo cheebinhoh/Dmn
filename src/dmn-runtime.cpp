@@ -48,7 +48,7 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   auto *impl = new Dmn_Runtime_Manager_Impl;
 
 #ifdef _POSIX_TIMERS
-  struct sigevent sev{};
+  struct sigevent sev {};
 
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
@@ -152,7 +152,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *impl,
   assert(impl->m_timer_created);
 
 #ifdef _POSIX_TIMERS
-  struct itimerspec its{};
+  struct itimerspec its {};
 
   its.it_value.tv_sec = sec;
   its.it_value.tv_nsec = nsec;
@@ -165,7 +165,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *impl,
                              std::system_category().message(errno));
   }
 #else /* _POSIX_TIMERS */
-  struct itimerval timer{};
+  struct itimerval timer {};
 
   timer.it_value.tv_sec = sec;
   timer.it_value.tv_usec = nsec / 1000;

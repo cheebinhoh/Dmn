@@ -190,8 +190,8 @@ private:
 }; // class Dmn_BlockingQueue
 
 template <typename Derived, typename T>
-inline auto Dmn_BlockingQueue<Derived, T>::pop(std::size_t count, long timeout)
-    -> std::vector<T> {
+inline auto Dmn_BlockingQueue<Derived, T>::pop(std::size_t count,
+                                               long timeout) -> std::vector<T> {
   return static_cast<Derived *>(this)->pop(count, timeout);
 }
 

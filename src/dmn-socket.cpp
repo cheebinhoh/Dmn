@@ -45,7 +45,7 @@ namespace dmn {
 Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
     : m_ip4{ip4}, m_port_no{port_no}, m_write_only{write_only} {
   constexpr int broadcast{1};
-  struct sockaddr_in servaddr{};
+  struct sockaddr_in servaddr {};
   const int type{SOCK_DGRAM};
 
   m_fd = socket(AF_INET, type, 0);
@@ -111,7 +111,7 @@ void Dmn_Socket::write(const std::string &item) {
    *        as a member value per object to avoid reconstructing it on every
    *        write call.
    */
-  struct sockaddr_in servaddr{};
+  struct sockaddr_in servaddr {};
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
   servaddr.sin_port = htons(m_port_no);

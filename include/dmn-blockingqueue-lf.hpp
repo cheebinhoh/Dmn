@@ -252,9 +252,9 @@ protected:
    * @return An optional containing the data from the head of the queue, or
    *         std::nullopt if the queue is empty and wait is false.
    */
-  virtual auto popOptional(bool wait,
-                           const Inflight_Guard_Ticket &inflightTicket)
-      -> std::optional<T>;
+  virtual auto
+  popOptional(bool wait,
+              const Inflight_Guard_Ticket &inflightTicket) -> std::optional<T>;
 
   /**
    * @brief Wrapper call to pushImpl to copy and enqueue the item into the
@@ -459,8 +459,8 @@ auto dmn::Dmn_BlockingQueue_Lf<T>::freeRetiredNodeList(Node *head) -> uint64_t {
 }
 
 template <typename T>
-auto Dmn_BlockingQueue_Lf<T>::pop(size_t count, long timeout)
-    -> std::vector<T> {
+auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
+                                  long timeout) -> std::vector<T> {
   assert(count > 0);
 
   auto inflightTicket = this->enterInflightGate();
@@ -506,8 +506,8 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popOptional(
-    bool wait, const Inflight_Guard_Ticket &inflightTicket)
-    -> std::optional<T> {
+    bool wait,
+    const Inflight_Guard_Ticket &inflightTicket) -> std::optional<T> {
   std::optional<T> res{};
 
   do {

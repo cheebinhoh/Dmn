@@ -402,9 +402,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb,
  * @param flags   Additional WriteOptions (kForce, etc.).
  * @return true if write succeeded without conflict, false otherwise.
  */
-auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
-                                                        WriteFlags flags)
-    -> bool {
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(
+    dmn::DMesgPb &&dmesgpb, WriteFlags flags) -> bool {
   std::string topic = dmesgpb.topic();
 
   flags.set(kBlock);
@@ -421,9 +420,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &&dmesgpb,
  * @param flags   Additional WriteOptions (kForce, etc.).
  * @return true if write succeeded without conflict, false otherwise.
  */
-auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(dmn::DMesgPb &dmesgpb,
-                                                        WriteFlags flags)
-    -> bool {
+auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(
+    dmn::DMesgPb &dmesgpb, WriteFlags flags) -> bool {
   std::string topic = dmesgpb.topic();
 
   flags.set(kBlock);
@@ -454,7 +452,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                              "handler needs to be reset");
   }
 
-  struct timeval tval{};
+  struct timeval tval {};
   gettimeofday(&tval, nullptr);
 
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tval);

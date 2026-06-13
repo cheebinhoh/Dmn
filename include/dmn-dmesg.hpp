@@ -588,8 +588,8 @@ public:
    *
    * @return last message of topic or nullptr if no message for such topic.
    */
-  auto getTopicLastMessage(std::string_view topic)
-      -> std::optional<dmn::DMesgPb>;
+  auto
+  getTopicLastMessage(std::string_view topic) -> std::optional<dmn::DMesgPb>;
 
   /**
    * @brief Reset conflict state by posting last message of the topic.

@@ -343,8 +343,8 @@ template <typename T> auto Dmn_BlockingQueue_Mt<T>::waitForEmpty() -> uint64_t {
 }
 
 template <typename T>
-auto Dmn_BlockingQueue_Mt<T>::pop(size_t count, long timeout)
-    -> std::vector<T> {
+auto Dmn_BlockingQueue_Mt<T>::pop(size_t count,
+                                  long timeout) -> std::vector<T> {
   std::vector<T> ret{};
 
   assert(count > 0);
