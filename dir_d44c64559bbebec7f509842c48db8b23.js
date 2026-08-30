@@ -18,6 +18,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-runtime.hpp", "dmn-runtime_8hpp.html", "dmn-runtime_8hpp" ],
     [ "dmn-singleton.hpp", "dmn-singleton_8hpp.html", "dmn-singleton_8hpp" ],
     [ "dmn-socket.hpp", "dmn-socket_8hpp.html", "dmn-socket_8hpp" ],
+    [ "dmn-state.hpp", "dmn-state_8hpp.html", "dmn-state_8hpp" ],
     [ "dmn-timer.hpp", "dmn-timer_8hpp.html", "dmn-timer_8hpp" ],
     [ "dmn-util.hpp", "dmn-util_8hpp.html", "dmn-util_8hpp" ],
     [ "dmn.hpp", "dmn_8hpp.html", null ]

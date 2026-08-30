@@ -17,5 +17,6 @@ var searchData=
   ['dmn_5fruntime_5fmanager_5fimpl_5fsetnexttimerat_14',['Dmn_Runtime_Manager_Impl_setNextTimerAt',['../dmn-runtime_8hpp.html#a0579788c11b30cefe7d89be4f7ce0206',1,'dmn::detail']]],
   ['dmn_5fruntime_5ftask_15',['dmn_runtime_task',['../structdmn_1_1Dmn__Runtime__Task.html#a4fc97b9128cbf791b963fafee228aa1e',1,'dmn::Dmn_Runtime_Task::Dmn_Runtime_Task(std::coroutine_handle&lt; promise_type &gt; h) noexcept'],['../structdmn_1_1Dmn__Runtime__Task.html#a8a54bb69603dba06023da1cbb5998f12',1,'dmn::Dmn_Runtime_Task::Dmn_Runtime_Task(Dmn_Runtime_Task &amp;&amp;other) noexcept']]],
   ['dmn_5fsocket_16',['Dmn_Socket',['../classdmn_1_1Dmn__Socket.html#aa7da5ee8aeaff18aa2f81472cc747b28',1,'dmn::Dmn_Socket']]],
-  ['dmn_5ftimer_17',['Dmn_Timer',['../classdmn_1_1Dmn__Timer.html#a1547d3b395d9da4297861defdef5b4db',1,'dmn::Dmn_Timer']]]
+  ['dmn_5fstate_17',['dmn_state',['../classdmn_1_1Dmn__State.html#a69bc58811775ed5bfc128d7cd79b84af',1,'dmn::Dmn_State::Dmn_State(std::string_view name)'],['../classdmn_1_1Dmn__State.html#abdc4a6a21bb540469cc3a567333dd99f',1,'dmn::Dmn_State::Dmn_State(const Dmn_State &amp;obj)=delete'],['../classdmn_1_1Dmn__State.html#acd73f2ef1eb80dddc9465b2356c074c4',1,'dmn::Dmn_State::Dmn_State(Dmn_State &amp;&amp;obj)=delete']]],
+  ['dmn_5ftimer_18',['Dmn_Timer',['../classdmn_1_1Dmn__Timer.html#a1547d3b395d9da4297861defdef5b4db',1,'dmn::Dmn_Timer']]]
 ];

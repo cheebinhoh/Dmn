@@ -11,5 +11,6 @@ var searchData=
   ['return_5fvoid_8',['return_void',['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a6505eb9ba38c8743034dcf7dcacef6cf',1,'dmn::Dmn_Runtime_Task::promise_type']]],
   ['runexec_9',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]],
   ['runfninthreadhelper_10',['runFnInThreadHelper',['../classdmn_1_1Dmn__Proc.html#a93a3d80de18bc7b022d4bbf85fb394ba',1,'dmn::Dmn_Proc']]],
-  ['runpriortocreateinstance_11',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
+  ['runnext_11',['runNext',['../classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81',1,'dmn::Dmn_State']]],
+  ['runpriortocreateinstance_12',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
 ];

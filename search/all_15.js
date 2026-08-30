@@ -8,7 +8,8 @@ var searchData=
   ['_7edmn_5fproc_5',['~Dmn_Proc',['../classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b',1,'dmn::Dmn_Proc']]],
   ['_7edmn_5fruntime_5ftask_6',['~Dmn_Runtime_Task',['../structdmn_1_1Dmn__Runtime__Task.html#ae792abe106dfe7731610d97e3a972c58',1,'dmn::Dmn_Runtime_Task']]],
   ['_7edmn_5fsocket_7',['~Dmn_Socket',['../classdmn_1_1Dmn__Socket.html#a1321d794de567003890c7e91b98e5b5e',1,'dmn::Dmn_Socket']]],
-  ['_7edmn_5ftimer_8',['~Dmn_Timer',['../classdmn_1_1Dmn__Timer.html#a1ff7073558731b15a3a675620e877c94',1,'dmn::Dmn_Timer']]],
-  ['_7escopeguard_9',['~ScopeGuard',['../structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2',1,'dmn::ScopeGuard']]],
-  ['_7eticket_10',['~Ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aa1c6f33a98ce90972522a4391d2ab3ce',1,'dmn::Dmn_Inflight_Guard::Ticket']]]
+  ['_7edmn_5fstate_8',['~Dmn_State',['../classdmn_1_1Dmn__State.html#a8147f0b3c831a0834f82f966bf2be2a2',1,'dmn::Dmn_State']]],
+  ['_7edmn_5ftimer_9',['~Dmn_Timer',['../classdmn_1_1Dmn__Timer.html#a1ff7073558731b15a3a675620e877c94',1,'dmn::Dmn_Timer']]],
+  ['_7escopeguard_10',['~ScopeGuard',['../structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2',1,'dmn::ScopeGuard']]],
+  ['_7eticket_11',['~Ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aa1c6f33a98ce90972522a4391d2ab3ce',1,'dmn::Dmn_Inflight_Guard::Ticket']]]
 ];

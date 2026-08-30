@@ -59,6 +59,7 @@ var hierarchy =
       [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
     ] ],
     [ "dmn::Dmn_Singleton< Dmn_Runtime_Manager< Dmn_BlockingQueue_Mt > >", "classdmn_1_1Dmn__Singleton.html", null ],
+    [ "dmn::Dmn_State", "classdmn_1_1Dmn__State.html", null ],
     [ "dmn::Dmn_Pub< T, QueueType >::Dmn_Sub", "classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html", [
       [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", null ]
     ] ],

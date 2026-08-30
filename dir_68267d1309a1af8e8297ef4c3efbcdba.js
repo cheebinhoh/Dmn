@@ -8,5 +8,6 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "dmn-kafka-sender.cpp", "dmn-kafka-sender_8cpp.html", null ],
     [ "dmn-proc.cpp", "dmn-proc_8cpp.html", "dmn-proc_8cpp" ],
     [ "dmn-runtime.cpp", "dmn-runtime_8cpp.html", "dmn-runtime_8cpp" ],
-    [ "dmn-socket.cpp", "dmn-socket_8cpp.html", null ]
+    [ "dmn-socket.cpp", "dmn-socket_8cpp.html", null ],
+    [ "dmn-state.cpp", "dmn-state_8cpp.html", null ]
 ];
