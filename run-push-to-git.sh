@@ -35,7 +35,7 @@ if [ $rootdir != "" ]; then
   cd $rootdir
 fi
 
-. ${rootdir}/run-clang-format.sh
+. ${rootdir}/scripts/run-tab-check-and-clang-format.sh
 
 # test build, we do not want to check in things that break
 if [ "${buildTest}" == "yes" ]; then
