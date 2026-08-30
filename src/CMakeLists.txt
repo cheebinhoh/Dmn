@@ -8,6 +8,7 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-socket.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-state.cpp
 
               # kafka
               ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-dmesgnet-kafka.cpp
@@ -55,6 +56,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp

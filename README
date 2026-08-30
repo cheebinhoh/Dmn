@@ -26,3 +26,8 @@ The dmn Dockerfile container:
 1. run container (interactive mode) - "docker run -it --rm dmn"
 2. run 'ctest -L dmn'
 3. remove built container - "docker rmi dmn"
+
+### Native in Linux without docker
+mkdir build 
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON 
+cmake --build build/

@@ -39,6 +39,7 @@
 #include "dmn-runtime.hpp"
 #include "dmn-singleton.hpp"
 #include "dmn-socket.hpp"
+#include "dmn-state.hpp"
 #include "dmn-timer.hpp"
 #include "dmn-util.hpp"
 
