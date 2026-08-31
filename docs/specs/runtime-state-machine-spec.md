@@ -17,11 +17,11 @@ The primary behavior is:
 
 1. client obtains a state handle from the `Dmn_Runtime_State_Engine` singleton;
 2. client configures the state(s) on that object;
-3. client calls `statehandle->run()`;
+3. client calls `statehandle->run()` (optionally with priority / delay / onError handler);
 4. `run()` enqueues a runtime task into the runtime engine and returns a boolean indicating whether the enqueue succeeded;
 5. the runtime engine continues to repost tasks until the state object reaches its terminal condition; errors occurring in async execution invoke a client-provided onError callback (if supplied) and are captured on the state handle;
 6. all state objects created by the engine are executed in serialized order through `Dmn_Runtime_Manager` (subject to the engine's serialization policy);
-7. client may call `statehandle->wait()` or use the returned future to block or asynchronously observe completion.
+7. client may call `statehandle->wait()` or use the returned shared_future to block or asynchronously observe completion.
 
 ## 2. Design Objective
 
@@ -30,7 +30,7 @@ The existing `dmn-state` component is synchronous and client-driven. It calls `r
 - the state object remains a state machine definition and execution state,
 - the runtime engine owns when the state steps are executed,
 - state execution is serialized within the runtime’s async context,
-- the client receives an async completion signal via `wait()` or a future rather than manually stepping the machine.
+- the client receives an async completion signal via `wait()` or a shared_future rather than manually stepping the machine.
 
 This makes the feature a natural fit for handshake flows, retries, startup/teardown workflows, protocol states, network state transitions, and any runtime pipeline that must share the same scheduling semantics as other runtime jobs.
 
@@ -43,7 +43,7 @@ This makes the feature a natural fit for handshake flows, retries, startup/teard
 - state registration API for user-defined states
 - `run()` scheduling through the runtime engine with onError callback forwarding to `dmn-runtime` semantics
 - serialized execution of all runtime state objects (engine-global by default)
-- `wait()` completion API for async execution with optional timeout and a future-based async alternative
+- `wait()` completion API for async execution with optional timeout and a shared_future-based async alternative
 - shutdown, error, cancellation, and terminal-state handling
 - tests for startup, normal completion, errors, cancellation, and lifetime edge cases
 
@@ -57,32 +57,13 @@ This makes the feature a natural fit for handshake flows, retries, startup/teard
 
 ## 4. Architectural Context
 
-### Existing Runtime Architecture
+Refer to `include/dmn-runtime.hpp`, `include/dmn-runtime-task.hpp`, and `include/dmn-state.hpp` for the runtime and state primitives that will be reused.
 
-The current runtime API is singleton-based and uses:
+Key runtime types and semantics reused:
 
-- `Dmn_Runtime_Manager<QueueType>::createInstance()` for process-wide lifecycle
-- `addJob()` / `addTimedJob()` for queued work
-- `enterMainLoop()` / `exitMainLoop()` for the runtime loop
-- `Dmn_Runtime_Job` with priority and coroutine execution support
-- `Dmn_Runtime_Task` as the coroutine wrapper for job execution
-
-The runtime currently serializes work via its async execution model, and this is the correct execution context for the new state engine.
-
-### Existing State Machine Architecture
-
-`Dmn_State` has the following current semantics:
-
-- stores a vector of state functors
-- uses `m_next` to drive execution
-- supports `setStateFnc()`, `setNext()`, `setEnd()`, and `runNext()`
-- defines init/finalize hooks
-- uses `runNext()` directly in the caller context
-- has no async lifecycle, no wait, and no runtime ownership
-
-### Feature Intent
-
-The runtime state engine is not a replacement for `Dmn_State`; it is a runtime-managed execution shell around it. Each state object created by the engine is still a `Dmn_State`, but with additional runtime lifetime controls and completion synchronization.
+- `Dmn_Runtime_Job::Priority` and `Dmn_Runtime_Manager::addJob()` / `addTimedJob()`
+- `Dmn_Runtime_Job::OnErrorFncType` (signature: `std::function<void(std::exception_ptr &)>`) — the onError callback type used by runtime jobs
+- `Dmn_Runtime_Manager` owns the singleton async thread and provides `isRunInAsyncThread()` to detect runtime-thread context
 
 ## 5. Functional Requirements
 
@@ -102,10 +83,10 @@ Clients must be able to obtain a managed handle to a state object from the runti
 
 Ownership model (required):
 
-- `createState()` MUST return a managed handle type: `std::shared_ptr<Dmn_Runtime_State>` (or an alias) following the existing dmn pattern used by other components (for example, `dmn-dmesg` and other resource holders in the codebase).
-- The engine must retain a `std::shared_ptr` to the state object while it is queued or running. This guarantees the object remains alive until it reaches a terminal state even if the client drops its handle.
+- `createState()` MUST return a managed handle type: `std::shared_ptr<Dmn_Runtime_State>` (alias `DmnRuntimeStatePtr`) following the existing dmn pattern used by other components (for example, `dmn-dmesg`).
+- The engine MUST retain a `std::shared_ptr` to the state object while it is queued or running. This guarantees the object remains alive until it reaches a terminal state even if the client drops its handle.
 - When the object becomes terminal (completed/failed/cancelled), the engine releases its internal shared_ptr; any remaining client-held shared_ptr keeps the object alive until all references are dropped.
-- The spec must include sample usage showing how clients keep a handle, but clients may also intentionally let the engine own a state for fire-and-forget semantics.
+- Clients may intentionally drop their handle to rely on engine ownership for fire-and-forget semantics.
 
 The resulting object must:
 
@@ -126,17 +107,25 @@ The engine must support:
 
 ### FR-4: `run()` dispatches work to runtime and error callback forwarding
 
-The runtime state handle must expose a public `run()` method. In addition, `run()` MUST accept an optional onError callback that matches the `dmn-runtime` onError callback signature so callers can receive asynchronous error notifications.
+The runtime state handle must expose a public `run()` method. In addition, `run()` MUST accept optional parameters for priority, delay (timed variant), and an onError callback that matches the runtime's `Dmn_Runtime_Job::OnErrorFncType` signature.
 
 Behavior:
 
-- `run()` may be called from any client thread
-- `run()` must schedule asynchronous work on the singleton `Dmn_Runtime_Manager` async thread
-- `run()` returns `true` if the state was successfully queued (or started) and `false` if the enqueue failed (invalid state, already terminal, or internal error)
-- an optional `onError` callback provided to `run()` is forwarded to the underlying `dmn-runtime` job so that asynchronous runtime failures invoke the client callback when the runtime job reports an error
-- the runtime work must execute exactly one next state step of the state object per posted job
-- after the step executes, the engine must post another runtime task to run the next state, continuing until no more states remain
-- `run()` must not directly execute state logic in the caller thread
+- `run()` may be called from any client thread EXCEPT the runtime async thread (calls from the runtime thread are disallowed — see `run()` thread policy below).
+- `run()` must schedule asynchronous work on the singleton `Dmn_Runtime_Manager` async thread by calling `addJob()` or `addTimedJob()` as appropriate.
+- `run()` returns `true` if the state was successfully queued (or started) and `false` if the enqueue failed (invalid state, already terminal, or internal error).
+- `run()` is a one-shot operation for each state handle: subsequent `run()` calls after the first successful enqueue MUST be no-ops and MUST return `false`.
+- The optional `onError` callback provided to `run()` MUST be forwarded to the underlying `dmn-runtime` job so that asynchronous runtime failures invoke the client callback when the runtime job reports an error. Use `Dmn_Runtime_Job::OnErrorFncType` as the canonical type.
+- The runtime work must execute exactly one next state step of the state object per posted job; after the step executes, the engine reposts another job (or finalizes) until terminal.
+- `run()` MUST NOT execute state logic synchronously in the caller thread.
+
+Priority and timed variants:
+
+- `run()` must accept an optional `Dmn_Runtime_Job::Priority` parameter and an optional timeout/delay parameter so callers can control priority and optionally schedule timed runs. The engine will map these directly to `Dmn_Runtime_Manager::addJob()` (immediate) or `addTimedJob()` (timed).
+
+Thread policy for `run()` and `wait()`:
+
+- If `run()` or `wait()` is called from inside the runtime async thread (detected via `Dmn_Runtime_Manager::isRunInAsyncThread()`), the implementation MUST assert in debug builds and throw `std::runtime_error` (or similar) in non-debug builds. This prevents deadlocks and enforces the rule that runtime-internal callbacks should not block the runtime.
 
 ### FR-5: Serialized execution across all state objects
 
@@ -156,10 +145,10 @@ Each runtime state object must support a `wait()` method and provide safer alter
 Behavior:
 
 - `wait()` blocks until the state object reaches its terminal state
-- `wait()` MUST support an overload `wait(std::chrono::milliseconds timeout)` (or templated duration) that returns a boolean indicating whether the wait observed terminal completion before the timeout
-- `wait()` MUST NOT be called from the runtime async thread; calling from the runtime thread is undefined — implementations SHOULD assert or return immediately with an error when detected
-- in addition to blocking wait(), the object MUST provide a `std::future<void> getFuture()` (or equivalent) so callers can use non-blocking or async wait patterns on other threads or coroutines
-- `wait()` and future completion must be signalled using a condition variable / promise and must handle spurious wakeups correctly
+- `wait()` MUST support an overload `wait_for(std::chrono::duration<...> timeout)` that returns a boolean indicating whether the wait observed terminal completion before the timeout
+- `wait()` MUST NOT be called from the runtime async thread; calling from the runtime thread is undefined — implementations MUST assert (debug) and throw (release) when detected
+- The object MUST provide a `std::shared_future<void> getFuture()` so callers can use non-blocking or async wait patterns. The shared_future MUST be available immediately after state creation (before run()) and MUST become ready on terminal state regardless of whether run() was ever called.
+- Multiple threads/callers MAY wait concurrently on the same shared_future or call `wait()` concurrently; the implementation must support multiple waiters.
 
 ### FR-7: Terminal state and completion semantics
 
@@ -198,8 +187,8 @@ If a state callback throws while running inside the runtime-managed async thread
 
 - capture the exception
 - set the state object to failed terminal state
-- notify any waiting client via `wait()` or future
-- invoke the onError callback supplied by the client (if any) with the runtime's error details
+- notify any waiting client via `wait()` or shared_future
+- invoke the onError callback supplied to `run()` (if any) with the runtime's error details using `Dmn_Runtime_Job::OnErrorFncType`
 - avoid corrupting the runtime scheduler internal state
 
 ## 6. Non-Functional Requirements
@@ -222,11 +211,11 @@ The engine MUST hold a `std::shared_ptr` to any queued/running state object unti
 
 ### NFR-5: Thread safety for wait semantics
 
-`wait()` must be implemented using synchronization primitives appropriate for cross-thread signaling (`std::condition_variable`, flag, or equivalent) and must not busy-spin.
+`wait()` must be implemented using synchronization primitives appropriate for cross-thread signaling (`std::condition_variable`, flag, or equivalent) and must not busy-spin. Use of a `std::shared_future<void>` simplifies multi-waiter semantics.
 
 ## 7. Proposed API Shape
 
-This API is proposed to match the existing library naming and runtime conventions while reflecting the ownership and error/cancel semantics requested.
+This API is proposed to match the existing library naming and runtime conventions while reflecting the ownership, error/cancel, priority/timed semantics and thread-safety rules requested.
 
 ```cpp
 namespace dmn {
@@ -251,7 +240,7 @@ public:
 class Dmn_Runtime_State : public Dmn_State {
 public:
   using FncType = std::function<void(Dmn_Runtime_State &)>;
-  using OnErrorFnc = std::function<void(std::exception_ptr)>; // forwarded to runtime's onError
+  using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr &)>
 
   explicit Dmn_Runtime_State(std::string_view name);
 
@@ -264,21 +253,25 @@ public:
   // lifecycle APIs
   // run: returns true when the enqueue succeeded; false on failure (already terminal, invalid, runtime busy)
   // optional onError is forwarded to the runtime job so callers get notified of async job failure.
-  bool run(OnErrorFnc onError = nullptr);
+  // priority and timed overloads are supported and map to addJob()/addTimedJob().
+  bool run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
+           const std::chrono::steady_clock::duration &delay = std::chrono::steady_clock::duration::zero(),
+           OnErrorFnc onError = {});
 
   // cancel is cooperative and idempotent. If called before a step runs, the running task will
   // observe the cancelled flag, call setEnd() and transition to terminal state instead of executing further steps.
   void cancel();
 
-  // wait blocks until terminal state. wait(timeout) returns true if it observed terminal state before timeout.
+  // wait blocks until terminal state. wait_for(timeout) returns true if it observed terminal state before timeout.
   void wait();
   template <typename Rep, typename Period>
   bool wait_for(const std::chrono::duration<Rep, Period> &timeout);
 
-  // future-based async alternative
-  std::future<void> getFuture();
+  // future-based async alternative (shared_future supports multiple waiters and callers).
+  std::shared_future<void> getFuture();
 
   // introspection
+  // isRunning() indicates the handle has been queued or is actively running inside the engine
   bool isRunning() const;
   bool isCompleted() const;
   bool isFailed() const;
@@ -294,14 +287,16 @@ private:
   // synchronization / state
   std::mutex m_waitMutex;
   std::condition_variable m_waitCv;
-  std::promise<void> m_completionPromise; // getFuture() returns m_completionPromise.get_future()
 
-  std::atomic_bool m_running{false};
-  std::atomic_bool m_completed{false};
-  std::atomic_bool m_failed{false};
-  std::atomic_bool m_cancelled{false};
-  std::atomic_bool m_queued{false};
-  std::atomic_bool m_waiting{false};
+  // promise/future pair: keep a shared_future so multiple waiters are supported
+  std::promise<void> m_completionPromise;
+  std::shared_future<void> m_completionSharedFuture; // initialized from m_completionPromise.get_future().share()
+
+  std::atomic_bool m_running{false};   // set when a runtime task is active
+  std::atomic_bool m_completed{false}; // terminal
+  std::atomic_bool m_failed{false};    // terminal
+  std::atomic_bool m_cancelled{false}; // set by cancel()
+  std::atomic_bool m_queued{false};    // set before enqueue to avoid duplicates
 
   // captured failure for diagnostics
   std::mutex m_failureMutex;
@@ -314,10 +309,12 @@ private:
 ### API Notes
 
 - `Dmn_Runtime_State_Engine::createState()` returns a `std::shared_ptr<Dmn_Runtime_State>` handle. The engine retains a shared_ptr while the state is queued/running to ensure safe lifetime.
-- `Dmn_Runtime_State::run(OnErrorFnc)` returns a boolean: true on successful enqueue, false if enqueue failed (e.g., already terminal or invalid state).
-- `run()` accepts an optional onError callback that is forwarded to the `dmn-runtime` job plumbing; if the runtime reports an error, the callback will be invoked with the exception_ptr.
-- `cancel()` is cooperative: it sets a cancelled flag. The runtime job, before calling `runNext()`, must check isCancelled() and call `setEnd()` if the state has been cancelled so that the state finalizes without executing further steps.
-- `wait()` supports a timeout variant; a future is also available for non-blocking waits.
+- `Dmn_Runtime_State::run(priority, delay, onError)` returns a boolean: true on successful enqueue, false if enqueue failed (e.g., already terminal or invalid state). If `delay` is non-zero, the engine must use `addTimedJob()`; otherwise `addJob()` is used.
+- `run()` accepts an optional onError callback that uses the runtime's `Dmn_Runtime_Job::OnErrorFncType` signature and is forwarded to the runtime job.
+- `run()` is one-shot: a successful `run()` prevents subsequent `run()` calls from enqueueing again; such subsequent calls return `false` (no-op). This avoids duplicate enqueues across threads.
+- `cancel()` is cooperative: it sets a cancelled flag. The runtime job, before calling `runNext()`, must check `isCancelled()` and call `setEnd()` if the state has been cancelled so that the state finalizes without executing further steps.
+- `wait()` supports a timeout variant and `getFuture()` returns a `std::shared_future<void>` that can be used by multiple waiters. The shared_future is valid immediately after createState() is called and resolves when the state reaches a terminal condition.
+- Calls to `run()` or `wait()` from inside the runtime async thread must assert/throw. Use `Dmn_Runtime_Manager::isRunInAsyncThread()` to detect and enforce this.
 
 ## 8. Execution Model
 
@@ -328,23 +325,23 @@ A runtime state object has the following lifecycle:
 1. Created by `Dmn_Runtime_State_Engine::createState()` and returned as a shared_ptr handle
 2. Configured by setting state functors (`setStateFnc`, etc.)
 3. Idle before `run()` is called
-4. Queued for runtime execution after `run()` (engine retains shared_ptr)
+4. Queued for runtime execution after `run()` (engine retains shared_ptr and sets `m_queued` atomically)
 5. Running inside runtime async thread
 6. Finalized once terminal condition reached (engine releases internal shared_ptr)
-7. Client may call `wait()` at any time after submission or use the future returned by `getFuture()`
+7. Client may call `wait()` at any time after submission or use the shared_future returned by `getFuture()`
 
-### 8.2 `run()` exact semantics
+### 8.2 `run()` exact semantics and atomic queued flag
 
-When `statehandle->run(onError)` is called:
+When `statehandle->run(priority, delay, onError)` is called:
 
 1. the state object must be validated for legal execution
-2. if not already running/completed, it is marked queued and the engine stores an internal shared_ptr
-3. a runtime job is scheduled in the runtime engine; the job is created with the supplied onError callback forwarded to the runtime
-4. the scheduled job executes exactly one next state step using the state object
-5. before calling `runNext()`, the runtime job checks the cancel flag; if cancelled, it must call `setEnd()` and finalize instead of running the step
-6. after the state step finishes, the runtime engine checks whether another state remains
-7. if another state exists and not cancelled, the engine posts a new runtime job for the next step
-8. if no state remains, the object transitions to completed terminal state and the engine notifies waiters (condition variable and promise)
+2. the implementation MUST atomically set the `m_queued` flag (e.g., using compare_exchange) to avoid races where multiple threads try to enqueue simultaneously; only the thread that successfully sets `m_queued` proceeds to request the engine to retain an internal shared_ptr and submit the runtime job
+3. if `m_queued` was already true or the object is terminal, `run()` returns false (no-op)
+4. the engine stores a shared_ptr to the object (ensuring lifetime) and schedules a runtime job via `addJob()` or `addTimedJob()` depending on `delay`
+5. the scheduled job executes exactly one next state step using the state object
+6. before calling `runNext()`, the runtime job MUST check the cancel flag; if cancelled, it MUST call `setEnd()` and finalize instead of running the step
+7. after the state step finishes, the runtime engine checks whether another state remains and reposts a new runtime job if appropriate
+8. if no state remains, the object transitions to completed terminal state, the engine notifies waiters (set promise) and releases its internal shared_ptr
 9. if a state callback throws, the exception is captured, the object transitions to failed, waiters are notified, and the optional onError callback is invoked
 
 This loop continues until no more states to run. The runtime engine is responsible for re-posting tasks while the object remains active.
@@ -370,15 +367,15 @@ The runtime layer adds async ownership, completion signaling, cancellation token
 ### 9.2 Cancellation contract
 
 - `cancel()` sets the cancellation flag and is safe to call from any thread.
-- The runtime job must observe `isCancelled()` before executing `runNext()` and call `setEnd()` to force deterministic finalization.
-- State functors may query `isCancelled()` if they want to implement cooperative cancellation.
+- The runtime job MUST observe `isCancelled()` before executing `runNext()` and call `setEnd()` to force deterministic finalization.
+- State functors MAY query `isCancelled()` if they want to implement cooperative cancellation.
 
 ### 9.3 `wait()` behavior and deadlock avoidance
 
 - `wait()` blocks until the object is terminal.
-- Implementations must detect (or document) that `wait()` MUST NOT be called from the runtime async thread. Preferably, `wait()` asserts or returns an error when invoked from runtime thread context.
+- Implementations MUST detect calls from the runtime async thread and assert/throw as described.
 - `wait_for(timeout)` returns a bool indicating whether the wait observed terminal completion before the timeout expired.
-- `getFuture()` provides an async, non-blocking alternative which is safe to use from the runtime thread if the runtime supports async continuation semantics (otherwise the caller should still avoid awaiting it on the runtime thread).
+- `getFuture()` returns a `std::shared_future<void>` available immediately after creation and resolves on terminal state.
 
 ## 10. Detailed Behavior and Edge Cases
 
@@ -392,10 +389,8 @@ A runtime state object must not be run multiple times simultaneously.
 
 Behavior:
 
-- if `run()` is called while already queued or running, it MUST return false
-- repeated `run()` calls after completion MUST return false
-
-This explicit boolean return covers the recommended behavior and aligns with the request.
+- The first successful `run()` enqueues the object and returns true.
+- Subsequent `run()` calls (concurrent or later) MUST return false (no-op). This avoids duplicate enqueues and is thread-safe due to the atomic `m_queued` guard.
 
 ### 10.3 Finalized or canceled states
 
@@ -407,8 +402,8 @@ If a state callback throws while inside the runtime engine:
 
 - capture the exception in `std::exception_ptr` stored on the object
 - transition object to failed terminal state
-- set the promise / notify the condition variable so waiters/future observers are notified
-- invoke the optional onError callback provided to `run()` with the captured exception
+- set the completion promise and notify any shared_future waiters
+- invoke the optional onError callback provided to `run()` with the captured exception (using `Dmn_Runtime_Job::OnErrorFncType`)
 - ensure runtime queue remains healthy
 
 ### 10.5 Shutdown race and modes
@@ -442,17 +437,19 @@ Provide clear priority mapping between engine jobs and other runtime jobs. The e
 Additional edge-case tests (required):
 
 - `destructor_while_queued`: verify engine-held shared_ptr keeps object alive while queued and that finalization occurs correctly when the client drops its handle
-- `wait_from_runtime_thread_detected`: ensure wait() from runtime thread either asserts or returns error
+- `wait_from_runtime_thread_detected`: ensure wait() from runtime thread asserts/throws
 - `cancel_before_run_or_queued`: calling cancel() before a queued step prevents runNext() and finalizes the state
 - `cancel_during_queued_execution`: cancellation while queued leads the runtime job to call setEnd() rather than executing further steps
 - `run_onerror_callback_invoked`: ensure onError passed to run() is invoked when the runtime job fails
 - `shutdown_graceful_vs_immediate`: test both shutdown modes and their effects on queued and running states
+- `getFuture_shared_waiters_before_run`: verify multiple waiters using getFuture() before run() all get signaled on terminal condition
+- `run_priority_and_timed_variant`: verify run(priority, delay) maps to addJob/addTimedJob and honors priority ordering
 
 ### Integration Tests
 
 - run multiple runtime state objects in the same runtime engine
 - verify that state steps are serialized in posting order
-- verify wait() and future complete after sequence completion
+- verify wait() and shared_future complete after sequence completion
 - verify runtime jobs remain valid when the state object reaches terminal condition
 - stress test many queued states to measure the effect of global serialization
 
@@ -469,9 +466,9 @@ The feature is accepted when all of the following are true:
 
 - clients can create runtime-managed state objects from a singleton engine using a shared_ptr handle
 - state objects subclass `Dmn_State` and retain base state semantics
-- `statehandle->run(onError)` schedules work into the runtime engine and returns true/false to indicate success
+- `statehandle->run(priority, delay, onError)` schedules work into the runtime engine and returns true/false to indicate success
 - state execution is serialized through the runtime engine by default
-- `statehandle->wait()` and `wait_for()` block until runtime completion or terminal failure and `getFuture()` is available for async waiting
+- `statehandle->wait()` and `wait_for()` block until runtime completion or terminal failure and `getFuture()` is available for async waiting (shared_future)
 - `cancel()` cooperatively finalizes execution and prevents future steps; cancel semantics are documented and tested
 - exceptions and cancellation leave the runtime in a valid state and optional onError callbacks are invoked
 - documentation, examples and tests exist for typical runtime state workflow usage and lifetime edge cases
@@ -482,7 +479,7 @@ The feature is accepted when all of the following are true:
 Mitigation: `run()` must schedule a single runtime task per state step and stop when the terminal condition is reached. No unbounded recursive scheduling loop is allowed. Atomic queued flag prevents duplicate enqueues.
 
 ### Risk: wait deadlock
-Mitigation: do not call `wait()` from inside the runtime async thread. Document and assert this in debug builds; prefer future-based wait from runtime thread contexts.
+Mitigation: do not call `wait()` from inside the runtime async thread. Document and assert this in debug builds; throw in release builds. Prefer future-based wait from runtime thread contexts.
 
 ### Risk: queued state object lifetime issues
 Mitigation: engine must hold a `std::shared_ptr` while queued. Returning a shared_ptr to clients and holding an internal shared_ptr mirrors the existing dmn pattern used in other subsystems (see `dmn-dmesg`).
@@ -504,7 +501,7 @@ The runtime state engine should primarily add:
 
 - state object lifecycle tracking using shared_ptr handles
 - queueing and serialization logic
-- `wait()` synchronization (condition_variable + promise/future)
+- `wait()` synchronization (condition_variable + promise/shared_future)
 - terminal-state finalization and onError callback forwarding
 - cooperative cancel() semantics
 
@@ -522,8 +519,9 @@ s->setNext();
 s->setStateFnc([](dmn::Dmn_Runtime_State &st){ /* step 1 */ }, 1);
 s->setEnd();
 
-// run with onError callback
-bool ok = s->run([](std::exception_ptr ep){ /* log or inspect error */ });
+// run with onError callback, medium priority, immediate
+bool ok = s->run(Dmn_Runtime_Job::Priority::kMedium, std::chrono::steady_clock::duration::zero(),
+                 [](std::exception_ptr &ep){ /* log or inspect error */ });
 if (!ok) { /* handle enqueue failure */ }
 
 // wait (blocking)
@@ -539,7 +537,7 @@ fut.wait();
 The feature is complete when:
 
 - the singleton runtime state engine is designed and documented with shared_ptr handle ownership
-- the runtime state object class is specified and matches the required async semantics (run returning bool, onError forwarding, cancel, wait/timeout/future)
+- the runtime state object class is specified and matches the required async semantics (run returning bool, onError forwarding, cancel, wait/timeout/shared_future)
 - `run()` and `wait()` behavior are documented and tested
 - serialized execution through `Dmn_Runtime_Manager` is verified
 - shutdown, failure, and cancellation semantics are validated
@@ -548,8 +546,8 @@ The feature is complete when:
 ## 17. Recommended Milestones
 
 1. Create the engine singleton and state object base model (shared_ptr handle)
-2. Add runtime scheduling and serialized execution loop with onError forwarding
-3. Add completion/failure/cancel tracking, wait(timeout), and future support
+2. Add runtime scheduling and serialized execution loop with onError forwarding, priority and timed variants
+3. Add completion/failure/cancel tracking, wait(timeout), and shared_future support
 4. Add tests for execution order, completion, failures, destructor-while-queued, and shutdown modes
 5. Validate the runtime integration with `Dmn_Runtime_Manager`
 
