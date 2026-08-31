@@ -57,7 +57,8 @@ namespace dmn {
 class Dmn_Runtime_State : public Dmn_State {
 public:
   using FncType = std::function<void(Dmn_Runtime_State &)>;
-  using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr &)>
+  using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr
+                                                      // &)>
 
   /**
    * @brief Construct a runtime-managed state object with a human-readable name.
@@ -103,8 +104,10 @@ public:
   /**
    * @brief Schedule this state handle for runtime execution.
    *
-   * @param priority Job priority to use when enqueuing (maps to Dmn_Runtime_Job::Priority).
-   * @param delay If non-zero, the job is scheduled via addTimedJob() after this delay.
+   * @param priority Job priority to use when enqueuing (maps to
+   * Dmn_Runtime_Job::Priority).
+   * @param delay If non-zero, the job is scheduled via addTimedJob() after this
+   * delay.
    * @param onError Optional error callback forwarded to the runtime job. The
    *                type matches Dmn_Runtime_Job::OnErrorFncType.
    * @return true if the state was successfully queued; false if enqueue
@@ -116,9 +119,11 @@ public:
    * - Calling run() from inside the runtime async thread is disallowed and
    *   will assert/throw.
    */
-  bool run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
-           const std::chrono::steady_clock::duration &delay = std::chrono::steady_clock::duration::zero(),
-           OnErrorFnc onError = {});
+  bool
+  run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
+      const std::chrono::steady_clock::duration &delay =
+          std::chrono::steady_clock::duration::zero(),
+      OnErrorFnc onError = {});
 
   /**
    * @brief Request cooperative cancellation of this state.
@@ -194,7 +199,8 @@ private:
  * - retain a shared_ptr to queued/running state objects to guarantee lifetime
  * - integrate with Dmn_Runtime_Manager by creating runtime jobs for state steps
  */
-class Dmn_Runtime_State_Engine : public Dmn_Singleton<Dmn_Runtime_State_Engine> {
+class Dmn_Runtime_State_Engine
+    : public Dmn_Singleton<Dmn_Runtime_State_Engine> {
 public:
   using DmnRuntimeStatePtr = std::shared_ptr<Dmn_Runtime_State>;
 
