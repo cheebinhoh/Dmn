@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <string>
+#include <type_traits>
 
 #include "dmn-runtime-state.hpp"
 
@@ -22,6 +23,12 @@ int main(int argc, char *argv[]) {
 
   EXPECT_NE(first, nullptr);
   EXPECT_EQ(first.get(), second.get());
+
+  static_assert(std::is_base_of_v<dmn::Dmn_State, dmn::Dmn_Runtime_State>);
+
+  auto state = first->createState("runtime-state-test");
+
+  EXPECT_NE(state, nullptr);
 
   return RUN_ALL_TESTS();
 }

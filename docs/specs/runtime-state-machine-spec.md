@@ -86,15 +86,18 @@ The manager must not declare a same-named `createInstance()` with a different
 return type. A forwarding convenience function is permitted only when it has a
 distinct name and preserves the singleton's shared ownership semantics.
 
-The first implementation increment is limited to manager construction. It must
-provide a focused unit test that calls
+The initial implementation increment provides manager construction and a
+focused unit test that calls
 `Dmn_Runtime_State_Manager::createInstance()`, verifies the returned
 `std::shared_ptr` is non-null, and verifies repeated calls return the same
 manager instance. This increment uses
 `include/dmn-runtime-state.hpp`, `src/dmn-runtime-state.cpp`, and
 `test/dmn-test-runtime-state.cpp`, registered as `dmn-test-runtime-state`.
-State creation, runtime scheduling, and lifecycle behavior are out of scope
-for that increment.
+The completed follow-on increment adds `DmnRuntimeStatePtr`,
+`createState()`, and a test that verifies a non-null state handle and
+`Dmn_State` inheritance. Runtime scheduling, lifecycle state, cancellation,
+waiting, and manager-side ownership retention remain out of scope until their
+respective implementation phases.
 
 ### FR-2: Client-managed state object creation and ownership
 

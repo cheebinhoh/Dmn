@@ -10,10 +10,11 @@
  * @date 2026-08-31
  *
  * This header declares the public types used by clients to create and manage
- * runtime-managed state machine instances. The current implementation phase
- * supports construction of Dmn_Runtime_State_Manager only. Dmn_Runtime_State
- * lifecycle and scheduling operations remain declarations for later phases;
- * clients must not use them until their implementations and tests are added.
+ * runtime-managed state machine instances. The current implementation supports
+ * constructing Dmn_Runtime_State_Manager and creating state handles.
+ * Dmn_Runtime_State lifecycle and scheduling operations remain declarations
+ * for later phases; clients must not use them until their implementations and
+ * tests are added.
  */
 
 #ifndef DMN_RUNTIME_STATE_HPP_
@@ -74,6 +75,11 @@ public:
    * @brief Virtual destructor. Implementation should ensure safe teardown.
    */
   virtual ~Dmn_Runtime_State() noexcept;
+
+  Dmn_Runtime_State(const Dmn_Runtime_State &) = delete;
+  Dmn_Runtime_State &operator=(const Dmn_Runtime_State &) = delete;
+  Dmn_Runtime_State(Dmn_Runtime_State &&) = delete;
+  Dmn_Runtime_State &operator=(Dmn_Runtime_State &&) = delete;
 
   /* State configuration (inherited semantics from Dmn_State) */
 
@@ -195,11 +201,19 @@ private:
 };
 
 /**
+ * @brief Client-owned handle to a runtime-managed state.
+ *
+ * The manager returns this handle from createState(). Later scheduling phases
+ * retain an additional handle while the state is queued or running.
+ */
+using DmnRuntimeStatePtr = std::shared_ptr<Dmn_Runtime_State>;
+
+/**
  * @class Dmn_Runtime_State_Manager
  * @brief Singleton manager for runtime-managed states.
  *
- * The current implementation supports singleton construction only. State
- * creation and runtime-managed execution are added in later phases.
+ * The current implementation supports singleton construction and state-handle
+ * creation. Runtime-managed execution is added in later phases.
  */
 class Dmn_Runtime_State_Manager
     : public Dmn_Singleton<Dmn_Runtime_State_Manager> {
@@ -220,6 +234,17 @@ public:
   Dmn_Runtime_State_Manager(Dmn_Runtime_State_Manager &&obj) = delete;
   Dmn_Runtime_State_Manager &
   operator=(Dmn_Runtime_State_Manager &&obj) = delete;
+
+  /**
+   * @brief Create a client-owned runtime state handle.
+   *
+   * The manager does not retain the returned handle until a later scheduling
+   * phase queues the state for execution.
+   *
+   * @param name Human-readable state name used for diagnostics.
+   * @return A newly constructed runtime-managed state handle.
+   */
+  DmnRuntimeStatePtr createState(std::string_view name = "");
 
 protected:
   /**

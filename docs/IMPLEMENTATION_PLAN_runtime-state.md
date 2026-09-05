@@ -25,15 +25,15 @@ Phase 0: API contract and header preparation
   exception from get(); and runtime-thread run()/wait() calls throw in all
   build configurations.
 
-Phase 1: Construct the singleton manager
+Phase 1: Construct the singleton manager (complete)
 - Correct `include/dmn-runtime-state.hpp` so
-  `Dmn_Runtime_State_Manager` has a protected constructor/destructor and
-  friends `Dmn_Singleton<Dmn_Runtime_State_Manager>`. Do not declare a
+  `Dmn_Runtime_State_Manager` has a protected constructor, public destructor,
+  and friends `Dmn_Singleton<Dmn_Runtime_State_Manager>`. Do not declare a
   conflicting `createInstance()` method; use the inherited shared-pointer
-  factory.
-- Add `src/dmn-runtime-state.cpp` containing only the manager
-  constructor and destructor definitions. Do not implement state creation,
-  runtime scheduling, lifecycle flags, cancellation, waiting, or shutdown.
+  factory. The public destructor is required by the singleton's default
+  `std::shared_ptr` deleter.
+- Add `src/dmn-runtime-state.cpp` containing the manager constructor and
+  destructor definitions.
 - Add `test/dmn-test-runtime-state.cpp`, with a focused unit test that
   calls `Dmn_Runtime_State_Manager::createInstance()`, verifies the returned
   shared pointer is non-null, and verifies repeated calls return the same
@@ -48,12 +48,24 @@ Verify:
 - cmake --build build
 - ctest --test-dir build -R dmn-test-runtime-state --output-on-failure
 
-Phase 2: Terminal-state primitive and lifecycle unit tests
+Completed follow-on increment: State-handle creation
+- Add the `DmnRuntimeStatePtr` alias for
+  `std::shared_ptr<Dmn_Runtime_State>`.
+- Implement `Dmn_Runtime_State_Manager::createState(std::string_view)` to
+  construct and return a new `Dmn_Runtime_State`.
+- Define the runtime-state constructor, destructor, and default no-op
+  lifecycle hooks required to link the concrete polymorphic type.
+- Extend `dmn-test-runtime-state` to verify `createState()` returns a
+  non-null handle and that `Dmn_Runtime_State` derives from `Dmn_State`.
+- Do not retain created states in the manager yet. Retention begins only when
+  a later `run()` implementation queues a state.
+
+Phase 2: Terminal-state primitive and lifecycle unit tests (next)
 - Implement the completion promise/shared_future pair, terminal flags, and a
   single idempotent terminal transition helper.
 - Implement the selected no-state and cancel-before-run behavior.
-- Add targeted tests for state creation, a pending pre-run future, rejected
-  unconfigured run(), and cancel-before-run terminalization.
+- Add targeted tests for a pending pre-run future, rejected unconfigured
+  run(), and cancel-before-run terminalization.
 
 Verify:
 - cmake -B build -DCMAKE_BUILD_TYPE=Debug

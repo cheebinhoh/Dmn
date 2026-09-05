@@ -18,7 +18,7 @@ The manager does not allow independent parallel execution of state steps across 
 ### Decision 4: `run()` is async-only
 The client never directly executes state logic in its own thread. `run()` only queues runtime tasks. The runtime executes each state step and then re-posts the next task until the machine is complete.
 
-## 3. Phase 1: Construct the manager singleton
+## 3. Phase 1: Construct the manager singleton (complete)
 
 ### Tasks
 
@@ -29,8 +29,8 @@ The client never directly executes state logic in its own thread. `run()` only q
 - add a focused unit test that constructs the singleton, verifies the returned
   shared pointer is non-null, and verifies repeated calls return the same
   manager instance
-- defer state creation, lifecycle flags, waiting, scheduling, and ownership
-  retention to later phases
+- defer lifecycle flags, waiting, scheduling, and ownership retention to later
+  phases
 
 ### Deliverables
 
@@ -39,19 +39,28 @@ The client never directly executes state logic in its own thread. `run()` only q
 - registered `dmn-test-runtime-state` target
 - singleton construction test
 
-## 4. Phase 2: Implement the state object and completion model
+### Completed follow-on increment: Create state handles
+
+- define `DmnRuntimeStatePtr` as `std::shared_ptr<Dmn_Runtime_State>`
+- implement `Dmn_Runtime_State_Manager::createState()` to return a newly
+  constructed concrete runtime state
+- define the runtime-state constructor, destructor, and default no-op
+  lifecycle hooks
+- extend the runtime-state test to verify non-null state creation and
+  `Dmn_State` inheritance
+- do not retain a manager-owned state handle until successful runtime queueing
+
+## 4. Phase 2: Implement the completion model
 
 ### Tasks
 
-- implement the declared `Dmn_Runtime_State` subclass of `Dmn_State`
 - add runtime lifecycle flags (`queued`, `running`, `completed`, `failed`,
   `cancelled`)
 - add `wait()` synchronization primitives and the shared future
-- confirm object ownership and terminal-state semantics
+- implement pre-run rejection and cancel-before-run terminal semantics
 
 ### Deliverables
 
-- implemented state class
 - lifecycle state model
 - completion waiting design
 
