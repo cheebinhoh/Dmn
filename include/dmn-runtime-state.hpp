@@ -48,6 +48,11 @@ public:
 
   virtual ~Dmn_Runtime_State() noexcept;
 
+  Dmn_Runtime_State(const Dmn_Runtime_State &obj) = delete;
+  Dmn_Runtime_State &operator=(const Dmn_Runtime_State &obj) = delete;
+  Dmn_Runtime_State(Dmn_Runtime_State &&obj) = delete;
+  Dmn_Runtime_State &operator=(Dmn_Runtime_State &&obj) = delete;
+
   /**
    * @brief Append or replace a callback while the state is idle.
    *
