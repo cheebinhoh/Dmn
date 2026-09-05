@@ -47,13 +47,21 @@ The client never directly executes state logic in its own thread. `run()` only q
 - define the runtime-state constructor, destructor, and default no-op
   lifecycle hooks
 - extend the runtime-state test to verify non-null state creation and
-  `Dmn_State` inheritance
+  `Dmn_State` inheritance and compatibility stepping
+- remove shadowing declarations of `setStateFnc()`, `setNext()`, and
+  `setEnd()` so clients use the inherited `Dmn_State` API; re-expose
+  `runNext()` as protected and grant the manager friend access
+- add public `Dmn_State::hasStateFncs()` to identify whether the client
+  configured at least one state function
 - do not retain a manager-owned state handle until successful runtime queueing
 
 ## 4. Phase 2: Implement the completion model
 
 ### Tasks
 
+- keep transition selection in state functions through their `Dmn_State &`
+  parameter; the runtime manager controls when `runNext()` executes and
+  reposts work, not which transition is selected
 - add runtime lifecycle flags (`queued`, `running`, `completed`, `failed`,
   `cancelled`)
 - add `wait()` synchronization primitives and the shared future

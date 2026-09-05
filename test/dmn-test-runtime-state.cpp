@@ -30,5 +30,24 @@ int main(int argc, char *argv[]) {
 
   EXPECT_NE(state, nullptr);
 
+  bool stateFncRan{};
+  state->setStateFnc([&stateFncRan](dmn::Dmn_State &machine) {
+    stateFncRan = true;
+    machine.setEnd();
+  });
+  EXPECT_TRUE(state->hasStateFncs());
+
+  auto &baseState = static_cast<dmn::Dmn_State &>(*state);
+  EXPECT_TRUE(!baseState.isInitialized());
+  EXPECT_TRUE(!baseState.isFinalized());
+
+  while (baseState) {
+    baseState.runNext();
+  }
+
+  EXPECT_TRUE(baseState.isInitialized());
+  EXPECT_TRUE(baseState.isFinalized());
+  EXPECT_TRUE(stateFncRan);
+
   return RUN_ALL_TESTS();
 }

@@ -41,6 +41,10 @@ auto Dmn_State::isInitialized() -> bool { return m_initialized; }
 
 auto Dmn_State::isFinalized() -> bool { return m_finalized; }
 
+bool Dmn_State::hasStateFncs() const noexcept {
+  return m_states.size() > 1;
+}
+
 auto Dmn_State::runNext() -> bool {
   // preferred assertion: use an explicit cast so it always compiles
   assert(static_cast<bool>(*this) && "runNext called after finalize");
