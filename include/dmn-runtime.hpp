@@ -362,6 +362,14 @@ public:
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
+  /**
+   * @brief Return whether the caller is the runtime's asynchronous thread.
+   *
+   * This is intended for APIs layered on the runtime that must reject
+   * blocking or re-entrant operations from runtime callbacks.
+   */
+  [[nodiscard]] auto isRunInAsyncThread() const -> bool;
+
 protected:
   Dmn_Runtime_Manager();
 
@@ -392,10 +400,6 @@ private:
   void execRuntimeJobInternal();
   /** @brief Invoke all registered hooks for @p signo in the async context. */
   void execSignalHandlerHookInternal(int signo);
-
-  /** @brief Return true if the caller is running on the singleton async thread.
-   */
-  auto isRunInAsyncThread() -> bool;
 
   /** @brief Insert @p hook into the internal map for @p signo. */
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
@@ -452,6 +456,8 @@ private:
 
   std::thread::id
       m_asyncThreadId{}; ///< Thread ID of the singleton asynchronous context.
+  mutable std::mutex
+      m_asyncThreadIdMutex{}; ///< Synchronizes external thread-context checks.
 
   inline static sigset_t s_mask{}; ///< Signal mask applied to the process
                                    ///< before singleton creation.
@@ -462,7 +468,10 @@ Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
     : Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>{},
       Dmn_Async<QueueType>{"Dmn_Runtime_Manager"},
       m_mask{Dmn_Runtime_Manager::s_mask} {
-  this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
+  this->addExecTask([this]() {
+    std::lock_guard<std::mutex> lock{m_asyncThreadIdMutex};
+    m_asyncThreadId = std::this_thread::get_id();
+  });
 
   // default, these signal handler hooks will be executed in the singleton
   // asynchronous context right after externally registered signal handler hooks
@@ -850,7 +859,8 @@ void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
  *         @c false otherwise.
  */
 template <template <class> class QueueType>
-auto Dmn_Runtime_Manager<QueueType>::isRunInAsyncThread() -> bool {
+auto Dmn_Runtime_Manager<QueueType>::isRunInAsyncThread() const -> bool {
+  std::lock_guard<std::mutex> lock{m_asyncThreadIdMutex};
   return std::this_thread::get_id() == m_asyncThreadId;
 }
 

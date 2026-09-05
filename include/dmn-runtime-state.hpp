@@ -2,17 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-runtime-state.hpp
- * @brief Public API for the Runtime State Engine: a runtime-owned state
- *        execution engine that composes the existing dmn-runtime scheduler
- *        with the dmn-state finite-state helper.
- *
- * @author Chee Bin HOH
- * @date 2026-08-31
- *
- * This header declares the public types used by clients to create and
- * manage runtime-managed state machine instances. Implementation details
- * are intentionally omitted from the header; refer to the implementation
- * (.cpp) and specification documents for full behavior.
+ * @brief Public API for runtime-managed Dmn_State execution.
  */
 
 #ifndef DMN_RUNTIME_STATE_HPP_
@@ -22,102 +12,70 @@
 #include "dmn-state.hpp"
 
 #include <chrono>
+#include <exception>
+#include <functional>
 #include <future>
 #include <memory>
-#include <mutex>
+#include <stdexcept>
 #include <string_view>
 
 namespace dmn {
 
+class Dmn_Runtime_State_Engine;
+
 /**
- * @class Dmn_Runtime_State
- * @brief A runtime-managed state machine instance.
+ * @brief A one-shot Dmn_State executed by Dmn_Runtime_Manager.
  *
- * Dmn_Runtime_State subclasses Dmn_State and adds asynchronous runtime
- * ownership semantics: a client obtains a shared_ptr handle from the
- * engine, configures state functors using the same Dmn_State API, then
- * calls run() to schedule execution on the global runtime thread.
- *
- * Important behavior (summary):
- * - createState() returns std::shared_ptr<Dmn_Runtime_State> — the engine
- *   also holds a shared_ptr while the state is queued or running to
- *   guarantee lifetime.
- * - run(priority, delay, onError) enqueues the state for execution; it
- *   returns true when enqueue succeeded and false otherwise. The optional
- *   onError callback uses Dmn_Runtime_Job::OnErrorFncType and is forwarded
- *   into the runtime job.
- * - cancel() is cooperative: runtime tasks must observe isCancelled() and
- *   call setEnd() before runNext() when cancelled.
- * - wait(), wait_for(), and getFuture() provide blocking and non-blocking
- *   completion waiting. getFuture() returns a std::shared_future<void> so
- *   multiple waiters are supported.
- * - Calling run() or wait() from inside the runtime async thread is
- *   disallowed: implementations MUST assert/throw when detected.
+ * Instances are created only by Dmn_Runtime_State_Engine. Configure all state
+ * callbacks before calling run(). Each callback must call setNext() or
+ * setEnd() exactly once before returning.
  */
-class Dmn_Runtime_State : public Dmn_State {
+class Dmn_Runtime_State : public Dmn_State,
+                          public std::enable_shared_from_this<Dmn_Runtime_State> {
 public:
   using FncType = std::function<void(Dmn_Runtime_State &)>;
-  using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr
-                                                      // &)>
+  using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType;
 
-  /**
-   * @brief Construct a runtime-managed state object with a human-readable name.
-   * @param name Human-readable name used for diagnostics.
-   */
-  explicit Dmn_Runtime_State(std::string_view name);
+  enum class Status {
+    kIdle,
+    kQueued,
+    kRunning,
+    kCompleted,
+    kFailed,
+    kCancelled,
+  };
 
-  /**
-   * @brief Virtual destructor. Implementation should ensure safe teardown.
-   */
   virtual ~Dmn_Runtime_State() noexcept;
 
-  /* State configuration (inherited semantics from Dmn_State) */
-
   /**
-   * @brief Set the functor for a state slot.
-   * @param fnc The functor to be called for the state step.
-   * @param index 1-based index for the state slot (0 uses default behavior).
+   * @brief Append or replace a callback while the state is idle.
    *
-   * This method preserves Dmn_State semantics and allows clients to define
-   * the machine steps.
+   * The callback is adapted to Dmn_State's base callback type. It must make
+   * exactly one transition through setNext() or setEnd().
    */
   void setStateFnc(FncType fnc, int index = 0);
 
   /**
-   * @brief Set the next user state by index (1-based).
-   * @param index 1..m_states.size() selects the next state.
+   * @brief Select the next state from a currently executing state callback.
    */
   void setNext(int index);
 
   /**
-   * @brief Convenience: set the next state to the sequential next slot.
+   * @brief Select the sequential next state from a running callback.
    */
   void setNext();
 
   /**
-   * @brief Mark the machine to finalize after the current step.
+   * @brief Finalize after the currently executing state callback returns.
    */
   void setEnd();
 
-  /* Lifecycle API */
-
   /**
-   * @brief Schedule this state handle for runtime execution.
+   * @brief Submit this configured handle once to the runtime.
    *
-   * @param priority Job priority to use when enqueuing (maps to
-   * Dmn_Runtime_Job::Priority).
-   * @param delay If non-zero, the job is scheduled via addTimedJob() after this
-   * delay.
-   * @param onError Optional error callback forwarded to the runtime job. The
-   *                type matches Dmn_Runtime_Job::OnErrorFncType.
-   * @return true if the state was successfully queued; false if enqueue
-   *         failed (already terminal, duplicate run, invalid configuration).
-   *
-   * Notes:
-   * - run() is one-shot for a given handle: the first successful call enqueues
-   *   the state; subsequent calls return false.
-   * - Calling run() from inside the runtime async thread is disallowed and
-   *   will assert/throw.
+   * A non-zero delay applies only to the initial step. Continuations are
+   * submitted immediately at the same priority. Invalid configuration marks
+   * the state failed and returns false without invoking @p onError.
    */
   bool
   run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
@@ -126,99 +84,97 @@ public:
       OnErrorFnc onError = {});
 
   /**
-   * @brief Request cooperative cancellation of this state.
+   * @brief Request cancellation.
    *
-   * The cancellation is idempotent and thread-safe. It does NOT preempt a
-   * currently-running functor unless that functor explicitly observes the
-   * cancel flag via isCancelled(). The runtime job must check isCancelled()
-   * and call setEnd() prior to invoking runNext() if cancellation is set.
+   * Cancelling while idle terminally cancels the handle immediately. A queued
+   * or running callback is not preempted; no additional user callback is run
+   * after cancellation is observed.
    */
   void cancel();
 
   /**
-   * @brief Block until the state reaches a terminal condition.
-   *
-   * Calling wait() from the runtime async thread is disallowed; implementations
-   * should assert or throw if detected. See getFuture() for async waiting.
+   * @brief Wait for a terminal status.
+   * @throws std::runtime_error if called from the runtime async thread.
    */
   void wait();
 
   /**
-   * @brief Block until terminal or timeout.
-   * @return true if terminal observed before timeout, false otherwise.
+   * @brief Wait for a terminal status or timeout.
+   * @throws std::runtime_error if called from the runtime async thread.
    */
   template <typename Rep, typename Period>
-  bool wait_for(const std::chrono::duration<Rep, Period> &timeout);
+  bool wait_for(const std::chrono::duration<Rep, Period> &timeout) {
+    assertNotRuntimeThread();
+    return getFuture().wait_for(timeout) == std::future_status::ready;
+  }
 
   /**
-   * @brief Return a shared_future that becomes ready when the state reaches
-   *        a terminal condition (completed/failed/cancelled).
+   * @brief Return a multi-waiter completion future.
    *
-   * The shared_future is available immediately after the state is created
-   * so callers may register waiters before run() is called.
+   * It becomes ready with a value for completed/cancelled states and with the
+   * captured exception for failed states. An idle state remains pending until
+   * run() or cancel() makes it terminal.
    */
-  std::shared_future<void> getFuture();
+  [[nodiscard]] std::shared_future<void> getFuture() const;
+
+  [[nodiscard]] bool isRunning() const;
+  [[nodiscard]] bool isCompleted() const;
+  [[nodiscard]] bool isFailed() const;
+  [[nodiscard]] bool isCancelled() const;
+  [[nodiscard]] Status status() const;
 
   /**
-   * @brief Introspection helpers.
-   *
-   * isRunning(): queued or actively running inside the engine.
-   * isCompleted(): terminal success.
-   * isFailed(): terminal failure.
-   * isCancelled(): cancellation requested.
+   * @brief Return the failure that will be rethrown by getFuture().get().
    */
-  bool isRunning() const;
-  bool isCompleted() const;
-  bool isFailed() const;
-  bool isCancelled() const;
-
-protected:
-  /**
-   * @brief Lifecycle hooks for derived implementations.
-   *
-   * Subclasses may override these to observe state lifecycle transitions. The
-   * default implementations are no-ops.
-   */
-  virtual void onStarted();
-  virtual void onCompleted();
-  virtual void onFailed(std::exception_ptr ep);
-  virtual void onCancelled();
+  [[nodiscard]] std::exception_ptr failure() const;
 
 private:
-  // Implementation details are intentionally private and placed in the
-  // corresponding .cpp. Refer to the specification for the concurrency and
-  // lifecycle invariants the implementation must satisfy.
+  friend class Dmn_Runtime_State_Engine;
+
+  explicit Dmn_Runtime_State(std::string_view name);
+  void assertNotRuntimeThread() const;
+
+  struct Impl;
+  std::unique_ptr<Impl> m_impl;
 };
 
 /**
- * @class Dmn_Runtime_State_Engine
- * @brief Singleton factory and manager for runtime-managed states.
- *
- * Responsibilities:
- * - provide createState() returning a shared_ptr handle to a Dmn_Runtime_State
- * - retain a shared_ptr to queued/running state objects to guarantee lifetime
- * - integrate with Dmn_Runtime_Manager by creating runtime jobs for state steps
+ * @brief Singleton factory and lifetime manager for runtime state handles.
  */
 class Dmn_Runtime_State_Engine
     : public Dmn_Singleton<Dmn_Runtime_State_Engine> {
+  friend class Dmn_Singleton<Dmn_Runtime_State_Engine>;
+
 public:
   using DmnRuntimeStatePtr = std::shared_ptr<Dmn_Runtime_State>;
 
-  /**
-   * @brief Obtain the singleton engine instance.
-   */
-  static auto createInstance() -> Dmn_Runtime_State_Engine &;
+  enum class ShutdownMode { kGraceful, kImmediate };
+
+  /// Inherited factory returning std::shared_ptr<Dmn_Runtime_State_Engine>.
+  using Dmn_Singleton<Dmn_Runtime_State_Engine>::createInstance;
 
   /**
-   * @brief Create a new runtime-managed state object and return a shared_ptr
-   *        handle to the client. The engine will also hold a shared_ptr while
-   *        the state is queued or running.
+   * @brief Create an idle, client-configurable runtime state handle.
    */
-  DmnRuntimeStatePtr createState(std::string_view name);
+  [[nodiscard]] DmnRuntimeStatePtr createState(std::string_view name);
 
-protected:
-  Dmn_Runtime_State_Engine();
+  /**
+   * @brief Stop accepting new runs permanently.
+   *
+   * Graceful shutdown lets accepted work finish. Immediate shutdown cancels
+   * queued handles and requests cancellation of a running callback.
+   */
+  void shutdown(ShutdownMode mode);
+
+  [[nodiscard]] bool isShutdown() const;
+
   virtual ~Dmn_Runtime_State_Engine() noexcept;
+
+private:
+  Dmn_Runtime_State_Engine();
+
+  struct Impl;
+  std::unique_ptr<Impl> m_impl;
 };
 
 } // namespace dmn

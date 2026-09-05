@@ -37,6 +37,7 @@
 #include "dmn-proc.hpp"
 #include "dmn-pub-sub.hpp"
 #include "dmn-runtime.hpp"
+#include "dmn-runtime-state.hpp"
 #include "dmn-singleton.hpp"
 #include "dmn-socket.hpp"
 #include "dmn-state.hpp"

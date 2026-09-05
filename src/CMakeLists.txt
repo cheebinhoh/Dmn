@@ -58,6 +58,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
 
@@ -177,4 +178,3 @@ target_link_libraries(dmn-kafka-sender
                         dmn
                         ${rdkafka_LIB}
 )
-

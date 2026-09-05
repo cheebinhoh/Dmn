@@ -1,94 +1,84 @@
 # Runtime State Engine Implementation Plan
 
-This document is a step-by-step TDD-first implementation plan for the runtime state engine feature. It maps spec items to phased implementation tasks. Follow the phases sequentially and run unit tests after each phase.
+Status: Canonical plan
+Specification: [`specs/runtime-state-machine-spec.md`](specs/runtime-state-machine-spec.md)
 
-Repository layout assumptions
-- include/: public headers
-- src/: library implementation
-- test/: unit tests
-- CMake macros like ADD_TEST_EXECUTABLE are available and used for registering test executables.
+Implement the phases in order. The API contract in the specification takes
+precedence over this plan.
 
-Phase 0: Already completed (spec & header)
-- `docs/specs/runtime-state-machine-spec.md` updated with ownership, run(onError), cancel, wait(timeout)/shared_future, priority/timed variants and tests.
-- Public header `include/dmn-runtime-state.hpp` added declaring the API.
+## Phase 1: Wire the public surface
 
-Phase 1: Add test skeletons and minimal stubs to compile
-- Add test: `test/dmn-test-runtime-state.cpp` (skeleton)
-- Add CMake: include `dmn-test-runtime-state` in `test/CMakeLists.txt`
-- Add Phase-1 stub: `src/dmn-runtime-state.cpp` implementing minimal methods (compile-friendly):
-  - Dmn_Runtime_State ctor/dtor
-  - run() returns false
-  - cancel() is a no-op
-  - wait() returns immediately
-  - getFuture() returns ready shared_future
+1. Add `src/dmn-runtime-state.cpp` to `src/CMakeLists.txt`.
+2. Add `include/dmn-runtime-state.hpp` to the `dmn` interface headers and
+   include it from `include/dmn.hpp`.
+3. Add `dmn-test-runtime-state` to `test/CMakeLists.txt`.
+4. Implement defaulted/destructed PIMPL owners and the engine singleton
+   constructor. Do not add compile-only behavior stubs.
+5. Use the public, const `Dmn_Runtime_Manager::isRunInAsyncThread()` for
+   runtime-thread checks.
 
-Verify:
-- cmake -B build -DCMAKE_BUILD_TYPE=Debug
-- cmake --build build
-- ctest --test-dir build --output-on-failure
+## Phase 2: Implement synchronization and configuration
 
-Phase 2: Basic runtime enqueue & single-step execution
-- Implement run() to atomically set queued flag and enqueue a Dmn_Runtime_Job to `Dmn_Runtime_Manager::addJob()` (immediate) or `addTimedJob()` (delay). Use Dmn_Runtime_Job::Priority.
-- Engine will retain an internal shared_ptr to the state while queued; store it in `std::unordered_map<void*, std::shared_ptr<Dmn_Runtime_State>> m_pendingStates;` keyed by pointer or generated id.
-- The job's m_fnc must create a coroutine task (TaskFncType) that:
-  - locks a weak_ptr to the state
-  - checks isCancelled(); if set, call setEnd() and finalize
-  - calls runNext() once (in try/catch)
-  - if still active, repost by calling addJob() again
-  - if terminal, set completion promise and erase engine internal shared_ptr
-- Wire `m_completionPromise` and `m_completionSharedFuture` so getFuture() returns `m_completionSharedFuture`.
+1. Define `Dmn_Runtime_State::Impl` with a mutex, `Status`, cancellation
+   request, configured callback count, transition guard, failure exception,
+   promise, and shared future.
+2. Define `Dmn_Runtime_State_Engine::Impl` with a mutex, irreversible
+   shutdown mode, monotonically increasing ID, and
+   `unordered_map<uint64_t, shared_ptr<Dmn_Runtime_State>>` pending map.
+3. Make `createState()` the only construction path. Since the state constructor
+   is private, use `shared_ptr<Dmn_Runtime_State>{new Dmn_Runtime_State{name}}`
+   rather than `make_shared`, and bind the new state to its creating engine
+   without creating an ownership cycle.
+4. Adapt each `FncType(Dmn_Runtime_State&)` into the base
+   `Dmn_State::FncType(Dmn_State&)`, validate one transition per callback, and
+   reject `setStateFnc()` after submission.
+5. Restrict `setNext()` and `setEnd()` to the current runtime callback.
+6. Implement one idempotent terminal-transition helper. It must store the
+   status and exception, fulfill the promise, then arrange release of engine
+   ownership without holding either mutex during external calls.
 
-Tests expected to pass after this phase:
-- RuntimeState_BasicFlow
-- RuntimeState_GetFuture_PreRun_MultipleWaiters (shared_future works)
+## Phase 3: Submit and continue jobs
 
-Phase 3: Exception capture and onError forwarding
-- Wrap runNext() call in try/catch inside the runtime job.
-- On exception:
-  - store `std::current_exception()` in the state
-  - set `m_failed` flag
-  - set `m_completionPromise` (set_exception or set_value, but capture ep for diagnostics)
-  - invoke onError callback forwarded via job.m_onErrorFnc
-- Update run() to forward client-provided onError into the runtime job creation
+1. Reject runtime-thread `run()` calls with `std::runtime_error`.
+2. Atomically accept only an idle, non-empty, non-shutdown state. Empty
+   configuration becomes failed with `logic_error`; `kSched` priority and a
+   negative delay become failed with `invalid_argument`; duplicate, cancelled,
+   or shutdown submissions return `false`.
+3. Retain `shared_from_this()` in the engine pending map before submitting the
+   initial runtime job. If submission throws, remove ownership and fail the
+   handle.
+4. Submit the initial job with `addJob()` or `addTimedJob()` as specified.
+   Store the supplied priority and onError for each continuation.
+5. In a job, process at most one `runNext()`. Check cancellation before a
+   user step and after a running step. Cancellation finalizes the base state
+   without running another user callback.
+6. On a callback exception, terminally fail the state before rethrowing the
+   same exception. Pass `onError` only as the runtime job error callback; do
+   not call it in state-engine code.
+7. Repost only an active, non-cancelled state at its original priority.
 
-Tests expected to pass:
-- RuntimeState_RunOnErrorCallback
-- state_exception_marks_failed
+## Phase 4: Completion and shutdown
 
-Phase 4: Cancel semantics & destructor-while-queued
-- Implement cancel() to set atomic m_cancelled.
-- Ensure runtime job checks m_cancelled before runNext() and calls setEnd() if true.
-- Ensure engine internal shared_ptr map is created when run() enqueues; it must hold the shared_ptr until terminal.
-- Implement destructor_while_queued test to validate engine holds state alive.
+1. Implement `wait()`, `wait_for()`, `getFuture()`, status queries, and
+   `failure()` from the shared-future contract.
+2. Implement graceful shutdown: reject future runs and retain accepted work
+   until it reaches a terminal state.
+3. Implement immediate shutdown: terminally cancel queued entries, remove
+   their ownership after fulfillment, and request cancellation of a running
+   entry. Never block waiting for a callback.
 
-Phase 5: Priority/timed behavior and fairness
-- Implement run(priority, delay) mapping to addJob/addTimedJob. If delay > 0 use addTimedJob.
-- Add tests verifying that priority ordering affects execution order.
-- Consider fairness: ensure engine uses runtime priority queues and doesn't monopolize the runtime.
+## Phase 5: Tests
 
-Phase 6: Runtime-thread detection & runtime safety
-- Detect runtime context using `Dmn_Runtime_Manager::isRunInAsyncThread()`.
-- In run() and wait(), if called on runtime thread: assert in debug builds and throw `std::runtime_error` in release builds.
-- Implement safe unit/integration tests for detection (special harness that posts a runtime job which attempts to call wait() and expects an exception).
+Add the required tests listed in the specification. Tests that require runtime
+execution must start and stop `Dmn_Runtime_Manager` according to the existing
+runtime-test pattern. Include a callback that deliberately omits a transition,
+and verify that it fails instead of entering an infinite repost loop.
 
-Phase 7: Polish, stress tests, documentation
-- Add stress tests, runtime integration tests, and code comments.
-- Document known limitations and example usage.
+## Validation
 
-Developer checklist for each commit
-- Keep commits small and focused.
-- Run `cmake -B build -DCMAKE_BUILD_TYPE=Debug` and `cmake --build build` locally before pushing.
-- Run `ctest --test-dir build --output-on-failure` after each phase and fix failing tests or update the Phase implementation accordingly.
-
-Notes and gotchas
-- Use weak_ptr in runtime job to avoid reference cycles; the engine's internal shared_ptr keeps the object alive while queued.
-- Use atomic compare_exchange to set queued flag and avoid races for multiple-concurrent run() calls.
-- Use std::shared_future to support multiple waiters.
-- Be careful to release engine internal shared_ptr only after the completion promise is fulfilled and after finalization is complete.
-- Use runtime's addJob/addTimedJob APIs and forward onError callback using Dmn_Runtime_Job::OnErrorFncType.
-
-Example commands
-- Configure & build: cmake -B build -DCMAKE_BUILD_TYPE=Debug
-- Build: cmake --build build -j$(nproc)
-- Run tests: ctest --test-dir build --output-on-failure
-
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+ctest --test-dir build -R dmn-test-runtime-state -VV --output-on-failure
+ctest --test-dir build --output-on-failure
+```
