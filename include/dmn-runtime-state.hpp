@@ -30,8 +30,9 @@ class Dmn_Runtime_State_Engine;
  * callbacks before calling run(). Each callback must call setNext() or
  * setEnd() exactly once before returning.
  */
-class Dmn_Runtime_State : public Dmn_State,
-                          public std::enable_shared_from_this<Dmn_Runtime_State> {
+class Dmn_Runtime_State
+    : public Dmn_State,
+      public std::enable_shared_from_this<Dmn_Runtime_State> {
 public:
   using FncType = std::function<void(Dmn_Runtime_State &)>;
   using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType;
