@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(s1);
   EXPECT_TRUE(!s1.isInitialized());
   EXPECT_TRUE(!s1.isFinalized());
+  EXPECT_FALSE(s1.hasStateFncs());
 
   s1.runNext();
   EXPECT_TRUE(s1);
@@ -58,6 +59,8 @@ int main(int argc, char *argv[]) {
       s.setEnd();
     }
   });
+
+  EXPECT_TRUE(s3.hasStateFncs());
 
   while (s3) {
     s3.runNext();

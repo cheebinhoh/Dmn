@@ -56,11 +56,22 @@ Completed follow-on increment: State-handle creation
 - Define the runtime-state constructor, destructor, and default no-op
   lifecycle hooks required to link the concrete polymorphic type.
 - Extend `dmn-test-runtime-state` to verify `createState()` returns a
-  non-null handle and that `Dmn_Runtime_State` derives from `Dmn_State`.
+  non-null handle, that `Dmn_Runtime_State` derives from `Dmn_State`, and
+  that inherited state configuration and stepping remain accessible for
+  compatibility testing.
+- Remove the shadowing `Dmn_Runtime_State` declarations of `setStateFnc()`,
+  `setNext()`, and `setEnd()`. `runNext()` is re-exposed as protected and is
+  available to `Dmn_Runtime_State_Manager` through friendship.
+- Add `Dmn_State::hasStateFncs()` as a public query for whether the client
+  configured at least one state function, excluding the internal
+  initialization function.
 - Do not retain created states in the manager yet. Retention begins only when
   a later `run()` implementation queues a state.
 
 Phase 2: Terminal-state primitive and lifecycle unit tests (next)
+- Do not make the manager advance state transitions implicitly: it controls
+  when `runNext()` executes, while a state function uses its `Dmn_State &`
+  parameter to call `setNext()` or `setEnd()`.
 - Implement the completion promise/shared_future pair, terminal flags, and a
   single idempotent terminal transition helper.
 - Implement the selected no-state and cancel-before-run behavior.

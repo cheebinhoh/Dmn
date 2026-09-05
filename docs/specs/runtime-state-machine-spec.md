@@ -121,11 +121,22 @@ The resulting object must:
 
 A client must be able to define one or more states on the returned runtime state object via the compatible `Dmn_State` interface.
 
-The manager must support:
+`Dmn_Runtime_State` MUST inherit, rather than redeclare or override,
+`Dmn_State::setStateFnc()`, `setNext()`, and `setEnd()`. State functions
+therefore retain the base callback signature, `std::function<void(Dmn_State
+&)>`.
 
-- sequential state definition by appending state functors
-- explicit transition to next state via `setNext()` and `setEnd()` semantics
-- state functors that are valid in the same pattern as `Dmn_State`
+Clients configure state functions before calling `run()`. They do not directly
+advance or terminate the machine from outside a state function: the runtime
+manager controls when `runNext()` executes and whether another job is posted.
+A state function uses its `Dmn_State &` parameter to call `setNext()` or
+`setEnd()` when it needs to select the next transition or terminate the
+machine, preserving existing `Dmn_State` semantics.
+
+`Dmn_State::hasStateFncs()` is a public query that returns true when at least
+one client-defined state function exists. It excludes the internal
+initialization function and is used by `Dmn_Runtime_State::run()` to reject an
+unconfigured state without terminalizing it.
 
 ### FR-4: `run()` dispatches work to runtime and error callback forwarding
 
@@ -258,14 +269,12 @@ This API is proposed to match the existing library naming and runtime convention
 ```cpp
 namespace dmn {
 
+class Dmn_Runtime_State;
+using DmnRuntimeStatePtr = std::shared_ptr<Dmn_Runtime_State>;
+
 class Dmn_Runtime_State_Manager
     : public Dmn_Singleton<Dmn_Runtime_State_Manager> {
 public:
-  class Dmn_Runtime_State;
-
-  // handle type returned to clients. Follows existing dmn shared ownership pattern.
-  using DmnRuntimeStatePtr = std::shared_ptr<Dmn_Runtime_State>;
-
   // Inherited factory:
   // std::shared_ptr<Dmn_Runtime_State_Manager> createInstance();
 
@@ -277,17 +286,20 @@ public:
 };
 
 class Dmn_Runtime_State : public Dmn_State {
+  friend class Dmn_Runtime_State_Manager;
+
 public:
-  using FncType = std::function<void(Dmn_Runtime_State &)>;
   using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr &)>
 
   explicit Dmn_Runtime_State(std::string_view name);
 
-  // state configuration (same as Dmn_State)
-  void setStateFnc(FncType fnc, int index = 0);
-  void setNext(int index);
-  void setNext();
-  void setEnd();
+  // State configuration methods are inherited unchanged from Dmn_State.
+  // The runtime manager controls execution by calling protected runNext().
+
+protected:
+  using Dmn_State::runNext;
+
+public:
 
   // lifecycle APIs
   // run: returns true when the enqueue succeeded; false on failure (already terminal, invalid, runtime busy)
@@ -409,7 +421,11 @@ It must retain:
 - init/finalize behavior inherited from the base
 - default state sequencing model
 
-The runtime layer adds async ownership, completion signaling, cancellation token, and error forwarding on top of the base semantics.
+The runtime layer must not hide or redeclare the base configuration methods.
+It adds async ownership, completion signaling, cancellation token, and error
+forwarding on top of the base semantics. The manager controls when
+`runNext()` is invoked; state functions control their transitions with the
+inherited `Dmn_State &` API.
 
 ### 9.2 Cancellation contract
 
@@ -561,17 +577,18 @@ The runtime state manager should primarily add:
 Sample usage (illustrative):
 
 ```cpp
-using StatePtr = dmn::Dmn_Runtime_State_Manager::DmnRuntimeStatePtr;
+using StatePtr = dmn::DmnRuntimeStatePtr;
 
 // create
 auto manager = dmn::Dmn_Runtime_State_Manager::createInstance();
 StatePtr s = manager->createState("example");
 
-// configure
-s->setStateFnc([](dmn::Dmn_Runtime_State &st){ /* step 0 */ }, 0);
-s->setNext();
-s->setStateFnc([](dmn::Dmn_Runtime_State &st){ /* step 1 */ }, 1);
-s->setEnd();
+// Configure using the inherited Dmn_State API. The manager later invokes
+// runNext(); each state function selects its own transition.
+s->setStateFnc([](dmn::Dmn_State &st) {
+  /* step work */
+  st.setEnd();
+});
 
 // run with onError callback, medium priority, immediate
 bool ok = s->run(Dmn_Runtime_Job::Priority::kMedium, std::chrono::steady_clock::duration::zero(),

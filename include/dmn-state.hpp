@@ -103,6 +103,16 @@ public:
   auto isFinalized() -> bool;
 
   /**
+   * @brief Return whether the client configured at least one state function.
+   *
+   * Excludes the internal initialization function installed during
+   * construction.
+   *
+   * @return true when at least one user-defined state function exists.
+   */
+  bool hasStateFncs() const noexcept;
+
+  /**
    * @brief Execute the next state step.
    * @return true if the state machine remains active after running the step;
    *         false when it has finalized/stopped.

@@ -59,8 +59,9 @@ namespace dmn {
  *   disallowed: implementations MUST throw std::runtime_error when detected.
  */
 class Dmn_Runtime_State : public Dmn_State {
+  friend class Dmn_Runtime_State_Manager;
+
 public:
-  using FncType = std::function<void(Dmn_Runtime_State &)>;
   using OnErrorFnc =
       Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr
                                        // &)>
@@ -80,34 +81,6 @@ public:
   Dmn_Runtime_State &operator=(const Dmn_Runtime_State &) = delete;
   Dmn_Runtime_State(Dmn_Runtime_State &&) = delete;
   Dmn_Runtime_State &operator=(Dmn_Runtime_State &&) = delete;
-
-  /* State configuration (inherited semantics from Dmn_State) */
-
-  /**
-   * @brief Set the functor for a state slot.
-   * @param fnc The functor to be called for the state step.
-   * @param index 1-based index for the state slot (0 uses default behavior).
-   *
-   * This method preserves Dmn_State semantics and allows clients to define
-   * the machine steps.
-   */
-  void setStateFnc(FncType fnc, int index = 0);
-
-  /**
-   * @brief Set the next user state by index (1-based).
-   * @param index 1..m_states.size() selects the next state.
-   */
-  void setNext(int index);
-
-  /**
-   * @brief Convenience: set the next state to the sequential next slot.
-   */
-  void setNext();
-
-  /**
-   * @brief Mark the machine to finalize after the current step.
-   */
-  void setEnd();
 
   /* Lifecycle API */
 
@@ -183,6 +156,10 @@ public:
   bool isCancelled() const;
 
 protected:
+  // Only Dmn_Runtime_State, its subclasses, and the friend manager may
+  // advance the underlying Dmn_State machine directly.
+  using Dmn_State::runNext;
+
   /**
    * @brief Lifecycle hooks for derived implementations.
    *
