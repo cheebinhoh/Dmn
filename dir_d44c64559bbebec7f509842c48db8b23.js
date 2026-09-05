@@ -14,6 +14,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-pipe.hpp", "dmn-pipe_8hpp.html", "dmn-pipe_8hpp" ],
     [ "dmn-proc.hpp", "dmn-proc_8hpp.html", "dmn-proc_8hpp" ],
     [ "dmn-pub-sub.hpp", "dmn-pub-sub_8hpp.html", "dmn-pub-sub_8hpp" ],
+    [ "dmn-runtime-state.hpp", "dmn-runtime-state_8hpp.html", "dmn-runtime-state_8hpp" ],
     [ "dmn-runtime-task.hpp", "dmn-runtime-task_8hpp.html", "dmn-runtime-task_8hpp" ],
     [ "dmn-runtime.hpp", "dmn-runtime_8hpp.html", "dmn-runtime_8hpp" ],
     [ "dmn-singleton.hpp", "dmn-singleton_8hpp.html", "dmn-singleton_8hpp" ],

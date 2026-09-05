@@ -19,6 +19,8 @@ var annotated_dup =
       [ "Dmn_Pub", "classdmn_1_1Dmn__Pub.html", "classdmn_1_1Dmn__Pub" ],
       [ "Dmn_Runtime_Job", "structdmn_1_1Dmn__Runtime__Job.html", "structdmn_1_1Dmn__Runtime__Job" ],
       [ "Dmn_Runtime_Manager", "classdmn_1_1Dmn__Runtime__Manager.html", "classdmn_1_1Dmn__Runtime__Manager" ],
+      [ "Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", "classdmn_1_1Dmn__Runtime__State" ],
+      [ "Dmn_Runtime_State_Engine", "classdmn_1_1Dmn__Runtime__State__Engine.html", "classdmn_1_1Dmn__Runtime__State__Engine" ],
       [ "Dmn_Runtime_Task", "structdmn_1_1Dmn__Runtime__Task.html", "structdmn_1_1Dmn__Runtime__Task" ],
       [ "Dmn_Singleton", "classdmn_1_1Dmn__Singleton.html", null ],
       [ "Dmn_Socket", "classdmn_1_1Dmn__Socket.html", "classdmn_1_1Dmn__Socket" ],

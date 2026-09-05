@@ -30,11 +30,14 @@ var searchData=
   ['dmn_5fruntime_5fjob_27',['Dmn_Runtime_Job',['../structdmn_1_1Dmn__Runtime__Job.html',1,'dmn']]],
   ['dmn_5fruntime_5fmanager_28',['Dmn_Runtime_Manager',['../classdmn_1_1Dmn__Runtime__Manager.html',1,'dmn']]],
   ['dmn_5fruntime_5fmanager_5fimpl_29',['Dmn_Runtime_Manager_Impl',['../structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html',1,'dmn::detail']]],
-  ['dmn_5fruntime_5ftask_30',['Dmn_Runtime_Task',['../structdmn_1_1Dmn__Runtime__Task.html',1,'dmn']]],
-  ['dmn_5fsingleton_31',['Dmn_Singleton',['../classdmn_1_1Dmn__Singleton.html',1,'dmn']]],
-  ['dmn_5fsingleton_3c_20dmn_5fruntime_5fmanager_3c_20dmn_5fblockingqueue_5fmt_20_3e_20_3e_32',['Dmn_Singleton&lt; Dmn_Runtime_Manager&lt; Dmn_BlockingQueue_Mt &gt; &gt;',['../classdmn_1_1Dmn__Singleton.html',1,'dmn']]],
-  ['dmn_5fsocket_33',['Dmn_Socket',['../classdmn_1_1Dmn__Socket.html',1,'dmn']]],
-  ['dmn_5fstate_34',['Dmn_State',['../classdmn_1_1Dmn__State.html',1,'dmn']]],
-  ['dmn_5fsub_35',['Dmn_Sub',['../classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html',1,'dmn::Dmn_Pub']]],
-  ['dmn_5ftimer_36',['Dmn_Timer',['../classdmn_1_1Dmn__Timer.html',1,'dmn']]]
+  ['dmn_5fruntime_5fstate_30',['Dmn_Runtime_State',['../classdmn_1_1Dmn__Runtime__State.html',1,'dmn']]],
+  ['dmn_5fruntime_5fstate_5fengine_31',['Dmn_Runtime_State_Engine',['../classdmn_1_1Dmn__Runtime__State__Engine.html',1,'dmn']]],
+  ['dmn_5fruntime_5ftask_32',['Dmn_Runtime_Task',['../structdmn_1_1Dmn__Runtime__Task.html',1,'dmn']]],
+  ['dmn_5fsingleton_33',['Dmn_Singleton',['../classdmn_1_1Dmn__Singleton.html',1,'dmn']]],
+  ['dmn_5fsingleton_3c_20dmn_5fruntime_5fmanager_3c_20dmn_5fblockingqueue_5fmt_20_3e_20_3e_34',['Dmn_Singleton&lt; Dmn_Runtime_Manager&lt; Dmn_BlockingQueue_Mt &gt; &gt;',['../classdmn_1_1Dmn__Singleton.html',1,'dmn']]],
+  ['dmn_5fsingleton_3c_20dmn_5fruntime_5fstate_5fengine_20_3e_35',['Dmn_Singleton&lt; Dmn_Runtime_State_Engine &gt;',['../classdmn_1_1Dmn__Singleton.html',1,'dmn']]],
+  ['dmn_5fsocket_36',['Dmn_Socket',['../classdmn_1_1Dmn__Socket.html',1,'dmn']]],
+  ['dmn_5fstate_37',['Dmn_State',['../classdmn_1_1Dmn__State.html',1,'dmn']]],
+  ['dmn_5fsub_38',['Dmn_Sub',['../classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html',1,'dmn::Dmn_Pub']]],
+  ['dmn_5ftimer_39',['Dmn_Timer',['../classdmn_1_1Dmn__Timer.html',1,'dmn']]]
 ];
