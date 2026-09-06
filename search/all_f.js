@@ -16,6 +16,7 @@ var searchData=
   ['run_13',['run',['../classdmn_1_1Dmn__Runtime__State.html#aa95ba5fb21878d9d76253697e16ca518',1,'dmn::Dmn_Runtime_State']]],
   ['runexec_14',['runExec',['../classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498',1,'dmn::Dmn_Proc']]],
   ['runfninthreadhelper_15',['runFnInThreadHelper',['../classdmn_1_1Dmn__Proc.html#a93a3d80de18bc7b022d4bbf85fb394ba',1,'dmn::Dmn_Proc']]],
-  ['runnext_16',['runnext',['../classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81',1,'dmn::Dmn_State::runNext()'],['../classdmn_1_1Dmn__Runtime__State.html#af94ef4784a6073840df7cfc64576ae81',1,'dmn::Dmn_Runtime_State::runNext()']]],
-  ['runpriortocreateinstance_17',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]]
+  ['runnext_16',['runNext',['../classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81',1,'dmn::Dmn_State']]],
+  ['runpriortocreateinstance_17',['runPriorToCreateInstance',['../classdmn_1_1Dmn__Runtime__Manager.html#a456083f9813654f46124a31c9d26d4a6',1,'dmn::Dmn_Runtime_Manager']]],
+  ['runtimestatefnc_18',['RuntimeStateFnc',['../classdmn_1_1Dmn__Runtime__State.html#a14d28c40fd8814d8f019f31332c337ae',1,'dmn::Dmn_Runtime_State']]]
 ];

@@ -118,6 +118,9 @@ Public Types</h2></td></tr>
 <tr class="memitem:a23b4cfb22eafc08d7d53665a4ca05d71" id="r_a23b4cfb22eafc08d7d53665a4ca05d71"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">OnErrorFnc</a> = Dmn_Runtime_Job::OnErrorFncType</td></tr>
 <tr class="memdesc:a23b4cfb22eafc08d7d53665a4ca05d71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback invoked by the runtime when a state step throws.  <br /></td></tr>
 <tr class="separator:a23b4cfb22eafc08d7d53665a4ca05d71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14d28c40fd8814d8f019f31332c337ae" id="r_a14d28c40fd8814d8f019f31332c337ae"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a14d28c40fd8814d8f019f31332c337ae">RuntimeStateFnc</a> = std::function&lt; void(<a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &amp;state)&gt;</td></tr>
+<tr class="memdesc:a14d28c40fd8814d8f019f31332c337ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime-aware state callback type.  <br /></td></tr>
+<tr class="separator:a14d28c40fd8814d8f019f31332c337ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -140,12 +143,15 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Runtime_State
 <tr class="memitem:ac36ef5b50388a65bbafb63d122d2e187" id="r_ac36ef5b50388a65bbafb63d122d2e187"><td class="memItemLeft" align="right" valign="top"><a id="ac36ef5b50388a65bbafb63d122d2e187" name="ac36ef5b50388a65bbafb63d122d2e187"></a>
 <a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &amp;&amp;)=delete</td></tr>
 <tr class="separator:ac36ef5b50388a65bbafb63d122d2e187"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab46ad7e4cab1d54f88d7395dec1ccea2" id="r_ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab46ad7e4cab1d54f88d7395dec1ccea2">cancel</a> ()</td></tr>
-<tr class="memdesc:ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request cooperative cancellation of this state.  <br /></td></tr>
-<tr class="separator:ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49fa5e5a74c12c0c024a9dd15dadd364" id="r_a49fa5e5a74c12c0c024a9dd15dadd364"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364">setRuntimeStateFnc</a> (<a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a14d28c40fd8814d8f019f31332c337ae">RuntimeStateFnc</a> fnc, int index=0)</td></tr>
+<tr class="memdesc:a49fa5e5a74c12c0c024a9dd15dadd364"><td class="mdescLeft">&#160;</td><td class="mdescRight">Install a runtime-aware state functor.  <br /></td></tr>
+<tr class="separator:a49fa5e5a74c12c0c024a9dd15dadd364"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa95ba5fb21878d9d76253697e16ca518" id="r_aa95ba5fb21878d9d76253697e16ca518"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#aa95ba5fb21878d9d76253697e16ca518">run</a> (Dmn_Runtime_Job::Priority priority=Dmn_Runtime_Job::Priority::kMedium, const std::chrono::steady_clock::duration &amp;delay=std::chrono::steady_clock::duration::zero(), <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">OnErrorFnc</a> onError={})</td></tr>
 <tr class="memdesc:aa95ba5fb21878d9d76253697e16ca518"><td class="mdescLeft">&#160;</td><td class="mdescRight">Schedule this state handle for runtime execution.  <br /></td></tr>
 <tr class="separator:aa95ba5fb21878d9d76253697e16ca518"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab46ad7e4cab1d54f88d7395dec1ccea2" id="r_ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab46ad7e4cab1d54f88d7395dec1ccea2">cancel</a> ()</td></tr>
+<tr class="memdesc:ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request cooperative cancellation of this state.  <br /></td></tr>
+<tr class="separator:ab46ad7e4cab1d54f88d7395dec1ccea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73c4879aae52df6b236c9f486893bea8" id="r_a73c4879aae52df6b236c9f486893bea8"><td class="memItemLeft" align="right" valign="top">std::shared_future&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a73c4879aae52df6b236c9f486893bea8">getFuture</a> ()</td></tr>
 <tr class="memdesc:a73c4879aae52df6b236c9f486893bea8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a shared_future that becomes ready when the state reaches a terminal condition (completed/failed/cancelled).  <br /></td></tr>
 <tr class="separator:a73c4879aae52df6b236c9f486893bea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,7 +206,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setEnd</b> ()</td></t
 <tr class="memdesc:a97876f995fb05376c2a5dd89c3a8409b inherit pub_methods_classdmn_1_1Dmn__State"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the state machine to end (finalize) after the current step. <br /></td></tr>
 <tr class="separator:a97876f995fb05376c2a5dd89c3a8409b inherit pub_methods_classdmn_1_1Dmn__State"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b5665100db9d0d1ca15346b373326d5 inherit pub_methods_classdmn_1_1Dmn__State" id="r_a1b5665100db9d0d1ca15346b373326d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">setNext</a> (int index)</td></tr>
-<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5 inherit pub_methods_classdmn_1_1Dmn__State"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next state by 1-based index into the configured states.  <br /></td></tr>
+<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5 inherit pub_methods_classdmn_1_1Dmn__State"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next state by internal or user-state index.  <br /></td></tr>
 <tr class="separator:a1b5665100db9d0d1ca15346b373326d5 inherit pub_methods_classdmn_1_1Dmn__State"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99219261e8cdd326bb28ffa09019e6aa inherit pub_methods_classdmn_1_1Dmn__State" id="r_a99219261e8cdd326bb28ffa09019e6aa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa">setNext</a> ()</td></tr>
 <tr class="memdesc:a99219261e8cdd326bb28ffa09019e6aa inherit pub_methods_classdmn_1_1Dmn__State"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: set the next state to the next sequential state.  <br /></td></tr>
@@ -245,9 +251,6 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>onCompleted</
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>onCancelled</b> ()</td></tr>
 <tr class="memdesc:afcebb4889a46b53b660cf96dbcc1982b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called after cancellation is published as terminal. <br /></td></tr>
 <tr class="separator:afcebb4889a46b53b660cf96dbcc1982b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af94ef4784a6073840df7cfc64576ae81" id="r_af94ef4784a6073840df7cfc64576ae81"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a> () -&gt; bool</td></tr>
-<tr class="memdesc:af94ef4784a6073840df7cfc64576ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restrict state-machine advancement to this type and its manager.  <br /></td></tr>
-<tr class="separator:af94ef4784a6073840df7cfc64576ae81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__State"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__State')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__State.html">dmn::Dmn_State</a></td></tr>
 <tr class="memitem:a891238b9ffb5fac974ffbde03e7c01ec inherit pro_methods_classdmn_1_1Dmn__State" id="r_a891238b9ffb5fac974ffbde03e7c01ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a891238b9ffb5fac974ffbde03e7c01ec">init</a> (<a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;s)</td></tr>
 <tr class="memdesc:a891238b9ffb5fac974ffbde03e7c01ec inherit pro_methods_classdmn_1_1Dmn__State"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform internal initialization. Intended for internal use or subclasses that need to hook into init behavior.  <br /></td></tr>
@@ -264,10 +267,12 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Runtime_State_Ma
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A runtime-managed state machine instance. </p>
-<p><a class="el" href="classdmn_1_1Dmn__Runtime__State.html" title="A runtime-managed state machine instance.">Dmn_Runtime_State</a> subclasses <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> and adds asynchronous runtime ownership semantics: a client obtains a shared_ptr handle from the manager, configures state functors using the same <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> API, then calls run() to schedule execution on the global runtime thread.</p>
+<p><a class="el" href="classdmn_1_1Dmn__Runtime__State.html" title="A runtime-managed state machine instance.">Dmn_Runtime_State</a> subclasses <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> and adds asynchronous runtime ownership semantics: a client obtains a shared_ptr handle from the manager, configures state functors using the inherited <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> API or the runtime-aware <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364">setRuntimeStateFnc()</a> helper, then calls run() to schedule execution on the global runtime thread.</p>
 <h2><a class="anchor" id="autotoc_md36"></a>
 Lifecycle</h2>
-<p>A state is configured, submitted once, and then completes, fails, or is cancelled. Cancellation is cooperative: it prevents subsequent state steps but does not interrupt a functor already executing. Completion is published through a <code>std::shared_future&lt;void&gt;</code>, which supports multiple waiters. </p>
+<p>A state is configured, submitted once, and then completes, fails, or is cancelled. Cancellation is cooperative: it prevents subsequent state steps but does not interrupt a functor already executing. Completion is published through a <code>std::shared_future&lt;void&gt;</code>, which supports multiple waiters.</p>
+<p>The inherited <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> configuration API remains the client-facing way to install state functors before submission. After a successful <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#aa95ba5fb21878d9d76253697e16ca518">run</a>, external calls to <a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a">Dmn_State::setStateFnc</a>, <a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">Dmn_State::setNext</a>, and <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">Dmn_State::setEnd</a> throw <code>std::logic_error</code>. Manager-driven execution still permits state callbacks to call <a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">setNext</a> or <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a> from inside the currently executing runtime step. External <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a> calls are rejected; only the manager may advance the machine.</p>
+<p>For callbacks that need runtime-only APIs such as <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e">isCancelled()</a>, use <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364">setRuntimeStateFnc()</a>. It adapts a callback that takes <code><a class="el" href="classdmn_1_1Dmn__Runtime__State.html" title="A runtime-managed state machine instance.">Dmn_Runtime_State</a></code> &amp; into the underlying <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> callback storage while preserving the base API for compatibility. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a23b4cfb22eafc08d7d53665a4ca05d71" name="a23b4cfb22eafc08d7d53665a4ca05d71"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a23b4cfb22eafc08d7d53665a4ca05d71">&#9670;&#160;</a></span>OnErrorFnc</h2>
@@ -283,6 +288,23 @@ Lifecycle</h2>
 
 <p>Callback invoked by the runtime when a state step throws. </p>
 <p>The callback receives the exception captured by the runtime job. </p>
+
+</div>
+</div>
+<a id="a14d28c40fd8814d8f019f31332c337ae" name="a14d28c40fd8814d8f019f31332c337ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14d28c40fd8814d8f019f31332c337ae">&#9670;&#160;</a></span>RuntimeStateFnc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a14d28c40fd8814d8f019f31332c337ae">dmn::Dmn_Runtime_State::RuntimeStateFnc</a> =  std::function&lt;void(<a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &amp;state)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Runtime-aware state callback type. </p>
+<p>Use this when the callback needs runtime-state APIs such as <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e">isCancelled()</a>, while still participating in the same underlying state-machine execution model. </p>
 
 </div>
 </div>
@@ -338,7 +360,7 @@ Lifecycle</h2>
 </div><div class="memdoc">
 
 <p>Request cooperative cancellation of this state. </p>
-<p>The cancellation is idempotent and thread-safe. It does NOT preempt a currently-running functor unless that functor explicitly observes the cancel flag via <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e" title="Return whether cancellation was requested or completed.">isCancelled()</a>. The runtime job must check <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e" title="Return whether cancellation was requested or completed.">isCancelled()</a> and call <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Mark the state machine to end (finalize) after the current step.">setEnd()</a> prior to invoking <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#af94ef4784a6073840df7cfc64576ae81" title="Restrict state-machine advancement to this type and its manager.">runNext()</a> if cancellation is set.</p>
+<p>The cancellation is idempotent and thread-safe. It does NOT preempt a currently-running functor. A callback that needs cooperative early exit should prefer <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364">setRuntimeStateFnc()</a> so it can query <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e">isCancelled()</a> directly on its <code><a class="el" href="classdmn_1_1Dmn__Runtime__State.html" title="A runtime-managed state machine instance.">Dmn_Runtime_State</a></code> &amp; parameter. The runtime job must check <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e" title="Return whether cancellation was requested or completed.">isCancelled()</a> and call <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Mark the state machine to end (finalize) after the current step.">setEnd()</a> prior to invoking <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the next state step.">runNext()</a> if cancellation is set.</p>
 <p>A state cancelled before submission becomes terminal immediately. A submitted state becomes terminal when the runtime observes the request. </p>
 
 </div>
@@ -483,31 +505,41 @@ Lifecycle</h2>
 
 </div>
 </div>
-<a id="af94ef4784a6073840df7cfc64576ae81" name="af94ef4784a6073840df7cfc64576ae81"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af94ef4784a6073840df7cfc64576ae81">&#9670;&#160;</a></span>runNext()</h2>
+<a id="a49fa5e5a74c12c0c024a9dd15dadd364" name="a49fa5e5a74c12c0c024a9dd15dadd364"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49fa5e5a74c12c0c024a9dd15dadd364">&#9670;&#160;</a></span>setRuntimeStateFnc()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_State::runNext </td>
+          <td class="memname">void dmn::Dmn_Runtime_State::setRuntimeStateFnc </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> -&gt; bool</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html#a14d28c40fd8814d8f019f31332c337ae">RuntimeStateFnc</a>&#160;</td>
+          <td class="paramname"><em>fnc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>index</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Restrict state-machine advancement to this type and its manager. </p>
-<p>Derived classes may use <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a> to implement specialized execution, but clients cannot drive a runtime-managed state directly. </p>
+<p>Install a runtime-aware state functor. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fnc</td><td>Callback invoked as the selected state step body with the runtime-managed state object. </td></tr>
+    <tr><td class="paramname">index</td><td>If 0 or the next 1-based user-state index, append a new user state. If 1..the current highest user-state index, replace the existing user state at that slot.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>This is a convenience wrapper over the inherited <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> API. It adapts a callback taking <code><a class="el" href="classdmn_1_1Dmn__Runtime__State.html" title="A runtime-managed state machine instance.">Dmn_Runtime_State</a></code> &amp; into the underlying storage used by <a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a">Dmn_State::setStateFnc()</a>. </p>
 
 </div>
 </div>

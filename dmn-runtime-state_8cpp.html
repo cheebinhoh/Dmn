@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8cpp.html',''); init
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md43"></a>
 Implementation Notes</h2>
-<p>Lifecycle flags and the completion promise are synchronized by Dmn_Runtime_State::m_mutex. The manager separately protects its retained state handles while jobs are queued or running. Hooks always run after the lifecycle mutex is released so derived implementations can safely inspect state or call other public APIs. </p>
+<p>Lifecycle flags and the completion promise are synchronized by Dmn_Runtime_State::m_mutex. The manager separately protects its retained state handles while jobs are queued or running. Lifecycle hooks always run after the lifecycle mutex is released so derived implementations can safely inspect state or call other public APIs. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

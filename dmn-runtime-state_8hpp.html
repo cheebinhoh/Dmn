@@ -103,6 +103,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp.html',''); init
 <code>#include &quot;<a class="el" href="dmn-state_8hpp_source.html">dmn-state.hpp</a>&quot;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
 <code>#include &lt;exception&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;future&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;mutex&gt;</code><br />
@@ -135,13 +136,13 @@ Typedefs</h2></td></tr>
 <dl class="section date"><dt>Date</dt><dd>2026-08-31</dd></dl>
 <h2><a class="anchor" id="autotoc_md33"></a>
 Overview</h2>
-<p>This header combines Dmn_State with Dmn_Runtime_Manager to execute state-machine steps asynchronously on the process-wide runtime thread. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API, and submit it with Dmn_Runtime_State::run().</p>
+<p>This header combines Dmn_State with Dmn_Runtime_Manager to execute state-machine steps asynchronously on the process-wide runtime thread. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API or setRuntimeStateFnc(), and submit it with Dmn_Runtime_State::run().</p>
 <h2><a class="anchor" id="autotoc_md34"></a>
 Ownership and Lifetime</h2>
 <p>State handles are shared pointers. Once a state is submitted, the manager retains an owning handle until it reaches a terminal outcome, ensuring queued and running work cannot access a destroyed state. Implementations should use shared_from_this() only after a state is owned by a <code>std::shared_ptr</code>.</p>
 <h2><a class="anchor" id="autotoc_md35"></a>
 Thread Safety</h2>
-<p>Public lifecycle operations and state inspection are thread-safe. State functors and lifecycle hooks execute in the runtime async thread. Blocking wait and shutdown operations are prohibited from that thread to avoid deadlock. </p>
+<p>Public lifecycle operations and state inspection are thread-safe. State functors and lifecycle hooks execute in the runtime async thread. State configuration belongs to the pre-submission phase only: after a successful run(), external calls to inherited configuration/transition APIs are rejected. Blocking wait and shutdown operations are prohibited from the runtime async thread to avoid deadlock. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>
 <a id="a210907b43b7fdae14054e27bdcc0d56b" name="a210907b43b7fdae14054e27bdcc0d56b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a210907b43b7fdae14054e27bdcc0d56b">&#9670;&#160;</a></span>DmnRuntimeStatePtr</h2>

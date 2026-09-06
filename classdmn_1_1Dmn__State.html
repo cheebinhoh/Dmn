@@ -140,7 +140,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setEnd</b> ()</td></t
 <tr class="memdesc:a97876f995fb05376c2a5dd89c3a8409b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the state machine to end (finalize) after the current step. <br /></td></tr>
 <tr class="separator:a97876f995fb05376c2a5dd89c3a8409b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b5665100db9d0d1ca15346b373326d5" id="r_a1b5665100db9d0d1ca15346b373326d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">setNext</a> (int index)</td></tr>
-<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next state by 1-based index into the configured states.  <br /></td></tr>
+<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next state by internal or user-state index.  <br /></td></tr>
 <tr class="separator:a1b5665100db9d0d1ca15346b373326d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99219261e8cdd326bb28ffa09019e6aa" id="r_a99219261e8cdd326bb28ffa09019e6aa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa">setNext</a> ()</td></tr>
 <tr class="memdesc:a99219261e8cdd326bb28ffa09019e6aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: set the next state to the next sequential state.  <br /></td></tr>
@@ -177,6 +177,18 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:aa502afcd81843908eb251051965ec320" id="r_aa502afcd81843908eb251051965ec320"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#aa502afcd81843908eb251051965ec320">finalize</a> (<a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;s)</td></tr>
 <tr class="memdesc:aa502afcd81843908eb251051965ec320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform internal finalization/cleanup. Intended for internal use or subclasses that need to hook into finalize behavior.  <br /></td></tr>
 <tr class="separator:aa502afcd81843908eb251051965ec320"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad26912bc09bead7511137cdeac6320e6" id="r_ad26912bc09bead7511137cdeac6320e6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ad26912bc09bead7511137cdeac6320e6">beforeSetStateFnc</a> ()</td></tr>
+<tr class="memdesc:ad26912bc09bead7511137cdeac6320e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before installing or replacing a state functor.  <br /></td></tr>
+<tr class="separator:ad26912bc09bead7511137cdeac6320e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a599ac942d58bee5a2a09bf406cd314" id="r_a8a599ac942d58bee5a2a09bf406cd314"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a8a599ac942d58bee5a2a09bf406cd314">beforeSetNext</a> ()</td></tr>
+<tr class="memdesc:a8a599ac942d58bee5a2a09bf406cd314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before changing the next-state selector.  <br /></td></tr>
+<tr class="separator:a8a599ac942d58bee5a2a09bf406cd314"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2c3df7787d364335b63d26a36986201" id="r_ac2c3df7787d364335b63d26a36986201"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ac2c3df7787d364335b63d26a36986201">beforeSetEnd</a> ()</td></tr>
+<tr class="memdesc:ac2c3df7787d364335b63d26a36986201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before forcing terminal selection with <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a>.  <br /></td></tr>
+<tr class="separator:ac2c3df7787d364335b63d26a36986201"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d6208aa1cfb0a474e6eebc4b93d2cec" id="r_a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a9d6208aa1cfb0a474e6eebc4b93d2cec">beforeRunNext</a> ()</td></tr>
+<tr class="memdesc:a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before advancing the machine with <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a>.  <br /></td></tr>
+<tr class="separator:a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Compact generic finite-state-machine helper. </p>
@@ -251,6 +263,118 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a9d6208aa1cfb0a474e6eebc4b93d2cec" name="a9d6208aa1cfb0a474e6eebc4b93d2cec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d6208aa1cfb0a474e6eebc4b93d2cec">&#9670;&#160;</a></span>beforeRunNext()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_State::beforeRunNext </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hook invoked before advancing the machine with <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a>. </p>
+<p>Derived classes may override this to reserve stepping for a manager or execution context. The default implementation permits the operation. </p>
+
+</div>
+</div>
+<a id="ac2c3df7787d364335b63d26a36986201" name="ac2c3df7787d364335b63d26a36986201"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac2c3df7787d364335b63d26a36986201">&#9670;&#160;</a></span>beforeSetEnd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_State::beforeSetEnd </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hook invoked before forcing terminal selection with <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a>. </p>
+<p>Derived classes may override this to restrict who may end the machine. The default implementation permits the operation. </p>
+
+</div>
+</div>
+<a id="a8a599ac942d58bee5a2a09bf406cd314" name="a8a599ac942d58bee5a2a09bf406cd314"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a599ac942d58bee5a2a09bf406cd314">&#9670;&#160;</a></span>beforeSetNext()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_State::beforeSetNext </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hook invoked before changing the next-state selector. </p>
+<p>Derived classes may override this to distinguish internal runtime-driven transitions from external client mutations. The default implementation permits the operation. </p>
+
+</div>
+</div>
+<a id="ad26912bc09bead7511137cdeac6320e6" name="ad26912bc09bead7511137cdeac6320e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad26912bc09bead7511137cdeac6320e6">&#9670;&#160;</a></span>beforeSetStateFnc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_State::beforeSetStateFnc </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hook invoked before installing or replacing a state functor. </p>
+<p>Derived classes may override this to enforce additional lifecycle rules. The default implementation permits the operation. </p>
+
+</div>
+</div>
 <a id="aa502afcd81843908eb251051965ec320" name="aa502afcd81843908eb251051965ec320"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa502afcd81843908eb251051965ec320">&#9670;&#160;</a></span>finalize()</h2>
 
@@ -444,14 +568,14 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set the next state by 1-based index into the configured states. </p>
+<p>Set the next state by internal or user-state index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">index</td><td>1..m_states.size() selects a user state.</td></tr>
+    <tr><td class="paramname">index</td><td>0 selects the internal initialization step and 1..m_states.size()-1 select configured user states.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>If index is out of range the implementation may assert or throw. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Callers must pass a valid configured index. Invalid indices trigger the implementation's existing defensive checks. </dd></dl>
 
 </div>
 </div>
@@ -485,7 +609,7 @@ Protected Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fnc</td><td>The functor to be called for the state step. </td></tr>
-    <tr><td class="paramname">index</td><td>If 1..m_states.size(), place fnc at that slot; if 0, behavior is implementation-specific (commonly used to set the "current/next" state). </td></tr>
+    <tr><td class="paramname">index</td><td>If 0 or the next 1-based user-state index, append a new user state. If 1..the current highest user-state index, replace the existing user state at that slot. </td></tr>
   </table>
   </dd>
 </dl>
