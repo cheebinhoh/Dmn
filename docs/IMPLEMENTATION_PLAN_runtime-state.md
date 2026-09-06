@@ -58,11 +58,19 @@ Completed follow-on increment: State-handle creation
   lifecycle hooks required to link the concrete polymorphic type.
 - Extend `dmn-test-runtime-state` to verify `createState()` returns a
   non-null handle, that `Dmn_Runtime_State` derives from `Dmn_State`, and
-  that inherited state configuration and stepping remain accessible for
-  compatibility testing.
-- Remove the shadowing `Dmn_Runtime_State` declarations of `setStateFnc()`,
-  `setNext()`, and `setEnd()`. `runNext()` is re-exposed as protected and is
-  available to `Dmn_Runtime_State_Manager` through friendship.
+  that inherited state configuration remains available for pre-submission
+  setup.
+- Add `Dmn_Runtime_State::setRuntimeStateFnc()` as a convenience wrapper that
+  adapts `std::function<void(Dmn_Runtime_State &)>` into the underlying
+  `Dmn_State` callback storage for runtime-aware logic such as cancellation
+  checks.
+- Keep the inherited `Dmn_State` declarations visible, but add dynamic guard
+  hooks so external `setStateFnc()`, `setNext()`, and `setEnd()` throw
+  `std::logic_error` after a successful `run()`, even through a
+  `Dmn_State &` view.
+- Reserve `runNext()` for manager-only execution by rejecting all external
+  calls and routing manager-driven stepping through internal runtime-state
+  helpers.
 - Add `Dmn_State::hasStateFncs()` as a public query for whether the client
   configured at least one state function, excluding the internal
   initialization function.
@@ -71,8 +79,9 @@ Completed follow-on increment: State-handle creation
 
 Phase 2: Terminal-state primitive and lifecycle unit tests (complete)
 - Do not make the manager advance state transitions implicitly: it controls
-  when `runNext()` executes, while a state function uses its `Dmn_State &`
-  parameter to call `setNext()` or `setEnd()`.
+  when `runNext()` executes, while a state function uses either its
+  `Dmn_State &` parameter or its `Dmn_Runtime_State &` parameter to call
+  `setNext()` or `setEnd()`, depending on which registration API was used.
 - Require clients to finish configuring state functions before successful
   submission, because configuration is not synchronized with runtime execution.
 - Implement the completion promise/shared_future pair, terminal flags, and a
@@ -100,6 +109,9 @@ Phase 3: Basic runtime enqueue & single-step execution (complete)
   - if still active, repost immediately by calling addJob() again
   - if terminal, set completion promise and erase manager internal shared_ptr
 - Wire `m_completionPromise` and `m_completionSharedFuture` so getFuture() returns `m_completionSharedFuture`.
+- Document `setRuntimeStateFnc()` as the preferred callback registration API
+  for runtime-aware logic such as `isCancelled()`, while keeping the
+  inherited `setStateFnc()` path documented for base-API compatibility.
 
 Tests expected to pass after this phase:
 - RuntimeState_BasicFlow
@@ -121,9 +133,11 @@ Tests expected to pass:
 
 Phase 5: Complete lifecycle and scheduling coverage (complete)
 - Added focused named Google Test cases for singleton/state creation,
-  unconfigured and pre-run cancellation behavior, normal execution, failure
-  propagation, queued cancellation, manager-retained lifetime, priority
-  ordering, delayed initial submission, and runtime-thread rejection.
+  external mutation rejection after submission, runtime-aware callback
+  cancellation observation, unconfigured and pre-run cancellation behavior,
+  normal execution, failure propagation, queued cancellation,
+  manager-retained lifetime, priority ordering, delayed initial submission,
+  and runtime-thread rejection.
 - The queued-cancellation test verifies no user-defined step executes after
   cancellation and that the inherited `Dmn_State` is finalized.
 - The retained-lifetime test verifies a client can release its handle after
@@ -158,6 +172,11 @@ Phase 7: Integration, stress, and documentation (complete)
 - Added a public usage example that documents runtime initialization from the
   main thread, explicit state-manager shutdown while the runtime loop is
   active, and runtime shutdown only after state draining completes.
+- Added API-boundary coverage that verifies external mutation is rejected
+  after submission and that external `runNext()` cannot bypass the
+  runtime-managed execution path.
+- Added runtime-aware callback coverage that verifies a running step can
+  observe `isCancelled()` directly from its `Dmn_Runtime_State &` parameter.
 
 Developer checklist for each commit
 - Keep commits small and focused.
