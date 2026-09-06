@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('dmn-state_8hpp.html',''); initResizabl
 </div><!--header-->
 <div class="contents">
 
-<p>Generic State machine wrapper and API that clients can drive the state machine to execute different states.  
+<p>A caller-driven state machine composed of callback functions.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;cassert&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
@@ -110,13 +110,13 @@ $(document).ready(function(){initNavTree('dmn-state_8hpp.html',''); initResizabl
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html">dmn::Dmn_State</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compact generic finite-state-machine helper.  <a href="classdmn_1_1Dmn__State.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A finite-state machine advanced explicitly by its caller.  <a href="classdmn_1_1Dmn__State.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Generic State machine wrapper and API that clients can drive the state machine to execute different states. </p>
+<div class="textblock"><p>A caller-driven state machine composed of callback functions. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<p>The Dmn_State class stores a sequence of state functors and provides a small API for initializing, advancing, and finalizing a state machine. States are represented by functors of type std::function&lt;void(Dmn_State&amp;)&gt;. </p>
+<p>Clients register one or more callbacks and advance the machine by calling runNext(). Each callback receives the state machine so it can repeat, select another state, advance sequentially, or end execution. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

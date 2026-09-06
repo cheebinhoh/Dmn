@@ -97,7 +97,6 @@ $(document).ready(function(){initNavTree('dmn-state_8cpp.html',''); initResizabl
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-state_8hpp_source.html">dmn-state.hpp</a>&quot;</code><br />
 <code>#include &lt;cassert&gt;</code><br />
-<code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
@@ -106,7 +105,7 @@ $(document).ready(function(){initNavTree('dmn-state_8cpp.html',''); initResizabl
 </div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Generic State machine wrapper and API that clients can drive the state machine to execute different states. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<p>The Dmn_State class stores a sequence of state functors and provides a small API for initializing, advancing, and finalizing a state machine. States are represented by functors of type std::function&lt;void(Dmn_State&amp;)&gt;. </p>
+<p>Each runNext() call executes at most one user-provided state callback. Initialization before the first callback and finalization after terminal selection are handled internally by the same call. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

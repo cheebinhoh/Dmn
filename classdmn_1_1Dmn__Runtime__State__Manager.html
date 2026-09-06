@@ -288,7 +288,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Cancel submitted states and wait for the runtime to drain them. </p>
-<p>Shutdown is idempotent. It permanently rejects new state submissions: handles created after shutdown remain configurable, but <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#aa95ba5fb21878d9d76253697e16ca518">Dmn_Runtime_State::run</a> returns false. Submitted states are cancelled cooperatively; an executing user step may finish before publishing cancellation, while queued steps finalize without running another user-defined callback.</p>
+<p>Shutdown is idempotent. It permanently rejects new state submissions: handles created after shutdown remain configurable, but <a class="el" href="classdmn_1_1Dmn__Runtime__State.html#aa95ba5fb21878d9d76253697e16ca518">Dmn_Runtime_State::run</a> returns false. Submitted states are cancelled cooperatively; an executing user callback may finish before publishing cancellation, while queued states finalize without running another user-defined callback.</p>
 <p>This method waits without holding the manager mutex until every state retained when shutdown began has reached a terminal outcome. The runtime main loop must remain active so queued work can observe cancellation.</p>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">

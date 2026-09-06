@@ -102,6 +102,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8cpp.html',''); init
 <code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;thread&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -109,7 +110,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8cpp.html',''); init
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md43"></a>
 Implementation Notes</h2>
-<p>Lifecycle flags and the completion promise are synchronized by Dmn_Runtime_State::m_mutex. The manager separately protects its retained state handles while jobs are queued or running. Lifecycle hooks always run after the lifecycle mutex is released so derived implementations can safely inspect state or call other public APIs. </p>
+<p>Lifecycle flags and the completion promise are synchronized by Dmn_Runtime_State::m_mutex. The manager separately protects its retained state handles while jobs are queued or running. Each job executes at most one user-state callback; Dmn_State folds internal initialization and finalization into that dispatch. Lifecycle hooks always run after the lifecycle mutex is released so derived implementations can safely inspect state or call other public APIs. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

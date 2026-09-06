@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp.html',''); init
 </div><!--header-->
 <div class="contents">
 
-<p>Runtime-scheduled finite-state-machine execution and lifetime management.  
+<p>Asynchronous state-machine execution and lifetime management.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-singleton_8hpp_source.html">dmn-singleton.hpp</a>&quot;</code><br />
@@ -110,6 +110,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp.html',''); init
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;thread&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 </div>
 <p><a href="dmn-runtime-state_8hpp_source.html">Go to the source code of this file.</a></p>
@@ -130,19 +131,20 @@ Typedefs</h2></td></tr>
 <tr class="separator:a210907b43b7fdae14054e27bdcc0d56b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Runtime-scheduled finite-state-machine execution and lifetime management. </p>
+<div class="textblock"><p>Asynchronous state-machine execution and lifetime management. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <dl class="section author"><dt>Author</dt><dd>Chee Bin HOH </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>2026-08-31</dd></dl>
 <h2><a class="anchor" id="autotoc_md33"></a>
 Overview</h2>
-<p>This header combines Dmn_State with Dmn_Runtime_Manager to execute state-machine steps asynchronously on the process-wide runtime thread. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API or setRuntimeStateFnc(), and submit it with Dmn_Runtime_State::run().</p>
+<p>This header runs Dmn_State callbacks on the process-wide Dmn_Runtime_Manager thread. Internal initialization and finalization occur in the same runtime dispatch as the surrounding user-state work and are not scheduled separately. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API or setRuntimeStateFnc(), and submit it with Dmn_Runtime_State::run().</p>
 <h2><a class="anchor" id="autotoc_md34"></a>
 Ownership and Lifetime</h2>
-<p>State handles are shared pointers. Once a state is submitted, the manager retains an owning handle until it reaches a terminal outcome, ensuring queued and running work cannot access a destroyed state. Implementations should use shared_from_this() only after a state is owned by a <code>std::shared_ptr</code>.</p>
+<p>State handles are shared pointers. After a successful submission, the manager retains an owning handle until the state completes, fails, or is cancelled. A client may therefore release its handle without invalidating queued or running work.</p>
 <h2><a class="anchor" id="autotoc_md35"></a>
 Thread Safety</h2>
-<p>Public lifecycle operations and state inspection are thread-safe. State functors and lifecycle hooks execute in the runtime async thread. State configuration belongs to the pre-submission phase only: after a successful run(), external calls to inherited configuration/transition APIs are rejected. Blocking wait and shutdown operations are prohibited from the runtime async thread to avoid deadlock. </p>
+<p>Runtime lifecycle operations and runtime-specific status queries are synchronized. Configure inherited Dmn_State callbacks and transitions from one client thread before submission. During execution, inherited base lifecycle queries should only be read from a callback or after the completion future is ready.</p>
+<p>User-state callbacks, onStarted(), onCompleted(), and onFailed() execute on the runtime thread. onCancelled() executes in whichever thread publishes cancellation: normally the runtime thread for queued work, but the caller's thread when cancellation completes before successful submission. Blocking wait and shutdown operations are prohibited from the runtime thread to avoid deadlock. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>
 <a id="a210907b43b7fdae14054e27bdcc0d56b" name="a210907b43b7fdae14054e27bdcc0d56b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a210907b43b7fdae14054e27bdcc0d56b">&#9670;&#160;</a></span>DmnRuntimeStatePtr</h2>

@@ -97,7 +97,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__State.html',''); init
 </div><!--header-->
 <div class="contents">
 
-<p>Compact generic finite-state-machine helper.  
+<p>A finite-state machine advanced explicitly by its caller.  
  <a href="classdmn_1_1Dmn__State.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-state_8hpp_source.html">dmn-state.hpp</a>&gt;</code></p>
@@ -114,10 +114,11 @@ Inheritance diagram for dmn::Dmn_State:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a69bc58811775ed5bfc128d7cd79b84af" id="r_a69bc58811775ed5bfc128d7cd79b84af"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a69bc58811775ed5bfc128d7cd79b84af">Dmn_State</a> (std::string_view name)</td></tr>
-<tr class="memdesc:a69bc58811775ed5bfc128d7cd79b84af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> with a human-readable name.  <br /></td></tr>
+<tr class="memdesc:a69bc58811775ed5bfc128d7cd79b84af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an empty state machine.  <br /></td></tr>
 <tr class="separator:a69bc58811775ed5bfc128d7cd79b84af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8147f0b3c831a0834f82f966bf2be2a2" id="r_a8147f0b3c831a0834f82f966bf2be2a2"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a8147f0b3c831a0834f82f966bf2be2a2">~Dmn_State</a> () noexcept</td></tr>
-<tr class="memdesc:a8147f0b3c831a0834f82f966bf2be2a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor to allow clean subclassing.  <br /></td></tr>
+<tr class="memitem:a8147f0b3c831a0834f82f966bf2be2a2" id="r_a8147f0b3c831a0834f82f966bf2be2a2"><td class="memItemLeft" align="right" valign="top"><a id="a8147f0b3c831a0834f82f966bf2be2a2" name="a8147f0b3c831a0834f82f966bf2be2a2"></a>
+virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_State</b> () noexcept</td></tr>
+<tr class="memdesc:a8147f0b3c831a0834f82f966bf2be2a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the state machine. <br /></td></tr>
 <tr class="separator:a8147f0b3c831a0834f82f966bf2be2a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdc4a6a21bb540469cc3a567333dd99f" id="r_abdc4a6a21bb540469cc3a567333dd99f"><td class="memItemLeft" align="right" valign="top"><a id="abdc4a6a21bb540469cc3a567333dd99f" name="abdc4a6a21bb540469cc3a567333dd99f"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_State</b> (const <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;obj)=delete</td></tr>
@@ -135,70 +136,79 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="memdesc:a249ce98acbd241f4e5f7789f00b851a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">non-movable <br /></td></tr>
 <tr class="separator:a249ce98acbd241f4e5f7789f00b851a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a97876f995fb05376c2a5dd89c3a8409b" id="r_a97876f995fb05376c2a5dd89c3a8409b"><td class="memItemLeft" align="right" valign="top"><a id="a97876f995fb05376c2a5dd89c3a8409b" name="a97876f995fb05376c2a5dd89c3a8409b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setEnd</b> ()</td></tr>
-<tr class="memdesc:a97876f995fb05376c2a5dd89c3a8409b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the state machine to end (finalize) after the current step. <br /></td></tr>
+<tr class="memitem:a97876f995fb05376c2a5dd89c3a8409b" id="r_a97876f995fb05376c2a5dd89c3a8409b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a> ()</td></tr>
+<tr class="memdesc:a97876f995fb05376c2a5dd89c3a8409b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the end of the state machine.  <br /></td></tr>
 <tr class="separator:a97876f995fb05376c2a5dd89c3a8409b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b5665100db9d0d1ca15346b373326d5" id="r_a1b5665100db9d0d1ca15346b373326d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">setNext</a> (int index)</td></tr>
-<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next state by internal or user-state index.  <br /></td></tr>
+<tr class="memdesc:a1b5665100db9d0d1ca15346b373326d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select which user state the next <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> call will execute.  <br /></td></tr>
 <tr class="separator:a1b5665100db9d0d1ca15346b373326d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99219261e8cdd326bb28ffa09019e6aa" id="r_a99219261e8cdd326bb28ffa09019e6aa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa">setNext</a> ()</td></tr>
-<tr class="memdesc:a99219261e8cdd326bb28ffa09019e6aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: set the next state to the next sequential state.  <br /></td></tr>
+<tr class="memdesc:a99219261e8cdd326bb28ffa09019e6aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the next sequential user state.  <br /></td></tr>
 <tr class="separator:a99219261e8cdd326bb28ffa09019e6aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99eeb5086c5da75102742daf167f2a0a" id="r_a99eeb5086c5da75102742daf167f2a0a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a">setStateFnc</a> (FncType fnc, int index=0)</td></tr>
-<tr class="memdesc:a99eeb5086c5da75102742daf167f2a0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the functor for a state slot.  <br /></td></tr>
+<tr class="memdesc:a99eeb5086c5da75102742daf167f2a0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a user-state callback or replace an existing one.  <br /></td></tr>
 <tr class="separator:a99eeb5086c5da75102742daf167f2a0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeef8296a5be2caab0bf6f640236183d8" id="r_aeef8296a5be2caab0bf6f640236183d8"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#aeef8296a5be2caab0bf6f640236183d8">isInitialized</a> () -&gt; bool</td></tr>
-<tr class="memdesc:aeef8296a5be2caab0bf6f640236183d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the machine has been initialized.  <br /></td></tr>
+<tr class="memdesc:aeef8296a5be2caab0bf6f640236183d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report whether internal initialization has run.  <br /></td></tr>
 <tr class="separator:aeef8296a5be2caab0bf6f640236183d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1dfd95a21cd05aea5535afc6efe8627" id="r_ab1dfd95a21cd05aea5535afc6efe8627"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ab1dfd95a21cd05aea5535afc6efe8627">isFinalized</a> () -&gt; bool</td></tr>
-<tr class="memdesc:ab1dfd95a21cd05aea5535afc6efe8627"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the machine has been finalized.  <br /></td></tr>
+<tr class="memdesc:ab1dfd95a21cd05aea5535afc6efe8627"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report whether internal finalization has run.  <br /></td></tr>
 <tr class="separator:ab1dfd95a21cd05aea5535afc6efe8627"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a995bc2b803f138a67b1d77f519b8d6de" id="r_a995bc2b803f138a67b1d77f519b8d6de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a995bc2b803f138a67b1d77f519b8d6de">hasStateFncs</a> () const noexcept</td></tr>
-<tr class="memdesc:a995bc2b803f138a67b1d77f519b8d6de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return whether the client configured at least one state function.  <br /></td></tr>
+<tr class="memdesc:a995bc2b803f138a67b1d77f519b8d6de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report whether at least one user-state callback is configured.  <br /></td></tr>
 <tr class="separator:a995bc2b803f138a67b1d77f519b8d6de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af94ef4784a6073840df7cfc64576ae81" id="r_af94ef4784a6073840df7cfc64576ae81"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a> () -&gt; bool</td></tr>
-<tr class="memdesc:af94ef4784a6073840df7cfc64576ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute the next state step.  <br /></td></tr>
+<tr class="memdesc:af94ef4784a6073840df7cfc64576ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute the currently selected user-state callback.  <br /></td></tr>
 <tr class="separator:af94ef4784a6073840df7cfc64576ae81"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af43e3622a41db96db08399a6f238878d" id="r_af43e3622a41db96db08399a6f238878d"><td class="memItemLeft" align="right" valign="top"><a id="af43e3622a41db96db08399a6f238878d" name="af43e3622a41db96db08399a6f238878d"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>operator bool</b> () const noexcept</td></tr>
-<tr class="memdesc:af43e3622a41db96db08399a6f238878d"><td class="mdescLeft">&#160;</td><td class="mdescRight">conversion to bool: true when NOT finalized <br /></td></tr>
+<tr class="memitem:af43e3622a41db96db08399a6f238878d" id="r_af43e3622a41db96db08399a6f238878d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#af43e3622a41db96db08399a6f238878d">operator bool</a> () const noexcept</td></tr>
+<tr class="memdesc:af43e3622a41db96db08399a6f238878d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report whether the machine contains callbacks and is not finalized.  <br /></td></tr>
 <tr class="separator:af43e3622a41db96db08399a6f238878d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9db7c9c0a94227017438c9310ff2b5f0" id="r_a9db7c9c0a94227017438c9310ff2b5f0"><td class="memItemLeft" align="right" valign="top"><a id="a9db7c9c0a94227017438c9310ff2b5f0" name="a9db7c9c0a94227017438c9310ff2b5f0"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!</b> () const noexcept</td></tr>
-<tr class="memdesc:a9db7c9c0a94227017438c9310ff2b5f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">optional complement for clarity <br /></td></tr>
+<tr class="memdesc:a9db7c9c0a94227017438c9310ff2b5f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the logical complement of operator bool(). <br /></td></tr>
 <tr class="separator:a9db7c9c0a94227017438c9310ff2b5f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a891238b9ffb5fac974ffbde03e7c01ec" id="r_a891238b9ffb5fac974ffbde03e7c01ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a891238b9ffb5fac974ffbde03e7c01ec">init</a> (<a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;s)</td></tr>
-<tr class="memdesc:a891238b9ffb5fac974ffbde03e7c01ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform internal initialization. Intended for internal use or subclasses that need to hook into init behavior.  <br /></td></tr>
+<tr class="memdesc:a891238b9ffb5fac974ffbde03e7c01ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform the initialization used by <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a>.  <br /></td></tr>
 <tr class="separator:a891238b9ffb5fac974ffbde03e7c01ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa502afcd81843908eb251051965ec320" id="r_aa502afcd81843908eb251051965ec320"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#aa502afcd81843908eb251051965ec320">finalize</a> (<a class="el" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;s)</td></tr>
-<tr class="memdesc:aa502afcd81843908eb251051965ec320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform internal finalization/cleanup. Intended for internal use or subclasses that need to hook into finalize behavior.  <br /></td></tr>
+<tr class="memdesc:aa502afcd81843908eb251051965ec320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform the finalization used by <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a>.  <br /></td></tr>
 <tr class="separator:aa502afcd81843908eb251051965ec320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad26912bc09bead7511137cdeac6320e6" id="r_ad26912bc09bead7511137cdeac6320e6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ad26912bc09bead7511137cdeac6320e6">beforeSetStateFnc</a> ()</td></tr>
-<tr class="memdesc:ad26912bc09bead7511137cdeac6320e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before installing or replacing a state functor.  <br /></td></tr>
+<tr class="memdesc:ad26912bc09bead7511137cdeac6320e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a" title="Add a user-state callback or replace an existing one.">setStateFnc()</a> operation.  <br /></td></tr>
 <tr class="separator:ad26912bc09bead7511137cdeac6320e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a599ac942d58bee5a2a09bf406cd314" id="r_a8a599ac942d58bee5a2a09bf406cd314"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a8a599ac942d58bee5a2a09bf406cd314">beforeSetNext</a> ()</td></tr>
-<tr class="memdesc:a8a599ac942d58bee5a2a09bf406cd314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before changing the next-state selector.  <br /></td></tr>
+<tr class="memdesc:a8a599ac942d58bee5a2a09bf406cd314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa" title="Select the next sequential user state.">setNext()</a> operation.  <br /></td></tr>
 <tr class="separator:a8a599ac942d58bee5a2a09bf406cd314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2c3df7787d364335b63d26a36986201" id="r_ac2c3df7787d364335b63d26a36986201"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ac2c3df7787d364335b63d26a36986201">beforeSetEnd</a> ()</td></tr>
-<tr class="memdesc:ac2c3df7787d364335b63d26a36986201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before forcing terminal selection with <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a>.  <br /></td></tr>
+<tr class="memdesc:ac2c3df7787d364335b63d26a36986201"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Select the end of the state machine.">setEnd()</a> operation.  <br /></td></tr>
 <tr class="separator:ac2c3df7787d364335b63d26a36986201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d6208aa1cfb0a474e6eebc4b93d2cec" id="r_a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a9d6208aa1cfb0a474e6eebc4b93d2cec">beforeRunNext</a> ()</td></tr>
-<tr class="memdesc:a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hook invoked before advancing the machine with <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a>.  <br /></td></tr>
+<tr class="memdesc:a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> operation.  <br /></td></tr>
 <tr class="separator:a9d6208aa1cfb0a474e6eebc4b93d2cec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Compact generic finite-state-machine helper. </p>
-<p>Each state is a functor callable with the <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> instance; the machine stores these functors and uses m_next to select which to run next.</p>
-<p>Usage example: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classdmn_1_1Dmn__State.html">Dmn_State</a> s(<span class="stringliteral">&quot;example&quot;</span>);</div>
-<div class="line">s.setStateFnc(step1, 1);</div>
-<div class="line">s.setStateFnc(step2, 2);</div>
-<div class="line"><span class="keywordflow">while</span> (s.runNext()) <span class="comment">// drive the machine</span></div>
+<div class="textblock"><p>A finite-state machine advanced explicitly by its caller. </p>
+<p>Register callbacks with <a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a" title="Add a user-state callback or replace an existing one.">setStateFnc()</a>, then call <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> until it returns false. Each call executes at most one callback. A callback remains selected for the next call unless it calls <a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa" title="Select the next sequential user state.">setNext()</a>, <a class="el" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5" title="Select which user state the next runNext() call will execute.">setNext(int)</a>, or <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Select the end of the state machine.">setEnd()</a>.</p>
+<p>Initialization runs automatically before the first callback. Finalization runs automatically as soon as a callback selects the end. Neither lifecycle operation requires a separate call from the client.</p>
+<p>A machine with no callbacks converts to false. Calling <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> on an empty machine is valid: it initializes and finalizes the machine, then returns false without invoking a callback.</p>
+<p>Usage example: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classdmn_1_1Dmn__State.html">Dmn_State</a> state{<span class="stringliteral">&quot;example&quot;</span>};</div>
+<div class="line">state.<a class="code hl_function" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a">setStateFnc</a>([](<a class="code hl_class" href="classdmn_1_1Dmn__State.html">Dmn_State</a> &amp;current) {</div>
+<div class="line">  <span class="comment">// First state work.</span></div>
+<div class="line">  current.<a class="code hl_function" href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">setNext</a>();</div>
+<div class="line">});</div>
+<div class="line">state.setStateFnc([](Dmn_State &amp;current) {</div>
+<div class="line">  <span class="comment">// Second state work.</span></div>
+<div class="line">  current.setEnd();</div>
+<div class="line">});</div>
+<div class="line"> </div>
+<div class="line"><span class="keywordflow">while</span> (state.runNext())</div>
 <div class="line">  ;</div>
-<div class="ttc" id="aclassdmn_1_1Dmn__State_html"><div class="ttname"><a href="classdmn_1_1Dmn__State.html">dmn::Dmn_State</a></div><div class="ttdoc">Compact generic finite-state-machine helper.</div><div class="ttdef"><b>Definition</b> dmn-state.hpp:42</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__State_html"><div class="ttname"><a href="classdmn_1_1Dmn__State.html">dmn::Dmn_State</a></div><div class="ttdoc">A finite-state machine advanced explicitly by its caller.</div><div class="ttdef"><b>Definition</b> dmn-state.hpp:57</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__State_html_a1b5665100db9d0d1ca15346b373326d5"><div class="ttname"><a href="classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5">dmn::Dmn_State::setNext</a></div><div class="ttdeci">void setNext(int index)</div><div class="ttdoc">Select which user state the next runNext() call will execute.</div><div class="ttdef"><b>Definition</b> dmn-state.cpp:99</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__State_html_a99eeb5086c5da75102742daf167f2a0a"><div class="ttname"><a href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a">dmn::Dmn_State::setStateFnc</a></div><div class="ttdeci">void setStateFnc(FncType fnc, int index=0)</div><div class="ttdoc">Add a user-state callback or replace an existing one.</div><div class="ttdef"><b>Definition</b> dmn-state.cpp:116</div></div>
 </div><!-- fragment --> </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a69bc58811775ed5bfc128d7cd79b84af" name="a69bc58811775ed5bfc128d7cd79b84af"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a69bc58811775ed5bfc128d7cd79b84af">&#9670;&#160;</a></span>Dmn_State()</h2>
@@ -224,41 +234,13 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a <a class="el" href="classdmn_1_1Dmn__State.html" title="Compact generic finite-state-machine helper.">Dmn_State</a> with a human-readable name. </p>
+<p>Construct an empty state machine. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>Human-readable name for diagnostics/logging. </td></tr>
+    <tr><td class="paramname">name</td><td>Human-readable name for diagnostics. </td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a id="a8147f0b3c831a0834f82f966bf2be2a2" name="a8147f0b3c831a0834f82f966bf2be2a2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8147f0b3c831a0834f82f966bf2be2a2">&#9670;&#160;</a></span>~Dmn_State()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">dmn::Dmn_State::~Dmn_State </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Virtual destructor to allow clean subclassing. </p>
-<p>noexcept to avoid throwing during stack unwinding. </p>
 
 </div>
 </div>
@@ -286,8 +268,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Hook invoked before advancing the machine with <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a>. </p>
-<p>Derived classes may override this to reserve stepping for a manager or execution context. The default implementation permits the operation. </p>
+<p>Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> operation. </p>
+<p>Derived classes may override this hook to restrict where execution may occur. The default implementation permits the operation. </p>
 
 </div>
 </div>
@@ -314,8 +296,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Hook invoked before forcing terminal selection with <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b">setEnd</a>. </p>
-<p>Derived classes may override this to restrict who may end the machine. The default implementation permits the operation. </p>
+<p>Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Select the end of the state machine.">setEnd()</a> operation. </p>
+<p>Derived classes may override this hook to restrict who may end the machine. The default implementation permits the operation. </p>
 
 </div>
 </div>
@@ -342,8 +324,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Hook invoked before changing the next-state selector. </p>
-<p>Derived classes may override this to distinguish internal runtime-driven transitions from external client mutations. The default implementation permits the operation. </p>
+<p>Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa" title="Select the next sequential user state.">setNext()</a> operation. </p>
+<p>Derived classes may override this hook to restrict who may select a transition. The default implementation permits the operation. </p>
 
 </div>
 </div>
@@ -370,8 +352,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Hook invoked before installing or replacing a state functor. </p>
-<p>Derived classes may override this to enforce additional lifecycle rules. The default implementation permits the operation. </p>
+<p>Validate an impending <a class="el" href="classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a" title="Add a user-state callback or replace an existing one.">setStateFnc()</a> operation. </p>
+<p>Derived classes may override this hook to reject configuration changes, for example after execution starts. The default implementation permits the operation. </p>
 
 </div>
 </div>
@@ -399,8 +381,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Perform internal finalization/cleanup. Intended for internal use or subclasses that need to hook into finalize behavior. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Perform the finalization used by <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a>. </p>
+<p>Derived classes normally do not need to call this directly. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">s</td><td>Reference to the state object being finalized. </td></tr>
   </table>
@@ -432,9 +414,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Return whether the client configured at least one state function. </p>
-<p>Excludes the internal initialization function installed during construction.</p>
-<dl class="section return"><dt>Returns</dt><dd>true when at least one user-defined state function exists. </dd></dl>
+<p>Report whether at least one user-state callback is configured. </p>
+<dl class="section return"><dt>Returns</dt><dd>true when the machine contains a user-provided callback. </dd></dl>
 
 </div>
 </div>
@@ -462,8 +443,8 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Perform internal initialization. Intended for internal use or subclasses that need to hook into init behavior. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Perform the initialization used by <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a>. </p>
+<p>Derived classes normally do not need to call this directly. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">s</td><td>Reference to the state object being initialized. </td></tr>
   </table>
@@ -487,8 +468,8 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Check whether the machine has been finalized. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if the machine has completed/finalized. </dd></dl>
+<p>Report whether internal finalization has run. </p>
+<dl class="section return"><dt>Returns</dt><dd>true after <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> reaches the end of the machine. </dd></dl>
 
 </div>
 </div>
@@ -507,8 +488,36 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Check whether the machine has been initialized. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if initialization has occurred. </dd></dl>
+<p>Report whether internal initialization has run. </p>
+<dl class="section return"><dt>Returns</dt><dd>true after <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> initializes the machine before its first user-state callback. </dd></dl>
+
+</div>
+</div>
+<a id="af43e3622a41db96db08399a6f238878d" name="af43e3622a41db96db08399a6f238878d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af43e3622a41db96db08399a6f238878d">&#9670;&#160;</a></span>operator bool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_State::operator bool </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Report whether the machine contains callbacks and is not finalized. </p>
+<p>A false result can mean either that no callback is configured or that the machine has finalized. Use <a class="el" href="classdmn_1_1Dmn__State.html#ab1dfd95a21cd05aea5535afc6efe8627" title="Report whether internal finalization has run.">isFinalized()</a> to distinguish those cases. </p>
 
 </div>
 </div>
@@ -527,8 +536,31 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Execute the next state step. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if the state machine remains active after running the step; false when it has finalized/stopped. </dd></dl>
+<p>Execute the currently selected user-state callback. </p>
+<p>On the first call, initialization runs before the callback. If the callback selects the end by calling <a class="el" href="classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b" title="Select the end of the state machine.">setEnd()</a> or by advancing past the last state, finalization runs before this method returns.</p>
+<p>If no callbacks are configured, this method initializes and finalizes the machine without invoking a callback.</p>
+<dl class="section return"><dt>Returns</dt><dd>true when another callback can be executed; false after finalization. </dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd>The machine must not already be finalized. </dd></dl>
+
+</div>
+</div>
+<a id="a97876f995fb05376c2a5dd89c3a8409b" name="a97876f995fb05376c2a5dd89c3a8409b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97876f995fb05376c2a5dd89c3a8409b">&#9670;&#160;</a></span>setEnd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_State::setEnd </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Select the end of the state machine. </p>
+<p>When called from a state callback, finalization occurs before the current <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> call returns. Otherwise, the next <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> call finalizes the machine without invoking a user callback. </p>
 
 </div>
 </div>
@@ -547,8 +579,8 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Convenience: set the next state to the next sequential state. </p>
-<p>Advances m_next by one (subject to bounds and configured states). </p>
+<p>Select the next sequential user state. </p>
+<p>Calling this from the last user state selects the end of the machine. </p>
 
 </div>
 </div>
@@ -568,14 +600,19 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set the next state by internal or user-state index. </p>
+<p>Select which user state the next <a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81" title="Execute the currently selected user-state callback.">runNext()</a> call will execute. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">index</td><td>0 selects the internal initialization step and 1..m_states.size()-1 select configured user states.</td></tr>
+    <tr><td class="paramname">index</td><td>With N configured user states, values 1 through N select a callback. N+1 selects the end of the machine. Zero is reserved for internal initialization. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>Callers must pass a valid configured index. Invalid indices trigger the implementation's existing defensive checks. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::out_of_range</td><td>if index is outside 1 through N+1. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -605,14 +642,22 @@ Protected Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set the functor for a state slot. </p>
+<p>Add a user-state callback or replace an existing one. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">fnc</td><td>The functor to be called for the state step. </td></tr>
-    <tr><td class="paramname">index</td><td>If 0 or the next 1-based user-state index, append a new user state. If 1..the current highest user-state index, replace the existing user state at that slot. </td></tr>
+    <tr><td class="paramname">fnc</td><td>Callback to execute when this state is selected. </td></tr>
+    <tr><td class="paramname">index</td><td>With N callbacks currently configured, pass 0 (the default) or N+1 to append a callback. Pass 1 through N to replace the callback at that state. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::out_of_range</td><td>if index is negative or greater than N+1.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>State numbers start at 1. Zero means "append" only in this method and cannot be selected with <a class="el" href="classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa" title="Select the next sequential user state.">setNext()</a>.</p>
+<dl class="section pre"><dt>Precondition</dt><dd>Do not modify callback registration while a callback is executing. </dd></dl>
 
 </div>
 </div>
