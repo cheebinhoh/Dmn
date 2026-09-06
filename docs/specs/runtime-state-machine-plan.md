@@ -47,10 +47,15 @@ The client never directly executes state logic in its own thread. `run()` only q
 - define the runtime-state constructor, destructor, and default no-op
   lifecycle hooks
 - extend the runtime-state test to verify non-null state creation and
-  `Dmn_State` inheritance and compatibility stepping
-- remove shadowing declarations of `setStateFnc()`, `setNext()`, and
-  `setEnd()` so clients use the inherited `Dmn_State` API; re-expose
-  `runNext()` as protected and grant the manager friend access
+  `Dmn_State` inheritance and pre-submission configuration compatibility
+- add a runtime-aware callback registration helper so state functors can take
+  `Dmn_Runtime_State &` directly when they need runtime-only APIs such as
+  cancellation inspection
+- keep the inherited `Dmn_State` configuration API visible, but dynamically
+  reject external `setStateFnc()`, `setNext()`, and `setEnd()` calls after a
+  successful `run()`
+- reject external `runNext()` through any `Dmn_Runtime_State` or `Dmn_State`
+  view so only the manager may advance the machine
 - add public `Dmn_State::hasStateFncs()` to identify whether the client
   configured at least one state function
 - retain a manager-owned state handle after successful runtime queueing and
@@ -60,9 +65,10 @@ The client never directly executes state logic in its own thread. `run()` only q
 
 ### Tasks
 
-- keep transition selection in state functions through their `Dmn_State &`
-  parameter; the runtime manager controls when `runNext()` executes and
-  reposts work, not which transition is selected
+- keep transition selection in state functions through either their
+  `Dmn_State &` or `Dmn_Runtime_State &` parameter; the runtime manager
+  controls when `runNext()` executes and reposts work, not which transition
+  is selected
 - add runtime lifecycle flags (`queued`, `running`, `completed`, `failed`,
   `cancelled`)
 - add promise/shared-future completion synchronization for `wait()` and
@@ -108,9 +114,10 @@ The client never directly executes state logic in its own thread. `run()` only q
 
 ### Tasks
 
-- Added named Google Test cases for cancellation while queued, manager-retained
-  lifetime after the client drops its handle, priority ordering, timed initial
-  submission, and runtime-thread rejection.
+- Added named Google Test cases for external mutation rejection after
+  submission, runtime-aware callback cancellation observation, cancellation
+  while queued, manager-retained lifetime after the client drops its handle,
+  priority ordering, timed initial submission, and runtime-thread rejection.
 - The runtime-thread harness verifies `run()`, `wait()`, and `wait_for()`
   throw `std::runtime_error` from the runtime async thread.
 - The test suite verifies runtime-managed states retain `Dmn_State`
@@ -150,6 +157,11 @@ The client never directly executes state logic in its own thread. `run()` only q
 - Added shutdown stress coverage for a running state and 32 queued states.
 - Added user documentation for runtime initialization, configuration,
   submission, completion waiting, state-manager shutdown, and runtime exit.
+- Added API-boundary enforcement so runtime submission freezes external
+  configuration/mutation and reserves `runNext()` for manager-driven
+  execution only.
+- Added runtime-aware callback support so cancellation-aware state steps can
+  use `Dmn_Runtime_State &` directly when needed.
 
 ## 10. Risks and Checkpoints
 

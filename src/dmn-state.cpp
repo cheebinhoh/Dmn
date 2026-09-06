@@ -6,7 +6,7 @@
  *        the state machine to execute different states.
  *
  * The Dmn_State class stores a sequence of state functors and provides a
- * a small API for initializing, advancing, and finalizing a state machine.
+ * small API for initializing, advancing, and finalizing a state machine.
  * States are represented by functors of type std::function<void(Dmn_State&)>.
  */
 
@@ -37,6 +37,14 @@ void Dmn_State::init([[maybe_unused]] Dmn_State &s) {
 
 void Dmn_State::finalize([[maybe_unused]] Dmn_State &s) { m_finalized = true; }
 
+void Dmn_State::beforeSetStateFnc() {}
+
+void Dmn_State::beforeSetNext() {}
+
+void Dmn_State::beforeSetEnd() {}
+
+void Dmn_State::beforeRunNext() {}
+
 auto Dmn_State::isInitialized() -> bool { return m_initialized; }
 
 auto Dmn_State::isFinalized() -> bool { return m_finalized; }
@@ -44,17 +52,18 @@ auto Dmn_State::isFinalized() -> bool { return m_finalized; }
 bool Dmn_State::hasStateFncs() const noexcept { return m_states.size() > 1; }
 
 auto Dmn_State::runNext() -> bool {
+  beforeRunNext();
+
   // preferred assertion: use an explicit cast so it always compiles
   assert(static_cast<bool>(*this) && "runNext called after finalize");
 
-  // runtime check (assert disappears in release; use this if you need it
-  // always)
+  // Preserve a runtime guard because assert() disappears in release builds.
   if (!static_cast<bool>(*this)) {
-    // handle error: return false, throw, log, etc.
     return false;
   }
 
   assert(m_next <= static_cast<int>(m_states.size()));
+
   if (m_next < 0) {
     finalize(*this);
   } else if (m_next >= static_cast<int>(m_states.size())) {
@@ -67,20 +76,27 @@ auto Dmn_State::runNext() -> bool {
   return static_cast<bool>(*this);
 }
 
-void Dmn_State::setEnd() { m_next = static_cast<int>(m_states.size()); }
+void Dmn_State::setEnd() {
+  beforeSetEnd();
+  m_next = static_cast<int>(m_states.size());
+}
 
 void Dmn_State::setNext(int index) {
+  beforeSetNext();
   assert(index >= 0 && index <= static_cast<int>(m_states.size()));
 
   m_next = index;
 }
 
 void Dmn_State::setNext() {
+  beforeSetNext();
   assert(m_next >= 0 && m_next < static_cast<int>(m_states.size()));
   m_next++;
 }
 
 void Dmn_State::setStateFnc(FncType fnc, int index) {
+  beforeSetStateFnc();
+
   if (index < 0) {
     throw std::out_of_range("setStateFnc: index must be >= 0");
   }

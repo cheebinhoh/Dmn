@@ -69,6 +69,55 @@ TEST(DmnRuntimeState, CreatesSingletonManagerAndStateHandle) {
   EXPECT_NE(first->createState("state"), nullptr);
 }
 
+TEST(DmnRuntimeState, RejectsExternalMutationAfterSubmission) {
+  using namespace std::chrono_literals;
+
+  auto state = stateManager()->createState("frozen-after-run");
+  state->setStateFnc([](dmn::Dmn_State &current) { current.setEnd(); });
+  dmn::Dmn_State &base = *state;
+
+  EXPECT_TRUE(state->run());
+  EXPECT_THROW(state->setStateFnc([](dmn::Dmn_State &) {}), std::logic_error);
+  EXPECT_THROW(state->setNext(0), std::logic_error);
+  EXPECT_THROW(state->setEnd(), std::logic_error);
+  EXPECT_THROW(base.runNext(), std::logic_error);
+
+  state->cancel();
+  Runtime_Main_Loop loop{runtime()};
+  EXPECT_TRUE(state->wait_for(5s));
+  loop.stop();
+}
+
+TEST(DmnRuntimeState, RuntimeCallbackCanObserveCancellationDirectly) {
+  using namespace std::chrono_literals;
+
+  std::promise<void> callbackStarted;
+  auto callbackStartedFuture = callbackStarted.get_future();
+  std::atomic_bool observedCancellation{};
+  auto state = stateManager()->createState("runtime-aware-callback");
+  state->setRuntimeStateFnc([&callbackStarted, &observedCancellation](
+                                dmn::Dmn_Runtime_State &current) {
+    callbackStarted.set_value();
+
+    while (!current.isCancelled()) {
+      std::this_thread::sleep_for(1ms);
+    }
+
+    observedCancellation = true;
+    current.setEnd();
+  });
+
+  EXPECT_TRUE(state->run());
+  Runtime_Main_Loop loop{runtime()};
+  EXPECT_EQ(callbackStartedFuture.wait_for(5s), std::future_status::ready);
+  state->cancel();
+  EXPECT_TRUE(state->wait_for(5s));
+  loop.stop();
+
+  EXPECT_TRUE(observedCancellation.load());
+  EXPECT_TRUE(state->isCancelled());
+}
+
 TEST(DmnRuntimeState, RejectsUnconfiguredAndPreRunCancelledStates) {
   using namespace std::chrono_literals;
 

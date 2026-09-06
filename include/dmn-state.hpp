@@ -6,7 +6,7 @@
  *        the state machine to execute different states.
  *
  * The Dmn_State class stores a sequence of state functors and provides a
- * a small API for initializing, advancing, and finalizing a state machine.
+ * small API for initializing, advancing, and finalizing a state machine.
  * States are represented by functors of type std::function<void(Dmn_State&)>.
  */
 
@@ -67,10 +67,12 @@ public:
   void setEnd();
 
   /**
-   * @brief Set the next state by 1-based index into the configured states.
-   * @param index 1..m_states.size() selects a user state.
+   * @brief Set the next state by internal or user-state index.
+   * @param index 0 selects the internal initialization step and
+   *              1..m_states.size()-1 select configured user states.
    *
-   * @note If index is out of range the implementation may assert or throw.
+   * @note Callers must pass a valid configured index. Invalid indices trigger
+   *       the implementation's existing defensive checks.
    */
   void setNext(int index);
 
@@ -84,9 +86,9 @@ public:
   /**
    * @brief Set the functor for a state slot.
    * @param fnc The functor to be called for the state step.
-   * @param index If 1..m_states.size(), place fnc at that slot; if 0,
-   *              behavior is implementation-specific (commonly used to set
-   *              the "current/next" state).
+   * @param index If 0 or the next 1-based user-state index, append a new user
+   *              state. If 1..the current highest user-state index, replace
+   *              the existing user state at that slot.
    */
   void setStateFnc(FncType fnc, int index = 0);
 
@@ -140,6 +142,39 @@ protected:
    */
   void finalize(Dmn_State &s);
 
+  /**
+   * @brief Hook invoked before installing or replacing a state functor.
+   *
+   * Derived classes may override this to enforce additional lifecycle rules.
+   * The default implementation permits the operation.
+   */
+  virtual void beforeSetStateFnc();
+
+  /**
+   * @brief Hook invoked before changing the next-state selector.
+   *
+   * Derived classes may override this to distinguish internal runtime-driven
+   * transitions from external client mutations. The default implementation
+   * permits the operation.
+   */
+  virtual void beforeSetNext();
+
+  /**
+   * @brief Hook invoked before forcing terminal selection with @ref setEnd.
+   *
+   * Derived classes may override this to restrict who may end the machine.
+   * The default implementation permits the operation.
+   */
+  virtual void beforeSetEnd();
+
+  /**
+   * @brief Hook invoked before advancing the machine with @ref runNext.
+   *
+   * Derived classes may override this to reserve stepping for a manager or
+   * execution context. The default implementation permits the operation.
+   */
+  virtual void beforeRunNext();
+
 private:
   const std::string m_name{}; ///< Human-readable name for diagnostics/logging.
 
@@ -156,8 +191,8 @@ private:
   /**
    * @brief State functors.
    *
-   * Conceptually 1-based: user states occupy slots 1..m_states.size(). Index 0
-   * is reserved/unused by the vector storage.
+   * Slot 0 stores the internal initialization step. User states occupy slots
+   * 1..m_states.size()-1.
    */
   std::vector<FncType> m_states{};
 

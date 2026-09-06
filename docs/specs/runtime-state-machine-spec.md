@@ -6,17 +6,21 @@ Status: Draft — Phases 1-7 implemented.
 
 The current implementation provides the singleton manager, managed state
 handles, completion futures, runtime scheduling, manager-held lifetime,
-one-shot submission, cooperative cancellation, failure capture, and runtime
-error callback forwarding. `run()` supports priority and an initial delay;
-later steps are reposted immediately at the submitted priority.
+one-shot submission, cooperative cancellation, failure capture, runtime
+error callback forwarding, post-submission external-mutation rejection, and
+the runtime-aware `setRuntimeStateFnc()` callback API. `run()` supports
+priority and an initial delay; later steps are reposted immediately at the
+submitted priority.
 
 `run()`, `wait()`, and `wait_for()` reject calls from the runtime async thread.
-Focused tests cover queued cancellation, manager-retained lifetime, priority
-ordering, timed initial submission, runtime-thread rejection,
-drain-and-cancel shutdown, multi-state serialization, failure isolation, and
-concurrent lifecycle operations. The manager exposes one shutdown mode and no
-configurable concurrency. The current runtime architecture serializes all
-state steps through the process-wide runtime async thread.
+Focused tests cover external-mutation rejection after submission,
+runtime-aware callback cancellation observation, queued cancellation,
+manager-retained lifetime, priority ordering, timed initial submission,
+runtime-thread rejection, drain-and-cancel shutdown, multi-state
+serialization, failure isolation, and concurrent lifecycle operations. The
+manager exposes one shutdown mode and no configurable concurrency. The
+current runtime architecture serializes all state steps through the
+process-wide runtime async thread.
 
 ## 1. Summary
 
@@ -105,9 +109,9 @@ distinct name and preserves the singleton's shared ownership semantics.
 
 The implemented manager and state handle live in
 `include/dmn-runtime-state.hpp` and `src/dmn-runtime-state.cpp`; the
-`dmn-test-runtime-state` target exercises the currently implemented baseline.
-Manager shutdown modes and broader multi-state integration/stress coverage
-remain outstanding.
+`dmn-test-runtime-state` target exercises creation, scheduling, cancellation,
+mutation guards, runtime-aware callback behavior, shutdown, and concurrent
+integration coverage.
 
 ### FR-2: Client-managed state object creation and ownership
 
@@ -125,32 +129,45 @@ The resulting object must:
 - be a concrete state object type derived from `Dmn_State`
 - be created from the runtime state manager singleton and returned as a shared_ptr handle
 - carry runtime-managed lifecycle metadata
-- be configured by calling `setStateFnc()` or equivalent state registration methods
+- be configured by calling `setStateFnc()`, `setRuntimeStateFnc()`, or an
+  equivalent state registration method
 
 ### FR-3: State configuration
 
 A client must be able to define one or more states on the returned runtime state object via the compatible `Dmn_State` interface.
 
-`Dmn_Runtime_State` MUST inherit, rather than redeclare or override,
-`Dmn_State::setStateFnc()`, `setNext()`, and `setEnd()`. State functions
-therefore retain the base callback signature, `std::function<void(Dmn_State
-&)>`.
+`Dmn_Runtime_State` MUST inherit the `Dmn_State` configuration surface so
+state functions retain the base callback signature,
+`std::function<void(Dmn_State &)>`.
+
+`Dmn_Runtime_State` SHOULD also provide a runtime-aware convenience callback
+API that accepts `std::function<void(Dmn_Runtime_State &)>` and adapts it into
+the underlying `Dmn_State` callback storage. This is the preferred API when a
+callback needs runtime-only methods such as `isCancelled()`.
 
 Clients configure state functions before calling `run()`. They do not directly
 advance or terminate the machine from outside a state function: the runtime
 manager controls when `runNext()` executes and whether another job is posted.
-A state function uses its `Dmn_State &` parameter to call `setNext()` or
-`setEnd()` when it needs to select the next transition or terminate the
-machine, preserving existing `Dmn_State` semantics.
+A state function uses either its `Dmn_State &` parameter or its
+`Dmn_Runtime_State &` parameter, depending on which registration API the
+client chose, to call `setNext()` or `setEnd()` when it needs to select the
+next transition or terminate the machine.
 
 `Dmn_State::hasStateFncs()` is a public query that returns true when at least
 one client-defined state function exists. It excludes the internal
 initialization function and is used by `Dmn_Runtime_State::run()` to reject an
 unconfigured state without terminalizing it.
 
-Configuration must be complete before a successful `run()` call. Modifying
-state functions after submission is unsupported because the runtime may
-execute `runNext()` concurrently with the client thread.
+Configuration must be complete before a successful `run()` call. After a
+successful submission, external calls to inherited `setStateFnc()`,
+`setNext()`, and `setEnd()` MUST throw `std::logic_error`. This freeze applies
+through any `Dmn_Runtime_State` or `Dmn_State` view of the object. The
+currently executing runtime-managed callback remains allowed to call
+`setNext()` and `setEnd()` to choose transitions.
+
+External `runNext()` is never part of the runtime-managed contract. Calling
+`runNext()` on a `Dmn_Runtime_State` through any `Dmn_State` view MUST throw
+`std::logic_error`; only the manager may drive state advancement.
 
 ### FR-4: `run()` dispatches work to runtime and error callback forwarding
 
@@ -225,13 +242,13 @@ The object must track:
 - running state
 - completed state
 - failed state
-- canceled state
+- cancelled state
 
 A state object is terminal when it has either:
 
 - reached the end via `setEnd()` or a terminal transition
 - failed due to uncaught exception during a state step
-- been canceled
+- been cancelled
 
 ### FR-8: Cancellation and shutdown
 
@@ -239,10 +256,13 @@ The runtime state object MUST provide a `cancel()` method that is cooperative in
 
 Semantics:
 
-- `cancel()` is idempotent and sets the object's canceled flag and prevents further non-cooperative steps from being scheduled
+- `cancel()` is idempotent and sets the object's cancelled flag and prevents further non-cooperative steps from being scheduled
 - `cancel()` does NOT asynchronously preempt a currently executing state
-  functor. A callback that requires cooperative early exit may capture its
-  `Dmn_Runtime_State` handle and query `isCancelled()`.
+  functor. A callback that requires cooperative early exit should prefer the
+  runtime-aware callback API so it can inspect `isCancelled()` directly on its
+  `Dmn_Runtime_State &` parameter. Callers that use the inherited
+  `Dmn_State &` callback form may still capture their runtime-state handle and
+  query `isCancelled()` that way.
 - when the runtime task executes and detects the cancel flag is set, it MUST call `setEnd()` before invoking `runNext()` so that the state finalizes deterministically rather than executing further steps
 - `isCancelled()` provides the cancellation query for callbacks that capture
   their runtime-state handle and need to early-exit or perform cleanup
@@ -324,14 +344,15 @@ class Dmn_Runtime_State
 
 public:
   using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType; // std::function<void(std::exception_ptr &)>
+  using RuntimeStateFnc = std::function<void(Dmn_Runtime_State &)>;
 
   explicit Dmn_Runtime_State(std::string_view name);
 
-  // State configuration methods are inherited unchanged from Dmn_State.
-  // The runtime manager controls execution by calling protected runNext().
-
-protected:
-  using Dmn_State::runNext;
+  // State configuration methods are inherited from Dmn_State for pre-run
+  // setup. After successful run(), external setStateFnc()/setNext()/setEnd()
+  // calls throw std::logic_error. External runNext() also throws
+  // std::logic_error; only the manager may advance the machine.
+  void setRuntimeStateFnc(RuntimeStateFnc fnc, int index = 0);
 
 public:
 
@@ -402,7 +423,23 @@ private:
   first job uses `addTimedJob()`; later state steps use `addJob()`.
 - `run()` accepts an optional onError callback that uses the runtime's `Dmn_Runtime_Job::OnErrorFncType` signature and is forwarded to the runtime job.
 - `run()` is one-shot: a successful `run()` prevents subsequent `run()` calls from enqueueing again; such subsequent calls return `false` (no-op). This avoids duplicate enqueues across threads.
-- `cancel()` is cooperative: it sets a cancelled flag. The runtime job, before calling `runNext()`, must check `isCancelled()` and call `setEnd()` if the state has been cancelled so that the state finalizes without executing further steps.
+- `cancel()` is cooperative: it sets a cancelled flag. The runtime job, before
+  calling `runNext()`, must check `isCancelled()` and call `setEnd()` if the
+  state has been cancelled so that the state finalizes without executing
+  further steps.
+- `setRuntimeStateFnc()` is the preferred callback API when a state step needs
+  runtime-only methods such as `isCancelled()`. It adapts a
+  `Dmn_Runtime_State &` callback into the same underlying state-machine
+  storage.
+- The inherited `setStateFnc()` remains available for compatibility. A
+  callback that stays on the `Dmn_State &` form and wants to observe
+  cancellation must capture its runtime-state handle and call `isCancelled()`
+  on that handle.
+- After successful `run()`, external configuration or transition mutation is
+  frozen. Calls to inherited `setStateFnc()`, `setNext()`, and `setEnd()`
+  throw `std::logic_error` unless they occur from inside the active
+  runtime-managed callback. External `runNext()` also throws
+  `std::logic_error`, including when attempted through a `Dmn_State &` view.
 - `wait()` supports a timeout variant and `getFuture()` returns a `std::shared_future<void>` that can be used by multiple waiters. The shared_future is valid immediately after createState() is called and resolves when the state reaches a terminal condition.
 - Calls to `run()`, `wait()`, or `wait_for()` from inside the runtime async
   thread must throw `std::runtime_error`. Use the public
@@ -455,23 +492,30 @@ The new runtime state object must subclass `Dmn_State` and preserve `Dmn_State` 
 
 It must retain:
 
-- `setStateFnc()`, `setNext()`, `setEnd()`, `runNext()` semantics
+- `setStateFnc()`, `setNext()`, and `setEnd()` semantics for pre-submission
+  configuration and in-callback transition control
+- `setRuntimeStateFnc()` as a runtime-aware convenience wrapper for callbacks
+  that need `Dmn_Runtime_State` methods directly
 - init/finalize behavior inherited from the base
 - default state sequencing model
 
-The runtime layer must not hide or redeclare the base configuration methods.
-It adds async ownership, completion signaling, an `isCancelled()` query, and
-error forwarding on top of the base semantics. The manager controls when
-`runNext()` is invoked; state functions control their transitions with the
-inherited `Dmn_State &` API.
+The runtime layer keeps the base configuration methods visible, but adds
+dynamic enforcement on top of them: post-submission external mutation throws
+`std::logic_error`, while the active runtime-managed callback may still use the
+inherited `Dmn_State &` API to select the next transition or terminate.
+`runNext()` is reserved for the manager even if a caller obtains a
+`Dmn_State &` view of the runtime-managed object.
 
 ### 9.2 Cancellation contract
 
 - `cancel()` sets the cancellation flag and is safe to call from any thread.
-- The runtime job MUST observe `isCancelled()` before executing `runNext()` and call `setEnd()` to force deterministic finalization.
-- State functors that need to cooperate with cancellation may capture their
-  `Dmn_Runtime_State` handle and query `isCancelled()`; their callback
-  parameter remains `Dmn_State &` for base-API compatibility.
+- The runtime job MUST observe `isCancelled()` before executing `runNext()`
+  and call `setEnd()` to force deterministic finalization.
+- `setRuntimeStateFnc()` is the preferred way to write a cancellation-aware
+  state functor because its callback receives `Dmn_Runtime_State &` directly.
+- A callback registered through the inherited `setStateFnc()` may still
+  cooperate with cancellation by capturing its `Dmn_Runtime_State` handle and
+  querying `isCancelled()` explicitly.
 
 ### 9.3 `wait()` behavior and deadlock avoidance
 
@@ -500,9 +544,9 @@ Behavior:
   This avoids duplicate enqueues and is thread-safe due to the mutex-protected
   `m_queued` guard.
 
-### 10.3 Finalized or canceled states
+### 10.3 Finalized or cancelled states
 
-Once finalized, failed, or canceled, no further state step may be scheduled.
+Once finalized, failed, or cancelled, no further state step may be scheduled.
 
 ### 10.4 Exception propagation and onError
 
@@ -541,6 +585,8 @@ Provide clear priority mapping between manager jobs and other runtime jobs. The 
 `test/dmn-test-runtime-state.cpp` contains focused Google Test cases:
 
 - `CreatesSingletonManagerAndStateHandle`
+- `RejectsExternalMutationAfterSubmission`
+- `RuntimeCallbackCanObserveCancellationDirectly`
 - `RejectsUnconfiguredAndPreRunCancelledStates`
 - `ExecutesStatesAndReportsStateFailures`
 - `CancelsQueuedStateWithoutRunningUserStep`
@@ -630,9 +676,15 @@ auto runtime = dmn::Dmn_Runtime_Manager<>::createInstance();
 auto manager = dmn::Dmn_Runtime_State_Manager::createInstance();
 StatePtr s = manager->createState("example");
 
-// Configure using the inherited Dmn_State API. The manager invokes runNext();
-// each state function selects its own transition.
-s->setStateFnc([](dmn::Dmn_State &st) {
+// Prefer the runtime-aware callback API when the step may need
+// Dmn_Runtime_State methods such as isCancelled().
+s->setRuntimeStateFnc([](dmn::Dmn_Runtime_State &st) {
+  if (st.isCancelled()) {
+    st.setEnd();
+
+    return;
+  }
+
   /* step work */
   st.setEnd();
 });
@@ -671,10 +723,10 @@ The feature is complete when:
 
 1. Complete the manager singleton, state-handle, lifecycle, and scheduling
    implementation (complete).
-2. Add focused coverage for cancellation, ownership, priority/timing, and
-   runtime-thread safety (complete).
+2. Add focused coverage for cancellation, ownership, priority/timing,
+   runtime-thread safety, and runtime-aware callback behavior (complete).
 3. Define and implement drain-and-cancel manager shutdown (complete).
-4. Add multi-state integration and concurrency stress coverage.
+4. Add multi-state integration and concurrency stress coverage (complete).
 
 ---
 

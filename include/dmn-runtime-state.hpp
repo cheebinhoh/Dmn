@@ -14,7 +14,8 @@
  * state-machine steps asynchronously on the process-wide runtime thread.
  * Clients create a @ref Dmn_Runtime_State through
  * @ref Dmn_Runtime_State_Manager, configure it with the inherited
- * @ref Dmn_State API, and submit it with Dmn_Runtime_State::run().
+ * @ref Dmn_State API or @ref setRuntimeStateFnc(), and submit it with
+ * @ref Dmn_Runtime_State::run().
  *
  * Ownership and Lifetime
  * ----------------------
@@ -26,9 +27,11 @@
  * Thread Safety
  * -------------
  * Public lifecycle operations and state inspection are thread-safe. State
- * functors and lifecycle hooks execute in the runtime async thread. Blocking
- * wait and shutdown operations are prohibited from that thread to avoid
- * deadlock.
+ * functors and lifecycle hooks execute in the runtime async thread. State
+ * configuration belongs to the pre-submission phase only: after a successful
+ * run(), external calls to inherited configuration/transition APIs are
+ * rejected. Blocking wait and shutdown operations are prohibited from the
+ * runtime async thread to avoid deadlock.
  */
 
 #ifndef DMN_RUNTIME_STATE_HPP_
@@ -40,6 +43,7 @@
 
 #include <chrono>
 #include <exception>
+#include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
@@ -56,8 +60,9 @@ namespace dmn {
  *
  * Dmn_Runtime_State subclasses Dmn_State and adds asynchronous runtime
  * ownership semantics: a client obtains a shared_ptr handle from the
- * manager, configures state functors using the same Dmn_State API, then
- * calls run() to schedule execution on the global runtime thread.
+ * manager, configures state functors using the inherited @ref Dmn_State API
+ * or the runtime-aware @ref setRuntimeStateFnc() helper, then calls
+ * run() to schedule execution on the global runtime thread.
  *
  * Lifecycle
  * ---------
@@ -65,6 +70,19 @@ namespace dmn {
  * cancelled. Cancellation is cooperative: it prevents subsequent state steps
  * but does not interrupt a functor already executing. Completion is published
  * through a @c std::shared_future<void>, which supports multiple waiters.
+ *
+ * The inherited @ref Dmn_State configuration API remains the client-facing way
+ * to install state functors before submission. After a successful @ref run,
+ * external calls to @ref Dmn_State::setStateFnc, @ref Dmn_State::setNext, and
+ * @ref Dmn_State::setEnd throw @c std::logic_error. Manager-driven execution
+ * still permits state callbacks to call @ref setNext or @ref setEnd from
+ * inside the currently executing runtime step. External @ref runNext calls are
+ * rejected; only the manager may advance the machine.
+ *
+ * For callbacks that need runtime-only APIs such as @ref isCancelled(), use
+ * @ref setRuntimeStateFnc(). It adapts a callback that takes
+ * @c Dmn_Runtime_State & into the underlying @ref Dmn_State callback storage
+ * while preserving the base API for compatibility.
  */
 class Dmn_Runtime_State
     : public Dmn_State,
@@ -95,20 +113,32 @@ public:
   Dmn_Runtime_State(Dmn_Runtime_State &&) = delete;
   Dmn_Runtime_State &operator=(Dmn_Runtime_State &&) = delete;
 
-  /* Execution control */
+  /* Configuration */
 
   /**
-   * @brief Request cooperative cancellation of this state.
+   * @brief Runtime-aware state callback type.
    *
-   * The cancellation is idempotent and thread-safe. It does NOT preempt a
-   * currently-running functor unless that functor explicitly observes the
-   * cancel flag via isCancelled(). The runtime job must check isCancelled()
-   * and call setEnd() prior to invoking runNext() if cancellation is set.
-   *
-   * A state cancelled before submission becomes terminal immediately. A
-   * submitted state becomes terminal when the runtime observes the request.
+   * Use this when the callback needs runtime-state APIs such as
+   * @ref isCancelled(), while still participating in the same underlying
+   * state-machine execution model.
    */
-  void cancel();
+  using RuntimeStateFnc = std::function<void(Dmn_Runtime_State &state)>;
+
+  /**
+   * @brief Install a runtime-aware state functor.
+   * @param fnc Callback invoked as the selected state step body with the
+   *            runtime-managed state object.
+   * @param index If 0 or the next 1-based user-state index, append a new user
+   *              state. If 1..the current highest user-state index, replace
+   *              the existing user state at that slot.
+   *
+   * This is a convenience wrapper over the inherited @ref Dmn_State API. It
+   * adapts a callback taking @c Dmn_Runtime_State & into the underlying
+   * storage used by @ref Dmn_State::setStateFnc().
+   */
+  void setRuntimeStateFnc(RuntimeStateFnc fnc, int index = 0);
+
+  /* Execution control */
 
   /**
    * @brief Schedule this state handle for runtime execution.
@@ -138,6 +168,21 @@ public:
       const std::chrono::steady_clock::duration &delay =
           std::chrono::steady_clock::duration::zero(),
       OnErrorFnc onError = {});
+
+  /**
+   * @brief Request cooperative cancellation of this state.
+   *
+   * The cancellation is idempotent and thread-safe. It does NOT preempt a
+   * currently-running functor. A callback that needs cooperative early exit
+   * should prefer @ref setRuntimeStateFnc() so it can query
+   * @ref isCancelled() directly on its @c Dmn_Runtime_State & parameter. The
+   * runtime job must check isCancelled() and call setEnd() prior to invoking
+   * runNext() if cancellation is set.
+   *
+   * A state cancelled before submission becomes terminal immediately. A
+   * submitted state becomes terminal when the runtime observes the request.
+   */
+  void cancel();
 
   /* Completion waiting */
 
@@ -190,14 +235,6 @@ public:
 
 protected:
   /**
-   * @brief Restrict state-machine advancement to this type and its manager.
-   *
-   * Derived classes may use @ref runNext to implement specialized execution,
-   * but clients cannot drive a runtime-managed state directly.
-   */
-  using Dmn_State::runNext;
-
-  /**
    * @brief Lifecycle hooks for derived implementations.
    *
    * Subclasses may override these to observe state lifecycle transitions. The
@@ -237,6 +274,23 @@ private:
    * it. */
   void resetQueuedAfterSubmission();
 
+  /** @brief Advance the state machine with manager-only execution access. */
+  bool runNextManaged();
+
+  /** @brief Force terminal selection with manager-only execution access. */
+  void setEndManaged();
+
+  /** @brief Mark the current thread as executing a manager-authorized step. */
+  void enterInternalExecution();
+
+  /** @brief Clear manager-authorized execution access. */
+  void leaveInternalExecution() noexcept;
+
+  void beforeSetStateFnc() override;
+  void beforeSetNext() override;
+  void beforeSetEnd() override;
+  void beforeRunNext() override;
+
   mutable std::mutex m_mutex{}; ///< Protects lifecycle state and completion.
   std::promise<void> m_completionPromise{}; ///< Fulfilled on terminal state.
   std::shared_future<void>
@@ -249,6 +303,9 @@ private:
   bool m_failed{};    ///< Terminal failure marker.
   bool m_cancelled{}; ///< Cancellation requested or terminal.
   bool m_terminal{};  ///< Guards one-time completion publication.
+  unsigned int m_internalExecutionDepth{}; ///< Non-zero only while the manager
+                                           ///< drives a step and its
+                                           ///< callback-controlled transitions.
 };
 
 /**

@@ -9,9 +9,9 @@
  * --------------------
  * Lifecycle flags and the completion promise are synchronized by
  * Dmn_Runtime_State::m_mutex. The manager separately protects its retained
- * state handles while jobs are queued or running. Hooks always run after the
- * lifecycle mutex is released so derived implementations can safely inspect
- * state or call other public APIs.
+ * state handles while jobs are queued or running. Lifecycle hooks always run
+ * after the lifecycle mutex is released so derived implementations can safely
+ * inspect state or call other public APIs.
  */
 
 #include "dmn-runtime-state.hpp"
@@ -33,10 +33,95 @@ Dmn_Runtime_State::Dmn_Runtime_State(std::string_view name)
 
 Dmn_Runtime_State::~Dmn_Runtime_State() {}
 
+void Dmn_Runtime_State::setRuntimeStateFnc(RuntimeStateFnc fnc, int index) {
+  Dmn_State::setStateFnc(
+      [fnc = std::move(fnc)](Dmn_State &state) mutable {
+        fnc(static_cast<Dmn_Runtime_State &>(state));
+      },
+      index);
+}
+
+void Dmn_Runtime_State::beforeSetStateFnc() {
+  std::lock_guard lock{m_mutex};
+
+  if (m_queued || m_running || m_terminal) {
+    throw std::logic_error(
+        "Dmn_Runtime_State::setStateFnc cannot modify configuration after "
+        "successful run()");
+  }
+}
+
+void Dmn_Runtime_State::beforeSetNext() {
+  std::lock_guard lock{m_mutex};
+
+  if ((m_queued || m_running || m_terminal) && m_internalExecutionDepth == 0) {
+    throw std::logic_error(
+        "Dmn_Runtime_State transition changes are reserved for the active "
+        "runtime-managed step after successful run()");
+  }
+}
+
+void Dmn_Runtime_State::beforeSetEnd() {
+  std::lock_guard lock{m_mutex};
+
+  if ((m_queued || m_running || m_terminal) && m_internalExecutionDepth == 0) {
+    throw std::logic_error(
+        "Dmn_Runtime_State termination is reserved for the active "
+        "runtime-managed step after successful run()");
+  }
+}
+
+void Dmn_Runtime_State::beforeRunNext() {
+  std::lock_guard lock{m_mutex};
+
+  if (m_internalExecutionDepth == 0) {
+    throw std::logic_error(
+        "Dmn_Runtime_State::runNext is reserved for runtime-managed "
+        "execution");
+  }
+}
+
+void Dmn_Runtime_State::enterInternalExecution() {
+  std::lock_guard lock{m_mutex};
+  ++m_internalExecutionDepth;
+}
+
+void Dmn_Runtime_State::leaveInternalExecution() noexcept {
+  std::lock_guard lock{m_mutex};
+
+  assert(m_internalExecutionDepth > 0);
+
+  --m_internalExecutionDepth;
+}
+
+bool Dmn_Runtime_State::runNextManaged() {
+  struct Execution_Guard {
+    Dmn_Runtime_State *state;
+    ~Execution_Guard() { state->leaveInternalExecution(); }
+  };
+
+  enterInternalExecution();
+  Execution_Guard guard{this};
+
+  return Dmn_State::runNext();
+}
+
+void Dmn_Runtime_State::setEndManaged() {
+  struct Execution_Guard {
+    Dmn_Runtime_State *state;
+    ~Execution_Guard() { state->leaveInternalExecution(); }
+  };
+
+  enterInternalExecution();
+  Execution_Guard guard{this};
+  Dmn_State::setEnd();
+}
+
 void Dmn_Runtime_State::cancel() {
   bool completeNow{};
   {
     std::lock_guard lock{m_mutex};
+
     if (m_terminal || m_cancelled) {
       return;
     }
@@ -54,6 +139,7 @@ bool Dmn_Runtime_State::run(Dmn_Runtime_Job::Priority priority,
                             const std::chrono::steady_clock::duration &delay,
                             OnErrorFnc onError) {
   auto runtime = Dmn_Runtime_Manager<>::createInstance();
+
   if (runtime->isRunInAsyncThread()) {
     throw std::runtime_error(
         "Dmn_Runtime_State::run cannot run in the runtime async thread");
@@ -67,6 +153,7 @@ bool Dmn_Runtime_State::run(Dmn_Runtime_Job::Priority priority,
 
   {
     std::lock_guard lock{m_mutex};
+
     if (m_terminal || m_cancelled || m_queued) {
       return false;
     }
@@ -76,10 +163,12 @@ bool Dmn_Runtime_State::run(Dmn_Runtime_Job::Priority priority,
 
   if (Dmn_Runtime_State_Manager::createInstance()->enqueueState(
           std::move(self), priority, delay, std::move(onError))) {
+
     return true;
   }
 
   resetQueuedAfterSubmission();
+
   return false;
 }
 
@@ -106,6 +195,7 @@ bool Dmn_Runtime_State::isCancelled() const {
 
 bool Dmn_Runtime_State::isCompleted() const {
   std::lock_guard lock{m_mutex};
+
   return m_completed;
 }
 
@@ -125,11 +215,13 @@ bool Dmn_Runtime_State::beginStep() {
   bool callOnStarted{};
   {
     std::lock_guard lock{m_mutex};
+
     if (m_terminal || m_cancelled) {
       return false;
     }
 
     m_running = true;
+
     if (!m_started) {
       m_started = true;
       callOnStarted = true;
@@ -150,6 +242,7 @@ void Dmn_Runtime_State::complete(Terminal_State terminalState,
   bool callOnCancelled{};
   {
     std::lock_guard lock{m_mutex};
+
     if (m_terminal) {
       return;
     }
@@ -157,6 +250,7 @@ void Dmn_Runtime_State::complete(Terminal_State terminalState,
     m_terminal = true;
     m_queued = false;
     m_running = false;
+
     // Cancellation wins over a step that returned normally during shutdown.
     if (terminalState == Terminal_State::kCompleted && m_cancelled) {
       terminalState = Terminal_State::kCancelled;
@@ -197,6 +291,7 @@ void Dmn_Runtime_State::resetQueuedAfterSubmission() {
   bool completeNow{};
   {
     std::lock_guard lock{m_mutex};
+
     m_queued = false;
     completeNow = m_cancelled && !m_terminal;
   }
@@ -246,6 +341,7 @@ Dmn_Runtime_State_Manager::createState(std::string_view name) {
 
 void Dmn_Runtime_State_Manager::shutdown() {
   auto runtime = Dmn_Runtime_Manager<>::createInstance();
+
   if (runtime->isRunInAsyncThread()) {
     throw std::runtime_error(
         "Dmn_Runtime_State_Manager::shutdown cannot run in the runtime async "
@@ -255,8 +351,10 @@ void Dmn_Runtime_State_Manager::shutdown() {
   std::vector<DmnRuntimeStatePtr> pendingStates;
   {
     std::lock_guard lock{m_pendingStatesMutex};
+
     m_shutdown = true;
     pendingStates.reserve(m_pendingStates.size());
+
     for (const auto &[state, handle] : m_pendingStates) {
       (void)state;
       pendingStates.emplace_back(handle);
@@ -279,6 +377,7 @@ bool Dmn_Runtime_State_Manager::enqueueState(
   {
     std::lock_guard lock{m_pendingStatesMutex};
     const auto existing = m_pendingStates.find(state.get());
+
     if (m_shutdown && existing == m_pendingStates.end()) {
       return false;
     }
@@ -296,6 +395,7 @@ bool Dmn_Runtime_State_Manager::enqueueState(
 
   try {
     auto runtime = Dmn_Runtime_Manager<>::createInstance();
+
     if (delay == std::chrono::steady_clock::duration::zero()) {
       runtime->addJob(std::move(schedule), priority, std::move(onError));
     } else {
@@ -316,21 +416,22 @@ void Dmn_Runtime_State_Manager::executeStateStep(
     std::weak_ptr<Dmn_Runtime_State> weakState,
     Dmn_Runtime_Job::Priority priority, Dmn_Runtime_State::OnErrorFnc onError) {
   auto state = weakState.lock();
+
   if (!state) {
     return;
   }
 
   try {
     if (!state->beginStep()) {
-      state->setEnd();
-      (void)state->runNext();
+      state->setEndManaged();
+      (void)state->runNextManaged();
       state->complete(Dmn_Runtime_State::Terminal_State::kCancelled);
       releaseState(state.get());
 
       return;
     }
 
-    if (!state->runNext()) {
+    if (!state->runNextManaged()) {
       state->complete(Dmn_Runtime_State::Terminal_State::kCompleted);
       releaseState(state.get());
 
