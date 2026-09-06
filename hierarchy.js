@@ -59,14 +59,17 @@ var hierarchy =
       [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
     ] ],
     [ "dmn::Dmn_Singleton< Dmn_Runtime_Manager< Dmn_BlockingQueue_Mt > >", "classdmn_1_1Dmn__Singleton.html", null ],
-    [ "dmn::Dmn_Singleton< Dmn_Runtime_State_Engine >", "classdmn_1_1Dmn__Singleton.html", [
-      [ "dmn::Dmn_Runtime_State_Engine", "classdmn_1_1Dmn__Runtime__State__Engine.html", null ]
+    [ "dmn::Dmn_Singleton< Dmn_Runtime_State_Manager >", "classdmn_1_1Dmn__Singleton.html", [
+      [ "dmn::Dmn_Runtime_State_Manager", "classdmn_1_1Dmn__Runtime__State__Manager.html", null ]
     ] ],
     [ "dmn::Dmn_State", "classdmn_1_1Dmn__State.html", [
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
     [ "dmn::Dmn_Pub< T, QueueType >::Dmn_Sub", "classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html", [
       [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", null ]
+    ] ],
+    [ "std::enable_shared_from_this", null, [
+      [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],

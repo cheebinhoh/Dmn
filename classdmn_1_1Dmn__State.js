@@ -5,6 +5,7 @@ var classdmn_1_1Dmn__State =
     [ "Dmn_State", "classdmn_1_1Dmn__State.html#abdc4a6a21bb540469cc3a567333dd99f", null ],
     [ "Dmn_State", "classdmn_1_1Dmn__State.html#acd73f2ef1eb80dddc9465b2356c074c4", null ],
     [ "finalize", "classdmn_1_1Dmn__State.html#aa502afcd81843908eb251051965ec320", null ],
+    [ "hasStateFncs", "classdmn_1_1Dmn__State.html#a995bc2b803f138a67b1d77f519b8d6de", null ],
     [ "init", "classdmn_1_1Dmn__State.html#a891238b9ffb5fac974ffbde03e7c01ec", null ],
     [ "isFinalized", "classdmn_1_1Dmn__State.html#ab1dfd95a21cd05aea5535afc6efe8627", null ],
     [ "isInitialized", "classdmn_1_1Dmn__State.html#aeef8296a5be2caab0bf6f640236183d8", null ],

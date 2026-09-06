@@ -150,6 +150,9 @@ requires IsValidJobFnc&lt;F&gt;</td></tr>
 <tr class="memitem:aa88c4a09c5cc919f4fa2412ac8e0a7ab" id="r_aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab">exitMainLoop</a> ()</td></tr>
 <tr class="memdesc:aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the runtime to stop processing and exit the main loop.  <br /></td></tr>
 <tr class="separator:aa88c4a09c5cc919f4fa2412ac8e0a7ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8da9da1b7890b7f25e43b4b13e97756" id="r_af8da9da1b7890b7f25e43b4b13e97756"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#af8da9da1b7890b7f25e43b4b13e97756">isRunInAsyncThread</a> () -&gt; bool</td></tr>
+<tr class="memdesc:af8da9da1b7890b7f25e43b4b13e97756"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return true if the caller is running on the singleton async thread.  <br /></td></tr>
+<tr class="separator:af8da9da1b7890b7f25e43b4b13e97756"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1907e2ef032bc22e6a52c1c114c7afe6" id="r_a1907e2ef032bc22e6a52c1c114c7afe6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6">registerSignalHandlerHook</a> (int signo, SignalHandlerHook &amp;&amp;hook)</td></tr>
 <tr class="memdesc:a1907e2ef032bc22e6a52c1c114c7afe6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a signal handler hook for a particular signal number. Handlers are invoked by the runtime in a safe context (not from the raw signal handler) in a singleton asynchronous thread context.  <br /></td></tr>
 <tr class="separator:a1907e2ef032bc22e6a52c1c114c7afe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -374,6 +377,29 @@ template&lt;template&lt; class &gt; class QueueType&gt; </div>
 <p>Request the runtime to stop processing and exit the main loop. </p>
 <p>Exit the <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager</a></code> main loop and return control to the caller of <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a></code> (typically <code>main()</code>).</p>
 <p>May be called from a signal handler hook or from any thread. After this call returns, a subsequent call to <code><a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851" title="Start processing runtime events / jobs. Blocks until exitMainLoop() is called or the runtime decides ...">enterMainLoop()</a></code> will unblock and return to the caller. </p>
+
+</div>
+</div>
+<a id="af8da9da1b7890b7f25e43b4b13e97756" name="af8da9da1b7890b7f25e43b4b13e97756"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af8da9da1b7890b7f25e43b4b13e97756">&#9670;&#160;</a></span>isRunInAsyncThread()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;template&lt; class &gt; class QueueType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a>&lt; QueueType &gt;::isRunInAsyncThread </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> -&gt; bool</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return true if the caller is running on the singleton async thread. </p>
+<p>Return <code>true</code> if the caller is running inside the runtime's singleton asynchronous thread context.</p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> when the calling thread is the runtime's async thread, <code>false</code> otherwise. </dd></dl>
 
 </div>
 </div>

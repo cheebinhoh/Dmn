@@ -1,7 +1,7 @@
 var searchData=
 [
   ['pattern_0',['pattern',['../dmn-pub-sub_8hpp.html#autotoc_md24',1,'Design pattern'],['../dmn-proc_8hpp.html#autotoc_md22',1,'Design pattern'],['../dmn-dmesg_8hpp.html#autotoc_md12',1,'Design pattern'],['../dmn-blockingqueue_8hpp.html#autotoc_md8',1,'Design pattern'],['../dmn-async_8hpp.html#autotoc_md0',1,'Design pattern']]],
-  ['patterns_1',['Design patterns',['../dmn-singleton_8hpp.html#autotoc_md38',1,'']]],
+  ['patterns_1',['Design patterns',['../dmn-singleton_8hpp.html#autotoc_md42',1,'']]],
   ['polltimeoutms_2',['PollTimeoutMs',['../classdmn_1_1Dmn__Kafka.html#a5a88036fbad028cb0f15183c91860c47',1,'dmn::Dmn_Kafka']]],
   ['polymorphism_3',['Static polymorphism',['../dmn-blockingqueue_8hpp.html#autotoc_md9',1,'']]],
   ['pop_4',['pop',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a2c69dfa5fe6aab130f85d476034531a7',1,'dmn::Dmn_BlockingQueue_Lf::pop()'],['../classdmn_1_1Dmn__BlockingQueue__Mt.html#a993ec7e5232b5a7098b75969711affb1',1,'dmn::Dmn_BlockingQueue_Mt::pop()'],['../classdmn_1_1Dmn__BlockingQueue.html#ac5e4917d4e2247327fc3c12ffe614fda',1,'dmn::Dmn_BlockingQueue::pop() -&gt; T final'],['../classdmn_1_1Dmn__BlockingQueue.html#a9d324c91b1f2a47056ab7f80ff284c4c',1,'dmn::Dmn_BlockingQueue::pop(std::size_t count, long timeout=0) -&gt; std::vector&lt; T &gt;']]],

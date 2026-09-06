@@ -90,20 +90,26 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp.html',''); init
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle"><div class="title">dmn-runtime-state.hpp File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Public API for the Runtime State Engine: a runtime-owned state execution engine that composes the existing dmn-runtime scheduler with the dmn-state finite-state helper.  
+<p>Runtime-scheduled finite-state-machine execution and lifetime management.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-singleton_8hpp_source.html">dmn-singleton.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-state_8hpp_source.html">dmn-state.hpp</a>&quot;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;future&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;mutex&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;unordered_map&gt;</code><br />
 </div>
 <p><a href="dmn-runtime-state_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -112,17 +118,49 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State.html">dmn::Dmn_Runtime_State</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A runtime-managed state machine instance.  <a href="classdmn_1_1Dmn__Runtime__State.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State__Engine.html">dmn::Dmn_Runtime_State_Engine</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton factory and manager for runtime-managed states.  <a href="classdmn_1_1Dmn__Runtime__State__Engine.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Runtime__State__Manager.html">dmn::Dmn_Runtime_State_Manager</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton manager for runtime-managed states.  <a href="classdmn_1_1Dmn__Runtime__State__Manager.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a210907b43b7fdae14054e27bdcc0d56b" id="r_a210907b43b7fdae14054e27bdcc0d56b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a> = std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &gt;</td></tr>
+<tr class="memdesc:a210907b43b7fdae14054e27bdcc0d56b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared ownership handle for a runtime-managed state.  <br /></td></tr>
+<tr class="separator:a210907b43b7fdae14054e27bdcc0d56b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Public API for the Runtime State Engine: a runtime-owned state execution engine that composes the existing dmn-runtime scheduler with the dmn-state finite-state helper. </p>
+<div class="textblock"><p>Runtime-scheduled finite-state-machine execution and lifetime management. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <dl class="section author"><dt>Author</dt><dd>Chee Bin HOH </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>2026-08-31</dd></dl>
-<p>This header declares the public types used by clients to create and manage runtime-managed state machine instances. Implementation details are intentionally omitted from the header; refer to the implementation (.cpp) and specification documents for full behavior. </p>
-</div></div><!-- contents -->
+<h2><a class="anchor" id="autotoc_md33"></a>
+Overview</h2>
+<p>This header combines Dmn_State with Dmn_Runtime_Manager to execute state-machine steps asynchronously on the process-wide runtime thread. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API, and submit it with Dmn_Runtime_State::run().</p>
+<h2><a class="anchor" id="autotoc_md34"></a>
+Ownership and Lifetime</h2>
+<p>State handles are shared pointers. Once a state is submitted, the manager retains an owning handle until it reaches a terminal outcome, ensuring queued and running work cannot access a destroyed state. Implementations should use shared_from_this() only after a state is owned by a <code>std::shared_ptr</code>.</p>
+<h2><a class="anchor" id="autotoc_md35"></a>
+Thread Safety</h2>
+<p>Public lifecycle operations and state inspection are thread-safe. State functors and lifecycle hooks execute in the runtime async thread. Blocking wait and shutdown operations are prohibited from that thread to avoid deadlock. </p>
+</div><h2 class="groupheader">Typedef Documentation</h2>
+<a id="a210907b43b7fdae14054e27bdcc0d56b" name="a210907b43b7fdae14054e27bdcc0d56b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a210907b43b7fdae14054e27bdcc0d56b">&#9670;&#160;</a></span>DmnRuntimeStatePtr</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a> = typedef std::shared_ptr&lt;Dmn_Runtime_State&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Shared ownership handle for a runtime-managed state. </p>
+<p>The manager returns this handle from createState() and retains an additional handle after successful submission until the state becomes terminal. Retain this handle to configure, submit, inspect, or await the state. </p>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

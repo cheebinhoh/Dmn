@@ -5,5 +5,6 @@ var classdmn_1_1Dmn__Runtime__Manager =
     [ "clearSignalHandlerHook", "classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a", null ],
     [ "enterMainLoop", "classdmn_1_1Dmn__Runtime__Manager.html#ab9694235bcd595e812eacd6e115b1851", null ],
     [ "exitMainLoop", "classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab", null ],
+    [ "isRunInAsyncThread", "classdmn_1_1Dmn__Runtime__Manager.html#af8da9da1b7890b7f25e43b4b13e97756", null ],
     [ "registerSignalHandlerHook", "classdmn_1_1Dmn__Runtime__Manager.html#a1907e2ef032bc22e6a52c1c114c7afe6", null ]
 ];

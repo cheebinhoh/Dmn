@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['secint_0',['SecInt',['../dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4',1,'dmn']]]
+  ['nsecint_0',['NSecInt',['../dmn-runtime_8hpp.html#aba625a89985eb8bceb56e46e944883b5',1,'dmn']]]
 ];

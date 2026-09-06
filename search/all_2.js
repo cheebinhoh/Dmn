@@ -11,6 +11,6 @@ var searchData=
   ['closehandler_8',['closehandler',['../classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7',1,'dmn::Dmn_DMesg::closeHandler()'],['../classdmn_1_1Dmn__DMesgNet__Kafka.html#a73159e8bab3b1d351dcb6aa5e5b0ef0e',1,'dmn::Dmn_DMesgNet_Kafka::closeHandler()']]],
   ['concepts_9',['Key concepts',['../dmn-inflight-guard_8hpp.html#autotoc_md13',1,'']]],
   ['copy_20behavior_10',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]],
-  ['createinstance_11',['createinstance',['../classdmn_1_1Dmn__Runtime__State__Engine.html#a07ea833b9dfbc2b02b97c5548de58227',1,'dmn::Dmn_Runtime_State_Engine::createInstance()'],['../classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6',1,'dmn::Dmn_Singleton::createInstance()']]],
-  ['createstate_12',['createState',['../classdmn_1_1Dmn__Runtime__State__Engine.html#a84b3fe97a49213c5db3f0e986ebe84c7',1,'dmn::Dmn_Runtime_State_Engine']]]
+  ['createinstance_11',['createInstance',['../classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6',1,'dmn::Dmn_Singleton']]],
+  ['createstate_12',['createState',['../classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d',1,'dmn::Dmn_Runtime_State_Manager']]]
 ];

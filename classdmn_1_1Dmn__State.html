@@ -154,6 +154,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setEnd</b> ()</td></t
 <tr class="memitem:ab1dfd95a21cd05aea5535afc6efe8627" id="r_ab1dfd95a21cd05aea5535afc6efe8627"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#ab1dfd95a21cd05aea5535afc6efe8627">isFinalized</a> () -&gt; bool</td></tr>
 <tr class="memdesc:ab1dfd95a21cd05aea5535afc6efe8627"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether the machine has been finalized.  <br /></td></tr>
 <tr class="separator:ab1dfd95a21cd05aea5535afc6efe8627"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a995bc2b803f138a67b1d77f519b8d6de" id="r_a995bc2b803f138a67b1d77f519b8d6de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#a995bc2b803f138a67b1d77f519b8d6de">hasStateFncs</a> () const noexcept</td></tr>
+<tr class="memdesc:a995bc2b803f138a67b1d77f519b8d6de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return whether the client configured at least one state function.  <br /></td></tr>
+<tr class="separator:a995bc2b803f138a67b1d77f519b8d6de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af94ef4784a6073840df7cfc64576ae81" id="r_af94ef4784a6073840df7cfc64576ae81"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__State.html#af94ef4784a6073840df7cfc64576ae81">runNext</a> () -&gt; bool</td></tr>
 <tr class="memdesc:af94ef4784a6073840df7cfc64576ae81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute the next state step.  <br /></td></tr>
 <tr class="separator:af94ef4784a6073840df7cfc64576ae81"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -279,6 +282,35 @@ Protected Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a995bc2b803f138a67b1d77f519b8d6de" name="a995bc2b803f138a67b1d77f519b8d6de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a995bc2b803f138a67b1d77f519b8d6de">&#9670;&#160;</a></span>hasStateFncs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool dmn::Dmn_State::hasStateFncs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return whether the client configured at least one state function. </p>
+<p>Excludes the internal initialization function installed during construction.</p>
+<dl class="section return"><dt>Returns</dt><dd>true when at least one user-defined state function exists. </dd></dl>
 
 </div>
 </div>
