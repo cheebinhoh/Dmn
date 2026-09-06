@@ -12,11 +12,21 @@ The manager follows the same singleton model as `Dmn_Runtime_Manager`. It owns t
 ### Decision 2: state objects subclass `Dmn_State`
 Each runtime state object remains a state machine, but adds async lifecycle metadata and `wait()` support. This keeps the base state semantics while adding runtime execution ownership.
 
+`Dmn_State::runNext()` exposes only user-provided states: it performs
+initialization before the first user callback and finalization after a terminal
+callback in the same invocation. An empty `Dmn_State` converts to false, while
+an explicit `runNext()` initializes and finalizes it before returning false.
+
 ### Decision 3: all state execution is serialized
-The manager does not allow independent parallel execution of state steps across runtime state objects. It posts work to the runtime scheduler in serialized form.
+The manager does not allow independent parallel execution of user-state
+callbacks across submitted runtime state objects. It posts work to the
+process-wide runtime scheduler, which executes them serially.
 
 ### Decision 4: `run()` is async-only
-The client never directly executes state logic in its own thread. `run()` only queues runtime tasks. The runtime executes each state step and then re-posts the next task until the machine is complete.
+The client never directly executes state logic in its own thread. `run()` only
+queues runtime tasks. Each task invokes `runNext()`, executes at most one
+user-state callback, folds in pending initialization or finalization, and
+reposts when more user work remains.
 
 ## 3. Phase 1: Construct the manager singleton (complete)
 
@@ -54,8 +64,11 @@ The client never directly executes state logic in its own thread. `run()` only q
 - keep the inherited `Dmn_State` configuration API visible, but dynamically
   reject external `setStateFnc()`, `setNext()`, and `setEnd()` calls after a
   successful `run()`
+- authorize in-callback transitions by runtime thread identity, preventing a
+  client thread from mutating transitions while a callback is active
 - reject external `runNext()` through any `Dmn_Runtime_State` or `Dmn_State`
-  view so only the manager may advance the machine
+  view, including from inside a user callback, so only the manager may advance
+  the machine
 - add public `Dmn_State::hasStateFncs()` to identify whether the client
   configured at least one state function
 - retain a manager-owned state handle after successful runtime queueing and
@@ -84,10 +97,12 @@ The client never directly executes state logic in its own thread. `run()` only q
 
 ### Tasks
 
-- schedule state steps as runtime jobs using `Dmn_Runtime_Manager::addJob()`
+- schedule user-state callbacks as runtime jobs using
+  `Dmn_Runtime_Manager::addJob()`
 - ensure `run()` posts work to runtime rather than executing directly
 - serialize state object execution through the runtime queue
-- implement continuation loop so each step schedules the next one until terminal state
+- implement a continuation loop so each non-terminal user step schedules the
+  next one
 
 ### Deliverables
 
@@ -160,8 +175,8 @@ The client never directly executes state logic in its own thread. `run()` only q
 - Added API-boundary enforcement so runtime submission freezes external
   configuration/mutation and reserves `runNext()` for manager-driven
   execution only.
-- Added runtime-aware callback support so cancellation-aware state steps can
-  use `Dmn_Runtime_State &` directly when needed.
+- Added runtime-aware callback support so cancellation-aware user-state
+  callbacks can use `Dmn_Runtime_State &` directly when needed.
 
 ## 10. Risks and Checkpoints
 
@@ -190,7 +205,8 @@ The feature is done when:
 - the runtime state manager is implemented as a singleton
 - runtime state objects subclass `Dmn_State`
 - `run()` schedules async execution through `Dmn_Runtime_Manager`
-- all state objects are serialized through the runtime manager
+- callbacks from submitted state objects are serialized through the runtime
+  manager
 - client `wait()` supports async completion tracking
 - failure and cancellation paths are verified by tests
 - the library remains backward compatible with existing runtime/state APIs

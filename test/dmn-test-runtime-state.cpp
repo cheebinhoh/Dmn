@@ -78,7 +78,7 @@ TEST(DmnRuntimeState, RejectsExternalMutationAfterSubmission) {
 
   EXPECT_TRUE(state->run());
   EXPECT_THROW(state->setStateFnc([](dmn::Dmn_State &) {}), std::logic_error);
-  EXPECT_THROW(state->setNext(0), std::logic_error);
+  EXPECT_THROW(state->setNext(1), std::logic_error);
   EXPECT_THROW(state->setEnd(), std::logic_error);
   EXPECT_THROW(base.runNext(), std::logic_error);
 
@@ -110,12 +110,49 @@ TEST(DmnRuntimeState, RuntimeCallbackCanObserveCancellationDirectly) {
   EXPECT_TRUE(state->run());
   Runtime_Main_Loop loop{runtime()};
   EXPECT_EQ(callbackStartedFuture.wait_for(5s), std::future_status::ready);
+  EXPECT_THROW(state->setNext(1), std::logic_error);
+  EXPECT_THROW(state->setEnd(), std::logic_error);
   state->cancel();
   EXPECT_TRUE(state->wait_for(5s));
   loop.stop();
 
   EXPECT_TRUE(observedCancellation.load());
   EXPECT_TRUE(state->isCancelled());
+}
+
+TEST(DmnRuntimeState, RejectsRecursiveRunNextFromRuntimeCallback) {
+  using namespace std::chrono_literals;
+
+  std::atomic_bool recursiveRunRejected{};
+  std::atomic_int secondStateCount{};
+  auto state = stateManager()->createState("recursive-run-next");
+
+  state->setStateFnc(
+      [&recursiveRunRejected](dmn::Dmn_State &current) {
+        current.setNext();
+
+        try {
+          (void)current.runNext();
+        } catch (const std::logic_error &) {
+          recursiveRunRejected = true;
+        }
+      },
+      1);
+  state->setStateFnc(
+      [&secondStateCount](dmn::Dmn_State &current) {
+        ++secondStateCount;
+        current.setEnd();
+      },
+      2);
+
+  EXPECT_TRUE(state->run());
+  Runtime_Main_Loop loop{runtime()};
+  EXPECT_TRUE(state->wait_for(5s));
+  loop.stop();
+
+  EXPECT_TRUE(recursiveRunRejected.load());
+  EXPECT_EQ(secondStateCount.load(), 1);
+  EXPECT_TRUE(state->isCompleted());
 }
 
 TEST(DmnRuntimeState, RejectsUnconfiguredAndPreRunCancelledStates) {
@@ -482,6 +519,8 @@ TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
 TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
   using namespace std::chrono_literals;
 
+  // Keep this test last: shutdown permanently disables the process-wide
+  // runtime-state manager singleton.
   auto manager = stateManager();
   std::promise<void> blockingStepStarted;
   auto blockingStepStartedFuture = blockingStepStarted.get_future();

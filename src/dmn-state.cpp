@@ -5,15 +5,14 @@
  * @brief Generic State machine wrapper and API that clients can drive
  *        the state machine to execute different states.
  *
- * The Dmn_State class stores a sequence of state functors and provides a
- * small API for initializing, advancing, and finalizing a state machine.
- * States are represented by functors of type std::function<void(Dmn_State&)>.
+ * Each runNext() call executes at most one user-provided state callback.
+ * Initialization before the first callback and finalization after terminal
+ * selection are handled internally by the same call.
  */
 
 #include "dmn-state.hpp"
 
 #include <cassert>
-#include <functional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -23,8 +22,7 @@
 namespace dmn {
 
 Dmn_State::Dmn_State(std::string_view name) : m_name{name} {
-  m_states.emplace_back(
-      std::bind(&Dmn_State::init, this, std::placeholders::_1));
+  m_states.emplace_back();
 }
 
 Dmn_State::~Dmn_State() {}
@@ -32,7 +30,7 @@ Dmn_State::~Dmn_State() {}
 void Dmn_State::init([[maybe_unused]] Dmn_State &s) {
   m_initialized = true;
 
-  setNext(1); // either end of state or user provided first state
+  setNext(1); // Select the first user state; runNext() detects an empty list.
 }
 
 void Dmn_State::finalize([[maybe_unused]] Dmn_State &s) { m_finalized = true; }
@@ -54,23 +52,40 @@ bool Dmn_State::hasStateFncs() const noexcept { return m_states.size() > 1; }
 auto Dmn_State::runNext() -> bool {
   beforeRunNext();
 
-  // preferred assertion: use an explicit cast so it always compiles
-  assert(static_cast<bool>(*this) && "runNext called after finalize");
+  assert(!m_finalized && "runNext called after finalize");
 
-  // Preserve a runtime guard because assert() disappears in release builds.
-  if (!static_cast<bool>(*this)) {
+  if (m_finalized) {
     return false;
   }
 
   assert(m_next <= static_cast<int>(m_states.size()));
 
-  if (m_next < 0) {
+  // A previously selected terminal state takes precedence over initialization.
+  // This preserves cancellation behavior for machines that never started.
+  if (m_next >= static_cast<int>(m_states.size())) {
     finalize(*this);
-  } else if (m_next >= static_cast<int>(m_states.size())) {
+  } else if (!m_initialized) {
+    init(*this);
+  }
+
+  if (m_finalized) {
+    return false;
+  }
+
+  // Initialization selects the first user state. An empty machine therefore
+  // proceeds directly to finalization without exposing either internal step.
+  if (m_next >= static_cast<int>(m_states.size())) {
     finalize(*this);
-  } else {
-    auto &fn = m_states[m_next];
-    fn(*this);
+
+    return false;
+  }
+
+  assert(m_next > 0 && "state index 0 is reserved for initialization");
+  auto &fn = m_states[m_next];
+  fn(*this);
+
+  if (m_next >= static_cast<int>(m_states.size())) {
+    finalize(*this);
   }
 
   return static_cast<bool>(*this);
@@ -83,7 +98,11 @@ void Dmn_State::setEnd() {
 
 void Dmn_State::setNext(int index) {
   beforeSetNext();
-  assert(index >= 0 && index <= static_cast<int>(m_states.size()));
+
+  if (index <= 0 || index > static_cast<int>(m_states.size())) {
+    throw std::out_of_range(
+        "setNext: index must select a user state or the end");
+  }
 
   m_next = index;
 }
@@ -103,13 +122,13 @@ void Dmn_State::setStateFnc(FncType fnc, int index) {
 
   const int n = static_cast<int>(m_states.size());
   if (index == n || index == 0) {
-    // append the next step (must be exactly the next index)
+    // The reserved slot makes n the next 1-based user-state index.
     m_states.emplace_back(std::move(fnc));
   } else if (index < n) {
-    // overwrite an existing (non-zero) step
+    // Valid nonzero indices below n identify existing user states.
     m_states[index] = std::move(fnc);
   } else {
-    // index > n -> skipping steps is not allowed
+    // User-state indices must remain contiguous.
     throw std::out_of_range("setStateFnc: cannot skip steps; index too large");
   }
 }

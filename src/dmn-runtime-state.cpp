@@ -9,9 +9,11 @@
  * --------------------
  * Lifecycle flags and the completion promise are synchronized by
  * Dmn_Runtime_State::m_mutex. The manager separately protects its retained
- * state handles while jobs are queued or running. Lifecycle hooks always run
- * after the lifecycle mutex is released so derived implementations can safely
- * inspect state or call other public APIs.
+ * state handles while jobs are queued or running. Each job executes at most
+ * one user-state callback; Dmn_State folds internal initialization and
+ * finalization into that dispatch. Lifecycle hooks always run after the
+ * lifecycle mutex is released so derived implementations can safely inspect
+ * state or call other public APIs.
  */
 
 #include "dmn-runtime-state.hpp"
@@ -22,6 +24,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -46,52 +49,79 @@ void Dmn_Runtime_State::beforeSetStateFnc() {
 
   if (m_queued || m_running || m_terminal) {
     throw std::logic_error(
-        "Dmn_Runtime_State::setStateFnc cannot modify configuration after "
-        "successful run()");
+        "Dmn_Runtime_State::setStateFnc cannot modify configuration after the "
+        "state has been submitted or reached a terminal outcome");
   }
 }
 
 void Dmn_Runtime_State::beforeSetNext() {
   std::lock_guard lock{m_mutex};
 
-  if ((m_queued || m_running || m_terminal) && m_internalExecutionDepth == 0) {
+  const bool internalCaller =
+      m_internalExecutionDepth > 0 &&
+      m_internalExecutionThread == std::this_thread::get_id();
+  if ((m_queued || m_running || m_terminal) && !internalCaller) {
     throw std::logic_error(
-        "Dmn_Runtime_State transition changes are reserved for the active "
-        "runtime-managed step after successful run()");
+        "Dmn_Runtime_State transition changes are reserved for the runtime "
+        "callback after submission or a terminal outcome");
   }
 }
 
 void Dmn_Runtime_State::beforeSetEnd() {
   std::lock_guard lock{m_mutex};
 
-  if ((m_queued || m_running || m_terminal) && m_internalExecutionDepth == 0) {
+  const bool internalCaller =
+      m_internalExecutionDepth > 0 &&
+      m_internalExecutionThread == std::this_thread::get_id();
+  if ((m_queued || m_running || m_terminal) && !internalCaller) {
     throw std::logic_error(
-        "Dmn_Runtime_State termination is reserved for the active "
-        "runtime-managed step after successful run()");
+        "Dmn_Runtime_State termination is reserved for the runtime callback "
+        "after submission or a terminal outcome");
   }
 }
 
 void Dmn_Runtime_State::beforeRunNext() {
   std::lock_guard lock{m_mutex};
 
-  if (m_internalExecutionDepth == 0) {
+  const bool internalCaller =
+      m_internalExecutionDepth > 0 &&
+      m_internalExecutionThread == std::this_thread::get_id();
+  if (!internalCaller || !m_runNextPermitted) {
     throw std::logic_error(
         "Dmn_Runtime_State::runNext is reserved for runtime-managed "
         "execution");
   }
+
+  m_runNextPermitted = false;
 }
 
-void Dmn_Runtime_State::enterInternalExecution() {
+void Dmn_Runtime_State::enterInternalExecution(bool permitRunNext) {
   std::lock_guard lock{m_mutex};
+
+  if (m_internalExecutionDepth == 0) {
+    m_internalExecutionThread = std::this_thread::get_id();
+  } else {
+    assert(m_internalExecutionThread == std::this_thread::get_id());
+  }
+
   ++m_internalExecutionDepth;
+  if (permitRunNext) {
+    assert(!m_runNextPermitted);
+    m_runNextPermitted = true;
+  }
 }
 
 void Dmn_Runtime_State::leaveInternalExecution() noexcept {
   std::lock_guard lock{m_mutex};
 
   assert(m_internalExecutionDepth > 0);
+  assert(m_internalExecutionThread == std::this_thread::get_id());
 
   --m_internalExecutionDepth;
+  if (m_internalExecutionDepth == 0) {
+    m_internalExecutionThread = {};
+    m_runNextPermitted = false;
+  }
 }
 
 bool Dmn_Runtime_State::runNextManaged() {
@@ -100,7 +130,7 @@ bool Dmn_Runtime_State::runNextManaged() {
     ~Execution_Guard() { state->leaveInternalExecution(); }
   };
 
-  enterInternalExecution();
+  enterInternalExecution(true);
   Execution_Guard guard{this};
 
   return Dmn_State::runNext();
@@ -112,7 +142,7 @@ void Dmn_Runtime_State::setEndManaged() {
     ~Execution_Guard() { state->leaveInternalExecution(); }
   };
 
-  enterInternalExecution();
+  enterInternalExecution(false);
   Execution_Guard guard{this};
   Dmn_State::setEnd();
 }
