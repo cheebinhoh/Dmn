@@ -2,16 +2,17 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-runtime-state.hpp
- * @brief Runtime-scheduled finite-state-machine execution and lifetime
- *        management.
+ * @brief Asynchronous state-machine execution and lifetime management.
  *
  * @author Chee Bin HOH
  * @date 2026-08-31
  *
  * Overview
  * --------
- * This header combines @ref Dmn_State with @ref Dmn_Runtime_Manager to execute
- * state-machine steps asynchronously on the process-wide runtime thread.
+ * This header runs @ref Dmn_State callbacks on the process-wide
+ * @ref Dmn_Runtime_Manager thread. Internal initialization and finalization
+ * occur in the same runtime dispatch as the surrounding user-state work and
+ * are not scheduled separately.
  * Clients create a @ref Dmn_Runtime_State through
  * @ref Dmn_Runtime_State_Manager, configure it with the inherited
  * @ref Dmn_State API or @ref setRuntimeStateFnc(), and submit it with
@@ -19,19 +20,25 @@
  *
  * Ownership and Lifetime
  * ----------------------
- * State handles are shared pointers. Once a state is submitted, the manager
- * retains an owning handle until it reaches a terminal outcome, ensuring queued
- * and running work cannot access a destroyed state. Implementations should use
- * shared_from_this() only after a state is owned by a @c std::shared_ptr.
+ * State handles are shared pointers. After a successful submission, the
+ * manager retains an owning handle until the state completes, fails, or is
+ * cancelled. A client may therefore release its handle without invalidating
+ * queued or running work.
  *
  * Thread Safety
  * -------------
- * Public lifecycle operations and state inspection are thread-safe. State
- * functors and lifecycle hooks execute in the runtime async thread. State
- * configuration belongs to the pre-submission phase only: after a successful
- * run(), external calls to inherited configuration/transition APIs are
- * rejected. Blocking wait and shutdown operations are prohibited from the
- * runtime async thread to avoid deadlock.
+ * Runtime lifecycle operations and runtime-specific status queries are
+ * synchronized. Configure inherited @ref Dmn_State callbacks and transitions
+ * from one client thread before submission. During execution, inherited base
+ * lifecycle queries should only be read from a callback or after the
+ * completion future is ready.
+ *
+ * User-state callbacks, onStarted(), onCompleted(), and onFailed() execute on
+ * the runtime thread. onCancelled() executes in whichever thread publishes
+ * cancellation: normally the runtime thread for queued work, but the caller's
+ * thread when cancellation completes before successful submission. Blocking
+ * wait and shutdown operations are prohibited from the runtime thread to
+ * avoid deadlock.
  */
 
 #ifndef DMN_RUNTIME_STATE_HPP_
@@ -50,6 +57,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 
 namespace dmn {
@@ -60,29 +68,35 @@ namespace dmn {
  *
  * Dmn_Runtime_State subclasses Dmn_State and adds asynchronous runtime
  * ownership semantics: a client obtains a shared_ptr handle from the
- * manager, configures state functors using the inherited @ref Dmn_State API
+ * manager, configures state callbacks using the inherited @ref Dmn_State API
  * or the runtime-aware @ref setRuntimeStateFnc() helper, then calls
  * run() to schedule execution on the global runtime thread.
  *
  * Lifecycle
  * ---------
- * A state is configured, submitted once, and then completes, fails, or is
- * cancelled. Cancellation is cooperative: it prevents subsequent state steps
- * but does not interrupt a functor already executing. Completion is published
- * through a @c std::shared_future<void>, which supports multiple waiters.
+ * A state is configured, successfully submitted at most once, and then
+ * completes, fails, or is cancelled. Cancellation is cooperative: it does not
+ * interrupt a callback whose runtime dispatch has started. Completion is
+ * published through a @c std::shared_future<void>, which supports multiple
+ * waiters.
  *
  * The inherited @ref Dmn_State configuration API remains the client-facing way
- * to install state functors before submission. After a successful @ref run,
+ * to install state callbacks before submission. After a successful @ref run,
  * external calls to @ref Dmn_State::setStateFnc, @ref Dmn_State::setNext, and
  * @ref Dmn_State::setEnd throw @c std::logic_error. Manager-driven execution
  * still permits state callbacks to call @ref setNext or @ref setEnd from
- * inside the currently executing runtime step. External @ref runNext calls are
- * rejected; only the manager may advance the machine.
+ * inside the currently executing user-state callback. External @ref runNext
+ * calls are rejected; only the manager may advance the machine.
  *
  * For callbacks that need runtime-only APIs such as @ref isCancelled(), use
  * @ref setRuntimeStateFnc(). It adapts a callback that takes
  * @c Dmn_Runtime_State & into the underlying @ref Dmn_State callback storage
  * while preserving the base API for compatibility.
+ *
+ * The inherited Dmn_State boolean conversion describes whether configured
+ * base-state work remains; it is not a runtime terminal-status query. Use
+ * isCompleted(), isFailed(), isCancelled(), or getFuture() to observe the
+ * runtime lifecycle.
  */
 class Dmn_Runtime_State
     : public Dmn_State,
@@ -91,9 +105,10 @@ class Dmn_Runtime_State
 
 public:
   /**
-   * @brief Callback invoked by the runtime when a state step throws.
+   * @brief Callback invoked when a runtime dispatch throws.
    *
-   * The callback receives the exception captured by the runtime job.
+   * The callback receives the exception captured by the runtime job. This
+   * includes exceptions from onStarted() and user-state callbacks.
    */
   using OnErrorFnc = Dmn_Runtime_Job::OnErrorFncType;
 
@@ -125,16 +140,20 @@ public:
   using RuntimeStateFnc = std::function<void(Dmn_Runtime_State &state)>;
 
   /**
-   * @brief Install a runtime-aware state functor.
-   * @param fnc Callback invoked as the selected state step body with the
-   *            runtime-managed state object.
-   * @param index If 0 or the next 1-based user-state index, append a new user
-   *              state. If 1..the current highest user-state index, replace
-   *              the existing user state at that slot.
+   * @brief Add a runtime-aware user-state callback or replace an existing one.
+   * @param fnc Callback invoked with the runtime-managed state object.
+   * @param index With N callbacks currently configured, pass 0 (the default)
+   *              or N+1 to append a callback. Pass 1 through N to replace the
+   *              callback at that state.
+   * @throws std::out_of_range if index is negative or greater than N+1.
    *
    * This is a convenience wrapper over the inherited @ref Dmn_State API. It
    * adapts a callback taking @c Dmn_Runtime_State & into the underlying
-   * storage used by @ref Dmn_State::setStateFnc().
+   * storage used by @ref Dmn_State::setStateFnc() and uses the same indexing
+   * rules.
+   *
+   * @throws std::logic_error if called after successful submission.
+   * @throws std::out_of_range for an invalid index.
    */
   void setRuntimeStateFnc(RuntimeStateFnc fnc, int index = 0);
 
@@ -145,8 +164,8 @@ public:
    *
    * @param priority Job priority to use when enqueuing (maps to
    * Dmn_Runtime_Job::Priority).
-   * @param delay If non-zero, the first job is scheduled via addTimedJob()
-   * after this delay. Later state steps are posted immediately.
+   * @param delay If non-zero, the first runtime dispatch is scheduled via
+   * addTimedJob() after this delay. Later dispatches are posted immediately.
    * @param onError Optional error callback forwarded to the runtime job. The
    *                type matches Dmn_Runtime_Job::OnErrorFncType.
    * @return true if the state was successfully queued; false for an already
@@ -156,12 +175,16 @@ public:
    * Notes:
    * - run() is one-shot for a given handle: the first successful call enqueues
    *   the state; subsequent calls return false.
+   * - A failed enqueue does not consume the one allowed successful
+   *   submission, so the caller may retry.
    * - Calling run() from inside the runtime async thread is disallowed and
    *   throws std::runtime_error.
    *
    * @throws std::bad_weak_ptr if this object is not owned by a
    *         @c std::shared_ptr.
    * @throws std::runtime_error if called from the runtime async thread.
+   * @throws Any exception raised by the runtime scheduler while enqueuing.
+   *         The state remains eligible for another submission attempt.
    */
   bool
   run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
@@ -172,15 +195,15 @@ public:
   /**
    * @brief Request cooperative cancellation of this state.
    *
-   * The cancellation is idempotent and thread-safe. It does NOT preempt a
-   * currently-running functor. A callback that needs cooperative early exit
-   * should prefer @ref setRuntimeStateFnc() so it can query
-   * @ref isCancelled() directly on its @c Dmn_Runtime_State & parameter. The
-   * runtime job must check isCancelled() and call setEnd() prior to invoking
-   * runNext() if cancellation is set.
+   * The cancellation is idempotent and thread-safe. It does not preempt a
+   * user-state callback whose runtime dispatch has started. A callback that
+   * needs cooperative early exit should prefer @ref setRuntimeStateFnc() so it
+   * can query @ref isCancelled() directly.
    *
    * A state cancelled before submission becomes terminal immediately. A
    * submitted state becomes terminal when the runtime observes the request.
+   * Pre-submission cancellation invokes onCancelled() in the calling thread;
+   * cancellation of submitted work normally invokes it in the runtime thread.
    */
   void cancel();
 
@@ -194,12 +217,15 @@ public:
    * so callers may register waiters before run() is called.
    *
    * @return A copyable completion future. Calling @c get() on it rethrows a
-   *         state-step failure.
+   *         user-state callback failure.
    */
   std::shared_future<void> getFuture();
 
   /**
    * @brief Block until the state reaches a terminal condition.
+   *
+   * This method does not rethrow a captured execution failure. Call
+   * getFuture().get() when the failure must be observed.
    *
    * Calling wait() from the runtime async thread is disallowed and throws
    * std::runtime_error. See getFuture() for async waiting.
@@ -212,6 +238,10 @@ public:
    * @brief Block until the state is terminal or the timeout expires.
    * @param timeout Maximum duration to wait.
    * @return true if terminal observed before timeout, false otherwise.
+   *
+   * This method does not rethrow a captured execution failure. Call
+   * getFuture().get() when the failure must be observed.
+   *
    * @throws std::runtime_error if called from the runtime async thread.
    */
   template <typename Rep, typename Period>
@@ -227,10 +257,10 @@ public:
   /** @brief Return whether the state completed successfully. */
   bool isCompleted() const;
 
-  /** @brief Return whether a state step failed. */
+  /** @brief Return whether a user-state callback failed. */
   bool isFailed() const;
 
-  /** @brief Return whether the state is queued or executing a step. */
+  /** @brief Return whether the state is queued or has started but not ended. */
   bool isRunning() const;
 
 protected:
@@ -238,27 +268,40 @@ protected:
    * @brief Lifecycle hooks for derived implementations.
    *
    * Subclasses may override these to observe state lifecycle transitions. The
-   * default implementations are no-ops.
+   * default implementations are no-ops. Completion is published before a
+   * terminal hook runs, so a waiting client may resume while that hook is
+   * executing. Overrides of terminal hooks must not throw; their outcome has
+   * already been published, and an exception can interrupt manager cleanup.
+   * An exception from onStarted() is handled as a state failure before a user
+   * callback runs.
    */
-  /** @brief Called once before the first state step executes. */
+  /** @brief Called once when the first runtime dispatch begins. */
   virtual void onStarted();
 
-  /** @brief Called after normal terminal completion is published. */
+  /**
+   * @brief Called in the runtime thread after successful completion is
+   *        published.
+   */
   virtual void onCompleted();
 
   /**
-   * @brief Called after a state-step failure is published.
-   * @param ep Exception raised by the failed state step.
+   * @brief Called in the runtime thread after a failure is published.
+   * @param ep Exception raised by the failed user-state callback.
    */
   virtual void onFailed(std::exception_ptr ep);
 
-  /** @brief Called after cancellation is published as terminal. */
+  /**
+   * @brief Called after cancellation is published.
+   *
+   * This runs in the caller's thread for cancellation before submission and
+   * normally in the runtime thread for submitted work.
+   */
   virtual void onCancelled();
 
 private:
   enum class Terminal_State { kCompleted, kFailed, kCancelled };
 
-  /** @brief Begin a runtime step and invoke @ref onStarted exactly once. */
+  /** @brief Begin a runtime dispatch and invoke @ref onStarted exactly once. */
   bool beginStep();
 
   /**
@@ -274,16 +317,21 @@ private:
    * it. */
   void resetQueuedAfterSubmission();
 
-  /** @brief Advance the state machine with manager-only execution access. */
+  /**
+   * @brief Execute one user state with manager-only execution access.
+   *
+   * The base operation also performs pending initialization and terminal
+   * finalization in this call.
+   */
   bool runNextManaged();
 
   /** @brief Force terminal selection with manager-only execution access. */
   void setEndManaged();
 
-  /** @brief Mark the current thread as executing a manager-authorized step. */
-  void enterInternalExecution();
+  /** @brief Enter a manager-authorized runtime dispatch. */
+  void enterInternalExecution(bool permitRunNext);
 
-  /** @brief Clear manager-authorized execution access. */
+  /** @brief Leave a manager-authorized runtime dispatch. */
   void leaveInternalExecution() noexcept;
 
   void beforeSetStateFnc() override;
@@ -295,17 +343,20 @@ private:
   std::promise<void> m_completionPromise{}; ///< Fulfilled on terminal state.
   std::shared_future<void>
       m_completionSharedFuture{}; ///< Copyable completion notification.
-  std::exception_ptr m_failure{}; ///< Captured state-function failure.
+  std::exception_ptr m_failure{}; ///< Captured dispatch failure.
   bool m_queued{};                ///< True after successful submission setup.
-  bool m_running{}; ///< True after the first state step begins until terminal.
-  bool m_started{}; ///< Ensures onStarted runs once.
+  bool m_running{};   ///< True after the first runtime dispatch until terminal.
+  bool m_started{};   ///< Ensures onStarted runs once.
   bool m_completed{}; ///< Terminal normal-completion marker.
   bool m_failed{};    ///< Terminal failure marker.
   bool m_cancelled{}; ///< Cancellation requested or terminal.
   bool m_terminal{};  ///< Guards one-time completion publication.
   unsigned int m_internalExecutionDepth{}; ///< Non-zero only while the manager
-                                           ///< drives a step and its
+                                           ///< drives a dispatch and its
                                            ///< callback-controlled transitions.
+  std::thread::id
+      m_internalExecutionThread{}; ///< Thread authorized to change transitions.
+  bool m_runNextPermitted{}; ///< Consumed when the manager starts one step.
 };
 
 /**
@@ -363,8 +414,8 @@ public:
    * Shutdown is idempotent. It permanently rejects new state submissions:
    * handles created after shutdown remain configurable, but @ref
    * Dmn_Runtime_State::run returns false. Submitted states are cancelled
-   * cooperatively; an executing user step may finish before publishing
-   * cancellation, while queued steps finalize without running another
+   * cooperatively; an executing user callback may finish before publishing
+   * cancellation, while queued states finalize without running another
    * user-defined callback.
    *
    * This method waits without holding the manager mutex until every state
@@ -391,7 +442,7 @@ private:
   friend class Dmn_Runtime_State;
 
   /**
-   * @brief Retain and submit a state for its first or subsequent step.
+   * @brief Retain and submit a state for its first or subsequent dispatch.
    *
    * The retained handle guarantees state lifetime until @ref releaseState.
    * @return true when the job was accepted; false if shutdown rejects an
@@ -403,11 +454,14 @@ private:
                     Dmn_Runtime_State::OnErrorFnc onError);
 
   /**
-   * @brief Execute one state step and repost or terminally release it.
+   * @brief Advance a state and repost or terminally release it.
    *
    * @param state Non-owning state handle captured by a runtime job.
-   * @param priority Priority to reuse when posting the next step.
-   * @param onError Runtime error callback for the next step.
+   * @param priority Priority to reuse when posting the next dispatch.
+   * @param onError Runtime error callback for the next dispatch.
+   *
+   * A dispatch executes at most one user callback; cancellation or a
+   * previously selected end may execute none.
    */
   void executeStateStep(std::weak_ptr<Dmn_Runtime_State> state,
                         Dmn_Runtime_Job::Priority priority,

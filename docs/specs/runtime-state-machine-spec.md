@@ -1,6 +1,6 @@
 # Feature Spec: Runtime State Manager
 
-Status: Draft — Phases 1-7 implemented.
+Status: Implemented.
 
 ## Implementation Status
 
@@ -9,8 +9,8 @@ handles, completion futures, runtime scheduling, manager-held lifetime,
 one-shot submission, cooperative cancellation, failure capture, runtime
 error callback forwarding, post-submission external-mutation rejection, and
 the runtime-aware `setRuntimeStateFnc()` callback API. `run()` supports
-priority and an initial delay; later steps are reposted immediately at the
-submitted priority.
+priority and an initial delay; later user-state callbacks are reposted
+immediately at the submitted priority.
 
 `run()`, `wait()`, and `wait_for()` reject calls from the runtime async thread.
 Focused tests cover external-mutation rejection after submission,
@@ -19,12 +19,17 @@ manager-retained lifetime, priority ordering, timed initial submission,
 runtime-thread rejection, drain-and-cancel shutdown, multi-state
 serialization, failure isolation, and concurrent lifecycle operations. The
 manager exposes one shutdown mode and no configurable concurrency. The
-current runtime architecture serializes all state steps through the
+current runtime architecture serializes all user-state callbacks through the
 process-wide runtime async thread.
 
 ## 1. Summary
 
-This feature introduces a new runtime-owned state execution manager that combines the existing `dmn-runtime` scheduler with the `dmn-state` finite-state helper. The result is a singleton runtime service that creates state objects for clients, serializes their execution through the runtime, and lets callers wait for completion without forcing the client thread to execute each state step directly.
+This feature introduces a new runtime-owned state execution manager that
+combines the existing `dmn-runtime` scheduler with the `dmn-state` finite-state
+helper. The result is a singleton runtime service that creates state objects
+for clients, serializes their execution through the runtime, and lets callers
+wait for completion without forcing the client thread to execute each
+user-state callback directly.
 
 The new feature preserves the library’s current design philosophy:
 
@@ -39,16 +44,23 @@ The primary behavior is:
 2. client configures the state(s) on that object;
 3. client calls `statehandle->run()` (optionally with priority / delay / onError handler);
 4. `run()` enqueues a runtime task into the runtime manager and returns a boolean indicating whether the enqueue succeeded;
-5. the runtime manager continues to repost tasks until the state object reaches its terminal condition; errors occurring in async execution invoke a client-provided onError callback (if supplied) and are captured on the state handle;
-6. all state objects created by the manager are executed in serialized order through `Dmn_Runtime_Manager` (subject to the manager's serialization policy);
+5. the runtime manager continues to repost tasks while user callbacks remain;
+   errors occurring in async execution invoke a client-provided onError
+   callback (if supplied) and are captured on the state handle;
+6. callbacks from submitted state objects execute serially through
+   `Dmn_Runtime_Manager`;
 7. client may call `statehandle->wait()` or use the returned shared_future to block or asynchronously observe completion.
 
 ## 2. Design Objective
 
-The existing `dmn-state` component is synchronous and client-driven. It calls `runNext()` directly in the caller thread. That is useful for local control flow, but not for runtime-managed workflows. The new runtime state manager changes the ownership model:
+The existing `dmn-state` component is synchronous and client-driven. It calls
+`runNext()` directly in the caller thread; each call executes at most one user
+callback and folds in pending initialization or finalization. That is useful
+for local control flow, but not for runtime-managed workflows. The new runtime
+state manager changes the ownership model:
 
 - the state object remains a state machine definition and execution state,
-- the runtime manager owns when the state steps are executed,
+- the runtime manager owns when user-state callbacks are executed,
 - state execution is serialized within the runtime’s async context,
 - the client receives an async completion signal via `wait()` or a shared_future rather than manually stepping the machine.
 
@@ -73,7 +85,6 @@ This makes the feature a natural fit for handshake flows, retries, startup/teard
 - persistence or recovery of state machines
 - automatic consensus protocol orchestration
 - general-purpose actor model features
-- changes to existing `Dmn_State` sync API behavior
 
 ## 4. Architectural Context
 
@@ -154,20 +165,34 @@ client chose, to call `setNext()` or `setEnd()` when it needs to select the
 next transition or terminate the machine.
 
 `Dmn_State::hasStateFncs()` is a public query that returns true when at least
-one client-defined state function exists. It excludes the internal
-initialization function and is used by `Dmn_Runtime_State::run()` to reject an
-unconfigured state without terminalizing it.
+one client-defined callback exists. It excludes the reserved internal slot and
+is used by `Dmn_Runtime_State::run()` to reject an unconfigured state without
+terminalizing it.
+
+For synchronous `Dmn_State`, internal lifecycle work is not exposed as
+separate steps. `runNext()` performs initialization before the first
+user-provided callback and performs finalization after a callback selects a
+terminal transition, all in the same invocation. It executes at most one user
+callback per call. An empty state converts to false; an explicit `runNext()`
+still initializes and finalizes that empty state before returning false.
+State index 0 is reserved for internal initialization and is not a valid
+`setNext()` target.
 
 Configuration must be complete before a successful `run()` call. After a
 successful submission, external calls to inherited `setStateFnc()`,
 `setNext()`, and `setEnd()` MUST throw `std::logic_error`. This freeze applies
 through any `Dmn_Runtime_State` or `Dmn_State` view of the object. The
 currently executing runtime-managed callback remains allowed to call
-`setNext()` and `setEnd()` to choose transitions.
+`setNext()` and `setEnd()` to choose transitions. Authorization is tied to the
+runtime execution thread, so a client thread cannot mutate transitions while a
+callback is active.
 
 External `runNext()` is never part of the runtime-managed contract. Calling
 `runNext()` on a `Dmn_Runtime_State` through any `Dmn_State` view MUST throw
-`std::logic_error`; only the manager may drive state advancement.
+`std::logic_error`; only the manager may drive state advancement. This
+restriction also applies inside a user callback, which must use `setNext()` or
+`setEnd()` and return control to the manager instead of recursively advancing
+the machine.
 
 ### FR-4: `run()` dispatches work to runtime and error callback forwarding
 
@@ -180,10 +205,14 @@ Behavior:
 - `run()` returns `true` if the state was successfully queued and `false` when
   the state is unconfigured, cancelled, terminal, already active, or the
   manager has shut down. Runtime submission exceptions propagate after the
-  state clears its queued marker.
+  state clears its queued marker, allowing a later submission attempt.
 - `run()` is a one-shot operation for each state handle: subsequent `run()` calls after the first successful enqueue MUST be no-ops and MUST return `false`.
 - The optional `onError` callback provided to `run()` MUST be forwarded to the underlying `dmn-runtime` job so that asynchronous runtime failures invoke the client callback when the runtime job reports an error. Use `Dmn_Runtime_Job::OnErrorFncType` as the canonical type.
-- The runtime work must execute exactly one next state step of the state object per posted job; after the step executes, the manager reposts another job (or finalizes) until terminal.
+- Each runtime dispatch executes at most one user-provided callback.
+  Initialization runs before the first callback, and finalization runs after a
+  terminal callback in the same dispatch. Cancellation or an end selected
+  before submission may cause a dispatch to execute no user callback. After a
+  non-terminal callback executes, the manager reposts another job.
 - `run()` MUST NOT execute state logic synchronously in the caller thread.
 
 Priority and timed variants:
@@ -203,15 +232,15 @@ Thread policy for `run()`, `wait()`, and `wait_for()`:
 - This policy applies in every build configuration, permitting direct,
   deterministic unit testing without a debug-only death test.
 
-### FR-5: Serialized execution across all state objects
+### FR-5: Serialized execution across submitted state objects
 
 All state objects created from the runtime state manager must execute in serialized form through the shared runtime scheduler by default.
 
 Requirements:
 
-- no two state objects may run their next step concurrently in the same runtime manager (default global serialization)
+- no two state objects may run user-state callbacks concurrently in the same runtime manager (default global serialization)
 - state object execution order must follow runtime job ordering/priority semantics
-- state step tasks must be single-threaded relative to manager execution
+- user-state callbacks must be single-threaded relative to manager execution
 - the manager MAY provide configuration for relaxed concurrency (optional extension) but default behavior must be serialized to match the spec
 
 ### FR-6: Completion waiting via `wait()` and async alternatives
@@ -244,11 +273,32 @@ The object must track:
 - failed state
 - cancelled state
 
-A state object is terminal when it has either:
+A runtime state object is terminal when it has either:
 
-- reached the end via `setEnd()` or a terminal transition
-- failed due to uncaught exception during a state step
+- completed a `runNext()` call that observed an end selected by `setEnd()` or
+  another terminal transition
+- failed due to an uncaught exception during a user-state callback
 - been cancelled
+
+The inherited `Dmn_State::isInitialized()`, `isFinalized()`, and boolean
+conversion describe the base state-machine lifecycle. They are not substitutes
+for runtime terminal-status queries: failure or cancellation before a runtime
+dispatch can publish a terminal runtime outcome without running base
+finalization. Clients must use `isCompleted()`, `isFailed()`, `isCancelled()`,
+or `getFuture()` for runtime completion.
+
+Lifecycle hooks have these execution and ordering rules:
+
+- `onStarted()` normally runs in the runtime thread before `runNext()` and
+  before the first user callback. If it throws, the state fails.
+- `onCompleted()` and `onFailed()` run in the runtime thread after the terminal
+  result has been published.
+- `onCancelled()` runs synchronously in the caller's thread for
+  pre-submission cancellation and normally in the runtime thread for submitted
+  work.
+- A terminal future may wake a waiter before its terminal hook returns.
+- Terminal hook overrides must not throw because an exception can interrupt
+  manager cleanup without changing the already-published outcome.
 
 ### FR-8: Cancellation and shutdown
 
@@ -268,7 +318,8 @@ Semantics:
   their runtime-state handle and need to early-exit or perform cleanup
 - calling `cancel()` before `run()` transitions the object to cancelled
   terminal state immediately, completes its shared future, and causes any later
-  `run()` call to return false
+  `run()` call to return false. Its `onCancelled()` hook runs synchronously in
+  the thread that called `cancel()`.
 - `Dmn_Runtime_State_Manager::shutdown()` provides the current
   drain-and-cancel shutdown mode. It rejects new submissions, requests
   cancellation for all submitted states, and waits for their terminal futures.
@@ -292,11 +343,19 @@ If a state callback throws while running inside the runtime-managed async thread
 
 ### NFR-1: Singleton and runtime-thread ownership
 
-The runtime state manager must preserve the runtime’s model: client code may call APIs from any thread, but the actual state execution must be marshaled to the runtime async thread.
+The runtime state manager must preserve the runtime's execution model.
+Runtime-specific lifecycle operations and status queries are synchronized and
+may be called from client threads, subject to the runtime-thread restrictions
+on `run()`, `wait()`, `wait_for()`, and `shutdown()`. Inherited `Dmn_State`
+configuration is single-threaded and must finish before submission. User-state
+callbacks execute on the runtime thread.
 
-### NFR-2: Backward compatibility
+### NFR-2: Compatibility
 
-This feature must not break the existing `Dmn_Runtime_Manager` or `Dmn_State` APIs. It is additive only.
+The runtime manager API remains additive and does not change
+`Dmn_Runtime_Manager`. `Dmn_State` intentionally changes execution semantics
+so initialization and finalization are no longer user-visible steps, empty
+states convert to false, and index 0 is reserved for internal initialization.
 
 ### NFR-3: Determinism
 
@@ -349,8 +408,9 @@ public:
   explicit Dmn_Runtime_State(std::string_view name);
 
   // State configuration methods are inherited from Dmn_State for pre-run
-  // setup. After successful run(), external setStateFnc()/setNext()/setEnd()
-  // calls throw std::logic_error. External runNext() also throws
+  // setup. After submission or a terminal outcome, external
+  // setStateFnc()/setNext()/setEnd() calls throw std::logic_error.
+  // External runNext() always throws
   // std::logic_error; only the manager may advance the machine.
   void setRuntimeStateFnc(RuntimeStateFnc fnc, int index = 0);
 
@@ -362,8 +422,9 @@ public:
            const std::chrono::steady_clock::duration &delay = std::chrono::steady_clock::duration::zero(),
            OnErrorFnc onError = {});
 
-  // cancel is cooperative and idempotent. If called before a step runs, the running task will
-  // observe the cancelled flag, call setEnd() and transition to terminal state instead of executing further steps.
+  // Cancellation is cooperative and idempotent. A runtime dispatch observes
+  // the request, selects the end, and terminates without invoking another
+  // user callback. A callback whose dispatch already started may finish.
   void cancel();
 
   // wait blocks until terminal state. wait_for(timeout) returns true if it observed terminal state before timeout.
@@ -420,15 +481,17 @@ private:
   enqueue and false when the state is unconfigured, cancelled, terminal,
   already active, or its manager has shut down. A runtime submission exception
   propagates after clearing the queued marker. If `delay` is non-zero, the
-  first job uses `addTimedJob()`; later state steps use `addJob()`.
+  first runtime dispatch uses `addTimedJob()`; later dispatches use `addJob()`.
 - `run()` accepts an optional onError callback that uses the runtime's `Dmn_Runtime_Job::OnErrorFncType` signature and is forwarded to the runtime job.
 - `run()` is one-shot: a successful `run()` prevents subsequent `run()` calls from enqueueing again; such subsequent calls return `false` (no-op). This avoids duplicate enqueues across threads.
+- If runtime enqueueing throws, the queued marker is cleared before the
+  exception propagates and the caller may retry.
 - `cancel()` is cooperative: it sets a cancelled flag. The runtime job, before
   calling `runNext()`, must check `isCancelled()` and call `setEnd()` if the
-  state has been cancelled so that the state finalizes without executing
-  further steps.
-- `setRuntimeStateFnc()` is the preferred callback API when a state step needs
-  runtime-only methods such as `isCancelled()`. It adapts a
+  state has been cancelled so that the state finalizes without invoking
+  another user callback.
+- `setRuntimeStateFnc()` is the preferred callback API when a user-state
+  callback needs runtime-only methods such as `isCancelled()`. It adapts a
   `Dmn_Runtime_State &` callback into the same underlying state-machine
   storage.
 - The inherited `setStateFnc()` remains available for compatibility. A
@@ -438,7 +501,7 @@ private:
 - After successful `run()`, external configuration or transition mutation is
   frozen. Calls to inherited `setStateFnc()`, `setNext()`, and `setEnd()`
   throw `std::logic_error` unless they occur from inside the active
-  runtime-managed callback. External `runNext()` also throws
+  runtime-managed callback on the runtime thread. External `runNext()` also throws
   `std::logic_error`, including when attempted through a `Dmn_State &` view.
 - `wait()` supports a timeout variant and `getFuture()` returns a `std::shared_future<void>` that can be used by multiple waiters. The shared_future is valid immediately after createState() is called and resolves when the state reaches a terminal condition.
 - Calls to `run()`, `wait()`, or `wait_for()` from inside the runtime async
@@ -458,7 +521,7 @@ A runtime state object has the following lifecycle:
 4. Queued for runtime execution after `run()` (manager retains shared_ptr and
    sets `m_queued` while holding the state mutex)
 5. Running inside runtime async thread
-6. Finalized once terminal condition reached (manager releases internal shared_ptr)
+6. Terminal outcome published and manager-held ownership released
 7. Client may call `wait()` at any time after submission or use the shared_future returned by `getFuture()`
 
 ### 8.2 `run()` exact semantics and mutex-protected queued flag
@@ -472,9 +535,14 @@ When `statehandle->run(priority, delay, onError)` is called:
    internal shared_ptr and submit the runtime job
 3. if `m_queued` was already true or the object is terminal, `run()` returns false (no-op)
 4. the manager stores a shared_ptr to the object (ensuring lifetime) and schedules a runtime job via `addJob()` or `addTimedJob()` depending on `delay`
-5. the scheduled job executes exactly one next state step using the state object
-6. before calling `runNext()`, the runtime job MUST check the cancel flag; if cancelled, it MUST call `setEnd()` and finalize instead of running the step
-7. after the state step finishes, the runtime manager checks whether another state remains and reposts a new runtime job if appropriate
+5. the scheduled job invokes `runNext()`, which executes at most one
+   user-provided state callback and folds in internal initialization or
+   finalization when needed
+6. before calling `runNext()`, the runtime job checks cancellation; when
+   cancelled, it selects the end so `runNext()` finalizes without invoking
+   another user callback
+7. after the dispatch finishes, the runtime manager reposts a new job only
+   when more user work remains
 8. if no state remains, the object transitions to completed terminal state, the manager notifies waiters (set promise) and releases its internal shared_ptr
 9. if a state callback throws, the exception is captured, the object transitions to failed, waiters are notified, and the optional onError callback is invoked
 
@@ -482,13 +550,15 @@ This loop continues until no more states to run. The runtime manager is responsi
 
 ### 8.3 Serialization requirement and optional config
 
-All state object tasks must be executed in serialized form through the runtime queue by default. This strict global serialization simplifies reasoning and matches the project's stated intent. Implementations SHOULD provide configuration for relaxed concurrency (e.g., per-manager worker count) as an optional extension, but that must be explicitly chosen and documented by the caller.
+All state object tasks execute serially through the process-wide runtime queue.
+The current manager does not provide a relaxed-concurrency mode.
 
 ## 9. State Object Contract
 
 ### 9.1 Subclassing `Dmn_State`
 
-The new runtime state object must subclass `Dmn_State` and preserve `Dmn_State` semantics while adding runtime lifecycle tracking.
+The runtime state object must subclass `Dmn_State` and preserve its
+user-visible stepping semantics while adding runtime lifecycle tracking.
 
 It must retain:
 
@@ -496,7 +566,8 @@ It must retain:
   configuration and in-callback transition control
 - `setRuntimeStateFnc()` as a runtime-aware convenience wrapper for callbacks
   that need `Dmn_Runtime_State` methods directly
-- init/finalize behavior inherited from the base
+- internal initialization before the first user callback and finalization
+  after terminal selection, inherited from the base
 - default state sequencing model
 
 The runtime layer keeps the base configuration methods visible, but adds
@@ -524,6 +595,8 @@ inherited `Dmn_State &` API to select the next transition or terminate.
   `std::runtime_error` as described.
 - `wait_for(timeout)` returns a bool indicating whether the wait observed terminal completion before the timeout expired.
 - `getFuture()` returns a `std::shared_future<void>` available immediately after creation and resolves on terminal state.
+- `wait()` and `wait_for()` do not rethrow execution failures;
+  `getFuture().get()` rethrows the captured exception.
 
 ## 10. Detailed Behavior and Edge Cases
 
@@ -531,7 +604,9 @@ inherited `Dmn_State &` API to select the next transition or terminate.
 
 If no state is defined before `run()`, the manager must not enqueue an invalid
 task. `run()` returns false, leaves the state unsubmitted and non-terminal, and
-does not invoke onError.
+does not invoke onError. Its inherited `Dmn_State` boolean conversion is also
+false because no user-state callback is configured; this does not mean the
+runtime state has reached a terminal outcome.
 
 ### 10.2 Repeated `run()` calls
 
@@ -546,7 +621,8 @@ Behavior:
 
 ### 10.3 Finalized or cancelled states
 
-Once finalized, failed, or cancelled, no further state step may be scheduled.
+Once finalized, failed, or cancelled, no further user-state callback may be
+scheduled.
 
 ### 10.4 Exception propagation and onError
 
@@ -574,7 +650,9 @@ The runtime main loop must remain active while shutdown drains queued work.
 
 ## 11. Serialization and Scheduling Contract
 
-The manager is responsible for ensuring serialized processing across all state instances it creates (by default). Each queued job should trigger exactly one `runNext()` invocation and then repost if required.
+The manager serializes submitted state instances through the runtime queue.
+Each queued job triggers one `runNext()` invocation, which executes at most one
+user callback, and reposts only if more user work remains.
 
 Provide clear priority mapping between manager jobs and other runtime jobs. The manager must not starve other runtime jobs; use the runtime's priority scheme and document how manager tasks are enqueued.
 
@@ -586,6 +664,7 @@ Provide clear priority mapping between manager jobs and other runtime jobs. The 
 
 - `CreatesSingletonManagerAndStateHandle`
 - `RejectsExternalMutationAfterSubmission`
+- `RejectsRecursiveRunNextFromRuntimeCallback`
 - `RuntimeCallbackCanObserveCancellationDirectly`
 - `RejectsUnconfiguredAndPreRunCancelledStates`
 - `ExecutesStatesAndReportsStateFailures`
@@ -618,20 +697,23 @@ stress test drains 32 queued states behind an executing callback.
 The feature is accepted when all of the following are true:
 
 - clients can create runtime-managed state objects from a singleton manager using a shared_ptr handle
-- state objects subclass `Dmn_State` and retain base state semantics
+- state objects subclass `Dmn_State` and retain its documented user-visible
+  stepping semantics
 - `statehandle->run(priority, delay, onError)` schedules work into the runtime manager and returns true/false to indicate success
 - state execution is serialized through the runtime manager by default
 - `statehandle->wait()` and `wait_for()` block until runtime completion or terminal failure and `getFuture()` is available for async waiting (shared_future)
-- `cancel()` cooperatively finalizes execution and prevents future steps; cancel semantics are documented and tested
+- `cancel()` cooperatively terminates runtime execution and prevents future
+  user callbacks; cancellation semantics are documented and tested
 - exceptions and cancellation leave the runtime in a valid state and optional onError callbacks are invoked
 - documentation, examples and tests exist for typical runtime state workflow usage and lifetime edge cases
 
 ## 14. Risks and Mitigations (updated)
 
 ### Risk: re-entrant scheduling loop
-Mitigation: `run()` must schedule a single runtime task per state step and stop
-when the terminal condition is reached. No unbounded recursive scheduling loop
-is allowed. A mutex-protected queued flag prevents duplicate enqueues.
+Mitigation: `run()` must schedule a single runtime task per user-state callback
+and stop when the terminal condition is reached. Internal initialization and
+finalization do not require extra tasks. No unbounded recursive scheduling
+loop is allowed. A mutex-protected queued flag prevents duplicate enqueues.
 
 ### Risk: wait deadlock
 Mitigation: do not call `wait()` from inside the runtime async thread. Throw
@@ -646,7 +728,9 @@ Mitigation: the runtime manager must keep job postings small, deterministic, and
 
 ## 15. Implementation Notes
 
-This feature should be implemented as an additive API layered on top of the existing runtime and state components.
+The runtime-state feature is implemented as an API layered on the existing
+runtime and state components. It also includes the intentional `Dmn_State`
+stepping changes described in FR-3 and NFR-2.
 
 Implementation should reuse:
 
@@ -659,7 +743,7 @@ The runtime state manager should primarily add:
 - state object lifecycle tracking using shared_ptr handles
 - queueing and serialization logic
 - `wait()` synchronization through the promise/shared_future pair
-- terminal-state finalization and onError callback forwarding
+- terminal-outcome publication and onError callback forwarding
 - cooperative cancel() semantics
 
 Sample usage (illustrative):
@@ -676,7 +760,7 @@ auto runtime = dmn::Dmn_Runtime_Manager<>::createInstance();
 auto manager = dmn::Dmn_Runtime_State_Manager::createInstance();
 StatePtr s = manager->createState("example");
 
-// Prefer the runtime-aware callback API when the step may need
+// Prefer the runtime-aware callback API when the callback may need
 // Dmn_Runtime_State methods such as isCancelled().
 s->setRuntimeStateFnc([](dmn::Dmn_Runtime_State &st) {
   if (st.isCancelled()) {

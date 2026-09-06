@@ -68,12 +68,20 @@ Completed follow-on increment: State-handle creation
   hooks so external `setStateFnc()`, `setNext()`, and `setEnd()` throw
   `std::logic_error` after a successful `run()`, even through a
   `Dmn_State &` view.
+- Tie transition authorization to the runtime execution thread so external
+  client threads remain rejected while a callback is active.
 - Reserve `runNext()` for manager-only execution by rejecting all external
-  calls and routing manager-driven stepping through internal runtime-state
-  helpers.
+  calls, including recursive calls from a user callback, and routing
+  manager-driven stepping through internal runtime-state helpers.
 - Add `Dmn_State::hasStateFncs()` as a public query for whether the client
-  configured at least one state function, excluding the internal
-  initialization function.
+  configured at least one callback, excluding the reserved internal slot.
+- Keep internal initialization and finalization invisible to callers:
+  `runNext()` performs initialization before its first user callback and
+  finalization after a terminal callback in the same invocation. An empty
+  `Dmn_State` converts to false, and an explicit `runNext()` initializes and
+  finalizes it before returning false.
+- Reserve state index 0 for internal initialization; client transitions use
+  1-based user-state indices.
 - Do not retain created states in the manager yet. Retention begins only when
   a later `run()` implementation queues a state.
 
@@ -83,7 +91,8 @@ Phase 2: Terminal-state primitive and lifecycle unit tests (complete)
   `Dmn_State &` parameter or its `Dmn_Runtime_State &` parameter to call
   `setNext()` or `setEnd()`, depending on which registration API was used.
 - Require clients to finish configuring state functions before successful
-  submission, because configuration is not synchronized with runtime execution.
+  submission, because inherited `Dmn_State` configuration and inspection are
+  not synchronized with runtime execution.
 - Implement the completion promise/shared_future pair, terminal flags, and a
   single idempotent terminal transition helper.
 - Implement the selected no-state and cancel-before-run behavior.
@@ -104,8 +113,9 @@ Phase 3: Basic runtime enqueue & single-step execution (complete)
   DmnRuntimeStatePtr> m_pendingStates`.
 - The job's m_fnc creates a coroutine task (TaskFncType) that:
   - locks a weak_ptr to the state
-  - checks isCancelled(); if set, call setEnd() and finalize
-  - calls runNext() once (in try/catch)
+  - checks isCancelled(); if set, calls setEnd() and then runNext() to finalize
+  - calls runNext() once (in try/catch), executing at most one user callback
+    while folding in pending initialization or finalization
   - if still active, repost immediately by calling addJob() again
   - if terminal, set completion promise and erase manager internal shared_ptr
 - Wire `m_completionPromise` and `m_completionSharedFuture` so getFuture() returns `m_completionSharedFuture`.
@@ -113,9 +123,9 @@ Phase 3: Basic runtime enqueue & single-step execution (complete)
   for runtime-aware logic such as `isCancelled()`, while keeping the
   inherited `setStateFnc()` path documented for base-API compatibility.
 
-Tests expected to pass after this phase:
-- RuntimeState_BasicFlow
-- RuntimeState_GetFuture_PreRun_MultipleWaiters (shared_future works)
+Coverage implemented in:
+- `ExecutesStatesAndReportsStateFailures`
+- `RejectsUnconfiguredAndPreRunCancelledStates`
 
 Phase 4: Exception capture and onError forwarding (complete)
 - Wrap runNext() call in try/catch inside the runtime job.
@@ -127,9 +137,8 @@ Phase 4: Exception capture and onError forwarding (complete)
   - invoke onError callback forwarded via job.m_onErrorFnc
 - Update run() to forward client-provided onError into the runtime job creation
 
-Tests expected to pass:
-- RuntimeState_RunOnErrorCallback
-- state_exception_marks_failed
+Coverage implemented in:
+- `ExecutesStatesAndReportsStateFailures`
 
 Phase 5: Complete lifecycle and scheduling coverage (complete)
 - Added focused named Google Test cases for singleton/state creation,
@@ -154,7 +163,7 @@ Phase 6: Drain-and-cancel manager shutdown (complete)
 - Shutdown snapshots the manager-retained handles, requests cooperative
   cancellation outside the manager mutex, and waits for all captured states to
   reach terminal cancellation before returning.
-- A state step already executing may finish its callback, but its terminal
+- A user-state callback already executing may finish, but its terminal
   outcome is cancellation when shutdown requested it. Queued states finalize
   without running another user-defined callback.
 - Shutdown is idempotent and rejects calls from the runtime async thread to
@@ -188,11 +197,13 @@ Notes and gotchas
 - Use the state mutex to set the queued flag and avoid races for multiple
   concurrent run() calls.
 - Use std::shared_future to support multiple waiters.
-- Be careful to release manager internal shared_ptr only after the completion promise is fulfilled and after finalization is complete.
+- Release the manager-owned shared_ptr only after the terminal outcome is
+  published and its lifecycle hook returns. Failed states and states cancelled
+  before submission do not necessarily run base-state finalization.
 - Use runtime's addJob/addTimedJob APIs and forward onError callback using Dmn_Runtime_Job::OnErrorFncType.
 - The manager exposes one drain-and-cancel shutdown mode and no
-  concurrency-configuration API; state steps execute in the process-wide
-  runtime async context.
+  concurrency-configuration API; user-state callbacks execute in the
+  process-wide runtime async context.
 
 Example commands
 - Configure & build: cmake -B build -DCMAKE_BUILD_TYPE=Debug
