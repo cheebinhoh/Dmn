@@ -149,6 +149,7 @@ void Dmn_Runtime_State::setEndManaged() {
 
 void Dmn_Runtime_State::cancel() {
   bool completeNow{};
+
   {
     std::lock_guard lock{m_mutex};
 
@@ -243,6 +244,7 @@ bool Dmn_Runtime_State::isRunning() const {
 
 bool Dmn_Runtime_State::beginStep() {
   bool callOnStarted{};
+
   {
     std::lock_guard lock{m_mutex};
 
@@ -270,6 +272,7 @@ void Dmn_Runtime_State::complete(Terminal_State terminalState,
   bool callOnCompleted{};
   bool callOnFailed{};
   bool callOnCancelled{};
+
   {
     std::lock_guard lock{m_mutex};
 
@@ -319,6 +322,7 @@ void Dmn_Runtime_State::complete(Terminal_State terminalState,
 
 void Dmn_Runtime_State::resetQueuedAfterSubmission() {
   bool completeNow{};
+
   {
     std::lock_guard lock{m_mutex};
 
@@ -482,6 +486,7 @@ void Dmn_Runtime_State_Manager::executeStateStep(
 
 void Dmn_Runtime_State_Manager::releaseState(const Dmn_Runtime_State *state) {
   std::lock_guard lock{m_pendingStatesMutex};
+
   m_pendingStates.erase(state);
 }
 

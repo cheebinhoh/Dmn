@@ -14,10 +14,8 @@
 
 #include <cassert>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 namespace dmn {
 
@@ -93,6 +91,7 @@ auto Dmn_State::runNext() -> bool {
 
 void Dmn_State::setEnd() {
   beforeSetEnd();
+
   m_next = static_cast<int>(m_states.size());
 }
 
@@ -109,6 +108,7 @@ void Dmn_State::setNext(int index) {
 
 void Dmn_State::setNext() {
   beforeSetNext();
+
   assert(m_next >= 0 && m_next < static_cast<int>(m_states.size()));
   m_next++;
 }
