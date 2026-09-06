@@ -351,6 +351,10 @@ public:
    */
   void exitMainLoop();
 
+  /** @brief Return true if the caller is running on the singleton async thread.
+   */
+  auto isRunInAsyncThread() -> bool;
+
   /**
    * @brief Register a signal handler hook for a particular signal number.
    *        Handlers are invoked by the runtime in a safe context (not from
@@ -392,10 +396,6 @@ private:
   void execRuntimeJobInternal();
   /** @brief Invoke all registered hooks for @p signo in the async context. */
   void execSignalHandlerHookInternal(int signo);
-
-  /** @brief Return true if the caller is running on the singleton async thread.
-   */
-  auto isRunInAsyncThread() -> bool;
 
   /** @brief Insert @p hook into the internal map for @p signo. */
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);

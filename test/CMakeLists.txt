@@ -64,6 +64,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-runtime-queue-lf
                       dmn-test-runtime-queue-lf-2
                       dmn-test-runtime-queue-lf-3
+                      dmn-test-runtime-state
                       dmn-test-singleton
                       dmn-test-socket
                       dmn-test-state
@@ -140,6 +141,7 @@ if (ENABLE_VALGRIND)
         dmn-test-runtime-queue-lf
         dmn-test-runtime-queue-lf-2
         dmn-test-runtime-queue-lf-3
+	dmn-test-runtime-state
         dmn-test-singleton
         dmn-test-socket
         dmn-test-state
