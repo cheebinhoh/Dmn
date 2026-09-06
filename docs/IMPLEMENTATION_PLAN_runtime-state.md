@@ -16,14 +16,15 @@ Phase 0: API contract and header preparation
   therefore returns `std::shared_ptr<Dmn_Runtime_State_Manager>`. It must not
   declare a conflicting reference-returning factory.
 - `Dmn_Runtime_Manager::isRunInAsyncThread()` is part of the public runtime
-  API so runtime-state can reject run()/wait() calls from the async thread.
+  API so runtime-state can reject run()/wait()/wait_for() calls from the async
+  thread.
 - Update `include/dmn-runtime-state.hpp` to reflect these contracts before
   adding its implementation.
 - The selected lifecycle contract is: a pre-run shared future remains pending;
   no configured state makes run() return false without terminalizing; cancel()
   before run() terminalizes as cancelled; failed futures rethrow the captured
-  exception from get(); and runtime-thread run()/wait() calls throw in all
-  build configurations.
+  exception from get(); and runtime-thread run()/wait()/wait_for() calls throw
+  in all build configurations.
 
 Phase 1: Construct the singleton manager (complete)
 - Correct `include/dmn-runtime-state.hpp` so
@@ -68,10 +69,12 @@ Completed follow-on increment: State-handle creation
 - Do not retain created states in the manager yet. Retention begins only when
   a later `run()` implementation queues a state.
 
-Phase 2: Terminal-state primitive and lifecycle unit tests (next)
+Phase 2: Terminal-state primitive and lifecycle unit tests (complete)
 - Do not make the manager advance state transitions implicitly: it controls
   when `runNext()` executes, while a state function uses its `Dmn_State &`
   parameter to call `setNext()` or `setEnd()`.
+- Require clients to finish configuring state functions before successful
+  submission, because configuration is not synchronized with runtime execution.
 - Implement the completion promise/shared_future pair, terminal flags, and a
   single idempotent terminal transition helper.
 - Implement the selected no-state and cancel-before-run behavior.
@@ -83,14 +86,18 @@ Verify:
 - cmake --build build
 - ctest --test-dir build -R dmn-test-runtime-state --output-on-failure
 
-Phase 3: Basic runtime enqueue & single-step execution
-- Implement run() to atomically set queued flag and enqueue a Dmn_Runtime_Job to `Dmn_Runtime_Manager::addJob()` (immediate) or `addTimedJob()` (delay). Use Dmn_Runtime_Job::Priority.
-- Manager will retain an internal shared_ptr to the state while queued; store it in `std::unordered_map<void*, std::shared_ptr<Dmn_Runtime_State>> m_pendingStates;` keyed by pointer or generated id.
-- The job's m_fnc must create a coroutine task (TaskFncType) that:
+Phase 3: Basic runtime enqueue & single-step execution (complete)
+- Implement run() to set the mutex-protected queued flag and enqueue a
+  Dmn_Runtime_Job to `Dmn_Runtime_Manager::addJob()` (immediate) or
+  `addTimedJob()` (initial delay). Use Dmn_Runtime_Job::Priority.
+- The manager retains an internal shared_ptr to the state while queued or
+  running in `std::unordered_map<const Dmn_Runtime_State *,
+  DmnRuntimeStatePtr> m_pendingStates`.
+- The job's m_fnc creates a coroutine task (TaskFncType) that:
   - locks a weak_ptr to the state
   - checks isCancelled(); if set, call setEnd() and finalize
   - calls runNext() once (in try/catch)
-  - if still active, repost by calling addJob() again
+  - if still active, repost immediately by calling addJob() again
   - if terminal, set completion promise and erase manager internal shared_ptr
 - Wire `m_completionPromise` and `m_completionSharedFuture` so getFuture() returns `m_completionSharedFuture`.
 
@@ -98,7 +105,7 @@ Tests expected to pass after this phase:
 - RuntimeState_BasicFlow
 - RuntimeState_GetFuture_PreRun_MultipleWaiters (shared_future works)
 
-Phase 4: Exception capture and onError forwarding
+Phase 4: Exception capture and onError forwarding (complete)
 - Wrap runNext() call in try/catch inside the runtime job.
 - On exception:
   - store `std::current_exception()` in the state
@@ -112,30 +119,45 @@ Tests expected to pass:
 - RuntimeState_RunOnErrorCallback
 - state_exception_marks_failed
 
-Phase 5: Cancel semantics & destructor-while-queued
-- Implement cancel() to set atomic m_cancelled.
-- Ensure runtime job checks m_cancelled before runNext() and calls setEnd() if true.
-- Ensure manager internal shared_ptr map is created when run() enqueues; it must hold the shared_ptr until terminal.
-- Implement destructor_while_queued test to validate manager holds state alive.
+Phase 5: Complete lifecycle and scheduling coverage (complete)
+- Added focused named Google Test cases for singleton/state creation,
+  unconfigured and pre-run cancellation behavior, normal execution, failure
+  propagation, queued cancellation, manager-retained lifetime, priority
+  ordering, delayed initial submission, and runtime-thread rejection.
+- The queued-cancellation test verifies no user-defined step executes after
+  cancellation and that the inherited `Dmn_State` is finalized.
+- The retained-lifetime test verifies a client can release its handle after
+  submission and that the manager releases its final ownership after terminal
+  completion.
+- The priority and delay tests verify `run(priority, delay, onError)` maps
+  correctly to runtime scheduling behavior.
+- The runtime-thread test verifies `run()`, `wait()`, and `wait_for()` throw
+  `std::runtime_error` from the runtime async thread.
 
-Phase 6: Priority/timed behavior and fairness
-- Implement run(priority, delay) mapping to addJob/addTimedJob. If delay > 0 use addTimedJob.
-- Add tests verifying that priority ordering affects execution order.
-- Consider fairness: ensure manager uses runtime priority queues and doesn't monopolize the runtime.
+Phase 6: Drain-and-cancel manager shutdown (complete)
+- Added `Dmn_Runtime_State_Manager::shutdown()`, which permanently rejects new
+  state submissions while allowing callers to create non-runnable handles.
+- Shutdown snapshots the manager-retained handles, requests cooperative
+  cancellation outside the manager mutex, and waits for all captured states to
+  reach terminal cancellation before returning.
+- A state step already executing may finish its callback, but its terminal
+  outcome is cancellation when shutdown requested it. Queued states finalize
+  without running another user-defined callback.
+- Shutdown is idempotent and rejects calls from the runtime async thread to
+  avoid deadlock.
+- Added coverage for drain waiting, running and queued state cancellation, and
+  rejection of a post-shutdown submission.
 
-Phase 7: Runtime-thread detection & runtime safety
-- Detect runtime context using the public
-  `Dmn_Runtime_Manager::isRunInAsyncThread()`.
-- In run() and wait(), if called on runtime thread, throw
-  `std::runtime_error` in every build configuration.
-- Implement safe unit/integration tests for detection (a harness that posts a
-  runtime job which attempts to call wait() and expects an exception).
-
-Phase 8: Shutdown, polish, stress tests, documentation
-- Define and implement the selected graceful and immediate manager shutdown API
-  before adding shutdown tests.
-- Add stress tests, runtime integration tests, and code comments.
-- Document known limitations and example usage.
+Phase 7: Integration, stress, and documentation (complete)
+- Added multi-state integration coverage for serialized execution and runtime
+  async-thread affinity, plus failure-isolation coverage for independent
+  queued states.
+- Added concurrent client coverage for create/run/cancel/getFuture/wait
+  operations across 24 states, and shutdown stress coverage for 32 queued
+  states behind a running callback.
+- Added a public usage example that documents runtime initialization from the
+  main thread, explicit state-manager shutdown while the runtime loop is
+  active, and runtime shutdown only after state draining completes.
 
 Developer checklist for each commit
 - Keep commits small and focused.
@@ -144,10 +166,14 @@ Developer checklist for each commit
 
 Notes and gotchas
 - Use weak_ptr in runtime job to avoid reference cycles; the manager's internal shared_ptr keeps the object alive while queued.
-- Use atomic compare_exchange to set queued flag and avoid races for multiple-concurrent run() calls.
+- Use the state mutex to set the queued flag and avoid races for multiple
+  concurrent run() calls.
 - Use std::shared_future to support multiple waiters.
 - Be careful to release manager internal shared_ptr only after the completion promise is fulfilled and after finalization is complete.
 - Use runtime's addJob/addTimedJob APIs and forward onError callback using Dmn_Runtime_Job::OnErrorFncType.
+- The manager exposes one drain-and-cancel shutdown mode and no
+  concurrency-configuration API; state steps execute in the process-wide
+  runtime async context.
 
 Example commands
 - Configure & build: cmake -B build -DCMAKE_BUILD_TYPE=Debug

@@ -29,8 +29,8 @@ The client never directly executes state logic in its own thread. `run()` only q
 - add a focused unit test that constructs the singleton, verifies the returned
   shared pointer is non-null, and verifies repeated calls return the same
   manager instance
-- defer lifecycle flags, waiting, scheduling, and ownership retention to later
-  phases
+- this phase deliberately deferred lifecycle flags, waiting, scheduling, and
+  ownership retention to later phases
 
 ### Deliverables
 
@@ -53,9 +53,10 @@ The client never directly executes state logic in its own thread. `run()` only q
   `runNext()` as protected and grant the manager friend access
 - add public `Dmn_State::hasStateFncs()` to identify whether the client
   configured at least one state function
-- do not retain a manager-owned state handle until successful runtime queueing
+- retain a manager-owned state handle after successful runtime queueing and
+  release it after terminal completion
 
-## 4. Phase 2: Implement the completion model
+## 4. Phase 2: Implement the completion model (complete)
 
 ### Tasks
 
@@ -64,7 +65,8 @@ The client never directly executes state logic in its own thread. `run()` only q
   reposts work, not which transition is selected
 - add runtime lifecycle flags (`queued`, `running`, `completed`, `failed`,
   `cancelled`)
-- add `wait()` synchronization primitives and the shared future
+- add promise/shared-future completion synchronization for `wait()` and
+  `wait_for()`
 - implement pre-run rejection and cancel-before-run terminal semantics
 
 ### Deliverables
@@ -72,7 +74,7 @@ The client never directly executes state logic in its own thread. `run()` only q
 - lifecycle state model
 - completion waiting design
 
-## 5. Phase 3: Integrate with runtime scheduler
+## 5. Phase 3: Integrate with runtime scheduler (complete)
 
 ### Tasks
 
@@ -87,15 +89,14 @@ The client never directly executes state logic in its own thread. `run()` only q
 - serialized manager dispatcher
 - sequential execution loop
 
-## 6. Phase 4: State lifecycle and completion
+## 6. Phase 4: State lifecycle and completion (complete)
 
 ### Tasks
 
-- implement transitioned completion behavior
-- implement failed state handling for thrown exceptions
-- implement cancellation and shutdown handling
-- notify waiters exactly once
+- implement terminal completion, failure, and cancellation behavior
+- notify waiters exactly once through the stored shared future
 - avoid re-enqueuing after terminal state
+- defer shutdown-mode API and tests to the shutdown phase
 
 ### Deliverables
 
@@ -103,40 +104,54 @@ The client never directly executes state logic in its own thread. `run()` only q
 - exception-safe cleanup
 - completion synchronization contract
 
-## 7. Phase 5: API ergonomics and compatibility
+## 7. Phase 5: Complete lifecycle and scheduling test coverage (complete)
 
 ### Tasks
 
-- keep `Dmn_State` unchanged for synchronous scenarios
-- provide a runtime-specific object for async execution
-- preserve `setStateFnc()`, `setNext()`, `setEnd()`, and `runNext()` semantics
-- document `wait()` semantics and restrictions
+- Added named Google Test cases for cancellation while queued, manager-retained
+  lifetime after the client drops its handle, priority ordering, timed initial
+  submission, and runtime-thread rejection.
+- The runtime-thread harness verifies `run()`, `wait()`, and `wait_for()`
+  throw `std::runtime_error` from the runtime async thread.
+- The test suite verifies runtime-managed states retain `Dmn_State`
+  configuration and transition semantics.
 
 ### Deliverables
 
-- developer-facing API contract
-- usage examples for initialization, run, and wait
-- compatibility note for existing runtime and state users
+- independently reported lifecycle and scheduling tests
+- regression coverage for state lifetime and runtime-thread safety
 
-## 8. Phase 6: Validation
+## 8. Phase 6: Drain-and-cancel manager shutdown (complete)
 
-### Tests to add
+### Tasks
 
-- state object created from manager
-- multiple state objects serialized in order
-- `run()` enqueues runtime work and completes successfully
-- waiting on completion returns after all steps finish
-- exception sets failed terminal state
-- repeated run is rejected or ignored as designed
-- cancellation during queued or running state does not corrupt runtime
+- Added `Dmn_Runtime_State_Manager::shutdown()`.
+- Reject new runs after shutdown begins while preserving the existing
+  non-null `createState()` factory behavior.
+- Cancel retained states cooperatively and wait for terminal cancellation
+  outside the manager mutex.
+- Reject shutdown from the runtime async thread and release retained manager
+  handles as states become terminal.
 
-### Validation commands
+### Required tests
 
-- `cmake -B build -DCMAKE_BUILD_TYPE=Debug`
-- `cmake --build build`
-- `ctest --test-dir build --output-on-failure`
+- shutdown waits for a running state callback to complete
+- queued states are cancelled without running their user callback
+- post-shutdown submission is rejected
+- completion-future notification and manager-retention cleanup
 
-## 9. Risks and Checkpoints
+## 9. Phase 7: Integration and documentation (complete)
+
+### Tasks
+
+- Added multi-state serialization and failure-isolation integration tests.
+- Added concurrent lifecycle coverage for state creation, submission,
+  cancellation, future retrieval, and waiting.
+- Added shutdown stress coverage for a running state and 32 queued states.
+- Added user documentation for runtime initialization, configuration,
+  submission, completion waiting, state-manager shutdown, and runtime exit.
+
+## 10. Risks and Checkpoints
 
 ### Risk: one state object re-enters itself
 Checkpoint: ensure `run()` only posts a single pending job and does not recursively run a state before the previous task finishes.
@@ -147,7 +162,7 @@ Checkpoint: `wait()` must never run inside the runtime async thread; it must blo
 ### Risk: queue corruption during failure/cancel
 Checkpoint: all failed/cancelled states must terminate the loop cleanly and never re-post further runtime tasks.
 
-## 10. Definition of Ready
+## 11. Definition of Ready
 
 Implementation can begin once:
 
@@ -156,7 +171,7 @@ Implementation can begin once:
 - the serialization rules are agreed
 - `wait()` and failure semantics are documented
 
-## 11. Definition of Done
+## 12. Definition of Done
 
 The feature is done when:
 
