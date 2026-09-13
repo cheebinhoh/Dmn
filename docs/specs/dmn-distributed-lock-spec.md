@@ -129,6 +129,8 @@ Sort/index order:
   under sustained conflict until external cancellation/shutdown occurs.
 - `requestLockAsync` retries continue indefinitely under sustained conflict
   (bounded backoff), unless cancelled or shutdown.
+- for blocking requests, timeout terminalization must set shared terminal flag
+  checked before each retry attempt; retries must stop once timeout is reached.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -270,6 +272,8 @@ Argument validity rules:
   return `kWaiting` before timeout.
 - accepted blocking requests (`wait_timeout > 0ms`) are retained as addressable
   request lifecycle records and remain queryable by `request_id` after return.
+- when blocking request returns `kTimeout`, associated retry loop must be
+  terminalized and no further retries may run for that request.
 - queued requests must transition to `kGranted` when they become top-of-list
   and publisher accepts lock transition.
 - `requestLockAsync` always returns immediately with request lifecycle retained
@@ -293,6 +297,8 @@ Deterministic result mapping:
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - async retry-pending query state reports `kWaiting` until terminal transition.
 - owner-scoped query for granted async request returns `kGranted` with `entry`.
+- owner-scoped query must collapse in-progress internal `kLocking` state to
+  external result code `kWaiting` until terminal/granted transition is observed.
 - owner-scoped query for terminal async outcomes returns:
   - timeout -> `kTimeout`
   - cancelled -> `kCancelled`
@@ -422,8 +428,9 @@ Normative command checkpoints:
 
 - build: `cmake --build <build_dir> --target dmn-test-dlock`
 - list tests: `ctest --test-dir <build_dir> -N`
-- focused test run (normative): run one exact gtest case from the dlock test
-  binary with `--gtest_filter=<Suite.Test>`.
+- focused test run (normative, concrete):
+  1. `DMN_DLOCK_TEST_BIN=$(find <build_dir> -type f -name dmn-test-dlock | head -n1)`
+  2. `$DMN_DLOCK_TEST_BIN --gtest_filter=<Suite.Test>`
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
 If test binary path differs by generator/layout, use build output discovery to
