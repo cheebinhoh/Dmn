@@ -264,6 +264,10 @@ Argument validity rules:
 - `requestLockAsync` always returns immediately with request lifecycle retained
   for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`, and returns
   `kWaiting` on accepted submission.
+- `requestLockAsync` immediate rejection mapping:
+  - invalid args/options -> `kInvalidArg`
+  - shutdown gate active -> `kShutdown`
+  - publisher immediate submission failure -> `kPublisherError`
 
 Deterministic result mapping:
 
@@ -273,6 +277,7 @@ Deterministic result mapping:
 - conflict detected and retry scheduled (wait/async modes) -> transient internal state;
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - async retry-pending query state reports `kWaiting` until terminal transition.
+- owner-scoped query for granted async request returns `kGranted` with `entry`.
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
@@ -501,10 +506,17 @@ locate `dmn-test-dlock` first.
 27. `ResultCodeMapping_GrantedSetsOkTrue`
 28. `ResultCodeMapping_ConflictSetsOkFalse`
 29. `ResultCodeMapping_TimeoutSetsOkFalse`
-30. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-31. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-32. `Stress_HighContention_NoDeadlock`
-33. `Stress_WorkerThreads_NeverBlockOnWait`
+30. `ResultCodeMapping_WaitingSetsOkFalse`
+31. `ResultCodeMapping_CancelledSetsOkFalse`
+32. `ResultCodeMapping_NotOwnerSetsOkFalse`
+33. `ResultCodeMapping_NotFoundSetsOkFalse`
+34. `ResultCodeMapping_InvalidArgSetsOkFalse`
+35. `ResultCodeMapping_PublisherErrorSetsOkFalse`
+36. `ResultCodeMapping_ShutdownSetsOkFalse`
+37. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+38. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+39. `Stress_HighContention_NoDeadlock`
+40. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
