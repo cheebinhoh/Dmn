@@ -124,7 +124,7 @@ struct Dmn_DLock_AcquireResult {
     kAcquired,
     kBusy,
     kTimeout,
-    kCancelled,
+    kCancelled,   // includes explicit cancellation and manager-shutdown rejection
     kBackendError,
     kInvalidArg
   };
@@ -227,8 +227,8 @@ public:
 
   auto release(LeaseType &lease)
       -> Dmn_DLock_OpResult;
-  // release postcondition: lease proxy is reset/closed on successful backend
-  // release or successful no-op release outcome.
+  // release postcondition: for kOk or kNotOwner outcomes, lease proxy is
+  // reset/closed and manager retention removed.
 
   auto closeLease(LeaseType &lease)
       -> Dmn_DLock_OpResult;
@@ -389,7 +389,8 @@ Required checkpoint commands (example form; adapt to project scripts):
 
 - Build checkpoint: `cmake --build <build_dir> --target dmn-test-dlock`
 - Discover exact CTest name checkpoint: `ctest --test-dir <build_dir> -N`
-- Focused test checkpoint: `ctest --test-dir <build_dir> -R <exact_ctest_name_or_regex> --output-on-failure`
+- Focused single-test-case checkpoint (normative): run the dlock test binary with
+  gtest filter, e.g. `<build_dir>/test/dmn-test-dlock --gtest_filter=<Suite.Test>`
 - Full target checkpoint (normative): run exact discovered dlock CTest entry by
   exact-name regex (for example `-R '^dmn-test-dlock$'` when applicable).
 
