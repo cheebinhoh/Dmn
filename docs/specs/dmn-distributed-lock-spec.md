@@ -156,6 +156,7 @@ struct Dmn_DLock_OpResult {
 struct Dmn_DLock_ManagerCreateResult {
   enum class Code {
     kOk,
+    kConfigMismatch,
     kInvalidConfig,
     kBackendInitFailed,
     kClockInitFailed
@@ -231,7 +232,8 @@ public:
 
   auto closeLease(LeaseType &lease)
       -> Dmn_DLock_OpResult;
-  // closeLease is idempotent hard-close: best-effort release + always reset proxy.
+  // closeLease is idempotent close: best-effort release; on backend error keep
+  // proxy open for caller retry, otherwise reset proxy.
 
   auto isHeldByCaller(const Dmn_DLock_Key &key) const
       -> bool;
@@ -250,6 +252,9 @@ Singleton contract:
 - Repeated successful calls return `kOk` with `reused_existing=true`;
   backend/clock init failure codes apply only before
   the singleton exists.
+- Repeated calls with a different effective config
+  (`backend`, `clock`, or `owner_id`) must return `kConfigMismatch` and must not
+  replace singleton dependencies.
 
 ## 7. Backend Contract (interface)
 
@@ -410,6 +415,9 @@ Required checkpoint commands (example form; adapt to project scripts):
 6. Tests:
    - same shared_ptr returned across repeated create calls
    - invalid config error mapping
+   - backend initialize failure -> `kBackendInitFailed`
+   - clock initialize failure -> `kClockInitFailed`
+   - repeated create with different config -> `kConfigMismatch`
 7. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
 8. **Build checkpoint**: clean build after completing all Phase 1 tests.
 
@@ -542,26 +550,29 @@ Execution rule for every item below: add test -> build -> run (fail) -> implemen
 minimal code -> build -> run (pass) -> run full `dmn-test-dlock`.
 
 1. `CreateManager_InvalidConfig_ReturnsInvalidConfig`
-2. `CreateManager_RepeatedCalls_ReturnSingleton`
-3. `TryAcquire_FreeKey_ReturnsLeaseProxy`
-4. `TryAcquire_HeldKey_ReturnsBusy`
-5. `Release_OwnerLease_ReturnsOk`
-6. `Release_StaleLease_ReacquiredByOtherOwner_ReturnsNotOwner`
-7. `CloseLease_ResetsProxy_AndDropsManagerRetention`
-8. `Renew_ValidLease_ReturnsUpdatedExpiry`
-9. `Renew_NotOwner_ReturnsNotOwner`
-10. `Renew_ExpiredLease_ReturnsExpired`
-11. `Acquire_WaitTimeoutZero_PerformsSingleAttempt`
-12. `Acquire_ShutdownPrecedence_ReturnsCancelled`
-13. `Acquire_TimesOut_WhenLockStaysBusy`
-14. `Acquire_CancelToken_ReturnsCancelled`
-15. `Shutdown_RejectsNewAcquire`
-16. `Shutdown_BoundaryPreShutdownLease_RenewStillAllowed`
-17. `FencingToken_MonotonicAcrossTransfers`
-18. `Contention_MultiThread_NoDualOwnerOverlap`
-19. `Observability_EmitsAcquireBusy_WithRequiredPayloadFields`
-20. `Observability_EmitsReleaseNoopOtherOwner_WithRequiredPayloadFields`
-21. `Observability_EmitterFailure_DoesNotChangeLockCorrectness`
+2. `CreateManager_BackendInitializeFailure_ReturnsBackendInitFailed`
+3. `CreateManager_ClockInitializeFailure_ReturnsClockInitFailed`
+4. `CreateManager_RepeatedCalls_ReturnSingleton`
+5. `CreateManager_DifferentConfig_ReturnsConfigMismatch`
+6. `TryAcquire_FreeKey_ReturnsLeaseProxy`
+7. `TryAcquire_HeldKey_ReturnsBusy`
+8. `Release_OwnerLease_ReturnsOk`
+9. `Release_StaleLease_ReacquiredByOtherOwner_ReturnsNotOwner`
+10. `CloseLease_ResetsProxy_AndDropsManagerRetention`
+11. `Renew_ValidLease_ReturnsUpdatedExpiry`
+12. `Renew_NotOwner_ReturnsNotOwner`
+13. `Renew_ExpiredLease_ReturnsExpired`
+14. `Acquire_WaitTimeoutZero_PerformsSingleAttempt`
+15. `Acquire_ShutdownPrecedence_ReturnsCancelled`
+16. `Acquire_TimesOut_WhenLockStaysBusy`
+17. `Acquire_CancelToken_ReturnsCancelled`
+18. `Shutdown_RejectsNewAcquire`
+19. `Shutdown_BoundaryPreShutdownLease_RenewStillAllowed`
+20. `FencingToken_MonotonicAcrossTransfers`
+21. `Contention_MultiThread_NoDualOwnerOverlap`
+22. `Observability_EmitsAcquireBusy_WithRequiredPayloadFields`
+23. `Observability_EmitsReleaseNoopOtherOwner_WithRequiredPayloadFields`
+24. `Observability_EmitterFailure_DoesNotChangeLockCorrectness`
 
 ## 13. Definition of Done
 
