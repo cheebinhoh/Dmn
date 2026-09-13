@@ -204,7 +204,6 @@ struct Dmn_DLock_Result {
     kShutdown
   };
 
-  bool ok{false}; // derived strictly from `code` per normative mapping below
   Code code{Code::kInvalidArg};
   std::string message;
   std::string request_id;
@@ -296,7 +295,7 @@ Deterministic result mapping:
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
   `releaseLock`, `cancelRequest`) -> `kShutdown`
 - owner-scoped query during/after shutdown returns request-specific state code
-  (`kWaiting`/`kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`)
+  (`kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`)
   or `kNotFound`.
 - publisher transport/logic failure -> `kPublisherError`
 
@@ -308,12 +307,6 @@ Deterministic result mapping:
 - `request_id` must be empty for pre-submission immediate rejections
   (`kInvalidArg`, immediate `kShutdown`, immediate `kPublisherError`,
   `kConflict` in no-wait mode).
-
-Normative `ok` mapping:
-
-- `ok=true`: `kGranted`
-- `ok=false`: `kConflict`, `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
-  `kInvalidArg`, `kPublisherError`, `kShutdown`
 
 ## 7) State machine semantics
 
@@ -344,6 +337,14 @@ Phase 1:
 - priority ordering enabled
 - no mandatory aging uplift yet
 - uplift policy intentionally deferred
+
+Accepted Phase-1 behavior: starvation of lower-priority requests is possible.
+
+Operational guidance:
+
+- run with bounded wait timeout and cancellation policies
+- monitor queue age by priority via observability metrics
+- treat sustained starvation as SLO breach and operationally rebalance priority inputs
 
 Non-goal for Phase 1: formal starvation-freedom guarantee.
 
@@ -446,7 +447,11 @@ locate `dmn-test-dlock` first.
 1. Add event emission hooks.
 2. Validate payload schema.
 3. Ensure emitter failure isolation.
-4. Add observability tests.
+4. Add observability tests for:
+   - success transition payload (`kWaiting -> kGranted`)
+   - terminal timeout transition payload
+   - terminal cancel transition payload
+   - terminal shutdown transition payload
 5. TDD loop + build checkpoint.
 
 ### Phase 7 — stress/integration
@@ -524,35 +529,28 @@ locate `dmn-test-dlock` first.
 23. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
 24. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
 25. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
-26. `GetRequestStateForOwner_PostShutdownWaitingState_ReturnsWaiting`
-27. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
-28. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
-29. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
-30. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
-31. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
-32. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
-33. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
-34. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
-35. `CancelRequest_WaitingRequest_Terminates`
-36. `Shutdown_NewRequests_ReturnShutdown`
-37. `Shutdown_WakesWaiters`
-38. `Shutdown_CancelsPendingRetries`
-39. `Observability_EmitPayloadSchema_Valid`
-40. `Observability_EmitterFailure_DoesNotChangeResult`
-41. `ResultCodeMapping_GrantedSetsOkTrue`
-42. `ResultCodeMapping_ConflictSetsOkFalse`
-43. `ResultCodeMapping_TimeoutSetsOkFalse`
-44. `ResultCodeMapping_WaitingSetsOkFalse`
-45. `ResultCodeMapping_CancelledSetsOkFalse`
-46. `ResultCodeMapping_NotOwnerSetsOkFalse`
-47. `ResultCodeMapping_NotFoundSetsOkFalse`
-48. `ResultCodeMapping_InvalidArgSetsOkFalse`
-49. `ResultCodeMapping_PublisherErrorSetsOkFalse`
-50. `ResultCodeMapping_ShutdownSetsOkFalse`
-51. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-52. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-53. `Stress_HighContention_NoDeadlock`
-54. `Stress_WorkerThreads_NeverBlockOnWait`
+26. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
+27. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
+28. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
+29. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
+30. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
+31. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
+32. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
+33. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
+34. `CancelRequest_WaitingRequest_Terminates`
+35. `Shutdown_NewRequests_ReturnShutdown`
+36. `Shutdown_WakesWaiters`
+37. `Shutdown_CancelsPendingRetries`
+38. `Observability_EmitPayloadSchema_Valid`
+39. `Observability_EmitSuccessTransitionPayload_Valid`
+40. `Observability_EmitTimeoutTransitionPayload_Valid`
+41. `Observability_EmitCancelTransitionPayload_Valid`
+42. `Observability_EmitShutdownTransitionPayload_Valid`
+43. `Observability_EmitterFailure_DoesNotChangeResult`
+44. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+45. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+46. `Stress_HighContention_NoDeadlock`
+47. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
