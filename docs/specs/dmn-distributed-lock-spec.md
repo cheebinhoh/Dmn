@@ -34,7 +34,8 @@ spec-driven, test-driven development (TDD) as the implementation method.
 ## 3. Terminology
 
 - **Lock key**: globally unique string name for a protected resource.
-- **Owner ID**: unique client identity (process UUID + instance metadata).
+- **Owner ID**: opaque, cryptographically random client identity token.
+- **Owner metadata**: optional diagnostic data stored separately from owner ID.
 - **Lease**: finite ownership interval with expiration timestamp.
 - **Fencing token**: strictly increasing numeric token issued on successful lock grant.
 - **Backend**: storage/coordinator implementation used by lock manager.
@@ -73,8 +74,8 @@ Per lock key, backend stores:
 - Successful acquire always returns a fencing token greater than any prior token
   for that key.
 - Renew is valid only for the current owner and lease ID.
-- Release is idempotent for missing/expired leases; a release request against an
-  active lease owned by another owner must return `NotOwner` and must not revoke it.
+- Release is idempotent for missing/expired leases; stale-handle release after
+  expiry/reacquisition is a no-op success.
 
 ## 5. Public API Requirements
 
@@ -84,10 +85,16 @@ Per lock key, backend stores:
 - `Dmn_DLock_Token = uint64_t`
 - `Dmn_DLock_Duration = std::chrono::milliseconds`
 
-`Dmn_DLock_Result`:
+`Dmn_DLock_AcquireResult`:
 
 - `bool ok`
 - `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
+- `std::string message`
+
+`Dmn_DLock_OpResult` (renew/release):
+
+- `bool ok`
+- `enum Code { Ok, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
 - `std::string message`
 
 `Dmn_DLock_Handle`:
@@ -101,15 +108,15 @@ Per lock key, backend stores:
 
 ### 5.2 Manager API
 
-- `tryAcquire(key, lease_ttl, opts) -> AcquireResult`
+- `tryAcquire(key, lease_ttl, opts) -> Dmn_DLock_AcquireResult`
   - Returns immediately.
   - If busy, returns `Busy`.
-- `acquire(key, lease_ttl, wait_timeout, opts) -> AcquireResult`
+- `acquire(key, lease_ttl, wait_timeout, opts) -> Dmn_DLock_AcquireResult`
   - Retries until acquired, timeout, or cancellation.
-- `renew(handle, lease_ttl) -> Result`
+- `renew(handle, lease_ttl) -> Dmn_DLock_OpResult`
   - Extends lease only if current owner + lease ID match.
-- `release(handle) -> Result`
-  - Releases if owner matches; otherwise `NotOwner`.
+- `release(handle) -> Dmn_DLock_OpResult`
+  - Releases if owner matches; stale/missing lease release is idempotent success.
 - `isHeldByCaller(key) -> bool`
 - `shutdown() -> void`
   - Cancels pending acquire waiters and prevents new acquisitions.
@@ -119,7 +126,8 @@ Per lock key, backend stores:
 - Any API requiring positive duration must reject zero/negative durations.
 - `lease_ttl` must be strictly positive for `tryAcquire`, `acquire`, and `renew`.
 - `wait_timeout` for `acquire` may be zero to request no-wait behavior
-  (equivalent outcome to one immediate acquire attempt).
+  (exact mapping: one immediate attempt; returns `Acquired` on success or `Busy`
+  on contention).
 - `acquire` timeout must be monotonic-clock based.
 - `acquire` wait loop must support cancellation token.
 - After `shutdown`, `tryAcquire` fails with `Cancelled`.
@@ -162,9 +170,9 @@ Requests from stale/non-owner callers must not mutate current owner state.
 
 ### FR-6: Idempotent Release
 
-`release()` is idempotent only when the lease is already missing/expired and no
-active owner exists for that lease. If the key is actively held by a different
-owner, `release()` must return `NotOwner`.
+`release()` is idempotent for stale/missing/expired handles. If the handle
+matches active ownership, it releases ownership; otherwise it returns success
+with no state change.
 
 ### FR-7: Process Crash Tolerance
 
@@ -203,7 +211,8 @@ an explicit factory/result path rather than constructor throws.
 
 ## 9. Security and Abuse Considerations
 
-- Owner IDs must be unguessable (UUID v4 or cryptographically random ID).
+- Owner IDs must be unguessable and metadata must not be embedded in owner ID
+  bytes; optional metadata is stored separately.
 - API must not trust client wall clock for lease validity decisions.
 - Fencing token must be propagated by lock users to guarded side effects.
 - Logging must not leak secrets in lock key metadata.
