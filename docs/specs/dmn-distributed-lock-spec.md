@@ -166,7 +166,7 @@ public:
   auto releaseLock(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
-  auto cancelRequest(const std::string &request_id)
+  auto cancelRequest(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
   auto getRequestState(const std::string &request_id) const
@@ -182,6 +182,18 @@ Argument validity rules:
 - negative range values are invalid for Phase 1 and return `kInvalidArg`.
 - `owner_id` must be non-empty.
 - `wait_timeout == 0ms` means no-wait single attempt.
+- `retry_min_backoff` and `retry_max_backoff` must be >= 0.
+- `retry_min_backoff <= retry_max_backoff` is required.
+- `retry_jitter_ratio` must be in `[0.0, 1.0]`.
+- invalid retry option combinations return `kInvalidArg`.
+
+`requestLock` return behavior:
+
+- if `wait_timeout == 0ms`: return immediately with `kGranted`, `kWaiting`, or
+  terminal error code.
+- if `wait_timeout > 0ms`: block in API thread until one of
+  `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`; do not
+  return `kWaiting` before timeout.
 
 ## 7) State machine semantics
 
@@ -197,10 +209,11 @@ Forbidden:
 
 ## 8) Data consistency and ordering rules
 
-- Publisher increments global `sequence` on accepted lock updates.
+- Publisher increments global `sequence` **only on accepted request creation**.
 - Publisher increments `table_version` on every accepted table mutation.
 - `sequence` is assigned once at request creation and is immutable for that
   request across release/cancel/state mutations.
+- mutation ordering uses `table_version` (not reassigned `sequence`).
 - Handlers apply snapshots only if incoming version is newer.
 - Top-of-list decision always based on latest mirrored version.
 
@@ -327,21 +340,22 @@ Normative command checkpoints:
 3. `RequestLock_PublisherAccept_ReturnsGranted`
 4. `RequestLock_PublisherConflict_SchedulesRetry`
 5. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
-6. `RequestLock_ApiWait_GrantsWhenTop`
-7. `RequestLock_MissedWakeupRace_DoesNotHang`
-8. `RequestLock_VersionChange_WakesWaiter`
-9. `ReleaseLock_NotOwner_ReturnsNotOwner`
-10. `ReleaseLock_Owner_SetsUnlocked`
-11. `CancelRequest_WaitingRequest_Terminates`
-12. `Shutdown_NewRequests_ReturnShutdown`
-13. `Shutdown_WakesWaiters`
-14. `Shutdown_CancelsPendingRetries`
-15. `Observability_EmitPayloadSchema_Valid`
-16. `Observability_EmitterFailure_DoesNotChangeResult`
-17. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-18. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-19. `Stress_HighContention_NoDeadlock`
-20. `Stress_WorkerThreads_NeverBlockOnWait`
+6. `RequestLock_NoWaitMode_ReturnsWaitingWhenNotTop`
+7. `RequestLock_ApiWait_GrantsWhenTop`
+8. `RequestLock_MissedWakeupRace_DoesNotHang`
+9. `RequestLock_VersionChange_WakesWaiter`
+10. `ReleaseLock_NotOwner_ReturnsNotOwner`
+11. `ReleaseLock_Owner_SetsUnlocked`
+12. `CancelRequest_WaitingRequest_Terminates`
+13. `Shutdown_NewRequests_ReturnShutdown`
+14. `Shutdown_WakesWaiters`
+15. `Shutdown_CancelsPendingRetries`
+16. `Observability_EmitPayloadSchema_Valid`
+17. `Observability_EmitterFailure_DoesNotChangeResult`
+18. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+19. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+20. `Stress_HighContention_NoDeadlock`
+21. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
