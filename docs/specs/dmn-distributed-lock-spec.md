@@ -149,6 +149,7 @@ struct Dmn_DLock_OpResult {
 struct Dmn_DLock_ManagerCreateResult {
   enum class Code {
     kOk,
+    kReusedExistingSingleton,
     kInvalidConfig,
     kBackendInitFailed,
     kClockInitFailed
@@ -157,6 +158,7 @@ struct Dmn_DLock_ManagerCreateResult {
   bool ok{false};
   Code code{Code::kInvalidConfig};
   std::string message;
+  bool reused_existing{false};
   // singleton shared_ptr type used across this repository
   std::shared_ptr<Dmn_DLock_Manager> manager;
 };
@@ -179,7 +181,7 @@ public:
 class Dmn_DLock_Manager::Dmn_DLockLeaseProxy {
   friend class Dmn_DLock_Manager;
 public:
-  auto operator->() const -> std::shared_ptr<Dmn_DLockLease>; // DMesg-like
+  auto lockShared() const -> std::shared_ptr<Dmn_DLockLease>;
   explicit operator bool() const noexcept;
 private:
   void reset() noexcept;
@@ -191,8 +193,8 @@ using LeaseType = Dmn_DLock_Manager::Dmn_DLockLeaseProxy;
 
 Proxy behavior:
 
-- `operator->()` throws `std::runtime_error` if lease already closed/reset.
-- Callers should use `if (lease)` before dereference (same pattern as DMesg).
+- `lockShared()` returns null if lease already closed/reset.
+- Callers should use `if (lease)` then `auto l = lease.lockShared()` before access.
 
 ## 6.5 Manager API signatures (normative)
 
@@ -236,6 +238,9 @@ Singleton contract:
 
 - `createManager()` must call `Dmn_Singleton<Dmn_DLock_Manager>::createInstance(...)`.
 - It must never create more than one manager instance.
+- Repeated successful calls return `kReusedExistingSingleton` with
+  `reused_existing=true`; backend/clock init failure codes apply only before
+  the singleton exists.
 
 ## 7. Backend Contract (interface)
 
@@ -309,8 +314,7 @@ public:
 - Runtime lock operations are result-code driven:
   `tryAcquire`, `acquire`, `renew`, `release`, `closeLease`.
 - `createManager` is result-code driven.
-- Only proxy dereference (`LeaseType::operator->`) may throw on closed proxy,
-  intentionally mirroring `Dmn_DMesg` proxy behavior.
+- Proxy access uses `lockShared()` null checks (non-throwing).
 
 ## 10. Observability Contract
 
@@ -328,6 +332,18 @@ Required event outcomes:
 - `release_noop_missing_or_expired`
 - `release_noop_active_other_owner`
 - `release_backend_error`
+
+Minimum event payload schema (all events):
+
+- `event_name: string`
+- `lock_key: string`
+- `owner_id: string`
+- `lease_id: string` (empty when unavailable)
+- `fencing_token: uint64` (0 when unavailable)
+- `result_code: string`
+- `backend_now_ms: uint64`
+- `manager_generation: uint64`
+- `message: string` (optional diagnostic)
 
 ## 11. Implementation Plan (step-by-step, implementation-ready)
 
@@ -360,7 +376,7 @@ Required event outcomes:
 5. Tests:
    - valid proxy after acquire
    - closed proxy after `closeLease`
-   - `operator->` throws after close
+   - `lockShared()` returns null after close
 
 ### Phase 3 — tryAcquire()
 
@@ -381,6 +397,7 @@ Required event outcomes:
 ### Phase 4 — release() and closeLease()
 
 1. Implement release path using lease identity fields.
+   - Postcondition: backend lock state updated/no-op, but local proxy remains valid.
 2. Map backend release replies:
    - released -> `kOk`
    - noop missing/expired -> `kOk`
@@ -390,6 +407,7 @@ Required event outcomes:
    - best-effort `release(lease)`
    - remove internal retained lease
    - reset proxy.
+   - Postcondition: local handle is closed regardless of backend release result.
 4. Tests:
    - owner release
    - stale/noop release
