@@ -77,7 +77,7 @@ Per lock key, backend stores:
 
 ## 5. Public API Requirements
 
-## 5.1 Types
+### 5.1 Types
 
 - `Dmn_DLock_Key = std::string`
 - `Dmn_DLock_Token = uint64_t`
@@ -116,8 +116,11 @@ Per lock key, backend stores:
 ### 5.3 Behavioral Requirements
 
 - Any API requiring positive duration must reject zero/negative durations.
+- `lease_ttl` must be strictly positive for `tryAcquire`, `acquire`, and `renew`.
+- `wait_timeout` for `acquire` must be strictly positive in Phase 1 semantics.
 - `acquire` timeout must be monotonic-clock based.
 - `acquire` wait loop must support cancellation token.
+- After `shutdown`, `tryAcquire` fails with `Cancelled`.
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
 - After `shutdown`, all renew attempts fail with `Cancelled`.
 - Renewing after lease expiration returns `Expired`.
@@ -199,7 +202,7 @@ reported by exceptions.
 
 ## 10. Test-Driven Development (TDD) Strategy
 
-## 10.1 TDD Rules
+### 10.1 TDD Rules
 
 1. Write failing test first.
 2. Implement minimal code to pass.
@@ -282,7 +285,8 @@ reported by exceptions.
 
 1. Write failing tests for shutdown behavior.
 2. Implement shutdown state flag and waiter cancellation.
-3. Ensure no new acquire/renew operations proceed post-shutdown (policy-defined exceptions may keep release allowed).
+3. Ensure no new `tryAcquire`/`acquire`/`renew` operations proceed post-shutdown
+   (policy-defined exceptions may keep release allowed).
 4. Add race tests between shutdown and acquire.
 
 ### Phase 6: Observability
