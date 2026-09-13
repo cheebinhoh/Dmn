@@ -296,8 +296,8 @@ Query mutability contract:
   until explicit `releaseLock` succeeds.
 - after `retained_terminal_ttl` elapses, query may legitimately return
   `kNotFound` for previously terminalized non-granted records that were pruned.
-- TTL pruning must be enforced independent of query calls (for example by
-  maintenance tick/worker or lifecycle-event-triggered sweep).
+- TTL pruning must be enforced independent of query calls via manager-owned
+  pruning executor maintenance ticks.
 - queries must observe pruning decisions committed before the query starts.
 - synchronization rule: pruning commit and query-read start must serialize on the
   same lifecycle-state mutex/version barrier; pruning increments
@@ -456,6 +456,7 @@ Valid transitions:
 - `kLocking -> kLocked -> kUnlocked` (accepted immediately-top async request path)
 - `kLocking -> kLocked` (accepted immediately-top synchronous no-wait grant path)
 - `kLocking -> kLocked` (accepted immediately-top synchronous blocking-wait grant path)
+- `kLocked -> kUnlocked` (normal owner-authorized release path)
 - `kLocked -> kLocked` (shutdown preserves retained granted lock until explicit release)
 - `kLockWaiting -> kUnlocked` (cancel/timeout/shutdown terminalization)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
@@ -755,6 +756,7 @@ Normative command checkpoints:
 79. `Shutdown_PruningDrain_SkipsGrantedRecordsWhileDrainingQueuedWork`
 80. `Shutdown_FinalSynchronousPruneSweep_PrunesNewlyTerminalizedNonGranted`
 81. `RequestLock_RetentionVersionChange_WakesWaiterWhenTableVersionUnchanged`
+82. `RequestLock_RetryBackoff_JitterAppliedWithinConfiguredRatio`
 
 ## 14) Definition of Done
 
