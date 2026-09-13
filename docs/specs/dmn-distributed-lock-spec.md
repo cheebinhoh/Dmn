@@ -223,7 +223,9 @@ public:
       -> Dmn_DLock_Result;
 
   // non-blocking waitable submission: enqueues request lifecycle and returns
-  // immediately with request_id and `kWaiting` (lifecycle retained)
+  // immediately with request_id and either:
+  // - `kWaiting` for accepted queued submission
+  // - `kGranted` for immediate lockable submission
   auto requestLockAsync(int start, int end, const Dmn_DLock_RequestOptions &opts)
       -> Dmn_DLock_Result;
 
@@ -502,26 +504,30 @@ locate `dmn-test-dlock` first.
 18. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
 19. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
 20. `RequestLockAsync_ReturnsRequestIdAndWaitingOrGranted`
-21. `CancelRequest_WaitingRequest_Terminates`
-22. `Shutdown_NewRequests_ReturnShutdown`
-23. `Shutdown_WakesWaiters`
-24. `Shutdown_CancelsPendingRetries`
-25. `Observability_EmitPayloadSchema_Valid`
-26. `Observability_EmitterFailure_DoesNotChangeResult`
-27. `ResultCodeMapping_GrantedSetsOkTrue`
-28. `ResultCodeMapping_ConflictSetsOkFalse`
-29. `ResultCodeMapping_TimeoutSetsOkFalse`
-30. `ResultCodeMapping_WaitingSetsOkFalse`
-31. `ResultCodeMapping_CancelledSetsOkFalse`
-32. `ResultCodeMapping_NotOwnerSetsOkFalse`
-33. `ResultCodeMapping_NotFoundSetsOkFalse`
-34. `ResultCodeMapping_InvalidArgSetsOkFalse`
-35. `ResultCodeMapping_PublisherErrorSetsOkFalse`
-36. `ResultCodeMapping_ShutdownSetsOkFalse`
-37. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-38. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-39. `Stress_HighContention_NoDeadlock`
-40. `Stress_WorkerThreads_NeverBlockOnWait`
+21. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
+22. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
+23. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
+24. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
+25. `CancelRequest_WaitingRequest_Terminates`
+26. `Shutdown_NewRequests_ReturnShutdown`
+27. `Shutdown_WakesWaiters`
+28. `Shutdown_CancelsPendingRetries`
+29. `Observability_EmitPayloadSchema_Valid`
+30. `Observability_EmitterFailure_DoesNotChangeResult`
+31. `ResultCodeMapping_GrantedSetsOkTrue`
+32. `ResultCodeMapping_ConflictSetsOkFalse`
+33. `ResultCodeMapping_TimeoutSetsOkFalse`
+34. `ResultCodeMapping_WaitingSetsOkFalse`
+35. `ResultCodeMapping_CancelledSetsOkFalse`
+36. `ResultCodeMapping_NotOwnerSetsOkFalse`
+37. `ResultCodeMapping_NotFoundSetsOkFalse`
+38. `ResultCodeMapping_InvalidArgSetsOkFalse`
+39. `ResultCodeMapping_PublisherErrorSetsOkFalse`
+40. `ResultCodeMapping_ShutdownSetsOkFalse`
+41. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+42. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+43. `Stress_HighContention_NoDeadlock`
+44. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
