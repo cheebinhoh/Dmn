@@ -126,6 +126,8 @@ Sort/index order:
 - `requestLockAsync` without cancel token may remain in `kLockWaiting` lifecycle
   state (query code `kWaiting`) indefinitely
   under sustained conflict until external cancellation/shutdown occurs.
+- For `requestLockAsync`, retry-until-terminal applies only when a terminal path
+  exists (cancel token provided or shutdown occurs).
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -275,7 +277,7 @@ Argument validity rules:
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
-  - publisher immediate submission failure (pre-acceptance) -> `kPublisherError`
+  - local enqueue/scheduling failure -> `kPublisherError`
 
 Deterministic result mapping:
 
@@ -319,6 +321,8 @@ Deterministic result mapping:
 - `shutdown()` is synchronous.
 - On return, pending waiters are woken, pending retries are cancelled, and
   affected retained requests have terminal state persisted.
+- `shutdown()` is guaranteed non-throwing and does not return failure status
+  (best-effort completion with deterministic terminalization semantics).
 
 ## 7) State machine semantics
 
@@ -336,6 +340,13 @@ Terminal publisher failure representation:
 
 - retained request transitions to terminal lifecycle state `kLocking -> kUnlocked`
   with result code `kPublisherError`.
+
+State entry triggers:
+
+- enter `kLockWaiting` when request is accepted but not currently top/lockable.
+- enter `kLocking` when request becomes top candidate and a publish/grant
+  transition attempt is in progress at publisher.
+- enter `kLocked` when publisher confirms lock grant for the request.
 
 ## 8) Data consistency and ordering rules
 
