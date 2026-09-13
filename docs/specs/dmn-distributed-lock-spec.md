@@ -147,6 +147,7 @@ Shared state under one mutex:
 
 - mirrored lock table
 - `table_version`
+- `retention_version` (monotonic on each committed prune mutation)
 - per-request terminal flags (`granted`, `cancelled`, `timed_out`, `failed`)
 
 Wait pattern (normative):
@@ -404,6 +405,10 @@ Deterministic result mapping:
 - `shutdown()` is synchronous.
 - shutdown order is strict: quiesce retry scheduling first, then cancel/drain
   retry lane, then stop/drain pruning lane.
+- stop/drain pruning lane semantics are strict:
+  1) stop acceptance of new pruning work,
+  2) drain already-enqueued pruning work,
+  3) apply granted-skip rule during drain.
 - during pruning-lane drain, pruning logic must continue to skip retained
   granted records (never TTL-delete granted entries).
 - On return, pending waiters are woken, pending retries are cancelled, and
@@ -727,6 +732,8 @@ Normative command checkpoints:
 75. `RetentionMaintenance_PostExpiry_PrunesNonGrantedTerminalWithoutPriorQuery`
 76. `Shutdown_RetainedGrantedRequest_PostTtl_ReleaseStillSucceeds`
 77. `Shutdown_StrictOrder_QuiesceRetryThenDrainRetryThenDrainPruning_BeforeReturn`
+78. `RetentionBarrier_QuerySeesPruningCommittedBeforeQueryStart`
+79. `Shutdown_PruningDrain_SkipsGrantedRecordsWhileDrainingQueuedWork`
 
 ## 14) Definition of Done
 
