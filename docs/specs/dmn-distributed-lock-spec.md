@@ -231,6 +231,7 @@ struct Dmn_DLock_Result {
 
 struct Config {
   std::chrono::milliseconds default_async_expiry{std::chrono::minutes{5}}; // mandatory bounded async lifetime fallback
+  std::chrono::milliseconds retained_terminal_ttl{std::chrono::hours{1}};  // minimum terminal queryability window
 };
 
 class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager> {
@@ -263,6 +264,10 @@ Query mutability contract:
 - `getRequestStateForOwner` is concurrency-safe and callable during lifecycle transitions.
 - query may perform internal housekeeping (for example, retention pruning/access
   bookkeeping) but must not mutate externally observable request outcome.
+- housekeeping must not delete retained terminal records before
+  `retained_terminal_ttl` has elapsed from terminalization.
+- after `retained_terminal_ttl` elapses, query may legitimately return
+  `kNotFound` for previously terminalized records that were pruned.
 
 Argument validity rules:
 
@@ -272,6 +277,7 @@ Argument validity rules:
 - `wait_timeout == 0ms` means no-wait single attempt.
 - `async_expiry` (when provided) must be > 0ms.
 - manager `default_async_expiry` must be configured > 0ms.
+- manager `retained_terminal_ttl` must be configured > 0ms.
 - `retry_min_backoff` and `retry_max_backoff` must be >= 0.
 - `retry_min_backoff <= retry_max_backoff` is required.
 - `retry_jitter_ratio` must be in `[0.0, 1.0]`.
@@ -343,6 +349,8 @@ Deterministic result mapping:
 - query request not found -> `kNotFound`
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
   `cancelRequest`) -> `kShutdown`
+- shutdown gate exception: `releaseLock` is the only mutation allowed
+  during/after shutdown, and only for retained previously granted requests.
 - `releaseLock` remains permitted during/after shutdown only for retained
   already-granted requests; release of retained non-granted/terminal requests
   returns `kNotFound`.
@@ -377,6 +385,8 @@ Deterministic result mapping:
   `kShutdown` and lifecycle-closed (`kUnlocked`) **unless** authoritative
   publisher grant confirmation was already persisted, in which case outcome
   must remain `kGranted`.
+- post-shutdown, `releaseLock` remains intentionally available as the sole
+  mutation to allow deterministic cleanup of retained granted requests.
 - `shutdown()` is guaranteed non-throwing and does not return failure status
   (best-effort completion with deterministic terminalization semantics).
 
@@ -606,69 +616,71 @@ Normative command checkpoints:
 2. `RequestLock_EmptyOwnerId_ReturnsInvalidArg`
 3. `RequestLock_InvalidRetryBounds_ReturnsInvalidArg`
 4. `RequestLock_InvalidJitterRatio_ReturnsInvalidArg`
-5. `LockingEntry_OrderByStartEndPrioritySequence`
-6. `RequestLock_PublisherAccept_ReturnsGranted`
-7. `RequestLock_PublisherConflict_SchedulesRetry`
-8. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
-9. `RequestLock_NoWaitMode_NotTopReturnsConflictCode`
-10. `RequestLock_NoWaitMode_VersionMismatchReturnsConflictCode`
-11. `RequestLock_ApiWait_GrantsWhenTop`
-12. `RequestLock_MissedWakeupRace_DoesNotHang`
-13. `RequestLock_VersionChange_WakesWaiter`
-14. `ReleaseLock_NotOwner_ReturnsNotOwner`
-15. `ReleaseLock_Owner_SetsUnlocked`
-16. `ReleaseLock_RequestNotFound_ReturnsNotFound`
-17. `CancelRequest_RequestNotFound_ReturnsNotFound`
-18. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
-19. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
-20. `RequestLockAsync_ReturnsRequestIdAndWaiting`
-21. `RequestLockAsync_InvalidArgs_ReturnsInvalidArgAndEmptyRequestId`
-22. `RequestLockAsync_ShutdownGate_ReturnsShutdownAndEmptyRequestId`
-23. `RequestLockAsync_LocalEnqueueFailure_ReturnsLocalSubmissionErrorAndEmptyRequestId`
-24. `RequestLock_PublisherTerminalFailure_ReturnsPublisherError`
-25. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
-26. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
-27. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
-28. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
-29. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
-30. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
-31. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
-32. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
-33. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
-34. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
-35. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
-36. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
-37. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
-38. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
-39. `CancelRequest_WaitingRequest_Terminates`
-40. `BlockingRequest_ExternalCancelRequest_TerminatesAndStopsRetries`
-41. `BlockingRequest_ExternalCancelRequest_WithoutRetryLoop_ReturnsCancelled`
-42. `Shutdown_NewRequests_ReturnShutdown`
-43. `Shutdown_CancelRequest_ReturnsShutdown`
-44. `Shutdown_WakesWaiters`
-45. `Shutdown_CancelsPendingRetries`
-46. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
-47. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsNotFound`
-48. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
-49. `Observability_EmitPayloadSchema_Valid`
-50. `Observability_EmitSuccessTransitionPayload_Valid`
-51. `Observability_EmitTimeoutTransitionPayload_Valid`
-52. `Observability_EmitCancelTransitionPayload_Valid`
-53. `Observability_EmitShutdownTransitionPayload_Valid`
-54. `Observability_EmitterFailure_DoesNotChangeResult`
-55. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-56. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-57. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-58. `Stress_HighContention_NoDeadlock`
-59. `Stress_WorkerThreads_NeverBlockOnWait`
-60. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
-61. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
-62. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
-63. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
-64. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
-65. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
-66. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
-67. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
+5. `ManagerConfig_DefaultAsyncExpiry_NonPositiveRejected`
+6. `LockingEntry_OrderByStartEndPrioritySequence`
+7. `RequestLock_PublisherAccept_ReturnsGranted`
+8. `RequestLock_PublisherConflict_SchedulesRetry`
+9. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
+10. `RequestLock_NoWaitMode_NotTopReturnsConflictCode`
+11. `RequestLock_NoWaitMode_VersionMismatchReturnsConflictCode`
+12. `RequestLock_ApiWait_GrantsWhenTop`
+13. `RequestLock_MissedWakeupRace_DoesNotHang`
+14. `RequestLock_VersionChange_WakesWaiter`
+15. `ReleaseLock_NotOwner_ReturnsNotOwner`
+16. `ReleaseLock_Owner_SetsUnlocked`
+17. `ReleaseLock_RequestNotFound_ReturnsNotFound`
+18. `CancelRequest_RequestNotFound_ReturnsNotFound`
+19. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
+20. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
+21. `RequestLockAsync_ReturnsRequestIdAndWaiting`
+22. `RequestLockAsync_InvalidArgs_ReturnsInvalidArgAndEmptyRequestId`
+23. `RequestLockAsync_ShutdownGate_ReturnsShutdownAndEmptyRequestId`
+24. `RequestLockAsync_LocalEnqueueFailure_ReturnsLocalSubmissionErrorAndEmptyRequestId`
+25. `RequestLock_PublisherTerminalFailure_ReturnsPublisherError`
+26. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
+27. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
+28. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
+29. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
+30. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
+31. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
+32. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
+33. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
+34. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
+35. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
+36. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
+37. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
+38. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
+39. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
+40. `CancelRequest_WaitingRequest_Terminates`
+41. `BlockingRequest_ExternalCancelRequest_TerminatesAndStopsRetries`
+42. `BlockingRequest_ExternalCancelRequest_WithoutRetryLoop_ReturnsCancelled`
+43. `Shutdown_NewRequests_ReturnShutdown`
+44. `Shutdown_CancelRequest_ReturnsShutdown`
+45. `Shutdown_WakesWaiters`
+46. `Shutdown_CancelsPendingRetries`
+47. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
+48. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsNotFound`
+49. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
+50. `Observability_EmitPayloadSchema_Valid`
+51. `Observability_EmitSuccessTransitionPayload_Valid`
+52. `Observability_EmitTimeoutTransitionPayload_Valid`
+53. `Observability_EmitCancelTransitionPayload_Valid`
+54. `Observability_EmitShutdownTransitionPayload_Valid`
+55. `Observability_EmitterFailure_DoesNotChangeResult`
+56. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+57. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+58. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+59. `Stress_HighContention_NoDeadlock`
+60. `Stress_WorkerThreads_NeverBlockOnWait`
+61. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
+62. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
+63. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
+64. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
+65. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
+66. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
+67. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
+68. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
+69. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
 
 ## 14) Definition of Done
 
