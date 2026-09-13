@@ -164,6 +164,7 @@ while (true) {
            retention_version != observed_retention_version;
   });
   if (!ready) {
+    // lock is still held here; final predicate check must read mutex-protected state.
     if (isRequestTopAndLocked(request_id) || isRequestTerminal(request_id)) break;
     break; // deadline reached without terminal/granted transition
   }
@@ -177,6 +178,8 @@ Rules:
 - waiter captures observed table/retention versions before sleeping
 - after `wait_until` timeout, waiter must perform one final under-lock
   granted/terminal predicate check before concluding timeout
+- predicate helpers (`isRequestTopAndLocked`, `isRequestTerminal`) must read
+  mutex-protected mirrored state while lock is held
 
 This prevents lost notifications and stale waits.
 
@@ -551,8 +554,9 @@ Normative command checkpoints:
 - focused test run (normative, deterministic):
   1. resolve exact test executable command via
      `ctest --test-dir <build_dir> -N -V -R '^dmn-test-dlock$'`
-  2. run resolved executable with
-     `--gtest_filter=<Suite.Test>`
+  2. run resolved executable with framework-native single-test selector for
+     the target test framework (for example, if GoogleTest is used:
+     `--gtest_filter=<Suite.Test>`).
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
 ## 12) Step-by-step implementation plan
