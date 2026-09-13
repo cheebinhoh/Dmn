@@ -367,9 +367,12 @@ Deterministic result mapping:
 `request_id` field population rules:
 
 - `request_id` is acceptance-scoped, not result-code-scoped.
+- accepted async submissions return immediately as `kWaiting` with non-empty
+  `request_id`; later terminal outcomes are observed via
+  `getRequestStateForOwner`, not async immediate return code.
 - `request_id` must be populated for any accepted request lifecycle, including
-  accepted submissions that later terminate as
-  `kGranted`/`kWaiting`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`.
+  accepted submissions whose persisted lifecycle later terminates as
+  `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`.
 - this includes synchronous no-wait `kGranted` outcomes and blocking wait-mode
   returns (`kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`)
   after accepted submission.
@@ -677,10 +680,10 @@ Normative command checkpoints:
 59. `RequestLock_CancelToken_InterruptsWithCancelledCode`
 60. `Stress_HighContention_NoDeadlock`
 61. `Stress_WorkerThreads_NeverBlockOnWait`
-62. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
-63. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
-64. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
-65. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
+62. `RequestLockAsync_AcceptedThenTimeout_PersistedLifecycleHasSameRequestId`
+63. `RequestLockAsync_AcceptedThenCancelled_PersistedLifecycleHasSameRequestId`
+64. `RequestLockAsync_AcceptedThenShutdown_PersistedLifecycleHasSameRequestId`
+65. `RequestLockAsync_AcceptedThenPublisherError_PersistedLifecycleHasSameRequestId`
 66. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
 67. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
 68. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
