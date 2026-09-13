@@ -392,7 +392,9 @@ Deterministic result mapping:
   `cancelRequest`) -> `kShutdown`
 - default post-shutdown `releaseLock` behavior is `kShutdown`.
 - shutdown exception for pre-shutdown retained requests:
-  - retained previously granted request -> `releaseLock` remains permitted.
+  - retained previously granted request -> `releaseLock` remains permitted and
+    must execute normal ownership validation plus authoritative publisher
+    release transition (`kLocked -> kUnlocked`) before success.
   - all other post-shutdown `releaseLock` calls -> `kShutdown`.
 - retained granted requests must remain discoverable for `releaseLock`
   (not TTL-pruned) until explicit release succeeds.
@@ -766,6 +768,7 @@ Normative command checkpoints:
 81. `RequestLock_RetentionVersionChange_WakesWaiterWhenTableVersionUnchanged`
 82. `RequestLock_RetryBackoff_JitterAppliedWithinConfiguredRatio`
 83. `RequestLockAsync_ExplicitAsyncExpiry_PositiveValue_ExpiresWithTimeout`
+84. `RequestLockAsync_ExplicitAsyncExpiry_OverridesManagerDefaultExpiry`
 
 ## 14) Definition of Done
 
