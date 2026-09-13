@@ -32,6 +32,7 @@ Functional requirements:
 - FR-4: Conflict updates retry asynchronously with bounded backoff.
 - FR-5: API-thread wait uses missed-wakeup-safe predicate+version wait loop.
 - FR-6: Async worker must never block on condition wait.
+- FR-7: Async requests must have bounded lifetime via per-request or manager-default expiry.
 
 Non-functional requirements:
 
@@ -125,11 +126,14 @@ Sort/index order:
 - Retry loop applies only to `requestLock(wait_timeout > 0ms)` and
   `requestLockAsync`; no-wait mode (`wait_timeout == 0ms`) is single-attempt.
 - `requestLockAsync` without cancel token may remain in `kLockWaiting` lifecycle
-  state (query code `kWaiting`) indefinitely
-  under sustained conflict until external cancellation/shutdown occurs.
-- `requestLockAsync` retries continue indefinitely under sustained
-  conflict/version-mismatch
-  (bounded backoff), unless cancelled or shutdown.
+  state (query code `kWaiting`) only until bounded async expiry is reached.
+- `requestLockAsync` retries continue while request remains pending under
+  sustained conflict/version-mismatch
+  (bounded backoff), unless cancelled/shutdown/async-expiry.
+- async requests must always have bounded lifetime via:
+  - per-request `async_expiry` when set, or
+  - mandatory manager `default_async_expiry` when `async_expiry` is nullopt.
+- async expiry terminalizes retained request as `kTimeout`.
 - for blocking requests, timeout terminalization must set shared terminal flag
   checked before each retry attempt; retries must stop once timeout is reached.
 
@@ -193,6 +197,7 @@ struct Dmn_DLock_RequestOptions {
   std::string owner_id; // required; identifies request owner
   int priority{0};
   std::chrono::milliseconds wait_timeout{std::chrono::milliseconds{0}}; // 0ms = no-wait (single attempt)
+  std::optional<std::chrono::milliseconds> async_expiry{std::nullopt}; // bounded async lifetime; falls back to manager default when nullopt
   std::chrono::milliseconds retry_min_backoff{std::chrono::milliseconds{10}};
   std::chrono::milliseconds retry_max_backoff{std::chrono::milliseconds{500}};
   double retry_jitter_ratio{0.20};
@@ -242,7 +247,7 @@ public:
   auto cancelRequest(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
-  auto getRequestStateForOwner(const std::string &request_id, const std::string &owner_id) const
+  auto getRequestStateForOwner(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
   void shutdown();
@@ -255,6 +260,7 @@ Argument validity rules:
 - negative range values are invalid for Phase 1 and return `kInvalidArg`.
 - `owner_id` must be non-empty.
 - `wait_timeout == 0ms` means no-wait single attempt.
+- `async_expiry` (when provided) must be > 0ms.
 - `retry_min_backoff` and `retry_max_backoff` must be >= 0.
 - `retry_min_backoff <= retry_max_backoff` is required.
 - `retry_jitter_ratio` must be in `[0.0, 1.0]`.
@@ -327,7 +333,8 @@ Deterministic result mapping:
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
   `cancelRequest`) -> `kShutdown`
 - `releaseLock` remains permitted during/after shutdown only for retained
-  already-granted requests; all other release attempts return `kShutdown`.
+  already-granted requests; release of retained non-granted/terminal requests
+  returns `kNotFound`.
 - owner-scoped query during/after shutdown returns persisted request outcome:
   `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError` or `kNotFound`.
 - owner-scoped query returns `kShutdown` only when that request lifecycle was
@@ -627,25 +634,27 @@ Normative command checkpoints:
 43. `Shutdown_WakesWaiters`
 44. `Shutdown_CancelsPendingRetries`
 45. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
-46. `Observability_EmitPayloadSchema_Valid`
-47. `Observability_EmitSuccessTransitionPayload_Valid`
-48. `Observability_EmitTimeoutTransitionPayload_Valid`
-49. `Observability_EmitCancelTransitionPayload_Valid`
-50. `Observability_EmitShutdownTransitionPayload_Valid`
-51. `Observability_EmitterFailure_DoesNotChangeResult`
-52. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-53. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-54. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-55. `Stress_HighContention_NoDeadlock`
-56. `Stress_WorkerThreads_NeverBlockOnWait`
-57. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
-58. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
-59. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
-60. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
-61. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
-62. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
-63. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
-64. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
+46. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsNotFound`
+47. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
+48. `Observability_EmitPayloadSchema_Valid`
+49. `Observability_EmitSuccessTransitionPayload_Valid`
+50. `Observability_EmitTimeoutTransitionPayload_Valid`
+51. `Observability_EmitCancelTransitionPayload_Valid`
+52. `Observability_EmitShutdownTransitionPayload_Valid`
+53. `Observability_EmitterFailure_DoesNotChangeResult`
+54. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+55. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+56. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+57. `Stress_HighContention_NoDeadlock`
+58. `Stress_WorkerThreads_NeverBlockOnWait`
+59. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
+60. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
+61. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
+62. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
+63. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
+64. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
+65. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
+66. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
 
 ## 14) Definition of Done
 
