@@ -97,7 +97,8 @@ Sort/index order:
 
 ## 4.1 `requestLock()` high-level behavior
 
-1. API creates new `LockingEntry` with `kLockWaiting` and unique `request_id`.
+1. For accepted submissions, API allocates unique `request_id` and creates
+   `LockingEntry`.
 2. API publish mode depends on API entrypoint:
    - `requestLockAsync(...)`: always submit async worker task and retain request lifecycle.
    - `requestLock(...)`: dispatch by `wait_timeout`:
@@ -274,6 +275,8 @@ Argument validity rules:
 - `requestLockAsync` always returns immediately with request lifecycle retained
   for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`, and returns
   `kWaiting` on accepted submission.
+- even if request is immediately top/lockable, async API still returns `kWaiting`
+  and transitions to `kGranted` through subsequent lifecycle update/query.
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
@@ -329,6 +332,7 @@ Deterministic result mapping:
 Valid transitions:
 
 - `kLockWaiting -> kLocking -> kLocked -> kUnlocked`
+- `kLocking -> kLocked -> kUnlocked` (accepted immediately-top async request path)
 - `kLockWaiting -> kUnlocked` (cancel/timeout)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
 
@@ -552,35 +556,38 @@ locate `dmn-test-dlock` first.
 18. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
 19. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
 20. `RequestLockAsync_ReturnsRequestIdAndWaiting`
-21. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
-22. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
-23. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
-24. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
-25. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
-26. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
-27. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
-28. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
-29. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
-30. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
-31. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
-32. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
-33. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
-34. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
-35. `CancelRequest_WaitingRequest_Terminates`
-36. `Shutdown_NewRequests_ReturnShutdown`
-37. `Shutdown_WakesWaiters`
-38. `Shutdown_CancelsPendingRetries`
-39. `Observability_EmitPayloadSchema_Valid`
-40. `Observability_EmitSuccessTransitionPayload_Valid`
-41. `Observability_EmitTimeoutTransitionPayload_Valid`
-42. `Observability_EmitCancelTransitionPayload_Valid`
-43. `Observability_EmitShutdownTransitionPayload_Valid`
-44. `Observability_EmitterFailure_DoesNotChangeResult`
-45. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-46. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-47. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-48. `Stress_HighContention_NoDeadlock`
-49. `Stress_WorkerThreads_NeverBlockOnWait`
+21. `RequestLockAsync_InvalidArgs_ReturnsInvalidArgAndEmptyRequestId`
+22. `RequestLockAsync_ShutdownGate_ReturnsShutdownAndEmptyRequestId`
+23. `RequestLockAsync_LocalEnqueueFailure_ReturnsPublisherErrorAndEmptyRequestId`
+24. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
+25. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
+26. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
+27. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
+28. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
+29. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
+30. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
+31. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
+32. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
+33. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
+34. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
+35. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
+36. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
+37. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
+38. `CancelRequest_WaitingRequest_Terminates`
+39. `Shutdown_NewRequests_ReturnShutdown`
+40. `Shutdown_WakesWaiters`
+41. `Shutdown_CancelsPendingRetries`
+42. `Observability_EmitPayloadSchema_Valid`
+43. `Observability_EmitSuccessTransitionPayload_Valid`
+44. `Observability_EmitTimeoutTransitionPayload_Valid`
+45. `Observability_EmitCancelTransitionPayload_Valid`
+46. `Observability_EmitShutdownTransitionPayload_Valid`
+47. `Observability_EmitterFailure_DoesNotChangeResult`
+48. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+49. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+50. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+51. `Stress_HighContention_NoDeadlock`
+52. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
