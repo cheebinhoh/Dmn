@@ -64,7 +64,7 @@ Per lock key, backend stores:
 - `owner_id: string`
 - `lease_id: string`
 - `fencing_token: uint64`
-- `expires_at_ms: uint64` (monotonic epoch in backend domain)
+- `expires_at_ms: uint64` (backend-owned expiration timestamp in backend time domain)
 - `version: uint64` (optimistic CAS version)
 
 ### 4.3 Safety Invariants
@@ -119,6 +119,7 @@ Per lock key, backend stores:
 - `acquire` timeout must be monotonic-clock based.
 - `acquire` wait loop must support cancellation token.
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
+- After `shutdown`, all renew attempts fail with `Cancelled`.
 - Renewing after lease expiration returns `Expired`.
 
 ## 6. Detailed Functional Requirements
@@ -154,8 +155,9 @@ Requests from stale/non-owner callers must not mutate current owner state.
 
 ### FR-6: Idempotent Release
 
-`release()` on already free/expired lock must return success-equivalent status
-without side effects.
+`release()` is idempotent only when the lease is already missing/expired and no
+active owner exists for that lease. If the key is actively held by a different
+owner, `release()` must return `NotOwner`.
 
 ### FR-7: Process Crash Tolerance
 
@@ -176,8 +178,8 @@ renew success/failure, release, timeout, cancellation, backend error.
 - Backend operation failure: `BackendError`
 - Shutdown/cancellation: `Cancelled`
 
-All errors must be surfaced without throwing, except unrecoverable programmer
-errors (e.g., null mandatory dependency during construction).
+All operational errors must be surfaced through result codes and must not be
+reported by exceptions.
 
 ## 8. Concurrency and Threading Model
 
