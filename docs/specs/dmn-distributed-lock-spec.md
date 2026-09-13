@@ -116,9 +116,9 @@ Sort/index order:
 
 - Retry only on conflict/version-mismatch outcomes.
 - Backoff configurable: min 10ms, max 500ms, jitter supported.
-- Include max-attempt or timeout guard.
+- Retry continues until one terminal boundary: granted, wait timeout, cancel,
+  shutdown, or publisher error.
 - Support cancellation/shutdown interruption.
-- If max-attempt guard is hit before `wait_timeout`, return `kTimeout`.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -226,7 +226,10 @@ public:
   auto cancelRequest(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
-  auto getRequestState(const std::string &request_id, std::optional<std::string> owner_id = std::nullopt) const
+  auto getRequestState(const std::string &request_id) const
+      -> Dmn_DLock_Result;
+
+  auto getRequestStateForOwner(const std::string &request_id, const std::string &owner_id) const
       -> Dmn_DLock_Result;
 
   void shutdown();
@@ -251,6 +254,8 @@ Argument validity rules:
 - if `wait_timeout > 0ms`: block in API thread until one of
   `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`; do not
   return `kWaiting` before timeout.
+- queued requests must transition to `kGranted` when they become top-of-list
+  and publisher accepts lock transition.
 
 Deterministic result mapping:
 
@@ -261,8 +266,9 @@ Deterministic result mapping:
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
-- query returns state if found; if `owner_id` provided, set `owner_match=true/false`
-- query with provided `owner_id` mismatch -> `kNotOwner`, `owner_match=false`, and no `entry`
+- unscoped query (`getRequestState`) returns state if found.
+- owner-scoped query (`getRequestStateForOwner`) validates owner identity.
+- owner-scoped query mismatch -> `kNotOwner`, `owner_match=false`, and no `entry`
 - query request not found -> `kNotFound`
 - shutdown gate -> `kShutdown`
 - publisher transport/logic failure -> `kPublisherError`
@@ -474,16 +480,17 @@ with `--gtest_filter=<Suite.Test>`.
 15. `ReleaseLock_RequestNotFound_ReturnsNotFound`
 16. `CancelRequest_RequestNotFound_ReturnsNotFound`
 17. `GetRequestState_RequestNotFound_ReturnsNotFound`
-18. `CancelRequest_WaitingRequest_Terminates`
-19. `Shutdown_NewRequests_ReturnShutdown`
-20. `Shutdown_WakesWaiters`
-21. `Shutdown_CancelsPendingRetries`
-22. `Observability_EmitPayloadSchema_Valid`
-23. `Observability_EmitterFailure_DoesNotChangeResult`
-24. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-25. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-26. `Stress_HighContention_NoDeadlock`
-27. `Stress_WorkerThreads_NeverBlockOnWait`
+18. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotOwner`
+19. `CancelRequest_WaitingRequest_Terminates`
+20. `Shutdown_NewRequests_ReturnShutdown`
+21. `Shutdown_WakesWaiters`
+22. `Shutdown_CancelsPendingRetries`
+23. `Observability_EmitPayloadSchema_Valid`
+24. `Observability_EmitterFailure_DoesNotChangeResult`
+25. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+26. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+27. `Stress_HighContention_NoDeadlock`
+28. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
