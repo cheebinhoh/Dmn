@@ -209,6 +209,7 @@ struct Dmn_DLock_Result {
     kNotOwner,
     kNotFound,
     kInvalidArg,
+    kLocalSubmissionError,
     kPublisherError,
     kShutdown
   };
@@ -284,15 +285,26 @@ Argument validity rules:
   and transitions to `kGranted` through subsequent lifecycle update/query.
 - async API return code `kWaiting` represents submission acceptance, not the
   internal persisted lifecycle state at that exact instant.
+- accepted async submissions must return non-empty `request_id`.
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
-  - local enqueue/scheduling failure before lifecycle acceptance -> `kPublisherError`
+  - local enqueue/scheduling failure before lifecycle acceptance -> `kLocalSubmissionError`
+- `kLocalSubmissionError` is reserved for pre-acceptance local
+  submission/scheduling failures only.
+- `kPublisherError` is reserved strictly for post-acceptance publisher
+  transport/logic terminal failures only (not local submission, shutdown,
+  timeout, cancellation, or observability/emitter issues).
+- shutdown-triggered termination must map to `kShutdown`, not `kPublisherError`.
+- observability/emitter failures must not alter operation result code and must
+  never remap outcomes to `kPublisherError`.
 
 Deterministic result mapping:
 
 - invalid args/options -> `kInvalidArg`
+- pre-acceptance local enqueue/scheduling failure -> `kLocalSubmissionError`
 - synchronous no-wait accepted and on-top lockable -> `kGranted`
+- synchronous blocking-wait accepted and eventually/top granted -> `kGranted`
 - synchronous no-wait not immediately grantable or preflight
   conflict/version-mismatch -> `kConflict` (no lifecycle created)
 - conflict detected and retry scheduled (wait/async modes) -> transient internal state;
@@ -313,39 +325,54 @@ Deterministic result mapping:
 - owner-scoped query mismatch or foreign request -> `kNotFound` (existence-safe)
 - query request not found -> `kNotFound`
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
-  `releaseLock`, `cancelRequest`) -> `kShutdown`
+  `cancelRequest`) -> `kShutdown`
+- `releaseLock` remains permitted during/after shutdown only for retained
+  already-granted requests; all other release attempts return `kShutdown`.
 - owner-scoped query during/after shutdown returns persisted request outcome:
-  `kGranted`/`kTimeout`/`kCancelled`/`kPublisherError` or `kNotFound`.
+  `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError` or `kNotFound`.
 - owner-scoped query returns `kShutdown` only when that request lifecycle was
   terminated by shutdown.
 - publisher transport/logic failure -> `kPublisherError`
 
 `request_id` field population rules:
 
+- `request_id` is acceptance-scoped, not result-code-scoped.
 - `request_id` must be populated for any accepted request lifecycle, including
-  terminal outcomes returned after accepted submission
-  (`kGranted`, `kWaiting`, `kTimeout`, `kCancelled`, `kShutdown`, `kPublisherError`).
-- this includes synchronous no-wait `kGranted` outcomes.
-- `request_id` must be empty for pre-submission immediate rejections
-  (`kInvalidArg`, immediate `kShutdown`, immediate `kPublisherError`,
+  accepted submissions that later terminate as
+  `kGranted`/`kWaiting`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`.
+- this includes synchronous no-wait `kGranted` outcomes and blocking wait-mode
+  returns (`kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`)
+  after accepted submission.
+- `request_id` must be empty for pre-acceptance immediate rejections
+  (`kInvalidArg`, immediate `kShutdown`, pre-acceptance `kLocalSubmissionError`,
   `kConflict` in no-wait mode).
 
 `shutdown()` completion contract:
 
 - `shutdown()` is synchronous.
 - On return, pending waiters are woken, pending retries are cancelled, and
-  affected retained requests have terminal state persisted.
+  retained request outcomes are deterministically persisted.
+- requests already in granted/locked outcome remain `kGranted` (not rewritten).
+- retained granted requests may still be explicitly released via `releaseLock`
+  during/after shutdown completion.
+- requests still nonterminal at shutdown (`kLockWaiting`/`kLocking`) are
+  terminalized to `kShutdown` and lifecycle-closed (`kUnlocked`).
 - `shutdown()` is guaranteed non-throwing and does not return failure status
   (best-effort completion with deterministic terminalization semantics).
 
 ## 7) State machine semantics
+
+Section 7 defines **internal lifecycle state transitions**. External API/query
+result projection rules are defined in Section 6 and may report `kWaiting`
+while internal lifecycle has advanced to `kLocking` for accepted async requests.
 
 Valid transitions:
 
 - `kLockWaiting -> kLocking -> kLocked -> kUnlocked`
 - `kLocking -> kLocked -> kUnlocked` (accepted immediately-top async request path)
 - `kLocking -> kLocked` (accepted immediately-top synchronous no-wait grant path)
-- `kLockWaiting -> kUnlocked` (cancel/timeout)
+- `kLocking -> kLocked` (accepted immediately-top synchronous blocking-wait grant path)
+- `kLockWaiting -> kUnlocked` (cancel/timeout/shutdown terminalization)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
 
 Forbidden:
@@ -362,7 +389,10 @@ State entry triggers:
 - enter `kLockWaiting` when request is accepted but not currently top/lockable.
 - enter `kLocking` when request becomes top candidate and a publish/grant
   transition attempt is in progress at publisher.
-- accepted immediately-top async requests may enter `kLocking` directly.
+- accepted immediately-top requests (async/no-wait/blocking-wait) may enter
+  `kLocking` directly.
+- for accepted async requests, external API/query state may still report
+  `kWaiting` while internal lifecycle is `kLocking`.
 - enter `kLocked` when publisher confirms lock grant for the request.
 
 ## 8) Data consistency and ordering rules
@@ -413,7 +443,8 @@ Minimum payload:
 - `sequence`, `table_version`
 - `result_code`, `timestamp_ms`
 
-Emitter failures must never change lock correctness result.
+Emitter failures must never change lock correctness result and must never remap
+an operation outcome to `kPublisherError`.
 
 ## 11) Strict TDD execution protocol (mandatory)
 
@@ -426,6 +457,8 @@ For **each test case**:
 5. Build target.
 6. Run focused test and confirm pass.
 7. Run full dlock test target.
+8. Record fail-first and pass evidence in PR notes (or equivalent progress
+   log) including test name and command outputs.
 
 Normative command checkpoints:
 
@@ -571,37 +604,48 @@ Normative command checkpoints:
 20. `RequestLockAsync_ReturnsRequestIdAndWaiting`
 21. `RequestLockAsync_InvalidArgs_ReturnsInvalidArgAndEmptyRequestId`
 22. `RequestLockAsync_ShutdownGate_ReturnsShutdownAndEmptyRequestId`
-23. `RequestLockAsync_LocalEnqueueFailure_ReturnsPublisherErrorAndEmptyRequestId`
-24. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
-25. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
-26. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
-27. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
-28. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
-29. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
-30. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
-31. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
-32. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
-33. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
-34. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
-35. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
-36. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
-37. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
-38. `CancelRequest_WaitingRequest_Terminates`
-39. `BlockingRequest_ExternalCancelRequest_TerminatesAndStopsRetries`
-40. `Shutdown_NewRequests_ReturnShutdown`
-41. `Shutdown_WakesWaiters`
-42. `Shutdown_CancelsPendingRetries`
-43. `Observability_EmitPayloadSchema_Valid`
-44. `Observability_EmitSuccessTransitionPayload_Valid`
-45. `Observability_EmitTimeoutTransitionPayload_Valid`
-46. `Observability_EmitCancelTransitionPayload_Valid`
-47. `Observability_EmitShutdownTransitionPayload_Valid`
-48. `Observability_EmitterFailure_DoesNotChangeResult`
-49. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-50. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-51. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-52. `Stress_HighContention_NoDeadlock`
-53. `Stress_WorkerThreads_NeverBlockOnWait`
+23. `RequestLockAsync_LocalEnqueueFailure_ReturnsLocalSubmissionErrorAndEmptyRequestId`
+24. `RequestLock_PublisherTerminalFailure_ReturnsPublisherError`
+25. `GetRequestStateForOwner_GrantedState_ReturnsGrantedWithEntry`
+26. `GetRequestStateForOwner_TimeoutState_ReturnsTimeout`
+27. `GetRequestStateForOwner_CancelledState_ReturnsCancelled`
+28. `GetRequestStateForOwner_ShutdownState_ReturnsShutdown`
+29. `GetRequestStateForOwner_PublisherFailureState_ReturnsPublisherError`
+30. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
+31. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
+32. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
+33. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
+34. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
+35. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
+36. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
+37. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
+38. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
+39. `CancelRequest_WaitingRequest_Terminates`
+40. `BlockingRequest_ExternalCancelRequest_TerminatesAndStopsRetries`
+41. `BlockingRequest_ExternalCancelRequest_WithoutRetryLoop_ReturnsCancelled`
+42. `Shutdown_NewRequests_ReturnShutdown`
+43. `Shutdown_WakesWaiters`
+44. `Shutdown_CancelsPendingRetries`
+45. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
+46. `Observability_EmitPayloadSchema_Valid`
+47. `Observability_EmitSuccessTransitionPayload_Valid`
+48. `Observability_EmitTimeoutTransitionPayload_Valid`
+49. `Observability_EmitCancelTransitionPayload_Valid`
+50. `Observability_EmitShutdownTransitionPayload_Valid`
+51. `Observability_EmitterFailure_DoesNotChangeResult`
+52. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+53. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+54. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+55. `Stress_HighContention_NoDeadlock`
+56. `Stress_WorkerThreads_NeverBlockOnWait`
+57. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
+58. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
+59. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
+60. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
+61. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
+62. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
+63. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
+64. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
 
 ## 14) Definition of Done
 
