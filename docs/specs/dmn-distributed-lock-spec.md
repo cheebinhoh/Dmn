@@ -119,15 +119,16 @@ Sort/index order:
 
 - Retry only on conflict/version-mismatch outcomes.
 - Backoff configurable: min 10ms, max 500ms, jitter supported.
-- Retry continues until one terminal boundary: granted, wait timeout, cancel,
-  shutdown, or publisher error.
+- Retryable outcomes: conflict/version-mismatch only.
+- Terminal outcomes: granted, wait timeout, cancel, shutdown, terminal publisher failure.
 - Support cancellation/shutdown interruption.
 - Retry loop applies only to `requestLock(wait_timeout > 0ms)` and
   `requestLockAsync`; no-wait mode (`wait_timeout == 0ms`) is single-attempt.
 - `requestLockAsync` without cancel token may remain in `kLockWaiting` lifecycle
   state (query code `kWaiting`) indefinitely
   under sustained conflict until external cancellation/shutdown occurs.
-- `requestLockAsync` retries continue indefinitely under sustained conflict
+- `requestLockAsync` retries continue indefinitely under sustained
+  conflict/version-mismatch
   (bounded backoff), unless cancelled or shutdown.
 - for blocking requests, timeout terminalization must set shared terminal flag
   checked before each retry attempt; retries must stop once timeout is reached.
@@ -292,7 +293,8 @@ Deterministic result mapping:
 
 - invalid args/options -> `kInvalidArg`
 - synchronous no-wait accepted and on-top lockable -> `kGranted`
-- synchronous no-wait not immediately grantable or publish conflict/version mismatch -> `kConflict`
+- synchronous no-wait not immediately grantable or preflight
+  conflict/version-mismatch -> `kConflict` (no lifecycle created)
 - conflict detected and retry scheduled (wait/async modes) -> transient internal state;
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - async retry-pending query state reports `kWaiting` until terminal transition.
@@ -342,6 +344,7 @@ Valid transitions:
 
 - `kLockWaiting -> kLocking -> kLocked -> kUnlocked`
 - `kLocking -> kLocked -> kUnlocked` (accepted immediately-top async request path)
+- `kLocking -> kLocked` (accepted immediately-top synchronous no-wait grant path)
 - `kLockWaiting -> kUnlocked` (cancel/timeout)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
 
@@ -428,9 +431,8 @@ Normative command checkpoints:
 
 - build: `cmake --build <build_dir> --target dmn-test-dlock`
 - list tests: `ctest --test-dir <build_dir> -N`
-- focused test run (normative, concrete):
-  1. `DMN_DLOCK_TEST_BIN=$(find <build_dir> -type f -name dmn-test-dlock | head -n1)`
-  2. `$DMN_DLOCK_TEST_BIN --gtest_filter=<Suite.Test>`
+- focused test run (normative, deterministic):
+  `GTEST_FILTER=<Suite.Test> ctest --test-dir <build_dir> -R '^dmn-test-dlock$' --output-on-failure`
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
 If test binary path differs by generator/layout, use build output discovery to
