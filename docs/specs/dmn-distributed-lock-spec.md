@@ -163,7 +163,10 @@ while (true) {
            table_version != observed_table_version ||
            retention_version != observed_retention_version;
   });
-  if (!ready) break; // deadline reached
+  if (!ready) {
+    if (isRequestTopAndLocked(request_id) || isRequestTerminal(request_id)) break;
+    break; // deadline reached without terminal/granted transition
+  }
 }
 ```
 
