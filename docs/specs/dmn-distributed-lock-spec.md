@@ -251,8 +251,9 @@ Argument validity rules:
 
 `requestLock` return behavior:
 
-- if `wait_timeout == 0ms`: return immediately with `kGranted`, `kWaiting`, or
-  terminal error code; do not enqueue background retry/waiter state.
+- if `wait_timeout == 0ms`: return immediately with `kGranted` or terminal error
+  code; if not immediately grantable due to ordering/conflict, return
+  `kConflict`. Do not enqueue background retry/waiter state.
 - if `wait_timeout > 0ms`: block in API thread until one of
   `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`; do not
   return `kWaiting` before timeout.
@@ -265,8 +266,7 @@ Deterministic result mapping:
 
 - invalid args/options -> `kInvalidArg`
 - synchronous no-wait accepted and on-top lockable -> `kGranted`
-- synchronous no-wait accepted but not-top yet -> `kWaiting`
-- synchronous no-wait publish conflict/version mismatch -> `kConflict`
+- synchronous no-wait not immediately grantable or publish conflict/version mismatch -> `kConflict`
 - conflict detected and retry scheduled (wait mode) -> transient internal state;
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - timeout expiry in wait mode -> `kTimeout`
@@ -281,7 +281,6 @@ Deterministic result mapping:
 Normative `ok` mapping:
 
 - `ok=true`: `kGranted`
-- `ok=true` for `requestLockAsync` accepted submission with `kWaiting`
 - `ok=false`: `kConflict`, `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
   `kInvalidArg`, `kPublisherError`, `kShutdown`
 
@@ -477,8 +476,8 @@ locate `dmn-test-dlock` first.
 6. `RequestLock_PublisherAccept_ReturnsGranted`
 7. `RequestLock_PublisherConflict_SchedulesRetry`
 8. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
-9. `RequestLock_NoWaitMode_ReturnsWaitingWhenNotTop`
-10. `RequestLock_NoWaitMode_ConflictReturnsConflictCode`
+9. `RequestLock_NoWaitMode_NotTopReturnsConflictCode`
+10. `RequestLock_NoWaitMode_VersionMismatchReturnsConflictCode`
 11. `RequestLock_ApiWait_GrantsWhenTop`
 12. `RequestLock_MissedWakeupRace_DoesNotHang`
 13. `RequestLock_VersionChange_WakesWaiter`
