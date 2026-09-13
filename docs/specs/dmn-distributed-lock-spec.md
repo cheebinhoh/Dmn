@@ -125,8 +125,9 @@ This prevents lost notifications and stale waits.
 
 ```cpp
 struct Dmn_DLock_RequestOptions {
+  std::string owner_id; // required; identifies request owner
   int priority{0};
-  std::chrono::milliseconds wait_timeout{0ms};
+  std::chrono::milliseconds wait_timeout{0ms}; // 0ms = no-wait (single attempt)
   std::chrono::milliseconds retry_min_backoff{10ms};
   std::chrono::milliseconds retry_max_backoff{500ms};
   double retry_jitter_ratio{0.20};
@@ -150,6 +151,7 @@ struct Dmn_DLock_Result {
   Code code{Code::kInvalidArg};
   std::string message;
   std::string request_id;
+  std::string owner_id;
   uint64_t sequence{0};
   uint64_t table_version{0};
 };
@@ -174,6 +176,13 @@ public:
 };
 ```
 
+Argument validity rules:
+
+- `start <= end` is required; otherwise `kInvalidArg`.
+- negative range values are invalid for Phase 1 and return `kInvalidArg`.
+- `owner_id` must be non-empty.
+- `wait_timeout == 0ms` means no-wait single attempt.
+
 ## 7) State machine semantics
 
 Valid transitions:
@@ -190,6 +199,8 @@ Forbidden:
 
 - Publisher increments global `sequence` on accepted lock updates.
 - Publisher increments `table_version` on every accepted table mutation.
+- `sequence` is assigned once at request creation and is immutable for that
+  request across release/cancel/state mutations.
 - Handlers apply snapshots only if incoming version is newer.
 - Top-of-list decision always based on latest mirrored version.
 
@@ -327,8 +338,10 @@ Normative command checkpoints:
 14. `Shutdown_CancelsPendingRetries`
 15. `Observability_EmitPayloadSchema_Valid`
 16. `Observability_EmitterFailure_DoesNotChangeResult`
-17. `Stress_HighContention_NoDeadlock`
-18. `Stress_WorkerThreads_NeverBlockOnWait`
+17. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+18. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+19. `Stress_HighContention_NoDeadlock`
+20. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
