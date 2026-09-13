@@ -398,20 +398,20 @@ Normative command checkpoints:
 
 ## 12.1) File-by-file implementation detail checklist (no-gap guide)
 
-`/home/runner/work/Dmn/Dmn/include/dmn-dlock.hpp`
+`include/dmn-dlock.hpp`
 
 - declare `LockState`, `LockingEntry`, `Dmn_DLock_RequestOptions`, `Dmn_DLock_Result`
 - declare `Dmn_DLock_Manager` API signatures exactly as Section 6
 - document preconditions/postconditions on each API
 
-`/home/runner/work/Dmn/Dmn/include/dmn-dlock-backend.hpp`
+`include/dmn-dlock-backend.hpp`
 
 - declare publisher-authoritative backend adapter interface:
   - single-attempt publish for no-wait mode
   - versioned publish for async retry mode
   - snapshot fetch/update callbacks
 
-`/home/runner/work/Dmn/Dmn/src/dmn-dlock.cpp`
+`src/dmn-dlock.cpp`
 
 - implement argument validation and deterministic result mapping
 - implement no-wait synchronous single-attempt path
@@ -420,19 +420,19 @@ Normative command checkpoints:
 - implement release/cancel ownership checks
 - implement shutdown rejection and waiter wakeup
 
-`/home/runner/work/Dmn/Dmn/src/dmn-dlock-backend-memory.cpp`
+`src/dmn-dlock-backend-memory.cpp`
 
 - implement in-memory authoritative table behavior
 - enforce monotonic `sequence` (create only) and monotonic `table_version` (all mutations)
 - implement conflict detection and expected-version matching
 
-`/home/runner/work/Dmn/Dmn/test/dmn-test-dlock.cpp`
+`test/dmn-test-dlock.cpp`
 
-- add tests in exact order from Section 13
+- add tests in exact order from the mandatory ordered test matrix in this spec
 - each test must follow fail-first -> minimal code -> pass loop
 - add race-focused tests for missed wakeup and worker non-blocking guarantee
 
-`/home/runner/work/Dmn/Dmn/test/CMakeLists.txt`
+`test/CMakeLists.txt`
 
 - ensure `dmn-test-dlock` is registered as runnable ctest entry
 
