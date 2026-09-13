@@ -263,7 +263,7 @@ Argument validity rules:
   and publisher accepts lock transition.
 - `requestLockAsync` always returns immediately with request lifecycle retained
   for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`, and returns
-  `kWaiting` on accepted submission.
+  `kWaiting` on accepted queued submission or `kGranted` if immediately lockable.
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
@@ -278,6 +278,11 @@ Deterministic result mapping:
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - async retry-pending query state reports `kWaiting` until terminal transition.
 - owner-scoped query for granted async request returns `kGranted` with `entry`.
+- owner-scoped query for terminal async outcomes returns:
+  - timeout -> `kTimeout`
+  - cancelled -> `kCancelled`
+  - shutdown-aborted -> `kShutdown`
+  - publisher terminal failure -> `kPublisherError`
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
@@ -496,7 +501,7 @@ locate `dmn-test-dlock` first.
 17. `CancelRequest_RequestNotFound_ReturnsNotFound`
 18. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
 19. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
-20. `RequestLockAsync_ReturnsRequestIdAndWaiting`
+20. `RequestLockAsync_ReturnsRequestIdAndWaitingOrGranted`
 21. `CancelRequest_WaitingRequest_Terminates`
 22. `Shutdown_NewRequests_ReturnShutdown`
 23. `Shutdown_WakesWaiters`
