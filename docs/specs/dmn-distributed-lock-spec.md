@@ -123,6 +123,8 @@ Sort/index order:
 - Support cancellation/shutdown interruption.
 - Retry loop applies only to `requestLock(wait_timeout > 0ms)` and
   `requestLockAsync`; no-wait mode (`wait_timeout == 0ms`) is single-attempt.
+- `requestLockAsync` without cancel token may remain `kWaiting` indefinitely
+  under sustained conflict until external cancellation/shutdown occurs.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -255,6 +257,8 @@ Argument validity rules:
 - if `wait_timeout == 0ms`: return immediately with `kGranted` or terminal error
   code; if not immediately grantable due to ordering/conflict, return
   `kConflict`. Do not enqueue background retry/waiter state.
+- no-wait mode allocates `request_id` only after immediate acceptance; conflicted
+  no-wait submissions do not create lifecycle records.
 - accepted no-wait grant (`kGranted`) is retained as lifecycle record and is
   queryable/releasable by `request_id`.
 - if `wait_timeout > 0ms`: block in API thread until one of
@@ -294,9 +298,10 @@ Deterministic result mapping:
 - query request not found -> `kNotFound`
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
   `releaseLock`, `cancelRequest`) -> `kShutdown`
-- owner-scoped query during/after shutdown returns request-specific state code
-  (`kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`)
-  or `kNotFound`.
+- owner-scoped query during/after shutdown returns persisted request outcome:
+  `kGranted`/`kTimeout`/`kCancelled`/`kPublisherError` or `kNotFound`.
+- owner-scoped query returns `kShutdown` only when that request lifecycle was
+  terminated by shutdown.
 - publisher transport/logic failure -> `kPublisherError`
 
 `request_id` field population rules:
@@ -532,25 +537,26 @@ locate `dmn-test-dlock` first.
 26. `GetRequestStateForOwner_PostShutdownGrantedState_ReturnsGranted`
 27. `GetRequestStateForOwner_PostShutdownTimeoutState_ReturnsTimeout`
 28. `GetRequestStateForOwner_PostShutdownCancelledState_ReturnsCancelled`
-29. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
-30. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
-31. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
-32. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
-33. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
-34. `CancelRequest_WaitingRequest_Terminates`
-35. `Shutdown_NewRequests_ReturnShutdown`
-36. `Shutdown_WakesWaiters`
-37. `Shutdown_CancelsPendingRetries`
-38. `Observability_EmitPayloadSchema_Valid`
-39. `Observability_EmitSuccessTransitionPayload_Valid`
-40. `Observability_EmitTimeoutTransitionPayload_Valid`
-41. `Observability_EmitCancelTransitionPayload_Valid`
-42. `Observability_EmitShutdownTransitionPayload_Valid`
-43. `Observability_EmitterFailure_DoesNotChangeResult`
-44. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-45. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-46. `Stress_HighContention_NoDeadlock`
-47. `Stress_WorkerThreads_NeverBlockOnWait`
+29. `GetRequestStateForOwner_PostShutdownPublisherErrorState_ReturnsPublisherError`
+30. `BlockingRequest_PostReturnQuery_Granted_ReturnsGranted`
+31. `BlockingRequest_PostReturnQuery_Timeout_ReturnsTimeout`
+32. `BlockingRequest_PostReturnQuery_Cancelled_ReturnsCancelled`
+33. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
+34. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
+35. `CancelRequest_WaitingRequest_Terminates`
+36. `Shutdown_NewRequests_ReturnShutdown`
+37. `Shutdown_WakesWaiters`
+38. `Shutdown_CancelsPendingRetries`
+39. `Observability_EmitPayloadSchema_Valid`
+40. `Observability_EmitSuccessTransitionPayload_Valid`
+41. `Observability_EmitTimeoutTransitionPayload_Valid`
+42. `Observability_EmitCancelTransitionPayload_Valid`
+43. `Observability_EmitShutdownTransitionPayload_Valid`
+44. `Observability_EmitterFailure_DoesNotChangeResult`
+45. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+46. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+47. `Stress_HighContention_NoDeadlock`
+48. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
