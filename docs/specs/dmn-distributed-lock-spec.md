@@ -287,7 +287,7 @@ Argument validity rules:
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
-  - local enqueue/scheduling failure -> `kPublisherError`
+  - local enqueue/scheduling failure before lifecycle acceptance -> `kPublisherError`
 
 Deterministic result mapping:
 
@@ -438,9 +438,6 @@ Normative command checkpoints:
      `--gtest_filter=<Suite.Test>`
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
-If test binary path differs by generator/layout, use build output discovery to
-locate `dmn-test-dlock` first.
-
 ## 12) Step-by-step implementation plan
 
 ### Phase 0 — scaffolding
@@ -590,20 +587,21 @@ locate `dmn-test-dlock` first.
 36. `BlockingRequest_PostReturnQuery_Shutdown_ReturnsShutdown`
 37. `BlockingRequest_PostReturnQuery_PublisherError_ReturnsPublisherError`
 38. `CancelRequest_WaitingRequest_Terminates`
-39. `Shutdown_NewRequests_ReturnShutdown`
-40. `Shutdown_WakesWaiters`
-41. `Shutdown_CancelsPendingRetries`
-42. `Observability_EmitPayloadSchema_Valid`
-43. `Observability_EmitSuccessTransitionPayload_Valid`
-44. `Observability_EmitTimeoutTransitionPayload_Valid`
-45. `Observability_EmitCancelTransitionPayload_Valid`
-46. `Observability_EmitShutdownTransitionPayload_Valid`
-47. `Observability_EmitterFailure_DoesNotChangeResult`
-48. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-49. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-50. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-51. `Stress_HighContention_NoDeadlock`
-52. `Stress_WorkerThreads_NeverBlockOnWait`
+39. `BlockingRequest_ExternalCancelRequest_TerminatesAndStopsRetries`
+40. `Shutdown_NewRequests_ReturnShutdown`
+41. `Shutdown_WakesWaiters`
+42. `Shutdown_CancelsPendingRetries`
+43. `Observability_EmitPayloadSchema_Valid`
+44. `Observability_EmitSuccessTransitionPayload_Valid`
+45. `Observability_EmitTimeoutTransitionPayload_Valid`
+46. `Observability_EmitCancelTransitionPayload_Valid`
+47. `Observability_EmitShutdownTransitionPayload_Valid`
+48. `Observability_EmitterFailure_DoesNotChangeResult`
+49. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+50. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+51. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+52. `Stress_HighContention_NoDeadlock`
+53. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
