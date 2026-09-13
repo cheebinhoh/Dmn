@@ -132,7 +132,7 @@ Per lock key, backend stores:
 `Dmn_DLock_ManagerCreateResult`:
 
 - `bool ok`
-- `std::shared_ptr<Dmn_DLock_Manager> manager` (shared pointer to the singleton instance)
+- `std::shared_ptr<Dmn_DLock_Manager> manager` (this project's singleton handle type)
 - `enum Code { Ok, InvalidConfig, BackendInitFailed, ClockInitFailed }`
 - `std::string message`
 
@@ -158,6 +158,8 @@ Per lock key, backend stores:
 - `createManager(const Dmn_DLock_ManagerConfig &config) -> Dmn_DLock_ManagerCreateResult`
   - Internally calls singleton `Dmn_Singleton<Dmn_DLock_Manager>::createInstance(...)`.
   - Never creates multiple manager instances; returned shared_ptr aliases the singleton.
+  - Singleton lifecycle contract in this spec is shared_ptr-based (same as
+    `Dmn_Singleton` in this repository).
 - `tryAcquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult`
   - Returns immediately.
   - If busy, returns `Busy`.
@@ -192,7 +194,8 @@ Per lock key, backend stores:
 - After `shutdown`, renew is allowed only for handles that were successfully
   acquired before shutdown began, identified by
   `handle.acquireGeneration() < manager.shutdownCutoffGeneration()` where
-  shutdown stores a strict cutoff generation before rejecting new acquires.
+  `shutdownCutoffGeneration` is the first disallowed generation value (set when
+  shutdown begins).
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
@@ -264,7 +267,8 @@ All operational errors must be surfaced through result codes and must not be
 reported by exceptions.
 
 This non-throwing contract applies to runtime lock operations (`tryAcquire`,
-`acquire`, `renew`, `release`) and manager creation (`createManager`).
+`acquire`, `renew`, `release`, `closeLease`) and manager creation
+(`createManager`).
 Construction/setup failures must be exposed through
 `Dmn_DLock_ManagerCreateResult` rather than constructor throws.
 
@@ -319,8 +323,9 @@ Construction/setup failures must be exposed through
 13. shutdown rejects new acquire and cancels waiters.
 14. renew after shutdown succeeds only for pre-shutdown leases.
 15. renew after shutdown fails for post-shutdown/rejected acquisition paths.
-16. backend error propagation maps to `BackendError`.
-17. invalid durations return `InvalidArg`.
+16. lease acquired at shutdown boundary (immediately pre-shutdown) remains renewable.
+17. backend error propagation maps to `BackendError`.
+18. invalid durations return `InvalidArg`.
 
 ### 10.4 Integration/Stress Test Matrix
 
