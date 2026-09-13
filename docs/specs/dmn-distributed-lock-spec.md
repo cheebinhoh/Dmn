@@ -90,13 +90,20 @@ Per lock key, backend stores:
 `Dmn_DLock_AcquireResult`:
 
 - `bool ok`
-- `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
+- `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg }`
 - `std::string message`
 
 `Dmn_DLock_OpResult` (renew/release):
 
 - `bool ok`
 - `enum Code { Ok, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
+- `std::string message`
+
+`Dmn_DLock_ManagerCreateResult`:
+
+- `bool ok`
+- `std::shared_ptr<Dmn_DLock_Manager> manager`
+- `enum Code { Ok, InvalidConfig, BackendInitFailed, ClockInitFailed }`
 - `std::string message`
 
 `Dmn_DLock_Handle`:
@@ -140,7 +147,7 @@ Per lock key, backend stores:
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
 - After `shutdown`, renew is allowed only for handles that were successfully
   acquired before shutdown began, identified by
-  `handle.acquireGeneration() < manager.shutdownGeneration()`.
+  `handle.acquireGeneration() <= manager.shutdownGeneration()`.
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
@@ -196,7 +203,7 @@ renew success/failure, release, timeout, cancellation, backend error.
 
 - Validation errors: `InvalidArg`
 - Contention: `Busy` or `Timeout`
-- Ownership mismatch: `NotOwner` (primarily renew path)
+- Ownership mismatch: `NotOwner` (renew path; release stale/non-owner is no-op success)
 - Lease stale: `Expired`
 - Backend operation failure: `BackendError`
 - Shutdown/cancellation: `Cancelled`
