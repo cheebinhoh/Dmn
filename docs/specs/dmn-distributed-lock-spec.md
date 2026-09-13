@@ -294,6 +294,9 @@ Query mutability contract:
   `retained_terminal_ttl` has elapsed from terminalization.
 - retained granted records are exempt from TTL pruning and must be preserved
   until explicit `releaseLock` succeeds.
+- post-shutdown unreleased granted records are intentionally retained for manager
+  lifetime (not TTL-reclaimable); cleanup path is explicit `releaseLock` or
+  manager destruction.
 - after `retained_terminal_ttl` elapses, query may legitimately return
   `kNotFound` for previously terminalized non-granted records that were pruned.
 - TTL pruning must be enforced independent of query calls via manager-owned
@@ -460,6 +463,11 @@ Valid transitions:
 - `kLocked -> kLocked` (shutdown preserves retained granted lock until explicit release)
 - `kLockWaiting -> kUnlocked` (cancel/timeout/shutdown terminalization)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
+
+Interpretation rule:
+
+- paths starting at `kLocking` represent accepted-immediate-top requests created
+  directly in `kLocking` (no prior `kLockWaiting` state).
 
 Forbidden:
 
@@ -757,6 +765,7 @@ Normative command checkpoints:
 80. `Shutdown_FinalSynchronousPruneSweep_PrunesNewlyTerminalizedNonGranted`
 81. `RequestLock_RetentionVersionChange_WakesWaiterWhenTableVersionUnchanged`
 82. `RequestLock_RetryBackoff_JitterAppliedWithinConfiguredRatio`
+83. `RequestLockAsync_ExplicitAsyncExpiry_PositiveValue_ExpiresWithTimeout`
 
 ## 14) Definition of Done
 
