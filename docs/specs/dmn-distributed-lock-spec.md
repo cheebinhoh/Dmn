@@ -178,9 +178,9 @@ Forbidden responsibility leakage:
 struct Dmn_DLock_RequestOptions {
   std::string owner_id; // required; identifies request owner
   int priority{0};
-  std::chrono::milliseconds wait_timeout{0ms}; // 0ms = no-wait (single attempt)
-  std::chrono::milliseconds retry_min_backoff{10ms};
-  std::chrono::milliseconds retry_max_backoff{500ms};
+  std::chrono::milliseconds wait_timeout{std::chrono::milliseconds{0}}; // 0ms = no-wait (single attempt)
+  std::chrono::milliseconds retry_min_backoff{std::chrono::milliseconds{10}};
+  std::chrono::milliseconds retry_max_backoff{std::chrono::milliseconds{500}};
   double retry_jitter_ratio{0.20};
   std::shared_ptr<std::atomic_bool> cancel_token{};
 };
@@ -204,13 +204,14 @@ struct Dmn_DLock_Result {
   std::string owner_id;
   uint64_t sequence{0};
   uint64_t table_version{0};
+  std::optional<LockingEntry> entry;
 };
 
 class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager> {
 public:
   static auto createInstance(const Config &cfg) -> std::shared_ptr<Dmn_DLock_Manager>;
 
-  auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts = {})
+  auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts = Dmn_DLock_RequestOptions{})
       -> Dmn_DLock_Result;
 
   auto releaseLock(const std::string &request_id, const std::string &owner_id)
@@ -220,7 +221,7 @@ public:
       -> Dmn_DLock_Result;
 
   auto getRequestState(const std::string &request_id, const std::string &owner_id) const
-      -> std::optional<LockingEntry>;
+      -> Dmn_DLock_Result;
 
   void shutdown();
 };
@@ -254,6 +255,8 @@ Deterministic result mapping:
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
+- query owner mismatch -> `kNotOwner`
+- query request not found -> `kInvalidArg` with message `request not found`
 - shutdown gate -> `kShutdown`
 - publisher transport/logic failure -> `kPublisherError`
 
@@ -442,26 +445,29 @@ with `--gtest_filter=<Suite.Test>`.
 ## 13) Mandatory ordered test matrix
 
 1. `RequestLock_InvalidRange_ReturnsInvalidArg`
-2. `LockingEntry_OrderByStartEndPrioritySequence`
-3. `RequestLock_PublisherAccept_ReturnsGranted`
-4. `RequestLock_PublisherConflict_SchedulesRetry`
-5. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
-6. `RequestLock_NoWaitMode_ReturnsWaitingWhenNotTop`
-7. `RequestLock_ApiWait_GrantsWhenTop`
-8. `RequestLock_MissedWakeupRace_DoesNotHang`
-9. `RequestLock_VersionChange_WakesWaiter`
-10. `ReleaseLock_NotOwner_ReturnsNotOwner`
-11. `ReleaseLock_Owner_SetsUnlocked`
-12. `CancelRequest_WaitingRequest_Terminates`
-13. `Shutdown_NewRequests_ReturnShutdown`
-14. `Shutdown_WakesWaiters`
-15. `Shutdown_CancelsPendingRetries`
-16. `Observability_EmitPayloadSchema_Valid`
-17. `Observability_EmitterFailure_DoesNotChangeResult`
-18. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-19. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-20. `Stress_HighContention_NoDeadlock`
-21. `Stress_WorkerThreads_NeverBlockOnWait`
+2. `RequestLock_EmptyOwnerId_ReturnsInvalidArg`
+3. `RequestLock_InvalidRetryBounds_ReturnsInvalidArg`
+4. `RequestLock_InvalidJitterRatio_ReturnsInvalidArg`
+5. `LockingEntry_OrderByStartEndPrioritySequence`
+6. `RequestLock_PublisherAccept_ReturnsGranted`
+7. `RequestLock_PublisherConflict_SchedulesRetry`
+8. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
+9. `RequestLock_NoWaitMode_ReturnsWaitingWhenNotTop`
+10. `RequestLock_ApiWait_GrantsWhenTop`
+11. `RequestLock_MissedWakeupRace_DoesNotHang`
+12. `RequestLock_VersionChange_WakesWaiter`
+13. `ReleaseLock_NotOwner_ReturnsNotOwner`
+14. `ReleaseLock_Owner_SetsUnlocked`
+15. `CancelRequest_WaitingRequest_Terminates`
+16. `Shutdown_NewRequests_ReturnShutdown`
+17. `Shutdown_WakesWaiters`
+18. `Shutdown_CancelsPendingRetries`
+19. `Observability_EmitPayloadSchema_Valid`
+20. `Observability_EmitterFailure_DoesNotChangeResult`
+21. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+22. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+23. `Stress_HighContention_NoDeadlock`
+24. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
