@@ -558,8 +558,9 @@ Normative command checkpoints:
 1. Reject new requests with `kShutdown`.
 2. Wake blocked waiters and mark terminal.
 3. Cancel pending retries safely.
-4. Add shutdown tests.
-5. TDD loop + build checkpoint.
+4. Enforce retention policy (`retained_terminal_ttl`) for non-granted records.
+5. Add shutdown/retention tests (pre-expiry still queryable, post-expiry pruned).
+6. TDD loop + build checkpoint.
 
 ### Phase 6 — observability
 
@@ -630,7 +631,7 @@ Normative command checkpoints:
 5. `ManagerConfig_DefaultAsyncExpiry_NonPositiveRejected`
 6. `LockingEntry_OrderByStartEndPrioritySequence`
 7. `RequestLockSync_PublisherAccept_ReturnsGranted`
-8. `RequestLockSync_PublisherConflict_SchedulesRetry`
+8. `RequestLockBlockingOrAsync_PublisherConflict_SchedulesRetry`
 9. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
 10. `RequestLock_NoWaitMode_NotTopReturnsConflictCode`
 11. `RequestLock_NoWaitMode_VersionMismatchReturnsConflictCode`
@@ -693,6 +694,8 @@ Normative command checkpoints:
 68. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
 69. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
 70. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
+71. `GetRequestStateForOwner_NonGrantedTerminal_PreExpiry_StillReturned`
+72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_ReturnsNotFound`
 
 ## 14) Definition of Done
 
