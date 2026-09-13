@@ -47,8 +47,8 @@ spec-driven, test-driven development (TDD) as the implementation method.
 1. `Dmn_DLock_Manager` (singleton)
    - User-facing API for acquire/renew/release.
    - Owns lifecycle, retry policy, and shutdown behavior.
-   - Tracks `shutdownGeneration` for post-shutdown renew eligibility.
-2. `Dmn_DLock_Handle`
+   - Tracks `shutdownCutoffGeneration` for post-shutdown renew eligibility.
+2. `Dmn_DLockLease`
    - Represents one acquired lease.
    - Carries key, owner ID, lease ID, expiration, fencing token.
    - Carries manager `acquire_generation` captured at successful acquire time.
@@ -58,6 +58,33 @@ spec-driven, test-driven development (TDD) as the implementation method.
    - Monotonic time abstraction for deterministic testing.
 5. `Dmn_DLock_Events`
    - Optional observability hooks for metrics/logging.
+
+### 4.4 Class Hierarchy and DMesg Relationship (Normative)
+
+Best-call decision: `Dmn_DLock` uses **composition**, not inheritance, with
+`Dmn_DMesg`.
+
+- `Dmn_DLock_Manager` **must not inherit** from `Dmn_DMesg`.
+- `Dmn_DLock_Manager` may optionally compose a `Dmn_DMesg*` (or wrapper) for
+  lock event publication/diagnostics.
+- Lock correctness (acquire/renew/release CAS) must remain independent from
+  message delivery state.
+
+Normative class shape:
+
+- `class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager>`
+- `class Dmn_DLock_Manager::Dmn_DLockLease` (internal lease object)
+- `class Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (weak reference proxy)
+
+Ownership model must mirror `Dmn_DMesg` handler pattern:
+
+- DMesg pattern reference:
+  - `openHandler(...) -> Dmn_DMesgHandlerProxy` (weak proxy to manager-owned shared_ptr)
+  - `closeHandler(HandlerType&)` explicitly unregisters/frees and resets proxy
+- DLock equivalent:
+  - successful acquire returns `Dmn_DLockLeaseProxy`
+  - manager owns live lease objects in `std::shared_ptr`
+  - `closeLease(LeaseType&)` explicitly releases/free/reset proxy
 
 ### 4.2 Data Model (logical)
 
@@ -91,14 +118,14 @@ Per lock key, backend stores:
 
 - `bool ok`
 - `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg }`
-- `Dmn_DLock_Handle handle` (present when `ok=true`)
+- `Dmn_DLockLeaseProxy lease` (present when `ok=true`)
 - `std::string message`
 
 `Dmn_DLock_OpResult` (renew/release):
 
 - `bool ok`
 - `enum Code { Ok, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
-- `std::optional<uint64_t> expires_at_ms` (set on successful renew)
+- `std::optional<uint64_t> expires_at_ms` (backend time domain; set on successful renew)
 - `std::string message`
 
 `Dmn_DLock_ManagerCreateResult`:
@@ -108,7 +135,7 @@ Per lock key, backend stores:
 - `enum Code { Ok, InvalidConfig, BackendInitFailed, ClockInitFailed }`
 - `std::string message`
 
-`Dmn_DLock_Handle`:
+`Dmn_DLockLease`:
 
 - `key()`
 - `ownerId()`
@@ -118,24 +145,33 @@ Per lock key, backend stores:
 - `isValid()`
 - `acquireGeneration()`
 
+`Dmn_DLockLeaseProxy` (DMesg-style proxy):
+
+- stores `std::weak_ptr<Dmn_DLockLease>`
+- `operator->() -> std::shared_ptr<Dmn_DLockLease>` (throws if closed)
+- `explicit operator bool() const noexcept`
+- `reset()`
+
 ### 5.2 Manager API
 
-- `tryAcquire(key, lease_ttl, opts) -> Dmn_DLock_AcquireResult`
+- `createManager(const Dmn_DLock_ManagerConfig &config) -> Dmn_DLock_ManagerCreateResult`
+- `tryAcquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult`
   - Returns immediately.
   - If busy, returns `Busy`.
-- `acquire(key, lease_ttl, wait_timeout, opts) -> Dmn_DLock_AcquireResult`
+- `acquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, Dmn_DLock_Duration wait_timeout, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult`
   - Retries until acquired, timeout, or cancellation.
-- `renew(handle, lease_ttl) -> Dmn_DLock_OpResult`
+- `renew(Dmn_DLockLeaseProxy &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult`
   - Extends lease only if current owner + lease ID match.
-  - On success, updates handle expiration and returns updated `expires_at_ms`.
-- `release(handle) -> Dmn_DLock_OpResult`
+  - On success, updates lease expiration and returns updated `expires_at_ms`.
+- `release(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult`
   - Releases if owner matches; stale/missing lease release is idempotent success.
-- `isHeldByCaller(key) -> bool`
+- `closeLease(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult`
+  - DMesg-like explicit free path; performs best-effort release then resets proxy.
+- `isHeldByCaller(const Dmn_DLock_Key &key) const -> bool`
   - `caller` means the manager instance's configured `owner_id`.
 - `shutdown() -> void`
   - Cancels pending acquire waiters and prevents new acquisitions.
-- `createManager(config) -> Dmn_DLock_ManagerCreateResult`
-  - Returns `{ ok, manager, code, message }` and must not throw on recoverable setup errors.
+- `shutdownCutoffGeneration() const -> uint64_t`
 
 ### 5.3 Behavioral Requirements
 
@@ -144,6 +180,8 @@ Per lock key, backend stores:
 - `wait_timeout` for `acquire` may be zero to request no-wait behavior
   (exact mapping: one immediate attempt; returns `Acquired` on success or `Busy`
   on contention).
+- If shutdown has started, `Cancelled` takes precedence over `Busy` for
+  zero-timeout `acquire`.
 - `acquire` timeout must be monotonic-clock based.
 - `acquire` wait loop must support cancellation token.
 - After `shutdown`, `tryAcquire` fails with `Cancelled`.
@@ -155,6 +193,8 @@ Per lock key, backend stores:
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
+- `expiresAt()` and `expires_at_ms` both use backend time-domain milliseconds
+  (no local wall-clock translation in API).
 
 ## 6. Detailed Functional Requirements
 
@@ -201,7 +241,12 @@ future acquisition by other clients.
 ### FR-8: Observability
 
 Emit structured events/counters for acquire attempt, acquire success/failure,
-renew success/failure, release, timeout, cancellation, backend error.
+renew success/failure, timeout, cancellation, backend error, and release
+outcomes:
+
+- `release_mutated` (owner release performed)
+- `release_noop_stale_or_missing` (idempotent no-op)
+- `release_backend_error`
 
 ## 7. Error Model
 
@@ -294,35 +339,70 @@ Construction/setup failures must be exposed through
 
 ## 11. Step-by-Step Implementation Plan
 
+### 11.0 Files, Classes, and Hierarchy (must implement first)
+
+New files:
+
+- `include/dmn-dlock.hpp`
+- `include/dmn-dlock-backend.hpp`
+- `src/dmn-dlock.cpp`
+- `src/dmn-dlock-backend-memory.cpp` (test/dev backend)
+- `test/dmn-test-dlock.cpp`
+
+Class map:
+
+- `dmn::Dmn_DLock_Manager` (singleton root)
+- `dmn::Dmn_DLock_Manager::Dmn_DLockLease` (internal state object)
+- `dmn::Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (client handle proxy)
+- `dmn::Dmn_DLock_Backend` (backend interface)
+- `dmn::Dmn_DLock_Clock` (clock abstraction)
+
+API signatures to implement exactly:
+
+- `static auto createManager(const Dmn_DLock_ManagerConfig &config) -> Dmn_DLock_ManagerCreateResult;`
+- `auto tryAcquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult;`
+- `auto acquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, Dmn_DLock_Duration wait_timeout, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult;`
+- `auto renew(Dmn_DLockLeaseProxy &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult;`
+- `auto release(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult;`
+- `auto closeLease(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult;`
+- `auto isHeldByCaller(const Dmn_DLock_Key &key) const -> bool;`
+- `auto shutdownCutoffGeneration() const -> uint64_t;`
+- `void shutdown();`
+
 ### Phase 0: Scaffolding and Contracts
 
-1. Add public headers: `dmn-dlock.hpp`, `dmn-dlock-backend.hpp`.
-2. Define enums/result structs and handle type.
-3. Add backend abstract interface + fake backend for tests.
-4. Add fake monotonic clock interface for deterministic tests.
-5. Add test target `dmn-test-dlock` to build system.
+1. Add public headers and source files listed in 11.0.
+2. Define `Dmn_DLockLeaseProxy` using DMesg-style weak proxy semantics.
+3. Define result structs/enums and options structs.
+4. Add backend abstract interface + in-memory fake backend for tests.
+5. Add clock abstraction and fake clock for deterministic tests.
+6. Add test target `dmn-test-dlock` to build system.
 
 ### Phase 1: Non-blocking Acquire
 
 1. Write failing tests for `tryAcquire` success + busy.
-2. Implement manager construction and dependency wiring.
+2. Implement manager creation (`createManager`) with non-throwing result path.
 3. Implement backend CAS acquire path.
-4. Return lock handle with fencing token and expiration.
+4. Return `Dmn_DLockLeaseProxy` with `owner_id`, `lease_id`, `fencing_token`,
+   `expires_at_ms`, and `acquire_generation`.
 5. Refactor result mapping and error helpers.
 
 ### Phase 2: Release and Ownership Validation
 
 1. Write failing tests for owner release + idempotent release.
 2. Implement release path with owner/lease validation.
-3. Add stale-owner negative tests.
-4. Refactor shared key validation paths.
+3. Implement `closeLease()` to mirror DMesg `closeHandler()` semantics:
+   best-effort release + proxy reset.
+4. Add stale-owner/no-op release tests and proxy reset tests.
+5. Refactor shared key validation paths.
 
 ### Phase 3: Renew Semantics
 
 1. Write failing tests for renew success, not-owner, expired.
 2. Implement renew CAS update path.
-3. Validate expiration edge boundaries.
-4. Refactor expiration utility helpers.
+3. Update lease object + `expires_at_ms` result on success.
+4. Validate expiration edge boundaries.
+5. Refactor expiration utility helpers.
 
 ### Phase 4: Blocking Acquire + Cancellation
 
@@ -336,7 +416,7 @@ Construction/setup failures must be exposed through
 1. Write failing tests for shutdown behavior.
 2. Implement shutdown state flag and waiter cancellation.
 3. Capture `acquire_generation` on successful acquire and set
-   `shutdownGeneration` when shutdown begins.
+   `shutdownCutoffGeneration` when shutdown begins.
 4. Ensure no new `tryAcquire`/`acquire` operations proceed post-shutdown, allow
    renew only for pre-shutdown handles, and keep `release` allowed/idempotent.
 5. Add race tests between shutdown and acquire.
@@ -371,6 +451,7 @@ Suggested suites:
 - `DmnDLockReleaseTest`
 - `DmnDLockShutdownTest`
 - `DmnDLockConcurrencyTest`
+- `DmnDLockLeaseProxyOwnershipTest` (DMesg-like lifetime/close behavior)
 
 Naming examples:
 
@@ -380,6 +461,8 @@ Naming examples:
 - `Release_AlreadyExpired_IsIdempotent`
 - `Acquire_AfterShutdown_ReturnsCancelled`
 - `ConcurrentTryAcquire_OnlyOneSucceeds`
+- `CloseLease_ResetsProxy_AndIsNoThrowOnClosedLease`
+- `LeaseProxy_OperatorArrow_ThrowsAfterCloseLease`
 
 ## 13. Definition of Ready
 
