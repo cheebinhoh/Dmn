@@ -285,6 +285,8 @@ Argument validity rules:
 - `async_expiry` (when provided) must be > 0ms.
 - manager `default_async_expiry` must be configured > 0ms.
 - manager `retained_terminal_ttl` must be configured > 0ms.
+- `async_expiry` applies only to `requestLockAsync`; for `requestLock` it is
+  ignored and has no behavioral effect.
 - `retry_min_backoff` and `retry_max_backoff` must be >= 0.
 - `retry_min_backoff <= retry_max_backoff` is required.
 - `retry_jitter_ratio` must be in `[0.0, 1.0]`.
@@ -675,7 +677,7 @@ Normative command checkpoints:
 45. `Shutdown_WakesWaiters`
 46. `Shutdown_CancelsPendingRetries`
 47. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
-48. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsNotFound`
+48. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsShutdown`
 49. `Shutdown_RetainedGrantedRequest_NotPrunedBeforeRelease`
 50. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
 51. `Observability_EmitPayloadSchema_Valid`
