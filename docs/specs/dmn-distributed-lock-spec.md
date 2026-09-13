@@ -127,8 +127,8 @@ Sort/index order:
 - `requestLockAsync` without cancel token may remain in `kLockWaiting` lifecycle
   state (query code `kWaiting`) indefinitely
   under sustained conflict until external cancellation/shutdown occurs.
-- For `requestLockAsync`, retry-until-terminal applies only when a terminal path
-  exists (cancel token provided or shutdown occurs).
+- `requestLockAsync` retries continue indefinitely under sustained conflict
+  (bounded backoff), unless cancelled or shutdown.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -277,6 +277,8 @@ Argument validity rules:
   `kWaiting` on accepted submission.
 - even if request is immediately top/lockable, async API still returns `kWaiting`
   and transitions to `kGranted` through subsequent lifecycle update/query.
+- async API return code `kWaiting` represents submission acceptance, not the
+  internal persisted lifecycle state at that exact instant.
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
@@ -315,6 +317,7 @@ Deterministic result mapping:
 - `request_id` must be populated for any accepted request lifecycle, including
   terminal outcomes returned after accepted submission
   (`kGranted`, `kWaiting`, `kTimeout`, `kCancelled`, `kShutdown`, `kPublisherError`).
+- this includes synchronous no-wait `kGranted` outcomes.
 - `request_id` must be empty for pre-submission immediate rejections
   (`kInvalidArg`, immediate `kShutdown`, immediate `kPublisherError`,
   `kConflict` in no-wait mode).
@@ -350,6 +353,7 @@ State entry triggers:
 - enter `kLockWaiting` when request is accepted but not currently top/lockable.
 - enter `kLocking` when request becomes top candidate and a publish/grant
   transition attempt is in progress at publisher.
+- accepted immediately-top async requests may enter `kLocking` directly.
 - enter `kLocked` when publisher confirms lock grant for the request.
 
 ## 8) Data consistency and ordering rules
