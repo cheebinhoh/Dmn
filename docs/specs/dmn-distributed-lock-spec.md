@@ -22,6 +22,30 @@ The design follows existing DMN patterns:
 - manager-owned object + proxy lifecycle pattern: `include/dmn-dmesg.hpp`
 - async runtime/task style and testing conventions: `include/dmn-runtime-state.hpp`, `test/CMakeLists.txt`
 
+## 2.1) Requirements baseline (normative)
+
+Functional requirements:
+
+- FR-1: Exclusive lock ordering is publisher-authoritative.
+- FR-2: Handler tables mirror publisher snapshots by `table_version`.
+- FR-3: `request_id` + `owner_id` identify ownership for release/cancel.
+- FR-4: Conflict updates retry asynchronously with bounded backoff.
+- FR-5: API-thread wait uses missed-wakeup-safe predicate+version wait loop.
+- FR-6: Async worker must never block on condition wait.
+
+Non-functional requirements:
+
+- NFR-1: Deterministic ordering for same-key contenders.
+- NFR-2: No deadlock under contention/retry/shutdown.
+- NFR-3: Test-first implementation (fail-first then pass) is mandatory.
+- NFR-4: Observability failures cannot alter correctness outcomes.
+
+Invariant requirements:
+
+- IR-1: `sequence` is immutable per request creation.
+- IR-2: `table_version` is monotonic per accepted mutation.
+- IR-3: Request terminal states are one-way and non-reopenable.
+
 ## 3) Core architecture decisions
 
 ### 3.1 Authoritative ordering model
@@ -125,6 +149,31 @@ This prevents lost notifications and stale waits.
 
 ## 6) Public API contract (v1)
 
+## 6.0) Class relationship and responsibility guide (normative)
+
+```text
+Dmn_DLock_Manager (singleton orchestrator)
+  ├─ Request API surface (request/release/cancel/query/shutdown)
+  ├─ Local mirrored table state (mutex + cv + version)
+  ├─ Async retry worker scheduling
+  ├─ Publisher client adapter (authoritative update/read)
+  └─ Event emitter adapter (optional)
+```
+
+Responsibility boundaries:
+
+- `Dmn_DLock_Manager`: orchestration and correctness enforcement.
+- Publisher adapter: authoritative acceptance/rejection + version sequencing.
+- Handler mirror state: local wait predicate evaluation only (not authoritative).
+- Async worker: publish/retry only; no blocking wait.
+- API caller thread: optional blocking wait until terminal/granted.
+
+Forbidden responsibility leakage:
+
+- worker thread must not own wait loop
+- handler mirror must not resolve authoritative conflicts
+- event emitter must not mutate lock decision paths
+
 ```cpp
 struct Dmn_DLock_RequestOptions {
   std::string owner_id; // required; identifies request owner
@@ -196,6 +245,18 @@ Argument validity rules:
 - if `wait_timeout > 0ms`: block in API thread until one of
   `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`; do not
   return `kWaiting` before timeout.
+
+Deterministic result mapping:
+
+- invalid args/options -> `kInvalidArg`
+- synchronous no-wait accepted and on-top lockable -> `kGranted`
+- synchronous no-wait accepted but not-top yet -> `kWaiting`
+- conflict detected and retry scheduled (wait mode only) -> transient internal state, final API result stays terminal/granted
+- timeout expiry in wait mode -> `kTimeout`
+- cancel token/request cancellation -> `kCancelled`
+- release/cancel owner mismatch -> `kNotOwner`
+- shutdown gate -> `kShutdown`
+- publisher transport/logic failure -> `kPublisherError`
 
 ## 7) State machine semantics
 
@@ -334,6 +395,46 @@ Normative command checkpoints:
 3. Cancellation/timeouts under load.
 4. No worker-thread blocking assertions.
 5. TDD loop + final build/test checkpoint.
+
+## 12.1) File-by-file implementation detail checklist (no-gap guide)
+
+`/home/runner/work/Dmn/Dmn/include/dmn-dlock.hpp`
+
+- declare `LockState`, `LockingEntry`, `Dmn_DLock_RequestOptions`, `Dmn_DLock_Result`
+- declare `Dmn_DLock_Manager` API signatures exactly as Section 6
+- document preconditions/postconditions on each API
+
+`/home/runner/work/Dmn/Dmn/include/dmn-dlock-backend.hpp`
+
+- declare publisher-authoritative backend adapter interface:
+  - single-attempt publish for no-wait mode
+  - versioned publish for async retry mode
+  - snapshot fetch/update callbacks
+
+`/home/runner/work/Dmn/Dmn/src/dmn-dlock.cpp`
+
+- implement argument validation and deterministic result mapping
+- implement no-wait synchronous single-attempt path
+- implement wait-timeout async path with worker retries
+- implement mutex/cv wait predicate loop with `table_version`
+- implement release/cancel ownership checks
+- implement shutdown rejection and waiter wakeup
+
+`/home/runner/work/Dmn/Dmn/src/dmn-dlock-backend-memory.cpp`
+
+- implement in-memory authoritative table behavior
+- enforce monotonic `sequence` (create only) and monotonic `table_version` (all mutations)
+- implement conflict detection and expected-version matching
+
+`/home/runner/work/Dmn/Dmn/test/dmn-test-dlock.cpp`
+
+- add tests in exact order from Section 13
+- each test must follow fail-first -> minimal code -> pass loop
+- add race-focused tests for missed wakeup and worker non-blocking guarantee
+
+`/home/runner/work/Dmn/Dmn/test/CMakeLists.txt`
+
+- ensure `dmn-test-dlock` is registered as runnable ctest entry
 
 ## 13) Mandatory ordered test matrix
 
