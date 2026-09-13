@@ -189,7 +189,6 @@ struct Dmn_DLock_Result {
   enum class Code {
     kGranted,
     kWaiting,
-    kConflictRetrying,
     kTimeout,
     kCancelled,
     kNotOwner,
@@ -220,7 +219,7 @@ public:
   auto cancelRequest(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
-  auto getRequestState(const std::string &request_id) const
+  auto getRequestState(const std::string &request_id, const std::string &owner_id) const
       -> std::optional<LockingEntry>;
 
   void shutdown();
@@ -328,8 +327,12 @@ Normative command checkpoints:
 
 - build: `cmake --build <build_dir> --target dmn-test-dlock`
 - list tests: `ctest --test-dir <build_dir> -N`
-- focused test: `<build_dir>/test/dmn-test-dlock --gtest_filter=<Suite.Test>`
-- full test entry: `ctest --test-dir <build_dir> -R '^dmn-test-dlock$' --output-on-failure`
+- focused test run (normative, ctest-based): run targeted ctest entry with regex
+  matching your dlock test target name.
+- full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
+
+Optional example (non-normative, layout-dependent): run test binary directly
+with `--gtest_filter=<Suite.Test>`.
 
 ## 12) Step-by-step implementation plan
 
