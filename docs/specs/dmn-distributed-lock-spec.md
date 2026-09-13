@@ -192,6 +192,7 @@ struct Dmn_DLock_Result {
   enum class Code {
     kGranted,
     kWaiting,
+    kConflict,
     kTimeout,
     kCancelled,
     kNotOwner,
@@ -215,9 +216,6 @@ struct Dmn_DLock_Result {
 class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager> {
 public:
   static auto createInstance(const Config &cfg) -> std::shared_ptr<Dmn_DLock_Manager>;
-
-  auto requestLock(int start, int end)
-      -> Dmn_DLock_Result;
 
   auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts)
       -> Dmn_DLock_Result;
@@ -268,7 +266,9 @@ Deterministic result mapping:
 - invalid args/options -> `kInvalidArg`
 - synchronous no-wait accepted and on-top lockable -> `kGranted`
 - synchronous no-wait accepted but not-top yet -> `kWaiting`
-- conflict detected and retry scheduled (wait mode only) -> transient internal state, final API result stays terminal/granted
+- synchronous no-wait publish conflict/version mismatch -> `kConflict`
+- conflict detected and retry scheduled (wait mode) -> transient internal state;
+  final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
@@ -282,7 +282,7 @@ Normative `ok` mapping:
 
 - `ok=true`: `kGranted`
 - `ok=true` for `requestLockAsync` accepted submission with `kWaiting`
-- `ok=false`: `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
+- `ok=false`: `kConflict`, `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
   `kInvalidArg`, `kPublisherError`, `kShutdown`
 
 ## 7) State machine semantics
@@ -355,12 +355,12 @@ Normative command checkpoints:
 
 - build: `cmake --build <build_dir> --target dmn-test-dlock`
 - list tests: `ctest --test-dir <build_dir> -N`
-- focused test run (normative, ctest-based): run targeted ctest entry with regex
-  matching your dlock test target name.
+- focused test run (normative): run one exact gtest case from the dlock test
+  binary with `--gtest_filter=<Suite.Test>`.
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
-Optional example (non-normative, layout-dependent): run test binary directly
-with `--gtest_filter=<Suite.Test>`.
+If test binary path differs by generator/layout, use build output discovery to
+locate `dmn-test-dlock` first.
 
 ## 12) Step-by-step implementation plan
 
@@ -478,26 +478,27 @@ with `--gtest_filter=<Suite.Test>`.
 7. `RequestLock_PublisherConflict_SchedulesRetry`
 8. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
 9. `RequestLock_NoWaitMode_ReturnsWaitingWhenNotTop`
-10. `RequestLock_ApiWait_GrantsWhenTop`
-11. `RequestLock_MissedWakeupRace_DoesNotHang`
-12. `RequestLock_VersionChange_WakesWaiter`
-13. `ReleaseLock_NotOwner_ReturnsNotOwner`
-14. `ReleaseLock_Owner_SetsUnlocked`
-15. `ReleaseLock_RequestNotFound_ReturnsNotFound`
-16. `CancelRequest_RequestNotFound_ReturnsNotFound`
-17. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
-18. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
-19. `RequestLockAsync_ReturnsRequestIdAndWaiting`
-20. `CancelRequest_WaitingRequest_Terminates`
-21. `Shutdown_NewRequests_ReturnShutdown`
-22. `Shutdown_WakesWaiters`
-23. `Shutdown_CancelsPendingRetries`
-24. `Observability_EmitPayloadSchema_Valid`
-25. `Observability_EmitterFailure_DoesNotChangeResult`
-26. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-27. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-28. `Stress_HighContention_NoDeadlock`
-29. `Stress_WorkerThreads_NeverBlockOnWait`
+10. `RequestLock_NoWaitMode_ConflictReturnsConflictCode`
+11. `RequestLock_ApiWait_GrantsWhenTop`
+12. `RequestLock_MissedWakeupRace_DoesNotHang`
+13. `RequestLock_VersionChange_WakesWaiter`
+14. `ReleaseLock_NotOwner_ReturnsNotOwner`
+15. `ReleaseLock_Owner_SetsUnlocked`
+16. `ReleaseLock_RequestNotFound_ReturnsNotFound`
+17. `CancelRequest_RequestNotFound_ReturnsNotFound`
+18. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
+19. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
+20. `RequestLockAsync_ReturnsRequestIdAndWaiting`
+21. `CancelRequest_WaitingRequest_Terminates`
+22. `Shutdown_NewRequests_ReturnShutdown`
+23. `Shutdown_WakesWaiters`
+24. `Shutdown_CancelsPendingRetries`
+25. `Observability_EmitPayloadSchema_Valid`
+26. `Observability_EmitterFailure_DoesNotChangeResult`
+27. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+28. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+29. `Stress_HighContention_NoDeadlock`
+30. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
