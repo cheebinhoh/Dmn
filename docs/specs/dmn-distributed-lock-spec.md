@@ -356,11 +356,10 @@ Deterministic result mapping:
 - query request not found -> `kNotFound`
 - shutdown gate for submission/mutation APIs (`requestLock`, `requestLockAsync`,
   `cancelRequest`) -> `kShutdown`
-- shutdown gate exception: `releaseLock` is the only mutation allowed
-  during/after shutdown, and only for retained previously granted requests.
-- `releaseLock` remains permitted during/after shutdown only for retained
-  already-granted requests; release of retained non-granted/terminal requests
-  returns `kNotFound`.
+- default post-shutdown `releaseLock` behavior is `kShutdown`.
+- shutdown exception for pre-shutdown retained requests:
+  - retained previously granted request -> `releaseLock` remains permitted.
+  - retained non-granted/terminal request -> `kNotFound`.
 - retained granted requests must remain discoverable for `releaseLock`
   (not TTL-pruned) until explicit release succeeds.
 - owner-scoped query during/after shutdown returns persisted request outcome:
@@ -562,7 +561,8 @@ Normative command checkpoints:
 2. Wake blocked waiters and mark terminal.
 3. Cancel pending retries safely.
 4. Enforce retention policy (`retained_terminal_ttl`) for non-granted records.
-5. Add shutdown/retention tests (pre-expiry still queryable, post-expiry pruned).
+5. Add shutdown/retention tests (pre-expiry still queryable, post-expiry pruned,
+   and pruning occurs without prior query via maintenance path).
 6. TDD loop + build checkpoint.
 
 ### Phase 6 — observability
@@ -701,6 +701,8 @@ Normative command checkpoints:
 72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_PrunesEachOutcome_TimeoutCancelledShutdownPublisherError`
 73. `ReleaseLock_NonGrantedTerminal_PreExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
 74. `ReleaseLock_NonGrantedTerminal_PostExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
+75. `RetentionMaintenance_PostExpiry_PrunesNonGrantedTerminalWithoutPriorQuery`
+76. `Shutdown_RetainedGrantedRequest_PostTtl_ReleaseStillSucceeds`
 
 ## 14) Definition of Done
 
