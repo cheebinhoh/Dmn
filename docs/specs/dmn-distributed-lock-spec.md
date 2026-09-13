@@ -221,9 +221,12 @@ public:
 
   auto release(LeaseType &lease)
       -> Dmn_DLock_OpResult;
+  // release postcondition: lease proxy is reset/closed on successful backend
+  // release or successful no-op release outcome.
 
   auto closeLease(LeaseType &lease)
       -> Dmn_DLock_OpResult;
+  // closeLease is idempotent hard-close: best-effort release + always reset proxy.
 
   auto isHeldByCaller(const Dmn_DLock_Key &key) const
       -> bool;
@@ -367,8 +370,8 @@ For each test in Section 12, execute this exact loop:
 Required checkpoint commands (example form; adapt to project scripts):
 
 - Build checkpoint: `cmake --build <build_dir> --target dmn-test-dlock`
-- Focused test checkpoint: `ctest --test-dir <build_dir> -R dmn-test-dlock --output-on-failure`
-- Full target checkpoint: run full `dmn-test-dlock` binary/ctest suite.
+- Focused test checkpoint: `ctest --test-dir <build_dir> -R <focused_test_regex> --output-on-failure`
+- Full target checkpoint (normative): `ctest --test-dir <build_dir> -R dmn-test-dlock --output-on-failure`
 
 ### Phase 0 — Scaffolding and type contracts
 
@@ -427,16 +430,17 @@ Required checkpoint commands (example form; adapt to project scripts):
 ### Phase 4 — release() and closeLease()
 
 1. Implement release path using lease identity fields.
-   - Postcondition: backend lock state updated/no-op, but local proxy remains valid.
+   - Postcondition: on released/no-op success, local proxy is reset/closed and
+     manager lease retention is removed.
 2. Map backend release replies:
    - released -> `kOk`
    - noop missing/expired -> `kOk`
    - noop active other owner -> `kOk` (no-op; preserve idempotent release contract)
    - backend error -> `kBackendError`
 3. Implement `closeLease(LeaseType&)`:
-   - best-effort `release(lease)`
-   - remove internal retained lease
-   - reset proxy.
+   - call `release(lease)` first
+   - if release returns backend error, still remove internal retained lease and
+     reset proxy (hard-close behavior).
    - Postcondition: local handle is closed regardless of backend release result.
 4. Tests:
    - owner release
@@ -494,7 +498,9 @@ Required checkpoint commands (example form; adapt to project scripts):
 
 1. Add optional event emitter interface.
 2. If configured, publish structured events to DMesg wrapper.
-3. Ensure observability failure does not affect lock correctness.
+3. Ensure observability failure does not affect lock correctness:
+   - event publish failures are swallowed from lock API results
+   - optional internal debug logging only; no result-code mutation.
 4. Tests:
    - event emission for each required outcome
    - payload schema field validation for each event
