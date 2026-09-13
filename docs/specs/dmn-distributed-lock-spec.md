@@ -102,6 +102,8 @@ Sort/index order:
    `LockingEntry`.
 2. API publish mode depends on API entrypoint:
    - `requestLockAsync(...)`: always submit async worker task and retain request lifecycle.
+     Immediate API return for accepted async submission is always `kWaiting`
+     with `request_id`, even if worker can grant internally without delay.
    - `requestLock(...)`: dispatch by `wait_timeout`:
      - `wait_timeout == 0ms`: synchronous single-attempt publish check.
      - `wait_timeout > 0ms`: submit async worker task then block in API thread.
@@ -418,8 +420,9 @@ Forbidden:
 
 Terminal publisher failure representation:
 
-- retained request transitions to terminal lifecycle state `kLocking -> kUnlocked`
-  with result code `kPublisherError`.
+- retained request may transition to terminal lifecycle state
+  `kLockWaiting -> kUnlocked` or `kLocking -> kUnlocked`
+  with result code `kPublisherError` depending on failure timing.
 
 State entry triggers:
 
@@ -434,7 +437,8 @@ State entry triggers:
 
 ## 8) Data consistency and ordering rules
 
-- Publisher increments global `sequence` **only on accepted request creation**.
+- Publisher increments global `sequence` only on authoritative
+  publisher-accepted request-create mutation.
 - Publisher increments `table_version` on every accepted table mutation.
 - `sequence` is assigned once at request creation and is immutable for that
   request across release/cancel/state mutations.
@@ -625,8 +629,8 @@ Normative command checkpoints:
 4. `RequestLock_InvalidJitterRatio_ReturnsInvalidArg`
 5. `ManagerConfig_DefaultAsyncExpiry_NonPositiveRejected`
 6. `LockingEntry_OrderByStartEndPrioritySequence`
-7. `RequestLock_PublisherAccept_ReturnsGranted`
-8. `RequestLock_PublisherConflict_SchedulesRetry`
+7. `RequestLockSync_PublisherAccept_ReturnsGranted`
+8. `RequestLockSync_PublisherConflict_SchedulesRetry`
 9. `RequestLock_RetryBackoff_RespectsConfiguredBounds`
 10. `RequestLock_NoWaitMode_NotTopReturnsConflictCode`
 11. `RequestLock_NoWaitMode_VersionMismatchReturnsConflictCode`
