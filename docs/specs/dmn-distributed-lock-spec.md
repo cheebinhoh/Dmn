@@ -359,7 +359,7 @@ Deterministic result mapping:
 - default post-shutdown `releaseLock` behavior is `kShutdown`.
 - shutdown exception for pre-shutdown retained requests:
   - retained previously granted request -> `releaseLock` remains permitted.
-  - retained non-granted/terminal request -> `kNotFound`.
+  - all other post-shutdown `releaseLock` calls -> `kShutdown`.
 - retained granted requests must remain discoverable for `releaseLock`
   (not TTL-pruned) until explicit release succeeds.
 - owner-scoped query during/after shutdown returns persisted request outcome:
@@ -396,8 +396,8 @@ Deterministic result mapping:
   `kShutdown` and lifecycle-closed (`kUnlocked`) **unless** authoritative
   publisher grant confirmation was already persisted, in which case outcome
   must remain `kGranted`.
-- post-shutdown, `releaseLock` remains intentionally available as the sole
-  mutation to allow deterministic cleanup of retained granted requests.
+- post-shutdown, only retained previously granted requests may be successfully
+  released; all other `releaseLock` calls return `kShutdown`.
 - `shutdown()` is guaranteed non-throwing and does not return failure status
   (best-effort completion with deterministic terminalization semantics).
 
@@ -413,6 +413,7 @@ Valid transitions:
 - `kLocking -> kLocked -> kUnlocked` (accepted immediately-top async request path)
 - `kLocking -> kLocked` (accepted immediately-top synchronous no-wait grant path)
 - `kLocking -> kLocked` (accepted immediately-top synchronous blocking-wait grant path)
+- `kLocked -> kLocked` (shutdown preserves retained granted lock until explicit release)
 - `kLockWaiting -> kUnlocked` (cancel/timeout/shutdown terminalization)
 - `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
 
@@ -699,8 +700,8 @@ Normative command checkpoints:
 70. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
 71. `GetRequestStateForOwner_NonGrantedTerminal_PreExpiry_PreservesEachOutcome_TimeoutCancelledShutdownPublisherError`
 72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_PrunesEachOutcome_TimeoutCancelledShutdownPublisherError`
-73. `ReleaseLock_NonGrantedTerminal_PreExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
-74. `ReleaseLock_NonGrantedTerminal_PostExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
+73. `ReleaseLock_PostShutdown_NonGrantedTerminal_ReturnsShutdownForEachOutcome_TimeoutCancelledShutdownPublisherError`
+74. `RequestLockAsync_InvalidAsyncExpiry_NonPositiveRejected`
 75. `RetentionMaintenance_PostExpiry_PrunesNonGrantedTerminalWithoutPriorQuery`
 76. `Shutdown_RetainedGrantedRequest_PostTtl_ReleaseStillSucceeds`
 
