@@ -306,6 +306,9 @@ public:
 - `lease_ttl` must be > 0 for `tryAcquire`, `acquire`, `renew`.
 - `wait_timeout` may be 0 (`acquire` behaves as one immediate attempt).
 - Shutdown precedence: after shutdown starts, `Cancelled` overrides `Busy`.
+- Post-shutdown acquire mapping:
+  - `tryAcquire` -> `Dmn_DLock_AcquireResult::Code::kCancelled`
+  - `acquire` -> `Dmn_DLock_AcquireResult::Code::kCancelled`
 - `renew` allowed post-shutdown only for leases acquired before cutoff generation.
 - `release` and `closeLease` remain allowed post-shutdown.
 - `expiresAtMs` values are backend time-domain milliseconds (no local translation).
@@ -428,7 +431,7 @@ Required checkpoint commands (example form; adapt to project scripts):
 2. Map backend release replies:
    - released -> `kOk`
    - noop missing/expired -> `kOk`
-   - noop active other owner -> `kNotOwner`
+   - noop active other owner -> `kOk` (no-op; preserve idempotent release contract)
    - backend error -> `kBackendError`
 3. Implement `closeLease(LeaseType&)`:
    - best-effort `release(lease)`
@@ -532,6 +535,9 @@ minimal code -> build -> run (pass) -> run full `dmn-test-dlock`.
 16. `Shutdown_BoundaryPreShutdownLease_RenewStillAllowed`
 17. `FencingToken_MonotonicAcrossTransfers`
 18. `Contention_MultiThread_NoDualOwnerOverlap`
+19. `Observability_EmitsAcquireBusy_WithRequiredPayloadFields`
+20. `Observability_EmitsReleaseNoopOtherOwner_WithRequiredPayloadFields`
+21. `Observability_EmitterFailure_DoesNotChangeLockCorrectness`
 
 ## 13. Definition of Done
 
