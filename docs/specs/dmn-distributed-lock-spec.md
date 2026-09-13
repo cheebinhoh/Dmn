@@ -123,7 +123,8 @@ Sort/index order:
 - Support cancellation/shutdown interruption.
 - Retry loop applies only to `requestLock(wait_timeout > 0ms)` and
   `requestLockAsync`; no-wait mode (`wait_timeout == 0ms`) is single-attempt.
-- `requestLockAsync` without cancel token may remain `kWaiting` indefinitely
+- `requestLockAsync` without cancel token may remain in `kLockWaiting` lifecycle
+  state (query code `kWaiting`) indefinitely
   under sustained conflict until external cancellation/shutdown occurs.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
@@ -274,7 +275,7 @@ Argument validity rules:
 - `requestLockAsync` immediate rejection mapping:
   - invalid args/options -> `kInvalidArg`
   - shutdown gate active -> `kShutdown`
-  - publisher immediate submission failure -> `kPublisherError`
+  - publisher immediate submission failure (pre-acceptance) -> `kPublisherError`
 
 Deterministic result mapping:
 
@@ -313,17 +314,28 @@ Deterministic result mapping:
   (`kInvalidArg`, immediate `kShutdown`, immediate `kPublisherError`,
   `kConflict` in no-wait mode).
 
+`shutdown()` completion contract:
+
+- `shutdown()` is synchronous.
+- On return, pending waiters are woken, pending retries are cancelled, and
+  affected retained requests have terminal state persisted.
+
 ## 7) State machine semantics
 
 Valid transitions:
 
 - `kLockWaiting -> kLocking -> kLocked -> kUnlocked`
 - `kLockWaiting -> kUnlocked` (cancel/timeout)
-- `kLocking -> kUnlocked` (publisher reject/cancel/shutdown)
+- `kLocking -> kUnlocked` (publisher reject/cancel/shutdown/publisher terminal failure)
 
 Forbidden:
 
 - `kUnlocked -> kLocked` reuse of same request_id
+
+Terminal publisher failure representation:
+
+- retained request transitions to terminal lifecycle state `kLocking -> kUnlocked`
+  with result code `kPublisherError`.
 
 ## 8) Data consistency and ordering rules
 
@@ -553,10 +565,11 @@ locate `dmn-test-dlock` first.
 42. `Observability_EmitCancelTransitionPayload_Valid`
 43. `Observability_EmitShutdownTransitionPayload_Valid`
 44. `Observability_EmitterFailure_DoesNotChangeResult`
-45. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-46. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-47. `Stress_HighContention_NoDeadlock`
-48. `Stress_WorkerThreads_NeverBlockOnWait`
+45. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+46. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+47. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+48. `Stress_HighContention_NoDeadlock`
+49. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
