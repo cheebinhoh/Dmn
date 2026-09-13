@@ -192,6 +192,7 @@ struct Dmn_DLock_Result {
     kTimeout,
     kCancelled,
     kNotOwner,
+    kNotFound,
     kInvalidArg,
     kPublisherError,
     kShutdown
@@ -205,13 +206,17 @@ struct Dmn_DLock_Result {
   uint64_t sequence{0};
   uint64_t table_version{0};
   std::optional<LockingEntry> entry;
+  std::optional<bool> owner_match;
 };
 
 class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager> {
 public:
   static auto createInstance(const Config &cfg) -> std::shared_ptr<Dmn_DLock_Manager>;
 
-  auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts = Dmn_DLock_RequestOptions{})
+  auto requestLock(int start, int end)
+      -> Dmn_DLock_Result;
+
+  auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts)
       -> Dmn_DLock_Result;
 
   auto releaseLock(const std::string &request_id, const std::string &owner_id)
@@ -220,7 +225,7 @@ public:
   auto cancelRequest(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
-  auto getRequestState(const std::string &request_id, const std::string &owner_id) const
+  auto getRequestState(const std::string &request_id, std::optional<std::string> owner_id = std::nullopt) const
       -> Dmn_DLock_Result;
 
   void shutdown();
@@ -255,8 +260,8 @@ Deterministic result mapping:
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
-- query owner mismatch -> `kNotOwner`
-- query request not found -> `kInvalidArg` with message `request not found`
+- query returns state if found; if `owner_id` provided, set `owner_match=true/false`
+- query request not found -> `kNotFound`
 - shutdown gate -> `kShutdown`
 - publisher transport/logic failure -> `kPublisherError`
 
