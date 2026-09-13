@@ -266,8 +266,10 @@ Query mutability contract:
   bookkeeping) but must not mutate externally observable request outcome.
 - housekeeping must not delete retained terminal records before
   `retained_terminal_ttl` has elapsed from terminalization.
+- retained granted records are exempt from TTL pruning and must be preserved
+  until explicit `releaseLock` succeeds.
 - after `retained_terminal_ttl` elapses, query may legitimately return
-  `kNotFound` for previously terminalized records that were pruned.
+  `kNotFound` for previously terminalized non-granted records that were pruned.
 
 Argument validity rules:
 
@@ -354,6 +356,8 @@ Deterministic result mapping:
 - `releaseLock` remains permitted during/after shutdown only for retained
   already-granted requests; release of retained non-granted/terminal requests
   returns `kNotFound`.
+- retained granted requests must remain discoverable for `releaseLock`
+  (not TTL-pruned) until explicit release succeeds.
 - owner-scoped query during/after shutdown returns persisted request outcome:
   `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError` or `kNotFound`.
 - owner-scoped query returns `kShutdown` only when that request lifecycle was
@@ -660,27 +664,28 @@ Normative command checkpoints:
 46. `Shutdown_CancelsPendingRetries`
 47. `Shutdown_RetainedGrantedRequest_ReleaseStillAllowed`
 48. `Shutdown_RetainedNonGrantedRequest_ReleaseReturnsNotFound`
-49. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
-50. `Observability_EmitPayloadSchema_Valid`
-51. `Observability_EmitSuccessTransitionPayload_Valid`
-52. `Observability_EmitTimeoutTransitionPayload_Valid`
-53. `Observability_EmitCancelTransitionPayload_Valid`
-54. `Observability_EmitShutdownTransitionPayload_Valid`
-55. `Observability_EmitterFailure_DoesNotChangeResult`
-56. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
-57. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-58. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-59. `Stress_HighContention_NoDeadlock`
-60. `Stress_WorkerThreads_NeverBlockOnWait`
-61. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
-62. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
-63. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
-64. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
-65. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
-66. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
-67. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
-68. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
-69. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
+49. `Shutdown_RetainedGrantedRequest_NotPrunedBeforeRelease`
+50. `RequestLockAsync_DefaultAsyncExpiry_ExpiresWithTimeout`
+51. `Observability_EmitPayloadSchema_Valid`
+52. `Observability_EmitSuccessTransitionPayload_Valid`
+53. `Observability_EmitTimeoutTransitionPayload_Valid`
+54. `Observability_EmitCancelTransitionPayload_Valid`
+55. `Observability_EmitShutdownTransitionPayload_Valid`
+56. `Observability_EmitterFailure_DoesNotChangeResult`
+57. `Observability_EmitterFailure_DoesNotChangePersistedQueryState`
+58. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+59. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+60. `Stress_HighContention_NoDeadlock`
+61. `Stress_WorkerThreads_NeverBlockOnWait`
+62. `RequestLockAsync_AcceptedThenTimeout_ReturnValueHasRequestId`
+63. `RequestLockAsync_AcceptedThenCancelled_ReturnValueHasRequestId`
+64. `RequestLockAsync_AcceptedThenShutdown_ReturnValueHasRequestId`
+65. `RequestLockAsync_AcceptedThenPublisherError_ReturnValueHasRequestId`
+66. `BlockingRequest_AcceptedThenTimeout_ReturnValueHasRequestId`
+67. `BlockingRequest_AcceptedThenCancelled_ReturnValueHasRequestId`
+68. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
+69. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
+70. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
 
 ## 14) Definition of Done
 
