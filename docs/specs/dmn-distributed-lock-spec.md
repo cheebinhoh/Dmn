@@ -694,8 +694,8 @@ Normative command checkpoints:
 68. `BlockingRequest_AcceptedThenShutdown_ReturnValueHasRequestId`
 69. `BlockingRequest_AcceptedThenPublisherError_ReturnValueHasRequestId`
 70. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
-71. `GetRequestStateForOwner_NonGrantedTerminal_PreExpiry_StillReturned`
-72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_ReturnsNotFound`
+71. `GetRequestStateForOwner_NonGrantedTerminal_PreExpiry_PreservesEachOutcome_TimeoutCancelledShutdownPublisherError`
+72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_PrunesEachOutcome_TimeoutCancelledShutdownPublisherError`
 
 ## 14) Definition of Done
 
