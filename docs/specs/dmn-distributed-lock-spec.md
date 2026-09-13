@@ -432,7 +432,9 @@ Normative command checkpoints:
 - build: `cmake --build <build_dir> --target dmn-test-dlock`
 - list tests: `ctest --test-dir <build_dir> -N`
 - focused test run (normative, deterministic):
-  `GTEST_FILTER=<Suite.Test> ctest --test-dir <build_dir> -R '^dmn-test-dlock$' --output-on-failure`
+  `<build_dir>/test/dmn-test-dlock --gtest_filter=<Suite.Test>`
+- if your generator/layout differs, first resolve exact test executable command via:
+  `ctest --test-dir <build_dir> -N -V -R '^dmn-test-dlock$'`
 - full test entry: `ctest --test-dir <build_dir> -R 'dmn-test-dlock' --output-on-failure`
 
 If test binary path differs by generator/layout, use build output discovery to
