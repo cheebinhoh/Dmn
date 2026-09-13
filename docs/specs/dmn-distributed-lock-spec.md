@@ -157,9 +157,13 @@ while (true) {
   if (isRequestTopAndLocked(request_id) || isRequestTerminal(request_id)) break;
   const auto observed_table_version = table_version;
   const auto observed_retention_version = retention_version;
-  if (cv.wait_until(lock, deadline) == std::cv_status::timeout) break;
-  if (table_version != observed_table_version ||
-      retention_version != observed_retention_version) continue;
+  const auto ready = cv.wait_until(lock, deadline, [&] {
+    return isRequestTopAndLocked(request_id) ||
+           isRequestTerminal(request_id) ||
+           table_version != observed_table_version ||
+           retention_version != observed_retention_version;
+  });
+  if (!ready) break; // deadline reached
 }
 ```
 
