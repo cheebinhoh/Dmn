@@ -47,9 +47,11 @@ spec-driven, test-driven development (TDD) as the implementation method.
 1. `Dmn_DLock_Manager` (singleton)
    - User-facing API for acquire/renew/release.
    - Owns lifecycle, retry policy, and shutdown behavior.
+   - Tracks `shutdownGeneration` for post-shutdown renew eligibility.
 2. `Dmn_DLock_Handle`
    - Represents one acquired lease.
    - Carries key, owner ID, lease ID, expiration, fencing token.
+   - Carries manager `acquire_generation` captured at successful acquire time.
 3. `Dmn_DLock_Backend` (interface)
    - Pluggable backend contract for compare-and-swap lock state.
 4. `Dmn_DLock_Clock`
@@ -105,6 +107,7 @@ Per lock key, backend stores:
 - `fencingToken()`
 - `expiresAt()`
 - `isValid()`
+- `acquireGeneration()`
 
 ### 5.2 Manager API
 
@@ -136,7 +139,8 @@ Per lock key, backend stores:
 - After `shutdown`, `tryAcquire` fails with `Cancelled`.
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
 - After `shutdown`, renew is allowed only for handles that were successfully
-  acquired before shutdown began.
+  acquired before shutdown began, identified by
+  `handle.acquireGeneration() < manager.shutdownGeneration()`.
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
@@ -272,7 +276,8 @@ Construction/setup failures must be exposed through
 3. Renew CAS succeeds only for matching `owner_id` + `lease_id`.
 4. Renew CAS rejects stale/non-owner lease updates.
 5. Release CAS succeeds for owner and is idempotent when lease is already gone.
-6. Release CAS rejects attempts to revoke an active lease of another owner.
+6. Release CAS reports active-other-owner without mutation; manager maps that
+   outcome to public API success-no-op semantics.
 7. Fencing token increments strictly on successful ownership transfer.
 8. Backend read/modify/write paths preserve per-key version monotonicity.
 
@@ -319,9 +324,11 @@ Construction/setup failures must be exposed through
 
 1. Write failing tests for shutdown behavior.
 2. Implement shutdown state flag and waiter cancellation.
-3. Ensure no new `tryAcquire`/`acquire` operations proceed post-shutdown, allow
+3. Capture `acquire_generation` on successful acquire and set
+   `shutdownGeneration` when shutdown begins.
+4. Ensure no new `tryAcquire`/`acquire` operations proceed post-shutdown, allow
    renew only for pre-shutdown handles, and keep `release` allowed/idempotent.
-4. Add race tests between shutdown and acquire.
+5. Add race tests between shutdown and acquire.
 
 ### Phase 6: Observability
 
