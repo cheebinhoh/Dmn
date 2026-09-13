@@ -1,6 +1,6 @@
 # Feature Specification: DMN Distributed Range Lock (`Dmn_DLock`)
 
-Status: Accepted for incremental implementation.
+Status: Ready for incremental implementation.
 
 ## 1. Purpose
 
@@ -60,6 +60,30 @@ that do not exist.
    shared-owned object created by a factory, not a process-wide singleton.
 5. Existing network tests frequently use sleeps. New lock tests MUST use
    explicit barriers, futures, fake clocks, and deterministic fault injection.
+
+### 2.3 Base-library isolation
+
+The lock implementation is additive. It MUST NOT change the behavior or public
+C++ API of `Dmn_DMesg`, `Dmn_DMesgNet`, `Dmn_Runtime_Manager`, `Dmn_Async`,
+`Dmn_Proc`, `Dmn_Pub`, or any blocking queue. Lock-specific executors,
+coordination, diagnostics, and test hooks belong in lock files.
+
+The only approved edits to existing base-library files are:
+
+- add the library-reserved enum value `dlock = 2` to
+  `src/proto/dmn-dmesg-type.proto`;
+- add `DLockEnvelopePb dlock = 2` to the `DMesgBodyPb` oneof and import the
+  lock schema in `src/proto/dmn-dmesg-body.proto`;
+- add lock source, generated protobuf, public header, and test target entries to
+  the existing CMake lists;
+- include the lock public facade from `include/dmn.hpp`.
+
+These protobuf changes are wire-compatible additions: existing field numbers
+and enum values MUST NOT be changed or reused. A compatibility test MUST prove
+that existing `sys` and `message` payloads still round-trip unchanged. Any
+implementation discovery that appears to require another base-library change
+stops that increment for design review; it MUST NOT be folded into the lock
+change implicitly.
 
 ## 3. Goals, Scope, and Non-goals
 
@@ -316,6 +340,14 @@ public:
       std::shared_ptr<Dmn_DLock_Backend> backend,
       std::shared_ptr<Dmn_DLock_Event_Emitter> emitter = {})
       -> std::shared_ptr<Dmn_DLock_Manager>;
+  ~Dmn_DLock_Manager() noexcept;
+
+  Dmn_DLock_Manager(const Dmn_DLock_Manager &) = delete;
+  auto operator=(const Dmn_DLock_Manager &)
+      -> Dmn_DLock_Manager & = delete;
+  Dmn_DLock_Manager(Dmn_DLock_Manager &&) = delete;
+  auto operator=(Dmn_DLock_Manager &&)
+      -> Dmn_DLock_Manager & = delete;
 
   auto requestLock(Dmn_DLock_Range range,
                    const Dmn_DLock_RequestOptions &options)
@@ -344,6 +376,8 @@ public:
 
 } // namespace dmn
 ```
+
+The manager destructor calls `shutdown()`.
 
 ### 6.1 Construction
 
@@ -412,6 +446,87 @@ the manager accepts the request locally, including time spent waiting for
 authority bootstrap or retry backoff. Every create attempt carries only the
 remaining duration; neither delivery nor retry can extend the original
 deadline.
+
+### 6.3 Public event contract
+
+Observability uses a concrete immutable event contract:
+
+```cpp
+enum class Dmn_DLock_Event_Type {
+  kRequestAccepted,
+  kCommandSubmitted,
+  kRetryScheduled,
+  kWaiting,
+  kGranted,
+  kRenewed,
+  kReleased,
+  kCancelled,
+  kAcquireTimeout,
+  kLeaseExpired,
+  kAuthorityRestarted,
+  kShutdown,
+  kProtocolError
+};
+
+struct Dmn_DLock_Event {
+  Dmn_DLock_Event_Type type;
+  std::string domain;
+  std::string client_id;
+  std::string authority_id;
+  std::string request_id;
+  std::string operation_id;
+  std::optional<Dmn_DLock_Range> range;
+  int priority{};
+  std::optional<Dmn_DLock_State> old_state;
+  std::optional<Dmn_DLock_State> new_state;
+  Dmn_DLock_Terminal_Reason terminal_reason{
+      Dmn_DLock_Terminal_Reason::kNone};
+  std::uint64_t table_version{};
+  std::uint64_t sequence{};
+  std::uint64_t authority_generation{};
+  std::string authority_nonce;
+  std::optional<std::uint64_t> fencing_token;
+  std::uint32_t retry_attempt{};
+  std::chrono::milliseconds retry_delay{};
+  std::chrono::steady_clock::time_point observed_at;
+  std::string message;
+};
+
+class Dmn_DLock_Event_Emitter {
+public:
+  virtual ~Dmn_DLock_Event_Emitter() noexcept = default;
+  virtual void emit(const Dmn_DLock_Event &event) = 0;
+};
+```
+
+The manager owns a shared reference to the emitter. It invokes `emit()` only
+from its worker, after releasing every manager/backend lock. The event object
+is valid only for the call; an emitter that needs it later copies it.
+Exceptions are caught at this boundary, reported with
+`DMN_DEBUG_PRINT(std::cerr << ...)`, and otherwise discarded. This diagnostic
+is intentionally best-effort and may be compiled out in release builds;
+emitter failure is never part of lock correctness and never changes a result.
+
+### 6.4 Public timestamp semantics
+
+Every `steady_clock::time_point` exposed by the public model belongs to the
+client manager's clock:
+
+- `created_at` is the local acceptance time for a request created by that
+  manager;
+- `terminal_at` is when that manager first committed the terminal projection;
+- `lease_deadline` is the conservative local deadline derived in Section 13.
+
+Authority monotonic time points are never copied into public entries or
+snapshots. An authority snapshot may contain other clients' requests, but the
+public owner-scoped API never manufactures a local `Dmn_DLock_Entry` for an
+unknown request. Diagnostic wire timestamps are optional wall-clock values and
+do not participate in ordering, equality, expiry, or correctness.
+
+For results produced before bootstrap or without an authority mutation,
+`table_version == 0` means that no authority version is known. Once a mirror is
+established, local validation and lifecycle results report the latest known
+version.
 
 ## 7. API Semantics
 
@@ -568,6 +683,35 @@ caller wait up to `authority_response_timeout`.
 These rules prevent a blocked worker and prevent transport uncertainty from
 being reported as a successful mutation.
 
+### 7.9 Concurrent mutation calls
+
+Public mutation calls are linearized under the lifecycle mutex. At most one
+caller-originated cancel, renew, or release operation is active for a request.
+
+- A repeated call with the same mutation kind and identical effective business
+  payload while its operation is active joins the same completion and observes
+  the same confirmed result or response timeout; it does not allocate another
+  operation id. Cancel/release identity is `(request_id, owner_id)`. Renewal
+  identity is `(request_id, owner_id, effective_lease_duration)`.
+- A same-kind call with a different business payload returns `kInvalidState`
+  without submission.
+- A different mutation kind that is incompatible with the locally committed
+  state returns `kInvalidState` without submission.
+- Release intent is sticky and has precedence over renewal. Once a release
+  call is admitted, the caller must stop using the resource, no later renewal
+  is admitted, and a late renewal reply cannot extend the local deadline.
+- For a waiting request, admitted cancellation similarly prevents a later
+  caller-originated mutation. A grant racing the cancel is handled by the
+  authority's serialized result: `kInvalidState` from cancel transitions to
+  the I-12 cleanup release path.
+- Query never joins or changes a mutation and returns the latest committed
+  local projection.
+
+An operation that timed out to its API caller may remain active internally for
+the cleanup required by Sections 7.8 and 12. Joining applies only while the
+original completion object is still retained; after it has completed, the
+persisted lifecycle rules in Sections 7.5-7.7 apply.
+
 ## 8. Lifecycle State Machine
 
 ```text
@@ -602,6 +746,185 @@ Rules:
 `kGranting` is authority-internal transient state used while one serialized
 transaction selects grants and builds its resulting snapshot. Published
 snapshots normally contain only waiting, granted, and terminal records.
+
+### 8.1 Transport-neutral protocol model
+
+`include/dmn-dlock-protocol.hpp` defines the complete C++ boundary shared by
+the authority and every backend. It uses value types only and includes no
+DMesg or protobuf header.
+
+All protocol durations are checked, non-negative `std::chrono::milliseconds`.
+Conversion to protobuf uses `uint64` milliseconds and rejects overflow. The
+following structures are normative; implementations may add comparison
+operators and private helpers but MUST NOT require transport-specific fields:
+
+```cpp
+enum class Dmn_DLock_Create_Mode { kWait, kNoWait };
+
+enum class Dmn_DLock_Protocol_Status {
+  kAccepted,
+  kWaiting,
+  kGranted,
+  kReleased,
+  kCancelled,
+  kConflict,
+  kNotFound,
+  kNotOwner,
+  kInvalidState,
+  kInvalidArgument,
+  kVersionConflict,
+  kEpochMismatch,
+  kProtocolError
+};
+
+struct Dmn_DLock_Command_Header {
+  std::uint32_t protocol_version{1};
+  std::string domain;
+  std::string authority_id;
+  std::uint64_t authority_generation{};
+  std::string authority_nonce;
+  std::string client_id;
+  std::string client_incarnation;
+  std::string correlation_id;
+  std::string request_id;
+  std::string operation_id;
+  std::optional<std::uint64_t> expected_table_version;
+};
+
+struct Dmn_DLock_Create_Command {
+  Dmn_DLock_Range range;
+  std::string owner_id;
+  int priority{};
+  Dmn_DLock_Create_Mode mode{Dmn_DLock_Create_Mode::kWait};
+  std::optional<std::chrono::milliseconds> acquire_remaining;
+  std::chrono::milliseconds lease_duration{};
+};
+
+struct Dmn_DLock_Cancel_Command {
+  std::string owner_id;
+};
+
+struct Dmn_DLock_Renew_Command {
+  std::string owner_id;
+  std::chrono::milliseconds lease_duration{};
+};
+
+struct Dmn_DLock_Release_Command {
+  std::string owner_id;
+};
+
+struct Dmn_DLock_Snapshot_Request_Command {};
+
+using Dmn_DLock_Command_Body =
+    std::variant<Dmn_DLock_Create_Command,
+                 Dmn_DLock_Cancel_Command,
+                 Dmn_DLock_Renew_Command,
+                 Dmn_DLock_Release_Command,
+                 Dmn_DLock_Snapshot_Request_Command>;
+
+struct Dmn_DLock_ProtocolCommand {
+  Dmn_DLock_Command_Header header;
+  Dmn_DLock_Command_Body body;
+};
+
+struct Dmn_DLock_ProtocolEntry {
+  std::string domain;
+  Dmn_DLock_Range range;
+  Dmn_DLock_State state{Dmn_DLock_State::kWaiting};
+  Dmn_DLock_Terminal_Reason terminal_reason{
+      Dmn_DLock_Terminal_Reason::kNone};
+  std::string request_id;
+  std::string owner_id;
+  int priority{};
+  std::uint64_t sequence{};
+  std::uint64_t authority_generation{};
+  std::string authority_nonce;
+  std::optional<std::uint64_t> fencing_token;
+  std::optional<std::chrono::milliseconds> acquire_remaining;
+  std::optional<std::chrono::milliseconds> lease_remaining;
+};
+
+struct Dmn_DLock_Snapshot {
+  std::uint32_t protocol_version{1};
+  std::string domain;
+  std::string authority_id;
+  std::uint64_t authority_generation{};
+  std::string authority_nonce;
+  std::uint64_t table_version{};
+  std::vector<Dmn_DLock_ProtocolEntry> entries;
+};
+
+struct Dmn_DLock_ProtocolReply {
+  Dmn_DLock_Command_Header command;
+  Dmn_DLock_Protocol_Status status{
+      Dmn_DLock_Protocol_Status::kProtocolError};
+  std::string message;
+  std::uint64_t table_version{};
+  std::optional<Dmn_DLock_ProtocolEntry> entry;
+  std::optional<Dmn_DLock_Snapshot> snapshot;
+};
+
+enum class Dmn_DLock_Protocol_Error_Code {
+  kMalformed,
+  kMissingField,
+  kOutOfRange,
+  kUnknownVariant,
+  kIdentityMismatch
+};
+
+struct Dmn_DLock_Protocol_Error {
+  Dmn_DLock_Protocol_Error_Code code;
+  std::string message;
+};
+```
+
+An active protocol entry has exactly one remaining duration appropriate to its
+state; a terminal entry has neither and contains the authority's logical
+terminal outcome. Protocol entries contain no `steady_clock::time_point`.
+A reply carries a full snapshot only for a version conflict, epoch mismatch,
+or explicit snapshot request. A successful grant or renewal requires
+`reply.entry->lease_remaining`; this entry field is the only source used for
+Section 13 deadline derivation. It is absent from non-granted entries. A
+converter never substitutes a default object for a missing required field: it
+returns
+`Dmn_DLock_Protocol_Error`.
+
+The immutable operation identity is:
+
+- command variant, domain, authority id, client id/incarnation, request id,
+  operation id, owner id, range, priority, create mode, and requested lease
+  duration;
+- `acquire_remaining` is included for a first create but may only decrease on
+  retries; an increase is a permanent protocol error;
+- correlation id, retry attempt, expected table version, and decreasing
+  acquisition remaining are retry metadata.
+
+Snapshot requests require correlation identity but no request or operation id
+because they do not mutate or participate in operation deduplication. They are
+explicitly exempt from current-epoch validation and may carry an empty,
+unknown, or stale generation/nonce; the configured domain and authority id
+must still match. The authority answers with its current full snapshot. Every
+mutation requires current epoch identity and all three correlation, request,
+and operation ids.
+
+Identifiers are opaque non-empty byte strings at the C++ boundary. Production
+manager-generated identifiers use canonical lowercase hexadecimal random
+128-bit values prefixed by the client incarnation:
+`<client-incarnation>:<random-id>`. Tests inject a deterministic source.
+
+### 8.2 Conversion failure contract
+
+Protobuf conversion functions return a typed result containing either the
+transport-neutral value or `Dmn_DLock_Protocol_Error { code, message }`.
+They do not throw for peer-controlled malformed data. Allocation failures and
+other process failures may still throw and are not converted into protocol
+success.
+
+Malformed commands receive `kProtocolError` when enough validated routing
+identity exists to send a reply; otherwise they are dropped and reported
+through the backend/service diagnostic path. Malformed replies and snapshots
+are delivered to the manager through the backend error callback defined in
+Section 10.1.
 
 ## 9. Authority Model
 
@@ -651,6 +974,68 @@ the command's remaining acquisition duration. The authority rejects an
 acquisition or lease duration above its configured maximum. Authority
 maintenance expires waiting requests. Retries of an accepted create cannot
 extend that deadline.
+
+### 9.1.1 Authority construction and methods
+
+The authority has a complete synchronous API:
+
+```cpp
+class Dmn_DLock_Clock {
+public:
+  virtual ~Dmn_DLock_Clock() noexcept = default;
+  virtual auto now() const noexcept
+      -> std::chrono::steady_clock::time_point = 0;
+};
+
+struct Dmn_DLock_Authority_Result {
+  Dmn_DLock_ProtocolReply reply;
+  std::optional<Dmn_DLock_Snapshot> changed_snapshot;
+};
+
+class Dmn_DLock_Authority final {
+public:
+  Dmn_DLock_Authority(
+      Dmn_DLock_Authority_Config config,
+      std::string authority_nonce,
+      std::shared_ptr<const Dmn_DLock_Clock> clock);
+  ~Dmn_DLock_Authority() noexcept;
+
+  Dmn_DLock_Authority(const Dmn_DLock_Authority &) = delete;
+  auto operator=(const Dmn_DLock_Authority &)
+      -> Dmn_DLock_Authority & = delete;
+  Dmn_DLock_Authority(Dmn_DLock_Authority &&) = delete;
+  auto operator=(Dmn_DLock_Authority &&)
+      -> Dmn_DLock_Authority & = delete;
+
+  auto process(const Dmn_DLock_ProtocolCommand &command)
+      -> Dmn_DLock_Authority_Result;
+  auto snapshot() const -> Dmn_DLock_Snapshot;
+  auto runMaintenance() -> std::optional<Dmn_DLock_Snapshot>;
+};
+```
+
+`Dmn_DLock_Clock` is declared in `include/dmn-dlock-clock.hpp` so the manager,
+authority, backends, and tests share one clock contract without introducing an
+authority-header dependency.
+
+The constructor validates the config, a non-empty nonce, and a non-null clock.
+It creates no thread. `process()`, `snapshot()`, and `runMaintenance()` require
+serialized external entry; the authority is deliberately not internally
+concurrent. The in-memory backend and DMesg authority service provide that
+serialization.
+
+`changed_snapshot` is present exactly when the transaction incremented
+`table_version`. A version conflict reply carries `reply.snapshot` even though
+`changed_snapshot` is absent. `snapshot()` recomputes remaining-duration
+metadata without changing structural state or `table_version`.
+
+The authority stores logical cached outcomes and internal monotonic deadlines,
+not a frozen reply. On every duplicate command attempt, `process()` rebuilds
+the reply and recomputes `lease_remaining` or acquisition remaining using the
+injected clock before the backend queues delivery. Delay between processing
+and callback/publication is included in the manager's measured round trip and
+therefore in the conservative subtraction from Section 13. No backend needs
+authority internals or a lazy reply callback.
 
 ### 9.2 Idempotency
 
@@ -738,6 +1123,46 @@ observes a snapshot for its domain with:
 This detection is diagnostic containment, not consensus. Deployment still
 guarantees I-1.
 
+The service is constructed and controlled explicitly:
+
+```cpp
+struct Dmn_DLock_DMesg_Authority_Service_Options {
+  std::shared_ptr<const Dmn_DLock_Clock> clock;
+  std::function<std::string()> nonce_source;
+};
+
+class Dmn_DLock_DMesg_Authority_Service final {
+public:
+  static auto create(
+      Dmn_DLock_Authority_Config config,
+      std::shared_ptr<Dmn_DMesg> dmesg,
+      Dmn_DLock_DMesg_Authority_Service_Options options = {})
+      -> std::shared_ptr<Dmn_DLock_DMesg_Authority_Service>;
+  void start();
+  void shutdown() noexcept;
+  ~Dmn_DLock_DMesg_Authority_Service() noexcept;
+
+  Dmn_DLock_DMesg_Authority_Service(
+      const Dmn_DLock_DMesg_Authority_Service &) = delete;
+  auto operator=(const Dmn_DLock_DMesg_Authority_Service &)
+      -> Dmn_DLock_DMesg_Authority_Service & = delete;
+  Dmn_DLock_DMesg_Authority_Service(
+      Dmn_DLock_DMesg_Authority_Service &&) = delete;
+  auto operator=(Dmn_DLock_DMesg_Authority_Service &&)
+      -> Dmn_DLock_DMesg_Authority_Service & = delete;
+};
+```
+
+`create()` validates without opening handlers. `start()` is called exactly
+once, opens handlers, publishes the initial snapshot, and either succeeds or
+rolls back all opened resources before throwing. The service owns its
+authority and executor but shares ownership of the supplied `Dmn_DMesg`.
+`shutdown()` is synchronous and idempotent. Copy and move are deleted.
+An absent clock selects the production steady clock. An empty nonce source
+selects a cryptographically strong random 128-bit nonce encoded as lowercase
+hexadecimal. A supplied nonce source that returns an empty value causes
+`start()` to roll back and throw `std::runtime_error`.
+
 ## 10. Backend and Transport Contracts
 
 ### 10.1 Backend interface
@@ -757,13 +1182,36 @@ struct Dmn_DLock_Submit_Result {
   std::string message;
 };
 
+enum class Dmn_DLock_Backend_Error_Code {
+  kMalformedMessage,
+  kIdentityMismatch,
+  kProtocolGap,
+  kReconnect,
+  kPublishConflict,
+  kSplitAuthority,
+  kTransportClosed,
+  kInternalFailure
+};
+
+struct Dmn_DLock_Backend_Error {
+  Dmn_DLock_Backend_Error_Code code;
+  std::string message;
+  bool fatal{};
+  std::string correlation_id;
+  std::string request_id;
+  std::optional<std::uint64_t> authority_generation;
+  std::string authority_nonce;
+};
+
 class Dmn_DLock_Backend {
 public:
   using ReplyHandler = std::function<void(Dmn_DLock_ProtocolReply)>;
   using SnapshotHandler = std::function<void(Dmn_DLock_Snapshot)>;
+  using ErrorHandler = std::function<void(Dmn_DLock_Backend_Error)>;
 
   virtual ~Dmn_DLock_Backend() noexcept = default;
-  virtual void start(SnapshotHandler on_snapshot) = 0;
+  virtual void start(SnapshotHandler on_snapshot,
+                     ErrorHandler on_error) = 0;
   virtual auto submit(Dmn_DLock_ProtocolCommand command,
                       ReplyHandler on_reply)
       -> Dmn_DLock_Submit_Result = 0;
@@ -772,8 +1220,10 @@ public:
 };
 ```
 
-`start()` is called exactly once and either completes successfully or throws;
-the manager factory then rolls back construction. `submit()` and
+Each backend object is exclusive to one manager. `start()` is called exactly
+once; a second call throws `std::logic_error`. It either completes successfully
+or throws; the manager factory then calls `shutdown()` before releasing the
+backend and propagating the construction error. `submit()` and
 `requestSnapshot()` return promptly with local acceptance or a classified
 failure. `kAccepted` does not mean the authority committed the operation.
 
@@ -789,6 +1239,16 @@ already entered before shutdown is covered by manager inflight accounting.
 Backend implementations classify only known transient failures as retryable;
 malformed protocol, identity mismatch, and closed transport are permanent for
 that submission.
+
+`on_error` reports failures not representable by a valid reply or snapshot,
+including malformed payloads, reconnects, split-authority observations, and
+fatal publication failure. It follows the same callback concurrency and
+shutdown rules as the other callbacks. A nonfatal reconnect/protocol-gap event
+causes snapshot resynchronization. A fatal current-epoch error terminalizes
+affected live requests as `kPublisherError`; `kSplitAuthority` for a higher
+valid generation follows authority-restart handling instead. An error tied to
+a known correlation/request completes that operation consistently before the
+general recovery action is scheduled.
 
 The DMesg backend catches handler conflict/write exceptions and maps them to
 `kRetryableFailure`. Before retrying, its executor performs DMesg conflict
@@ -812,6 +1272,86 @@ The manager and authority depend only on this transport-neutral contract.
 Future `Dmn_DMesgNet` support is a new backend, or a transport injected into
 the DMesg backend, rather than a change to manager ordering, lifecycle, or
 public locking APIs.
+
+Their public construction APIs are:
+
+```cpp
+struct Dmn_DLock_InMemory_Backend_Options {
+  std::shared_ptr<const Dmn_DLock_Clock> clock;
+  bool deterministic_callbacks{false};
+};
+
+class Dmn_DLock_InMemory_Backend final : public Dmn_DLock_Backend {
+public:
+  static auto create(
+      Dmn_DLock_Authority_Config config,
+      Dmn_DLock_InMemory_Backend_Options options = {})
+      -> std::shared_ptr<Dmn_DLock_InMemory_Backend>;
+  ~Dmn_DLock_InMemory_Backend() noexcept override;
+
+  Dmn_DLock_InMemory_Backend(
+      const Dmn_DLock_InMemory_Backend &) = delete;
+  auto operator=(const Dmn_DLock_InMemory_Backend &)
+      -> Dmn_DLock_InMemory_Backend & = delete;
+  Dmn_DLock_InMemory_Backend(Dmn_DLock_InMemory_Backend &&) = delete;
+  auto operator=(Dmn_DLock_InMemory_Backend &&)
+      -> Dmn_DLock_InMemory_Backend & = delete;
+
+  void start(SnapshotHandler on_snapshot,
+             ErrorHandler on_error) override;
+  auto submit(Dmn_DLock_ProtocolCommand command,
+              ReplyHandler on_reply)
+      -> Dmn_DLock_Submit_Result override;
+  auto requestSnapshot() -> Dmn_DLock_Submit_Result override;
+  void shutdown() noexcept override;
+};
+
+struct Dmn_DLock_DMesg_Backend_Config {
+  std::string domain;
+  std::string client_id;
+  std::string authority_id;
+  std::uint64_t minimum_authority_generation{};
+};
+
+class Dmn_DLock_DMesg_Backend final : public Dmn_DLock_Backend {
+public:
+  static auto create(
+      Dmn_DLock_DMesg_Backend_Config config,
+      std::shared_ptr<Dmn_DMesg> dmesg)
+      -> std::shared_ptr<Dmn_DLock_DMesg_Backend>;
+  ~Dmn_DLock_DMesg_Backend() noexcept override;
+
+  Dmn_DLock_DMesg_Backend(const Dmn_DLock_DMesg_Backend &) = delete;
+  auto operator=(const Dmn_DLock_DMesg_Backend &)
+      -> Dmn_DLock_DMesg_Backend & = delete;
+  Dmn_DLock_DMesg_Backend(Dmn_DLock_DMesg_Backend &&) = delete;
+  auto operator=(Dmn_DLock_DMesg_Backend &&)
+      -> Dmn_DLock_DMesg_Backend & = delete;
+
+  void start(SnapshotHandler on_snapshot,
+             ErrorHandler on_error) override;
+  auto submit(Dmn_DLock_ProtocolCommand command,
+              ReplyHandler on_reply)
+      -> Dmn_DLock_Submit_Result override;
+  auto requestSnapshot() -> Dmn_DLock_Submit_Result override;
+  void shutdown() noexcept override;
+};
+```
+
+Production defaults create a steady clock and normal callback executor.
+Both factories validate their arguments but defer handler/thread startup to
+`start()`. They share ownership of supplied dependencies and delete copy/move.
+
+The concrete declarations live in distinct public headers:
+
+- `include/dmn-dlock-backend-memory.hpp`;
+- `include/dmn-dlock-backend-dmesg.hpp`;
+- `include/dmn-dlock-authority-service-dmesg.hpp`.
+
+The umbrella `include/dmn.hpp` includes the public facade and backend headers.
+The transport-neutral backend interface remains in
+`include/dmn-dlock-backend.hpp`; the authority core remains in
+`include/dmn-dlock-authority.hpp`.
 
 ### 10.2 DMesg protocol
 
@@ -879,10 +1419,12 @@ self-deadlock in `Dmn_DMesg`.
 
 DMesg latest-message playback is useful for snapshots but unsafe for commands.
 The authority command handler drops every message with `playback == true`.
-It also rejects commands without the currently announced authority generation
-and nonce. A client therefore bootstraps from the snapshot topic before sending
-commands, and replayed commands from a prior authority epoch cannot mutate a
-restarted authority.
+It rejects every mutation without the currently announced authority generation
+and nonce. A snapshot request is the sole exception: after domain and authority
+id validation it may carry an empty, stale, or unknown epoch and receives the
+current full snapshot. A client therefore bootstraps from the snapshot topic
+or an explicit snapshot request before sending mutations, and replayed
+mutations from a prior authority epoch cannot affect a restarted authority.
 
 Client-specific topics remain cached by the current DMesg implementation.
 Stable, bounded client identifiers are recommended in v1 to limit topic-cache
@@ -909,6 +1451,13 @@ Snapshots are complete, not deltas. A client:
 
 `DMesgPb.runningCounter` may suppress/replay transport messages, but it never
 replaces these rules.
+
+For a structurally identical same-version snapshot, the manager applies each
+remaining-duration field only when it shortens an already established local
+deadline. A larger remaining duration is treated as reordered stale timing
+metadata and ignored, not as structural divergence and never as authority to
+extend a deadline. Missing, negative, or overflowing required duration
+metadata is malformed protocol.
 
 Applying a snapshot does not complete a command reply promise unless the
 snapshot contains a terminal state that definitively resolves that request.
@@ -1017,10 +1566,10 @@ The acquisition result is not a perpetual mutex. A granted lock is valid only
 until its authority-generated lease deadline.
 
 - The authority uses `std::chrono::steady_clock`.
-- A grant/renew reply carries `lease_remaining_ms` recomputed when that reply
-  is emitted, including for a cached idempotent outcome, and echoes the
-  operation attempt/correlation id. Authority monotonic timestamps are
-  diagnostic only; clients never compare process clocks.
+- A grant/renew reply carries `lease_remaining_ms` recomputed when the
+  authority processes that command attempt, including a cached idempotent
+  outcome, and echoes its fresh correlation id. Authority monotonic timestamps
+  are diagnostic only; clients never compare process clocks.
 - The manager records local steady-clock send and receive times for each
   attempt. For a successful create or renewal it derives
   `local_deadline = reply_receive_time + lease_remaining_at_reply -
@@ -1215,14 +1764,20 @@ worker re-entry and self-destruction during callback execution.
 | File | Responsibility |
 |---|---|
 | `include/dmn-dlock.hpp` | Public types, manager API, API documentation. |
+| `include/dmn-dlock-clock.hpp` | Shared monotonic clock abstraction. |
 | `include/dmn-dlock-protocol.hpp` | Transport-neutral command, reply, snapshot, and status types. |
 | `include/dmn-dlock-backend.hpp` | Abstract backend interface over protocol types. |
+| `include/dmn-dlock-backend-memory.hpp` | Public in-memory backend factory and options. |
+| `include/dmn-dlock-backend-dmesg.hpp` | Public DMesg client-backend factory and config. |
 | `include/dmn-dlock-authority.hpp` | Authority API for embedded/server use. |
+| `include/dmn-dlock-authority-service-dmesg.hpp` | Public DMesg authority-service lifecycle API. |
+| `include/dmn-dlock-pb-util.hpp` | Lock protobuf/value conversion declarations. |
 | `src/dmn-dlock.cpp` | Validation, local lifecycle, waiting, retries, retention, shutdown. |
 | `src/dmn-dlock-authority.cpp` | Ordering, overlap, idempotency, versions, leases, snapshots. |
 | `src/dmn-dlock-backend-memory.cpp` | Deterministic in-memory adapter. |
 | `src/dmn-dlock-backend-dmesg.cpp` | DMesg command/reply/snapshot adapter. |
 | `src/dmn-dlock-authority-service-dmesg.cpp` | DMesg authority service and dispatch executor. |
+| `src/dmn-dlock-pb-util.cpp` | Checked lock protobuf/value conversion implementation. |
 | `src/proto/dmn-dlock.proto` | Lock wire protocol. |
 | `test/dmn-test-dlock.cpp` | Public manager and in-memory integration tests. |
 | `test/dmn-test-dlock-authority.cpp` | Pure authority/order/protocol tests. |
@@ -1244,6 +1799,45 @@ The implementation must inject:
 Production defaults use `steady_clock` and a real random source. Tests use a
 manual clock and deterministic sequence. Tests MUST NOT depend on wall-clock
 sleeps for correctness.
+
+These seams do not expand the production manager API. Declare
+`detail::Dmn_DLock_Manager_Test_Access` as a friend of the manager and define it
+only in `test/dmn-test-dlock-fakes.hpp`. It calls the same private manager
+factory as the public `create()` while supplying:
+
+- `shared_ptr<const Dmn_DLock_Clock>`;
+- `std::function<std::string()>` for request, operation, correlation, and
+  client-incarnation ids;
+- `std::function<double()>` returning a deterministic unit value in
+  `[0.0, 1.0]` for jitter;
+- an internal executor factory whose test executor exposes explicit
+  `runReady()`, `advanceAndRun(duration)`, barrier, and callback-drain methods.
+
+The internal executor and dependency bundle are declared in
+`src/dmn-dlock-internal.hpp`; they are not added to `include/dmn.hpp` and are
+not an installed/public compatibility contract. The test target adds the
+repository source directory as a private include directory. Production
+`create()` supplies the real clock, random/id sources, and worker executor.
+Authority and in-memory backend clock injection remains public because those
+components are explicitly embeddable.
+
+The production backend and authority-service classes likewise declare
+`detail::Dmn_DLock_Backend_Test_Access` and
+`detail::Dmn_DLock_Authority_Service_Test_Access` as friends. Their definitions
+exist only in `test/dmn-test-dlock-fakes.hpp` and provide these exact controls:
+
+- drain already queued in-memory callbacks;
+- run one authority maintenance pass after advancing the manual clock;
+- install a one-shot dropped, delayed, duplicate, reordered, or classified
+  error delivery fault before startup;
+- wait at barriers immediately before callback delivery and immediately before
+  DMesg publication;
+- inspect only test counters for queued callbacks and serialized authority
+  entry.
+
+The accessors do not mutate authority tables or manager lifecycle state
+directly. Production builds contain no public test methods, and no test seam is
+added to `Dmn_DMesg` or another base class.
 
 Fault-capable fakes must support:
 
