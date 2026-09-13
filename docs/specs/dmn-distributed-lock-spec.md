@@ -121,6 +121,8 @@ Sort/index order:
 - Retry continues until one terminal boundary: granted, wait timeout, cancel,
   shutdown, or publisher error.
 - Support cancellation/shutdown interruption.
+- Retry loop applies only to `requestLock(wait_timeout > 0ms)` and
+  `requestLockAsync`; no-wait mode (`wait_timeout == 0ms`) is single-attempt.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -202,7 +204,7 @@ struct Dmn_DLock_Result {
     kShutdown
   };
 
-  bool ok{false};
+  bool ok{false}; // derived strictly from `code` per normative mapping below
   Code code{Code::kInvalidArg};
   std::string message;
   std::string request_id;
@@ -221,7 +223,7 @@ public:
       -> Dmn_DLock_Result;
 
   // non-blocking waitable submission: enqueues request lifecycle and returns
-  // immediately with request_id (typically kWaiting unless granted inline)
+  // immediately with request_id and `kWaiting` (lifecycle retained)
   auto requestLockAsync(int start, int end, const Dmn_DLock_RequestOptions &opts)
       -> Dmn_DLock_Result;
 
@@ -260,15 +262,17 @@ Argument validity rules:
 - queued requests must transition to `kGranted` when they become top-of-list
   and publisher accepts lock transition.
 - `requestLockAsync` always returns immediately with request lifecycle retained
-  for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`.
+  for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`, and returns
+  `kWaiting` on accepted submission.
 
 Deterministic result mapping:
 
 - invalid args/options -> `kInvalidArg`
 - synchronous no-wait accepted and on-top lockable -> `kGranted`
 - synchronous no-wait not immediately grantable or publish conflict/version mismatch -> `kConflict`
-- conflict detected and retry scheduled (wait mode) -> transient internal state;
+- conflict detected and retry scheduled (wait/async modes) -> transient internal state;
   final API result is one of `kGranted`/`kTimeout`/`kCancelled`/`kShutdown`/`kPublisherError`
+- async retry-pending query state reports `kWaiting` until terminal transition.
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
@@ -494,10 +498,13 @@ locate `dmn-test-dlock` first.
 24. `Shutdown_CancelsPendingRetries`
 25. `Observability_EmitPayloadSchema_Valid`
 26. `Observability_EmitterFailure_DoesNotChangeResult`
-27. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-28. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-29. `Stress_HighContention_NoDeadlock`
-30. `Stress_WorkerThreads_NeverBlockOnWait`
+27. `ResultCodeMapping_GrantedSetsOkTrue`
+28. `ResultCodeMapping_ConflictSetsOkFalse`
+29. `ResultCodeMapping_TimeoutSetsOkFalse`
+30. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+31. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+32. `Stress_HighContention_NoDeadlock`
+33. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
