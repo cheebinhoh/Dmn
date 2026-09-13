@@ -76,7 +76,9 @@ Required friend declaration:
 
 Exactly mirror the memory ownership model used by `Dmn_DMesg` handlers:
 
-- Manager stores active leases in `std::vector<std::shared_ptr<Dmn_DLockLease>>`.
+- Manager stores active leases in
+  `std::unordered_map<std::string, std::shared_ptr<Dmn_DLockLease>>` keyed by
+  `lease_id` for O(1)-style close/remove lookup under churn.
 - Caller receives `Dmn_DLockLeaseProxy` with `std::weak_ptr<Dmn_DLockLease>`.
 - `closeLease(LeaseType&)` explicitly releases/unregisters and resets proxy.
 - A closed/expired proxy must not access released lease object.
@@ -149,7 +151,6 @@ struct Dmn_DLock_OpResult {
 struct Dmn_DLock_ManagerCreateResult {
   enum class Code {
     kOk,
-    kReusedExistingSingleton,
     kInvalidConfig,
     kBackendInitFailed,
     kClockInitFailed
@@ -238,8 +239,8 @@ Singleton contract:
 
 - `createManager()` must call `Dmn_Singleton<Dmn_DLock_Manager>::createInstance(...)`.
 - It must never create more than one manager instance.
-- Repeated successful calls return `kReusedExistingSingleton` with
-  `reused_existing=true`; backend/clock init failure codes apply only before
+- Repeated successful calls return `kOk` with `reused_existing=true`;
+  backend/clock init failure codes apply only before
   the singleton exists.
 
 ## 7. Backend Contract (interface)
@@ -347,6 +348,25 @@ Minimum event payload schema (all events):
 
 ## 11. Implementation Plan (step-by-step, implementation-ready)
 
+### 11.0 Mandatory TDD execution loop (for every test case)
+
+For each test in Section 12, execute this exact loop:
+
+1. Add exactly one new test case.
+2. Build the target.
+3. Run the new test (or focused filter) and confirm it fails for the expected reason.
+4. Implement minimal code change for that test only.
+5. Build again.
+6. Re-run the same focused test and confirm it passes.
+7. Run the full `dmn-test-dlock` target to guard regressions.
+8. Proceed to the next test.
+
+Required checkpoint commands (example form; adapt to project scripts):
+
+- Build checkpoint: `cmake --build <build_dir> --target dmn-test-dlock`
+- Focused test checkpoint: `ctest --test-dir <build_dir> -R dmn-test-dlock --output-on-failure`
+- Full target checkpoint: run full `dmn-test-dlock` binary/ctest suite.
+
 ### Phase 0 — Scaffolding and type contracts
 
 1. Create files in Section 5.1.
@@ -356,6 +376,7 @@ Minimum event payload schema (all events):
    - source compilation in `src/CMakeLists.txt`
    - new test target entry `dmn-test-dlock` in `test/CMakeLists.txt`.
 5. Write compile-only tests for API type existence.
+6. **Build checkpoint**: build `dmn-test-dlock` after scaffolding compiles.
 
 ### Phase 1 — Manager creation and singleton wiring
 
@@ -366,6 +387,8 @@ Minimum event payload schema (all events):
 5. Tests:
    - same shared_ptr returned across repeated create calls
    - invalid config error mapping
+6. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+7. **Build checkpoint**: clean build after completing all Phase 1 tests.
 
 ### Phase 2 — Lease proxy ownership (DMesg pattern)
 
@@ -377,6 +400,8 @@ Minimum event payload schema (all events):
    - valid proxy after acquire
    - closed proxy after `closeLease`
    - `lockShared()` returns null after close
+6. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+7. **Build checkpoint**: clean build after Phase 2 logical group.
 
 ### Phase 3 — tryAcquire()
 
@@ -393,6 +418,8 @@ Minimum event payload schema (all events):
    - free key acquires
    - held key returns busy
    - backend error mapping
+7. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+8. **Build checkpoint**: clean build after Phase 3.
 
 ### Phase 4 — release() and closeLease()
 
@@ -401,7 +428,7 @@ Minimum event payload schema (all events):
 2. Map backend release replies:
    - released -> `kOk`
    - noop missing/expired -> `kOk`
-   - noop active other owner -> `kOk`
+   - noop active other owner -> `kNotOwner`
    - backend error -> `kBackendError`
 3. Implement `closeLease(LeaseType&)`:
    - best-effort `release(lease)`
@@ -412,6 +439,8 @@ Minimum event payload schema (all events):
    - owner release
    - stale/noop release
    - close resets proxy and frees manager ownership
+5. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+6. **Build checkpoint**: clean build after Phase 4.
 
 ### Phase 5 — renew()
 
@@ -426,6 +455,8 @@ Minimum event payload schema (all events):
    - expired
    - post-shutdown allowed for pre-cutoff lease
    - post-shutdown denied for non-eligible lease
+7. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+8. **Build checkpoint**: clean build after Phase 5.
 
 ### Phase 6 — acquire() blocking path
 
@@ -440,6 +471,8 @@ Minimum event payload schema (all events):
    - timeout
    - cancellation
    - shutdown precedence over busy
+5. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+6. **Build checkpoint**: clean build after Phase 6.
 
 ### Phase 7 — shutdown and generation cutoff
 
@@ -451,6 +484,8 @@ Minimum event payload schema (all events):
    - reject new acquires
    - boundary lease acquired immediately pre-shutdown remains renewable
    - pending waiters cancelled
+6. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+7. **Build checkpoint**: clean build after Phase 7.
 
 ### Phase 8 — observability + DMesg composition hook
 
@@ -459,7 +494,10 @@ Minimum event payload schema (all events):
 3. Ensure observability failure does not affect lock correctness.
 4. Tests:
    - event emission for each required outcome
+   - payload schema field validation for each event
    - no correctness regression when emitter disabled/fails
+5. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+6. **Build checkpoint**: clean build after Phase 8.
 
 ### Phase 9 — integration + stress
 
@@ -468,8 +506,13 @@ Minimum event payload schema (all events):
 3. Renew under intermittent backend failure.
 4. High churn across many keys.
 5. No dual-owner overlap assertions.
+6. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+7. **Build checkpoint**: clean build after Phase 9 and before merge.
 
 ## 12. Detailed TDD Matrix (must implement in order)
+
+Execution rule for every item below: add test -> build -> run (fail) -> implement
+minimal code -> build -> run (pass) -> run full `dmn-test-dlock`.
 
 1. `CreateManager_InvalidConfig_ReturnsInvalidConfig`
 2. `CreateManager_RepeatedCalls_ReturnSingleton`
