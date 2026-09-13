@@ -73,8 +73,8 @@ Per lock key, backend stores:
 - Successful acquire always returns a fencing token greater than any prior token
   for that key.
 - Renew is valid only for the current owner and lease ID.
-- Release is idempotent for missing/expired/stale leases and must not revoke an
-  active lease owned by another owner.
+- Release is idempotent for missing/expired leases; a release request against an
+  active lease owned by another owner must return `NotOwner` and must not revoke it.
 
 ## 5. Public API Requirements
 
@@ -188,6 +188,10 @@ renew success/failure, release, timeout, cancellation, backend error.
 All operational errors must be surfaced through result codes and must not be
 reported by exceptions.
 
+This non-throwing contract applies to runtime lock operations (`tryAcquire`,
+`acquire`, `renew`, `release`). Construction/setup failures must be exposed via
+an explicit factory/result path rather than constructor throws.
+
 ## 8. Concurrency and Threading Model
 
 - Manager methods are thread-safe.
@@ -245,6 +249,17 @@ reported by exceptions.
 - Owner crash simulation (no release) followed by lease expiry takeover.
 - Rapid renew loop under intermittent backend failures.
 - High churn across many keys (hot/cold distribution).
+
+### 10.5 Backend Contract Test Matrix
+
+1. Acquire CAS succeeds only when key is free or lease is expired.
+2. Acquire CAS rejects when an active lease exists for another owner.
+3. Renew CAS succeeds only for matching `owner_id` + `lease_id`.
+4. Renew CAS rejects stale/non-owner lease updates.
+5. Release CAS succeeds for owner and is idempotent when lease is already gone.
+6. Release CAS rejects attempts to revoke an active lease of another owner.
+7. Fencing token increments strictly on successful ownership transfer.
+8. Backend read/modify/write paths preserve per-key version monotonicity.
 
 ## 11. Step-by-Step Implementation Plan
 
