@@ -155,9 +155,11 @@ Wait pattern (normative):
 ```cpp
 while (true) {
   if (isRequestTopAndLocked(request_id) || isRequestTerminal(request_id)) break;
-  if (observed_table_version != table_version ||
-      observed_retention_version != retention_version) break;
+  const auto observed_table_version = table_version;
+  const auto observed_retention_version = retention_version;
   if (cv.wait_until(lock, deadline) == std::cv_status::timeout) break;
+  if (table_version != observed_table_version ||
+      retention_version != observed_retention_version) continue;
 }
 ```
 
@@ -739,6 +741,7 @@ Normative command checkpoints:
 78. `RetentionBarrier_QuerySeesPruningCommittedBeforeQueryStart`
 79. `Shutdown_PruningDrain_SkipsGrantedRecordsWhileDrainingQueuedWork`
 80. `Shutdown_FinalSynchronousPruneSweep_PrunesNewlyTerminalizedNonGranted`
+81. `RequestLock_RetentionVersionChange_WakesWaiterWhenTableVersionUnchanged`
 
 ## 14) Definition of Done
 
