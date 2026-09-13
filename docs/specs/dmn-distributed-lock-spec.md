@@ -272,6 +272,9 @@ Query mutability contract:
   until explicit `releaseLock` succeeds.
 - after `retained_terminal_ttl` elapses, query may legitimately return
   `kNotFound` for previously terminalized non-granted records that were pruned.
+- TTL pruning must be enforced independent of query calls (for example by
+  maintenance tick/worker or lifecycle-event-triggered sweep); query-side
+  housekeeping may be opportunistic but must not be the only pruning trigger.
 
 Argument validity rules:
 
@@ -696,6 +699,8 @@ Normative command checkpoints:
 70. `ManagerConfig_RetainedTerminalTtl_NonPositiveRejected`
 71. `GetRequestStateForOwner_NonGrantedTerminal_PreExpiry_PreservesEachOutcome_TimeoutCancelledShutdownPublisherError`
 72. `GetRequestStateForOwner_NonGrantedTerminal_PostExpiry_PrunesEachOutcome_TimeoutCancelledShutdownPublisherError`
+73. `ReleaseLock_NonGrantedTerminal_PreExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
+74. `ReleaseLock_NonGrantedTerminal_PostExpiry_ReturnsNotFoundForEachOutcome_TimeoutCancelledShutdownPublisherError`
 
 ## 14) Definition of Done
 
