@@ -220,13 +220,15 @@ public:
   auto requestLock(int start, int end, const Dmn_DLock_RequestOptions &opts)
       -> Dmn_DLock_Result;
 
+  // non-blocking waitable submission: enqueues request lifecycle and returns
+  // immediately with request_id (typically kWaiting unless granted inline)
+  auto requestLockAsync(int start, int end, const Dmn_DLock_RequestOptions &opts)
+      -> Dmn_DLock_Result;
+
   auto releaseLock(const std::string &request_id, const std::string &owner_id)
       -> Dmn_DLock_Result;
 
   auto cancelRequest(const std::string &request_id, const std::string &owner_id)
-      -> Dmn_DLock_Result;
-
-  auto getRequestState(const std::string &request_id) const
       -> Dmn_DLock_Result;
 
   auto getRequestStateForOwner(const std::string &request_id, const std::string &owner_id) const
@@ -256,6 +258,8 @@ Argument validity rules:
   return `kWaiting` before timeout.
 - queued requests must transition to `kGranted` when they become top-of-list
   and publisher accepts lock transition.
+- `requestLockAsync` always returns immediately with request lifecycle retained
+  for later `getRequestStateForOwner`/`cancelRequest`/`releaseLock`.
 
 Deterministic result mapping:
 
@@ -266,9 +270,8 @@ Deterministic result mapping:
 - timeout expiry in wait mode -> `kTimeout`
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
-- unscoped query (`getRequestState`) returns state if found.
 - owner-scoped query (`getRequestStateForOwner`) validates owner identity.
-- owner-scoped query mismatch -> `kNotOwner`, `owner_match=false`, and no `entry`
+- owner-scoped query mismatch or foreign request -> `kNotFound` (existence-safe)
 - query request not found -> `kNotFound`
 - shutdown gate -> `kShutdown`
 - publisher transport/logic failure -> `kPublisherError`
@@ -479,18 +482,19 @@ with `--gtest_filter=<Suite.Test>`.
 14. `ReleaseLock_Owner_SetsUnlocked`
 15. `ReleaseLock_RequestNotFound_ReturnsNotFound`
 16. `CancelRequest_RequestNotFound_ReturnsNotFound`
-17. `GetRequestState_RequestNotFound_ReturnsNotFound`
-18. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotOwner`
-19. `CancelRequest_WaitingRequest_Terminates`
-20. `Shutdown_NewRequests_ReturnShutdown`
-21. `Shutdown_WakesWaiters`
-22. `Shutdown_CancelsPendingRetries`
-23. `Observability_EmitPayloadSchema_Valid`
-24. `Observability_EmitterFailure_DoesNotChangeResult`
-25. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-26. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-27. `Stress_HighContention_NoDeadlock`
-28. `Stress_WorkerThreads_NeverBlockOnWait`
+17. `GetRequestStateForOwner_RequestNotFound_ReturnsNotFound`
+18. `GetRequestStateForOwner_OwnerMismatch_ReturnsNotFound`
+19. `RequestLockAsync_ReturnsRequestIdAndWaiting`
+20. `CancelRequest_WaitingRequest_Terminates`
+21. `Shutdown_NewRequests_ReturnShutdown`
+22. `Shutdown_WakesWaiters`
+23. `Shutdown_CancelsPendingRetries`
+24. `Observability_EmitPayloadSchema_Valid`
+25. `Observability_EmitterFailure_DoesNotChangeResult`
+26. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+27. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+28. `Stress_HighContention_NoDeadlock`
+29. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
