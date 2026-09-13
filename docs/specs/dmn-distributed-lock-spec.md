@@ -273,19 +273,18 @@ public:
 Query mutability contract:
 
 - `getRequestStateForOwner` is concurrency-safe and callable during lifecycle transitions.
-- query may perform internal housekeeping (for example, retention pruning/access
-  bookkeeping) but must not mutate externally observable request outcome.
-- housekeeping must not delete retained terminal records before
+- query is read-only for lifecycle retention state and must not execute pruning.
+- pruning must not delete retained terminal records before
   `retained_terminal_ttl` has elapsed from terminalization.
 - retained granted records are exempt from TTL pruning and must be preserved
   until explicit `releaseLock` succeeds.
 - after `retained_terminal_ttl` elapses, query may legitimately return
   `kNotFound` for previously terminalized non-granted records that were pruned.
 - TTL pruning must be enforced independent of query calls (for example by
-  maintenance tick/worker or lifecycle-event-triggered sweep); query-side
-  housekeeping may be opportunistic but must not be the only pruning trigger.
-- pruning executor ownership: manager-owned maintenance worker (same manager
-  execution domain as retry scheduling) is authoritative for TTL pruning.
+  maintenance tick/worker or lifecycle-event-triggered sweep).
+- queries must observe pruning decisions committed before the query starts.
+- pruning executor ownership: manager-owned dedicated maintenance executor/lane
+  (separate from retry scheduling execution lane) is authoritative for TTL pruning.
 - pruning executor must be stoppable and drainable by `shutdown()`.
 
 Argument validity rules:
@@ -399,6 +398,8 @@ Deterministic result mapping:
 `shutdown()` completion contract:
 
 - `shutdown()` is synchronous.
+- shutdown order is strict: quiesce retry scheduling first, then cancel/drain
+  retry lane, then stop/drain pruning lane.
 - On return, pending waiters are woken, pending retries are cancelled, and
   retained request outcomes are deterministically persisted.
 - `shutdown()` must stop and drain pruning executor work before returning.
@@ -411,8 +412,8 @@ Deterministic result mapping:
   must remain `kGranted`.
 - post-shutdown, only retained previously granted requests may be successfully
   released; all other `releaseLock` calls return `kShutdown`.
-- `shutdown()` is guaranteed non-throwing and does not return failure status
-  (best-effort completion with deterministic terminalization semantics).
+- `shutdown()` is guaranteed non-throwing with strict completion semantics:
+  return is allowed only after shutdown-order steps are fully completed.
 
 ## 7) State machine semantics
 
@@ -573,11 +574,13 @@ Normative command checkpoints:
 
 1. Reject new requests with `kShutdown`.
 2. Wake blocked waiters and mark terminal.
-3. Cancel pending retries safely.
-4. Enforce retention policy (`retained_terminal_ttl`) for non-granted records.
-5. Add shutdown/retention tests (pre-expiry still queryable, post-expiry pruned,
+3. Quiesce retry scheduling and drain retry lane.
+4. Stop/drain dedicated pruning lane.
+5. Cancel pending retries safely.
+6. Enforce retention policy (`retained_terminal_ttl`) for non-granted records.
+7. Add shutdown/retention tests (pre-expiry still queryable, post-expiry pruned,
    and pruning occurs without prior query via maintenance path).
-6. TDD loop + build checkpoint.
+8. TDD loop + build checkpoint.
 
 ### Phase 6 — observability
 
