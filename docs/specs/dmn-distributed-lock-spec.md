@@ -113,6 +113,11 @@ struct Dmn_DLock_AcquireOptions {
 
 ## 6.3 Result types
 
+Header declaration order requirement:
+
+1. Declare `Dmn_DLockLease` and `Dmn_DLockLeaseProxy` first.
+2. Then declare `Dmn_DLock_AcquireResult`/`Dmn_DLock_OpResult` using `LeaseType`.
+
 ```cpp
 struct Dmn_DLock_AcquireResult {
   enum class Code {
@@ -128,7 +133,7 @@ struct Dmn_DLock_AcquireResult {
   Code code{Code::kInvalidArg};
   std::string message;
   // set only when ok=true
-  class Dmn_DLock_Manager::Dmn_DLockLeaseProxy lease;
+  LeaseType lease;
 };
 
 struct Dmn_DLock_OpResult {
@@ -252,6 +257,7 @@ Singleton contract:
 class Dmn_DLock_Backend {
 public:
   virtual ~Dmn_DLock_Backend() = default;
+  virtual auto initialize() -> bool = 0;
 
   struct AcquireReply {
     bool acquired{false};
@@ -301,6 +307,13 @@ public:
                        const std::string &lease_id,
                        uint64_t now_ms)
       -> ReleaseReply = 0;
+};
+
+class Dmn_DLock_Clock {
+public:
+  virtual ~Dmn_DLock_Clock() = default;
+  virtual auto initialize() -> bool = 0;
+  virtual auto nowMs() const -> uint64_t = 0; // backend time domain
 };
 ```
 
@@ -370,8 +383,10 @@ For each test in Section 12, execute this exact loop:
 Required checkpoint commands (example form; adapt to project scripts):
 
 - Build checkpoint: `cmake --build <build_dir> --target dmn-test-dlock`
-- Focused test checkpoint: `ctest --test-dir <build_dir> -R <focused_test_regex> --output-on-failure`
-- Full target checkpoint (normative): `ctest --test-dir <build_dir> -R dmn-test-dlock --output-on-failure`
+- Discover exact CTest name checkpoint: `ctest --test-dir <build_dir> -N`
+- Focused test checkpoint: `ctest --test-dir <build_dir> -R <exact_ctest_name_or_regex> --output-on-failure`
+- Full target checkpoint (normative): run exact discovered dlock CTest entry by
+  exact-name regex (for example `-R '^dmn-test-dlock$'` when applicable).
 
 ### Phase 0 — Scaffolding and type contracts
 
@@ -388,13 +403,15 @@ Required checkpoint commands (example form; adapt to project scripts):
 
 1. Implement `createManager(config)` validation.
 2. Validate non-null backend/clock and non-empty owner_id.
-3. Call singleton `createInstance(...)`.
-4. Return `Dmn_DLock_ManagerCreateResult` codes.
-5. Tests:
+3. Call `backend->initialize()` and `clock->initialize()` exactly once before
+   first singleton creation.
+4. Call singleton `createInstance(...)`.
+5. Return `Dmn_DLock_ManagerCreateResult` codes.
+6. Tests:
    - same shared_ptr returned across repeated create calls
    - invalid config error mapping
-6. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
-7. **Build checkpoint**: clean build after completing all Phase 1 tests.
+7. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
+8. **Build checkpoint**: clean build after completing all Phase 1 tests.
 
 ### Phase 2 — Lease proxy ownership (DMesg pattern)
 
@@ -435,16 +452,17 @@ Required checkpoint commands (example form; adapt to project scripts):
 2. Map backend release replies:
    - released -> `kOk`
    - noop missing/expired -> `kOk`
-   - noop active other owner -> `kOk` (no-op; preserve idempotent release contract)
+   - noop active other owner -> `kNotOwner`
    - backend error -> `kBackendError`
 3. Implement `closeLease(LeaseType&)`:
    - call `release(lease)` first
-   - if release returns backend error, still remove internal retained lease and
-     reset proxy (hard-close behavior).
-   - Postcondition: local handle is closed regardless of backend release result.
+   - if release returns backend error, keep manager retention + proxy unchanged.
+   - if release is `kOk`/`kNotOwner`, remove local retention and reset proxy.
+   - Postcondition: hard close only on non-backend-error outcomes.
 4. Tests:
    - owner release
-   - stale/noop release
+   - stale active-other-owner release returns `kNotOwner`
+   - missing/expired lease release returns `kOk` no-op
    - close resets proxy and frees manager ownership
 5. **TDD checkpoint per test**: fail first, implement, build, pass, run full dlock tests.
 6. **Build checkpoint**: clean build after Phase 4.
@@ -528,7 +546,7 @@ minimal code -> build -> run (pass) -> run full `dmn-test-dlock`.
 3. `TryAcquire_FreeKey_ReturnsLeaseProxy`
 4. `TryAcquire_HeldKey_ReturnsBusy`
 5. `Release_OwnerLease_ReturnsOk`
-6. `Release_StaleLease_ReacquiredByOtherOwner_ReturnsOkNoop`
+6. `Release_StaleLease_ReacquiredByOtherOwner_ReturnsNotOwner`
 7. `CloseLease_ResetsProxy_AndDropsManagerRetention`
 8. `Renew_ValidLease_ReturnsUpdatedExpiry`
 9. `Renew_NotOwner_ReturnsNotOwner`
