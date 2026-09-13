@@ -91,12 +91,14 @@ Per lock key, backend stores:
 
 - `bool ok`
 - `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg }`
+- `Dmn_DLock_Handle handle` (present when `ok=true`)
 - `std::string message`
 
 `Dmn_DLock_OpResult` (renew/release):
 
 - `bool ok`
 - `enum Code { Ok, Cancelled, BackendError, InvalidArg, NotOwner, Expired }`
+- `std::optional<uint64_t> expires_at_ms` (set on successful renew)
 - `std::string message`
 
 `Dmn_DLock_ManagerCreateResult`:
@@ -125,6 +127,7 @@ Per lock key, backend stores:
   - Retries until acquired, timeout, or cancellation.
 - `renew(handle, lease_ttl) -> Dmn_DLock_OpResult`
   - Extends lease only if current owner + lease ID match.
+  - On success, updates handle expiration and returns updated `expires_at_ms`.
 - `release(handle) -> Dmn_DLock_OpResult`
   - Releases if owner matches; stale/missing lease release is idempotent success.
 - `isHeldByCaller(key) -> bool`
@@ -147,7 +150,8 @@ Per lock key, backend stores:
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
 - After `shutdown`, renew is allowed only for handles that were successfully
   acquired before shutdown began, identified by
-  `handle.acquireGeneration() <= manager.shutdownGeneration()`.
+  `handle.acquireGeneration() < manager.shutdownCutoffGeneration()` where
+  shutdown stores a strict cutoff generation before rejecting new acquires.
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
@@ -221,8 +225,8 @@ Construction/setup failures must be exposed through
 - Manager methods are thread-safe.
 - Backend interaction is serialized per key by CAS/version semantics, not by a
   global process lock.
-- Local process optimization may use a striped mutex map per key to reduce
-  duplicate backend load.
+- Local process synchronization strategy is implementation-defined and must not
+  change lock correctness semantics.
 - No unbounded busy loops; all retries sleep/yield with jittered backoff.
 
 ## 9. Security and Abuse Considerations
