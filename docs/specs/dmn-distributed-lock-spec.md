@@ -283,6 +283,10 @@ Query mutability contract:
 - TTL pruning must be enforced independent of query calls (for example by
   maintenance tick/worker or lifecycle-event-triggered sweep).
 - queries must observe pruning decisions committed before the query starts.
+- synchronization rule: pruning commit and query-read start must serialize on the
+  same lifecycle-state mutex/version barrier; pruning increments
+  `retention_version` on commit, and query snapshots state after acquiring that
+  barrier so it cannot miss earlier committed pruning.
 - pruning executor ownership: manager-owned dedicated maintenance executor/lane
   (separate from retry scheduling execution lane) is authoritative for TTL pruning.
 - pruning executor must be stoppable and drainable by `shutdown()`.
@@ -400,6 +404,8 @@ Deterministic result mapping:
 - `shutdown()` is synchronous.
 - shutdown order is strict: quiesce retry scheduling first, then cancel/drain
   retry lane, then stop/drain pruning lane.
+- during pruning-lane drain, pruning logic must continue to skip retained
+  granted records (never TTL-delete granted entries).
 - On return, pending waiters are woken, pending retries are cancelled, and
   retained request outcomes are deterministically persisted.
 - `shutdown()` must stop and drain pruning executor work before returning.
@@ -720,6 +726,7 @@ Normative command checkpoints:
 74. `RequestLockAsync_InvalidAsyncExpiry_NonPositiveRejected`
 75. `RetentionMaintenance_PostExpiry_PrunesNonGrantedTerminalWithoutPriorQuery`
 76. `Shutdown_RetainedGrantedRequest_PostTtl_ReleaseStillSucceeds`
+77. `Shutdown_StrictOrder_QuiesceRetryThenDrainRetryThenDrainPruning_BeforeReturn`
 
 ## 14) Definition of Done
 
