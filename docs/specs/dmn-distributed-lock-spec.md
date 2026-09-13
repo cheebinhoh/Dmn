@@ -98,9 +98,11 @@ Sort/index order:
 ## 4.1 `requestLock()` high-level behavior
 
 1. API creates new `LockingEntry` with `kLockWaiting` and unique `request_id`.
-2. API publish mode depends on `wait_timeout`:
-   - `wait_timeout == 0ms`: perform synchronous single-attempt publish check.
-   - `wait_timeout > 0ms`: submit async worker task to publish/update.
+2. API publish mode depends on API entrypoint:
+   - `requestLockAsync(...)`: always submit async worker task and retain request lifecycle.
+   - `requestLock(...)`: dispatch by `wait_timeout`:
+     - `wait_timeout == 0ms`: synchronous single-attempt publish check.
+     - `wait_timeout > 0ms`: submit async worker task then block in API thread.
 3. Worker attempts publisher update with expected `table_version` / conflict counter.
 4. If conflict, worker schedules retry with configurable backoff (10–500ms).
 5. API thread waits (if needed) until local mirrored table indicates request is top/locked.
@@ -279,6 +281,7 @@ Deterministic result mapping:
 Normative `ok` mapping:
 
 - `ok=true`: `kGranted`
+- `ok=true` for `requestLockAsync` accepted submission with `kWaiting`
 - `ok=false`: `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
   `kInvalidArg`, `kPublisherError`, `kShutdown`
 
