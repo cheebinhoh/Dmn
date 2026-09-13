@@ -118,8 +118,11 @@ Per lock key, backend stores:
 - `release(handle) -> Dmn_DLock_OpResult`
   - Releases if owner matches; stale/missing lease release is idempotent success.
 - `isHeldByCaller(key) -> bool`
+  - `caller` means the manager instance's configured `owner_id`.
 - `shutdown() -> void`
   - Cancels pending acquire waiters and prevents new acquisitions.
+- `createManager(config) -> Dmn_DLock_ManagerCreateResult`
+  - Returns `{ ok, manager, code, message }` and must not throw on recoverable setup errors.
 
 ### 5.3 Behavioral Requirements
 
@@ -132,7 +135,8 @@ Per lock key, backend stores:
 - `acquire` wait loop must support cancellation token.
 - After `shutdown`, `tryAcquire` fails with `Cancelled`.
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
-- After `shutdown`, all renew attempts fail with `Cancelled`.
+- After `shutdown`, renew is allowed only for handles that were successfully
+  acquired before shutdown began.
 - After `shutdown`, `release` remains allowed and must preserve idempotent
   semantics.
 - Renewing after lease expiration returns `Expired`.
@@ -166,7 +170,7 @@ Requests from stale/non-owner callers must not mutate current owner state.
 - lock granted
 - wait timeout reached
 - cancellation signaled
-- manager shutdown
+- manager shutdown (for new acquisitions)
 
 ### FR-6: Idempotent Release
 
@@ -188,7 +192,7 @@ renew success/failure, release, timeout, cancellation, backend error.
 
 - Validation errors: `InvalidArg`
 - Contention: `Busy` or `Timeout`
-- Ownership mismatch: `NotOwner`
+- Ownership mismatch: `NotOwner` (primarily renew path)
 - Lease stale: `Expired`
 - Backend operation failure: `BackendError`
 - Shutdown/cancellation: `Cancelled`
@@ -197,8 +201,9 @@ All operational errors must be surfaced through result codes and must not be
 reported by exceptions.
 
 This non-throwing contract applies to runtime lock operations (`tryAcquire`,
-`acquire`, `renew`, `release`). Construction/setup failures must be exposed via
-an explicit factory/result path rather than constructor throws.
+`acquire`, `renew`, `release`) and manager creation (`createManager`).
+Construction/setup failures must be exposed through
+`Dmn_DLock_ManagerCreateResult` rather than constructor throws.
 
 ## 8. Concurrency and Threading Model
 
@@ -254,7 +259,8 @@ an explicit factory/result path rather than constructor throws.
 
 ### 10.4 Integration/Stress Test Matrix
 
-- 2, 8, 32 contenders on one key with bounded fairness checks.
+- 2, 8, 32 contenders on one key with safety checks (single-owner invariant and
+  no dual-owner overlap).
 - Owner crash simulation (no release) followed by lease expiry takeover.
 - Rapid renew loop under intermittent backend failures.
 - High churn across many keys (hot/cold distribution).
@@ -313,8 +319,8 @@ an explicit factory/result path rather than constructor throws.
 
 1. Write failing tests for shutdown behavior.
 2. Implement shutdown state flag and waiter cancellation.
-3. Ensure no new `tryAcquire`/`acquire`/`renew` operations proceed post-shutdown
-   while keeping `release` allowed and idempotent post-shutdown.
+3. Ensure no new `tryAcquire`/`acquire` operations proceed post-shutdown, allow
+   renew only for pre-shutdown handles, and keep `release` allowed/idempotent.
 4. Add race tests between shutdown and acquire.
 
 ### Phase 6: Observability
