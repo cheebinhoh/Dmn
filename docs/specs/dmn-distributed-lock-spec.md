@@ -75,6 +75,7 @@ Normative class shape:
 - `class Dmn_DLock_Manager : public dmn::Dmn_Singleton<Dmn_DLock_Manager>`
 - `class Dmn_DLock_Manager::Dmn_DLockLease` (internal lease object)
 - `class Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (weak reference proxy)
+- `using LeaseType = Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (public alias)
 
 Ownership model must mirror `Dmn_DMesg` handler pattern:
 
@@ -82,7 +83,7 @@ Ownership model must mirror `Dmn_DMesg` handler pattern:
   - `openHandler(...) -> Dmn_DMesgHandlerProxy` (weak proxy to manager-owned shared_ptr)
   - `closeHandler(HandlerType&)` explicitly unregisters/frees and resets proxy
 - DLock equivalent:
-  - successful acquire returns `Dmn_DLockLeaseProxy`
+  - successful acquire returns `LeaseType`
   - manager owns live lease objects in `std::shared_ptr`
   - `closeLease(LeaseType&)` explicitly releases/free/reset proxy
 
@@ -118,7 +119,7 @@ Per lock key, backend stores:
 
 - `bool ok`
 - `enum Code { Acquired, Busy, Timeout, Cancelled, BackendError, InvalidArg }`
-- `Dmn_DLockLeaseProxy lease` (present when `ok=true`)
+- `LeaseType lease` (present when `ok=true`)
 - `std::string message`
 
 `Dmn_DLock_OpResult` (renew/release):
@@ -131,11 +132,11 @@ Per lock key, backend stores:
 `Dmn_DLock_ManagerCreateResult`:
 
 - `bool ok`
-- `std::shared_ptr<Dmn_DLock_Manager> manager`
+- `std::shared_ptr<Dmn_DLock_Manager> manager` (shared pointer to the singleton instance)
 - `enum Code { Ok, InvalidConfig, BackendInitFailed, ClockInitFailed }`
 - `std::string message`
 
-`Dmn_DLockLease`:
+`Dmn_DLock_Manager::Dmn_DLockLease`:
 
 - `key()`
 - `ownerId()`
@@ -145,27 +146,29 @@ Per lock key, backend stores:
 - `isValid()`
 - `acquireGeneration()`
 
-`Dmn_DLockLeaseProxy` (DMesg-style proxy):
+`Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (DMesg-style proxy):
 
 - stores `std::weak_ptr<Dmn_DLockLease>`
-- `operator->() -> std::shared_ptr<Dmn_DLockLease>` (throws if closed)
-- `explicit operator bool() const noexcept`
+- `lockShared() -> std::shared_ptr<Dmn_DLockLease>` (returns null if closed)
+- `isOpen() const noexcept -> bool`
 - `reset()`
 
 ### 5.2 Manager API
 
 - `createManager(const Dmn_DLock_ManagerConfig &config) -> Dmn_DLock_ManagerCreateResult`
+  - Internally calls singleton `Dmn_Singleton<Dmn_DLock_Manager>::createInstance(...)`.
+  - Never creates multiple manager instances; returned shared_ptr aliases the singleton.
 - `tryAcquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult`
   - Returns immediately.
   - If busy, returns `Busy`.
 - `acquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, Dmn_DLock_Duration wait_timeout, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult`
   - Retries until acquired, timeout, or cancellation.
-- `renew(Dmn_DLockLeaseProxy &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult`
+- `renew(LeaseType &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult`
   - Extends lease only if current owner + lease ID match.
   - On success, updates lease expiration and returns updated `expires_at_ms`.
-- `release(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult`
+- `release(LeaseType &lease) -> Dmn_DLock_OpResult`
   - Releases if owner matches; stale/missing lease release is idempotent success.
-- `closeLease(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult`
+- `closeLease(LeaseType &lease) -> Dmn_DLock_OpResult`
   - DMesg-like explicit free path; performs best-effort release then resets proxy.
 - `isHeldByCaller(const Dmn_DLock_Key &key) const -> bool`
   - `caller` means the manager instance's configured `owner_id`.
@@ -314,8 +317,10 @@ Construction/setup failures must be exposed through
 11. fencing token increases on every new grant.
 12. concurrent acquire: only one winner.
 13. shutdown rejects new acquire and cancels waiters.
-14. backend error propagation maps to `BackendError`.
-15. invalid durations return `InvalidArg`.
+14. renew after shutdown succeeds only for pre-shutdown leases.
+15. renew after shutdown fails for post-shutdown/rejected acquisition paths.
+16. backend error propagation maps to `BackendError`.
+17. invalid durations return `InvalidArg`.
 
 ### 10.4 Integration/Stress Test Matrix
 
@@ -354,6 +359,7 @@ Class map:
 - `dmn::Dmn_DLock_Manager` (singleton root)
 - `dmn::Dmn_DLock_Manager::Dmn_DLockLease` (internal state object)
 - `dmn::Dmn_DLock_Manager::Dmn_DLockLeaseProxy` (client handle proxy)
+- `dmn::Dmn_DLock_Manager::LeaseType` (public alias)
 - `dmn::Dmn_DLock_Backend` (backend interface)
 - `dmn::Dmn_DLock_Clock` (clock abstraction)
 
@@ -362,9 +368,9 @@ API signatures to implement exactly:
 - `static auto createManager(const Dmn_DLock_ManagerConfig &config) -> Dmn_DLock_ManagerCreateResult;`
 - `auto tryAcquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult;`
 - `auto acquire(const Dmn_DLock_Key &key, Dmn_DLock_Duration lease_ttl, Dmn_DLock_Duration wait_timeout, const Dmn_DLock_AcquireOptions &opts) -> Dmn_DLock_AcquireResult;`
-- `auto renew(Dmn_DLockLeaseProxy &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult;`
-- `auto release(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult;`
-- `auto closeLease(Dmn_DLockLeaseProxy &lease) -> Dmn_DLock_OpResult;`
+- `auto renew(LeaseType &lease, Dmn_DLock_Duration lease_ttl) -> Dmn_DLock_OpResult;`
+- `auto release(LeaseType &lease) -> Dmn_DLock_OpResult;`
+- `auto closeLease(LeaseType &lease) -> Dmn_DLock_OpResult;`
 - `auto isHeldByCaller(const Dmn_DLock_Key &key) const -> bool;`
 - `auto shutdownCutoffGeneration() const -> uint64_t;`
 - `void shutdown();`
@@ -372,7 +378,7 @@ API signatures to implement exactly:
 ### Phase 0: Scaffolding and Contracts
 
 1. Add public headers and source files listed in 11.0.
-2. Define `Dmn_DLockLeaseProxy` using DMesg-style weak proxy semantics.
+2. Define `LeaseType` (alias to `Dmn_DLockLeaseProxy`) using DMesg-style weak proxy semantics.
 3. Define result structs/enums and options structs.
 4. Add backend abstract interface + in-memory fake backend for tests.
 5. Add clock abstraction and fake clock for deterministic tests.
@@ -383,7 +389,7 @@ API signatures to implement exactly:
 1. Write failing tests for `tryAcquire` success + busy.
 2. Implement manager creation (`createManager`) with non-throwing result path.
 3. Implement backend CAS acquire path.
-4. Return `Dmn_DLockLeaseProxy` with `owner_id`, `lease_id`, `fencing_token`,
+4. Return `LeaseType` with `owner_id`, `lease_id`, `fencing_token`,
    `expires_at_ms`, and `acquire_generation`.
 5. Refactor result mapping and error helpers.
 
@@ -462,7 +468,7 @@ Naming examples:
 - `Acquire_AfterShutdown_ReturnsCancelled`
 - `ConcurrentTryAcquire_OnlyOneSucceeds`
 - `CloseLease_ResetsProxy_AndIsNoThrowOnClosedLease`
-- `LeaseProxy_OperatorArrow_ThrowsAfterCloseLease`
+- `LeaseProxy_LockShared_ReturnsNullAfterCloseLease`
 
 ## 13. Definition of Ready
 
