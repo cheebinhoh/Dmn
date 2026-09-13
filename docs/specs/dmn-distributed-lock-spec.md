@@ -153,11 +153,12 @@ Shared state under one mutex:
 Wait pattern (normative):
 
 ```cpp
-cv.wait(lock, [&] {
-  return isRequestTopAndLocked(request_id) ||
-         isRequestTerminal(request_id) ||
-         observed_version != table_version;
-});
+while (true) {
+  if (isRequestTopAndLocked(request_id) || isRequestTerminal(request_id)) break;
+  if (observed_table_version != table_version ||
+      observed_retention_version != retention_version) break;
+  if (cv.wait_until(lock, deadline) == std::cv_status::timeout) break;
+}
 ```
 
 Rules:
@@ -404,13 +405,16 @@ Deterministic result mapping:
 
 - `shutdown()` is synchronous.
 - shutdown order is strict: quiesce retry scheduling first, then cancel/drain
-  retry lane, then stop/drain pruning lane.
+  retry lane, then terminalize pending requests/wake waiters, then stop/drain
+  pruning lane, then run final synchronous prune sweep.
 - stop/drain pruning lane semantics are strict:
   1) stop acceptance of new pruning work,
   2) drain already-enqueued pruning work,
   3) apply granted-skip rule during drain.
 - during pruning-lane drain, pruning logic must continue to skip retained
   granted records (never TTL-delete granted entries).
+- final synchronous prune sweep must apply same granted-skip rule and process
+  newly eligible non-granted records created by shutdown terminalization.
 - On return, pending waiters are woken, pending retries are cancelled, and
   retained request outcomes are deterministically persisted.
 - `shutdown()` must stop and drain pruning executor work before returning.
@@ -734,6 +738,7 @@ Normative command checkpoints:
 77. `Shutdown_StrictOrder_QuiesceRetryThenDrainRetryThenDrainPruning_BeforeReturn`
 78. `RetentionBarrier_QuerySeesPruningCommittedBeforeQueryStart`
 79. `Shutdown_PruningDrain_SkipsGrantedRecordsWhileDrainingQueuedWork`
+80. `Shutdown_FinalSynchronousPruneSweep_PrunesNewlyTerminalizedNonGranted`
 
 ## 14) Definition of Done
 
