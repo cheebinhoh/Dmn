@@ -73,7 +73,8 @@ Per lock key, backend stores:
 - Successful acquire always returns a fencing token greater than any prior token
   for that key.
 - Renew is valid only for the current owner and lease ID.
-- Release is idempotent; releasing an already-expired or missing lease is safe.
+- Release is idempotent for missing/expired/stale leases and must not revoke an
+  active lease owned by another owner.
 
 ## 5. Public API Requirements
 
@@ -117,12 +118,15 @@ Per lock key, backend stores:
 
 - Any API requiring positive duration must reject zero/negative durations.
 - `lease_ttl` must be strictly positive for `tryAcquire`, `acquire`, and `renew`.
-- `wait_timeout` for `acquire` must be strictly positive in Phase 1 semantics.
+- `wait_timeout` for `acquire` may be zero to request no-wait behavior
+  (equivalent outcome to one immediate acquire attempt).
 - `acquire` timeout must be monotonic-clock based.
 - `acquire` wait loop must support cancellation token.
 - After `shutdown`, `tryAcquire` fails with `Cancelled`.
 - After `shutdown`, all acquire attempts fail with `Cancelled`.
 - After `shutdown`, all renew attempts fail with `Cancelled`.
+- After `shutdown`, `release` remains allowed and must preserve idempotent
+  semantics.
 - Renewing after lease expiration returns `Expired`.
 
 ## 6. Detailed Functional Requirements
@@ -286,7 +290,7 @@ reported by exceptions.
 1. Write failing tests for shutdown behavior.
 2. Implement shutdown state flag and waiter cancellation.
 3. Ensure no new `tryAcquire`/`acquire`/`renew` operations proceed post-shutdown
-   (policy-defined exceptions may keep release allowed).
+   while keeping `release` allowed and idempotent post-shutdown.
 4. Add race tests between shutdown and acquire.
 
 ### Phase 6: Observability
