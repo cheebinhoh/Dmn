@@ -199,6 +199,15 @@ struct Dmn_DLock_RequestOptions {
   std::string owner_id; // required; identifies request owner
   int priority{0};
   std::chrono::milliseconds wait_timeout{std::chrono::milliseconds{0}}; // 0ms = no-wait (single attempt)
+  std::chrono::milliseconds retry_min_backoff{std::chrono::milliseconds{10}};
+  std::chrono::milliseconds retry_max_backoff{std::chrono::milliseconds{500}};
+  double retry_jitter_ratio{0.20};
+  std::shared_ptr<std::atomic_bool> cancel_token{};
+};
+
+struct Dmn_DLock_AsyncRequestOptions {
+  std::string owner_id; // required; identifies request owner
+  int priority{0};
   std::optional<std::chrono::milliseconds> async_expiry{std::nullopt}; // bounded async lifetime; falls back to manager default when nullopt
   std::chrono::milliseconds retry_min_backoff{std::chrono::milliseconds{10}};
   std::chrono::milliseconds retry_max_backoff{std::chrono::milliseconds{500}};
@@ -245,7 +254,7 @@ public:
 
   // non-blocking waitable submission: enqueues request lifecycle and returns
   // immediately with request_id and `kWaiting` for accepted submission.
-  auto requestLockAsync(int start, int end, const Dmn_DLock_RequestOptions &opts)
+  auto requestLockAsync(int start, int end, const Dmn_DLock_AsyncRequestOptions &opts)
       -> Dmn_DLock_Result;
 
   auto releaseLock(const std::string &request_id, const std::string &owner_id)
@@ -275,6 +284,9 @@ Query mutability contract:
 - TTL pruning must be enforced independent of query calls (for example by
   maintenance tick/worker or lifecycle-event-triggered sweep); query-side
   housekeeping may be opportunistic but must not be the only pruning trigger.
+- pruning executor ownership: manager-owned maintenance worker (same manager
+  execution domain as retry scheduling) is authoritative for TTL pruning.
+- pruning executor must be stoppable and drainable by `shutdown()`.
 
 Argument validity rules:
 
@@ -285,8 +297,6 @@ Argument validity rules:
 - `async_expiry` (when provided) must be > 0ms.
 - manager `default_async_expiry` must be configured > 0ms.
 - manager `retained_terminal_ttl` must be configured > 0ms.
-- `async_expiry` applies only to `requestLockAsync`; for `requestLock` it is
-  ignored and has no behavioral effect.
 - `retry_min_backoff` and `retry_max_backoff` must be >= 0.
 - `retry_min_backoff <= retry_max_backoff` is required.
 - `retry_jitter_ratio` must be in `[0.0, 1.0]`.
@@ -391,6 +401,7 @@ Deterministic result mapping:
 - `shutdown()` is synchronous.
 - On return, pending waiters are woken, pending retries are cancelled, and
   retained request outcomes are deterministically persisted.
+- `shutdown()` must stop and drain pruning executor work before returning.
 - requests already in granted/locked outcome remain `kGranted` (not rewritten).
 - retained granted requests may still be explicitly released via `releaseLock`
   during/after shutdown completion.
