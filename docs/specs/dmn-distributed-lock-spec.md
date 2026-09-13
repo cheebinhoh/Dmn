@@ -174,7 +174,9 @@ Rules:
 
 - updater acquires same mutex, updates table/version/flags, then `notify_all()`
 - waiter must re-check predicate in loop
-- waiter captures `observed_version` before sleeping
+- waiter captures observed table/retention versions before sleeping
+- after `wait_until` timeout, waiter must perform one final under-lock
+  granted/terminal predicate check before concluding timeout
 
 This prevents lost notifications and stale waits.
 
