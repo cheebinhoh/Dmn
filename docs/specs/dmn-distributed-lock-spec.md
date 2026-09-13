@@ -118,6 +118,7 @@ Sort/index order:
 - Backoff configurable: min 10ms, max 500ms, jitter supported.
 - Include max-attempt or timeout guard.
 - Support cancellation/shutdown interruption.
+- If max-attempt guard is hit before `wait_timeout`, return `kTimeout`.
 
 ## 5) Missed-wakeup-safe wait/notify contract (critical)
 
@@ -261,9 +262,16 @@ Deterministic result mapping:
 - cancel token/request cancellation -> `kCancelled`
 - release/cancel owner mismatch -> `kNotOwner`
 - query returns state if found; if `owner_id` provided, set `owner_match=true/false`
+- query with provided `owner_id` mismatch -> `kNotOwner`, `owner_match=false`, and no `entry`
 - query request not found -> `kNotFound`
 - shutdown gate -> `kShutdown`
 - publisher transport/logic failure -> `kPublisherError`
+
+Normative `ok` mapping:
+
+- `ok=true`: `kGranted`
+- `ok=false`: `kWaiting`, `kTimeout`, `kCancelled`, `kNotOwner`, `kNotFound`,
+  `kInvalidArg`, `kPublisherError`, `kShutdown`
 
 ## 7) State machine semantics
 
@@ -463,16 +471,19 @@ with `--gtest_filter=<Suite.Test>`.
 12. `RequestLock_VersionChange_WakesWaiter`
 13. `ReleaseLock_NotOwner_ReturnsNotOwner`
 14. `ReleaseLock_Owner_SetsUnlocked`
-15. `CancelRequest_WaitingRequest_Terminates`
-16. `Shutdown_NewRequests_ReturnShutdown`
-17. `Shutdown_WakesWaiters`
-18. `Shutdown_CancelsPendingRetries`
-19. `Observability_EmitPayloadSchema_Valid`
-20. `Observability_EmitterFailure_DoesNotChangeResult`
-21. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
-22. `RequestLock_CancelToken_InterruptsWithCancelledCode`
-23. `Stress_HighContention_NoDeadlock`
-24. `Stress_WorkerThreads_NeverBlockOnWait`
+15. `ReleaseLock_RequestNotFound_ReturnsNotFound`
+16. `CancelRequest_RequestNotFound_ReturnsNotFound`
+17. `GetRequestState_RequestNotFound_ReturnsNotFound`
+18. `CancelRequest_WaitingRequest_Terminates`
+19. `Shutdown_NewRequests_ReturnShutdown`
+20. `Shutdown_WakesWaiters`
+21. `Shutdown_CancelsPendingRetries`
+22. `Observability_EmitPayloadSchema_Valid`
+23. `Observability_EmitterFailure_DoesNotChangeResult`
+24. `RequestLock_WaitTimeout_ExpiresWithTimeoutCode`
+25. `RequestLock_CancelToken_InterruptsWithCancelledCode`
+26. `Stress_HighContention_NoDeadlock`
+27. `Stress_WorkerThreads_NeverBlockOnWait`
 
 ## 14) Definition of Done
 
