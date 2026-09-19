@@ -37,6 +37,11 @@ local full-table mirror <----> one Dmn_DMesg publisher <----> sibling handlers
 caller-only condition wait / retained owner query
 ```
 
+The local full-table mirror MAY be represented internally as an interval tree
+per session to accelerate overlap and eligibility queries. This internal
+representation does not change the wire format: publication still carries a
+canonical, sorted list of entries in a full snapshot.
+
 `Dmn_DLock<DMesgBase = Dmn_DMesg>` derives from a DMesg-compatible base.
 V1 implementation and tests use `Dmn_DLock<Dmn_DMesg>` only.  Do not add a
 manager-global mirror, a backend, an authority service, command/reply topics,
@@ -159,6 +164,9 @@ with only types and no operational placeholders:
   `Dmn_DMesgNet` cannot instantiate the unsafe v1 algorithm;
 - `template<class DMesgBase = Dmn_DMesg> class Dmn_DLock`;
 - injected clock, deterministic ID/jitter interfaces, and private test access.
+- define `Dmn_IntervalTree<T>` interface and tests for canonical enumeration
+  and overlap queries; the lock-table codec uses canonical enumeration to
+  serialize entries.
 
 Add an additive lock-table protobuf/value codec only when the existing DMesg
 payload shape requires it.  Preserve all old protobuf field numbers/enums and
@@ -238,6 +246,9 @@ Add:
 - `DlockFenceIncreasesForNewGrant`;
 - `DlockPublisherRejectsInvalidTableTransition`;
 - `DlockAllocatorsSurvivePruningAndBatchGrant`.
+- `DlockIntervalTreeCanonicalEnumerationMatchesWireOrder` — the interval-tree
+  mirror enumerates entries in the same canonical order used by the protobuf
+  full-table payload.
 
 Use a test publisher fixture with explicit delivery drains.  There is one
 publisher, not a simulated second authority.
