@@ -178,21 +178,14 @@ paused stale client.
 
 ### 4.1 Internal lock-table representation
 
-Each `Dmn_DLock` session maintains its local lock-table mirror as an internal
-data structure; the wire format remains a full, versioned snapshot of all
-entries. Implementations MAY use an interval tree per handler to store and
-query entries by range, provided that:
+Implementations MUST use the independent `Dmn_IntervalBTree` module (see `dmn-interval-btree-spec_3.md`) per handler to store and query entries by range. This external dependency guarantees:
 
-- the interval tree is a pure in-memory representation; it does not change the
-  commit authority or wire protocol;
-- all eligibility, overlap, and ranking rules remain deterministic and are
-  applied over the same logical set of entries; and
-- serialization to the protobuf full-table payload uses a canonical ordering
-  independent of the tree’s internal shape.
+- the interval B-tree is a pure in-memory representation; it does not change the commit authority or wire protocol;
+- all eligibility, overlap, and ranking rules remain deterministic and are applied over the same logical set of entries using `Dmn_TopologyResult`; and
+- serialization to the protobuf full-table payload uses `enumerateCanonical()` to produce a stable sorted order.
 
 Canonical ordering is normative: every committed table version MUST serialize
-to a byte-identical payload on all handlers. Implementations therefore MUST
-produce the entry list in a stable sorted order, for example:
+to a byte-identical payload on all handlers. The B-Tree module provides this exact ordering:
 
 1. ascending `range.start`;
 2. ascending `range.end`;
@@ -201,7 +194,7 @@ produce the entry list in a stable sorted order, for example:
 5. ascending `request_id` as a final tie-breaker.
 
 Equal table versions that differ in entry ordering or structure are protocol
-errors. The interval tree is an internal optimization only; it does not alter
+errors. The interval B-tree is an internal optimization only; it does not alter
 the definition of a lock table, mirror, or commit.
 
 ## 5. `Dmn_DLock` API shape and session ownership
@@ -209,21 +202,6 @@ the definition of a lock table, mirror, or commit.
 `Dmn_DLock` is a template deriving from a DMesg-compatible base, so a later
 transport-compatible implementation can be investigated without changing the
 lock facade:
-
-```cpp
-template <class DMesgBase = Dmn_DMesg>
-  requires std::same_as<DMesgBase, Dmn_DMesg>
-class Dmn_DLock : public DMesgBase;
-```
-
-The v1 constraint deliberately rejects `Dmn_DMesgNet`, even though it derives
-from `Dmn_DMesg`.  The template preserves the intended facade shape without
-making an unsafe transport substitution available.  A future consensus
-implementation may relax or replace this constraint only with the distinct
-coordination policy and tests required by Section 10.
-
-The public shape is normative; implementations may use private PIMPL/control
-types but do not omit these operations:
 
 ```cpp
 struct Dmn_DLock_Config {
@@ -287,13 +265,13 @@ public:
 Result codes cover granted, waiting, released, conflict, timeout, cancelled,
 not-owner, not-found, invalid-state, invalid-argument, handler-closed,
 publisher-error, lease-expired, and shutdown.  Invalid proxy dereference throws
-`std::logic_error`; an operation that entered before close but loses the
+std::logic_error; an operation that entered before close but loses the
 public-gate race returns handler-closed without a request id.  The proxy
 control block is thread-safe even though concurrent mutation of the same proxy
 object is not.
 
-`openHandler()` returns a copyable lock proxy.  Behind every copy is a shared
-`SessionControl` block containing an immutable generated `session_id`, an
+openHandler() returns a copyable lock proxy.  Behind every copy is a shared
+SessionControl block containing an immutable generated session_id, an
 atomic public gate, and a weak/public-safe route to private session state.
 The actual session owns its derived DMesg handler, local table mirror,
 condition variable, request association index, retry state, and in-flight
@@ -330,24 +308,28 @@ Owner mismatch remains `kNotFound` for privacy.
 
 ### 6.1 Submission
 
-`handler.acquireLock()` validates synchronously, allocates immutable request
+handler.acquireLock() validates synchronously, allocates immutable request
 and operation identities, records the request in that session's local mirror
 state, and posts a nonblocking job through its corresponding DMesg handler's
 protected scheduling wrapper.  Its sequence is tentative until the first
-accepted insertion assigns and commits `next_sequence`; conflict rebase may
+accepted insertion assigns and commits next_sequence; conflict rebase may
 change only that tentative value.  It does not publish inline and it never
 blocks the handler context.
 
 The job:
 
-1. checks the public/cleanup gate appropriate to its intent;
-2. starts from the session-local newest full table;
-3. adds or reapplies the immutable request entry, applies deterministic
-   eligibility/expiry rules, and drafts a complete next table;
-4. publishes that complete, versioned candidate through the **single** DMesg
-   publisher; and
-5. treats publisher acceptance as commit, updates its mirror, and wakes local
-   waiters after releasing internal locks.
+    checks the public/cleanup gate appropriate to its intent;
+
+    starts from the session-local newest full table;
+
+    adds or reapplies the immutable request entry, applies deterministic
+    eligibility/expiry rules, and drafts a complete next table;
+
+    publishes that complete, versioned candidate through the single DMesg
+    publisher; and
+
+    treats publisher acceptance as commit, updates its mirror, and wakes local
+    waiters after releasing internal locks.
 
 Only the calling thread of a blocking API waits.  It waits on a condition
 predicate that includes request terminal/granted state, mirror/table version,
@@ -366,7 +348,7 @@ bounded exponential backoff with injected deterministic jitter in tests,
 saturating arithmetic, and acquisition/lease/close checks before every retry.
 
 The delay itself MUST NOT execute in or occupy the handler context.  The
-current `Dmn_Async::addExecTaskAfter()` repeatedly requeues a not-yet-due item
+current Dmn_Async::addExecTaskAfter() repeatedly requeues a not-yet-due item
 and can prevent that handler from consuming the very table update needed for
 reconciliation.  A lock-specific, session-owned cancellable timer waits
 outside the handler context and posts only the ready retry back through the
@@ -397,34 +379,39 @@ incompatible mutations return a defined invalid-state result without changing
 the table.
 
 Terminal entries are retained for query and idempotency for
-`retained_terminal_ttl`; granted entries are never TTL-pruned.  Safe pruning
+retained_terminal_ttl; granted entries are never TTL-pruned.  Safe pruning
 retains a compact immutable tombstone for at least the publisher process
 lifetime unless a bounded replay window is separately specified.  Maintenance
 uses the same publish/conflict/retry path as every table mutation.
 
 ## 7. Close and shutdown
 
-`closeHandler(proxy)` is synchronous for public invalidation and bounded
-cleanup admission, idempotent, and `noexcept`; its public return type is
-`void`.  It is semantically release-all plus cancel-waiting for that session:
+closeHandler(proxy) is synchronous for public invalidation and bounded
+cleanup admission, idempotent, and noexcept; its public return type is
+void.  It is semantically release-all plus cancel-waiting for that session:
 
-1. atomically close the shared public gate, so every proxy copy is immediately
-   invalid;
-2. under the session state mutex, snapshot immutable session-associated
-   requests, mark waiting requests cancellation-pending, and make release
-   intent sticky for granted or potentially granted requests;
-3. retain a private closing-cleanup session and its DMesg handler;
-4. post cancellation/release mutations through that handler.  These cleanup
-   operations explicitly bypass the public closed-handler submission gate,
-   but no other new work does;
-5. for each mutation, draft and publish the resulting complete table, consume
-   conflicts, and retry with the same bounded policy;
-6. close the underlying DMesg handler only when cleanup reaches a committed
-   terminal outcome, or when publisher transport is closed and the recorded
-   finite lease fallback applies.
+    atomically close the shared public gate, so every proxy copy is immediately
+    invalid;
 
-After admitting all cleanup as one batch, `closeHandler()` waits collectively
-for at most `close_cleanup_timeout`, never one timeout per request.  It then
+    under the session state mutex, snapshot immutable session-associated
+    requests, mark waiting requests cancellation-pending, and make release
+    intent sticky for granted or potentially granted requests;
+
+    retain a private closing-cleanup session and its DMesg handler;
+
+    post cancellation/release mutations through that handler.  These cleanup
+    operations explicitly bypass the public closed-handler submission gate,
+    but no other new work does;
+
+    for each mutation, draft and publish the resulting complete table, consume
+    conflicts, and retry with the same bounded policy;
+
+    close the underlying DMesg handler only when cleanup reaches a committed
+    terminal outcome, or when publisher transport is closed and the recorded
+    finite lease fallback applies.
+
+After admitting all cleanup as one batch, closeHandler() waits collectively
+for at most close_cleanup_timeout, never one timeout per request.  It then
 returns even if private cleanup must continue.  It MUST NOT be called from a
 DMesg handler callback or handler task; such use is a contract violation
 because synchronous public invalidation would re-enter that handler's
@@ -435,23 +422,26 @@ exposed, and its release mutation is retried.  Explicit release followed by
 close is idempotent: retained terminal state prevents another table mutation.
 Closing a session never affects sibling sessions or their handlers.
 
-Because `closeHandler()` returns void, it must emit durable/inspectable events:
-`close_started`, `cleanup_cancel_submitted`, `cleanup_release_submitted`,
-`cleanup_retry`, `cleanup_committed`, and `cleanup_deferred_to_lease`.  Each
+Because closeHandler() returns void, it must emit durable/inspectable events:
+close_started, cleanup_cancel_submitted, cleanup_release_submitted,
+cleanup_retry, cleanup_committed, and cleanup_deferred_to_lease.  Each
 includes session/request ids, table version, retry attempt, and reason.
 Retained query records expose the same terminal/cleanup projection.
 
 Shutdown has precedence over new public work.  At shutdown linearization:
 
-1. the lock transitions to closing, closes every public session gate, and
-   rejects operations not already accepted;
-2. cleanup already admitted by a handler close is preserved, and shutdown
-   additionally admits release/cancel cleanup for every remaining session;
-3. all waiters are notified, and the implementation permits one bounded,
-   collective cleanup window while the publisher remains usable;
-4. it stops accepting new retries/maintenance, closes underlying DMesg
-   handlers/publisher transport, marks remaining cleanup as lease fallback,
-   and reaches fully-closed.
+    the lock transitions to closing, closes every public session gate, and
+    rejects operations not already accepted;
+
+    cleanup already admitted by a handler close is preserved, and shutdown
+    additionally admits release/cancel cleanup for every remaining session;
+
+    all waiters are notified, and the implementation permits one bounded,
+    collective cleanup window while the publisher remains usable;
+
+    it stops accepting new retries/maintenance, closes underlying DMesg
+    handlers/publisher transport, marks remaining cleanup as lease fallback,
+    and reaches fully-closed.
 
 Thus a close beginning after shutdown linearization does not reopen transport
 or submit work; it observes shutdown/lease fallback.  A close that began
@@ -465,13 +455,13 @@ The lock publication is a DMesg payload containing a versioned full lock table,
 not command/reply/authority-service messages.  Any protobuf addition is
 additive: existing field numbers and enum values remain unchanged; all new
 enums reserve zero as unspecified; checked durations are integer
-milliseconds.  Existing `sys` and ordinary message bodies must round-trip
+milliseconds.  Existing sys and ordinary message bodies must round-trip
 unchanged.
 
 The topic/configuration is a single, explicit domain table channel bound to
 the authoritative publisher.  It is not a collection of per-client command,
 reply, or election topics, and no topic convention alone creates authority.
-Only lock-derived handlers created by that `Dmn_DLock` instance may write this
+Only lock-derived handlers created by that Dmn_DLock instance may write this
 reserved channel.  Publisher validation checks the canonical transition even
 for such trusted writers; an ordinary DMesg handler cannot bypass it.
 Raw user data is not concatenated unsafely into a topic.  Playback is a valid
@@ -550,54 +540,18 @@ leader-change safety, minority-partition non-progress, log reconciliation,
 duplicate proposal idempotency, committed close-as-release, stale-leader
 fencing, crash/restart persistence, and membership-change safety.
 
-## 11. Interval tree module (`Dmn_IntervalTree`)
+## 11. External Interval B-Tree Dependency
 
-Refer to dmn-interval-btree-plan.md
+Dmn_DLock relies strictly on the independent Dmn_IntervalBTree<T> module to maintain the local lock-table mirror.
+Dmn_DLock does not redefine interval storage or logic internally.
 
-## 12. Interval tree module (`Dmn_IntervalTree`)
+- Overlap and eligibility logic use addWithTopology and queryTopology to evaluate new lock requests against deterministic boundary rules.
+- Priority evaluation inside the B-Tree is configured to rank contenders by ascending priority and lower immutable sequence.
+- Canonical serialization delegates entirely to the B-Tree's enumerateCanonical() method.
 
-`Dmn_IntervalTree<T>` is the internal, per-session interval index used by
-`Dmn_DLock` handlers to store and query lock-table entries by range. It is an
-implementation detail only: it does not alter the v1 commit authority, the
-wire format, or the definition of a lock-table snapshot. All correctness
-properties continue to be defined solely by the canonical full-table payload
-committed by the publisher.
+Refer to dmn-interval-btree-spec_3.md for the precise structural API and topological matrix.
 
-### 12.1 Template requirements
-
-The template parameter `T` MUST provide the following minimal interface:
-
-- `std::int64_t getStart() const;`
-- `std::int64_t getEnd() const;`
-- `std::int64_t getMidpoint() const;`  
-  (used for tree layout and augmentation)
-- a stable identity or key for equality and removal
-
-The interval tree MAY store additional metadata, but it MUST NOT mutate or
-reinterpret any lock-table semantics defined elsewhere in this specification.
-
-### 12.2 Operations
-
-`Dmn_IntervalTree<T>` MUST support:
-
-- insertion of one interval-bearing value;
-- removal of one interval-bearing value;
-- querying for all values whose intervals overlap a given `[start, end]`;
-- enumeration of all values in canonical sorted order.
-
-Canonical enumeration is normative: `enumerateCanonical()` MUST return entries
-sorted exactly as required by Section 4.1:
-
-1. ascending `range.start`;
-2. ascending `range.end`;
-3. ascending `priority`;
-4. ascending immutable `sequence`;
-5. ascending `request_id` as a final tie-breaker.
-
-This ordering MUST be stable and MUST NOT depend on the internal shape,
-balancing, or insertion history of the interval tree.
-
-### 12.3 Determinism and isolation
+### 11.1 Determinism and isolation
 
 Each `Dmn_DLock` session owns exactly one interval tree instance. The tree is
 never shared across sessions and never used as a global manager or authority.
@@ -608,7 +562,7 @@ Two handlers with equal logical lock-table state MUST produce byte-identical
 protobuf payloads, regardless of differences in their interval-tree internal
 structure. Equal table versions that serialize differently are protocol errors.
 
-### 12.4 Relationship to the lock-table snapshot
+### 11.2 Relationship to the lock-table snapshot
 
 The interval tree is an optimization for:
 
@@ -628,108 +582,7 @@ All committed state continues to be defined solely by the canonical full-table
 payload delivered by the publisher. The interval tree MUST always reflect the
 session-local mirror of that committed table.
 
-## 13. `Dmn_IntervalTree` module
-
-`Dmn_IntervalTree` is an internal utility module that provides a pure
-in‑memory interval index over `Dmn_DLock` table entries. It exists only to
-optimize range queries and eligibility checks; it does **not** change commit
-authority, wire format, or lock semantics.
-
-### 13.1 Purpose and scope
-
-`Dmn_IntervalTree` is used by `Dmn_DLock` handler sessions to:
-
-- index active and waiting lock entries by their inclusive integer ranges; and
-- support deterministic overlap and eligibility checks during table drafting.
-
-The module is strictly an implementation detail of `Dmn_DLock`. It MUST NOT be
-treated as a shared authority, cache, or manager‑global mirror. All committed
-state remains defined by the canonical full lock table snapshot and its
-versioned header.
-
-### 13.2 Data model
-
-`Dmn_IntervalTree` stores references or lightweight handles to lock‑table
-entries whose ranges satisfy:
-
-- `0 <= start && start <= end` for signed 64‑bit non‑negative inclusive ranges; and
-- overlap defined as `a.start <= b.end && b.start <= a.end`.
-
-The tree MAY be implemented as an augmented balanced binary search tree, a
-segment tree, or another deterministic interval index, provided that:
-
-- **Internal representation:** the tree structure is purely in‑memory and
-  never serialized directly.
-- **Entry identity:** entries are keyed by immutable request/session/owner ids,
-  range, priority, and sequence as defined by the lock table.
-
-### 13.3 Operations
-
-The module exposes a minimal, deterministic API:
-
-- **Insert entry:** add a lock entry with its range and immutable identity.
-- **Remove entry:** remove an entry when it becomes terminal and is pruned
-  from the active set.
-- **Update state:** update the entry’s state (`waiting`, `granted`, terminal)
-  without changing its immutable identity or range.
-- **Query overlapping:** return all entries whose ranges overlap a candidate
-  range.
-- **Query eligible:** support helper routines that determine whether a
-  candidate entry is eligible to grant, given current grants and higher‑ranked
-  contenders.
-
-Eligibility and ranking MUST follow the lock‑table rules:
-
-- contenders rank by ascending priority and then lower immutable insertion
-  sequence; and
-- a waiting entry grants only when it overlaps neither a grant nor a
-  better‑ranked active contender.
-
-The tree itself MUST NOT introduce any additional ordering or tie‑breaking
-rules beyond those defined by the lock table.
-
-### 13.4 Canonical serialization and determinism
-
-`Dmn_IntervalTree` never defines the wire format. Serialization to the
-protobuf full‑table payload uses the canonical ordering defined by the lock
-table, independent of the tree’s internal shape:
-
-1. ascending `range.start`;
-2. ascending `range.end`;
-3. ascending `priority`;
-4. ascending immutable `sequence`;
-5. ascending `request_id` as a final tie‑breaker.
-
-Equal table versions that differ in entry ordering or structure are protocol
-errors. Implementations therefore MUST:
-
-- rebuild the serialized entry list from the logical set of entries, not from
-  the tree’s physical layout; and
-- ensure that equal logical tables always produce byte‑identical payloads on
-  all handlers.
-
-### 13.5 Isolation and lifecycle
-
-`Dmn_IntervalTree` is owned per `Dmn_DLock` session:
-
-- each handler session maintains its own tree alongside its local lock‑table
-  mirror; and
-- closing one session and its tree MUST NOT mutate or invalidate sibling
-  sessions.
-
-Session close and shutdown follow the existing lock semantics:
-
-- cleanup and release/cancel mutations are drafted from the lock‑table mirror
-  and reflected into the tree; and
-- once a request becomes terminal and is safely pruned from the active set,
-  its entry is removed from the tree, while retained tombstones remain in the
-  lock table for query and idempotency.
-
-The module does not own clocks, leases, or fencing tokens; it only indexes
-ranges and identities. All lease and fence enforcement remains the
-responsibility of `Dmn_DLock` and the external protected resources.
-
-## 14. Acceptance criteria
+## 12. Acceptance criteria
 
 The feature is complete only when the test matrix passes, normal DMesg
 regressions pass, `git diff --check` is clean, and documentation says exactly
@@ -738,5 +591,3 @@ what v1 guarantees: handler-local mirrors converge through one authoritative
 automatic failover are not enabled by v1.  A future network specialization is
 complete only after the Section 10 consensus requirements and their separate
 tests pass; no individual backend is authoritative in that mode.
-
-
