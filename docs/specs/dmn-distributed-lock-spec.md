@@ -140,6 +140,13 @@ Ranges are signed 64-bit, non-negative, and inclusive.  A valid range satisfies
 `a.start <= b.end && b.start <= a.end`.  Thus `[1,2]` conflicts with `[2,3]`,
 while `[1,2]` does not conflict with `[3,4]`.
 
+`Dmn_DLock_Range` is an alias or direct value-compatible wrapper around
+`Dmn_IntervalRange`; both use the same inclusive `int64_t` endpoints and
+overlap operation. DLock adds the domain constraint `start >= 0` through its
+own validation before calling the generic B-tree. Conversion MUST preserve
+both endpoints exactly and MUST reject negative or reversed ranges before any
+tree mutation.
+
 Each table entry contains, at minimum:
 
 - domain, immutable request/session/owner ids, range, priority, and sequence;
@@ -178,14 +185,23 @@ paused stale client.
 
 ### 4.1 Internal lock-table representation
 
-Implementations MUST use the independent `Dmn_IntervalBTree` module (see `dmn-interval-btree-spec_3.md`) per handler to store and query entries by range. This external dependency guarantees:
+Implementations MUST use the independent `Dmn_IntervalBTree` module (see
+`dmn-interval-btree-spec.md`) per handler to store and query entries by range.
+This external dependency guarantees:
 
 - the interval B-tree is a pure in-memory representation; it does not change the commit authority or wire protocol;
-- all eligibility, overlap, and ranking rules remain deterministic and are applied over the same logical set of entries using `Dmn_TopologyResult`; and
-- serialization to the protobuf full-table payload uses `enumerateCanonical()` to produce a stable sorted order.
+- overlap queries and canonical enumeration operate over the same logical set
+  of entries;
+- DLock applies lifecycle-state filtering and deterministic eligibility rules
+  to B-tree results; `Dmn_TopologyResult` is an initial geometric and
+  priority evaluation, not the grant decision; and
+- serialization to the protobuf full-table payload uses
+  `enumerateCanonical(lockDuplicateOrder)` to produce a stable sorted order.
 
 Canonical ordering is normative: every committed table version MUST serialize
-to a byte-identical payload on all handlers. The B-Tree module provides this exact ordering:
+to a byte-identical payload on all handlers. DLock MUST never use the B-tree's
+default insertion-ordinal ordering for wire serialization. It supplies an
+explicit duplicate comparator with this exact ordering:
 
 1. ascending `range.start`;
 2. ascending `range.end`;
@@ -196,6 +212,29 @@ to a byte-identical payload on all handlers. The B-Tree module provides this exa
 Equal table versions that differ in entry ordering or structure are protocol
 errors. The interval B-tree is an internal optimization only; it does not alter
 the definition of a lock table, mirror, or commit.
+
+When a committed full table is received, the handler reconstructs its tree with
+`reconstructFromCanonical()` using the received canonical list and the same
+duplicate comparator. Runtime callbacks are reconnected through registrations
+matching a stable request identity carried in each opaque entry value; callback
+functions are never serialized.
+
+`addWithTopology()` may initialize a newly submitted request as waiting or
+eligible, but DLock grant state is decided by the complete transition
+function. A request is granted only when it overlaps no granted entry and no
+better-ranked active waiting contender. Terminal retained entries do not block
+eligibility. A topology callback signals affected requests for reevaluation; it
+does not grant a lock directly. Any grant, release, expiration, or cancellation
+is included in a complete candidate table and becomes visible only after
+publisher acceptance.
+
+DLock MUST retain all committed entries in the reconstructed B-tree so
+canonical snapshots and runtime callback registrations cover the complete
+table. Before topology or eligibility decisions, it MUST use
+`forEachOverlapping()` and filter results by lifecycle state. Terminal entries
+remain in the tree for query/idempotency but are excluded from grant
+eligibility; DLock MUST NOT rely on generic topology over the unfiltered
+retained table.
 
 ## 5. `Dmn_DLock` API shape and session ownership
 
@@ -212,6 +251,8 @@ struct Dmn_DLock_Config {
   std::chrono::milliseconds close_cleanup_timeout;
   std::chrono::milliseconds retained_terminal_ttl;
 };
+
+using Dmn_DLock_Range = Dmn_IntervalRange;
 
 struct Dmn_DLock_RequestOptions {
   std::string owner_id;
@@ -309,7 +350,7 @@ Owner mismatch remains `kNotFound` for privacy.
 ### 6.1 Submission
 
 handler.acquireLock() validates synchronously, allocates immutable request
-and operation identities, records the request in that session's local mirror
+and operation identities, records the request in session-local pending-intent
 state, and posts a nonblocking job through its corresponding DMesg handler's
 protected scheduling wrapper.  Its sequence is tentative until the first
 accepted insertion assigns and commits next_sequence; conflict rebase may
@@ -320,16 +361,24 @@ The job:
 
     checks the public/cleanup gate appropriate to its intent;
 
-    starts from the session-local newest full table;
+    starts from the session-local newest committed full table;
 
-    adds or reapplies the immutable request entry, applies deterministic
+    adds or reapplies the immutable request entry, uses B-tree topology to
+    identify affected entries, applies lifecycle filtering and deterministic
     eligibility/expiry rules, and drafts a complete next table;
 
     publishes that complete, versioned candidate through the single DMesg
     publisher; and
 
-    treats publisher acceptance as commit, updates its mirror, and wakes local
-    waiters after releasing internal locks.
+    treats publisher acceptance as commit, atomically replaces the committed
+    mirror, and wakes local waiters after releasing internal locks.
+
+Candidate construction MUST use a separate value/object from the committed
+mirror. A rejected, conflicting, or abandoned candidate MUST NOT mutate the
+committed mirror, its B-tree, or committed request state. The B-tree's
+`reconstructFromCanonical()` operation is used when a committed snapshot is
+consumed; candidate evaluation may use a temporary B-tree or a canonical
+value transition before acceptance.
 
 Only the calling thread of a blocking API waits.  It waits on a condition
 predicate that includes request terminal/granted state, mirror/table version,
@@ -482,26 +531,56 @@ barriers—not wall-clock sleeps.
 | `DmesgDefaultOpenHandlerBehaviorUnchanged` | Default factory remains `Dmn_DMesgHandler`; public API, playback/filter, proxy close, and write/conflict behavior are unchanged. |
 | `DmesgCustomHandlerPostsInOwnContext` | The new protected factory/scheduling seam creates only an opted-in derived handler and runs its job in that handler context. |
 | `DmesgCustomHandlerPublishCompletionIsNonblocking` | The protected completion hook reports accepted/conflict publication without a handler-context wait. |
+| `DmesgPublisherValidationRejectsBeforeCacheAndDelivery` | A rejected custom validation never changes the cache or reaches subscribers; ordinary handlers retain default acceptance. |
+| `DmesgDefaultProxyCloseUnchanged` | Existing DMesg proxy-copy invalidation and close behavior remain unchanged. |
 | `DlockInclusiveSharedEndpointConflicts` | Inclusive overlap and adjacent non-overlap are correct. |
+| `DlockRangeAdapterPreservesEndpoints` | Conversion between the DLock and interval range types preserves both endpoints and rejects negative or reversed ranges before mutation. |
 | `DlockSinglePublisherCommitExcludesOverlap` | Accepted full tables never grant overlapping ranges. |
 | `DlockPublisherRejectsInvalidTableTransition` | Stale-base, skipped-version, overlapping-grant, allocator-regression, and unauthorized lock-channel publications never enter cache or delivery. |
 | `DlockDeterministicPriorityThenSequence` | Priority then immutable sequence determines eligible contenders. |
 | `DlockPublishConflictConsumesAndRetries` | A losing handler consumes the newer table, reapplies the same request, and retries without force overwrite. |
 | `DlockSuccessfulCommitGrantsOnlyWhenEligible` | A successful request commits waiting when not top and later grants only after synchronized change. |
+| `DlockTopologyCallbackSchedulesReevaluation` | A topology change signals reevaluation without exposing a grant before a publisher-accepted table transition. |
+| `DlockTerminalEntriesDoNotBlockEligibility` | Retained terminal entries remain queryable but do not block a new eligible request. |
+| `DlockCanonicalSnapshotRebuildPreservesEnumeration` | Reconstructing a handler tree from canonical entries reproduces canonical ordering and reconnects runtime callbacks without load-time dispatch. |
+| `DlockOverlapInspectionDoesNotCopyEntries` | Eligibility inspection can visit B-tree entries by const reference without copying payloads. |
+| `DlockCandidateMutationDoesNotAlterCommittedMirror` | A rejected/conflicting candidate leaves the committed mirror unchanged until publisher acceptance. |
 | `DlockCallerWaitHasNoMissedWakeup` | Notification-before-sleep and final predicate checks cannot hang. |
 | `DlockWorkerNeverBlocksForCaller` | Another request progresses while an API caller waits. |
+| `DlockAcquireAsyncReturnsWithoutWaiting` | Asynchronous acquire returns without blocking the caller or handler context. |
+| `DlockInvalidArgumentsDoNotMutateTable` | Invalid ranges, empty owners, invalid durations, and malformed identities return the documented result without publication. |
+| `DlockResultCodesAndOwnerAuthorization` | Granted, waiting, conflict, timeout, cancelled, not-owner, not-found, invalid-state, handler-closed, publisher-error, lease-expired, and shutdown results are distinguishable and owner checks are enforced. |
+| `DlockProxyInvalidDereferenceThrows` | Dereferencing an invalid handler proxy throws `std::logic_error`. |
+| `DlockOpenCreatesOneDerivedDmesgHandler` | Each lock session owns exactly one corresponding derived DMesg handler. |
+| `DlockSessionAssociationIsImmutableAfterPublicClose` | Request/session association remains queryable and immutable after public close. |
 | `DlockProxyCopiesCloseImmediately` | Every proxy copy rejects public calls immediately despite retained/in-flight session references. |
 | `DlockCloseCancelsWaitersAndReleasesGrants` | Close publishes cancellation/release table changes and leaves sibling sessions usable. |
 | `DlockCloseRacingGrantNeverExposesGrant` | Barrier-controlled grant/close race releases the grant and never returns it. |
 | `DlockExplicitReleaseThenCloseIsIdempotent` | No second release-table mutation is committed. |
+| `DlockCancelWaitingRequest` | Cancelling a waiting request commits a terminal cancellation and reevaluates other contenders. |
+| `DlockReleaseGrantedRequestIsIdempotent` | Repeated release of one owned grant produces one logical release transition. |
+| `DlockLateGrantAfterTimeoutIsReleasedNotExposed` | A grant racing timeout is never exposed and is reconciled through release. |
+| `DlockLeaseExpiryReleasesAndReevaluates` | Lease expiry releases the grant and reevaluates eligible waiters through publication. |
+| `DlockTerminalQueryRetainedThenPruned` | Terminal query metadata remains available through retention and is safely pruned afterward. |
+| `DlockOwnerMismatchQueryIsNotFound` | An owner mismatch does not reveal request state. |
+| `DlockConcurrentEquivalentReleaseJoinsOneIntent` | Equivalent concurrent releases coalesce without duplicate table mutations. |
 | `DlockCleanupBypassesClosedPublicGate` | Private cleanup runs after proxy invalidation; ordinary public submission cannot. |
 | `DlockCloseObservabilityAndRetainedQuery` | Void close emits lifecycle/cleanup outcomes and owner query remains available after close. |
 | `DlockCloseShutdownPrecedence` | Close-before-shutdown uses the collective cleanup window; close-after-shutdown records lease fallback and submits nothing. |
+| `DlockShutdownRejectsNewOperationsAndWakesWaiters` | Shutdown rejects newly submitted work and wakes all blocked callers with shutdown state. |
+| `DlockNoHandlerJobOrCallbackOutlivesDlock` | Teardown drains or invalidates all handler jobs and callbacks before destruction. |
+| `DlockTransportClosureDefersCleanupToFiniteLease` | Transport closure records lease fallback and never claims an uncommitted release. |
 | `DlockLeaseAndFenceRejectStaleUse` | Lease expiry and monotonic fencing protect a fence-enforcing resource model. |
 | `DlockPlaybackPreservesOriginalExpiry` | After original sessions disappear and the manual clock passes expiry, a newly opened handler cannot revive the played-back grant. |
 | `DlockAllocatorsSurvivePruningAndBatchGrant` | Sequence/fence counters never regress across release, expiry, pruning, or a transition granting multiple entries. |
 | `DlockRenewPreservesFenceAndRespectsReleaseIntent` | Renewal is serialized as a table mutation, preserves the fence, and cannot win over close/release. |
 | `DlockVersionAndProtobufCompatibility` | Full-table version validation and existing DMesg protobuf payload compatibility hold. |
+
+The implementation plan further decomposes this matrix with explicit tests
+for adjacent and invalid ranges, codec round trips, independent mirror
+synchronization, no-wait conflict, version advancement, fencing allocation,
+conflict backoff and delivery starvation, final timeout predicates, retained
+queries, sibling isolation, shutdown ordering, and invalid-state mutations.
 
 ## 10. Future consensus-replicated mode
 
@@ -545,11 +624,21 @@ fencing, crash/restart persistence, and membership-change safety.
 Dmn_DLock relies strictly on the independent Dmn_IntervalBTree<T> module to maintain the local lock-table mirror.
 Dmn_DLock does not redefine interval storage or logic internally.
 
-- Overlap and eligibility logic use addWithTopology and queryTopology to evaluate new lock requests against deterministic boundary rules.
-- Priority evaluation inside the B-Tree is configured to rank contenders by ascending priority and lower immutable sequence.
-- Canonical serialization delegates entirely to the B-Tree's enumerateCanonical() method.
+- `addWithTopology()` and `queryTopology()` identify geometric overlap and
+  priority relationships for affected requests; DLock then filters terminal
+  entries and applies its grant rule.
+- DLock uses `forEachOverlapping()` when it only needs to inspect entries;
+  copy-returning overlap results are used only when ownership of a snapshot
+  is required.
+- Priority evaluation inside the B-tree ranks active contenders by ascending
+  priority and lower immutable sequence, while DLock remains authoritative for
+  lifecycle-state filtering and grant transitions.
+- Canonical serialization delegates to
+  `enumerateCanonical(lockDuplicateOrder)`, never to the default
+  insertion-ordinal ordering.
 
-Refer to dmn-interval-btree-spec_3.md for the precise structural API and topological matrix.
+Refer to `dmn-interval-btree-spec.md` for the precise structural API and
+topological matrix.
 
 ### 11.1 Determinism and isolation
 
@@ -557,6 +646,11 @@ Each `Dmn_DLock` session owns exactly one interval tree instance. The tree is
 never shared across sessions and never used as a global manager or authority.
 All mutation and query operations run exclusively on that session’s handler
 execution context and MUST NOT block.
+
+After a committed snapshot is received, the session rebuilds its tree from the
+canonical entry list in that list's order. The rebuild is callback-suppressed;
+registered callbacks are reattached by stable request ID, and DLock computes
+net request-state notifications only after the complete mirror is consistent.
 
 Two handlers with equal logical lock-table state MUST produce byte-identical
 protobuf payloads, regardless of differences in their interval-tree internal

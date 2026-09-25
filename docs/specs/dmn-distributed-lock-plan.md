@@ -37,8 +37,9 @@ local full-table mirror <----> one Dmn_DMesg publisher <----> sibling handlers
 caller-only condition wait / retained owner query
 ```
 
-The local full-table mirror MAY be represented internally as an interval tree
-per session to accelerate overlap and eligibility queries. This internal
+The local full-table mirror MUST be represented internally as a
+`Dmn_IntervalBTree` per session to accelerate overlap and eligibility queries.
+This internal
 representation does not change the wire format: publication still carries a
 canonical, sorted list of entries in a full snapshot.
 
@@ -157,16 +158,18 @@ jobs; existing public DMesg behavior is proven unchanged.
 Create the public lock header and lock-private implementation header/source
 with only types and no operational placeholders:
 
-- inclusive `Dmn_DLock_Range` validation/overlap;
+- `Dmn_DLock_Range` as an alias or value-compatible wrapper around
+  `Dmn_IntervalRange`, with DLock-specific non-negative validation;
 - table entry/state/terminal reason, immutable request/session identities,
   table schema/version, lease/fence values, and result/event values;
 - a v1 template constraint requiring exactly `Dmn_DMesg`, so
   `Dmn_DMesgNet` cannot instantiate the unsafe v1 algorithm;
 - `template<class DMesgBase = Dmn_DMesg> class Dmn_DLock`;
 - injected clock, deterministic ID/jitter interfaces, and private test access.
-- define `Dmn_IntervalTree<T>` interface and tests for canonical enumeration
-  and overlap queries; the lock-table codec uses canonical enumeration to
-  serialize entries.
+- use the existing `Dmn_IntervalBTree<T>` interface and tests for canonical
+  enumeration, canonical reconstruction, callback registration, and both
+  copying and visitor-based overlap queries; the lock-table codec uses
+  `enumerateCanonical(lockDuplicateOrder)` to serialize entries.
 
 Add an additive lock-table protobuf/value codec only when the existing DMesg
 payload shape requires it.  Preserve all old protobuf field numbers/enums and
@@ -178,6 +181,7 @@ Introduce `dmn-test-dlock` at this layer and add:
 - `DlockInclusiveSharedEndpointConflicts`;
 - `DlockAdjacentRangesDoNotConflict`;
 - `DlockRejectsNegativeAndReversedRanges`;
+- `DlockRangeAdapterPreservesEndpoints`;
 - `DlockFullTableCodecRoundTrips`;
 - `DlockExistingDmesgPayloadCompatibility`.
 
@@ -229,11 +233,28 @@ never reads global manager state.
 Then implement a derived handler job which:
 
 1. posts via the Layer 1 wrapper;
-2. updates only its session-local mirror;
+2. reads the session-local committed mirror without mutating it;
 3. drafts/publishes a full candidate table through the one configured DMesg
    publisher; and
-4. on publisher acceptance records the committed mirror/version and notifies
-   only after unlocking.
+4. on publisher acceptance reconstructs/replaces the committed mirror and
+   records its version, then notifies only after unlocking.
+
+Candidate evaluation uses a separate candidate value/tree. A rejected or
+conflicting candidate MUST leave the committed mirror and committed B-tree
+unchanged. Snapshot delivery uses `reconstructFromCanonical()` only after
+validation and acceptance.
+
+The transition function uses `addWithTopology()` or `queryTopology()` to
+identify affected ranges, but DLock applies lifecycle-state filtering and its
+priority-then-sequence grant rule separately. A topology callback only
+requests reevaluation; it never exposes a grant directly. Terminal entries
+remain queryable but do not block eligibility.
+
+Retain all committed entries in the B-tree so canonical reconstruction and
+runtime callback registration cover the complete table. Before evaluating
+topology or eligibility, visit overlaps with `forEachOverlapping()` and filter
+by lifecycle state. Do not pass the unfiltered retained table to generic
+topology as a grant decision.
 
 Add:
 
@@ -246,9 +267,14 @@ Add:
 - `DlockFenceIncreasesForNewGrant`;
 - `DlockPublisherRejectsInvalidTableTransition`;
 - `DlockAllocatorsSurvivePruningAndBatchGrant`.
-- `DlockIntervalTreeCanonicalEnumerationMatchesWireOrder` — the interval-tree
+- `DlockIntervalBTreeCanonicalEnumerationMatchesWireOrder` — the interval-tree
   mirror enumerates entries in the same canonical order used by the protobuf
-  full-table payload.
+  full-table payload;
+- `DlockCanonicalSnapshotRebuildPreservesEnumeration`;
+- `DlockTerminalEntriesDoNotBlockEligibility`;
+- `DlockTopologyCallbackSchedulesReevaluation`;
+- `DlockCandidateMutationDoesNotAlterCommittedMirror`.
+- `DlockOverlapInspectionDoesNotCopyEntries`.
 
 Use a test publisher fixture with explicit delivery drains.  There is one
 publisher, not a simulated second authority.
@@ -268,6 +294,10 @@ Add conflict handling to the handler job, one test at a time:
 6. `DlockCallerWaitHasNoMissedWakeup`;
 7. `DlockWorkerNeverBlocksForCaller`;
 8. `DlockTimeoutFinalPredicateLetsCommittedGrantWin`.
+9. `DlockAcquireAsyncReturnsWithoutWaiting`.
+10. `DlockInvalidArgumentsDoNotMutateTable`.
+11. `DlockResultCodesAndOwnerAuthorization`.
+12. `DlockProxyInvalidDereferenceThrows`.
 
 On conflict the job consumes/validates the new complete table, replaces only
 its local mirror, reapplies the same request entry, and schedules retry in the
@@ -305,6 +335,7 @@ Tests:
 - `DlockTerminalQueryRetainedThenPruned`;
 - `DlockOwnerMismatchQueryIsNotFound`;
 - `DlockConcurrentEquivalentReleaseJoinsOneIntent`.
+- `DlockInvalidStateMutationsAreRejectedWithoutPublication`.
 
 Persist compact immutable terminal/tombstone data so query and duplicate
 release are meaningful after normal terminal completion.  The session ID
@@ -368,6 +399,7 @@ Add:
 
 - `DlockCloseShutdownPrecedence`;
 - `DlockShutdownWakesBlockedAcquire`;
+- `DlockShutdownRejectsNewOperationsAndWakesWaiters`;
 - `DlockShutdownCleanupUsesOneCollectiveWindow`;
 - `DlockCloseAfterShutdownSubmitsNothing`;
 - `DlockTransportClosureDefersCleanupToFiniteLease`;

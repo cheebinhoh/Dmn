@@ -98,6 +98,7 @@ Tests
 - IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
 - IntervalBTreeCustomComparatorIsUsed
 - IntervalBTreeEmptyAndSize
+- IntervalBTreeConstructorsUseDefaultAndCustomComparators
 
 Exit: basic API and canonical ordering complete
 
@@ -115,10 +116,13 @@ Tests
 - IntervalTreeSupportsStringPayload
 - IntervalTreeSupportsStructPayload
 - IntervalTreePayloadDoesNotAffectOrdering
+- IntervalBTreePayloadDoesNotAffectDefaultRangeOrdering
+- IntervalBTreeStateCallbackReceivesOldAndNewState
 - IntervalBTreeMoveOnlyPayloadCanBeInserted
 - IntervalBTreeMoveOnlyPayloadCanBeEnumeratedByMove
 - IntervalBTreeMoveOnlyPayloadSupportsStateCallback
 - IntervalBTreeMoveOnlyPayloadDoesNotInstantiateCopyQueries
+- IntervalBTreeCopyAndMoveInsertionOverloads
 
 Exit: template payload support complete.
 
@@ -176,6 +180,8 @@ Implementation
 Implement:
 - hasOverlap(range)
 - findOverlapping(range)
+- `forEachOverlapping(range, visitor)`, visiting matching payloads by const
+  reference in canonical order without copying them.
 
 Traversal rules:
 - check each key in node for overlap,
@@ -189,6 +195,9 @@ Tests
 - IntervalBTreeFindOverlappingRejectsInvalidQuery
 - IntervalBTreeHasOverlapRejectsInvalidQuery
 - IntervalBTreeOverlapQueryPrunesCorrectly
+- IntervalBTreeOverlapVisitorAvoidsPayloadCopies
+- IntervalBTreeOverlapVisitorRejectsInvalidQuery
+- IntervalBTreeOverlapVisitorRequiresCallableVisitor
 
 Exit: overlap queries complete.
 
@@ -254,6 +263,7 @@ Tests
 - IntervalBTreeInsertionNotifiesExistingOverlappedEntry
 - IntervalBTreeInsertionNotifiesPriorityChange
 - IntervalBTreeInsertionNotifiesNonAdjacentAffectedEntries
+- IntervalBTreeInvalidTopologyQueryDoesNotMutate
 
 Exit: layered range locking queries and topology states complete.
 
@@ -278,7 +288,9 @@ Implement:
 Tests
 - IntervalBTreeAddAndRemoveExact
 - IntervalBTreeRejectsInvalidInsertionWithoutMutation
+- IntervalBTreeInvalidRemovalDoesNotMutate
 - IntervalBTreeRemoveByRange
+- IntervalBTreeRemoveAliasMatchesRemoveByRange
 - IntervalBTreeRemoveDuplicateRangeWithMatcher
 - IntervalBTreeEmptyMatcherRemovesUniqueRange
 - IntervalBTreeRemovePredicateSelectsOpaqueValue
@@ -297,10 +309,11 @@ Tests
 - IntervalBTreeCallbackExceptionDoesNotPoisonTree
 - IntervalBTreeReentrantMutationIsRejected
 - IntervalBTreeClearResetsState
+- IntervalBTreeClearSuppressesCallbacksAndAllowsReuse
 
 Exit: removal complete.
 
-## 13. Layer 9: canonical enumeration (final)
+## 13. Layer 9: canonical enumeration and reconstruction
 Implementation
 
 Implement:
@@ -313,6 +326,26 @@ Implement:
 - `enumerateCanonicalMove(duplicateOrder)` moves all stored payloads out and
   supports move-only `T`; it computes the full result before clearing the
   tree and does not invoke callbacks for extracted entries.
+- `reconstructFromCanonical(entries, duplicateOrder)` validates the complete
+  vector, loads entries in exactly vector order, assigns reconstruction
+  ordinals in that order, reconnects registered callbacks by matching opaque
+  values, recomputes state after loading, and suppresses load-time callbacks.
+  It leaves the destination unchanged on validation failure.
+- callback registration and unregistration by a client-supplied matcher over
+  opaque values. Each registration carries client-supplied shared context and
+  invokes its callback with `(context, opaqueValue, oldState, newState)`;
+  registrations are runtime metadata and are not serialized.
+
+The required round-trip invariant is:
+
+```text
+destination.enumerateCanonical(order) ==
+source.enumerateCanonical(order)
+```
+
+after reconstructing an empty destination from the source result. The
+invariant concerns observable logical topology and query results, not
+physical node shape.
 
 Tests
 - IntervalBTreeCanonicalEnumerationMatchesSpec
@@ -321,6 +354,12 @@ Tests
 - IntervalBTreeDuplicateRangesUseCallerOrdering
 - IntervalBTreeMoveOnlyPayloadCanBeEnumeratedByMove
 - IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
+- IntervalBTreeCanonicalReconstructionPreservesTopology
+- IntervalBTreeReconstructionReconnectsRegisteredCallbacks
+- IntervalBTreeRegisteredCallbackReceivesContextAndOpaqueValue
+- IntervalBTreeUnregisterCallbackStopsFutureDispatch
+- IntervalBTreeReconstructionValidationFailureLeavesTreeUnchanged
+- IntervalBTreeMoveEnumerationDoesNotDispatchCallbacks
 
 Exit: canonical enumeration complete.
 
@@ -346,13 +385,13 @@ Exit: deletion preserves all B-tree and overlap-pruning invariants.
 ## 15. Layer 11: lifecycle and integration
 Implementation
 
-Provide optional `toVector()` and `fromVector()` only if a consuming
-component requires them. `fromVector()` MUST preserve canonical ordering
-semantics and callback behavior, and MUST define whether callbacks are
-installed or suppressed during reconstruction.
+`reconstructFromCanonical()` is required because Dmn_DLock consumes complete
+committed snapshots. It MUST preserve canonical ordering semantics, restore
+runtime callbacks through registrations, suppress load-time callbacks, and
+define net-state dispatch only after reconstruction is complete.
 
 Tests
-- IntervalTreeRebuildMatchesOriginalCanonicalOrder
+- IntervalBTreeRebuildMatchesOriginalCanonicalOrder
 - IntervalBTreeClearResetsSizeAndAllowsReuse
 - IntervalBTreeDestructorReleasesAllUniqueOwnedNodes
 

@@ -57,6 +57,14 @@ independent of duplicate insertion order MUST provide a duplicate ordering
 callback over the opaque values. Payload data remains excluded from the
 default ordering.
 
+`enumerateCanonical()` is also the logical topology snapshot operation. A
+caller MAY feed its result to `reconstructFromCanonical()` on an empty tree.
+The reconstruction MUST consume entries in exactly the supplied order, assign
+new reconstruction ordinals in that order, rebuild all metadata, and produce
+the same subsequent canonical enumeration when given the same duplicate-order
+callback. This guarantees equivalent observable logical topology and query
+results; it does not require identical physical node splits or allocation.
+
 ---
 
 ## 3. Template API shape
@@ -117,8 +125,18 @@ using state_change_callback = std::function<void(
     const Dmn_OverlayState& newState)>;
 ```
 
-The callback is associated with the entry at insertion time. It is not part
-of canonical ordering, equality, serialization, or topology calculation.
+The callback is runtime metadata. It is not part of canonical ordering,
+equality, serialization, or topology calculation. A callback MAY be attached
+at insertion time or through a registration keyed by client-supplied opaque
+data. This permits a tree rebuilt from a canonical entry list to reconnect
+runtime callbacks without serializing function objects.
+
+Registrations are evaluated against each reconstructed entry's opaque value.
+The first matching registration is used; registrations MUST be deterministic
+and clients MUST NOT register overlapping matchers unless precedence is
+intentional. A missing registration leaves the entry without a callback and
+is not an error. Registration and reconstruction obey the tree's external
+synchronization requirement.
 Callbacks are optional and are invoked only when either `topology` or
 `isTop` changes for an already-existing entry.
 
@@ -166,10 +184,9 @@ Condition: The new range completely engulfs/swallows one or more existing locks,
 
 Key Distinguishing Feature: The new lock is strictly larger than existing overlapping locks and completely contains them.
 
-Example: Existing in Tree: [5, 10] and [20, 25], New Entry: [8, 22], Result: CoveringExisting, Why:
-- Left boundary (5) starts in open space before 10.
-- Right boundary (20) ends in open space after 15.
-- The existing lock [10, 15] sits entirely inside [5, 20].
+Example: Existing in Tree: [10, 15], New Entry: [5, 20], Result:
+CoveringExisting, because the new range strictly contains the existing range
+and extends beyond it on both sides.
 
 #### 3.1.4 Summary Matrix
 Topology Enum    | Left Boundary State | Right Boundary State | Existing Entries Contained Inside?
@@ -269,6 +286,9 @@ public:
   // Queries
   bool hasOverlap(range_type range) const noexcept;
   std::vector<std::pair<range_type, value_type>> findOverlapping(range_type range) const;
+  using overlap_visitor = std::function<void(
+      const range_type&, const value_type&)>;
+  void forEachOverlapping(range_type range, overlap_visitor visitor) const;
 
   // Layer-Aware Query
   // Evaluates where a given range and value sit in the stack without modifying the tree
@@ -278,6 +298,24 @@ public:
       duplicate_order_evaluator<value_type> duplicateOrder = {}) const;
   std::vector<std::pair<range_type, value_type>> enumerateCanonicalMove(
       duplicate_order_evaluator<value_type> duplicateOrder = {});
+
+  // Rebuilds from an enumerateCanonical() result in exactly that order.
+  // Callback dispatch is suppressed during loading; net state transitions
+  // are computed only after the complete tree is present.
+  void reconstructFromCanonical(
+      const std::vector<std::pair<range_type, value_type>>& entries,
+      duplicate_order_evaluator<value_type> duplicateOrder = {});
+
+  using callback_registration_id = std::uint64_t;
+  using callback_context = std::shared_ptr<void>;
+  using registered_state_callback = std::function<void(
+      const callback_context&, const value_type&,
+      const Dmn_OverlayState&, const Dmn_OverlayState&)>;
+  callback_registration_id registerStateCallback(
+      std::function<bool(const value_type&)> matches,
+      callback_context context,
+      registered_state_callback callback);
+  void unregisterStateCallback(callback_registration_id registration);
 
   bool empty() const noexcept;
   std::size_t size() const noexcept;
@@ -316,15 +354,47 @@ before the second; returning `false` means it does not. The callback MUST
 define a strict weak ordering. If it is empty, insertion ordinal orders
 duplicates. The callback never orders entries with different ranges.
 
+`reconstructFromCanonical(entries, duplicateOrder)` is a replacement
+operation intended for restoring a logical topology snapshot. It validates
+all entries before mutation, loads them in vector order, assigns ordinals in
+that order, restores callback registrations by matching each opaque value,
+recomputes all entry states after loading, and dispatches no callbacks caused
+solely by loading. If entries came from `enumerateCanonical(duplicateOrder)`,
+the postcondition is:
+
+```text
+destination.enumerateCanonical(duplicateOrder) == entries
+```
+
+The operation MUST leave the destination unchanged if validation fails.
+Because callbacks are runtime registrations, they are not included in the
+canonical entry vector.
+
+For a registered callback, the first callback argument is the client-supplied
+context and the second is the reconstructed entry's opaque value. The old and
+new overlay states follow those arguments. The context is retained by shared
+ownership until the registration is removed and any already-computed
+callback dispatch completes.
+
 Move-only payloads are supported by plain `add` and the `T&&` overload.
 `findOverlapping`, `queryTopology`, and `enumerateCanonical` use
 copy-returning result types and therefore require a copyable `T` when
-instantiated or called. Clients with move-only payloads must use plain `add`,
-state callbacks, predicates, and
-`enumerateCanonicalMove` unless a future reference-based query API is added.
+instantiated or called. `forEachOverlapping` visits entries by const
+reference and does not copy payloads; it requires a non-empty visitor,
+invokes it in canonical order after validating the query range, and invokes
+no visitor for an invalid query. The visitor MUST NOT mutate the tree or
+retain references after it returns. Clients with move-only payloads must use
+plain `add`, state callbacks, predicates, `forEachOverlapping`, and
+`enumerateCanonicalMove`.
 `enumerateCanonicalMove` is an extraction operation: it computes its complete
 ordered result, moves every payload into the result, clears the tree, and
 does not invoke state callbacks for the extracted entries.
+
+`addWithTopology()` reports the new entry's initial geometric topology and
+priority state. It does not itself define an application-level grant or
+commit decision. Clients may use the result to initialize entry state, but
+must apply their own state filtering and transition rules when stored values
+have lifecycle states such as waiting, granted, or terminal.
 
 All insertion and removal methods reject an invalid range without mutation.
 `add` and `addWithTopology` return `false` in that case; the result from a
@@ -521,6 +591,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
 - IntervalBTreeCustomComparatorIsUsed
 - IntervalBTreeEnumerationIsIndependentOfNodeSplits
+- IntervalBTreeConstructorsUseDefaultAndCustomComparators
 
 ### 5.3 Overlap tests
 - IntervalBTreeFindOverlappingSingle
@@ -529,11 +600,15 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeFindOverlappingRejectsInvalidQuery
 - IntervalBTreeHasOverlapRejectsInvalidQuery
 - IntervalBTreeOverlapQueryPrunesCorrectly
+- IntervalBTreeOverlapVisitorAvoidsPayloadCopies
+- IntervalBTreeOverlapVisitorRejectsInvalidQuery
+- IntervalBTreeOverlapVisitorRequiresCallableVisitor
 
 ### 5.4 Add/remove tests
 - IntervalBTreeRejectsInvalidInsertionWithoutMutation
 - IntervalBTreeAddAndRemoveExact
 - IntervalBTreeRemoveByRange
+- IntervalBTreeRemoveAliasMatchesRemoveByRange
 - IntervalBTreeRemovePredicateSelectsOpaqueValue
 - IntervalBTreeRemovePredicateMissLeavesTreeUnchanged
 - IntervalBTreeRemoveAllOverlapping
@@ -541,6 +616,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeRemoveDuplicateRangeWithMatcher
 - IntervalBTreeEmptyMatcherRemovesUniqueRange
 - IntervalBTreeClearResetsState
+- IntervalBTreeInvalidRemovalDoesNotMutate
 
 ### 5.5 State transition tests
 - IntervalBTreeNoPriorityEvaluatorMarksEntryTop
@@ -566,6 +642,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeCallbackExceptionLeavesTreeValid
 - IntervalBTreeCallbackExceptionDoesNotPoisonTree
 - IntervalBTreeReentrantMutationIsRejected
+- IntervalBTreeInvalidTopologyQueryDoesNotMutate
 
 ### 5.6 Structural tests
 - IntervalBTreeNodeStoresMultipleKeys
@@ -587,6 +664,11 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeMoveOnlyPayloadDoesNotInstantiateCopyQueries
 - IntervalBTreeClearResetsSizeAndAllowsReuse
 - IntervalBTreeDestructorReleasesAllUniqueOwnedNodes
+- IntervalBTreeCopyAndMoveInsertionOverloads
+- IntervalBTreeClearSuppressesCallbacksAndAllowsReuse
+- IntervalBTreeUnregisterCallbackStopsFutureDispatch
+- IntervalBTreeReconstructionValidationFailureLeavesTreeUnchanged
+- IntervalBTreeMoveEnumerationDoesNotDispatchCallbacks
 
 ## 6. Definition of done
 
@@ -600,4 +682,7 @@ invoked, so no callback observes a partially recomputed state.
   never report the initial state of a newly inserted entry.
 - Template payload support is complete.
 - API follows DMN coding conventions.
+- Copy-returning APIs, reference visitor APIs, callback registration, and
+  reconstruction validation have explicit coverage in the implementation
+  plan.
 - Documentation includes examples and test references.
