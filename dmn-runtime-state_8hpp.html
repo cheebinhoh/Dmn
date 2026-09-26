@@ -135,13 +135,13 @@ Typedefs</h2></td></tr>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <dl class="section author"><dt>Author</dt><dd>Chee Bin HOH </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>2026-08-31</dd></dl>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md39"></a>
 Overview</h2>
 <p>This header runs Dmn_State callbacks on the process-wide Dmn_Runtime_Manager thread. Internal initialization and finalization occur in the same runtime dispatch as the surrounding user-state work and are not scheduled separately. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API or setRuntimeStateFnc(), and submit it with Dmn_Runtime_State::run().</p>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md40"></a>
 Ownership and Lifetime</h2>
 <p>State handles are shared pointers. After a successful submission, the manager retains an owning handle until the state completes, fails, or is cancelled. A client may therefore release its handle without invalidating queued or running work.</p>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<h2><a class="anchor" id="autotoc_md41"></a>
 Thread Safety</h2>
 <p>Runtime lifecycle operations and runtime-specific status queries are synchronized. Configure inherited Dmn_State callbacks and transitions from one client thread before submission. During execution, inherited base lifecycle queries should only be read from a callback or after the completion future is ready.</p>
 <p>User-state callbacks, onStarted(), onCompleted(), and onFailed() execute on the runtime thread. onCancelled() executes in whichever thread publishes cancellation: normally the runtime thread for queued work, but the caller's thread when cancellation completes before successful submission. Blocking wait and shutdown operations are prohibited from the runtime thread to avoid deadlock. </p>

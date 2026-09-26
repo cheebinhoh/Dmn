@@ -1,7 +1,16 @@
 var searchData=
 [
-  ['unhandled_5fexception_0',['unhandled_exception',['../structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html#a5cbef2514804377925a4755cfa1b0c0b',1,'dmn::Dmn_Runtime_Task::promise_type']]],
-  ['unregistersubscriber_1',['unregisterSubscriber',['../classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da',1,'dmn::Dmn_Pub']]],
-  ['usage_20guidelines_2',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md16',1,'']]],
-  ['usage_20summary_3',['usage summary',['../dmn-async_8hpp.html#autotoc_md1',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md32',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md40',1,'Usage Summary']]]
+  ['testcancel_0',['testcancel',['../classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f',1,'dmn::Dmn_Proc']]],
+  ['thread‑safety_20signal‑safety_20notes_1',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md45',1,'']]],
+  ['thread_20safety_2',['thread safety',['../dmn-interval-btree_8hpp.html#autotoc_md21',1,'Thread safety'],['../dmn-runtime-state_8hpp.html#autotoc_md41',1,'Thread Safety']]],
+  ['threading_20and_20cancellation_3',['Threading and cancellation',['../dmn-pipe_8hpp.html#autotoc_md24',1,'']]],
+  ['threading_20and_20execution_20model_4',['Threading and execution model',['../dmn-pub-sub_8hpp.html#autotoc_md32',1,'']]],
+  ['threading_20memory_20order_20notes_5',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md14',1,'']]],
+  ['ticket_6',['ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html',1,'dmn::Dmn_Inflight_Guard&lt; T &gt;::Ticket'],['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#ac47def854a5c0c079fbd7b5997a34b38',1,'dmn::Dmn_Inflight_Guard::Ticket::Ticket()']]],
+  ['timedjobcomparator_7',['TimedJobComparator',['../structdmn_1_1TimedJobComparator.html',1,'dmn']]],
+  ['timeout_20semantics_8',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'']]],
+  ['timepoint_9',['TimePoint',['../dmn-runtime_8hpp.html#ad9fce06b7f4d912b253f7297280df759',1,'dmn']]],
+  ['timestamp_20setters_10',['Timestamp setters',['../group__dmesg__pb__timestamp.html',1,'']]],
+  ['topic_11',['Topic',['../classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48',1,'dmn::Dmn_Kafka']]],
+  ['topology_20and_20callbacks_12',['Topology and callbacks',['../dmn-interval-btree_8hpp.html#autotoc_md20',1,'']]]
 ];

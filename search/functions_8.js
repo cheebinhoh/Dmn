@@ -14,5 +14,5 @@ var searchData=
   ['isruninasyncthread_11',['isRunInAsyncThread',['../classdmn_1_1Dmn__Runtime__Manager.html#af8da9da1b7890b7f25e43b4b13e97756',1,'dmn::Dmn_Runtime_Manager']]],
   ['isrunning_12',['isRunning',['../classdmn_1_1Dmn__Runtime__State.html#ae3b387cc208cdf60c9206297d1772d00',1,'dmn::Dmn_Runtime_State']]],
   ['isshutdown_13',['isshutdown',['../classdmn_1_1Dmn__BlockingQueue.html#a13bac196cd31294a957c6a9a8d537eae',1,'dmn::Dmn_BlockingQueue::isShutdown()'],['../classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76',1,'dmn::Dmn_Pipe::isShutdown()']]],
-  ['isvalid_14',['isValid',['../structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c',1,'dmn::Dmn_Runtime_Task']]]
+  ['isvalid_14',['isvalid',['../structdmn_1_1Dmn__IntervalRange.html#abaed24c3b6c5a47b17e294c7158d386e',1,'dmn::Dmn_IntervalRange::isValid()'],['../structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c',1,'dmn::Dmn_Runtime_Task::isValid()']]]
 ];

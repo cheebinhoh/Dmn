@@ -2,6 +2,7 @@ var annotated_dup =
 [
     [ "dmn", null, [
       [ "detail", null, [
+        [ "Dmn_IntervalBTreeTestAccess", "structdmn_1_1detail_1_1Dmn__IntervalBTreeTestAccess.html", null ],
         [ "Dmn_Runtime_Manager_Impl", "structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html", null ]
       ] ],
       [ "Dmn_Async", "classdmn_1_1Dmn__Async.html", "classdmn_1_1Dmn__Async" ],
@@ -12,8 +13,11 @@ var annotated_dup =
       [ "Dmn_DMesgNet", "classdmn_1_1Dmn__DMesgNet.html", "classdmn_1_1Dmn__DMesgNet" ],
       [ "Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", "classdmn_1_1Dmn__DMesgNet__Kafka" ],
       [ "Dmn_Inflight_Guard", "classdmn_1_1Dmn__Inflight__Guard.html", "classdmn_1_1Dmn__Inflight__Guard" ],
+      [ "Dmn_IntervalBTree", "classdmn_1_1Dmn__IntervalBTree.html", "classdmn_1_1Dmn__IntervalBTree" ],
+      [ "Dmn_IntervalRange", "structdmn_1_1Dmn__IntervalRange.html", "structdmn_1_1Dmn__IntervalRange" ],
       [ "Dmn_Io", "classdmn_1_1Dmn__Io.html", "classdmn_1_1Dmn__Io" ],
       [ "Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html", "classdmn_1_1Dmn__Kafka" ],
+      [ "Dmn_OverlayState", "structdmn_1_1Dmn__OverlayState.html", "structdmn_1_1Dmn__OverlayState" ],
       [ "Dmn_Pipe", "classdmn_1_1Dmn__Pipe.html", "classdmn_1_1Dmn__Pipe" ],
       [ "Dmn_Proc", "classdmn_1_1Dmn__Proc.html", "classdmn_1_1Dmn__Proc" ],
       [ "Dmn_Pub", "classdmn_1_1Dmn__Pub.html", "classdmn_1_1Dmn__Pub" ],
@@ -26,6 +30,7 @@ var annotated_dup =
       [ "Dmn_Socket", "classdmn_1_1Dmn__Socket.html", "classdmn_1_1Dmn__Socket" ],
       [ "Dmn_State", "classdmn_1_1Dmn__State.html", "classdmn_1_1Dmn__State" ],
       [ "Dmn_Timer", "classdmn_1_1Dmn__Timer.html", "classdmn_1_1Dmn__Timer" ],
+      [ "Dmn_TopologyResult", "structdmn_1_1Dmn__TopologyResult.html", "structdmn_1_1Dmn__TopologyResult" ],
       [ "ScopeGuard", "structdmn_1_1ScopeGuard.html", "structdmn_1_1ScopeGuard" ],
       [ "TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ]
     ] ]

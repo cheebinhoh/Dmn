@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['implementation_20notes_0',['implementation notes',['../dmn-runtime-state_8cpp.html#autotoc_md43',1,'Implementation Notes'],['../dmn-runtime_8hpp.html#autotoc_md41',1,'Implementation Notes'],['../dmn-blockingqueue-mt_8hpp.html#autotoc_md7',1,'Implementation notes']]],
+  ['implementation_20notes_0',['implementation notes',['../dmn-runtime-state_8cpp.html#autotoc_md49',1,'Implementation Notes'],['../dmn-runtime_8hpp.html#autotoc_md47',1,'Implementation Notes'],['../dmn-interval-btree_8hpp.html#autotoc_md22',1,'Implementation notes'],['../dmn-blockingqueue-mt_8hpp.html#autotoc_md7',1,'Implementation notes']]],
   ['incrementbyone_1',['incrementByOne',['../dmn-util_8hpp.html#a54c3932aae9cfc4c170bc38b95802d5f',1,'dmn']]],
   ['inflight_5fcount_2',['inflight_count',['../classdmn_1_1Dmn__Inflight__Guard.html#a2e016f41a234303c075ed70f4ed6f029',1,'dmn::Dmn_Inflight_Guard']]],
   ['init_3',['init',['../classdmn_1_1Dmn__State.html#a891238b9ffb5fac974ffbde03e7c01ec',1,'dmn::Dmn_State']]],
@@ -15,5 +15,5 @@ var searchData=
   ['isruninasyncthread_12',['isRunInAsyncThread',['../classdmn_1_1Dmn__Runtime__Manager.html#af8da9da1b7890b7f25e43b4b13e97756',1,'dmn::Dmn_Runtime_Manager']]],
   ['isrunning_13',['isRunning',['../classdmn_1_1Dmn__Runtime__State.html#ae3b387cc208cdf60c9206297d1772d00',1,'dmn::Dmn_Runtime_State']]],
   ['isshutdown_14',['isshutdown',['../classdmn_1_1Dmn__BlockingQueue.html#a13bac196cd31294a957c6a9a8d537eae',1,'dmn::Dmn_BlockingQueue::isShutdown()'],['../classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76',1,'dmn::Dmn_Pipe::isShutdown()']]],
-  ['isvalid_15',['isValid',['../structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c',1,'dmn::Dmn_Runtime_Task']]]
+  ['isvalid_15',['isvalid',['../structdmn_1_1Dmn__IntervalRange.html#abaed24c3b6c5a47b17e294c7158d386e',1,'dmn::Dmn_IntervalRange::isValid()'],['../structdmn_1_1Dmn__Runtime__Task.html#acb2afb8f2429d523090c5a1678673c0c',1,'dmn::Dmn_Runtime_Task::isValid()']]]
 ];

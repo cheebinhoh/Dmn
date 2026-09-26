@@ -130,16 +130,16 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight RAII wrapper around native pthread functionality. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Overview</h2>
 <p>This header declares Dmn_Proc, a small object-oriented wrapper that encapsulates a pthread and executes a user-provided callable (std::function&lt;void()&gt;) in a separate thread. Instead of varying behaviour through inheritance, Dmn_Proc accepts a task (functor/closure) that the thread runs — this encourages composition over inheritance and reduces the proliferation of subclasses.</p>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Key characteristics and expectations</h2>
 <ul>
 <li>RAII: Dmn_Proc attempts to cancel and join its thread in its destructor to free resources. Users should therefore ensure their task cooperates with pthread cancellation (either by reaching cancellation points or by calling Dmn_Proc::yield() periodically inside long-running loops).</li>
 <li>Cancellation: Thread cancellation via stopExec() is synchronous: if a task blocks indefinitely without reaching a cancellation point, the thread will not terminate. Place voluntary cancellation points (e.g. calls to Dmn_Proc::yield()) in long-running loops if you expect prompt cancellation.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Design pattern</h2>
 <p>Command - Implements a variant of the Command design pattern, allowing clients to submit parameterized requests encapsulated as std::function&lt;void()&gt; tasks executed by the thread. Bridge - Abstracts the underlying threading implementation from the client. Decorator - Provides an alternative to subclassing for adding additional responsibilities to the thread object or object that inherits the Dmn_Proc, a degenerated decorator. Strategy - The provided callback functor serves as a mechanism for strategy design pattern to varying the functionalities for the thread.</p>
 <p>Note on mutex cleanup macros The macros below wrap pthread_cleanup_push/pop for the common pattern of unlocking a mutex in cleanup handlers. They are convenience macros and rely on the presence of <a class="el" href="dmn-proc_8hpp.html#aa4a7dc7c0b2ae2bd03ed185009561a7f" title="Cleanup function used with pthread_cleanup_push/pop. Expects a pointer to a pthread_mutex_t and unloc...">dmn::cleanupFuncToUnlockPthreadMutex</a>. </p>

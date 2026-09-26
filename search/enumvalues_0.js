@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['kconsumer_0',['kConsumer',['../classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a967ffffa9aaf87c52e2c54522118083a',1,'dmn::Dmn_Kafka']]],
-  ['kproducer_1',['kProducer',['../classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1',1,'dmn::Dmn_Kafka']]]
+  ['clear_0',['Clear',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046adc30bc0c7914db5918da4263fce93ad2',1,'dmn']]],
+  ['coveringexisting_1',['CoveringExisting',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046a631eeaf02e95520b0c2bc5fd8a2049f9',1,'dmn']]]
 ];

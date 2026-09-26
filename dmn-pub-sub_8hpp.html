@@ -122,7 +122,7 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight publish/subscribe adaptor classes as wrapper. </p>
 <p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Overview</h2>
 <ul>
 <li>This header provides a small, efficient publish/subscribe adaptor classes:<ul>
@@ -131,32 +131,32 @@ Overview</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md24"></a>
+<h2><a class="anchor" id="autotoc_md30"></a>
 Design pattern</h2>
 <ul>
 <li>Adapter - it allows other subclasses to be adapted as publishers or subscribers.</li>
 <li>Observer - it defines many-to-many dependencies between objects so that when one object publishes a message, all dependent subscribers are notified, and a subscriber can subscribe more than one publishers.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md31"></a>
 Key design goals</h2>
 <ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
 <li>Concurrency: deliveries occur asynchronously and subscribers process notifications.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md32"></a>
 Threading and execution model</h2>
 <ul>
 <li>The Dmn_Pub is derived from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's publish() method.</li>
 <li>notify(const T&amp;, Dmn_Pub *pub) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how does the notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md27"></a>
+<h2><a class="anchor" id="autotoc_md33"></a>
 Synchronization</h2>
 <ul>
 <li>It is piggy back on Dmn_Async's synchronization job queue.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Buffering and replay</h2>
 <ul>
 <li>The publisher keeps a bounded history (m_buffer) of up to m_capacity recently-published items.</li>
@@ -167,12 +167,12 @@ Buffering and replay</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md29"></a>
+<h2><a class="anchor" id="autotoc_md35"></a>
 Filtering</h2>
 <ul>
 <li>An optional filter function (Dmn_Pub_Filter_Task) can be supplied at construction. If provided, the filter is invoked for each (subscriber, item) pair to decide whether that subscriber should receive the item.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md36"></a>
 Lifetime and cleanup</h2>
 <ul>
 <li>Dmn_Sub stores a list of back-pointer (m_pubs) to its publishers while registered.</li>
@@ -180,12 +180,12 @@ Lifetime and cleanup</h2>
 <li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
 <li>The Dmn_Pub and Dmn_Sub does not maintain object lifetime and ownership, these are left it to the client of the classes.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md31"></a>
+<h2><a class="anchor" id="autotoc_md37"></a>
 Error handling and exception safety</h2>
 <ul>
 <li>Destructors are noexcept; exceptions thrown during cleanup are swallowed to guarantee noexcept finalization.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md38"></a>
 Usage summary</h2>
 <ul>
 <li>Create a Dmn_Pub&lt;T&gt; with a name and optional capacity and filter.</li>

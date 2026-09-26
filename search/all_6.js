@@ -8,6 +8,6 @@ var searchData=
   ['gettopicrunningcounter_5',['getTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['gettopicrunningcounterinternal_6',['getTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['getvalue_7',['getValue',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a',1,'dmn::Dmn_Inflight_Guard::Ticket']]],
-  ['goals_8',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md25',1,'']]],
+  ['goals_8',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md31',1,'']]],
   ['guidelines_9',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md16',1,'']]]
 ];
