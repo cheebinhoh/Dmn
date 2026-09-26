@@ -45,7 +45,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-inflight-guard
-		      dmn-test-interval-btree
+                      dmn-test-interval-btree
                       dmn-test-io
                       dmn-test-pipe
                       dmn-test-pipe-2
@@ -143,7 +143,7 @@ if (ENABLE_VALGRIND)
         dmn-test-runtime-queue-lf
         dmn-test-runtime-queue-lf-2
         dmn-test-runtime-queue-lf-3
-	dmn-test-runtime-state
+        dmn-test-runtime-state
         dmn-test-singleton
         dmn-test-socket
         dmn-test-state

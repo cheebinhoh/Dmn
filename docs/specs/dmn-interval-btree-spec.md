@@ -1,6 +1,7 @@
 # Feature Specification: DMN Interval B‑Tree (`Dmn_IntervalBTree`)
 
-Status: design-ready specification; implementation is in progress.
+Status: implementation contract; verified coverage is tracked below and in
+`dmn-interval-btree-plan.md`.
 
 Implementation status: Layers 0-10 of `dmn-interval-btree-plan.md` are
 implemented and verified. This includes range validation, insertion,
@@ -383,9 +384,12 @@ duplicates. The callback never orders entries with different ranges.
 operation intended for restoring a logical topology snapshot. It validates
 all entries before mutation, loads them in vector order, assigns ordinals in
 that order, restores callback registrations by matching each opaque value,
-recomputes all entry states after loading, and dispatches no callbacks caused
-solely by loading. If entries came from `enumerateCanonical(duplicateOrder)`,
-the postcondition is:
+updates stored states as entries are loaded so the completed tree reflects
+the complete snapshot, and dispatches no callbacks caused solely by loading.
+The reconstruction `duplicateOrder` parameter is not invoked; canonical order
+is an input precondition, and the supplied order is preserved as the
+insertion-ordinal tie-breaker. If entries came from
+`enumerateCanonical(duplicateOrder)`, the postcondition is:
 
 ```text
 destination.enumerateCanonical(duplicateOrder) == entries

@@ -504,8 +504,11 @@ Implement:
 - `reconstructFromCanonical(entries, duplicateOrder)` validates the complete
   vector, loads entries in exactly vector order, assigns reconstruction
   ordinals in that order, reconnects registered callbacks by matching opaque
-  values, recomputes state after loading, and suppresses load-time callbacks.
-  It leaves the destination unchanged on validation failure.
+  values, updates stored states during loading so the final state reflects the
+  complete snapshot, and suppresses load-time callbacks. The duplicate-order
+  evaluator is not invoked during reconstruction; callers pass it to later
+  enumeration as needed. It leaves the destination unchanged on validation
+  failure.
 - callback registration and unregistration by a client-supplied matcher over
   opaque values. Each registration carries client-supplied shared context and
   invokes its callback with `(context, opaqueValue, oldState, newState)`;

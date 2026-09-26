@@ -407,9 +407,11 @@ public:
    * Loading does not dispatch state-change callbacks.
    *
    * @param entries Range/value snapshot to load.
-   * @param duplicateOrder Duplicate ordering associated with the snapshot;
-   *        callers pass the same evaluator to subsequent canonical
-   *        enumeration when needed.
+   * @param duplicateOrder Reserved for symmetry with canonical enumeration;
+   *        it is not invoked while loading. The supplied vector order becomes
+   *        the insertion-ordinal order for equal ranges. Pass the evaluator
+   *        to subsequent enumeration when payload-defined duplicate order is
+   *        required.
    * @throws std::invalid_argument if any range is invalid; the current tree
    *         remains unchanged.
    * @throws std::logic_error if invoked reentrantly.
