@@ -9,9 +9,31 @@ Implemented and verified:
   `size()`.
 - Layer 2B: default/custom canonical range ordering, stable duplicate ordering,
   and caller-defined ordering for identical ranges.
+- Layer 3: arbitrary copyable payloads, copy/move insertion, and storage of
+  move-only payloads.
+- Layer 4: uniquely owned root-leaf node storage with public behavior
+  preserved.
+- Layer 5: degree-2 B-tree insertion, child/root splitting, sorted traversal,
+  and structural invariant coverage.
+- Layer 6: unpruned overlap existence, copy-returning result, and
+  const-reference visitor queries.
 
-The focused `dmn-test-interval-btree` target and its registered tests pass.
-Layers 3 and later remain planned.
+Layer 7 is implemented and verified: pure topology classification,
+hypothetical `queryTopology()`, priority evaluation, insertion-state
+calculation, canonical synchronous notifications for changed existing
+entries, exception-safe callback dispatch, and reentrant-mutation rejection.
+
+The focused `dmn-test-interval-btree` target and its registered tests pass for
+the completed increments. Layer 8 is implemented and verified: exact and
+batch removal, degree-2 deletion balancing, net state notifications, and
+reusable clear, including mixed-order structural stress, move-only payload
+removal, callback ordering, exception recovery, and reentrancy guards.
+Layer 9 is implemented and verified: canonical move extraction, callback
+registration/reconnection, and transactional reconstruction.
+Layer 10 is implemented and verified: incrementally maintained
+`m_subtreeMaxEnd` and pruned overlap traversal, checked against a linear
+canonical baseline. Layer 11's interval-tree lifecycle tests pass, but direct
+consumer integration is blocked until a `Dmn_DLock` production module exists.
 
 ## 1. Delivery rule
 
@@ -165,8 +187,9 @@ second. The callback must define a strict weak ordering. For identical ranges,
 use insertion ordinal when the callback is empty. Do not use payload ordering
 for distinct ranges.
 
-Tests: `IntervalBTreeDuplicateRangesUseCallerOrdering` and
-`IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges`.
+Tests: `DuplicateRangesUseCallerOrdering`,
+`DuplicateOrderingCallbackNotCalledForDistinctRanges`, and
+`DuplicateOrderingCallbackCannotMutateTreeReentrantly`.
 
 #### 2B.4 Custom range comparator
 
@@ -204,10 +227,14 @@ Tests
 - IntervalTreePayloadDoesNotAffectOrdering
 - IntervalBTreePayloadDoesNotAffectDefaultRangeOrdering
 - IntervalBTreeMoveOnlyPayloadCanBeInserted
-- IntervalBTreeMoveOnlyPayloadDoesNotInstantiateCopyQueries
+- IntervalBTreeInvalidMoveInsertionDoesNotConsumePayload
 - IntervalBTreeCopyAndMoveInsertionOverloads
 
 Exit: template payload support complete.
+
+`IntervalBTreeMoveOnlyPayloadCanBeInserted` also verifies that merely
+instantiating and using storage operations for a move-only payload does not
+instantiate copy-returning enumeration.
 
 State-callback coverage belongs to Layer 7, where callbacks are introduced.
 Move enumeration belongs to Layer 9, alongside canonical extraction.
@@ -215,10 +242,14 @@ Move enumeration belongs to Layer 9, alongside canonical extraction.
 ## 8. Layer 4: B-tree node structure and ownership
 Implementation
 
+Replace the flat entry vector with a private root leaf node. The root leaf may
+temporarily hold more keys than the eventual B-tree maximum; Layer 5 adds
+splitting and balancing.
+
 Introduce a private node representation conceptually equivalent to:
 ```cpp
 struct Node {
-  std::vector<Entry> m_entries;
+  std::vector<std::unique_ptr<Entry>> m_entries;
   std::vector<std::unique_ptr<Node>> m_children;
   bool m_isLeaf{true};
 };
@@ -228,18 +259,16 @@ The tree owns `m_root` with `std::unique_ptr`; children own descendants with
 `std::unique_ptr`. Do not add parent pointers or `std::shared_ptr`. Preserve
 each entry's value, insertion ordinal, and optional callback when keys move
 during split, merge, or borrowing.
-Choose and document a fixed B-tree minimum degree of at least two. Structural
-tests must verify root exceptions and minimum/maximum key counts for every
-non-root node. Test structural invariants through a test-only validator or
-detail-level node tests; do not expose a production API solely for tests.
-This layer changes storage representation while preserving public behavior
-from Layers 2A-3.
+Use minimum degree two. Structural tests for split/root/child invariants are
+introduced with insertion in Layer 5, when those structures are first
+produced. Avoid adding public inspection methods; a test-only friend peer may
+validate private invariants. Preserve all observable behavior from Layers
+2A-3: copy and move payloads, insertion ordinals, comparator configuration,
+enumeration, empty, and size.
 
-Tests
-- IntervalBTreeNodeStoresMultipleKeys
-- IntervalBTreeNodeChildrenPartitionCorrectly
-- IntervalBTreeRootSplitCreatesOwnedRoot
-- IntervalBTreeSplitPreservesCallbacksAndOrdinals
+Tests: run all existing interval-B-tree tests as regression coverage for the
+representation change. Add no future-layer structure tests before the
+implementation can produce the structures under test.
 
 Exit: node structure complete.
 
@@ -254,10 +283,17 @@ Implement:
 - maintaining sorted keys.
 
 Tests
+- IntervalBTreeNodeStoresMultipleKeys
+- IntervalBTreeRootSplitCreatesOwnedRoot
+- IntervalBTreeNodeChildrenPartitionCorrectly
 - IntervalBTreeInsertionMaintainsOrder
 - IntervalBTreeInsertionSplitsNodes
 - IntervalBTreeInsertionDeterministicAcrossOrders
 - IntervalBTreeEnumerationIsIndependentOfNodeSplits
+- IntervalBTreeSplitPreservesEntryValuesAndOrdinals
+
+Callback preservation during splits is covered in Layer 7 after per-entry
+callbacks are introduced.
 
 Exit: insertion complete.
 
@@ -281,13 +317,15 @@ correct unpruned query behavior is established.
 
 Tests
 - IntervalBTreeFindOverlappingSingle
-- IntervalBTreeFindOverlappingMultiple
+- IntervalBTreeFindOverlappingMultipleInCanonicalOrder
 - IntervalBTreeFindOverlappingIncludesSharedEndpoints
 - IntervalBTreeFindOverlappingRejectsInvalidQuery
 - IntervalBTreeHasOverlapRejectsInvalidQuery
+- IntervalBTreeHasOverlapFindsAndRejectsNonOverlappingRanges
 - IntervalBTreeOverlapVisitorAvoidsPayloadCopies
-- IntervalBTreeOverlapVisitorRejectsInvalidQuery
+- IntervalBTreeOverlapVisitorRejectsInvalidQueryWithoutInvocation
 - IntervalBTreeOverlapVisitorRequiresCallableVisitor
+- IntervalBTreeOverlapVisitorSupportsMoveOnlyPayload
 
 Exit: overlap queries complete.
 
@@ -356,27 +394,30 @@ conservative implementation. This is required because non-adjacent entries
 can jointly cover a boundary or provide continuous `FullyCovered` coverage.
 
 Tests
-- IntervalBTreeStateCallbackReceivesOldAndNewState
-- IntervalBTreeMoveOnlyPayloadSupportsStateCallback
-- IntervalBTreeTopologyReturnsClearWhenEmpty
-- IntervalBTreeTopologyIdentifiesOverlaidLeftAndRight
-- IntervalBTreeTopologyIdentifiesFullyCovered
-- IntervalBTreeTopologyPrecedenceIsDeterministic
-- IntervalBTreeTopologyExactMatchIsFullyCovered
-- IntervalBTreeTopologyHandlesContiguousCoverage
-- IntervalBTreeTopologyHandlesCoverageGap
-- IntervalBTreeTopologyHandlesInt64BoundariesWithoutOverflow
-- IntervalBTreePriorityTieMarksBothEntriesTop
-- IntervalBTreeQueryTopologyIsHypothetical
-- IntervalBTreeTopologyUsesInsertionLevelForContainment
-- IntervalBTreeTopologyEvaluatesIsTopCorrectly
-- IntervalBTreeNoPriorityEvaluatorMarksEntryTop
-- IntervalBTreeAddWithTopologyMatchesQueryTopology
-- IntervalBTreeNewEntryCallbackNotInvokedOnInsertion
-- IntervalBTreeInsertionNotifiesExistingOverlappedEntry
-- IntervalBTreeInsertionNotifiesPriorityChange
-- IntervalBTreeInsertionNotifiesNonAdjacentAffectedEntries
-- IntervalBTreeInvalidTopologyQueryDoesNotMutate
+- TopologyReturnsClearWhenEmpty
+- TopologyIdentifiesOverlaidLeftAndRight
+- TopologyIdentifiesFullyCovered
+- TopologyPrecedenceIsDeterministic
+- TopologyExactMatchIsFullyCovered
+- TopologyIdentifiesCoveringExisting
+- TopologyHandlesContiguousCoverageAndCoverageGaps
+- TopologyHandlesInt64BoundariesWithoutOverflow
+- QueryTopologyIsHypothetical
+- TopologyPriorityUsesEvaluatorAndDefaultsToTop
+- InvalidTopologyQueryReturnsClearWithoutMutation
+- AddWithTopologyMatchesHypotheticalQuery
+- NewEntryCallbackIsNotInvokedOnInsertion
+- StateCallbackReceivesTopologyTransition
+- StateCallbackReceivesPriorityTransition
+- MoveOnlyPayloadSupportsStateCallback
+- RangeEndpointInsertionOverloadsForwardCallbacks
+- InsertionNotifiesNonAdjacentAffectedEntries
+- InsertionCallbacksFollowCanonicalOrder
+- TopologyUsesInsertionLevelForContainment
+- ExactDuplicateInsertionKeepsBothEntriesFullyCovered
+- CallbackExceptionLeavesTreeConsistentAndReusable
+- ReentrantInsertionFromCallbackIsRejected
+- ReentrantMoveEnumerationFromCallbackIsRejected
 
 Exit: topology queries, priorities, insertion states, and existing-entry
 callbacks are implemented and tested.
@@ -415,32 +456,24 @@ Implement:
   algorithm as insertion.
 
 Tests
-- IntervalBTreeAddAndRemoveExact
-- IntervalBTreeRejectsInvalidInsertionWithoutMutation
-- IntervalBTreeInvalidRemovalDoesNotMutate
-- IntervalBTreeRemoveRebalancesLeaf
-- IntervalBTreeRemoveRebalancesInternalNode
-- IntervalBTreeRemoveByRange
-- IntervalBTreeRemoveAliasMatchesRemoveByRange
-- IntervalBTreeRemoveDuplicateRangeWithMatcher
-- IntervalBTreeEmptyMatcherRemovesUniqueRange
-- IntervalBTreeRemovePredicateSelectsOpaqueValue
-- IntervalBTreeRemovePredicateMissLeavesTreeUnchanged
-- IntervalBTreeRemoveAllOverlapping
-- IntervalBTreeRemoveAllOverlappingReturnsCount
-- IntervalBTreeRemovalNotifiesFormerlyOverlaidEntry
-- IntervalBTreeRemovalRecomputesBothBoundaryOverlays
-- IntervalBTreeRemovalRecomputesFullyCoveredState
-- IntervalBTreeRemovalNotifiesAllAffectedNonAdjacentEntries
-- IntervalBTreeBatchRemovalNotifiesEachEntryAtMostOnce
-- IntervalBTreeCallbacksRunInCanonicalOrder
-- IntervalBTreeClearDoesNotNotifyDestroyedEntries
-- IntervalBTreeCallbackRunsAfterMutationIsConsistent
-- IntervalBTreeCallbackExceptionLeavesTreeValid
-- IntervalBTreeCallbackExceptionDoesNotPoisonTree
-- IntervalBTreeReentrantMutationIsRejected
-- IntervalBTreeClearResetsState
-- IntervalBTreeClearSuppressesCallbacksAndAllowsReuse
+- RemoveByRangeRemovesOneExactEntry
+- InvalidAndMissingRemovalLeaveTreeUnchanged
+- RemoveByRangeMatchesDuplicateByOpaqueValue
+- FailedRemovalPredicateLeavesTreeUnchanged
+- RemoveAliasMatchesRemoveByRange
+- RemoveAllOverlappingReturnsExactCount
+- RemovalRebalancesBTree
+- RemovalMaintainsInvariantsAcrossMixedOrders
+- RemovalSupportsMoveOnlyPayloads
+- RemovalRecomputesSurvivorTopologyAndPriority
+- RemovalNotifiesFormerlyOverlaidEntry
+- BatchRemovalNotifiesEachSurvivorOnce
+- RemovalCallbackRunsAfterTreeMutation
+- RemovalCallbackExceptionLeavesTreeValid
+- RemovalCallbacksFollowCanonicalOrder
+- RemovalPredicateCannotMutateTreeReentrantly
+- ClearSuppressesCallbacksAndAllowsReuse
+- ReentrantClearFromCallbackIsRejected
 
 This is the only layer that implements deletion balancing. Layer 10 is limited
 to subtree metadata and overlap-query pruning; it must not reimplement
@@ -490,13 +523,16 @@ invariant concerns observable logical topology and query results, not
 physical node shape.
 
 Tests
-- IntervalBTreeMoveOnlyPayloadCanBeEnumeratedByMove
-- IntervalBTreeCanonicalReconstructionPreservesTopology
-- IntervalBTreeReconstructionReconnectsRegisteredCallbacks
-- IntervalBTreeRegisteredCallbackReceivesContextAndOpaqueValue
-- IntervalBTreeUnregisterCallbackStopsFutureDispatch
-- IntervalBTreeReconstructionValidationFailureLeavesTreeUnchanged
-- IntervalBTreeMoveEnumerationDoesNotDispatchCallbacks
+- MoveOnlyPayloadCanBeEnumeratedByMove
+- MoveEnumerationUsesDuplicateOrdering
+- MoveEnumerationDoesNotDispatchCallbacks
+- CanonicalReconstructionPreservesTopology
+- ReconstructionValidationFailureLeavesTreeUnchanged
+- ReconstructionReconnectsRegisteredCallbacks
+- UnregisterCallbackStopsFutureDispatch
+- ReconstructionUsesFirstMatchingRegistration
+- ReconstructionPreservesDuplicateCanonicalOrder
+- RebuildMatchesOriginalCanonicalOrder
 
 Exit: canonical enumeration complete.
 
@@ -509,26 +545,29 @@ unpruned overlap traversal from Layer 6 as the correctness baseline and
 compare pruned results against it in tests.
 
 Tests
-- IntervalBTreeSubtreeMaxEndRemainsCorrect
-- IntervalBTreeInt64BoundaryMetadataRemainsCorrect
-- IntervalBTreeOverlapQueryPrunesCorrectly
+- SubtreeMaxEndRemainsCorrectAcrossMutations
+- Int64BoundarySubtreeMaxEndRemainsCorrect
+- PrunedOverlapQueriesMatchCanonicalBaseline
 
 Exit: metadata and pruning preserve all B-tree and overlap-query invariants.
 
 ## 15. Layer 11: lifecycle and integration
 Implementation
 
-Integrate the completed API with Dmn_DLock snapshot loading. Reconstruction
-itself is implemented and tested in Layer 9; this layer verifies consumer
-integration and remaining lifecycle behavior without duplicating the
-reconstruction implementation.
+Verify the API's snapshot/rebuild and lifecycle behavior at the interval-tree
+boundary. Reconstruction itself is implemented and tested in Layer 9.
+Consumer wiring into Dmn_DLock cannot be completed until a Dmn_DLock
+production module exists; the repository currently contains only its design
+documents, so do not invent a parallel lock implementation in this layer.
 
 Tests
-- IntervalBTreeRebuildMatchesOriginalCanonicalOrder
-- IntervalBTreeClearResetsSizeAndAllowsReuse
-- IntervalBTreeDestructorReleasesAllUniqueOwnedNodes
+- RebuildMatchesOriginalCanonicalOrder
+- ClearSuppressesCallbacksAndAllowsReuse
+- DestructorReleasesAllUniqueOwnedEntries
 
-Exit: integration complete.
+Exit: interval-tree lifecycle and snapshot boundary verified. Dmn_DLock
+consumer integration remains a downstream task in the DLock implementation
+plan.
 
 ## 16. Feasibility and design risks
 
