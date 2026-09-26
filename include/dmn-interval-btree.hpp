@@ -2,8 +2,60 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-interval-btree.hpp
- * @brief Provides a template-based B-tree for indexing inclusive intervals
- *        and querying overlapping entries.
+ * @brief Template B-tree for indexing inclusive intervals and their values.
+ *
+ * Overview
+ * --------
+ * @ref Dmn_IntervalBTree is an in-memory, degree-2 B-tree that stores
+ * inclusive @ref Dmn_IntervalRange keys alongside opaque payloads. It
+ * supports canonical enumeration, overlap queries, optional topology and
+ * priority evaluation, per-entry state-change callbacks, deletion, and
+ * reconstruction from canonical snapshots. The implementation is private to
+ * this header so each payload type can instantiate the complete template.
+ *
+ * Ordering and determinism
+ * ------------------------
+ * By default, distinct ranges are ordered by ascending start and then
+ * ascending end; payloads never participate in range ordering. A custom
+ * range comparator can replace that order, with the default range order used
+ * to break equivalence between distinct ranges. Equal ranges are ordered by
+ * insertion ordinal unless an enumeration call supplies a duplicate-order
+ * evaluator. Callers that need identical snapshots across trees must supply
+ * compatible range and duplicate-order comparators.
+ *
+ * Ownership and payload requirements
+ * -----------------------------------
+ * Nodes and entry records are uniquely owned by the tree. Entries retain
+ * their payload, ordinal, and runtime callback together while B-tree
+ * operations rebalance nodes. Lvalue insertion copies the payload; rvalue
+ * insertion moves it, allowing move-only payloads. Copy-returning operations
+ * require a copy-constructible payload when used. @ref forEachOverlapping()
+ * visits payloads by const reference, while @ref enumerateCanonicalMove()
+ * extracts payloads and empties the tree.
+ *
+ * Topology and callbacks
+ * ----------------------
+ * @ref queryTopology() computes a hypothetical insertion result without
+ * changing the tree. @ref addWithTopology() returns the same initial
+ * classification while inserting; the new entry's callback is not called for
+ * its initial state. Existing entries are notified only when their topology
+ * or priority state changes. Callbacks are synchronous, run after the
+ * mutation is structurally complete, and propagate exceptions without
+ * rolling back that mutation. Reentrant mutation is rejected with
+ * @c std::logic_error.
+ *
+ * Thread safety
+ * -------------
+ * The tree is not thread-safe. Callers must externally synchronize all
+ * concurrent reads and mutations. User-supplied visitors, comparators,
+ * matchers, and callbacks must not mutate the tree reentrantly.
+ *
+ * Implementation notes
+ * --------------------
+ * Overlap traversal is pruned using each node's maximum endpoint
+ * (@c m_subtreeMaxEnd). Insertions and deletions maintain this metadata along
+ * with the B-tree invariants. Canonical enumeration is independent of the
+ * tree's physical shape.
  */
 
 #ifndef DMN_INTERVAL_BTREE_HPP_
@@ -26,118 +78,411 @@ namespace detail {
 template <class T> struct Dmn_IntervalBTreeTestAccess;
 } // namespace detail
 
+/**
+ * @struct Dmn_IntervalRange
+ * @brief Inclusive interval with signed 64-bit endpoints.
+ *
+ * A range is valid when @c m_start is no greater than @c m_end. Two valid
+ * ranges overlap when they share at least one endpoint or interior point;
+ * adjacent but non-overlapping ranges remain distinct.
+ */
 struct Dmn_IntervalRange {
+  /** @brief Inclusive lower endpoint of the range. */
   std::int64_t m_start{};
+  /** @brief Inclusive upper endpoint of the range. */
   std::int64_t m_end{};
 
+  /**
+   * @brief Return whether the endpoints describe a valid range.
+   * @return @c true exactly when @c m_start <= @c m_end.
+   */
   auto isValid() const noexcept -> bool;
+
+  /**
+   * @brief Test inclusive overlap with another range.
+   *
+   * Invalid ranges never overlap. The implementation uses comparisons and
+   * does not calculate endpoint successors or predecessors.
+   *
+   * @param other Range to compare with this range.
+   * @return @c true when both ranges are valid and share at least one point.
+   */
   auto overlaps(const Dmn_IntervalRange &other) const noexcept -> bool;
 }; // struct Dmn_IntervalRange
 
+/**
+ * @enum Dmn_OverlayTopology
+ * @brief Geometric relationship between a candidate interval and overlaps.
+ *
+ * The classifier gives precedence to @c Clear, @c FullyCovered,
+ * @c CoveringExisting, and @c OverlaidBoth, then reports a one-sided overlay.
+ * Exact duplicates are @c FullyCovered. For stored entries, strict
+ * containment is interpreted relative to insertion level.
+ */
 enum class Dmn_OverlayTopology {
-  Clear,
-  OverlaidLeft,
-  OverlaidRight,
-  OverlaidBoth,
-  FullyCovered,
-  CoveringExisting
+  Clear,           ///< The candidate has no overlapping entries.
+  OverlaidLeft,    ///< Only the candidate's left boundary is covered.
+  OverlaidRight,   ///< Only the candidate's right boundary is covered.
+  OverlaidBoth,    ///< Both boundaries are covered, with a gap between.
+  FullyCovered,    ///< Existing ranges continuously cover the candidate.
+  CoveringExisting ///< The candidate strictly contains existing ranges.
 };
 
+/**
+ * @struct Dmn_TopologyResult
+ * @brief Initial topology, priority, and overlap snapshot for a query/add.
+ * @tparam T Payload type stored with each interval.
+ */
 template <class T> struct Dmn_TopologyResult {
+  /** @brief Geometric classification of the candidate interval. */
   Dmn_OverlayTopology m_status{Dmn_OverlayTopology::Clear};
+  /** @brief Whether the candidate is top-ranked among its overlaps. */
   bool m_isTop{true};
+  /** @brief Canonically ordered copies of all overlapping range/value pairs. */
   std::vector<std::pair<Dmn_IntervalRange, T>> m_overlappingEntries;
 };
 
+/**
+ * @struct Dmn_OverlayState
+ * @brief Topology and priority state recorded for a stored entry.
+ */
 struct Dmn_OverlayState {
+  /** @brief Current geometric relationship to overlapping entries. */
   Dmn_OverlayTopology m_topology{Dmn_OverlayTopology::Clear};
+  /** @brief True when no overlapping entry has strictly higher priority. */
   bool m_isTop{true};
 };
 
+/**
+ * @brief Predicate used to select an entry by its opaque payload.
+ * @tparam T Payload type.
+ */
 template <class T> using entry_matcher = std::function<bool(const T &)>;
 
+/**
+ * @brief Strict weak ordering used to order values of identical ranges.
+ * @tparam T Payload type.
+ */
 template <class T>
 using duplicate_order_evaluator = std::function<bool(const T &, const T &)>;
 
+/**
+ * @brief Callback invoked when an existing entry's overlay state changes.
+ * @tparam T Payload type.
+ */
 template <class T>
 using state_change_callback =
     std::function<void(const Dmn_IntervalRange &, const T &,
                        const Dmn_OverlayState &, const Dmn_OverlayState &)>;
 
+/**
+ * @class Dmn_IntervalBTree
+ * @brief Own and query a balanced index of inclusive ranges and payloads.
+ *
+ * @tparam T Payload type associated with each range.
+ *
+ * The class is non-copyable and non-movable. It stores duplicate ranges and
+ * uses an insertion ordinal as their default stable tie-breaker. A custom
+ * canonical comparator affects the ordering of distinct ranges; a priority
+ * evaluator is independent of canonical ordering.
+ *
+ * Overlap result APIs return entries in canonical order. Invalid input ranges
+ * are rejected by insertion and removal, and produce empty/false query
+ * results. The tree does not impose domain constraints such as non-negative
+ * endpoints.
+ *
+ * @note Not thread-safe. External synchronization is required.
+ */
 template <class T> class Dmn_IntervalBTree {
 public:
+  /** @brief Payload type associated with each range. */
   using value_type = T;
+  /** @brief Inclusive signed 64-bit interval key type. */
   using range_type = Dmn_IntervalRange;
+  /** @brief Ordering callback used only for payloads of identical ranges. */
   using duplicate_order_evaluator = dmn::duplicate_order_evaluator<value_type>;
+  /** @brief Strict weak ordering over ranges, independent of payload values. */
   using canonical_comparator =
       std::function<bool(const range_type &, const range_type &)>;
+  /** @brief Returns true when its first payload has strictly higher priority.
+   */
   using priority_evaluator =
       std::function<bool(const value_type &, const value_type &)>;
+  /** @brief Callback for changes to an existing entry's overlay state. */
   using state_change_callback = dmn::state_change_callback<value_type>;
+  /** @brief Predicate for selecting an exact-range entry by its payload. */
   using entry_matcher = dmn::entry_matcher<value_type>;
+  /** @brief Callback receiving matching ranges and payloads by const reference.
+   */
   using overlap_visitor =
       std::function<void(const range_type &, const value_type &)>;
+  /** @brief Opaque identifier returned when registering a state callback. */
   using callback_registration_id = std::uint64_t;
+  /** @brief Shared client context retained by a callback registration. */
   using callback_context = std::shared_ptr<void>;
+  /** @brief Registered callback receiving context, payload, and old/new state.
+   */
   using registered_state_callback =
       std::function<void(const callback_context &, const value_type &,
                          const Dmn_OverlayState &, const Dmn_OverlayState &)>;
 
+  /** @brief Construct an empty tree using the default range ordering. */
   Dmn_IntervalBTree() noexcept = default;
+
+  /**
+   * @brief Construct an empty tree with a custom range comparator.
+   *
+   * The comparator must define a deterministic strict weak ordering over
+   * ranges only. Equivalent distinct ranges use the default endpoint order
+   * as a tie-breaker.
+   *
+   * @param comparator Custom ordering for distinct ranges; may be empty.
+   */
   explicit Dmn_IntervalBTree(canonical_comparator comparator)
       : m_canonicalComparator(std::move(comparator)) {}
+
+  /**
+   * @brief Construct an empty tree with range and priority evaluators.
+   * @param comparator Strict weak ordering over ranges; may be empty.
+   * @param priorityEvaluator Returns true when its first value is strictly
+   *        higher priority than its second; ties are allowed.
+   */
   Dmn_IntervalBTree(canonical_comparator comparator,
                     priority_evaluator priorityEvaluator)
       : m_canonicalComparator(std::move(comparator)),
         m_priorityEvaluator(std::move(priorityEvaluator)) {}
 
-  // Rule of 5: delete copy/move
+  /** @brief Copying a tree is disabled because it uniquely owns its nodes. */
   Dmn_IntervalBTree(const Dmn_IntervalBTree &) = delete;
+  /** @brief Copy assignment is disabled. */
   Dmn_IntervalBTree &operator=(const Dmn_IntervalBTree &) = delete;
+  /** @brief Moving a tree is disabled. */
   Dmn_IntervalBTree(Dmn_IntervalBTree &&) = delete;
+  /** @brief Move assignment is disabled. */
   Dmn_IntervalBTree &operator=(Dmn_IntervalBTree &&) = delete;
 
+  /** @brief Destroy the tree and release all uniquely owned nodes and entries.
+   */
   ~Dmn_IntervalBTree() noexcept;
 
+  /**
+   * @brief Insert a copy of a payload for a valid range.
+   * @param range Inclusive interval to index.
+   * @param value Payload to copy into the tree.
+   * @param onStateChange Optional callback for later state changes to this
+   *        entry; it is not called for the entry's initial state.
+   * @return @c true on insertion, or @c false for an invalid range.
+   * @throws std::logic_error if invoked reentrantly from a user callback.
+   */
   bool add(range_type range, const value_type &value,
            state_change_callback onStateChange = {});
+
+  /**
+   * @brief Move a payload into the tree for a valid range.
+   * @param range Inclusive interval to index.
+   * @param value Payload to move into the tree.
+   * @param onStateChange Optional callback for later state changes.
+   * @return @c true on insertion, or @c false for an invalid range.
+   */
   bool add(range_type range, value_type &&value,
            state_change_callback onStateChange = {});
+
+  /**
+   * @brief Insert a copied payload using endpoint arguments.
+   * @param start Inclusive lower endpoint.
+   * @param end Inclusive upper endpoint.
+   * @param value Payload to copy.
+   * @param onStateChange Optional callback for later state changes.
+   * @return @c true on insertion, or @c false for a reversed range.
+   */
   bool add(std::int64_t start, std::int64_t end, const value_type &value,
            state_change_callback onStateChange = {}) {
     return add(range_type{start, end}, value, std::move(onStateChange));
   }
+
+  /**
+   * @brief Insert a moved payload using endpoint arguments.
+   * @param start Inclusive lower endpoint.
+   * @param end Inclusive upper endpoint.
+   * @param value Payload to move.
+   * @param onStateChange Optional callback for later state changes.
+   * @return @c true on insertion, or @c false for a reversed range.
+   */
   bool add(std::int64_t start, std::int64_t end, value_type &&value,
            state_change_callback onStateChange = {}) {
     return add(range_type{start, end}, std::move(value),
                std::move(onStateChange));
   }
+
+  /**
+   * @brief Query a candidate's state and insert it if its range is valid.
+   *
+   * The returned overlap list and topology describe the candidate before it
+   * is inserted. Its callback is retained for later state changes but is
+   * never invoked for this initial state.
+   *
+   * @param range Candidate inclusive interval.
+   * @param value Payload to copy into the tree.
+   * @param onStateChange Optional callback for later state changes.
+   * @return A pair of insertion success and the candidate's initial topology
+   *         result. A failed insertion returns a default result.
+   * @throws std::logic_error if invoked reentrantly from a user callback.
+   */
   std::pair<bool, Dmn_TopologyResult<value_type>>
   addWithTopology(range_type range, const value_type &value,
                   state_change_callback onStateChange = {});
+
+  /**
+   * @brief Remove the first matching entry with exactly equal endpoints.
+   * @param range Exact interval to match.
+   * @param matcher Optional payload predicate; an empty matcher selects the
+   *        first exact-range entry in canonical order.
+   * @return @c true if one entry was removed.
+   */
   bool remove(range_type range, entry_matcher matcher = {});
+
+  /**
+   * @brief Remove one exact-range entry; equivalent to @ref remove().
+   * @param range Exact interval to match.
+   * @param matcher Optional payload predicate.
+   * @return @c true if one entry was removed.
+   */
   bool removeByRange(range_type range, entry_matcher matcher = {});
+
+  /**
+   * @brief Remove every entry overlapping a valid range.
+   * @param range Interval used to select entries.
+   * @return Number of removed entries, or zero for an invalid range/no match.
+   */
   std::size_t removeAllOverlapping(range_type range);
+
+  /**
+   * @brief Remove all entries without notifying callbacks for destroyed
+   *        entries.
+   * @throws std::logic_error if invoked reentrantly from a user callback.
+   */
   void clear();
+
+  /** @brief Return whether the tree contains no entries. */
   bool empty() const noexcept;
+
+  /** @brief Return the number of stored entries, including duplicate ranges. */
   std::size_t size() const noexcept;
 
+  /**
+   * @brief Return a copy of all entries in canonical order.
+   *
+   * The duplicate-order evaluator is called only for entries with identical
+   * ranges. Without it, their insertion ordinals determine their order.
+   *
+   * @param duplicateOrder Optional strict weak ordering for equal-range
+   *        payloads.
+   * @return Canonically ordered range/value copies.
+   * @note Requires a copy-constructible @c T when called.
+   * @throws std::logic_error if a supplied ordering callback attempts
+   *         reentrant mutation.
+   */
   std::vector<std::pair<range_type, value_type>>
   enumerateCanonical(duplicate_order_evaluator duplicateOrder = {}) const;
+
+  /**
+   * @brief Move entries out in canonical order and leave the tree empty.
+   *
+   * @param duplicateOrder Optional strict weak ordering for equal-range
+   *        payloads.
+   * @return Canonically ordered range/value pairs owning the extracted
+   *         payloads.
+   * @throws std::logic_error if invoked reentrantly from a user callback or
+   *         if the ordering callback attempts mutation.
+   */
   std::vector<std::pair<range_type, value_type>>
   enumerateCanonicalMove(duplicate_order_evaluator duplicateOrder = {});
+
+  /**
+   * @brief Replace the tree contents from a canonical snapshot.
+   *
+   * Every range is validated before the current contents are replaced.
+   * Entries are loaded in supplied order with new insertion ordinals, and
+   * registered callbacks are reconnected by the first matching registration.
+   * Loading does not dispatch state-change callbacks.
+   *
+   * @param entries Range/value snapshot to load.
+   * @param duplicateOrder Duplicate ordering associated with the snapshot;
+   *        callers pass the same evaluator to subsequent canonical
+   *        enumeration when needed.
+   * @throws std::invalid_argument if any range is invalid; the current tree
+   *         remains unchanged.
+   * @throws std::logic_error if invoked reentrantly.
+   */
   void reconstructFromCanonical(
       const std::vector<std::pair<range_type, value_type>> &entries,
       duplicate_order_evaluator duplicateOrder = {});
+
+  /**
+   * @brief Register a callback to reconnect to matching reconstructed entries.
+   *
+   * Registrations are considered in insertion order, and the first matcher
+   * returning true is used. The context is retained by shared ownership.
+   *
+   * @param matches Predicate over the opaque payload; must be callable.
+   * @param context Client-owned callback context.
+   * @param callback Callback invoked on a later state transition.
+   * @return Nonzero registration identifier for later unregistration.
+   * @throws std::invalid_argument if either function is empty.
+   * @throws std::overflow_error if no registration identifiers remain.
+   */
   callback_registration_id
   registerStateCallback(std::function<bool(const value_type &)> matches,
                         callback_context context,
                         registered_state_callback callback);
+
+  /**
+   * @brief Unregister a callback and detach it from currently stored entries.
+   * @param registration Identifier returned by @ref registerStateCallback().
+   *        Unknown identifiers are ignored.
+   */
   void unregisterStateCallback(callback_registration_id registration);
+
+  /**
+   * @brief Return whether any stored interval overlaps a query interval.
+   * @param range Inclusive query interval.
+   * @return @c true if a valid query overlaps at least one stored range.
+   */
   bool hasOverlap(range_type range) const noexcept;
+
+  /**
+   * @brief Return copies of all overlapping entries in canonical order.
+   * @param range Inclusive query interval.
+   * @return Empty for an invalid query or no matches; otherwise matching
+   *         range/value copies in canonical order.
+   * @note Requires a copy-constructible @c T when called.
+   */
   std::vector<std::pair<range_type, value_type>>
   findOverlapping(range_type range) const;
+
+  /**
+   * @brief Visit overlapping entries in canonical order without copying.
+   *
+   * @param range Inclusive query interval.
+   * @param visitor Callable receiving const references to each range and
+   *        payload. References must not be retained after the call.
+   * @throws std::invalid_argument if @p visitor is empty, including for an
+   *         invalid query.
+   * @throws std::logic_error if the visitor attempts reentrant mutation.
+   */
   void forEachOverlapping(range_type range, overlap_visitor visitor) const;
+
+  /**
+   * @brief Compute the topology of a hypothetical higher-level entry.
+   *
+   * Does not mutate the tree or invoke state-change callbacks. If no priority
+   * evaluator was configured, @c m_isTop is true.
+   *
+   * @param range Candidate inclusive interval.
+   * @param value Candidate payload used by the priority evaluator.
+   * @return Topology, priority status, and canonically ordered overlap copies.
+   * @note Requires a copy-constructible @c T when called.
+   */
   Dmn_TopologyResult<value_type> queryTopology(range_type range,
                                                const value_type &value) const;
 
