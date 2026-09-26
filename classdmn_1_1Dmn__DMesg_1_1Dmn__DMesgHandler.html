@@ -112,6 +112,7 @@ Inheritance diagram for dmn::Dmn_DMesg::Dmn_DMesgHandler:</div>
 <area href="classdmn_1_1Dmn__Io.html" alt="dmn::Dmn_Io&lt; dmn::DMesgPb &gt;" shape="rect" coords="0,0,272,24"/>
 <area href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html" alt="dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub" shape="rect" coords="282,0,554,24"/>
 <area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; Dmn_BlockingQueue_Mt &gt;" shape="rect" coords="564,0,836,24"/>
+<area href="classdmn_1_1Dmn__DLock__Handler.html" title="DMesg handler specialized for DLock table publication and local replay." alt="dmn::Dmn_DLock_Handler" shape="rect" coords="282,112,554,136"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -246,6 +247,10 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:aa69e6a0a2171a34c07469c422c7ceeb2" id="r_aa69e6a0a2171a34c07469c422c7ceeb2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa69e6a0a2171a34c07469c422c7ceeb2">writeDMesgInternal</a> (dmn::DMesgPb &amp;dmesgpb, bool move, bool block=false)</td></tr>
 <tr class="memdesc:aa69e6a0a2171a34c07469c422c7ceeb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal write implementation used by public write(...) overloads.  <br /></td></tr>
 <tr class="separator:aa69e6a0a2171a34c07469c422c7ceeb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b" id="r_a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplParams" colspan="2"><a id="a311d2db40e29dbb9639b2aa91269651b" name="a311d2db40e29dbb9639b2aa91269651b"></a>
+template&lt;typename Callable &gt; </td></tr>
+<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scheduleInHandlerContext</b> (Callable &amp;&amp;fnc)</td></tr>
+<tr class="separator:a311d2db40e29dbb9639b2aa91269651b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>

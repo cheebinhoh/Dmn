@@ -105,9 +105,10 @@ Inheritance diagram for dmn::Dmn_DMesg:</div>
  <div class="center">
   <img src="classdmn_1_1Dmn__DMesg.png" usemap="#dmn::Dmn_5FDMesg_map" alt=""/>
   <map id="dmn::Dmn_5FDMesg_map" name="dmn::Dmn_5FDMesg_map">
-<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="0,56,272,80"/>
-<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="0,0,272,24"/>
-<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="0,168,272,192"/>
+<area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="141,56,413,80"/>
+<area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="141,0,413,24"/>
+<area href="classdmn_1_1Dmn__DLock.html" title="Phase 1 distributed lock built on top of Dmn_DMesg." alt="dmn::Dmn_DLock&lt; DMesgBase &gt;" shape="rect" coords="0,168,272,192"/>
+<area href="classdmn_1_1Dmn__DMesgNet.html" alt="dmn::Dmn_DMesgNet" shape="rect" coords="282,168,554,192"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -118,6 +119,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html">HandlerSpec</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalized constructor inputs for a derived DMesg handler.  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
@@ -134,6 +138,9 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>FilterTask</b> = std
 using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerConfig</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
 <tr class="memdesc:afd97af87f1df0ac7f10a0dfe8339910e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Key/value map used to pass per-handler configuration options. <br /></td></tr>
 <tr class="separator:afd97af87f1df0ac7f10a0dfe8339910e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa2cb50589c92e0b0d9a140a5284bd19" id="r_afa2cb50589c92e0b0d9a140a5284bd19"><td class="memItemLeft" align="right" valign="top"><a id="afa2cb50589c92e0b0d9a140a5284bd19" name="afa2cb50589c92e0b0d9a140a5284bd19"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerFactory</b> = std::function&lt; std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">Dmn_DMesgHandler</a> &gt;(const <a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html">HandlerSpec</a> &amp;)&gt;</td></tr>
+<tr class="separator:afa2cb50589c92e0b0d9a140a5284bd19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84a06f06705d551d0fe33d39e76eeab7" id="r_a84a06f06705d551d0fe33d39e76eeab7"><td class="memItemLeft" align="right" valign="top"><a id="a84a06f06705d551d0fe33d39e76eeab7" name="a84a06f06705d551d0fe33d39e76eeab7"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguration</b> = std::unordered_map&lt; std::string, std::string &gt;</td></tr>
 <tr class="memdesc:a84a06f06705d551d0fe33d39e76eeab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type used to represent key/value configuration entries for the <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> object itself. <br /></td></tr>
@@ -167,6 +174,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a361f1389d565edf75b0e157e255bfc10"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10">openHandler</a> (U &amp;&amp;...arg) -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a></td></tr>
 <tr class="memdesc:a361f1389d565edf75b0e157e255bfc10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create, register and return a new <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a>.  <br /></td></tr>
 <tr class="separator:a361f1389d565edf75b0e157e255bfc10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a024c44e562cc939a9a4a4c220b119e" id="r_a8a024c44e562cc939a9a4a4c220b119e"><td class="memItemLeft" align="right" valign="top"><a id="a8a024c44e562cc939a9a4a4c220b119e" name="a8a024c44e562cc939a9a4a4c220b119e"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>openHandlerWithFactory</b> (const <a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html">HandlerSpec</a> &amp;spec, const HandlerFactory &amp;factory) -&gt; <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a></td></tr>
+<tr class="memdesc:a8a024c44e562cc939a9a4a4c220b119e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open a handler using a normalized spec and factory for derived types. <br /></td></tr>
+<tr class="separator:a8a024c44e562cc939a9a4a4c220b119e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8855fe9eba1a0576c8e4ba0a16095bc7" id="r_a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7">closeHandler</a> (<a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">HandlerType</a> &amp;handlerToClose)</td></tr>
 <tr class="memdesc:a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unregister and free the provided handler.  <br /></td></tr>
 <tr class="separator:a8855fe9eba1a0576c8e4ba0a16095bc7"><td class="memSeparator" colspan="2">&#160;</td></tr>

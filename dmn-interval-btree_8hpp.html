@@ -160,22 +160,22 @@ Enumerations</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Template B-tree for indexing inclusive intervals and their values. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 Overview</h2>
 <p>Dmn_IntervalBTree is an in-memory, degree-2 B-tree that stores inclusive Dmn_IntervalRange keys alongside opaque payloads. It supports canonical enumeration, overlap queries, optional topology and priority evaluation, per-entry state-change callbacks, deletion, and reconstruction from canonical snapshots. The implementation is private to this header so each payload type can instantiate the complete template.</p>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Ordering and determinism</h2>
 <p>By default, distinct ranges are ordered by ascending start and then ascending end; payloads never participate in range ordering. A custom range comparator can replace that order, with the default range order used to break equivalence between distinct ranges. Equal ranges are ordered by insertion ordinal unless an enumeration call supplies a duplicate-order evaluator. Callers that need identical snapshots across trees must supply compatible range and duplicate-order comparators.</p>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Ownership and payload requirements</h2>
 <p>Nodes and entry records are uniquely owned by the tree. Entries retain their payload, ordinal, and runtime callback together while B-tree operations rebalance nodes. Lvalue insertion copies the payload; rvalue insertion moves it, allowing move-only payloads. Copy-returning operations require a copy-constructible payload when used. forEachOverlapping() visits payloads by const reference, while enumerateCanonicalMove() extracts payloads and empties the tree.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Topology and callbacks</h2>
 <p>queryTopology() computes a hypothetical insertion result without changing the tree. addWithTopology() returns the same initial classification while inserting; the new entry's callback is not called for its initial state. Existing entries are notified only when their topology or priority state changes. Callbacks are synchronous, run after the mutation is structurally complete, and propagate exceptions without rolling back that mutation. Reentrant mutation is rejected with <code>std::logic_error</code>.</p>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Thread safety</h2>
 <p>The tree is not thread-safe. Callers must externally synchronize all concurrent reads and mutations. User-supplied visitors, comparators, matchers, and callbacks must not mutate the tree reentrantly.</p>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Implementation notes</h2>
 <p>Overlap traversal is pruned using each node's maximum endpoint (<code>m_subtreeMaxEnd</code>). Insertions and deletions maintain this metadata along with the B-tree invariants. Canonical enumeration is independent of the tree's physical shape. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>

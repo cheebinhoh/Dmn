@@ -4,6 +4,7 @@ var hierarchy =
     [ "dmn::Dmn_Async< QueueType >", "classdmn_1_1Dmn__Async.html", [
       [ "dmn::Dmn_Pub< dmn::DMesgPb >", "classdmn_1_1Dmn__Pub.html", [
         [ "dmn::Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html", [
+          [ "dmn::Dmn_DLock< DMesgBase >", "classdmn_1_1Dmn__DLock.html", null ],
           [ "dmn::Dmn_DMesgNet", "classdmn_1_1Dmn__DMesgNet.html", null ]
         ] ]
       ] ],
@@ -11,7 +12,9 @@ var hierarchy =
       [ "dmn::Dmn_Runtime_Manager< QueueType >", "classdmn_1_1Dmn__Runtime__Manager.html", null ]
     ] ],
     [ "dmn::Dmn_Async< Dmn_BlockingQueue_Mt >", "classdmn_1_1Dmn__Async.html", [
-      [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", null ]
+      [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", [
+        [ "dmn::Dmn_DLock_Handler", "classdmn_1_1Dmn__DLock__Handler.html", null ]
+      ] ]
     ] ],
     [ "dmn::Dmn_Async< QueueType >::Dmn_Async_Handle", "classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html", null ],
     [ "dmn::Dmn_BlockingQueue< Derived, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
@@ -27,6 +30,17 @@ var hierarchy =
     [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< T >, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
       [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ]
     ] ],
+    [ "dmn::Dmn_DLock_Base", "classdmn_1_1Dmn__DLock__Base.html", [
+      [ "dmn::Dmn_DLock< DMesgBase >", "classdmn_1_1Dmn__DLock.html", null ]
+    ] ],
+    [ "dmn::Dmn_DLock_Config", "structdmn_1_1Dmn__DLock__Config.html", null ],
+    [ "dmn::Dmn_DLock_Entry", "structdmn_1_1Dmn__DLock__Entry.html", null ],
+    [ "dmn::Dmn_DLock_HandlerProxy", "classdmn_1_1Dmn__DLock__HandlerProxy.html", null ],
+    [ "dmn::Dmn_DLock_LifecycleEvent", "structdmn_1_1Dmn__DLock__LifecycleEvent.html", null ],
+    [ "dmn::Dmn_DLock_Range", "structdmn_1_1Dmn__DLock__Range.html", null ],
+    [ "dmn::Dmn_DLock_RequestOptions", "structdmn_1_1Dmn__DLock__RequestOptions.html", null ],
+    [ "dmn::Dmn_DLock_Result", "structdmn_1_1Dmn__DLock__Result.html", null ],
+    [ "dmn::Dmn_DLock_TableSnapshot", "structdmn_1_1Dmn__DLock__TableSnapshot.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
     [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [
@@ -77,6 +91,7 @@ var hierarchy =
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
+    [ "dmn::Dmn_DMesg::HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "structdmn_1_1ScopeGuard.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >::Ticket", "classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html", null ],

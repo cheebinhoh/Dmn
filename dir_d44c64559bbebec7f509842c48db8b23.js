@@ -6,6 +6,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-blockingqueue-mt.hpp", "dmn-blockingqueue-mt_8hpp.html", "dmn-blockingqueue-mt_8hpp" ],
     [ "dmn-blockingqueue.hpp", "dmn-blockingqueue_8hpp.html", "dmn-blockingqueue_8hpp" ],
     [ "dmn-debug.hpp", "dmn-debug_8hpp.html", null ],
+    [ "dmn-dlock.hpp", "dmn-dlock_8hpp.html", "dmn-dlock_8hpp" ],
     [ "dmn-dmesg-pb-util.hpp", "dmn-dmesg-pb-util_8hpp.html", "dmn-dmesg-pb-util_8hpp" ],
     [ "dmn-dmesg.hpp", "dmn-dmesg_8hpp.html", "dmn-dmesg_8hpp" ],
     [ "dmn-dmesgnet.hpp", "dmn-dmesgnet_8hpp.html", "dmn-dmesgnet_8hpp" ],

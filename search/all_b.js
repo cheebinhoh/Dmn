@@ -17,10 +17,10 @@ var searchData=
   ['m_5fth_14',['m_th',['../classdmn_1_1Dmn__Proc.html#a9a0a6e20baaf449c37613d26f65c6e84',1,'dmn::Dmn_Proc']]],
   ['m_5ftopology_15',['m_topology',['../structdmn_1_1Dmn__OverlayState.html#a97a97d30392fc63f4084f92fc8f3d637',1,'dmn::Dmn_OverlayState']]],
   ['make_5fscope_5fguard_16',['make_scope_guard',['../dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e',1,'dmn']]],
-  ['memory_20order_20notes_17',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md14',1,'']]],
+  ['memory_20order_20notes_17',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md18',1,'']]],
   ['message_20body_20setters_18',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
   ['message_20field_20setters_19',['DMesgPb message field setters',['../group__dmesg__pb__msg.html',1,'']]],
   ['message_20setters_20',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
-  ['model_21',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-pub-sub_8hpp.html#autotoc_md32',1,'Threading and execution model']]],
+  ['model_21',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-dlock_8hpp.html#autotoc_md14',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md36',1,'Threading and execution model']]],
   ['move_20and_20copy_20behavior_22',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]]
 ];

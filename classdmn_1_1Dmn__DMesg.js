@@ -2,6 +2,7 @@ var classdmn_1_1Dmn__DMesg =
 [
     [ "Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler" ],
     [ "Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy" ],
+    [ "HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
     [ "AsyncProcessTask", "classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95", null ],
     [ "FilterTask", "classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2", null ],
     [ "HandlerConfig", "classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e", null ],
@@ -11,6 +12,7 @@ var classdmn_1_1Dmn__DMesg =
     [ "getLastTopicCacheInternal", "classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65", null ],
     [ "getTopicLastMessage", "classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8", null ],
     [ "openHandler", "classdmn_1_1Dmn__DMesg.html#a361f1389d565edf75b0e157e255bfc10", null ],
+    [ "openHandlerWithFactory", "classdmn_1_1Dmn__DMesg.html#a8a024c44e562cc939a9a4a4c220b119e", null ],
     [ "publish", "classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225", null ],
     [ "publishInternal", "classdmn_1_1Dmn__DMesg.html#ad483b757d043de9973b744cf85f2a7b9", null ],
     [ "publishSysInternal", "classdmn_1_1Dmn__DMesg.html#a896b86227c1643a79c0b5cc29f0e6be4", null ],
