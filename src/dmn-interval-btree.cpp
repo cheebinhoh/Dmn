@@ -11,13 +11,13 @@
 namespace dmn {
 
 auto Dmn_IntervalRange::isValid() const noexcept -> bool {
-  return start <= end;
+  return m_start <= m_end;
 }
 
 auto Dmn_IntervalRange::overlaps(const Dmn_IntervalRange &other) const noexcept
     -> bool {
-  return isValid() && other.isValid() && start <= other.end &&
-         other.start <= end;
+  return isValid() && other.isValid() && m_start <= other.m_end &&
+         other.m_start <= m_end;
 }
 
 } // namespace dmn

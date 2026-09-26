@@ -2,12 +2,12 @@
 
 Status: design-ready specification; implementation is in progress.
 
-Implementation status: Layers 0, 1, and 2A of
-`dmn-interval-btree-plan.md` are implemented and verified. The current
-implementation includes template construction, range validity and overlap
-semantics, vector-backed insertion with invalid-range rejection, and the
-`empty()` / `size()` queries. Canonical ordering and enumeration (Layer 2B)
-and all subsequent capabilities remain unimplemented.
+Implementation status: Layers 0, 1, 2A, and 2B of
+`dmn-interval-btree-plan.md` are implemented and verified. This includes
+template construction, range validity and overlap semantics, vector-backed
+insertion with invalid-range rejection, `empty()` / `size()`, canonical
+enumeration, stable insertion ordinals, duplicate-order callback support,
+and custom range comparison. Layers 3 and later remain planned.
 
 ## 1. Purpose and scope
 
@@ -29,9 +29,9 @@ The interval B‑tree is purely in-memory and does not define wire format or com
 
 ### 2.1 Range definition
 
-A range is valid iff: start <= end
+A range is valid iff: `m_start <= m_end`.
 
-Overlap is defined as: a.start <= b.end && b.start <= a.end
+Overlap is defined as: a.m_start <= b.m_end && b.m_start <= a.m_end
 
 Thus:
 
@@ -55,8 +55,8 @@ that use the same canonical-comparator configuration.
 
 With the default comparator, entries with distinct ranges are ordered by:
 
-1. ascending `range.start`
-2. ascending `range.end`
+1. ascending `range.m_start`
+2. ascending `range.m_end`
 
 Payload `T` MUST NOT participate in ordering.
 
@@ -71,7 +71,7 @@ A caller MAY provide a custom range comparator. It MUST be a deterministic
 strict weak ordering, MUST inspect ranges only, and MUST be configured
 consistently by handlers that need identical canonical output. When the custom
 comparator orders two distinct ranges as equivalent, the default
-`(range.start, range.end)` ordering breaks that tie. For identical ranges,
+`(range.m_start, range.m_end)` ordering breaks that tie. For identical ranges,
 `duplicateOrder` breaks the tie when supplied; otherwise insertion ordinal
 does. The duplicate callback is never used for distinct ranges. Payloads do
 not affect ordering unless the caller explicitly supplies them to
@@ -93,8 +93,8 @@ results; it does not require identical physical node splits or allocation.
 
 ```cpp
 struct Dmn_IntervalRange {
-  std::int64_t start{};
-  std::int64_t end{};
+  std::int64_t m_start{};
+  std::int64_t m_end{};
 
   bool isValid() const noexcept;
   bool overlaps(const Dmn_IntervalRange &other) const noexcept;
@@ -113,9 +113,9 @@ enum class Dmn_OverlayTopology {
 // Rich return type for topological insertions and queries
 template <class T>
 struct Dmn_TopologyResult {
-  Dmn_OverlayTopology status{Dmn_OverlayTopology::Clear};
-  bool isTop{true};  // True if this entry holds the highest priority among all its overlaps
-  std::vector<std::pair<Dmn_IntervalRange, T>> overlappingEntries;
+  Dmn_OverlayTopology m_status{Dmn_OverlayTopology::Clear};
+  bool m_isTop{true};  // True if this entry holds the highest priority among all its overlaps
+  std::vector<std::pair<Dmn_IntervalRange, T>> m_overlappingEntries;
 };
 
 template <class T>
@@ -134,8 +134,8 @@ template <class T>
 using duplicate_order_evaluator = std::function<bool(const T&, const T&)>;
 
 struct Dmn_OverlayState {
-  Dmn_OverlayTopology topology{Dmn_OverlayTopology::Clear};
-  bool isTop{true};
+  Dmn_OverlayTopology m_topology{Dmn_OverlayTopology::Clear};
+  bool m_isTop{true};
 };
 
 template <class T>
@@ -160,7 +160,7 @@ synchronization requirement.
 Callbacks are optional and are invoked only when either `topology` or
 `isTop` changes for an already-existing entry.
 
-Dmn_IntervalRange::isValid() implements the start <= end rule.
+Dmn_IntervalRange::isValid() implements the `m_start <= m_end` rule.
 
 Dmn_IntervalRange::overlaps() implements the inclusive overlap rule.
 
@@ -454,13 +454,15 @@ operation remains usable.
 
 ```cpp
 struct LockData {
-  std::string nodeId;
-  std::uint64_t sequence;
+  std::string m_nodeId;
+  std::uint64_t m_sequence;
 };
 
 // Setup tree with a priority evaluator (higher sequence = "on top")
 Dmn_IntervalBTree<LockData>::priority_evaluator topCheck = 
-    [](const LockData& a, const LockData& b) { return a.sequence > b.sequence; };
+    [](const LockData& a, const LockData& b) {
+      return a.m_sequence > b.m_sequence;
+    };
 
 Dmn_IntervalBTree<LockData> tree({}, topCheck);
 
@@ -472,9 +474,9 @@ tree.add(10, 15, {"NodeA", 2});
 auto [success, result] = tree.addWithTopology({13, 17}, {"NodeC", 3});
 
 // success == true
-// result.status == Dmn_OverlayTopology::OverlaidLeft (left boundary 13 is within 10-15)
-// result.isTop == true (Node C's sequence 3 > Node A's sequence 2)
-// result.overlappingEntries contains [ ({10, 15}, {"NodeA", 2}) ]
+// result.m_status == Dmn_OverlayTopology::OverlaidLeft (left boundary 13 is within 10-15)
+// result.m_isTop == true (Node C's sequence 3 > Node A's sequence 2)
+// result.m_overlappingEntries contains [ ({10, 15}, {"NodeA", 2}) ]
 
 // Querying the state later
 auto queryState = tree.queryTopology({13, 17}, {"NodeC", 3});
@@ -486,20 +488,20 @@ auto queryState = tree.queryTopology({13, 17}, {"NodeC", 3});
 ### 4.1 Node structure
 ```cpp
 struct Node {
-  std::vector<Entry> entries;
-  std::vector<std::unique_ptr<Node>> children;
-  std::int64_t subtreeMaxEnd{};
-  bool isLeaf{true};
+  std::vector<Entry> m_entries;
+  std::vector<std::unique_ptr<Node>> m_children;
+  std::int64_t m_subtreeMaxEnd{};
+  bool m_isLeaf{true};
 };
 ```
 
 `Node` and `Entry` are private implementation details, not required public
-types. The owning tree stores its root as `std::unique_ptr` and owns every
-descendant through the node `children` vectors. Parent pointers and
+types. The owning tree stores its root as `m_root` (`std::unique_ptr`) and owns
+every descendant through the node `m_children` vectors. Parent pointers and
 `std::shared_ptr` are not required. An entry record keeps its range, value,
 insertion ordinal, and optional callback together so they cannot become
 misaligned when keys move during splits, merges, or borrowing.
-`subtreeMaxEnd` is introduced when overlap pruning is implemented. It MUST be
+`m_subtreeMaxEnd` is introduced when overlap pruning is implemented. It MUST be
 updated after insertion, split, merge, borrowing, and removal.
 
 ### 4.2 Insertion
@@ -519,10 +521,10 @@ minimum and maximum key counts.
 ### 4.3 Overlap queries
 - check each key for overlap;
 - descend into all candidate children for the initial correct implementation;
-- use `subtreeMaxEnd` to prune only after its metadata maintenance is
+- use `m_subtreeMaxEnd` to prune only after its metadata maintenance is
   implemented and validated.
 
-Pruning MUST never skip a child whose `subtreeMaxEnd` can reach the query
+Pruning MUST never skip a child whose `m_subtreeMaxEnd` can reach the query
 start. Query results are returned in canonical order.
 
 ### 4.4 Canonical enumeration
@@ -612,6 +614,7 @@ the public template can be instantiated; it does not assert tree behavior.
 - IntervalBTreeDuplicateRangesUseCallerOrdering
 - IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
 - IntervalBTreeCustomComparatorIsUsed
+- IntervalBTreeCustomComparatorEquivalentRangesUseDefaultTieBreak
 - IntervalBTreeEnumerationIsIndependentOfNodeSplits
 - IntervalBTreeConstructorsUseDefaultAndCustomComparators
 

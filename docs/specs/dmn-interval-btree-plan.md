@@ -7,10 +7,11 @@ Implemented and verified:
 - Layer 1: range validity and inclusive overlap semantics.
 - Layer 2A: vector-backed insertion, invalid-range rejection, `empty()`, and
   `size()`.
+- Layer 2B: default/custom canonical range ordering, stable duplicate ordering,
+  and caller-defined ordering for identical ranges.
 
 The focused `dmn-test-interval-btree` target and its registered tests pass.
-Layer 2B (canonical ordering and enumeration) has not started; subsequent
-layers remain planned.
+Layers 3 and later remain planned.
 
 ## 1. Delivery rule
 
@@ -33,6 +34,11 @@ a runtime failure; remove them before completing or committing the increment.
 ---
 
 ## 2. Target architecture
+
+Follow the repository's C++ data-member naming convention: prefix class and
+struct data members with `m_` (for example, `m_start`, `m_entries`, and
+`m_nextOrdinal`). Do not apply this prefix to local variables, function
+parameters, type aliases, or protocol field names.
 
 ```text
 application / Dmn_DLock / other DMN components
@@ -132,7 +138,7 @@ before the corresponding implementation change.
 
 Add `enumerateCanonical()` returning
 `std::vector<std::pair<range_type, value_type>>`. With no custom comparator,
-sort by ascending `range.start`, then ascending `range.end`. Payload values
+sort by ascending `range.m_start`, then ascending `range.m_end`. Payload values
 must not participate in this ordering.
 
 Test: `IntervalBTreeCanonicalOrderSimple`, inserting distinct ranges in an
@@ -167,12 +173,13 @@ Tests: `IntervalBTreeDuplicateRangesUseCallerOrdering` and
 Add the custom range-comparator constructor. The comparator receives ranges
 only, must be deterministic and a strict weak ordering, and must not inspect
 payloads. It orders distinct ranges. If it considers distinct ranges
-equivalent, break the tie by the default `(start, end)` order. Identical
+equivalent, break the tie by the default `(m_start, m_end)` order. Identical
 ranges are resolved by the duplicate callback or insertion ordinal. Callers
 that require matching canonical output across handlers must use equivalent
 comparator and duplicate-callback configurations.
 
-Tests: `IntervalBTreeCustomComparatorIsUsed` and
+Tests: `IntervalBTreeCustomComparatorIsUsed`,
+`IntervalBTreeCustomComparatorEquivalentRangesUseDefaultTieBreak`, and
 `IntervalBTreeConstructorsUseDefaultAndCustomComparators`.
 
 Existing Layer 2A tests (`IntervalBTreeStoresOneEntry` and
@@ -211,13 +218,13 @@ Implementation
 Introduce a private node representation conceptually equivalent to:
 ```cpp
 struct Node {
-  std::vector<Entry> entries;
-  std::vector<std::unique_ptr<Node>> children;
-  bool isLeaf{true};
+  std::vector<Entry> m_entries;
+  std::vector<std::unique_ptr<Node>> m_children;
+  bool m_isLeaf{true};
 };
 ```
 
-The tree owns `root_` with `std::unique_ptr`; children own descendants with
+The tree owns `m_root` with `std::unique_ptr`; children own descendants with
 `std::unique_ptr`. Do not add parent pointers or `std::shared_ptr`. Preserve
 each entry's value, insertion ordinal, and optional callback when keys move
 during split, merge, or borrowing.
@@ -496,7 +503,7 @@ Exit: canonical enumeration complete.
 ## 14. Layer 10: overlap metadata and pruning
 Implementation
 
-Add and maintain `subtreeMaxEnd` metadata for overlap pruning after every
+Add and maintain `m_subtreeMaxEnd` metadata for overlap pruning after every
 insertion, split, deletion, borrow, merge, and root contraction. Keep the
 unpruned overlap traversal from Layer 6 as the correctness baseline and
 compare pruned results against it in tests.
@@ -539,7 +546,7 @@ implementation-critical:
   mutate ranges or priorities. Reentrant mutation is explicitly rejected.
 - Callback exceptions occur after a successful, consistent mutation and are
   propagated without rollback; callers must handle this contract.
-- `subtreeMaxEnd` is required for safe pruning; every structural mutation
+- `m_subtreeMaxEnd` is required for safe pruning; every structural mutation
   must update it or overlap queries can become incorrect.
 - Parallel vectors are fragile. An internal entry record containing range,
   value, ordinal, and callback is preferred, even if the public node layout

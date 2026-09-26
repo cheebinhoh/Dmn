@@ -158,6 +158,8 @@ jobs; existing public DMesg behavior is proven unchanged.
 Create the public lock header and lock-private implementation header/source
 with only types and no operational placeholders:
 
+- prefix C++ class and struct data members with `m_`; preserve protocol field
+  identifiers and wire names unchanged;
 - `Dmn_DLock_Range` as an alias or value-compatible wrapper around
   `Dmn_IntervalRange`, with DLock-specific non-negative validation;
 - table entry/state/terminal reason, immutable request/session identities,

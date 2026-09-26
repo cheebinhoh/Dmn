@@ -19,8 +19,8 @@
 namespace dmn {
 
 struct Dmn_IntervalRange {
-  std::int64_t start{};
-  std::int64_t end{};
+  std::int64_t m_start{};
+  std::int64_t m_end{};
 
   auto isValid() const noexcept -> bool;
   auto overlaps(const Dmn_IntervalRange &other) const noexcept -> bool;
@@ -37,7 +37,7 @@ public:
 
   Dmn_IntervalBTree() noexcept = default;
   explicit Dmn_IntervalBTree(canonical_comparator comparator)
-      : canonicalComparator_(std::move(comparator)) {}
+      : m_canonicalComparator(std::move(comparator)) {}
 
   // Rule of 5: delete copy/move
   Dmn_IntervalBTree(const Dmn_IntervalBTree &) = delete;
@@ -57,21 +57,21 @@ public:
 private:
   static bool defaultRangeLess(const range_type &lhs,
                                const range_type &rhs) noexcept {
-    if (lhs.start != rhs.start) {
-      return lhs.start < rhs.start;
+    if (lhs.m_start != rhs.m_start) {
+      return lhs.m_start < rhs.m_start;
     }
-    return lhs.end < rhs.end;
+    return lhs.m_end < rhs.m_end;
   }
 
   struct Entry {
-    range_type range;
-    value_type value;
-    std::size_t ordinal;
+    range_type m_range;
+    value_type m_value;
+    std::size_t m_ordinal;
   };
 
-  canonical_comparator canonicalComparator_;
-  std::vector<Entry> entries_;
-  std::size_t nextOrdinal_{};
+  canonical_comparator m_canonicalComparator;
+  std::vector<Entry> m_entries;
+  std::size_t m_nextOrdinal{};
 };
 
 template <class T> Dmn_IntervalBTree<T>::~Dmn_IntervalBTree() noexcept {}
@@ -82,18 +82,18 @@ bool Dmn_IntervalBTree<T>::add(range_type range, const value_type &value) {
     return false;
   }
 
-  entries_.push_back(Entry{range, value, nextOrdinal_});
-  nextOrdinal_++;
+  m_entries.push_back(Entry{range, value, m_nextOrdinal});
+  m_nextOrdinal++;
 
   return true;
 }
 
 template <class T> bool Dmn_IntervalBTree<T>::empty() const noexcept {
-  return entries_.empty();
+  return m_entries.empty();
 }
 
 template <class T> std::size_t Dmn_IntervalBTree<T>::size() const noexcept {
-  return entries_.size();
+  return m_entries.size();
 }
 
 template <class T>
@@ -102,42 +102,42 @@ std::vector<std::pair<typename Dmn_IntervalBTree<T>::range_type,
 Dmn_IntervalBTree<T>::enumerateCanonical(
     duplicate_order_evaluator duplicateOrder) const {
   std::vector<const Entry *> orderedEntries;
-  orderedEntries.reserve(entries_.size());
+  orderedEntries.reserve(m_entries.size());
 
-  for (const auto &entry : entries_) {
+  for (const auto &entry : m_entries) {
     orderedEntries.push_back(&entry);
   }
 
   std::stable_sort(orderedEntries.begin(), orderedEntries.end(),
                    [this, &duplicateOrder](const Entry *lhs, const Entry *rhs) {
                      const bool identicalRanges =
-                         lhs->range.start == rhs->range.start &&
-                         lhs->range.end == rhs->range.end;
+                         lhs->m_range.m_start == rhs->m_range.m_start &&
+                         lhs->m_range.m_end == rhs->m_range.m_end;
 
                      if (identicalRanges) {
                        if (duplicateOrder) {
-                         return duplicateOrder(lhs->value, rhs->value);
+                         return duplicateOrder(lhs->m_value, rhs->m_value);
                        }
-                       return lhs->ordinal < rhs->ordinal;
+                       return lhs->m_ordinal < rhs->m_ordinal;
                      }
 
-                     if (canonicalComparator_) {
-                       if (canonicalComparator_(lhs->range, rhs->range)) {
+                     if (m_canonicalComparator) {
+                       if (m_canonicalComparator(lhs->m_range, rhs->m_range)) {
                          return true;
                        }
-                       if (canonicalComparator_(rhs->range, lhs->range)) {
+                       if (m_canonicalComparator(rhs->m_range, lhs->m_range)) {
                          return false;
                        }
                      }
 
-                     return defaultRangeLess(lhs->range, rhs->range);
+                     return defaultRangeLess(lhs->m_range, rhs->m_range);
                    });
 
   std::vector<std::pair<range_type, value_type>> result;
   result.reserve(orderedEntries.size());
 
   for (const Entry *entry : orderedEntries) {
-    result.emplace_back(entry->range, entry->value);
+    result.emplace_back(entry->m_range, entry->m_value);
   }
 
   return result;

@@ -135,14 +135,14 @@ session.
 
 ## 4. Ranges, entries, and table semantics
 
-Ranges are signed 64-bit, non-negative, and inclusive.  A valid range satisfies
-`0 <= start && start <= end`; overlap is
-`a.start <= b.end && b.start <= a.end`.  Thus `[1,2]` conflicts with `[2,3]`,
+Ranges are signed 64-bit, non-negative, and inclusive. A valid range satisfies
+`0 <= m_start && m_start <= m_end`; overlap is
+`a.m_start <= b.m_end && b.m_start <= a.m_end`.  Thus `[1,2]` conflicts with `[2,3]`,
 while `[1,2]` does not conflict with `[3,4]`.
 
 `Dmn_DLock_Range` is an alias or direct value-compatible wrapper around
 `Dmn_IntervalRange`; both use the same inclusive `int64_t` endpoints and
-overlap operation. DLock adds the domain constraint `start >= 0` through its
+overlap operation. DLock adds the domain constraint `m_start >= 0` through its
 own validation before calling the generic B-tree. Conversion MUST preserve
 both endpoints exactly and MUST reject negative or reversed ranges before any
 tree mutation.
@@ -203,8 +203,8 @@ to a byte-identical payload on all handlers. DLock MUST never use the B-tree's
 default insertion-ordinal ordering for wire serialization. It supplies an
 explicit duplicate comparator with this exact ordering:
 
-1. ascending `range.start`;
-2. ascending `range.end`;
+1. ascending `range.m_start`;
+2. ascending `range.m_end`;
 3. ascending `priority`;
 4. ascending immutable `sequence`;
 5. ascending `request_id` as a final tie-breaker.
@@ -238,28 +238,32 @@ retained table.
 
 ## 5. `Dmn_DLock` API shape and session ownership
 
+C++ class and struct data members in the DLock API use the repository's
+`m_` prefix convention. This naming convention does not rename protobuf field
+identifiers or other protocol-defined names.
+
 `Dmn_DLock` is a template deriving from a DMesg-compatible base, so a later
 transport-compatible implementation can be investigated without changing the
 lock facade:
 
 ```cpp
 struct Dmn_DLock_Config {
-  std::string domain;
-  std::chrono::milliseconds default_lease;
-  std::chrono::milliseconds retry_min_backoff;
-  std::chrono::milliseconds retry_max_backoff;
-  std::chrono::milliseconds close_cleanup_timeout;
-  std::chrono::milliseconds retained_terminal_ttl;
+  std::string m_domain;
+  std::chrono::milliseconds m_default_lease;
+  std::chrono::milliseconds m_retry_min_backoff;
+  std::chrono::milliseconds m_retry_max_backoff;
+  std::chrono::milliseconds m_close_cleanup_timeout;
+  std::chrono::milliseconds m_retained_terminal_ttl;
 };
 
 using Dmn_DLock_Range = Dmn_IntervalRange;
 
 struct Dmn_DLock_RequestOptions {
-  std::string owner_id;
-  int priority{};
-  std::chrono::milliseconds wait_timeout{};
-  std::optional<std::chrono::milliseconds> lease_duration;
-  std::shared_ptr<std::atomic_bool> cancel_token;
+  std::string m_owner_id;
+  int m_priority{};
+  std::chrono::milliseconds m_wait_timeout{};
+  std::optional<std::chrono::milliseconds> m_lease_duration;
+  std::shared_ptr<std::atomic_bool> m_cancel_token;
 };
 
 struct Dmn_DLock_Result;

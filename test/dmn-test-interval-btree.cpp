@@ -126,15 +126,127 @@ TEST(IntervalBTree, CanonicalOrderSimple) {
   const auto entries = tree.enumerateCanonical();
 
   ASSERT_EQ(entries.size(), 3U);
-  EXPECT_EQ(entries[0].first.start, 1);
-  EXPECT_EQ(entries[0].first.end, 2);
+  EXPECT_EQ(entries[0].first.m_start, 1);
+  EXPECT_EQ(entries[0].first.m_end, 2);
   EXPECT_EQ(entries[0].second, 11);
-  EXPECT_EQ(entries[1].first.start, 1);
-  EXPECT_EQ(entries[1].first.end, 3);
+  EXPECT_EQ(entries[1].first.m_start, 1);
+  EXPECT_EQ(entries[1].first.m_end, 3);
   EXPECT_EQ(entries[1].second, 10);
-  EXPECT_EQ(entries[2].first.start, 5);
-  EXPECT_EQ(entries[2].first.end, 7);
+  EXPECT_EQ(entries[2].first.m_start, 5);
+  EXPECT_EQ(entries[2].first.m_end, 7);
   EXPECT_EQ(entries[2].second, 50);
+}
+
+TEST(IntervalBTree, DuplicateRangesUseStableTieBreak) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  ASSERT_TRUE(tree.add({2, 5}, 10));
+  EXPECT_FALSE(tree.add({5, 2}, 99));
+  ASSERT_TRUE(tree.add({2, 5}, 20));
+
+  const auto entries = tree.enumerateCanonical();
+
+  ASSERT_EQ(entries.size(), 2U);
+  EXPECT_EQ(entries[0].second, 10);
+  EXPECT_EQ(entries[1].second, 20);
+}
+
+TEST(IntervalBTree, DuplicateRangesUseCallerOrdering) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  ASSERT_TRUE(tree.add({2, 5}, 30));
+  ASSERT_TRUE(tree.add({2, 5}, 10));
+  ASSERT_TRUE(tree.add({2, 5}, 20));
+
+  const auto entries = tree.enumerateCanonical(
+      [](const int &lhs, const int &rhs) { return lhs < rhs; });
+
+  ASSERT_EQ(entries.size(), 3U);
+  EXPECT_EQ(entries[0].second, 10);
+  EXPECT_EQ(entries[1].second, 20);
+  EXPECT_EQ(entries[2].second, 30);
+}
+
+TEST(IntervalBTree, DuplicateOrderingCallbackNotCalledForDistinctRanges) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  ASSERT_TRUE(tree.add({3, 5}, 30));
+  ASSERT_TRUE(tree.add({1, 4}, 10));
+  ASSERT_TRUE(tree.add({2, 6}, 20));
+
+  std::size_t callbackCalls = 0;
+  const auto entries =
+      tree.enumerateCanonical([&callbackCalls](const int &, const int &) {
+        ++callbackCalls;
+        return false;
+      });
+
+  EXPECT_EQ(callbackCalls, 0U);
+  ASSERT_EQ(entries.size(), 3U);
+  EXPECT_EQ(entries[0].second, 10);
+  EXPECT_EQ(entries[1].second, 20);
+  EXPECT_EQ(entries[2].second, 30);
+}
+
+TEST(IntervalBTree, CustomComparatorIsUsed) {
+  using Range = dmn::Dmn_IntervalBTree<int>::range_type;
+  const auto reverseStart = [](const Range &lhs, const Range &rhs) {
+    return lhs.m_start > rhs.m_start;
+  };
+  dmn::Dmn_IntervalBTree<int> tree(reverseStart);
+
+  ASSERT_TRUE(tree.add({1, 3}, 10));
+  ASSERT_TRUE(tree.add({5, 7}, 50));
+  ASSERT_TRUE(tree.add({3, 4}, 30));
+
+  const auto entries = tree.enumerateCanonical();
+
+  ASSERT_EQ(entries.size(), 3U);
+  EXPECT_EQ(entries[0].second, 50);
+  EXPECT_EQ(entries[1].second, 30);
+  EXPECT_EQ(entries[2].second, 10);
+}
+
+TEST(IntervalBTree, CustomComparatorEquivalentRangesUseDefaultTieBreak) {
+  using Range = dmn::Dmn_IntervalBTree<int>::range_type;
+  const auto compareStartOnly = [](const Range &lhs, const Range &rhs) {
+    return lhs.m_start < rhs.m_start;
+  };
+  dmn::Dmn_IntervalBTree<int> tree(compareStartOnly);
+
+  ASSERT_TRUE(tree.add({2, 5}, 25));
+  ASSERT_TRUE(tree.add({2, 3}, 23));
+  ASSERT_TRUE(tree.add({1, 8}, 18));
+
+  const auto entries = tree.enumerateCanonical();
+
+  ASSERT_EQ(entries.size(), 3U);
+  EXPECT_EQ(entries[0].second, 18);
+  EXPECT_EQ(entries[1].second, 23);
+  EXPECT_EQ(entries[2].second, 25);
+}
+
+TEST(IntervalBTree, ConstructorsUseDefaultAndCustomComparators) {
+  using Tree = dmn::Dmn_IntervalBTree<int>;
+  using Range = Tree::range_type;
+
+  Tree defaultTree;
+  ASSERT_TRUE(defaultTree.add({5, 7}, 50));
+  ASSERT_TRUE(defaultTree.add({1, 3}, 10));
+  const auto defaultEntries = defaultTree.enumerateCanonical();
+  ASSERT_EQ(defaultEntries.size(), 2U);
+  EXPECT_EQ(defaultEntries[0].second, 10);
+  EXPECT_EQ(defaultEntries[1].second, 50);
+
+  Tree customTree([](const Range &lhs, const Range &rhs) {
+    return lhs.m_start > rhs.m_start;
+  });
+  ASSERT_TRUE(customTree.add({5, 7}, 50));
+  ASSERT_TRUE(customTree.add({1, 3}, 10));
+  const auto customEntries = customTree.enumerateCanonical();
+  ASSERT_EQ(customEntries.size(), 2U);
+  EXPECT_EQ(customEntries[0].second, 50);
+  EXPECT_EQ(customEntries[1].second, 10);
 }
 
 int main(int argc, char *argv[]) {
