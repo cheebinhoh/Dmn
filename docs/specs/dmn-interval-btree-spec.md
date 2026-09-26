@@ -31,7 +31,9 @@ Thus:
 - `[1,2]` conflicts with `[2,3]`
 - `[1,2]` does not conflict with `[3,4]`
 
-Invalid ranges MUST be rejected.
+Invalid ranges MUST be rejected. `overlaps()` MUST return `false` if either
+operand is invalid; callers must not be able to get a positive overlap result
+from a reversed range.
 Implementations MUST avoid signed overflow when evaluating boundaries,
 coverage, or subtree metadata; range logic must use comparisons rather than
 computing `end + 1` or `start - 1`.
@@ -243,7 +245,7 @@ public:
   using priority_evaluator = std::function<bool(const value_type& a, const value_type& b)>;
 
   // Construction
-  Dmn_IntervalBTree() noexcept;
+  Dmn_IntervalBTree() noexcept = default;
   explicit Dmn_IntervalBTree(std::function<bool(
       const range_type &, const range_type &)> canonicalComparator);
   Dmn_IntervalBTree(
@@ -576,14 +578,22 @@ invoked, so no callback observes a partially recomputed state.
 ## 5. Deterministic test matrix
 
 ### 5.1 Range tests
-- IntervalRangeRejectsNegativeAndReversed
+- IntervalRangeRejectsReversed
+- IntervalRangeOverlapRejectsInvalidOperands
 - IntervalRangeAcceptsSinglePoint
 - IntervalRangeAcceptsNegativeValues
 - IntervalRangeInclusiveSharedEndpointConflicts
 - IntervalRangeAdjacentRangesDoNotConflict
 - IntervalRangeHandlesInt64BoundariesWithoutOverflow
 
-### 5.2 Ordering tests
+### 5.2 Construction smoke test
+- IntervalBTreeDefaultConstructs
+
+This compile-and-construction smoke test instantiates
+`Dmn_IntervalBTree<int>` using its default constructor. It verifies only that
+the public template can be instantiated; it does not assert tree behavior.
+
+### 5.3 Ordering tests
 - IntervalBTreeCanonicalOrderSimple
 - IntervalBTreeCanonicalOrderStable
 - IntervalBTreeDuplicateRangesUseStableTieBreak
@@ -593,7 +603,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeEnumerationIsIndependentOfNodeSplits
 - IntervalBTreeConstructorsUseDefaultAndCustomComparators
 
-### 5.3 Overlap tests
+### 5.4 Overlap tests
 - IntervalBTreeFindOverlappingSingle
 - IntervalBTreeFindOverlappingMultiple
 - IntervalBTreeFindOverlappingIncludesSharedEndpoints
@@ -604,7 +614,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeOverlapVisitorRejectsInvalidQuery
 - IntervalBTreeOverlapVisitorRequiresCallableVisitor
 
-### 5.4 Add/remove tests
+### 5.5 Add/remove tests
 - IntervalBTreeRejectsInvalidInsertionWithoutMutation
 - IntervalBTreeAddAndRemoveExact
 - IntervalBTreeRemoveByRange
@@ -618,7 +628,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeClearResetsState
 - IntervalBTreeInvalidRemovalDoesNotMutate
 
-### 5.5 State transition tests
+### 5.6 State transition tests
 - IntervalBTreeNoPriorityEvaluatorMarksEntryTop
 - IntervalBTreeTopologyPrecedenceIsDeterministic
 - IntervalBTreeTopologyExactMatchIsFullyCovered
@@ -644,7 +654,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeReentrantMutationIsRejected
 - IntervalBTreeInvalidTopologyQueryDoesNotMutate
 
-### 5.6 Structural tests
+### 5.7 Structural tests
 - IntervalBTreeNodeStoresMultipleKeys
 - IntervalBTreeNodeChildrenPartitionCorrectly
 - IntervalBTreeRootSplitCreatesOwnedRoot
@@ -654,7 +664,7 @@ invoked, so no callback observes a partially recomputed state.
 - IntervalBTreeSubtreeMaxEndRemainsCorrect
 - IntervalBTreeInt64BoundaryMetadataRemainsCorrect
 
-### 5.7 Payload and lifecycle tests
+### 5.8 Payload and lifecycle tests
 - IntervalBTreeSupportsStringPayload
 - IntervalBTreeSupportsStructPayload
 - IntervalBTreePayloadDoesNotAffectDefaultRangeOrdering

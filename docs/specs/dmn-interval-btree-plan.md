@@ -41,13 +41,22 @@ ctest --test-dir build -R 'dmn-test-interval-btree' --output-on-failure
 git diff --check
 ```
 
-## 4. Layer 0: baseline
+## 4. Layer 0: template construction smoke test
 
-1. Add dmn-interval-btree.hpp with forward declarations.
-2. Add empty test target dmn-test-interval-btree.
-3. Build and run tests.
+1. Add `include/dmn-interval-btree.hpp` with the `Dmn_IntervalBTree<T>`
+   class template and a usable default constructor. Keep the template
+   definition in the public header; do not move it into a `.cpp` file.
+2. Register `dmn-test-interval-btree` in CMake and add the
+   `IntervalBTreeDefaultConstructs` test, which instantiates
+   `Dmn_IntervalBTree<int>`.
+3. Build the focused test target and run the test.
 
-Exit: baseline compiles.
+This is a compile-and-construction smoke test only. It does not claim that
+the tree stores entries or implements any other operation. Do not add
+placeholder methods that report fabricated success or fixed results.
+
+Exit: the public template header is included by a test and its default
+constructor can be instantiated.
 
 ## 5. Layer 1: range semantics
 Implementation
@@ -58,7 +67,8 @@ Implement Dmn_IntervalRange with:
 - boundary comparisons that do not compute `start - 1` or `end + 1`.
 
 Tests
-- IntervalRangeRejectsNegativeAndReversed
+- IntervalRangeRejectsReversed
+- IntervalRangeOverlapRejectsInvalidOperands
 - IntervalRangeAcceptsSinglePoint
 - IntervalRangeAcceptsNegativeValues
 - IntervalRangeInclusiveSharedEndpointConflicts

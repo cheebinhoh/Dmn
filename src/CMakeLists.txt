@@ -5,6 +5,7 @@ message(STATUS "build dmn...")
 add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-interval-btree.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime-state.cpp
@@ -49,6 +50,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-mt.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp

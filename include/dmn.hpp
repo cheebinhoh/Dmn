@@ -32,6 +32,7 @@
 #include "dmn-debug.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
+#include "dmn-interval-btree.hpp"
 #include "dmn-io.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
