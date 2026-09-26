@@ -116,6 +116,27 @@ TEST(IntervalBTree, RejectsInvalidInsertionWithoutMutation) {
   EXPECT_EQ(tree.size(), 1U);
 }
 
+TEST(IntervalBTree, CanonicalOrderSimple) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  ASSERT_TRUE(tree.add({5, 7}, 50));
+  ASSERT_TRUE(tree.add({1, 3}, 10));
+  ASSERT_TRUE(tree.add({1, 2}, 11));
+
+  const auto entries = tree.enumerateCanonical();
+
+  ASSERT_EQ(entries.size(), 3U);
+  EXPECT_EQ(entries[0].first.start, 1);
+  EXPECT_EQ(entries[0].first.end, 2);
+  EXPECT_EQ(entries[0].second, 11);
+  EXPECT_EQ(entries[1].first.start, 1);
+  EXPECT_EQ(entries[1].first.end, 3);
+  EXPECT_EQ(entries[1].second, 10);
+  EXPECT_EQ(entries[2].first.start, 5);
+  EXPECT_EQ(entries[2].first.end, 7);
+  EXPECT_EQ(entries[2].second, 50);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
