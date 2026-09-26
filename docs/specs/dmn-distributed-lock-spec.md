@@ -16,6 +16,15 @@ ranges.  It is a table-replication protocol built on **one authoritative
 - the accepted publication is delivered to all other handlers, which replace
   their mirrors and reevaluate their local wait predicates.
 
+This specification deliberately separates the first implementation phase from the
+future distributed consensus phase:
+
+- Phase 1: `Dmn_DLock<Dmn_DMesg>` uses one publisher, one lock-domain table
+  channel, and canonical full-table snapshots carried in the DMesg message body.
+- Phase 2: a future `Dmn_DLock<Dmn_DMesgNet>` must be implemented only behind
+  a separate consensus protocol, not by reusing the v1 publisher-conflict loop as
+  authority.
+
 V1 is safe only while every participating lock handler uses the same configured,
 authoritative `Dmn_DMesg` publisher for a domain.  `Dmn_DMesgNet` may
 eventually be a compatible base/transport, but v1 makes **no** claim of
@@ -33,6 +42,161 @@ not by itself cross that boundary.
 There is no standalone `Dmn_DLock_Manager`, backend abstraction, authority
 service, command/reply topology, or manager-global mirror in this design.
 Retaining any of those as a second commit authority is forbidden.
+
+### 1.1 Phase-1 canonical wire contract
+
+Phase 1 is not a command/reply protocol.  It transports a whole-table snapshot:
+
+- the reserved domain topic is a single lock-table channel bound to the
+  authoritative DMesg publisher;
+- the payload is a canonical full-table snapshot; it is neither a request nor a
+  reply message;
+- every accepted snapshot advances `table_version` by exactly one and is
+  published as a normal DMesg message on that domain topic;
+- all handlers receive the same accepted canonical table payload and rebuild their
+  mirrored B-tree from that snapshot;
+- the table is serialized deterministically so equal versions are byte-identical
+  across handlers.
+
+Canonical serialization is normative.  The wire order of entries is ascending by
+`(range.m_start, range.m_end)`, and for identical ranges by
+`(priority, sequence, request_id)`.  A client must not rely on internal B-tree
+layout or insertion order; only the canonical snapshot is committed.
+
+### 1.2 Test-first implementation contract
+
+The implementation SHALL be driven by focused failing tests in this order:
+
+1. DLock DMesg seam regression tests: default handler behavior unchanged and
+   lock-derived handlers can post work in their own async context;
+2. table-schema and codec tests: canonical snapshot round-trip and compatibility;
+3. session/proxy lifetime tests: one session, one derived handler, immediate
+   proxy invalidation;
+4. local mirror state-machine tests: grant, waiting, expiry, release, cancel,
+   conflict, retry, and no-wait semantics;
+5. close/shutdown tests: private cleanup, finite lease fallback, and no
+   uncommitted release claim after transport closure;
+6. future-consensus gating tests: document and forbid `Dmn_DMesgNet` v1 use.
+
+The first phase is Dmn_DMesg only.  No test in Phase 1 may substitute a second
+publisher, manager authority, or DMesgNet election result as the lock source of
+truth.
+
+### 1.3 Canonical protobuf schema for the lock-table snapshot
+
+For testability, the implementation SHALL add a deterministic test harness that
+uses:
+
+- `Dmn_DLock_FakeClock` for in-process monotonic tick advancement and expiry checks;
+- `Dmn_DLock_TestPublisher` for a single-authority DMesg publisher fixture with
+  explicit drain/accept/conflict semantics;
+- `Dmn_DLock_TestBarrier` / promise-based coordination for close-vs-grant and
+  shutdown ordering.
+
+These are test-only fixtures; they are not a second authority or backend.
+
+
+Phase 1 adds a lock-specific payload inside `DMesgBodyPb` while preserving the
+existing `sys` and `message` variants.  The payload is a full snapshot of the
+current lock table, not a command or response.  The table is encoded in a
+canonical order and is distributed only through the publisher's authoritative
+DMesg topic.
+
+The wire schema is additive and therefore MUST preserve all existing field numbers
+and enums.  New lock-specific fields are assigned new numbers after the existing
+DMesg-specific ones; reserved zero values are forbidden.  The canonical form is a
+full snapshot rather than a diff.
+
+```proto
+syntax = "proto3";
+
+package dmn;
+
+enum DLockEntryStatePb {
+  DLOCK_ENTRY_STATE_UNSPECIFIED = 0;
+  DLOCK_ENTRY_STATE_WAITING     = 1;
+  DLOCK_ENTRY_STATE_GRANTED     = 2;
+  DLOCK_ENTRY_STATE_RELEASED    = 3;
+  DLOCK_ENTRY_STATE_CANCELLED   = 4;
+  DLOCK_ENTRY_STATE_EXPIRED     = 5;
+  DLOCK_ENTRY_STATE_ERROR       = 6;
+}
+
+enum DLockTerminalReasonPb {
+  DLOCK_TERMINAL_REASON_UNSPECIFIED = 0;
+  DLOCK_TERMINAL_REASON_NONE        = 1;
+  DLOCK_TERMINAL_REASON_RELEASED    = 2;
+  DLOCK_TERMINAL_REASON_CANCELLED   = 3;
+  DLOCK_TERMINAL_REASON_TIMEOUT     = 4;
+  DLOCK_TERMINAL_REASON_EXPIRED     = 5;
+  DLOCK_TERMINAL_REASON_SHUTDOWN    = 6;
+}
+
+message DLockRangePb {
+  int64 start = 1;
+  int64 end   = 2;
+}
+
+message DLockEntryPb {
+  string domain            = 1;
+  string request_id        = 2;
+  string session_id        = 3;
+  string owner_id          = 4;
+  DLockRangePb range       = 5;
+  int32 priority           = 6;
+  uint64 sequence          = 7;
+  uint64 fence             = 8;
+  DLockEntryStatePb state  = 9;
+  DLockTerminalReasonPb terminal_reason = 10;
+  int64 acquire_deadline_ticks = 11;
+  int64 lease_deadline_ticks   = 12;
+  bool waiting                  = 13;
+  bool granted                  = 14;
+}
+
+message DLockTablePb {
+  string domain                     = 1;
+  uint32 schema_version            = 2;
+  uint32 protocol_version          = 3;
+  uint64 publisher_incarnation     = 4;
+  uint64 base_table_version        = 5;
+  uint64 table_version             = 6;
+  uint64 next_sequence             = 7;
+  uint64 next_fencing_token        = 8;
+  repeated DLockEntryPb entries     = 9;
+}
+```
+
+The lock-table snapshot is inserted into `DMesgBodyPb` as an additive oneof arm:
+
+```proto
+message DMesgBodyPb {
+  oneof Body {
+    DMesgSysPb sys = 1;
+    DLockTablePb lock_table = 2;
+    string message = 5;
+  }
+}
+```
+
+This is the chosen Phase 1 transport shape: the payload is a canonical full
+snapshot, not a command, not a reply, and not a per-request control message.  A
+canonical `DLockTablePb` is serialized as the DMesg payload body and accepted
+only if `base_table_version` matches the current committed snapshot and
+`table_version == base_table_version + 1`.
+
+The canonical serialization algorithm is normative and must be enforced for both
+encoding and decode validation:
+
+- sort entries by ascending `(range.start, range.end)`;
+- for equal ranges, sort by ascending `(priority, sequence, request_id)`;
+- serialize the table as the full snapshot, no deltas;
+- reject equal-version tables whose entry ordering or structure differs;
+- reject any table whose range is invalid, negative, or overlaps with another
+  granted entry in the same committed snapshot.
+
+This canonical payload is the exact object that is transmitted in the protobuf
+message and reconstructed by each handler into its session-local `Dmn_IntervalBTree`.
 
 ## 2. Repository facts and required narrow `Dmn_DMesg` extension
 
@@ -264,6 +428,42 @@ transport-compatible implementation can be investigated without changing the
 lock facade:
 
 ```cpp
+enum class Dmn_DLock_ResultCode {
+  kGranted,
+  kWaiting,
+  kReleased,
+  kConflict,
+  kTimeout,
+  kCancelled,
+  kNotOwner,
+  kNotFound,
+  kInvalidState,
+  kInvalidArgument,
+  kHandlerClosed,
+  kPublisherError,
+  kLeaseExpired,
+  kShutdown,
+};
+
+struct Dmn_DLock_Result {
+  Dmn_DLock_ResultCode m_code{Dmn_DLock_ResultCode::kInvalidState};
+  std::string m_request_id;
+  std::string m_session_id;
+  std::string m_owner_id;
+  Dmn_DLock_Range m_range{};
+  std::uint64_t m_table_version{0};
+  std::uint64_t m_fence{0};
+};
+
+struct Dmn_DLock_LifecycleEvent {
+  std::string m_event_name;
+  std::string m_session_id;
+  std::string m_request_id;
+  std::uint64_t m_table_version{0};
+  std::uint64_t m_retry_attempt{0};
+  std::string m_reason;
+};
+
 struct Dmn_DLock_Config {
   std::string m_domain;
   std::chrono::milliseconds m_default_lease;
@@ -283,7 +483,6 @@ struct Dmn_DLock_RequestOptions {
   std::shared_ptr<std::atomic_bool> m_cancel_token;
 };
 
-struct Dmn_DLock_Result;
 class Dmn_DLock_Handler;
 
 class Dmn_DLock_HandlerProxy {
@@ -324,13 +523,14 @@ public:
 };
 ```
 
-Result codes cover granted, waiting, released, conflict, timeout, cancelled,
-not-owner, not-found, invalid-state, invalid-argument, handler-closed,
-publisher-error, lease-expired, and shutdown.  Invalid proxy dereference throws
-std::logic_error; an operation that entered before close but loses the
-public-gate race returns handler-closed without a request id.  The proxy
-control block is thread-safe even though concurrent mutation of the same proxy
-object is not.
+`Dmn_DLock_ResultCode` is the authoritative operation result contract.  Invalid
+proxy dereference throws `std::logic_error`; an operation that entered before
+close but loses the public-gate race returns `kHandlerClosed` without a request
+id.  Lifecycle observability uses `Dmn_DLock_LifecycleEvent` records generated by
+session-owned state transitions such as `close_started`,
+`cleanup_cancel_submitted`, `cleanup_release_submitted`, `cleanup_retry`,
+`cleanup_committed`, and `cleanup_deferred_to_lease`.  The proxy control block is
+thread-safe even though concurrent mutation of the same proxy object is not.
 
 openHandler() returns a copyable lock proxy.  Behind every copy is a shared
 SessionControl block containing an immutable generated session_id, an

@@ -33,6 +33,10 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
+                      dmn-test-dlock-dmesg-seam
+                      dmn-test-dlock-1
+                      dmn-test-dlock-2
+                      dmn-test-dlock-3
                       dmn-test-dmesgnet-1
                       dmn-test-dmesgnet-2
                       dmn-test-dmesgnet-3
