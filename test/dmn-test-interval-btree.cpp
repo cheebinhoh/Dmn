@@ -94,6 +94,28 @@ TEST(IntervalBTree, DefaultConstructs) {
   SUCCEED();
 }
 
+TEST(IntervalBTree, StoresOneEntry) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  EXPECT_TRUE(tree.empty());
+  EXPECT_EQ(tree.size(), 0U);
+
+  EXPECT_TRUE(tree.add({2, 5}, 42));
+
+  EXPECT_FALSE(tree.empty());
+  EXPECT_EQ(tree.size(), 1U);
+}
+
+TEST(IntervalBTree, RejectsInvalidInsertionWithoutMutation) {
+  dmn::Dmn_IntervalBTree<int> tree;
+
+  EXPECT_TRUE(tree.add({2, 5}, 42));
+  EXPECT_FALSE(tree.add({5, 2}, 7));
+
+  EXPECT_FALSE(tree.empty());
+  EXPECT_EQ(tree.size(), 1U);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

@@ -1,6 +1,13 @@
 # Feature Specification: DMN Interval B‑Tree (`Dmn_IntervalBTree`)
 
-Status: design-ready specification; implementation has not started.
+Status: design-ready specification; implementation is in progress.
+
+Implementation status: Layers 0, 1, and 2A of
+`dmn-interval-btree-plan.md` are implemented and verified. The current
+implementation includes template construction, range validity and overlap
+semantics, vector-backed insertion with invalid-range rejection, and the
+`empty()` / `size()` queries. Canonical ordering and enumeration (Layer 2B)
+and all subsequent capabilities remain unimplemented.
 
 ## 1. Purpose and scope
 
@@ -43,9 +50,10 @@ These constraints are NOT part of the generic interval B-tree.
 
 ### 2.2 Canonical ordering
 
-Canonical ordering is normative and MUST be identical across all handlers.
+Canonical ordering is normative and MUST be identical across all handlers
+that use the same canonical-comparator configuration.
 
-For entries with distinct ranges, ordering keys are:
+With the default comparator, entries with distinct ranges are ordered by:
 
 1. ascending `range.start`
 2. ascending `range.end`
@@ -58,6 +66,16 @@ ordering callback is supplied. A caller that needs canonical output
 independent of duplicate insertion order MUST provide a duplicate ordering
 callback over the opaque values. Payload data remains excluded from the
 default ordering.
+
+A caller MAY provide a custom range comparator. It MUST be a deterministic
+strict weak ordering, MUST inspect ranges only, and MUST be configured
+consistently by handlers that need identical canonical output. When the custom
+comparator orders two distinct ranges as equivalent, the default
+`(range.start, range.end)` ordering breaks that tie. For identical ranges,
+`duplicateOrder` breaks the tie when supplied; otherwise insertion ordinal
+does. The duplicate callback is never used for distinct ranges. Payloads do
+not affect ordering unless the caller explicitly supplies them to
+`duplicateOrder` for identical ranges.
 
 `enumerateCanonical()` is also the logical topology snapshot operation. A
 caller MAY feed its result to `reconstructFromCanonical()` on an empty tree.
@@ -328,13 +346,15 @@ public:
 };
 ```
 
-The canonical comparator MUST define a strict weak ordering for distinct
-ranges and receives ranges only. The default comparator uses range start and
-range end; duplicate ranges are resolved by the enumeration-time
-duplicate-order callback or, when that callback is empty, insertion ordinal.
-A custom range comparator MUST NOT inspect payloads or rely on transient
-addresses or pointers. Duplicate payload ordering belongs to
-`duplicateOrder`.
+The canonical comparator MUST define a deterministic strict weak ordering and
+receives ranges only. If it considers distinct ranges equivalent, the default
+range ordering `(start, end)` is the tie-breaker. The default comparator uses
+range start and range end. Identical ranges are resolved by the
+enumeration-time duplicate-order callback or, when that callback is empty,
+insertion ordinal. A custom range comparator MUST NOT inspect payloads or rely
+on transient addresses or pointers. Handlers requiring identical output MUST
+use equivalent comparator configurations and duplicate-order callbacks.
+Duplicate payload ordering belongs to `duplicateOrder`.
 The priority evaluator must be strict: `priority_evaluator(a, b)` and
 `priority_evaluator(b, a)` must not both be true.
 
@@ -465,31 +485,22 @@ auto queryState = tree.queryTopology({13, 17}, {"NodeC", 3});
 
 ### 4.1 Node structure
 ```cpp
-template <class T>
-struct Dmn_IntervalBTreeNode {
-  // Logical fields; an internal entry record is preferred over parallel
-  // vectors so metadata cannot become misaligned.
-  std::vector<Dmn_IntervalRange> ranges;
-  std::vector<T> values;
-  std::vector<std::uint64_t> insertionOrdinals;
-  std::vector<state_change_callback<T>> callbacks;
-  std::vector<std::unique_ptr<Dmn_IntervalBTreeNode>> children;
+struct Node {
+  std::vector<Entry> entries;
+  std::vector<std::unique_ptr<Node>> children;
   std::int64_t subtreeMaxEnd{};
   bool isLeaf{true};
 };
 ```
 
-The owning tree stores its root as `std::unique_ptr` and owns every
+`Node` and `Entry` are private implementation details, not required public
+types. The owning tree stores its root as `std::unique_ptr` and owns every
 descendant through the node `children` vectors. Parent pointers and
-`std::shared_ptr` are not required by this specification. A node key must
-also retain its optional callback, for example through a parallel callback
-vector or an internal entry record; callbacks must remain associated with
-the value when keys move during splits, merges, or borrowing.
-The entry-record representation is normative for preserving association
-correctness; the vectors above describe the logical node contents.
-All per-entry vectors have identical lengths. `subtreeMaxEnd` is maintained
-for every subtree if overlap pruning is enabled; it MUST be updated after
-insertion, split, merge, borrowing, and removal.
+`std::shared_ptr` are not required. An entry record keeps its range, value,
+insertion ordinal, and optional callback together so they cannot become
+misaligned when keys move during splits, merges, or borrowing.
+`subtreeMaxEnd` is introduced when overlap pruning is implemented. It MUST be
+updated after insertion, split, merge, borrowing, and removal.
 
 ### 4.2 Insertion
 - descend using canonical comparator;
@@ -507,8 +518,9 @@ minimum and maximum key counts.
 
 ### 4.3 Overlap queries
 - check each key for overlap;
-- descend into children whose key ranges may overlap;
-- optional subtree metadata (e.g., max end) may prune branches.
+- descend into all candidate children for the initial correct implementation;
+- use `subtreeMaxEnd` to prune only after its metadata maintenance is
+  implemented and validated.
 
 Pruning MUST never skip a child whose `subtreeMaxEnd` can reach the query
 start. Query results are returned in canonical order.
@@ -594,8 +606,8 @@ This compile-and-construction smoke test instantiates
 the public template can be instantiated; it does not assert tree behavior.
 
 ### 5.3 Ordering tests
+- IntervalBTreeStoresOneEntry
 - IntervalBTreeCanonicalOrderSimple
-- IntervalBTreeCanonicalOrderStable
 - IntervalBTreeDuplicateRangesUseStableTieBreak
 - IntervalBTreeDuplicateRangesUseCallerOrdering
 - IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
