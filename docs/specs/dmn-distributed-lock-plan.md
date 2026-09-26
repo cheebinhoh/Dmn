@@ -158,6 +158,8 @@ jobs; existing public DMesg behavior is proven unchanged.
 Create the public lock header and lock-private implementation header/source
 with only types and no operational placeholders:
 
+- prefix C++ class and struct data members with `m_`; preserve protocol field
+  identifiers and wire names unchanged;
 - `Dmn_DLock_Range` as an alias or value-compatible wrapper around
   `Dmn_IntervalRange`, with DLock-specific non-negative validation;
 - table entry/state/terminal reason, immutable request/session identities,
@@ -169,7 +171,11 @@ with only types and no operational placeholders:
 - use the existing `Dmn_IntervalBTree<T>` interface and tests for canonical
   enumeration, canonical reconstruction, callback registration, and both
   copying and visitor-based overlap queries; the lock-table codec uses
-  `enumerateCanonical(lockDuplicateOrder)` to serialize entries.
+  `enumerateCanonical(lockDuplicateOrder)` to serialize entries. Use the
+  default `(start, end)` range order; the duplicate evaluator orders only
+  equal-range entries by `(priority, sequence, request_id)`. DLock entry values
+  must be copy-constructible for snapshot enumeration and reconstruction;
+  visitor-based overlap inspection avoids copies.
 
 Add an additive lock-table protobuf/value codec only when the existing DMesg
 payload shape requires it.  Preserve all old protobuf field numbers/enums and
@@ -255,6 +261,18 @@ runtime callback registration cover the complete table. Before evaluating
 topology or eligibility, visit overlaps with `forEachOverlapping()` and filter
 by lifecycle state. Do not pass the unfiltered retained table to generic
 topology as a grant decision.
+
+All tree operations are confined to the session's handler execution context;
+the interval tree is not thread-safe. State callbacks run synchronously after
+the mutation completes, and callback exceptions do not roll back that
+mutation. Keep them nonblocking, nonthrowing at the integration boundary, and
+non-reentrant: schedule or mark reevaluation rather than mutating the tree
+from inside the callback. Snapshot reconstruction suppresses tree callbacks
+while loading, reconnects registrations from stable request IDs, and DLock
+computes request notifications after the complete mirror has been replaced.
+The received list is already canonical; reconstruction preserves its supplied
+order, while later serialization must explicitly pass
+`enumerateCanonical(lockDuplicateOrder)`.
 
 Add:
 

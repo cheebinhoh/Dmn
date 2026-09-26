@@ -135,14 +135,14 @@ session.
 
 ## 4. Ranges, entries, and table semantics
 
-Ranges are signed 64-bit, non-negative, and inclusive.  A valid range satisfies
-`0 <= start && start <= end`; overlap is
-`a.start <= b.end && b.start <= a.end`.  Thus `[1,2]` conflicts with `[2,3]`,
+Ranges are signed 64-bit, non-negative, and inclusive. A valid range satisfies
+`0 <= m_start && m_start <= m_end`; overlap is
+`a.m_start <= b.m_end && b.m_start <= a.m_end`.  Thus `[1,2]` conflicts with `[2,3]`,
 while `[1,2]` does not conflict with `[3,4]`.
 
 `Dmn_DLock_Range` is an alias or direct value-compatible wrapper around
 `Dmn_IntervalRange`; both use the same inclusive `int64_t` endpoints and
-overlap operation. DLock adds the domain constraint `start >= 0` through its
+overlap operation. DLock adds the domain constraint `m_start >= 0` through its
 own validation before calling the generic B-tree. Conversion MUST preserve
 both endpoints exactly and MUST reject negative or reversed ranges before any
 tree mutation.
@@ -200,24 +200,30 @@ This external dependency guarantees:
 
 Canonical ordering is normative: every committed table version MUST serialize
 to a byte-identical payload on all handlers. DLock MUST never use the B-tree's
-default insertion-ordinal ordering for wire serialization. It supplies an
-explicit duplicate comparator with this exact ordering:
-
-1. ascending `range.start`;
-2. ascending `range.end`;
-3. ascending `priority`;
-4. ascending immutable `sequence`;
-5. ascending `request_id` as a final tie-breaker.
+default insertion-ordinal ordering for wire serialization. The B-tree's range
+ordering is ascending `(range.m_start, range.m_end)` (the default ordering is
+sufficient). The `lockDuplicateOrder` evaluator passed to
+`enumerateCanonical()` applies only when both ranges are identical; it orders
+those entries lexicographically by ascending `priority`, ascending immutable
+`sequence`, then ascending `request_id`. `request_id` MUST uniquely break
+remaining ties. This split matches the B-tree API: range comparators order
+ranges only, while duplicate evaluators order payloads only for identical
+ranges.
 
 Equal table versions that differ in entry ordering or structure are protocol
 errors. The interval B-tree is an internal optimization only; it does not alter
 the definition of a lock table, mirror, or commit.
 
-When a committed full table is received, the handler reconstructs its tree with
-`reconstructFromCanonical()` using the received canonical list and the same
-duplicate comparator. Runtime callbacks are reconnected through registrations
-matching a stable request identity carried in each opaque entry value; callback
-functions are never serialized.
+When a committed full table is received, the handler validates it and passes
+the received canonical list to `reconstructFromCanonical()`. Reconstruction
+preserves the supplied order as fresh insertion ordinals; it does not apply
+the duplicate evaluator while loading. Subsequent serialization MUST again
+call `enumerateCanonical(lockDuplicateOrder)`. Runtime callbacks are reconnected
+through registrations matching a stable request identity carried in each
+opaque entry value; callback functions are never serialized. Since snapshot
+enumeration and reconstruction copy payloads, the DLock entry value MUST be
+copy-constructible. Use `forEachOverlapping()` for inspection paths that do
+not need owned copies.
 
 `addWithTopology()` may initialize a newly submitted request as waiting or
 eligible, but DLock grant state is decided by the complete transition
@@ -236,7 +242,22 @@ remain in the tree for query/idempotency but are excluded from grant
 eligibility; DLock MUST NOT rely on generic topology over the unfiltered
 retained table.
 
+The generic tree is not thread-safe. Each session's handler context is the
+exclusive owner of its tree operations. Tree state callbacks execute
+synchronously after the mutation has structurally completed; they MUST be
+nonblocking, must not mutate the tree reentrantly, and should only schedule or
+mark later reevaluation. Callback exceptions propagate after the tree mutation
+and do not roll it back, so DLock callbacks MUST handle/report their own
+failures rather than allowing an exception to make an already-applied
+transition appear uncommitted. Reconstruction suppresses tree callbacks while
+loading; DLock computes any request notifications only after replacing and
+validating the complete mirror.
+
 ## 5. `Dmn_DLock` API shape and session ownership
+
+C++ class and struct data members in the DLock API use the repository's
+`m_` prefix convention. This naming convention does not rename protobuf field
+identifiers or other protocol-defined names.
 
 `Dmn_DLock` is a template deriving from a DMesg-compatible base, so a later
 transport-compatible implementation can be investigated without changing the
@@ -244,22 +265,22 @@ lock facade:
 
 ```cpp
 struct Dmn_DLock_Config {
-  std::string domain;
-  std::chrono::milliseconds default_lease;
-  std::chrono::milliseconds retry_min_backoff;
-  std::chrono::milliseconds retry_max_backoff;
-  std::chrono::milliseconds close_cleanup_timeout;
-  std::chrono::milliseconds retained_terminal_ttl;
+  std::string m_domain;
+  std::chrono::milliseconds m_default_lease;
+  std::chrono::milliseconds m_retry_min_backoff;
+  std::chrono::milliseconds m_retry_max_backoff;
+  std::chrono::milliseconds m_close_cleanup_timeout;
+  std::chrono::milliseconds m_retained_terminal_ttl;
 };
 
 using Dmn_DLock_Range = Dmn_IntervalRange;
 
 struct Dmn_DLock_RequestOptions {
-  std::string owner_id;
-  int priority{};
-  std::chrono::milliseconds wait_timeout{};
-  std::optional<std::chrono::milliseconds> lease_duration;
-  std::shared_ptr<std::atomic_bool> cancel_token;
+  std::string m_owner_id;
+  int m_priority{};
+  std::chrono::milliseconds m_wait_timeout{};
+  std::optional<std::chrono::milliseconds> m_lease_duration;
+  std::shared_ptr<std::atomic_bool> m_cancel_token;
 };
 
 struct Dmn_DLock_Result;
@@ -630,8 +651,9 @@ Dmn_DLock does not redefine interval storage or logic internally.
 - DLock uses `forEachOverlapping()` when it only needs to inspect entries;
   copy-returning overlap results are used only when ownership of a snapshot
   is required.
-- Priority evaluation inside the B-tree ranks active contenders by ascending
-  priority and lower immutable sequence, while DLock remains authoritative for
+- If configured, the B-tree priority evaluator compares payload priority and
+  immutable sequence (ascending values are higher rank); it is a generic
+  overlap-state aid, not grant authorization. DLock remains authoritative for
   lifecycle-state filtering and grant transitions.
 - Canonical serialization delegates to
   `enumerateCanonical(lockDuplicateOrder)`, never to the default
@@ -649,8 +671,10 @@ execution context and MUST NOT block.
 
 After a committed snapshot is received, the session rebuilds its tree from the
 canonical entry list in that list's order. The rebuild is callback-suppressed;
-registered callbacks are reattached by stable request ID, and DLock computes
-net request-state notifications only after the complete mirror is consistent.
+registered callbacks are reattached by stable request ID. Once the complete
+mirror is consistent, DLock computes net request-state notifications itself.
+Any later B-tree callback is synchronous on the handler context, so it must
+remain nonblocking and defer reevaluation rather than reentering tree mutation.
 
 Two handlers with equal logical lock-table state MUST produce byte-identical
 protobuf payloads, regardless of differences in their interval-tree internal

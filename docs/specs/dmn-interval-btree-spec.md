@@ -1,6 +1,16 @@
 # Feature Specification: DMN Interval B‑Tree (`Dmn_IntervalBTree`)
 
-Status: design-ready specification; implementation has not started.
+Status: implementation contract; verified coverage is tracked below and in
+`dmn-interval-btree-plan.md`.
+
+Implementation status: Layers 0-10 of `dmn-interval-btree-plan.md` are
+implemented and verified. This includes range validation, insertion,
+canonical ordering, arbitrary and move-only payload storage, degree-2
+B-tree insertion/deletion, overlap and topology queries, state callbacks,
+canonical move extraction/reconstruction, and incrementally maintained
+subtree metadata for pruned overlap traversal. Layer 11 lifecycle/snapshot
+tests pass; integration into `Dmn_DLock` is blocked until that production
+component is implemented (the repository currently has only its design docs).
 
 ## 1. Purpose and scope
 
@@ -22,16 +32,18 @@ The interval B‑tree is purely in-memory and does not define wire format or com
 
 ### 2.1 Range definition
 
-A range is valid iff: start <= end
+A range is valid iff: `m_start <= m_end`.
 
-Overlap is defined as: a.start <= b.end && b.start <= a.end
+Overlap is defined as: a.m_start <= b.m_end && b.m_start <= a.m_end
 
 Thus:
 
 - `[1,2]` conflicts with `[2,3]`
 - `[1,2]` does not conflict with `[3,4]`
 
-Invalid ranges MUST be rejected.
+Invalid ranges MUST be rejected. `overlaps()` MUST return `false` if either
+operand is invalid; callers must not be able to get a positive overlap result
+from a reversed range.
 Implementations MUST avoid signed overflow when evaluating boundaries,
 coverage, or subtree metadata; range logic must use comparisons rather than
 computing `end + 1` or `start - 1`.
@@ -41,12 +53,13 @@ These constraints are NOT part of the generic interval B-tree.
 
 ### 2.2 Canonical ordering
 
-Canonical ordering is normative and MUST be identical across all handlers.
+Canonical ordering is normative and MUST be identical across all handlers
+that use the same canonical-comparator configuration.
 
-For entries with distinct ranges, ordering keys are:
+With the default comparator, entries with distinct ranges are ordered by:
 
-1. ascending `range.start`
-2. ascending `range.end`
+1. ascending `range.m_start`
+2. ascending `range.m_end`
 
 Payload `T` MUST NOT participate in ordering.
 
@@ -56,6 +69,16 @@ ordering callback is supplied. A caller that needs canonical output
 independent of duplicate insertion order MUST provide a duplicate ordering
 callback over the opaque values. Payload data remains excluded from the
 default ordering.
+
+A caller MAY provide a custom range comparator. It MUST be a deterministic
+strict weak ordering, MUST inspect ranges only, and MUST be configured
+consistently by handlers that need identical canonical output. When the custom
+comparator orders two distinct ranges as equivalent, the default
+`(range.m_start, range.m_end)` ordering breaks that tie. For identical ranges,
+`duplicateOrder` breaks the tie when supplied; otherwise insertion ordinal
+does. The duplicate callback is never used for distinct ranges. Payloads do
+not affect ordering unless the caller explicitly supplies them to
+`duplicateOrder` for identical ranges.
 
 `enumerateCanonical()` is also the logical topology snapshot operation. A
 caller MAY feed its result to `reconstructFromCanonical()` on an empty tree.
@@ -73,8 +96,8 @@ results; it does not require identical physical node splits or allocation.
 
 ```cpp
 struct Dmn_IntervalRange {
-  std::int64_t start{};
-  std::int64_t end{};
+  std::int64_t m_start{};
+  std::int64_t m_end{};
 
   bool isValid() const noexcept;
   bool overlaps(const Dmn_IntervalRange &other) const noexcept;
@@ -93,9 +116,9 @@ enum class Dmn_OverlayTopology {
 // Rich return type for topological insertions and queries
 template <class T>
 struct Dmn_TopologyResult {
-  Dmn_OverlayTopology status{Dmn_OverlayTopology::Clear};
-  bool isTop{true};  // True if this entry holds the highest priority among all its overlaps
-  std::vector<std::pair<Dmn_IntervalRange, T>> overlappingEntries;
+  Dmn_OverlayTopology m_status{Dmn_OverlayTopology::Clear};
+  bool m_isTop{true};  // True if this entry holds the highest priority among all its overlaps
+  std::vector<std::pair<Dmn_IntervalRange, T>> m_overlappingEntries;
 };
 
 template <class T>
@@ -114,8 +137,8 @@ template <class T>
 using duplicate_order_evaluator = std::function<bool(const T&, const T&)>;
 
 struct Dmn_OverlayState {
-  Dmn_OverlayTopology topology{Dmn_OverlayTopology::Clear};
-  bool isTop{true};
+  Dmn_OverlayTopology m_topology{Dmn_OverlayTopology::Clear};
+  bool m_isTop{true};
 };
 
 template <class T>
@@ -140,7 +163,7 @@ synchronization requirement.
 Callbacks are optional and are invoked only when either `topology` or
 `isTop` changes for an already-existing entry.
 
-Dmn_IntervalRange::isValid() implements the start <= end rule.
+Dmn_IntervalRange::isValid() implements the `m_start <= m_end` rule.
 
 Dmn_IntervalRange::overlaps() implements the inclusive overlap rule.
 
@@ -243,7 +266,7 @@ public:
   using priority_evaluator = std::function<bool(const value_type& a, const value_type& b)>;
 
   // Construction
-  Dmn_IntervalBTree() noexcept;
+  Dmn_IntervalBTree() noexcept = default;
   explicit Dmn_IntervalBTree(std::function<bool(
       const range_type &, const range_type &)> canonicalComparator);
   Dmn_IntervalBTree(
@@ -322,17 +345,20 @@ public:
 
   // Clear
   // Removes all entries without invoking callbacks for entries that no longer exist.
-  void clear() noexcept;
+  // May throw std::logic_error when called reentrantly from a callback.
+  void clear();
 };
 ```
 
-The canonical comparator MUST define a strict weak ordering for distinct
-ranges and receives ranges only. The default comparator uses range start and
-range end; duplicate ranges are resolved by the enumeration-time
-duplicate-order callback or, when that callback is empty, insertion ordinal.
-A custom range comparator MUST NOT inspect payloads or rely on transient
-addresses or pointers. Duplicate payload ordering belongs to
-`duplicateOrder`.
+The canonical comparator MUST define a deterministic strict weak ordering and
+receives ranges only. If it considers distinct ranges equivalent, the default
+range ordering `(start, end)` is the tie-breaker. The default comparator uses
+range start and range end. Identical ranges are resolved by the
+enumeration-time duplicate-order callback or, when that callback is empty,
+insertion ordinal. A custom range comparator MUST NOT inspect payloads or rely
+on transient addresses or pointers. Handlers requiring identical output MUST
+use equivalent comparator configurations and duplicate-order callbacks.
+Duplicate payload ordering belongs to `duplicateOrder`.
 The priority evaluator must be strict: `priority_evaluator(a, b)` and
 `priority_evaluator(b, a)` must not both be true.
 
@@ -358,9 +384,12 @@ duplicates. The callback never orders entries with different ranges.
 operation intended for restoring a logical topology snapshot. It validates
 all entries before mutation, loads them in vector order, assigns ordinals in
 that order, restores callback registrations by matching each opaque value,
-recomputes all entry states after loading, and dispatches no callbacks caused
-solely by loading. If entries came from `enumerateCanonical(duplicateOrder)`,
-the postcondition is:
+updates stored states as entries are loaded so the completed tree reflects
+the complete snapshot, and dispatches no callbacks caused solely by loading.
+The reconstruction `duplicateOrder` parameter is not invoked; canonical order
+is an input precondition, and the supplied order is preserved as the
+insertion-ordinal tie-breaker. If entries came from
+`enumerateCanonical(duplicateOrder)`, the postcondition is:
 
 ```text
 destination.enumerateCanonical(duplicateOrder) == entries
@@ -426,19 +455,23 @@ must not re-enter a mutating tree operation. Reentrant mutation is rejected
 by the implementation with `std::logic_error`, and is not part of the
 supported API contract. The mutation guard is cleared before callback
 dispatch exits, including when a callback throws, so a later independent
-operation remains usable.
+operation remains usable. `clear()` is potentially throwing for this reason:
+it also rejects reentrant calls instead of violating `noexcept` or destroying
+entries while a callback batch is using them.
 
 ### 3.3 Example
 
 ```cpp
 struct LockData {
-  std::string nodeId;
-  std::uint64_t sequence;
+  std::string m_nodeId;
+  std::uint64_t m_sequence;
 };
 
 // Setup tree with a priority evaluator (higher sequence = "on top")
 Dmn_IntervalBTree<LockData>::priority_evaluator topCheck = 
-    [](const LockData& a, const LockData& b) { return a.sequence > b.sequence; };
+    [](const LockData& a, const LockData& b) {
+      return a.m_sequence > b.m_sequence;
+    };
 
 Dmn_IntervalBTree<LockData> tree({}, topCheck);
 
@@ -450,9 +483,9 @@ tree.add(10, 15, {"NodeA", 2});
 auto [success, result] = tree.addWithTopology({13, 17}, {"NodeC", 3});
 
 // success == true
-// result.status == Dmn_OverlayTopology::OverlaidLeft (left boundary 13 is within 10-15)
-// result.isTop == true (Node C's sequence 3 > Node A's sequence 2)
-// result.overlappingEntries contains [ ({10, 15}, {"NodeA", 2}) ]
+// result.m_status == Dmn_OverlayTopology::OverlaidLeft (left boundary 13 is within 10-15)
+// result.m_isTop == true (Node C's sequence 3 > Node A's sequence 2)
+// result.m_overlappingEntries contains [ ({10, 15}, {"NodeA", 2}) ]
 
 // Querying the state later
 auto queryState = tree.queryTopology({13, 17}, {"NodeC", 3});
@@ -463,31 +496,24 @@ auto queryState = tree.queryTopology({13, 17}, {"NodeC", 3});
 
 ### 4.1 Node structure
 ```cpp
-template <class T>
-struct Dmn_IntervalBTreeNode {
-  // Logical fields; an internal entry record is preferred over parallel
-  // vectors so metadata cannot become misaligned.
-  std::vector<Dmn_IntervalRange> ranges;
-  std::vector<T> values;
-  std::vector<std::uint64_t> insertionOrdinals;
-  std::vector<state_change_callback<T>> callbacks;
-  std::vector<std::unique_ptr<Dmn_IntervalBTreeNode>> children;
-  std::int64_t subtreeMaxEnd{};
-  bool isLeaf{true};
+struct Node {
+  std::vector<std::unique_ptr<Entry>> m_entries;
+  std::vector<std::unique_ptr<Node>> m_children;
+  std::int64_t m_subtreeMaxEnd{std::numeric_limits<std::int64_t>::min()};
+  bool m_isLeaf{true};
 };
 ```
 
-The owning tree stores its root as `std::unique_ptr` and owns every
-descendant through the node `children` vectors. Parent pointers and
-`std::shared_ptr` are not required by this specification. A node key must
-also retain its optional callback, for example through a parallel callback
-vector or an internal entry record; callbacks must remain associated with
-the value when keys move during splits, merges, or borrowing.
-The entry-record representation is normative for preserving association
-correctness; the vectors above describe the logical node contents.
-All per-entry vectors have identical lengths. `subtreeMaxEnd` is maintained
-for every subtree if overlap pruning is enabled; it MUST be updated after
-insertion, split, merge, borrowing, and removal.
+`Node` and `Entry` are private implementation details, not required public
+types. The owning tree stores its root as `m_root` (`std::unique_ptr`) and owns
+every descendant through the node `m_children` vectors. Parent pointers and
+`std::shared_ptr` are not required. An entry record keeps its range, value,
+insertion ordinal, and optional callback together so they cannot become
+misaligned when keys move during splits, merges, or borrowing. Nodes own
+these entry records through `unique_ptr`, so structural shifts move ownership
+handles rather than imposing payload copy or assignment requirements.
+`m_subtreeMaxEnd` is introduced when overlap pruning is implemented. It MUST be
+updated after insertion, split, merge, borrowing, and removal.
 
 ### 4.2 Insertion
 - descend using canonical comparator;
@@ -505,10 +531,11 @@ minimum and maximum key counts.
 
 ### 4.3 Overlap queries
 - check each key for overlap;
-- descend into children whose key ranges may overlap;
-- optional subtree metadata (e.g., max end) may prune branches.
+- descend into all candidate children for the initial correct implementation;
+- use `m_subtreeMaxEnd` to prune only after its metadata maintenance is
+  implemented and validated.
 
-Pruning MUST never skip a child whose `subtreeMaxEnd` can reach the query
+Pruning MUST never skip a child whose `m_subtreeMaxEnd` can reach the query
 start. Query results are returned in canonical order.
 
 ### 4.4 Canonical enumeration
@@ -575,100 +602,107 @@ invoked, so no callback observes a partially recomputed state.
 
 ## 5. Deterministic test matrix
 
-### 5.1 Range tests
-- IntervalRangeRejectsNegativeAndReversed
-- IntervalRangeAcceptsSinglePoint
-- IntervalRangeAcceptsNegativeValues
-- IntervalRangeInclusiveSharedEndpointConflicts
-- IntervalRangeAdjacentRangesDoNotConflict
-- IntervalRangeHandlesInt64BoundariesWithoutOverflow
+The following names refer to the executable tests in
+`test/dmn-test-interval-btree.cpp`.
 
-### 5.2 Ordering tests
-- IntervalBTreeCanonicalOrderSimple
-- IntervalBTreeCanonicalOrderStable
-- IntervalBTreeDuplicateRangesUseStableTieBreak
-- IntervalBTreeDuplicateRangesUseCallerOrdering
-- IntervalBTreeDuplicateOrderingCallbackNotCalledForDistinctRanges
-- IntervalBTreeCustomComparatorIsUsed
-- IntervalBTreeEnumerationIsIndependentOfNodeSplits
-- IntervalBTreeConstructorsUseDefaultAndCustomComparators
+### 5.1 Range and API tests
+- `IntervalRange.RejectsReversed`, `IntervalRange.OverlapRejectsInvalidOperands`,
+  `IntervalRange.AcceptsSinglePoint`, `IntervalRange.AcceptsNegativeValues`,
+  `IntervalRange.InclusiveSharedEndpointConflicts`,
+  `IntervalRange.AdjacentRangesDoNotConflict`, and
+  `IntervalRange.HandlesInt64BoundariesWithoutOverflow`.
+- `IntervalBTree.DefaultConstructs`, `IntervalBTree.StoresOneEntry`, and
+  `IntervalBTree.RejectsInvalidInsertionWithoutMutation`.
 
-### 5.3 Overlap tests
-- IntervalBTreeFindOverlappingSingle
-- IntervalBTreeFindOverlappingMultiple
-- IntervalBTreeFindOverlappingIncludesSharedEndpoints
-- IntervalBTreeFindOverlappingRejectsInvalidQuery
-- IntervalBTreeHasOverlapRejectsInvalidQuery
-- IntervalBTreeOverlapQueryPrunesCorrectly
-- IntervalBTreeOverlapVisitorAvoidsPayloadCopies
-- IntervalBTreeOverlapVisitorRejectsInvalidQuery
-- IntervalBTreeOverlapVisitorRequiresCallableVisitor
+### 5.2 Canonical order, payload, and insertion structure
+- Ordering: `CanonicalOrderSimple`, `DuplicateRangesUseStableTieBreak`,
+  `DuplicateRangesUseCallerOrdering`,
+  `DuplicateOrderingCallbackNotCalledForDistinctRanges`,
+  `DuplicateOrderingCallbackCannotMutateTreeReentrantly`,
+  `CustomComparatorIsUsed`,
+  `CustomComparatorEquivalentRangesUseDefaultTieBreak`, and
+  `ConstructorsUseDefaultAndCustomComparators`.
+- Payloads: `SupportsStringPayload`, `SupportsStructPayload`,
+  `PayloadDoesNotAffectDefaultRangeOrdering`,
+  `MoveOnlyPayloadCanBeInserted`,
+  `InvalidMoveInsertionDoesNotConsumePayload`, and
+  `CopyAndMoveInsertionOverloads`.
+- Structure: `RootStoragePreservesMultipleEntries`, `NodeStoresMultipleKeys`,
+  `RootSplitCreatesOwnedRoot`, `NodeChildrenPartitionCorrectly`,
+  `InsertionSplitsNodes`, `InsertionDeterministicAcrossOrders`,
+  `EnumerationIsIndependentOfNodeSplits`, and
+  `SplitPreservesEntryValuesAndOrdinals`.
 
-### 5.4 Add/remove tests
-- IntervalBTreeRejectsInvalidInsertionWithoutMutation
-- IntervalBTreeAddAndRemoveExact
-- IntervalBTreeRemoveByRange
-- IntervalBTreeRemoveAliasMatchesRemoveByRange
-- IntervalBTreeRemovePredicateSelectsOpaqueValue
-- IntervalBTreeRemovePredicateMissLeavesTreeUnchanged
-- IntervalBTreeRemoveAllOverlapping
-- IntervalBTreeRemoveAllOverlappingReturnsCount
-- IntervalBTreeRemoveDuplicateRangeWithMatcher
-- IntervalBTreeEmptyMatcherRemovesUniqueRange
-- IntervalBTreeClearResetsState
-- IntervalBTreeInvalidRemovalDoesNotMutate
+### 5.3 Overlap and topology tests
+- Overlap queries: `FindOverlappingSingle`,
+  `FindOverlappingMultipleInCanonicalOrder`,
+  `FindOverlappingIncludesSharedEndpoints`,
+  `FindOverlappingRejectsInvalidQuery`, `HasOverlapRejectsInvalidQuery`,
+  `HasOverlapFindsAndRejectsNonOverlappingRanges`,
+  `OverlapVisitorAvoidsPayloadCopies`,
+  `OverlapVisitorRejectsInvalidQueryWithoutInvocation`,
+  `OverlapVisitorRequiresCallableVisitor`,
+  `OverlapVisitorSupportsMoveOnlyPayload`, and
+  `OverlapVisitorCannotMutateTreeReentrantly`.
+- Topology queries: `TopologyReturnsClearWhenEmpty`,
+  `TopologyIdentifiesOverlaidLeftAndRight`, `TopologyIdentifiesFullyCovered`,
+  `TopologyPrecedenceIsDeterministic`, `TopologyExactMatchIsFullyCovered`,
+  `TopologyIdentifiesCoveringExisting`,
+  `TopologyHandlesContiguousCoverageAndCoverageGaps`,
+  `TopologyHandlesInt64BoundariesWithoutOverflow`,
+  `QueryTopologyIsHypothetical`,
+  `TopologyPriorityUsesEvaluatorAndDefaultsToTop`, and
+  `InvalidTopologyQueryReturnsClearWithoutMutation`.
 
-### 5.5 State transition tests
-- IntervalBTreeNoPriorityEvaluatorMarksEntryTop
-- IntervalBTreeTopologyPrecedenceIsDeterministic
-- IntervalBTreeTopologyExactMatchIsFullyCovered
-- IntervalBTreeTopologyHandlesContiguousCoverage
-- IntervalBTreeTopologyHandlesCoverageGap
-- IntervalBTreeTopologyHandlesInt64BoundariesWithoutOverflow
-- IntervalBTreePriorityTieMarksBothEntriesTop
-- IntervalBTreeQueryTopologyIsHypothetical
-- IntervalBTreeInsertionNotifiesExistingOverlappedEntry
-- IntervalBTreeNewEntryCallbackNotInvokedOnInsertion
-- IntervalBTreeInsertionNotifiesPriorityChange
-- IntervalBTreeRemovalNotifiesFormerlyOverlaidEntry
-- IntervalBTreeRemovalRecomputesBothBoundaryOverlays
-- IntervalBTreeRemovalRecomputesFullyCoveredState
-- IntervalBTreeRemovalNotifiesAllAffectedNonAdjacentEntries
-- IntervalBTreeBatchRemovalNotifiesEachEntryAtMostOnce
-- IntervalBTreeStateCallbackReceivesOldAndNewState
-- IntervalBTreeCallbacksRunInCanonicalOrder
-- IntervalBTreeClearDoesNotNotifyDestroyedEntries
-- IntervalBTreeCallbackRunsAfterMutationIsConsistent
-- IntervalBTreeCallbackExceptionLeavesTreeValid
-- IntervalBTreeCallbackExceptionDoesNotPoisonTree
-- IntervalBTreeReentrantMutationIsRejected
-- IntervalBTreeInvalidTopologyQueryDoesNotMutate
+### 5.4 State callback and mutation tests
+- Insertion transitions: `AddWithTopologyMatchesHypotheticalQuery`,
+  `NewEntryCallbackIsNotInvokedOnInsertion`,
+  `StateCallbackReceivesTopologyTransition`,
+  `StateCallbackReceivesPriorityTransition`,
+  `MoveOnlyPayloadSupportsStateCallback`,
+  `RangeEndpointInsertionOverloadsForwardCallbacks`,
+  `InsertionNotifiesNonAdjacentAffectedEntries`,
+  `InsertionCallbacksFollowCanonicalOrder`,
+  `TopologyUsesInsertionLevelForContainment`, and
+  `ExactDuplicateInsertionKeepsBothEntriesFullyCovered`.
+- Removal: `RemoveByRangeRemovesOneExactEntry`,
+  `InvalidAndMissingRemovalLeaveTreeUnchanged`,
+  `RemoveByRangeMatchesDuplicateByOpaqueValue`,
+  `FailedRemovalPredicateLeavesTreeUnchanged`,
+  `RemoveAliasMatchesRemoveByRange`,
+  `RemoveAllOverlappingReturnsExactCount`,
+  `RemovalRebalancesBTree`,
+  `RemovalMaintainsInvariantsAcrossMixedOrders`,
+  `RemovalSupportsMoveOnlyPayloads`,
+  `RemovalRecomputesSurvivorTopologyAndPriority`,
+  `RemovalNotifiesFormerlyOverlaidEntry`,
+  `BatchRemovalNotifiesEachSurvivorOnce`,
+  `RemovalCallbackRunsAfterTreeMutation`,
+  `RemovalCallbackExceptionLeavesTreeValid`,
+  `RemovalCallbacksFollowCanonicalOrder`, and
+  `RemovalPredicateCannotMutateTreeReentrantly`.
+- Callback and clear safety: `CallbackExceptionLeavesTreeConsistentAndReusable`,
+  `ReentrantMoveEnumerationFromCallbackIsRejected`,
+  `ReentrantInsertionFromCallbackIsRejected`,
+  `ClearSuppressesCallbacksAndAllowsReuse`, and
+  `ReentrantClearFromCallbackIsRejected`.
 
-### 5.6 Structural tests
-- IntervalBTreeNodeStoresMultipleKeys
-- IntervalBTreeNodeChildrenPartitionCorrectly
-- IntervalBTreeRootSplitCreatesOwnedRoot
-- IntervalBTreeSplitPreservesCallbacksAndOrdinals
-- IntervalBTreeRemoveRebalancesLeaf
-- IntervalBTreeRemoveRebalancesInternalNode
-- IntervalBTreeSubtreeMaxEndRemainsCorrect
-- IntervalBTreeInt64BoundaryMetadataRemainsCorrect
-
-### 5.7 Payload and lifecycle tests
-- IntervalBTreeSupportsStringPayload
-- IntervalBTreeSupportsStructPayload
-- IntervalBTreePayloadDoesNotAffectDefaultRangeOrdering
-- IntervalBTreeMoveOnlyPayloadCanBeInserted
-- IntervalBTreeMoveOnlyPayloadCanBeEnumeratedByMove
-- IntervalBTreeMoveOnlyPayloadSupportsStateCallback
-- IntervalBTreeMoveOnlyPayloadDoesNotInstantiateCopyQueries
-- IntervalBTreeClearResetsSizeAndAllowsReuse
-- IntervalBTreeDestructorReleasesAllUniqueOwnedNodes
-- IntervalBTreeCopyAndMoveInsertionOverloads
-- IntervalBTreeClearSuppressesCallbacksAndAllowsReuse
-- IntervalBTreeUnregisterCallbackStopsFutureDispatch
-- IntervalBTreeReconstructionValidationFailureLeavesTreeUnchanged
-- IntervalBTreeMoveEnumerationDoesNotDispatchCallbacks
+### 5.5 Metadata, extraction, reconstruction, and lifecycle
+- Metadata/pruning: `SubtreeMaxEndRemainsCorrectAcrossMutations`,
+  `Int64BoundarySubtreeMaxEndRemainsCorrect`, and
+  `PrunedOverlapQueriesMatchCanonicalBaseline`.
+- Move extraction: `MoveOnlyPayloadCanBeEnumeratedByMove`,
+  `MoveEnumerationUsesDuplicateOrdering`, and
+  `MoveEnumerationDoesNotDispatchCallbacks`.
+- Reconstruction/registration: `CanonicalReconstructionPreservesTopology`,
+  `ReconstructionValidationFailureLeavesTreeUnchanged`,
+  `ReconstructionReconnectsRegisteredCallbacks`,
+  `UnregisterCallbackStopsFutureDispatch`,
+  `ReconstructionUsesFirstMatchingRegistration`,
+  `ReconstructionPreservesDuplicateCanonicalOrder`, and
+  `RebuildMatchesOriginalCanonicalOrder`.
+- Destruction: `DestructorReleasesAllUniqueOwnedEntries`; the registered
+  Valgrind test additionally checks for leaks and invalid memory use.
 
 ## 6. Definition of done
 
