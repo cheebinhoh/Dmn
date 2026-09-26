@@ -9,18 +9,18 @@
  * --------
  * `Dmn_DLock` implements the Phase 1 distributed lock for DMN. It is scoped to
  * a single authoritative `Dmn_DMesg` publisher and serializes a canonical,
- * whole-table lock snapshot over the DMesg transport. Each lock session maintains
- * a private mirror of the current table and applies conflict detection,
- * eligibility checks, and lifecycle transitions locally before publishing a new
- * canonical snapshot.
+ * whole-table lock snapshot over the DMesg transport. Each lock session
+ * maintains a private mirror of the current table and applies conflict
+ * detection, eligibility checks, and lifecycle transitions locally before
+ * publishing a new canonical snapshot.
  *
  * Phase boundary
  * --------------
- * This module intentionally implements only the `Dmn_DMesg`-based v1 model. It is
- * not a manager/back-end authority, and it does not treat `Dmn_DMesgNet` or its
- * election state as a lock source of truth. The lock table remains a plain data
- * structure serialized as a protobuf snapshot, with all grant decisions made by
- * the combined DLock state machine and the authoritative publisher.
+ * This module intentionally implements only the `Dmn_DMesg`-based v1 model. It
+ * is not a manager/back-end authority, and it does not treat `Dmn_DMesgNet` or
+ * its election state as a lock source of truth. The lock table remains a plain
+ * data structure serialized as a protobuf snapshot, with all grant decisions
+ * made by the combined DLock state machine and the authoritative publisher.
  *
  * Key responsibilities
  * --------------------
@@ -39,9 +39,10 @@
  * ---------------------------------
  * The canonical snapshot is a value object, not a live shared cache. Lock
  * operations use the session/instance mutex and the corresponding DMesg handler
- * context to serialize access to the mutable table and to maintain deterministic
- * ordering. The public API is not a replacement for the later consensus-backed
- * protocol; it is a narrow, testable Phase 1 layer on top of Dmn_DMesg.
+ * context to serialize access to the mutable table and to maintain
+ * deterministic ordering. The public API is not a replacement for the later
+ * consensus-backed protocol; it is a narrow, testable Phase 1 layer on top of
+ * Dmn_DMesg.
  *
  * See also
  * - `dmn-dmesg.hpp` : authoritative transport and handler lifecycle used by the
@@ -234,8 +235,8 @@ struct Dmn_DLock_Entry {
  * @brief Canonical whole-table snapshot distributed by the lock publisher.
  *
  * This object is the DMesg payload model for the v1 lock protocol. It is
- * serialized deterministically so that every handler reconstructs the same state
- * from the same canonical payload.
+ * serialized deterministically so that every handler reconstructs the same
+ * state from the same canonical payload.
  */
 struct Dmn_DLock_TableSnapshot {
   std::string m_domain{};
@@ -549,11 +550,11 @@ protected:
 /**
  * @brief Phase 1 distributed lock built on top of `Dmn_DMesg`.
  *
- * This class provides the v1 DMesg-only lock model, where a canonical full-table
- * snapshot is published and then replayed by all sessions in the same domain. It
- * is intentionally restricted to `Dmn_DMesg` and does not permit the later
- * `Dmn_DMesgNet` authority model to be used as a substitute for the current
- * Phase 1 semantics.
+ * This class provides the v1 DMesg-only lock model, where a canonical
+ * full-table snapshot is published and then replayed by all sessions in the
+ * same domain. It is intentionally restricted to `Dmn_DMesg` and does not
+ * permit the later `Dmn_DMesgNet` authority model to be used as a substitute
+ * for the current Phase 1 semantics.
  */
 template <class DMesgBase = Dmn_DMesg>
 class Dmn_DLock : public DMesgBase, public Dmn_DLock_Base {
@@ -591,7 +592,8 @@ public:
     std::unique_lock<std::mutex> lock(m_mutex);
     std::string request_id = options.m_request_id;
     if (request_id.empty()) {
-      request_id = std::string("req-") + std::to_string(m_table.m_next_sequence + 1);
+      request_id =
+          std::string("req-") + std::to_string(m_table.m_next_sequence + 1);
     }
 
     while (m_table.isGrantedForRange(range)) {
@@ -650,7 +652,9 @@ public:
                              return entry.m_request_id == request_id;
                            });
     if (it == m_table.m_entries.end()) {
-      return {Dmn_DLock_ResultCode::kInvalidState, {}, std::string(request_id),
+      return {Dmn_DLock_ResultCode::kInvalidState,
+              {},
+              std::string(request_id),
               "request not found"};
     }
 

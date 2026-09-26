@@ -19,19 +19,22 @@ namespace {
 TEST(DlockRealAcquire, SecondThreadBlocksUntilRelease) {
   dmn::Dmn_DLock dlock{"dlock-real-acquire"};
 
-  auto first = dlock.acquireLock({10, 20}, {"first-request", 1000, true, false, false});
+  auto first =
+      dlock.acquireLock({10, 20}, {"first-request", 1000, true, false, false});
   EXPECT_EQ(first.m_code, dmn::Dmn_DLock_ResultCode::kOk);
 
   std::atomic<bool> second_started{false};
   std::atomic<bool> second_done{false};
   std::atomic<bool> release_done{false};
 
-  dmn::Dmn_Proc second_thread{"dlock-second-thread", [&]() {
-    second_started.store(true);
-    auto result = dlock.acquireLock({15, 17}, {"second-request", 1000, true, false, false});
-    second_done.store(true);
-    EXPECT_EQ(result.m_code, dmn::Dmn_DLock_ResultCode::kOk);
-  }};
+  dmn::Dmn_Proc second_thread{
+      "dlock-second-thread", [&]() {
+        second_started.store(true);
+        auto result = dlock.acquireLock(
+            {15, 17}, {"second-request", 1000, true, false, false});
+        second_done.store(true);
+        EXPECT_EQ(result.m_code, dmn::Dmn_DLock_ResultCode::kOk);
+      }};
 
   EXPECT_TRUE(second_thread.exec());
   std::this_thread::sleep_for(std::chrono::milliseconds(20));

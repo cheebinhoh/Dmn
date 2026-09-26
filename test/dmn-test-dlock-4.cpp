@@ -56,24 +56,26 @@ TEST(DlockBlockingAcquire, OverlappingGrantBlocksCandidateUntilOwnerReleases) {
   std::atomic<bool> candidate_allowed_after_release{false};
 
   dmn::Dmn_Proc waiter{"waiter", [&]() {
-    waiter_started.store(true);
-    while (!release.load()) {
-      dmn::Dmn_Proc::yield();
-    }
+                         waiter_started.store(true);
+                         while (!release.load()) {
+                           dmn::Dmn_Proc::yield();
+                         }
 
-    std::lock_guard<std::mutex> guard(lock);
-    auto post_release = snapshot;
-    candidate_allowed_after_release.store(post_release.canAcceptEntry(candidate));
-  }};
+                         std::lock_guard<std::mutex> guard(lock);
+                         auto post_release = snapshot;
+                         candidate_allowed_after_release.store(
+                             post_release.canAcceptEntry(candidate));
+                       }};
 
   dmn::Dmn_Proc owner{"owner", [&]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    {
-      std::lock_guard<std::mutex> guard(lock);
-      snapshot.m_entries.clear();
-    }
-    release.store(true);
-  }};
+                        std::this_thread::sleep_for(
+                            std::chrono::milliseconds(20));
+                        {
+                          std::lock_guard<std::mutex> guard(lock);
+                          snapshot.m_entries.clear();
+                        }
+                        release.store(true);
+                      }};
 
   EXPECT_TRUE(waiter.exec());
   EXPECT_TRUE(owner.exec());
