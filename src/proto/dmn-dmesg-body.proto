@@ -6,6 +6,8 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
+import "proto/dmn-dlock.proto";
+
 package dmn;
 
 enum DMesgStatePb
@@ -47,6 +49,7 @@ message DMesgBodyPb
   oneof Body
   {
     DMesgSysPb sys     = 1;
+    DLockTablePb lock_table = 2;
 
     /* Application specific data is started at 5
      * or after, so that we have gap to add more library

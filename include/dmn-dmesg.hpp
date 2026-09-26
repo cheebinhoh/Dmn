@@ -107,6 +107,8 @@
 
 namespace dmn {
 
+class Dmn_DMesgHandler;
+
 /**
  * @brief Identifier string for the sys topic (used by DMesgNet).
  */
@@ -130,6 +132,31 @@ public:
    * @brief Key/value map used to pass per-handler configuration options.
    */
   using HandlerConfig = std::unordered_map<std::string, std::string>;
+
+  class Dmn_DMesgHandler;
+
+  /**
+   * @brief Normalized constructor inputs for a derived DMesg handler.
+   */
+  struct HandlerSpec {
+    std::string m_name{};
+    std::string m_topic{};
+    FilterTask m_filter_fn{};
+    AsyncProcessTask m_async_process_fn{};
+    HandlerConfig m_configs{};
+
+    HandlerSpec() = default;
+    HandlerSpec(std::string_view name, std::string_view topic,
+                FilterTask filter_fn = {},
+                AsyncProcessTask async_process_fn = {},
+                HandlerConfig configs = {})
+        : m_name{name}, m_topic{topic}, m_filter_fn{std::move(filter_fn)},
+          m_async_process_fn{std::move(async_process_fn)},
+          m_configs{std::move(configs)} {}
+  };
+
+  using HandlerFactory =
+      std::function<std::shared_ptr<Dmn_DMesgHandler>(const HandlerSpec &)>;
 
   /**
    * @brief Default handler configuration values.
@@ -426,6 +453,10 @@ public:
     void writeDMesgInternal(dmn::DMesgPb &dmesgpb, bool move,
                             bool block = false);
 
+    template <typename Callable> void scheduleInHandlerContext(Callable &&fnc) {
+      this->addExecTask(std::forward<Callable>(fnc));
+    }
+
   private:
     /**
      * @brief Return true if the handler is currently marked in a conflict
@@ -574,6 +605,13 @@ public:
   template <class... U> auto openHandler(U &&...arg) -> HandlerType;
 
   /**
+   * @brief Open a handler using a normalized spec and factory for derived
+   * types.
+   */
+  auto openHandlerWithFactory(const HandlerSpec &spec,
+                              const HandlerFactory &factory) -> HandlerType;
+
+  /**
    * @brief Unregister and free the provided handler.
    *
    * @param handlerToClose the internal handler will be reset upon return from
@@ -708,6 +746,31 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
    * This design keeps DMesg itself mutex-free while remaining thread safe.
    */
   auto waitHandler = this->addExecTaskWithWait([this, &handler]() {
+    this->m_handlers.push_back(handler);
+    this->playbackLastTopicDMesgPbInternal();
+    handler->setAfterInitialPlayback();
+  });
+
+  waitHandler->wait();
+
+  return handlerProxy;
+}
+
+inline auto Dmn_DMesg::openHandlerWithFactory(
+    const HandlerSpec &spec, const HandlerFactory &factory) -> HandlerType {
+  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
+
+  auto handler = factory(spec);
+  if (!handler) {
+    throw std::runtime_error("handler factory produced a null handler");
+  }
+
+  handler->m_owner = this;
+
+  this->registerSubscriber(handler);
+  handlerProxy.m_handler = handler;
+
+  auto waitHandler = this->addExecTaskWithWait([this, handler]() {
     this->m_handlers.push_back(handler);
     this->playbackLastTopicDMesgPbInternal();
     handler->setAfterInitialPlayback();

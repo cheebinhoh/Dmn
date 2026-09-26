@@ -7,6 +7,13 @@ test-driven increments.  This plan replaces the manager/backend/standalone
 authority approach: the only v1 serialization point is publisher acceptance
 of a full lock table by one authoritative `Dmn_DMesg` publisher.
 
+The implementation is intentionally Phase 1 only: a `Dmn_DLock<Dmn_DMesg>` that
+serializes a canonical full lock-table snapshot over the DMesg transport.  This
+plan does not permit a v1 `Dmn_DMesgNet` specialization or any use of
+multi-publisher master election as a lock authority.  A future consensus-backed
+transport is a separate design stream that must pass its own quorum, leader,
+log, and fencing tests before being enabled.
+
 For every increment:
 
 1. write one focused failing test;
@@ -33,9 +40,18 @@ private Dmn_DLock session -- owns --> derived Dmn_DMesg handler
        |                         handler async execution context
        |                                  |
 local full-table mirror <----> one Dmn_DMesg publisher <----> sibling handlers
+       |                                  |
+       |                     single reserved lock-domain topic
+       |                     canonical full-table DMesg snapshot payload
        |
 caller-only condition wait / retained owner query
 ```
+
+The lock-domain topic is a single reserved table channel.  Only lock-derived
+handlers created by the same `Dmn_DLock` instance may publish to it, but the
+publisher still validates the snapshot against the current committed version and
+state machine before accepting it.  The table channel is not a per-request
+command/reply stream, and it is not a source of authority by itself.
 
 The local full-table mirror MUST be represented internally as a
 `Dmn_IntervalBTree` per session to accelerate overlap and eligibility queries.
@@ -64,6 +80,12 @@ The first code layer deliberately changes `Dmn_DMesg` only because current
 `openHandler()` hard-codes `Dmn_DMesgHandler`, whose private `Dmn_Async`
 inheritance prevents a derived lock handler from posting work in its own
 execution context.
+
+The extension goal is narrow and explicit: allow a lock-derived handler to post
+jobs to its own DMesg callback context, observe publisher acceptance/conflict in
+that context without waiting, and validate the lock-table payload before the
+publisher mutates its cache or delivers to subscribers.  This is not a general
+multi-transport API and not a way to bypass the single-authority design.
 
 Make precisely these additive changes:
 
@@ -131,19 +153,19 @@ ownership, and close semantics for ordinary handlers.
 
 ### Tests, in strict order
 
-1. `DmesgDefaultOpenHandlerBehaviorUnchanged` — public construction produces
+1. `DlockDmesgSeamDefaultOpenHandlerBehaviorUnchanged` — public construction produces
    the existing behavior, including default handler type/lifetime.
-2. `DmesgDefaultPlaybackFilterAndConflictUnchanged` — latest-message playback,
+2. `DlockDmesgSeamDefaultPlaybackFilterAndConflictUnchanged` — latest-message playback,
    filtering, normal writes, running-counter conflict, and conflict recovery
    behave as before.
-3. `DmesgCustomHandlerPostsInOwnContext` — a test-only derived handler opened
+3. `DlockDmesgSeamCustomHandlerPostsInOwnContext` — a test-only derived handler opened
    through the protected factory posts a job and the job runs after the
    handler's regular async delivery in the same handler context.
-4. `DmesgCustomHandlerPublishCompletionIsNonblocking` — a custom handler
+4. `DlockDmesgSeamCustomHandlerPublishCompletionIsNonblocking` — a custom handler
    receives accepted/conflict completion on its context without waiting there.
-5. `DmesgDefaultProxyCloseUnchanged` — proxy copies and close retain their
+5. `DlockDmesgSeamDefaultProxyCloseUnchanged` — proxy copies and close retain their
    former invalidation/lifetime behavior.
-6. `DmesgPublisherValidationRejectsBeforeCacheAndDelivery` — an opted-in
+6. `DlockDmesgSeamPublisherValidationRejectsBeforeCacheAndDelivery` — an opted-in
    validator rejects once, reports completion deterministically, and does not
    alter default-channel behavior.
 
@@ -181,6 +203,11 @@ Add an additive lock-table protobuf/value codec only when the existing DMesg
 payload shape requires it.  Preserve all old protobuf field numbers/enums and
 test ordinary/sys payload round trips before adding lock fields.  The payload
 is a full table; do not implement command/reply/authority messages.
+
+The lock schema lives in the `DMesgBodyPb` oneof as an additive application
+payload and MUST be validated as a full snapshot, not as a diff or command.  A
+separate `dmn-dlock.proto` is acceptable only if it is inserted into the existing
+payload oneof and all legacy field numbers remain untouched.
 
 Introduce `dmn-test-dlock` at this layer and add:
 
@@ -311,11 +338,16 @@ Add conflict handling to the handler job, one test at a time:
 5. `DlockNewerTableReevaluatesWaitingRequest`;
 6. `DlockCallerWaitHasNoMissedWakeup`;
 7. `DlockWorkerNeverBlocksForCaller`;
-8. `DlockTimeoutFinalPredicateLetsCommittedGrantWin`.
-9. `DlockAcquireAsyncReturnsWithoutWaiting`.
-10. `DlockInvalidArgumentsDoNotMutateTable`.
-11. `DlockResultCodesAndOwnerAuthorization`.
-12. `DlockProxyInvalidDereferenceThrows`.
+8. `DlockTimeoutFinalPredicateLetsCommittedGrantWin`;
+9. `DlockAcquireAsyncReturnsWithoutWaiting`;
+10. `DlockInvalidArgumentsDoNotMutateTable`;
+11. `DlockResultCodesAndOwnerAuthorization`;
+12. `DlockProxyInvalidDereferenceThrows`;
+13. `DlockMultiThreadBlockedAcquireWaitsUntilRelease` — a second `Dmn_Proc`
+    thread attempting to acquire an overlapping range stays blocked while the
+    grant is held and only proceeds after the owner releases it.  This test
+    must use `Dmn_Proc` (not only static data) and an explicit release barrier
+    to prove the blocked path does not advance early.
 
 On conflict the job consumes/validates the new complete table, replaces only
 its local mirror, reapplies the same request entry, and schedules retry in the

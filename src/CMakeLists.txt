@@ -18,12 +18,14 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka.cpp
 
               # proto c++ sources
+              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.cc
               ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.cc
               ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.cc
               ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.cc
 )
 
 GENERATE_PROTOBUF(dmn
+                    dmn-dlock.proto
                     dmn-dmesg-type.proto
                     dmn-dmesg-body.proto
                     dmn-dmesg.proto
@@ -71,6 +73,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
 
                  # proto c++ sources
+                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h

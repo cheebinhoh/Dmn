@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package dmn;
+
+enum DLockEntryStatePb {
+  DLOCK_ENTRY_STATE_UNSPECIFIED = 0;
+  DLOCK_ENTRY_STATE_WAITING = 1;
+  DLOCK_ENTRY_STATE_GRANTED = 2;
+  DLOCK_ENTRY_STATE_RELEASED = 3;
+  DLOCK_ENTRY_STATE_CANCELLED = 4;
+  DLOCK_ENTRY_STATE_EXPIRED = 5;
+  DLOCK_ENTRY_STATE_ERROR = 6;
+}
+
+enum DLockTerminalReasonPb {
+  DLOCK_TERMINAL_REASON_UNSPECIFIED = 0;
+  DLOCK_TERMINAL_REASON_NONE = 1;
+  DLOCK_TERMINAL_REASON_RELEASED = 2;
+  DLOCK_TERMINAL_REASON_CANCELLED = 3;
+  DLOCK_TERMINAL_REASON_TIMEOUT = 4;
+  DLOCK_TERMINAL_REASON_EXPIRED = 5;
+  DLOCK_TERMINAL_REASON_SHUTDOWN = 6;
+}
+
+message DLockRangePb {
+  int64 start = 1;
+  int64 end = 2;
+}
+
+message DLockEntryPb {
+  string domain = 1;
+  string request_id = 2;
+  string session_id = 3;
+  string owner_id = 4;
+  DLockRangePb range = 5;
+  int32 priority = 6;
+  uint64 sequence = 7;
+  uint64 fence = 8;
+  DLockEntryStatePb state = 9;
+  DLockTerminalReasonPb terminal_reason = 10;
+  int64 acquire_deadline_ticks = 11;
+  int64 lease_deadline_ticks = 12;
+  bool waiting = 13;
+  bool granted = 14;
+}
+
+message DLockTablePb {
+  string domain = 1;
+  uint32 schema_version = 2;
+  uint32 protocol_version = 3;
+  uint64 publisher_incarnation = 4;
+  uint64 base_table_version = 5;
+  uint64 table_version = 6;
+  uint64 next_sequence = 7;
+  uint64 next_fencing_token = 8;
+  repeated DLockEntryPb entries = 9;
+}
