@@ -21,14 +21,13 @@ public:
                     dmn::Dmn_DMesg::FilterTask filter_fn,
                     dmn::Dmn_DMesg::AsyncProcessTask async_process_fn,
                     dmn::Dmn_DMesg::HandlerConfig configs)
-      : dmn::Dmn_DMesg::Dmn_DMesgHandler(
-            name, topic, std::move(filter_fn), std::move(async_process_fn),
-            std::move(configs)) {}
+      : dmn::Dmn_DMesg::Dmn_DMesgHandler(name, topic, std::move(filter_fn),
+                                         std::move(async_process_fn),
+                                         std::move(configs)) {}
 
   void postToOwnContext() {
-    this->scheduleInHandlerContext([this]() -> void {
-      this->m_ready.set_value();
-    });
+    this->scheduleInHandlerContext(
+        [this]() -> void { this->m_ready.set_value(); });
   }
 
   void waitForReady() { this->m_ready.get_future().wait(); }
@@ -42,11 +41,12 @@ private:
 TEST(DlockDmesgSeamCustomHandlerPostsInOwnContext, PostToOwnContext) {
   dmn::Dmn_DMesg dmesg{"dmesg-custom-seam"};
 
-  dmn::Dmn_DMesg::HandlerSpec spec{"custom-handler", "lock-topic", nullptr,
-                                   nullptr, {}};
+  dmn::Dmn_DMesg::HandlerSpec spec{
+      "custom-handler", "lock-topic", nullptr, nullptr, {}};
 
   auto handler = dmesg.openHandlerWithFactory(
-      spec, [](const dmn::Dmn_DMesg::HandlerSpec &cfg)
+      spec,
+      [](const dmn::Dmn_DMesg::HandlerSpec &cfg)
           -> std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> {
         return std::make_shared<TestCustomHandler>(
             cfg.m_name, cfg.m_topic, cfg.m_filter_fn, cfg.m_async_process_fn,
@@ -55,8 +55,8 @@ TEST(DlockDmesgSeamCustomHandlerPostsInOwnContext, PostToOwnContext) {
 
   EXPECT_TRUE(handler);
 
-  auto custom = std::dynamic_pointer_cast<TestCustomHandler>(
-      handler.operator->());
+  auto custom =
+      std::dynamic_pointer_cast<TestCustomHandler>(handler.operator->());
   EXPECT_TRUE(custom);
 
   ASSERT_TRUE(custom);

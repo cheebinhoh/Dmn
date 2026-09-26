@@ -38,7 +38,8 @@ TEST(DlockCanonicalProto, RoundTripTablePayload) {
   entry->set_sequence(1);
   entry->set_fence(77);
   entry->set_state(dmn::DLockEntryStatePb::DLOCK_ENTRY_STATE_GRANTED);
-  entry->set_terminal_reason(dmn::DLockTerminalReasonPb::DLOCK_TERMINAL_REASON_NONE);
+  entry->set_terminal_reason(
+      dmn::DLockTerminalReasonPb::DLOCK_TERMINAL_REASON_NONE);
   entry->set_acquire_deadline_ticks(1000);
   entry->set_lease_deadline_ticks(2000);
   entry->set_waiting(false);

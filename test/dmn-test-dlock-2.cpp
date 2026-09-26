@@ -2,7 +2,8 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dlock-2.cpp
- * @brief Session lifetime and proxy invalidation tests for the distributed lock.
+ * @brief Session lifetime and proxy invalidation tests for the distributed
+ * lock.
  */
 
 #include <gtest/gtest.h>

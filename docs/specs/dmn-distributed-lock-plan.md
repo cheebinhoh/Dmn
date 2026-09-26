@@ -338,11 +338,16 @@ Add conflict handling to the handler job, one test at a time:
 5. `DlockNewerTableReevaluatesWaitingRequest`;
 6. `DlockCallerWaitHasNoMissedWakeup`;
 7. `DlockWorkerNeverBlocksForCaller`;
-8. `DlockTimeoutFinalPredicateLetsCommittedGrantWin`.
-9. `DlockAcquireAsyncReturnsWithoutWaiting`.
-10. `DlockInvalidArgumentsDoNotMutateTable`.
-11. `DlockResultCodesAndOwnerAuthorization`.
-12. `DlockProxyInvalidDereferenceThrows`.
+8. `DlockTimeoutFinalPredicateLetsCommittedGrantWin`;
+9. `DlockAcquireAsyncReturnsWithoutWaiting`;
+10. `DlockInvalidArgumentsDoNotMutateTable`;
+11. `DlockResultCodesAndOwnerAuthorization`;
+12. `DlockProxyInvalidDereferenceThrows`;
+13. `DlockMultiThreadBlockedAcquireWaitsUntilRelease` — a second `Dmn_Proc`
+    thread attempting to acquire an overlapping range stays blocked while the
+    grant is held and only proceeds after the owner releases it.  This test
+    must use `Dmn_Proc` (not only static data) and an explicit release barrier
+    to prove the blocked path does not advance early.
 
 On conflict the job consumes/validates the new complete table, replaces only
 its local mirror, reapplies the same request entry, and schedules retry in the

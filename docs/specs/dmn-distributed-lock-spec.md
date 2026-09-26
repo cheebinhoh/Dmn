@@ -1,6 +1,7 @@
 # Feature Specification: DMN Distributed Range Lock (`Dmn_DLock`)
 
-Status: revised for publisher-serialized v1 and consensus-replicated evolution.
+Status: completed for the v1 Dmn_DMesg publisher-serialized lock. Future
+`Dmn_DMesgNet` consensus work is deferred to a separate specification.
 
 ## 1. Purpose and v1 boundary
 
@@ -43,6 +44,13 @@ There is no standalone `Dmn_DLock_Manager`, backend abstraction, authority
 service, command/reply topology, or manager-global mirror in this design.
 Retaining any of those as a second commit authority is forbidden.
 
+This specification is complete for the Phase 1 `Dmn_DMesg` implementation. The
+future `Dmn_DMesgNet` consensus-backed evolution is intentionally moved to a
+separate specification at
+`docs/specs/dmn-distributed-lock-dmesgnet-spec.md`. The v1 design does not
+grant `Dmn_DMesgNet` any lock authority and does not permit its use as the
+source of truth for this implementation.
+
 ### 1.1 Phase-1 canonical wire contract
 
 Phase 1 is not a command/reply protocol.  It transports a whole-table snapshot:
@@ -81,6 +89,12 @@ The implementation SHALL be driven by focused failing tests in this order:
 The first phase is Dmn_DMesg only.  No test in Phase 1 may substitute a second
 publisher, manager authority, or DMesgNet election result as the lock source of
 truth.
+
+The acquisition semantics must be covered by explicitly blocking tests: a second
+thread attempting to acquire an overlapping range shall remain blocked until the
+first thread releases the active grant.  The test harness uses `Dmn_Proc` and a
+manual condition variable/monitor to prove the blocked thread cannot advance
+while the grant remains active and can proceed only after release.
 
 ### 1.3 Canonical protobuf schema for the lock-table snapshot
 
@@ -803,42 +817,26 @@ synchronization, no-wait conflict, version advancement, fencing allocation,
 conflict backoff and delivery starvation, final timeout predicates, retained
 queries, sibling isolation, shutdown ordering, and invalid-state mutations.
 
-## 10. Future consensus-replicated mode
+## 10. Future Dmn_DMesgNet mode (deferred to a separate specification)
 
-The eventual multi-node mode is a replicated state machine, not a
-multi-publisher extension of the v1 counter retry loop:
+The multi-node, consensus-backed evolution is intentionally not part of this
+v1 `Dmn_DMesg` implementation.  It is defined separately in
+`docs/specs/dmn-distributed-lock-dmesgnet-spec.md`.
 
-- a concrete consensus protocol, recommended as Raft, defines member identity,
-  terms, voting, leader election, log matching, quorum commit, membership
-  changes, and durable term/vote/log state;
-- `Dmn_DMesgNet` is only a transport for consensus messages; its existing
-  membership or master-election result is not a vote, term, leader lease, or
-  commit certificate;
-- handlers submit immutable lock intents to the current consensus leader, but
-  neither the handler, leader, transport backend, nor receiving publisher may
-  declare success independently;
-- the lock-table transition is deterministic and is applied in committed-log
-  order on every replica; a handler returns a grant only after the entry's log
-  index is quorum committed and applied;
-- the public consensus fence is the ordered pair
-  `(consensus_term, committed_log_index)`; it is retained across snapshot/log
-  compaction and compared lexicographically without a lossy scalar mapping;
-- conflict retry rebases an uncommitted proposal, but cannot overwrite or
-  supersede committed state;
-- handler close submits cancel/release intents through the same consensus log
-  and retains its private cleanup session until commit or transport loss;
-- lease expiry requires a separately specified consensus-safe time mechanism,
-  such as quorum-confirmed leader time with bounded-clock assumptions or
-  replicated logical expiry ticks.  A process-local timer alone MUST NOT
-  release a distributed lock;
-- partitions without quorum make no lock-table progress.  They never grant
-  from a local mirror, even if that mirror appears uncontended.
+This v1 specification remains complete and authoritative for the current
+Phase 1 lock design.  No v1 lock code, test, or behavior may treat
+`Dmn_DMesgNet` membership state, master election, or transport-level metadata as
+an authority for lock grants, releases, lease expiry, or close semantics.
 
-A separate consensus protocol specification and fault-injection test plan are
-required before enabling `Dmn_DLock<Dmn_DMesgNet>`.  At minimum they must prove
-leader-change safety, minority-partition non-progress, log reconciliation,
-duplicate proposal idempotency, committed close-as-release, stale-leader
-fencing, crash/restart persistence, and membership-change safety.
+The future consensus design is expected to cover:
+
+- quorum-backed leader election and log commit semantics;
+- deterministic lock-table transitions applied in committed-log order;
+- consensus fencing, term ordering, and stale-leader rejection;
+- quorum-safe lease expiry and release/cancel persistence;
+- minority-partition non-progress and crash/restart recovery.
+
+That design remains future work and is not part of the current implementation.
 
 ## 11. External Interval B-Tree Dependency
 

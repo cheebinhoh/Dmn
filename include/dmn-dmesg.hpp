@@ -147,7 +147,8 @@ public:
 
     HandlerSpec() = default;
     HandlerSpec(std::string_view name, std::string_view topic,
-                FilterTask filter_fn = {}, AsyncProcessTask async_process_fn = {},
+                FilterTask filter_fn = {},
+                AsyncProcessTask async_process_fn = {},
                 HandlerConfig configs = {})
         : m_name{name}, m_topic{topic}, m_filter_fn{std::move(filter_fn)},
           m_async_process_fn{std::move(async_process_fn)},
@@ -604,10 +605,11 @@ public:
   template <class... U> auto openHandler(U &&...arg) -> HandlerType;
 
   /**
-   * @brief Open a handler using a normalized spec and factory for derived types.
+   * @brief Open a handler using a normalized spec and factory for derived
+   * types.
    */
   auto openHandlerWithFactory(const HandlerSpec &spec,
-                             const HandlerFactory &factory) -> HandlerType;
+                              const HandlerFactory &factory) -> HandlerType;
 
   /**
    * @brief Unregister and free the provided handler.
@@ -754,9 +756,8 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   return handlerProxy;
 }
 
-inline auto Dmn_DMesg::openHandlerWithFactory(const HandlerSpec &spec,
-                                              const HandlerFactory &factory)
-    -> HandlerType {
+inline auto Dmn_DMesg::openHandlerWithFactory(
+    const HandlerSpec &spec, const HandlerFactory &factory) -> HandlerType {
   auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
 
   auto handler = factory(spec);
