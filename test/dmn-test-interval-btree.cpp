@@ -249,10 +249,8 @@ TEST(IntervalBTree, EmptyTreeQueriesAndRemovalsAreNoOps) {
   EXPECT_EQ(tree.size(), 0U);
   EXPECT_FALSE(tree.hasOverlap({1, 2}));
   EXPECT_TRUE(tree.findOverlapping({1, 2}).empty());
-  tree.forEachOverlapping({1, 2},
-                          [&visitorCalls](const auto &, const auto &) {
-                            ++visitorCalls;
-                          });
+  tree.forEachOverlapping(
+      {1, 2}, [&visitorCalls](const auto &, const auto &) { ++visitorCalls; });
   EXPECT_EQ(visitorCalls, 0U);
   EXPECT_EQ(tree.queryTopology({1, 2}, 10).m_status,
             dmn::Dmn_OverlayTopology::Clear);
@@ -374,7 +372,7 @@ TEST(IntervalBTree, DuplicateOrderingCallbackCannotMutateTreeReentrantly) {
     tree.add({10, 15}, 30);
     return lhs < rhs;
   }),
-    std::logic_error);
+               std::logic_error);
 
   EXPECT_EQ(tree.size(), 2U);
 }
@@ -398,13 +396,12 @@ TEST(IntervalBTree, UserComparatorsCannotMutateTreeReentrantly) {
 
 TEST(IntervalBTree, PriorityEvaluatorCannotMutateTreeReentrantly) {
   dmn::Dmn_IntervalBTree<int> *treePointer = nullptr;
-  dmn::Dmn_IntervalBTree<int> tree(
-      {}, [&treePointer](int lhs, int rhs) {
-        if (treePointer != nullptr) {
-          treePointer->clear();
-        }
-        return lhs > rhs;
-      });
+  dmn::Dmn_IntervalBTree<int> tree({}, [&treePointer](int lhs, int rhs) {
+    if (treePointer != nullptr) {
+      treePointer->clear();
+    }
+    return lhs > rhs;
+  });
   treePointer = &tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
 
@@ -1679,13 +1676,14 @@ TEST(IntervalBTree, CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId) {
   Tree tree;
   const Tree::registered_state_callback callback =
       [](const auto &, const auto &, const auto &, const auto &) {};
-  const std::function<bool(const int &)> matcher =
-      [](const int &) { return true; };
+  const std::function<bool(const int &)> matcher = [](const int &) {
+    return true;
+  };
 
   EXPECT_THROW(tree.registerStateCallback({}, {}, callback),
                std::invalid_argument);
-  EXPECT_THROW(tree.registerStateCallback(
-                   matcher, {}, Tree::registered_state_callback{}),
+  EXPECT_THROW(tree.registerStateCallback(matcher, {},
+                                          Tree::registered_state_callback{}),
                std::invalid_argument);
 
   std::size_t calls = 0;

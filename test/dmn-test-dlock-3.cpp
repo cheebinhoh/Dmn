@@ -230,8 +230,7 @@ TEST(DlockLocalMirror, SnapshotCodecPreservesAllTableAndEntryFields) {
   EXPECT_EQ(restoredEntry.m_terminal_reason, entry.m_terminal_reason);
   EXPECT_EQ(restoredEntry.m_acquire_deadline_ticks,
             entry.m_acquire_deadline_ticks);
-  EXPECT_EQ(restoredEntry.m_lease_deadline_ticks,
-            entry.m_lease_deadline_ticks);
+  EXPECT_EQ(restoredEntry.m_lease_deadline_ticks, entry.m_lease_deadline_ticks);
   EXPECT_EQ(restoredEntry.m_waiting, entry.m_waiting);
   EXPECT_EQ(restoredEntry.m_granted, entry.m_granted);
 }
