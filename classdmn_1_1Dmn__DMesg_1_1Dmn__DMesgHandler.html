@@ -247,9 +247,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:aa69e6a0a2171a34c07469c422c7ceeb2" id="r_aa69e6a0a2171a34c07469c422c7ceeb2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa69e6a0a2171a34c07469c422c7ceeb2">writeDMesgInternal</a> (dmn::DMesgPb &amp;dmesgpb, bool move, bool block=false)</td></tr>
 <tr class="memdesc:aa69e6a0a2171a34c07469c422c7ceeb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal write implementation used by public write(...) overloads.  <br /></td></tr>
 <tr class="separator:aa69e6a0a2171a34c07469c422c7ceeb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b" id="r_a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplParams" colspan="2"><a id="a311d2db40e29dbb9639b2aa91269651b" name="a311d2db40e29dbb9639b2aa91269651b"></a>
-template&lt;typename Callable &gt; </td></tr>
-<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scheduleInHandlerContext</b> (Callable &amp;&amp;fnc)</td></tr>
+<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b" id="r_a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplParams" colspan="2">template&lt;typename Callable &gt; </td></tr>
+<tr class="memitem:a311d2db40e29dbb9639b2aa91269651b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a311d2db40e29dbb9639b2aa91269651b">scheduleInHandlerContext</a> (Callable &amp;&amp;fnc)</td></tr>
+<tr class="memdesc:a311d2db40e29dbb9639b2aa91269651b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Schedule a callable task to be executed within the handler's asynchronous execution context.  <br /></td></tr>
 <tr class="separator:a311d2db40e29dbb9639b2aa91269651b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -783,6 +783,48 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>Topic to resolve, or "" for all topics. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a311d2db40e29dbb9639b2aa91269651b" name="a311d2db40e29dbb9639b2aa91269651b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a311d2db40e29dbb9639b2aa91269651b">&#9670;&#160;</a></span>scheduleInHandlerContext()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Callable &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::Dmn_DMesg::Dmn_DMesgHandler::scheduleInHandlerContext </td>
+          <td>(</td>
+          <td class="paramtype">Callable &amp;&amp;&#160;</td>
+          <td class="paramname"><em>fnc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Schedule a callable task to be executed within the handler's asynchronous execution context. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Callable</td><td>The type of the callable object (e.g., lambda, function). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fnc</td><td>The callable task to be scheduled and executed. </td></tr>
   </table>
   </dd>
 </dl>
