@@ -7,6 +7,8 @@
 
 #include <gtest/gtest.h>
 
+#include "dmn-interval-btree.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -14,8 +16,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-#include "dmn-interval-btree.hpp"
 
 namespace dmn::detail {
 

@@ -19,8 +19,12 @@ namespace {
 TEST(DlockRealAcquire, SecondThreadBlocksUntilRelease) {
   dmn::Dmn_DLock dlock{"dlock-real-acquire"};
 
-  auto first =
-      dlock.acquireLock({.m_start = 10, .m_end = 20}, {.m_request_id = "first-request", .m_lease_ticks = 1000, .m_wait = true, .m_retries_allowed = false, .m_no_wait = false});
+  auto first = dlock.acquireLock({.m_start = 10, .m_end = 20},
+                                 {.m_request_id = "first-request",
+                                  .m_lease_ticks = 1000,
+                                  .m_wait = true,
+                                  .m_retries_allowed = false,
+                                  .m_no_wait = false});
   EXPECT_EQ(first.m_code, dmn::Dmn_DLock_ResultCode::kOk);
 
   std::atomic<bool> second_started{false};
@@ -30,8 +34,13 @@ TEST(DlockRealAcquire, SecondThreadBlocksUntilRelease) {
   dmn::Dmn_Proc second_thread{
       "dlock-second-thread", [&]() {
         second_started.store(true);
-        auto result = dlock.acquireLock(
-            {.m_start = 15, .m_end = 17}, {.m_request_id = "second-request", .m_lease_ticks = 1000, .m_wait = true, .m_retries_allowed = false, .m_no_wait = false});
+
+        auto result = dlock.acquireLock({.m_start = 15, .m_end = 17},
+                                        {.m_request_id = "second-request",
+                                         .m_lease_ticks = 1000,
+                                         .m_wait = true,
+                                         .m_retries_allowed = false,
+                                         .m_no_wait = false});
         second_done.store(true);
         EXPECT_EQ(result.m_code, dmn::Dmn_DLock_ResultCode::kOk);
       }};
@@ -65,7 +74,9 @@ TEST(DlockRealAcquire, WaitFlagRejectsImmediateConflict) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
+
   const int result = RUN_ALL_TESTS();
+
   google::protobuf::ShutdownProtobufLibrary();
 
   return result;
