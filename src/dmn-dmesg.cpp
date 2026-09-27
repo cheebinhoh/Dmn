@@ -98,8 +98,10 @@ void Dmn_DMesg::Dmn_DMesgHandler::notify(const dmn::DMesgPb &dmesgpb,
 }
 
 // class Dmn_DMesg::Dmn_DMesgHandler
-/** @brief Full constructor: initialises all handler fields from the given
- * arguments. */
+/**
+ * @brief Full constructor: initialises all handler fields from the given
+ * arguments.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
@@ -124,7 +126,9 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
   }
 }
 
-/** @brief Delegates to the full constructor using kHandlerConfig_Default. */
+/**
+ * @brief Delegates to the full constructor using kHandlerConfig_Default.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn,
@@ -132,19 +136,25 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, topic, std::move(filter_fn),
                        std::move(async_process_fn), kHandlerConfig_Default} {}
 
-/** @brief Delegates with a null async-process callback. */
+/**
+ * @brief Delegates with a null async-process callback.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic,
                                               FilterTask filter_fn)
     : Dmn_DMesgHandler{name, topic, std::move(filter_fn),
                        static_cast<AsyncProcessTask>(nullptr)} {}
 
-/** @brief Delegates with null filter and async-process callbacks. */
+/**
+ * @brief Delegates with null filter and async-process callbacks.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               std::string_view topic)
     : Dmn_DMesgHandler{name, topic, static_cast<FilterTask>(nullptr)} {}
 
-/** @brief Delegates to the full constructor with an empty topic string. */
+/**
+ * @brief Delegates to the full constructor with an empty topic string.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
                                               AsyncProcessTask async_process_fn,
@@ -152,7 +162,8 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, "", std::move(filter_fn),
                        std::move(async_process_fn), std::move(configs)} {}
 
-/** @brief Delegates with kHandlerConfig_Default for the empty-topic overload.
+/**
+ * @brief Delegates with kHandlerConfig_Default for the empty-topic overload.
  */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn,
@@ -160,8 +171,10 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, std::move(filter_fn), std::move(async_process_fn),
                        kHandlerConfig_Default} {}
 
-/** @brief Delegates with a null async-process callback for the empty-topic
- * overload. */
+/**
+ * @brief Delegates with a null async-process callback for the empty-topic
+ * overload.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
                                               FilterTask filter_fn)
     : Dmn_DMesgHandler{name, std::move(filter_fn),
@@ -199,8 +212,10 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
   return inConflict;
 }
 
-/** @brief Spin-waits until the initial playback of last-known messages
- * completes. */
+/**
+ * @brief Spin-waits until the initial playback of last-known messages
+ * completes.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
   while (!m_after_initial_playback.test()) {
     m_after_initial_playback.wait(false, std::memory_order_relaxed);
@@ -230,7 +245,9 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
   return runningCounter;
 }
 
-/** @brief Look up the running counter for @p topic directly (no locking). */
+/**
+ * @brief Look up the running counter for @p topic directly (no locking).
+ */
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
     std::string_view topic) -> uint64_t {
   auto iter = m_topic_running_counter.find(std::string{topic});
@@ -247,8 +264,10 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
 }
 
-/** @brief Set the playback-complete flag and wake all waiters (runs in async
- * context). */
+/**
+ * @brief Set the playback-complete flag and wake all waiters (runs in async
+ * context).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
   m_after_initial_playback.test_and_set(std::memory_order_relaxed);
   m_after_initial_playback.notify_all();
@@ -271,7 +290,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
   waitHandler->wait();
 }
 
-/** @brief Directly update the counter map entry for @p topic (no locking). */
+/**
+ * @brief Directly update the counter map entry for @p topic (no locking).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
     std::string_view topic, uint64_t runningCounter) {
   m_topic_running_counter[std::string{topic}] = runningCounter;
@@ -311,7 +332,9 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
   m_owner->resetHandlerConflictState(this, topic);
 }
 
-/** @brief Post the conflict callback update to the async context and wait. */
+/**
+ * @brief Post the conflict callback update to the async context and wait.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
 
@@ -324,12 +347,16 @@ void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
   return;
 }
 
-/** @brief Move-write overload: delegates to write(dmesgpb, flags=kDefault). */
+/**
+ * @brief Move-write overload: delegates to write(dmesgpb, flags=kDefault).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb) {
   this->write(dmesgpb, false);
 }
 
-/** @brief Copy-write overload: delegates to write(dmesgpb, flags=kDefault). */
+/**
+ * @brief Copy-write overload: delegates to write(dmesgpb, flags=kDefault).
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb) {
   this->write(dmesgpb, false);
 }
@@ -625,15 +652,19 @@ auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
   return ret;
 }
 
-/** @brief Return a mutable reference to the per-topic last-message cache (no
- * locking). */
+/**
+ * @brief Return a mutable reference to the per-topic last-message cache (no
+ * locking).
+ */
 auto Dmn_DMesg::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return m_topic_last_dmesgpb;
 }
 
-/** @brief Re-publish each topic's last-known message with the playback flag
- * set. */
+/**
+ * @brief Re-publish each topic's last-known message with the playback flag
+ * set.
+ */
 void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
   for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
     dmn::DMesgPb msgpb = topic_dmesgpb.second;
@@ -743,8 +774,10 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
   waitHandler->wait();
 }
 
-/** @brief Internal: force-republish the last cached message for @p topic (no
- * async dispatch). */
+/**
+ * @brief Internal: force-republish the last cached message for @p topic (no
+ * async dispatch).
+ */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
     std::string_view topic) {
   auto iter = m_topic_last_dmesgpb.find(std::string{topic});
@@ -773,8 +806,10 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
   });
 }
 
-/** @brief Locate @p handler_ptr in the handler list and call
- * resolveConflictInternal(). */
+/**
+ * @brief Locate @p handler_ptr in the handler list and call
+ * resolveConflictInternal().
+ */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
   auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),

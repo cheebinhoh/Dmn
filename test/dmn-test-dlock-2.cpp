@@ -44,7 +44,10 @@ TEST(DlockSessionLifetime, OneSessionOneHandler) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
+
   const int result = RUN_ALL_TESTS();
+
   google::protobuf::ShutdownProtobufLibrary();
+
   return result;
 }
