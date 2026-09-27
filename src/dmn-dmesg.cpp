@@ -654,7 +654,7 @@ auto Dmn_DMesg::getTopicLastMessage(std::string_view topic)
 
 /**
  * @brief Return a mutable reference to the per-topic last-message cache (no
- * locking). 
+ * locking).
  */
 auto Dmn_DMesg::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {

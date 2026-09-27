@@ -457,7 +457,8 @@ public:
      * @brief Schedule a callable task to be executed within the handler's
      * asynchronous execution context.
      *
-     * @tparam Callable The type of the callable object (e.g., lambda, function).
+     * @tparam Callable The type of the callable object (e.g., lambda,
+     * function).
      * @param  fnc      The callable task to be scheduled and executed.
      */
     template <typename Callable> void scheduleInHandlerContext(Callable &&fnc) {
@@ -689,7 +690,8 @@ private:
   /**
    * @brief Internal helper to finalize handler wiring and registration.
    */
-  auto finalizeHandlerRegistration(std::shared_ptr<Dmn_DMesgHandler> handler) -> HandlerType;
+  auto finalizeHandlerRegistration(std::shared_ptr<Dmn_DMesgHandler> handler)
+      -> HandlerType;
 
   /**
    * @brief Run in the publisher's async thread context to playback the last
@@ -729,9 +731,10 @@ private:
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 
-inline auto Dmn_DMesg::finalizeHandlerRegistration(std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler) -> HandlerType {
+inline auto Dmn_DMesg::finalizeHandlerRegistration(
+    std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler) -> HandlerType {
   auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
-  
+
   handler->m_owner = this;
   this->registerSubscriber(handler);
   handlerProxy.m_handler = handler;
