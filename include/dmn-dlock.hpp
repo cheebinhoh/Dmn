@@ -56,6 +56,7 @@
 
 #include "dmn-dmesg.hpp"
 #include "dmn-interval-btree.hpp"
+
 #include "proto/dmn-dlock.pb.h"
 
 #include <algorithm>
@@ -110,6 +111,7 @@ struct Dmn_DLock_Range {
     if (!isValid() || !other.isValid()) {
       return false;
     }
+
     return !(m_end < other.m_start || other.m_end < m_start);
   }
 
@@ -159,6 +161,7 @@ struct Dmn_DLock_LifecycleEvent {
 struct Dmn_DLock_RequestOptions {
   std::string m_request_id{};
   std::int64_t m_lease_ticks{0};
+
   bool m_wait{true};
   bool m_retries_allowed{false};
   bool m_no_wait{false};
@@ -170,6 +173,7 @@ struct Dmn_DLock_RequestOptions {
 struct Dmn_DLock_Config {
   std::string m_domain{"default"};
   std::int64_t m_default_lease_ticks{1000};
+
   bool m_require_canonical_snapshot{true};
 };
 
@@ -254,6 +258,7 @@ struct Dmn_DLock_TableSnapshot {
               [](const Dmn_DLock_Entry &lhs, const Dmn_DLock_Entry &rhs) {
                 const auto lhs_key = lhs.canonicalKey();
                 const auto rhs_key = rhs.canonicalKey();
+
                 return lhs_key < rhs_key;
               });
   }
@@ -267,6 +272,7 @@ struct Dmn_DLock_TableSnapshot {
       if (!entry.isValid()) {
         return false;
       }
+
       if (!entry.m_range.isValid()) {
         return false;
       }
@@ -279,6 +285,7 @@ struct Dmn_DLock_TableSnapshot {
         const bool same_domain = lhs.m_domain == rhs.m_domain;
         const bool granted_overlap =
             lhs.m_granted && rhs.m_granted && lhs.m_range.overlaps(rhs.m_range);
+
         if (same_domain && granted_overlap) {
           return false;
         }
@@ -299,6 +306,7 @@ struct Dmn_DLock_TableSnapshot {
           entry.m_session_id == candidate.m_session_id) {
         continue;
       }
+
       if (entry.m_granted && candidate.m_granted &&
           entry.m_domain == candidate.m_domain &&
           entry.m_range.overlaps(candidate.m_range)) {
@@ -325,6 +333,7 @@ struct Dmn_DLock_TableSnapshot {
     result.m_next_sequence =
         std::max(result.m_next_sequence, candidate.m_sequence + 1);
     result.canonicalize();
+
     return result;
   }
 
@@ -334,6 +343,7 @@ struct Dmn_DLock_TableSnapshot {
         return true;
       }
     }
+
     return false;
   }
 
@@ -356,6 +366,7 @@ struct Dmn_DLock_TableSnapshot {
 
     for (const auto &entry : snapshot) {
       auto *pb_entry = table.add_entries();
+
       pb_entry->set_domain(entry.m_domain);
       pb_entry->set_request_id(entry.m_request_id);
       pb_entry->set_session_id(entry.m_session_id);
@@ -454,10 +465,12 @@ struct Dmn_DLock_TableSnapshot {
       parsed.m_lease_deadline_ticks = entry.lease_deadline_ticks();
       parsed.m_waiting = entry.waiting();
       parsed.m_granted = entry.granted();
+
       snapshot.m_entries.push_back(parsed);
     }
 
     snapshot.canonicalize();
+
     return snapshot;
   }
 };
@@ -487,6 +500,7 @@ public:
     if (!snapshot.validate()) {
       return false;
     }
+
     return true;
   }
 
@@ -507,6 +521,7 @@ public:
     if (!m_handler) {
       throw std::runtime_error("lock handler has been closed");
     }
+
     return m_handler;
   }
 
@@ -518,6 +533,7 @@ public:
 
 private:
   friend class Dmn_DLock_Base;
+
   std::shared_ptr<Dmn_DLock_Handler> m_handler{};
 };
 
@@ -537,6 +553,7 @@ public:
         std::make_shared<Dmn_DLock_Handler>(session_name, topic, m_config);
     HandlerType proxy{};
     proxy.m_handler = handler;
+
     return proxy;
   }
 
@@ -601,10 +618,12 @@ public:
         return {Dmn_DLock_ResultCode::kNoWait, range, request_id,
                 "range is already granted"};
       }
+
       m_cv.wait(lock);
     }
 
     Dmn_DLock_Entry entry{};
+
     entry.m_domain = m_config.m_domain;
     entry.m_request_id = request_id;
     entry.m_session_id = std::string("session-") + request_id;
@@ -630,6 +649,7 @@ public:
     m_table.m_next_sequence = entry.m_sequence;
     m_table.m_next_fencing_token = entry.m_fence;
     m_cv.notify_all();
+
     return {Dmn_DLock_ResultCode::kOk, range, request_id, "granted"};
   }
 
@@ -640,13 +660,16 @@ public:
     auto future = promise->get_future();
     std::thread([this, range, options, promise]() {
       auto result = acquireLock(range, options);
+
       promise->set_value(result);
     }).detach();
+
     return future;
   }
 
   auto releaseLock(std::string_view request_id) -> Dmn_DLock_Result {
     std::lock_guard<std::mutex> lock(m_mutex);
+
     auto it = std::find_if(m_table.m_entries.begin(), m_table.m_entries.end(),
                            [&](const Dmn_DLock_Entry &entry) {
                              return entry.m_request_id == request_id;
@@ -661,12 +684,14 @@ public:
     const auto range = it->m_range;
     m_table.m_entries.erase(it);
     m_cv.notify_all();
+
     return {Dmn_DLock_ResultCode::kOk, range, std::string(request_id),
             "released"};
   }
 
   auto currentSnapshot() const -> Dmn_DLock_TableSnapshot {
     std::lock_guard<std::mutex> lock(m_mutex);
+
     return m_table;
   }
 
