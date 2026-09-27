@@ -20,7 +20,7 @@ TEST(DlockRealAcquire, SecondThreadBlocksUntilRelease) {
   dmn::Dmn_DLock dlock{"dlock-real-acquire"};
 
   auto first =
-      dlock.acquireLock({10, 20}, {"first-request", 1000, true, false, false});
+      dlock.acquireLock({.m_start = 10, .m_end = 20}, {.m_request_id = "first-request", .m_lease_ticks = 1000, .m_wait = true, .m_retries_allowed = false, .m_no_wait = false});
   EXPECT_EQ(first.m_code, dmn::Dmn_DLock_ResultCode::kOk);
 
   std::atomic<bool> second_started{false};
@@ -31,7 +31,7 @@ TEST(DlockRealAcquire, SecondThreadBlocksUntilRelease) {
       "dlock-second-thread", [&]() {
         second_started.store(true);
         auto result = dlock.acquireLock(
-            {15, 17}, {"second-request", 1000, true, false, false});
+            {.m_start = 15, .m_end = 17}, {.m_request_id = "second-request", .m_lease_ticks = 1000, .m_wait = true, .m_retries_allowed = false, .m_no_wait = false});
         second_done.store(true);
         EXPECT_EQ(result.m_code, dmn::Dmn_DLock_ResultCode::kOk);
       }};
@@ -67,5 +67,6 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   const int result = RUN_ALL_TESTS();
   google::protobuf::ShutdownProtobufLibrary();
+
   return result;
 }
