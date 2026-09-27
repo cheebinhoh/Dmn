@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dlock-4.cpp
- * @brief Multi-thread blocked acquisition and release semantics.
+ * @brief Helper-level blocked-state checks for DLock range availability.
  */
 
 #include <gtest/gtest.h>

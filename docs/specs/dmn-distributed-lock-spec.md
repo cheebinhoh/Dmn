@@ -1,7 +1,49 @@
 # Feature Specification: DMN Distributed Range Lock (`Dmn_DLock`)
 
-Status: completed for the v1 Dmn_DMesg publisher-serialized lock. Future
-`Dmn_DMesgNet` consensus work is deferred to a separate specification.
+Status: design target; **not implemented as specified**. The repository has a
+partial DLock prototype and protobuf schema, but no publisher-serialized lock
+protocol yet. `Dmn_DMesgNet` consensus work remains deferred to a separate
+specification.
+
+### Current implementation snapshot
+
+The source of truth is `include/dmn-dlock.hpp` and the registered tests under
+`test/dmn-test-dlock-*.cpp`. Today the prototype:
+
+- defines the range, result, request/config, entry, and table-snapshot values;
+- canonicalizes snapshot entries by `(start, end, priority, sequence,
+  request_id)` for serialization and converts snapshots to/from protobuf;
+- rejects negative/reversed DLock ranges and overlapping granted entries in
+  `Dmn_DLock_TableSnapshot::validate()`, and rejects an entry whose domain
+  differs from its containing table;
+- provides a `Dmn_DLock<Dmn_DMesg>`-only template, a handler proxy, and a
+  single instance-wide in-memory table protected by a mutex and condition
+  variable; and
+- supports basic blocking acquisition, no-wait rejection, release, and a
+  detached-thread `acquireLockAsync()` wrapper.
+
+This is **not** publisher serialization: `Dmn_DLock_Handler::publishSnapshot()`
+only returns the result of snapshot validation (`false` for invalid snapshots,
+`true` for valid ones); it does not publish. `openHandler()` creates a derived
+DMesg handler directly rather than registering it with the
+`Dmn_DMesg` publisher. Handler-proxy copies share handler lifetime through
+`shared_ptr`, but closing resets only the supplied proxy and does not invalidate
+the copies. They are not shared public-gate/session controls. The lock does
+not currently use `Dmn_IntervalBTree` for its mirror. Acquisition assigns
+simple local sequence and fence values, and release erases the entry rather
+than retaining a terminal record. The validator does not enforce canonical
+entry order, table version transitions, or consistency between the state enum
+and boolean flags. `acquireLockAsync()` launches a detached thread that captures
+the lock object by pointer; there is no task-drain or lifetime guarantee. There
+is no cross-handler synchronization, retry, timeout enforcement, lease
+maintenance, owner authorization, cleanup, or shutdown protocol.
+Consequently, the prototype must not be described or used as a distributed
+lock or relied on for fencing/lease safety.
+
+The DMesg extension is likewise partial: `openHandlerWithFactory()` and
+`scheduleInHandlerContext()` exist, but both are currently public rather than
+protected as required by this design. Nonblocking publication completion and
+publisher-side pre-cache validation are not implemented.
 
 ## 1. Purpose and v1 boundary
 
@@ -44,9 +86,9 @@ There is no standalone `Dmn_DLock_Manager`, backend abstraction, authority
 service, command/reply topology, or manager-global mirror in this design.
 Retaining any of those as a second commit authority is forbidden.
 
-This specification is complete for the Phase 1 `Dmn_DMesg` implementation. The
-future `Dmn_DMesgNet` consensus-backed evolution is intentionally moved to a
-separate specification at
+This specification defines the intended Phase 1 `Dmn_DMesg` implementation;
+the implementation is not complete. The future `Dmn_DMesgNet` consensus-backed
+evolution is intentionally moved to a separate specification at
 `docs/specs/dmn-distributed-lock-dmesgnet-spec.md`. The v1 design does not
 grant `Dmn_DMesgNet` any lock authority and does not permit its use as the
 source of truth for this implementation.
@@ -93,8 +135,19 @@ truth.
 The acquisition semantics must be covered by explicitly blocking tests: a second
 thread attempting to acquire an overlapping range shall remain blocked until the
 first thread releases the active grant.  The test harness uses `Dmn_Proc` and a
-manual condition variable/monitor to prove the blocked thread cannot advance
-while the grant remains active and can proceed only after release.
+condition-variable/monitor barrier to prove the blocked thread cannot advance
+while the grant remains active and can proceed only after release. This is a
+target acceptance requirement, not what the current test proves:
+`DlockRealAcquire.SecondThreadBlocksUntilRelease` uses `Dmn_Proc` but relies on
+fixed sleeps before and after release, so it must be replaced by the
+barrier-controlled test before this requirement can be considered satisfied.
+
+The focused prototype tests also exercise snapshot codecs for populated
+table/entry fields, reject malformed or cross-domain snapshots/candidates,
+check range conversion and copyable proxy semantics, exercise handler-context
+posting and validation, and cover invalid acquisitions plus the asynchronous
+acquire/release APIs. These are API/helper tests only; they are not evidence of
+the publisher-serialized behavior defined by the acceptance matrix below.
 
 ### 1.3 Canonical protobuf schema for the lock-table snapshot
 
@@ -214,23 +267,28 @@ message and reconstructed by each handler into its session-local `Dmn_IntervalBT
 
 ## 2. Repository facts and required narrow `Dmn_DMesg` extension
 
-Current `Dmn_DMesg::openHandler()` always constructs
-`Dmn_DMesgHandler`.  That type privately inherits `Dmn_Async`, so a derived
-lock handler cannot currently schedule arbitrary work in its own handler
-execution context.  Therefore the current API is insufficient; an
-implementation MUST NOT pretend otherwise.
+The public `Dmn_DMesg::openHandler()` still constructs
+`Dmn_DMesgHandler` by default. That type privately inherits `Dmn_Async`.
+The repository has since added public `openHandlerWithFactory()` and
+`scheduleInHandlerContext()` methods, allowing custom handler registration
+and handler-context scheduling. The target API intentionally narrows these
+seams to protected access; that change and the additional nonblocking
+publish-completion and publisher-validation seams are still required. An
+implementation MUST NOT claim they are already in place.
 
-The smallest deliberate, additive extensibility change is required before
-`Dmn_DLock` is implemented:
+The required additive extensibility consists of these seams; items 1 and 2
+are already present, while items 3 and 4 remain prerequisites for implementing
+the specified publisher-serialized `Dmn_DLock`:
 
-1. add a protected, non-template `openHandlerWithFactory(HandlerSpec,
-   HandlerFactory)` path that performs the existing registration, playback,
-   owner wiring, and lifetime setup.  `HandlerSpec` normalizes name, topic,
-   filter, callback, and configuration; the existing public forwarding
-   `openHandler()` remains unchanged and continues to construct exactly
-   `Dmn_DMesgHandler`;
-2. expose on `Dmn_DMesgHandler` a protected scheduling wrapper that posts a
-   `void()` task to that handler's existing `Dmn_Async` context;
+1. **Present, visibility differs:** `openHandlerWithFactory(HandlerSpec,
+   HandlerFactory)` performs the existing registration, playback, owner
+   wiring, and lifetime setup. `HandlerSpec` normalizes name, topic, filter,
+   callback, and configuration. It is currently public but must be protected;
+   the public forwarding `openHandler()` remains unchanged and continues to
+   construct exactly `Dmn_DMesgHandler`;
+2. **Present, visibility differs:** `Dmn_DMesgHandler` has a public scheduling
+   wrapper that posts a `void()` task to that handler's existing
+   `Dmn_Async` context; narrow it to protected;
 3. expose the minimum protected, nonblocking publish-completion hook needed
    for code already running in that context to learn publisher acceptance or
    conflict.  Current public `writeAndCheckConflict()` waits after scheduling,
@@ -363,7 +421,7 @@ paused stale client.
 
 ### 4.1 Internal lock-table representation
 
-Implementations MUST use the independent `Dmn_IntervalBTree` module (see
+The target implementation MUST use the independent `Dmn_IntervalBTree` module (see
 `dmn-interval-btree-spec.md`) per handler to store and query entries by range.
 This external dependency guarantees:
 
@@ -431,7 +489,17 @@ transition appear uncommitted. Reconstruction suppresses tree callbacks while
 loading; DLock computes any request notifications only after replacing and
 validating the complete mirror.
 
-## 5. `Dmn_DLock` API shape and session ownership
+## 5. `Dmn_DLock` target API shape and session ownership
+
+The API below is the **target contract**, not the current header API. The
+current public types and methods differ: result codes are `kOk`,
+`kInvalidState`, `kInvalidRange`, `kConflict`, `kTimeout`, `kCancelled`,
+`kShutdown`, `kNoWait`, and `kError`; request options currently contain
+`m_request_id`, `m_lease_ticks`, `m_wait`, `m_retries_allowed`, and
+`m_no_wait`; and `Dmn_DLock` currently exposes `acquireLock`,
+`acquireLockAsync`, `releaseLock`, and `currentSnapshot`. `Dmn_DLock_Handler`
+exposes a validation-only `publishSnapshot()` and an own-context scheduling
+wrapper. The session/proxy ownership model below is not implemented.
 
 C++ class and struct data members in the DLock API use the repository's
 `m_` prefix convention. This naming convention does not rename protobuf field
@@ -755,9 +823,19 @@ newer valid snapshots replace the session-local mirror.
 
 ## 9. Deterministic test matrix
 
-No DLock implementation or target exists today.  These tests are introduced
-alongside the implementation stages; this specification does not require
-uncompilable placeholder test files.  All timing tests use manual clocks,
+Initial DLock test targets now exist, but they cover the prototype rather than
+the complete matrix below. Existing coverage is limited to protobuf message
+body copy/compatibility (`dmn-test-dlock-1`), handler proxy liveness and
+distinct handlers (`dmn-test-dlock-2`), local snapshot validation,
+candidate checks, and canonical sorting (`dmn-test-dlock-3`), helper-level
+blocking-state checks (`dmn-test-dlock-4`), and basic local acquire/release
+behavior (`dmn-test-dlock-5`). These tests do not prove DMesg publication,
+cross-handler synchronization, or the close/retry/lease protocol. In
+particular, the existing protobuf test does not serialize and parse the
+message, and the real-acquire test uses wall-clock sleeps rather than a
+release barrier. Add the remaining tests alongside implementation stages;
+this specification does not require uncompilable placeholder test files. New
+timing tests should use manual clocks,
 deterministic IDs/jitter, explicit handler-context drains, promises, and
 barriers—not wall-clock sleeps.
 

@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dlock-5.cpp
- * @brief Real DLock acquisition blocking and release semantics across threads.
+ * @brief Local DLock API blocking and release semantics across threads.
  */
 
 #include <gtest/gtest.h>
@@ -12,6 +12,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <future>
 #include <thread>
 
 namespace {
@@ -68,6 +69,34 @@ TEST(DlockRealAcquire, WaitFlagRejectsImmediateConflict) {
 
   auto second = dlock.acquireLock({3, 4}, {"second", 1000, false, false, true});
   EXPECT_EQ(second.m_code, dmn::Dmn_DLock_ResultCode::kNoWait);
+}
+
+TEST(DlockRealAcquire, InvalidRangesDoNotMutateAndMissingReleaseIsReported) {
+  dmn::Dmn_DLock dlock{"dlock-invalid-range"};
+
+  const auto reversed = dlock.acquireLock({5, 2}, {.m_request_id = "bad"});
+  EXPECT_EQ(reversed.m_code, dmn::Dmn_DLock_ResultCode::kInvalidRange);
+  const auto negative = dlock.acquireLock({-1, 2}, {.m_request_id = "bad"});
+  EXPECT_EQ(negative.m_code, dmn::Dmn_DLock_ResultCode::kInvalidRange);
+  EXPECT_TRUE(dlock.currentSnapshot().m_entries.empty());
+
+  const auto missing = dlock.releaseLock("not-present");
+  EXPECT_EQ(missing.m_code, dmn::Dmn_DLock_ResultCode::kInvalidState);
+}
+
+TEST(DlockRealAcquire, AsyncAcquireCompletesAndSnapshotIsAnIndependentCopy) {
+  dmn::Dmn_DLock dlock{"dlock-async"};
+
+  auto result = dlock.acquireLockAsync(
+      {10, 20}, {.m_request_id = "async-request", .m_lease_ticks = 1000});
+  EXPECT_EQ(result.wait_for(std::chrono::seconds(5)),
+            std::future_status::ready);
+  ASSERT_EQ(result.get().m_code, dmn::Dmn_DLock_ResultCode::kOk);
+
+  auto snapshot = dlock.currentSnapshot();
+  ASSERT_EQ(snapshot.m_entries.size(), 1U);
+  snapshot.m_entries.clear();
+  EXPECT_EQ(dlock.currentSnapshot().m_entries.size(), 1U);
 }
 
 } // namespace

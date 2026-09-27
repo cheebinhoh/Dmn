@@ -1,5 +1,23 @@
 # Implementation Plan: `Dmn_DLock` Publisher-Serialized v1
 
+## Current repository status
+
+This document is the implementation roadmap, not a statement that the design
+below is already delivered. The repository currently contains a partial
+`include/dmn-dlock.hpp` prototype, `src/proto/dmn-dlock.proto`, protobuf
+oneof wiring, and the `dmn-test-dlock-*` targets. The prototype provides
+snapshot value/codec helpers and a local mutex/condition-variable acquisition
+path; it does **not** implement the publisher-serialized protocol described
+below. In particular, snapshot publication is not wired to DMesg, sessions do
+not own independent mirrors, and close/retry/lease/cleanup semantics are not
+implemented. Do not describe v1 as complete or safe for distributed use until
+the remaining layers and acceptance tests are implemented.
+
+The DMesg seam is also partial: `openHandlerWithFactory()` and
+`scheduleInHandlerContext()` exist but are currently public, not protected as
+this design requires. Nonblocking publish completion and pre-cache publisher
+validation hooks do not exist.
+
 ## 1. Delivery rule
 
 Implement the distributed-lock specification as small, independently buildable
@@ -22,11 +40,21 @@ For every increment:
 4. run `git diff --check`;
 5. do not add a method with placeholder success or an uncompilable future test.
 
-No DLock implementation or test target currently exists.  Create tests and
-their CMake registration only in the layer that supplies compilable production
-code.  Tests use a manual clock, deterministic IDs/backoff jitter, explicit
-handler-context drains, promises, and barriers.  Correctness tests never use
-wall-clock sleeps.
+The prototype and initial test targets already exist; extend them only in the
+layer that supplies compilable production behavior. New protocol correctness
+tests should use a manual clock, deterministic IDs/backoff jitter, explicit
+handler-context drains, promises, and barriers. Existing prototype tests
+include wall-clock sleeps and are not deterministic protocol proofs; replace
+those as the corresponding behavior is implemented. Correctness tests for the
+completed protocol must not depend on wall-clock sleeps.
+
+Current prototype test coverage includes protobuf table/message-body wire
+round-trips; DLock range conversion and overlap semantics; snapshot validation,
+candidate classification and sorting; proxy-copy behavior; handler task
+posting and snapshot validation; invalid acquire ranges; no-wait conflict;
+async acquisition; release/not-found; and snapshot-copy isolation. These tests
+do not establish the publisher-serialized protocol or its distributed
+lifecycle.
 
 ## 2. Target architecture
 
@@ -76,10 +104,11 @@ asynchronously with bounded backoff.
 
 ## 3. Approved base-library seam
 
-The first code layer deliberately changes `Dmn_DMesg` only because current
-`openHandler()` hard-codes `Dmn_DMesgHandler`, whose private `Dmn_Async`
-inheritance prevents a derived lock handler from posting work in its own
-execution context.
+The initial DMesg seam is partly implemented: the handler factory and
+handler-context scheduling wrapper are already present, but both are public
+today and must be narrowed to protected access. The remaining work also
+includes safe asynchronous publish completion and publisher-side validation
+before cache mutation/delivery.
 
 The extension goal is narrow and explicit: allow a lock-derived handler to post
 jobs to its own DMesg callback context, observe publisher acceptance/conflict in
@@ -87,14 +116,17 @@ that context without waiting, and validate the lock-table payload before the
 publisher mutates its cache or delivers to subscribers.  This is not a general
 multi-transport API and not a way to bypass the single-authority design.
 
-Make precisely these additive changes:
+Complete and test the following additive seams:
 
-1. protected non-template `openHandlerWithFactory(HandlerSpec,
-   HandlerFactory)` path that normalizes constructor inputs and preserves the
-   existing registration/playback/ownership path; the public forwarding
-   `openHandler()` remains unchanged; and
-2. protected `Dmn_DMesgHandler` scheduling wrapper for a `void()` job in its
-   existing async context; and
+1. **Present, visibility differs:** `openHandlerWithFactory(HandlerSpec,
+   HandlerFactory)` normalizes constructor inputs and preserves registration,
+   playback, and ownership. It is currently public but must be protected; the
+   public forwarding `openHandler()` remains unchanged. Verify behavior with
+   regression tests.
+2. **Present, visibility differs:** `Dmn_DMesgHandler` has a public
+   `scheduleInHandlerContext()` wrapper for a `void()` job in its existing
+   async context. Narrow it to protected and test that it executes in the
+   handler context.
 3. protected nonblocking publish-completion hook for a job already in that
    context.  The public `writeAndCheckConflict()` waits after scheduling and
    therefore cannot be used from the handler context; the hook reports
@@ -125,13 +157,15 @@ ctest --test-dir build -L dmn --output-on-failure
 When the relevant targets exist:
 
 ```bash
-cmake --build build --target dmn-test-dmesg dmn-test-dlock
-ctest --test-dir build -R '^(dmn-test-dmesg|dmn-test-dlock)$' --output-on-failure
+cmake --build build --target dmn-test-dlock-dmesg-seam dmn-test-dlock-1 dmn-test-dlock-2 dmn-test-dlock-3 dmn-test-dlock-4 dmn-test-dlock-5
+cmake --build build --target dmn-test-dmesg-1 dmn-test-dmesg-2 dmn-test-dmesg-3 dmn-test-dmesg-5 dmn-test-dmesg-6 dmn-test-dmesg-7 dmn-test-dmesg-8 dmn-test-dmesg-9 dmn-test-dmesg-10 dmn-test-dmesg-11
+ctest --test-dir build -R '^(dmn-test-dlock.*|dmn-test-dmesg-[0-9]+)$' --output-on-failure
 ```
 
-Use the repository's actual existing DMesg test target name if it differs;
-never invent a duplicate target.  Final validation runs the lock target,
-existing DMesg tests, and the `dmn` label.
+The repository registers individual numbered DMesg and DLock test targets;
+there is no aggregate `dmn-test-dmesg` or `dmn-test-dlock` target. Final
+validation runs the DLock targets, relevant existing DMesg tests, and the
+`dmn` label.
 
 ## 5. Layer 0: baseline
 
@@ -140,15 +174,16 @@ existing DMesg tests, and the `dmn` label.
 3. Record the original diff names, because these specification files may
    already be modified.
 
-**Exit:** baseline is known; no implementation/test file has been created.
+**Exit:** baseline is known; no new implementation or test file is created in
+this layer.
 
 ## 6. Layer 1: DMesg extensibility seam
 
 ### Scaffold
 
-Add the protected factory and protected scheduling wrapper with repository
-documentation.  Keep the existing public `openHandler` call shape and default
-factory path exact.  The factory must preserve registration, playback,
+Narrow the existing factory and scheduling wrapper to protected access and
+document them. Keep the existing public `openHandler` call shape and default
+factory path exact. The factory must preserve registration, playback,
 ownership, and close semantics for ordinary handlers.
 
 ### Tests, in strict order
@@ -177,8 +212,10 @@ jobs; existing public DMesg behavior is proven unchanged.
 
 ## 7. Layer 2: values, full-table codec, and lock scaffold
 
-Create the public lock header and lock-private implementation header/source
-with only types and no operational placeholders:
+The public header, protobuf schema/oneof, basic snapshot codec, and initial
+tests already exist. Review and complete these values and codec requirements
+without duplicating the existing scaffold or treating its local acquisition
+path as the distributed implementation:
 
 - prefix C++ class and struct data members with `m_`; preserve protocol field
   identifiers and wire names unchanged;
@@ -199,17 +236,19 @@ with only types and no operational placeholders:
   must be copy-constructible for snapshot enumeration and reconstruction;
   visitor-based overlap inspection avoids copies.
 
-Add an additive lock-table protobuf/value codec only when the existing DMesg
-payload shape requires it.  Preserve all old protobuf field numbers/enums and
-test ordinary/sys payload round trips before adding lock fields.  The payload
-is a full table; do not implement command/reply/authority messages.
+The existing `src/proto/dmn-dlock.proto` schema is already included in the
+`DMesgBodyPb` oneof. Preserve all old protobuf field numbers/enums and add
+compatibility tests for ordinary/sys payloads; the existing DLock tests
+currently check message-body compatibility by value-copy, not a serialized
+wire round trip. The payload remains a full table; do not implement
+command/reply/authority messages.
 
 The lock schema lives in the `DMesgBodyPb` oneof as an additive application
 payload and MUST be validated as a full snapshot, not as a diff or command.  A
 separate `dmn-dlock.proto` is acceptable only if it is inserted into the existing
 payload oneof and all legacy field numbers remain untouched.
 
-Introduce `dmn-test-dlock` at this layer and add:
+Extend the existing `dmn-test-dlock-1` target and add:
 
 - `DlockInclusiveSharedEndpointConflicts`;
 - `DlockAdjacentRangesDoNotConflict`;
@@ -218,8 +257,18 @@ Introduce `dmn-test-dlock` at this layer and add:
 - `DlockFullTableCodecRoundTrips`;
 - `DlockExistingDmesgPayloadCompatibility`.
 
-**Exit:** values, compatibility boundary, and full snapshot encoding compile;
-no lock is acquired yet.
+Related coverage already present in the numbered test files includes
+`DlockRange.IntervalConversionPreservesEndpointsAndValidity`,
+`DlockCanonicalProto.RoundTripTablePayload`,
+`DlockLocalMirror.SnapshotRejectsInvalidDomainAndEntryData`,
+`DlockLocalMirror.SnapshotRejectsEntriesFromAnotherDomain`, and
+`DlockLocalMirror.CandidateClassificationCoversInvalidWaitingAndGranted`,
+`DlockLocalMirror.CandidateFromAnotherDomainIsRejected`, and
+`DlockLocalMirror.SnapshotCodecPreservesAllTableAndEntryFields`.
+
+**Exit:** value/codec compatibility is covered. The existing local acquire
+prototype is not considered a completed distributed lock; the later layers
+must replace it with publisher-accepted full-table commits.
 
 ## 8. Layer 3: session/proxy lifetimes
 
@@ -242,6 +291,8 @@ underlying handler stays retained by the private session.
 Add:
 
 - `DlockOpenCreatesOneDerivedDmesgHandler`;
+- `DlockSessionLifetime.ClosingOneProxyCopyLeavesOtherCopiesLive`;
+- `DlockSessionLifetime.HandlerPostRunsAndSnapshotValidationIsExposed`;
 - `DlockSessionAssociationIsImmutableAfterPublicClose`;
 - `DlockProxyCopiesCloseImmediately`;
 - `DlockClosingOneSessionDoesNotInvalidateSibling`;
@@ -347,7 +398,12 @@ Add conflict handling to the handler job, one test at a time:
     thread attempting to acquire an overlapping range stays blocked while the
     grant is held and only proceeds after the owner releases it.  This test
     must use `Dmn_Proc` (not only static data) and an explicit release barrier
-    to prove the blocked path does not advance early.
+    to prove the blocked path does not advance early. The existing
+    `DlockRealAcquire.SecondThreadBlocksUntilRelease` test uses fixed sleeps
+    and does not yet provide this proof; replace it with the barrier-controlled
+    test rather than counting it as complete coverage.
+14. `DlockRealAcquire.InvalidRangesDoNotMutateAndMissingReleaseIsReported`;
+15. `DlockRealAcquire.AsyncAcquireCompletesAndSnapshotIsAnIndependentCopy`.
 
 On conflict the job consumes/validates the new complete table, replaces only
 its local mirror, reapplies the same request entry, and schedules retry in the
