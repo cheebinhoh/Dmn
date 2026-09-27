@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp.html',''); initResizabl
 </div><!--header-->
 <div class="contents">
 
-<p>Publisher-serialized distributed range lock for the v1 <code>Dmn_DMesg</code> implementation.  
+<p>Prototype DLock values and local acquisition API.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-interval-btree_8hpp_source.html">dmn-interval-btree.hpp</a>&quot;</code><br />
@@ -123,31 +123,31 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result returned by a DLock operation.  <a href="structdmn_1_1Dmn__DLock__Result.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DLock__LifecycleEvent.html">dmn::Dmn_DLock_LifecycleEvent</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lifecycle event emitted by a DLock session as it transitions state.  <a href="structdmn_1_1Dmn__DLock__LifecycleEvent.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lifecycle-event value shape; the current prototype does not emit it.  <a href="structdmn_1_1Dmn__DLock__LifecycleEvent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DLock__RequestOptions.html">dmn::Dmn_DLock_RequestOptions</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request-specific lock intent options.  <a href="structdmn_1_1Dmn__DLock__RequestOptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DLock__Config.html">dmn::Dmn_DLock_Config</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable runtime configuration for a DLock domain.  <a href="structdmn_1_1Dmn__DLock__Config.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration values supplied to a DLock instance and handler.  <a href="structdmn_1_1Dmn__DLock__Config.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DLock__Entry.html">dmn::Dmn_DLock_Entry</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Canonical representation of one lock request inside the lock table.  <a href="structdmn_1_1Dmn__DLock__Entry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DLock__TableSnapshot.html">dmn::Dmn_DLock_TableSnapshot</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Canonical whole-table snapshot distributed by the lock publisher.  <a href="structdmn_1_1Dmn__DLock__TableSnapshot.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whole-table snapshot value with protobuf conversion helpers.  <a href="structdmn_1_1Dmn__DLock__TableSnapshot.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DLock__Handler.html">dmn::Dmn_DLock_Handler</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">DMesg handler specialized for DLock table publication and local replay.  <a href="classdmn_1_1Dmn__DLock__Handler.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight DMesg handler wrapper used by the DLock prototype.  <a href="classdmn_1_1Dmn__DLock__Handler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">dmn::Dmn_DLock_HandlerProxy</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight proxy to the lock-specific DMesg handler.  <a href="classdmn_1_1Dmn__DLock__HandlerProxy.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DLock__Base.html">dmn::Dmn_DLock_Base</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared session-state base used by the v1 DLock implementation.  <a href="classdmn_1_1Dmn__DLock__Base.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimal local handler/proxy helper used by the DLock prototype.  <a href="classdmn_1_1Dmn__DLock__Base.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DLock.html">dmn::Dmn_DLock&lt; DMesgBase &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phase 1 distributed lock built on top of <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code>.  <a href="classdmn_1_1Dmn__DLock.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Local-only DLock prototype constrained to a <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code> base.  <a href="classdmn_1_1Dmn__DLock.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
@@ -196,28 +196,28 @@ Enumerations</h2></td></tr>
 <tr class="separator:ad33ab73067934ce5a5d9da17026cc9eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Publisher-serialized distributed range lock for the v1 <code>Dmn_DMesg</code> implementation. </p>
+<div class="textblock"><p>Prototype DLock values and local acquisition API. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Overview</h2>
-<p><code>Dmn_DLock</code> implements the Phase 1 distributed lock for DMN. It is scoped to a single authoritative <code>Dmn_DMesg</code> publisher and serializes a canonical, whole-table lock snapshot over the DMesg transport. Each lock session maintains a private mirror of the current table and applies conflict detection, eligibility checks, and lifecycle transitions locally before publishing a new canonical snapshot.</p>
+<p>This header currently provides DLock value types, snapshot/protobuf conversion helpers, a lightweight DMesg-handler wrapper, and a basic instance-local mutex/condition-variable acquisition prototype. Despite the design target described by the companion spec, this implementation does not publish snapshots, synchronize independent handlers, or implement a distributed lock protocol.</p>
 <h2><a class="anchor" id="autotoc_md12"></a>
 Phase boundary</h2>
-<p>This module intentionally implements only the <code>Dmn_DMesg</code>-based v1 model. It is not a manager/back-end authority, and it does not treat <code>Dmn_DMesgNet</code> or its election state as a lock source of truth. The lock table remains a plain data structure serialized as a protobuf snapshot, with all grant decisions made by the combined DLock state machine and the authoritative publisher.</p>
+<p>The template is restricted to <code>Dmn_DMesg</code>, but this type constraint is not evidence that publisher-serialized v1 is implemented. <code>Dmn_DMesgNet</code> and its election state are not used as a lock authority.</p>
 <h2><a class="anchor" id="autotoc_md13"></a>
 Key responsibilities</h2>
 <ul>
 <li>Define the public DLock result and lifecycle contract (<code>Dmn_DLock_Result</code>, <code>Dmn_DLock_ResultCode</code>, and <code>Dmn_DLock_LifecycleEvent</code>).</li>
 <li>Model a lock range, lock entry, and canonical table snapshot that can be serialized into <code>DLockTablePb</code> and rebuilt from its protobuf form.</li>
-<li>Enforce deterministic sorting and overlap validation for the canonical snapshot so every handler reconstructs the same table state.</li>
-<li>Provide a minimal <code>Dmn_DLock</code> API surface for acquire/release operations in the Phase 1 DMesg-only environment.</li>
-<li>Keep the protocol additive and transport-safe by storing the table in the existing <code>DMesgBodyPb</code> oneof and preserving existing payload compatibility.</li>
+<li>Provide deterministic snapshot conversion helpers and basic validation.</li>
+<li>Provide a local-only <code>Dmn_DLock</code> acquire/release prototype; no transport commit or cross-handler synchronization is performed.</li>
+<li>Use the additive <code>DMesgBodyPb</code> protobuf payload shape for snapshot values.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md14"></a>
 Thread safety and execution model</h2>
-<p>The canonical snapshot is a value object, not a live shared cache. Lock operations use the session/instance mutex and the corresponding DMesg handler context to serialize access to the mutable table and to maintain deterministic ordering. The public API is not a replacement for the later consensus-backed protocol; it is a narrow, testable Phase 1 layer on top of Dmn_DMesg.</p>
+<p>The current acquire/release operations synchronize a single in-memory table with a mutex and condition variable. They do not run in a DMesg handler context or publish state. <code>acquireLockAsync()</code> launches a detached thread that refers to the lock object, so the caller must keep the object alive until the returned future is ready. This prototype is not safe to use as a distributed lock.</p>
 <p>See also</p><ul>
-<li><code><a class="el" href="dmn-dmesg_8hpp.html" title="DMESG publisher/subscriber wrapper using Protobuf messages.">dmn-dmesg.hpp</a></code> : authoritative transport and handler lifecycle used by the v1 lock.</li>
+<li><code><a class="el" href="dmn-dmesg_8hpp.html" title="DMESG publisher/subscriber wrapper using Protobuf messages.">dmn-dmesg.hpp</a></code> : DMesg handler type used by the prototype wrapper.</li>
 <li><code>proto/dmn-dlock.proto</code> : canonical protobuf payload for the lock table.</li>
 <li><code>docs/specs/dmn-distributed-lock-spec.md</code> : current phase specification. </li>
 </ul>
@@ -243,7 +243,7 @@ Thread safety and execution model</h2>
 </div><div class="memdoc">
 
 <p>Final status reported by a DLock request. </p>
-<p>The values define the public contract for acquire/release/close operations in the v1 <code>Dmn_DMesg</code> implementation. A caller must distinguish <code>kConflict</code>, <code>kNoWait</code>, and <code>kTimeout</code> from ordinary success and from invalid or terminal states. </p>
+<p>The currently declared result codes. The local prototype returns only a subset; timeout, cancellation, shutdown, and lifecycle outcomes are not yet implemented. </p>
 
 </div>
 </div>

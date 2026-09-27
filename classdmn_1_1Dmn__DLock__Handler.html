@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DLock__Handler.html',
 </div><!--header-->
 <div class="contents">
 
-<p>DMesg handler specialized for DLock table publication and local replay.  
+<p>Lightweight DMesg handler wrapper used by the DLock prototype.  
  <a href="classdmn_1_1Dmn__DLock__Handler.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a>&gt;</code></p>
@@ -259,8 +259,8 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>WriteFlags</b> = std
 <tr class="separator:a311d2db40e29dbb9639b2aa91269651b inherit pro_methods_classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>DMesg handler specialized for DLock table publication and local replay. </p>
-<p>The handler owns a lock-domain configuration and exposes the narrow v1 capability needed by the DLock session: publishing a canonical table snapshot and scheduling work in the handler's own execution context. </p>
+<div class="textblock"><p>Lightweight DMesg handler wrapper used by the DLock prototype. </p>
+<p><code>publishSnapshot()</code> only validates the supplied snapshot; it does not write to DMesg. <code>postToOwnContext()</code> schedules work in the inherited handler context, but the local acquire implementation does not use that path. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a></li>
 </ul>

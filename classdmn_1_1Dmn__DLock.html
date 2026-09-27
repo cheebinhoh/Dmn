@@ -97,7 +97,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DLock.html',''); init
 </div><!--header-->
 <div class="contents">
 
-<p>Phase 1 distributed lock built on top of <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code>.  
+<p>Local-only DLock prototype constrained to a <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code> base.  
  <a href="classdmn_1_1Dmn__DLock.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a>&gt;</code></p>
@@ -108,7 +108,7 @@ Inheritance diagram for dmn::Dmn_DLock&lt; DMesgBase &gt;:</div>
   <img src="classdmn_1_1Dmn__DLock.png" usemap="#dmn::Dmn_5FDLock_3C_20DMesgBase_20_3E_map" alt=""/>
   <map id="dmn::Dmn_5FDLock_3C_20DMesgBase_20_3E_map" name="dmn::Dmn_5FDLock_3C_20DMesgBase_20_3E_map">
 <area href="classdmn_1_1Dmn__DMesg.html" alt="dmn::Dmn_DMesg" shape="rect" coords="0,112,272,136"/>
-<area href="classdmn_1_1Dmn__DLock__Base.html" title="Shared session-state base used by the v1 DLock implementation." alt="dmn::Dmn_DLock_Base" shape="rect" coords="282,112,554,136"/>
+<area href="classdmn_1_1Dmn__DLock__Base.html" title="Minimal local handler/proxy helper used by the DLock prototype." alt="dmn::Dmn_DLock_Base" shape="rect" coords="282,112,554,136"/>
 <area href="classdmn_1_1Dmn__Pub.html" alt="dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;" shape="rect" coords="0,56,272,80"/>
 <area href="classdmn_1_1Dmn__Async.html" alt="dmn::Dmn_Async&lt; QueueType &gt;" shape="rect" coords="0,0,272,24"/>
   </map>
@@ -324,8 +324,8 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>m_name</b> {}<
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class DMesgBase = Dmn_DMesg&gt;<br />
-class dmn::Dmn_DLock&lt; DMesgBase &gt;</div><p>Phase 1 distributed lock built on top of <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code>. </p>
-<p>This class provides the v1 DMesg-only lock model, where a canonical full-table snapshot is published and then replayed by all sessions in the same domain. It is intentionally restricted to <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code> and does not permit the later <code><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a></code> authority model to be used as a substitute for the current Phase 1 semantics. </p>
+class dmn::Dmn_DLock&lt; DMesgBase &gt;</div><p>Local-only DLock prototype constrained to a <code><a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a></code> base. </p>
+<p>This class currently serializes acquisitions only within its own in-memory table. It does not publish snapshots, synchronize handlers, enforce leases, or implement the publisher-serialized distributed-lock design. The template constraint prevents instantiation with <code><a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a></code>; it does not make this prototype suitable for distributed use. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a></li>
 </ul>

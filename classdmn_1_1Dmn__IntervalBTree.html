@@ -262,7 +262,7 @@ class dmn::Dmn_IntervalBTree&lt; T &gt;</div><p>Own and query a balanced index o
   </dd>
 </dl>
 <p>The class is non-copyable and non-movable. It stores duplicate ranges and uses an insertion ordinal as their default stable tie-breaker. A custom canonical comparator affects the ordering of distinct ranges; a priority evaluator is independent of canonical ordering.</p>
-<p>Overlap result APIs return entries in canonical order. Invalid input ranges are rejected by insertion and removal, and produce empty/false query results. The tree does not impose domain constraints such as non-negative endpoints.</p>
+<p>Overlap result APIs return entries in canonical order. Invalid input ranges throw std::invalid_argument for insertion, removal, and copying/visitor queries; <a class="el" href="classdmn_1_1Dmn__IntervalBTree.html#a4a600d2488e1ba52b1cadb816c8212cf" title="Return whether any stored interval overlaps a query interval.">hasOverlap()</a> returns false. The tree does not impose domain constraints such as non-negative endpoints.</p>
 <dl class="section note"><dt>Note</dt><dd>Not thread-safe. External synchronization is required. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6d1a18e41529dd0ab1ad5fe4b266c6f8" name="a6d1a18e41529dd0ab1ad5fe4b266c6f8"></a>
@@ -393,9 +393,10 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion, or <code>false</code> for an invalid range. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion. </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
     <tr><td class="paramname">std::logic_error</td><td>if invoked reentrantly from a user callback. </td></tr>
   </table>
   </dd>
@@ -446,7 +447,13 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion, or <code>false</code> for an invalid range. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -508,7 +515,13 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion, or <code>false</code> for a reversed range. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the endpoint range is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -570,7 +583,13 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion, or <code>false</code> for a reversed range. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> on insertion. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the endpoint range is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -621,6 +640,7 @@ template&lt;class T &gt; </div>
 <dl class="section return"><dt>Returns</dt><dd>A pair of insertion success and the candidate's initial topology result. A failed insertion returns a default result. </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
     <tr><td class="paramname">std::logic_error</td><td>if invoked reentrantly from a user callback. </td></tr>
   </table>
   </dd>
@@ -752,8 +772,14 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Empty for an invalid query or no matches; otherwise matching range/value copies in canonical order. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Empty when there are no matches; otherwise matching range/value copies in canonical order. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Requires a copy-constructible <code>T</code> when called. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -795,7 +821,7 @@ template&lt;class T &gt; </div>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::invalid_argument</td><td>if <code>visitor</code> is empty, including for an invalid query. </td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>visitor</code> is empty or <code>range</code> is invalid. </td></tr>
     <tr><td class="paramname">std::logic_error</td><td>if the visitor attempts reentrant mutation. </td></tr>
   </table>
   </dd>
@@ -836,7 +862,7 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if a valid query overlaps at least one stored range. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if a valid query overlaps at least one stored range; <code>false</code> for an invalid query. </dd></dl>
 
 </div>
 </div>
@@ -879,6 +905,12 @@ template&lt;class T &gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Topology, priority status, and canonically ordered overlap copies. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Requires a copy-constructible <code>T</code> when called. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1021,6 +1053,13 @@ template&lt;class T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if one entry was removed. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+    <tr><td class="paramname">std::logic_error</td><td>if invoked reentrantly from a user callback. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1049,7 +1088,13 @@ template&lt;class T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Number of removed entries, or zero for an invalid range/no match. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of removed entries, or zero when no entry overlaps. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1090,6 +1135,13 @@ template&lt;class T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if one entry was removed. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>range</code> is invalid. </td></tr>
+    <tr><td class="paramname">std::logic_error</td><td>if invoked reentrantly from a user callback. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

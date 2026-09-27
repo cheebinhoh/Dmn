@@ -96,7 +96,7 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__DLock__Config.html',
 </div><!--header-->
 <div class="contents">
 
-<p>Immutable runtime configuration for a DLock domain.  
+<p>Configuration values supplied to a DLock instance and handler.  
  <a href="structdmn_1_1Dmn__DLock__Config.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a>&gt;</code></p>
@@ -114,7 +114,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>m_require_canonical_s
 <tr class="separator:a6bce12156d93edb303898558d9d24841"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Immutable runtime configuration for a DLock domain. </p>
+<div class="textblock"><p>Configuration values supplied to a DLock instance and handler. </p>
+<p>The local acquisition path currently uses only <code>m_domain</code>. <code>m_default_lease_ticks</code> and <code>m_require_canonical_snapshot</code> are reserved for the protocol implementation and are not enforced by the prototype. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a></li>
 </ul>
