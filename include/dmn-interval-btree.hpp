@@ -494,6 +494,7 @@ private:
         : m_blocked(blocked), m_wasBlocked(blocked) {
       m_blocked = true;
     }
+
     ~MutationBlockGuard() { m_blocked = m_wasBlocked; }
 
     bool &m_blocked;
@@ -509,15 +510,18 @@ private:
 
     std::vector<range_type> clippedRanges;
     clippedRanges.reserve(overlaps.size());
+
     for (const auto &overlap : overlaps) {
       clippedRanges.push_back({std::max(range.m_start, overlap.m_start),
                                std::min(range.m_end, overlap.m_end)});
     }
+
     std::sort(clippedRanges.begin(), clippedRanges.end(),
               [](const range_type &lhs, const range_type &rhs) {
                 if (lhs.m_start != rhs.m_start) {
                   return lhs.m_start < rhs.m_start;
                 }
+
                 return lhs.m_end < rhs.m_end;
               });
 
@@ -525,14 +529,18 @@ private:
     bool rightCovered = false;
     auto coveredEnd = clippedRanges.front().m_end;
     bool continuousCoverage = leftCovered;
+
     for (std::size_t index = 1; index < clippedRanges.size(); ++index) {
       const auto &next = clippedRanges[index];
+
       if (coveredEnd != std::numeric_limits<std::int64_t>::max() &&
           next.m_start > coveredEnd + 1) {
         continuousCoverage = false;
       }
+
       coveredEnd = std::max(coveredEnd, next.m_end);
     }
+
     rightCovered = coveredEnd == range.m_end;
     if (continuousCoverage && rightCovered) {
       return Dmn_OverlayTopology::FullyCovered;
@@ -541,6 +549,7 @@ private:
     auto overlapStart = overlaps.front().m_start;
     auto overlapEnd = overlaps.front().m_end;
     bool hasContainedRange = false;
+
     for (const auto &overlap : overlaps) {
       overlapStart = std::min(overlapStart, overlap.m_start);
       overlapEnd = std::max(overlapEnd, overlap.m_end);
@@ -548,19 +557,24 @@ private:
           hasContainedRange ||
           (range.m_start < overlap.m_start && overlap.m_end < range.m_end);
     }
+
     if (hasContainedRange && range.m_start < overlapStart &&
         range.m_end > overlapEnd) {
       return Dmn_OverlayTopology::CoveringExisting;
     }
+
     if (leftCovered && rightCovered) {
       return Dmn_OverlayTopology::OverlaidBoth;
     }
+
     if (leftCovered) {
       return Dmn_OverlayTopology::OverlaidLeft;
     }
+
     if (rightCovered) {
       return Dmn_OverlayTopology::OverlaidRight;
     }
+
     return Dmn_OverlayTopology::Clear;
   }
 
@@ -569,6 +583,7 @@ private:
     if (lhs.m_start != rhs.m_start) {
       return lhs.m_start < rhs.m_start;
     }
+
     return lhs.m_end < rhs.m_end;
   }
 
@@ -600,19 +615,23 @@ private:
   auto entryLess(const Entry &lhs, const Entry &rhs) const -> bool {
     const bool identicalRanges = lhs.m_range.m_start == rhs.m_range.m_start &&
                                  lhs.m_range.m_end == rhs.m_range.m_end;
+
     if (identicalRanges) {
       return lhs.m_ordinal < rhs.m_ordinal;
     }
 
     if (m_canonicalComparator) {
       MutationBlockGuard guard(m_dispatchingCallbacks);
+
       if (m_canonicalComparator(lhs.m_range, rhs.m_range)) {
         return true;
       }
+
       if (m_canonicalComparator(rhs.m_range, lhs.m_range)) {
         return false;
       }
     }
+
     return defaultRangeLess(lhs.m_range, rhs.m_range);
   }
 
@@ -622,6 +641,7 @@ private:
       for (const auto &entry : node->m_entries) {
         entries.push_back(entry.get());
       }
+
       return;
     }
 
@@ -629,6 +649,7 @@ private:
       collectEntriesInOrder(node->m_children[index].get(), entries);
       entries.push_back(node->m_entries[index].get());
     }
+
     collectEntriesInOrder(node->m_children.back().get(), entries);
   }
 
@@ -637,23 +658,29 @@ private:
       for (const auto &entry : node->m_entries) {
         entries.push_back(entry.get());
       }
+
       return;
     }
+
     for (std::size_t index = 0; index < node->m_entries.size(); ++index) {
       collectEntriesInOrder(node->m_children[index].get(), entries);
       entries.push_back(node->m_entries[index].get());
     }
+
     collectEntriesInOrder(node->m_children.back().get(), entries);
   }
 
   auto calculateState(const Entry *candidate) const -> Dmn_OverlayState {
     Dmn_OverlayState state;
+
     std::vector<range_type> overlaps;
     std::vector<const Entry *> entries;
     entries.reserve(m_size);
+
     if (m_root) {
       collectEntriesInOrder(m_root.get(), entries);
     }
+
     for (const Entry *entry : entries) {
       if (entry != candidate && candidate->m_range.overlaps(entry->m_range)) {
         overlaps.push_back(entry->m_range);
@@ -665,6 +692,7 @@ private:
         }
       }
     }
+
     state.m_topology = classifyTopology(candidate->m_range, overlaps);
     return state;
   }
@@ -674,24 +702,29 @@ private:
     for (const auto &entry : node->m_entries) {
       maximumEnd = std::max(maximumEnd, entry->m_range.m_end);
     }
+
     for (const auto &child : node->m_children) {
       maximumEnd = std::max(maximumEnd, child->m_subtreeMaxEnd);
     }
+
     node->m_subtreeMaxEnd = maximumEnd;
+
     return maximumEnd;
   }
 
   auto insertEntry(std::unique_ptr<Entry> entry) -> bool {
     if (!entry->m_range.isValid()) {
-      return false;
+      throw std::invalid_argument("range is invalid");
     }
 
     std::vector<Entry *> existingEntries;
     std::vector<std::pair<Entry *, Dmn_OverlayState>> oldStates;
     existingEntries.reserve(m_size);
+
     if (m_root) {
       collectEntriesInOrder(m_root.get(), existingEntries);
     }
+
     for (Entry *existing : existingEntries) {
       if (existing->m_range.overlaps(entry->m_range)) {
         oldStates.emplace_back(existing, existing->m_state);
@@ -702,17 +735,21 @@ private:
     if (!m_root) {
       m_root = std::make_unique<Node>();
     }
+
     if (m_root->m_entries.size() == 2 * kMinimumDegree - 1) {
       auto newRoot = std::make_unique<Node>();
+
       newRoot->m_isLeaf = false;
       newRoot->m_children.reserve(1);
       newRoot->m_children.push_back(std::move(m_root));
+
       try {
         splitChild(*newRoot, 0);
       } catch (...) {
         m_root = std::move(newRoot->m_children.front());
         throw;
       }
+
       m_root = std::move(newRoot);
     }
 
@@ -722,6 +759,7 @@ private:
 
     insertedEntry->m_state = calculateState(insertedEntry);
     updateStatesAndNotify(oldStates);
+
     return true;
   }
 
@@ -729,23 +767,28 @@ private:
       const std::vector<std::pair<Entry *, Dmn_OverlayState>> &oldStates) {
     std::vector<std::tuple<Entry *, Dmn_OverlayState, Dmn_OverlayState>>
         transitions;
+
     for (const auto &[entry, oldState] : oldStates) {
       const auto newState = calculateState(entry);
       entry->m_state = newState;
+
       if (oldState.m_topology != newState.m_topology ||
           oldState.m_isTop != newState.m_isTop) {
         transitions.emplace_back(entry, oldState, newState);
       }
     }
+
     if (transitions.empty()) {
       return;
     }
+
     if (m_suppressCallbacks) {
       return;
     }
 
     {
       MutationBlockGuard guard(m_dispatchingCallbacks);
+
       for (const auto &[entry, oldState, newState] : transitions) {
         if (entry->m_onStateChange) {
           entry->m_onStateChange(entry->m_range, entry->m_value, oldState,
@@ -759,22 +802,27 @@ private:
                       const entry_matcher &matcher) -> Entry * {
     std::vector<Entry *> entries;
     entries.reserve(m_size);
+
     if (m_root) {
       collectEntriesInOrder(m_root.get(), entries);
     }
+
     for (Entry *entry : entries) {
       if (entry->m_range.m_start == range.m_start &&
           entry->m_range.m_end == range.m_end) {
         bool matches = true;
+
         if (matcher) {
           MutationBlockGuard guard(m_dispatchingCallbacks);
           matches = matcher(entry->m_value);
         }
+
         if (matches) {
           return entry;
         }
       }
     }
+
     return nullptr;
   }
 
@@ -783,14 +831,17 @@ private:
       -> state_change_callback {
     for (const auto &registration : m_callbackRegistrations) {
       bool matches = false;
+
       {
         MutationBlockGuard guard(m_dispatchingCallbacks);
         matches = registration.m_matches(value);
       }
+
       if (matches) {
         registrationId = registration.m_id;
         const auto context = registration.m_context;
         const auto callback = registration.m_callback;
+
         return [context, callback](const range_type &, const value_type &item,
                                    const Dmn_OverlayState &oldState,
                                    const Dmn_OverlayState &newState) {
@@ -798,7 +849,9 @@ private:
         };
       }
     }
+
     registrationId = 0;
+
     return {};
   }
 
@@ -812,6 +865,7 @@ private:
       auto entry = std::move(node.m_entries.back());
       node.m_entries.pop_back();
       refreshNodeMaxEnd(&node);
+
       return entry;
     }
 
@@ -825,8 +879,10 @@ private:
         --childIndex;
       }
     }
+
     auto entry = removeMaximum(*node.m_children[childIndex]);
     refreshNodeMaxEnd(&node);
+
     return entry;
   }
 
@@ -835,6 +891,7 @@ private:
       auto entry = std::move(node.m_entries.front());
       node.m_entries.erase(node.m_entries.begin());
       refreshNodeMaxEnd(&node);
+
       return entry;
     }
 
@@ -847,8 +904,10 @@ private:
         mergeChildren(node, childIndex);
       }
     }
+
     auto entry = removeMinimum(*node.m_children[childIndex]);
     refreshNodeMaxEnd(&node);
+
     return entry;
   }
 
@@ -859,11 +918,13 @@ private:
                            std::move(parent.m_entries[childIndex - 1]));
     parent.m_entries[childIndex - 1] = std::move(sibling.m_entries.back());
     sibling.m_entries.pop_back();
+
     if (!child.m_isLeaf) {
       child.m_children.insert(child.m_children.begin(),
                               std::move(sibling.m_children.back()));
       sibling.m_children.pop_back();
     }
+
     refreshNodeMaxEnd(&child);
     refreshNodeMaxEnd(&sibling);
     refreshNodeMaxEnd(&parent);
@@ -875,10 +936,12 @@ private:
     child.m_entries.push_back(std::move(parent.m_entries[childIndex]));
     parent.m_entries[childIndex] = std::move(sibling.m_entries.front());
     sibling.m_entries.erase(sibling.m_entries.begin());
+
     if (!child.m_isLeaf) {
       child.m_children.push_back(std::move(sibling.m_children.front()));
       sibling.m_children.erase(sibling.m_children.begin());
     }
+
     refreshNodeMaxEnd(&child);
     refreshNodeMaxEnd(&sibling);
     refreshNodeMaxEnd(&parent);
@@ -891,11 +954,13 @@ private:
     for (auto &entry : right.m_entries) {
       left.m_entries.push_back(std::move(entry));
     }
+
     if (!left.m_isLeaf) {
       for (auto &child : right.m_children) {
         left.m_children.push_back(std::move(child));
       }
     }
+
     parent.m_entries.erase(parent.m_entries.begin() +
                            static_cast<std::ptrdiff_t>(separatorIndex));
     parent.m_children.erase(parent.m_children.begin() +
@@ -929,8 +994,10 @@ private:
         eraseEntry(*node.m_children[index], target);
         refreshNodeMaxEnd(&node);
       }
+
       return;
     }
+
     if (node.m_isLeaf) {
       return;
     }
@@ -950,6 +1017,7 @@ private:
         --index;
       }
     }
+
     eraseEntry(*node.m_children[index], target);
     refreshNodeMaxEnd(&node);
   }
@@ -958,6 +1026,7 @@ private:
     if (!m_root) {
       return false;
     }
+
     eraseEntry(*m_root, target);
     if (m_root->m_entries.empty()) {
       if (m_root->m_isLeaf) {
@@ -966,7 +1035,9 @@ private:
         m_root = std::move(m_root->m_children.front());
       }
     }
+
     --m_size;
+
     return true;
   }
 
@@ -983,15 +1054,18 @@ private:
 
     constexpr auto maxKeys = 2 * kMinimumDegree - 1;
     sibling->m_entries.reserve(kMinimumDegree - 1);
+
     if (!child.m_isLeaf) {
       sibling->m_children.reserve(kMinimumDegree);
     }
+
     parent.m_entries.reserve(parent.m_entries.size() + 1);
     parent.m_children.reserve(parent.m_children.size() + 1);
 
     for (std::size_t index = kMinimumDegree; index < maxKeys; ++index) {
       sibling->m_entries.push_back(std::move(child.m_entries[index]));
     }
+
     auto promoted = std::move(child.m_entries[kMinimumDegree - 1]);
     child.m_entries.resize(kMinimumDegree - 1);
 
@@ -1000,6 +1074,7 @@ private:
            ++index) {
         sibling->m_children.push_back(std::move(child.m_children[index]));
       }
+
       child.m_children.resize(kMinimumDegree);
     }
 
@@ -1028,12 +1103,14 @@ private:
                                 static_cast<std::ptrdiff_t>(childIndex),
                             std::move(entry));
       refreshNodeMaxEnd(&node);
+
       return;
     }
 
     if (node.m_children[childIndex]->m_entries.size() ==
         2 * kMinimumDegree - 1) {
       splitChild(node, childIndex);
+
       if (entryLess(*node.m_entries[childIndex], *entry)) {
         ++childIndex;
       }
@@ -1048,15 +1125,18 @@ private:
     if (node->m_subtreeMaxEnd < range.m_start) {
       return false;
     }
+
     for (std::size_t index = 0; index < node->m_entries.size(); ++index) {
       if (!node->m_isLeaf &&
           hasOverlapInSubtree(node->m_children[index].get(), range)) {
         return true;
       }
+
       if (node->m_entries[index]->m_range.overlaps(range)) {
         return true;
       }
     }
+
     return !node->m_isLeaf &&
            hasOverlapInSubtree(node->m_children.back().get(), range);
   }
@@ -1066,15 +1146,18 @@ private:
     if (node->m_subtreeMaxEnd < range.m_start) {
       return;
     }
+
     for (std::size_t index = 0; index < node->m_entries.size(); ++index) {
       if (!node->m_isLeaf) {
         visitOverlappingInOrder(node->m_children[index].get(), range, visitor);
       }
+
       const auto &entry = *node->m_entries[index];
       if (entry.m_range.overlaps(range)) {
         visitor(entry.m_range, entry.m_value);
       }
     }
+
     if (!node->m_isLeaf) {
       visitOverlappingInOrder(node->m_children.back().get(), range, visitor);
     }
@@ -1100,10 +1183,12 @@ bool Dmn_IntervalBTree<T>::add(range_type range, const value_type &value,
                                state_change_callback onStateChange) {
   ensureMutationAllowed();
   if (!range.isValid()) {
-    return false;
+    throw std::invalid_argument("range is invalid");
   }
+
   auto entry = std::make_unique<Entry>(
       Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}});
+
   return insertEntry(std::move(entry));
 }
 
@@ -1112,10 +1197,12 @@ bool Dmn_IntervalBTree<T>::add(range_type range, value_type &&value,
                                state_change_callback onStateChange) {
   ensureMutationAllowed();
   if (!range.isValid()) {
-    return false;
+    throw std::invalid_argument("range is invalid");
   }
+
   auto entry = std::make_unique<Entry>(Entry{
       range, std::move(value), m_nextOrdinal, std::move(onStateChange), 0, {}});
+
   return insertEntry(std::move(entry));
 }
 
@@ -1127,14 +1214,17 @@ auto Dmn_IntervalBTree<T>::addWithTopology(range_type range,
   ensureMutationAllowed();
   Dmn_TopologyResult<value_type> result;
   if (!range.isValid()) {
-    return {false, std::move(result)};
+    throw std::invalid_argument("range is invalid");
   }
+
   result = queryTopology(range, value);
   auto entry = std::make_unique<Entry>(
       Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}});
+
   if (!insertEntry(std::move(entry))) {
     return {false, {}};
   }
+
   return {true, std::move(result)};
 }
 
@@ -1148,8 +1238,9 @@ bool Dmn_IntervalBTree<T>::removeByRange(range_type range,
                                          entry_matcher matcher) {
   ensureMutationAllowed();
   if (!range.isValid()) {
-    return false;
+    throw std::invalid_argument("range is invalid");
   }
+
   auto *target = findExactEntry(range, matcher);
   if (!target) {
     return false;
@@ -1160,6 +1251,7 @@ bool Dmn_IntervalBTree<T>::removeByRange(range_type range,
   collectEntriesInOrder(m_root.get(), entries);
   std::vector<std::pair<Entry *, Dmn_OverlayState>> oldStates;
   oldStates.reserve(entries.size());
+
   for (Entry *entry : entries) {
     if (entry != target && entry->m_range.overlaps(target->m_range)) {
       oldStates.emplace_back(entry, entry->m_state);
@@ -1168,13 +1260,19 @@ bool Dmn_IntervalBTree<T>::removeByRange(range_type range,
 
   eraseEntry(target);
   updateStatesAndNotify(oldStates);
+
   return true;
 }
 
 template <class T>
 std::size_t Dmn_IntervalBTree<T>::removeAllOverlapping(range_type range) {
   ensureMutationAllowed();
-  if (!range.isValid() || !m_root) {
+
+  if (!range.isValid()) {
+    throw std::invalid_argument("range is invalid");
+  }
+
+  if (!m_root) {
     return 0;
   }
 
@@ -1182,11 +1280,13 @@ std::size_t Dmn_IntervalBTree<T>::removeAllOverlapping(range_type range) {
   entries.reserve(m_size);
   collectEntriesInOrder(m_root.get(), entries);
   std::vector<Entry *> targets;
+
   for (Entry *entry : entries) {
     if (entry->m_range.overlaps(range)) {
       targets.push_back(entry);
     }
   }
+
   if (targets.empty()) {
     return 0;
   }
@@ -1196,10 +1296,12 @@ std::size_t Dmn_IntervalBTree<T>::removeAllOverlapping(range_type range) {
     if (containsEntry(targets, entry)) {
       continue;
     }
+
     const bool affected = std::any_of(
         targets.begin(), targets.end(), [entry](const Entry *target) {
           return entry->m_range.overlaps(target->m_range);
         });
+
     if (affected) {
       oldStates.emplace_back(entry, entry->m_state);
     }
@@ -1208,12 +1310,15 @@ std::size_t Dmn_IntervalBTree<T>::removeAllOverlapping(range_type range) {
   for (Entry *target : targets) {
     eraseEntry(target);
   }
+
   updateStatesAndNotify(oldStates);
+
   return targets.size();
 }
 
 template <class T> void Dmn_IntervalBTree<T>::clear() {
   ensureMutationAllowed();
+
   m_root.reset();
   m_size = 0;
   m_nextOrdinal = 0;
@@ -1234,6 +1339,7 @@ Dmn_IntervalBTree<T>::enumerateCanonical(
     duplicate_order_evaluator duplicateOrder) const {
   std::vector<const Entry *> orderedEntries;
   orderedEntries.reserve(m_size);
+
   if (m_root) {
     collectEntriesInOrder(m_root.get(), orderedEntries);
   }
@@ -1248,8 +1354,10 @@ Dmn_IntervalBTree<T>::enumerateCanonical(
             if (duplicateOrder) {
               return duplicateOrder(lhs->m_value, rhs->m_value);
             }
+
             return lhs->m_ordinal < rhs->m_ordinal;
           }
+
           return entryLess(*lhs, *rhs);
         });
   }
@@ -1270,11 +1378,14 @@ std::vector<std::pair<typename Dmn_IntervalBTree<T>::range_type,
 Dmn_IntervalBTree<T>::enumerateCanonicalMove(
     duplicate_order_evaluator duplicateOrder) {
   ensureMutationAllowed();
+
   std::vector<Entry *> orderedEntries;
   orderedEntries.reserve(m_size);
+
   if (m_root) {
     collectEntriesInOrder(m_root.get(), orderedEntries);
   }
+
   {
     MutationBlockGuard guard(m_dispatchingCallbacks);
     std::stable_sort(
@@ -1285,20 +1396,25 @@ Dmn_IntervalBTree<T>::enumerateCanonicalMove(
             if (duplicateOrder) {
               return duplicateOrder(lhs->m_value, rhs->m_value);
             }
+
             return lhs->m_ordinal < rhs->m_ordinal;
           }
+
           return entryLess(*lhs, *rhs);
         });
   }
 
   std::vector<std::pair<range_type, value_type>> result;
   result.reserve(orderedEntries.size());
+
   for (Entry *entry : orderedEntries) {
     result.emplace_back(entry->m_range, std::move(entry->m_value));
   }
+
   m_root.reset();
   m_size = 0;
   m_nextOrdinal = 0;
+
   return result;
 }
 
@@ -1308,6 +1424,7 @@ void Dmn_IntervalBTree<T>::reconstructFromCanonical(
     duplicate_order_evaluator duplicateOrder) {
   ensureMutationAllowed();
   (void)duplicateOrder;
+
   for (const auto &entry : entries) {
     if (!entry.first.isValid()) {
       throw std::invalid_argument("canonical entries contain an invalid range");
@@ -1316,6 +1433,7 @@ void Dmn_IntervalBTree<T>::reconstructFromCanonical(
 
   Dmn_IntervalBTree rebuilt(m_canonicalComparator, m_priorityEvaluator);
   rebuilt.m_suppressCallbacks = true;
+
   for (const auto &entry : entries) {
     callback_registration_id registrationId{};
     auto callback = callbackForReconstruction(entry.second, registrationId);
@@ -1327,6 +1445,7 @@ void Dmn_IntervalBTree<T>::reconstructFromCanonical(
                                                       {}});
     rebuilt.insertEntry(std::move(rebuiltEntry));
   }
+
   rebuilt.m_suppressCallbacks = false;
 
   m_root.swap(rebuilt.m_root);
@@ -1339,17 +1458,21 @@ auto Dmn_IntervalBTree<T>::registerStateCallback(
     std::function<bool(const value_type &)> matches, callback_context context,
     registered_state_callback callback) -> callback_registration_id {
   ensureMutationAllowed();
+
   if (!matches || !callback) {
     throw std::invalid_argument(
         "state callback registration requires callable matcher and callback");
   }
+
   if (m_nextCallbackRegistrationId ==
       std::numeric_limits<callback_registration_id>::max()) {
     throw std::overflow_error("state callback registration id exhausted");
   }
+
   const auto id = m_nextCallbackRegistrationId++;
   m_callbackRegistrations.push_back(
       {id, std::move(matches), std::move(context), std::move(callback)});
+
   return id;
 }
 
@@ -1357,19 +1480,23 @@ template <class T>
 void Dmn_IntervalBTree<T>::unregisterStateCallback(
     callback_registration_id registration) {
   ensureMutationAllowed();
+
   const auto registrationIt = std::find_if(
       m_callbackRegistrations.begin(), m_callbackRegistrations.end(),
       [registration](const CallbackRegistration &candidate) {
         return candidate.m_id == registration;
       });
+
   if (registrationIt == m_callbackRegistrations.end()) {
     return;
   }
+
   std::vector<Entry *> entries;
   entries.reserve(m_size);
   if (m_root) {
     collectEntriesInOrder(m_root.get(), entries);
   }
+
   m_callbackRegistrations.erase(registrationIt);
   for (Entry *entry : entries) {
     if (entry->m_callbackRegistrationId == registration) {
@@ -1390,13 +1517,14 @@ std::vector<std::pair<typename Dmn_IntervalBTree<T>::range_type,
 Dmn_IntervalBTree<T>::findOverlapping(range_type range) const {
   std::vector<std::pair<range_type, value_type>> result;
   if (!range.isValid()) {
-    return result;
+    throw std::invalid_argument("range is invalid");
   }
 
   forEachOverlapping(range, [&result](const range_type &overlapRange,
                                       const value_type &value) {
     result.emplace_back(overlapRange, value);
   });
+
   return result;
 }
 
@@ -1406,7 +1534,12 @@ void Dmn_IntervalBTree<T>::forEachOverlapping(range_type range,
   if (!visitor) {
     throw std::invalid_argument("overlap visitor must be callable");
   }
-  if (!range.isValid() || !m_root) {
+
+  if (!range.isValid()) {
+    throw std::invalid_argument("range is invalid");
+  }
+
+  if (!m_root) {
     return;
   }
 
@@ -1418,27 +1551,32 @@ template <class T>
 Dmn_TopologyResult<typename Dmn_IntervalBTree<T>::value_type>
 Dmn_IntervalBTree<T>::queryTopology(range_type range,
                                     const value_type &value) const {
-  Dmn_TopologyResult<value_type> result;
   if (!range.isValid()) {
-    return result;
+    throw std::invalid_argument("range is invalid");
   }
 
+  Dmn_TopologyResult<value_type> result;
   result.m_overlappingEntries = findOverlapping(range);
   std::vector<range_type> overlapRanges;
   overlapRanges.reserve(result.m_overlappingEntries.size());
+
   for (const auto &entry : result.m_overlappingEntries) {
     overlapRanges.push_back(entry.first);
   }
+
   result.m_status = classifyTopology(range, overlapRanges);
   if (m_priorityEvaluator) {
     MutationBlockGuard guard(m_dispatchingCallbacks);
+
     for (const auto &entry : result.m_overlappingEntries) {
       if (m_priorityEvaluator(entry.second, value)) {
         result.m_isTop = false;
+
         break;
       }
     }
   }
+
   return result;
 }
 

@@ -112,6 +112,12 @@ if (ENABLE_VALGRIND)
         dmn-test-blockingqueue-lf-7
         dmn-test-blockingqueue-perf-1
         dmn-test-blockingqueue-perf-2
+        dmn-test-dlock-dmesg-seam
+        dmn-test-dlock-1
+        dmn-test-dlock-2
+        dmn-test-dlock-3
+        dmn-test-dlock-4
+        dmn-test-dlock-5
         dmn-test-dmesg-1
         dmn-test-dmesg-2
         dmn-test-dmesg-3
