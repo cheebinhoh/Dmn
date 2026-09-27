@@ -453,6 +453,13 @@ public:
     void writeDMesgInternal(dmn::DMesgPb &dmesgpb, bool move,
                             bool block = false);
 
+    /**
+     * @brief Schedule a callable task to be executed within the handler's
+     * asynchronous execution context.
+     *
+     * @tparam Callable The type of the callable object (e.g., lambda, function).
+     * @param  fnc      The callable task to be scheduled and executed.
+     */
     template <typename Callable> void scheduleInHandlerContext(Callable &&fnc) {
       this->addExecTask(std::forward<Callable>(fnc));
     }
@@ -680,6 +687,11 @@ protected:
 
 private:
   /**
+   * @brief Internal helper to finalize handler wiring and registration.
+   */
+  auto finalizeHandlerRegistration(std::shared_ptr<Dmn_DMesgHandler> handler) -> HandlerType;
+
+  /**
    * @brief Run in the publisher's async thread context to playback the last
    * message for each topic to newly registered handlers.
    */
@@ -717,6 +729,25 @@ private:
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
 
+inline auto Dmn_DMesg::finalizeHandlerRegistration(std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler) -> HandlerType {
+  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
+  
+  handler->m_owner = this;
+  this->registerSubscriber(handler);
+  handlerProxy.m_handler = handler;
+
+  // Execute registration and playback on the publisher's async thread
+  auto waitHandler = this->addExecTaskWithWait([this, handler]() {
+    this->m_handlers.push_back(handler);
+    this->playbackLastTopicDMesgPbInternal();
+    handler->setAfterInitialPlayback();
+  });
+
+  waitHandler->wait();
+
+  return handlerProxy;
+}
+
 template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   // This function:
   //  - constructs a handler
@@ -730,55 +761,20 @@ template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   // The use of the publisher's singleton async context keeps most operations
   // mutex-free for the hot paths (publish/notify).
 
-  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
-
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
 
-  handler->m_owner = this;
-
-  this->registerSubscriber(handler);
-
-  handlerProxy.m_handler = handler;
-
-  /* The topic filter is executed within the DMesg singleton asynchronous
-   * thread context, but the filter value is maintained per Dmn_DMesgHandler.
-   * This design keeps DMesg itself mutex-free while remaining thread safe.
-   */
-  auto waitHandler = this->addExecTaskWithWait([this, &handler]() {
-    this->m_handlers.push_back(handler);
-    this->playbackLastTopicDMesgPbInternal();
-    handler->setAfterInitialPlayback();
-  });
-
-  waitHandler->wait();
-
-  return handlerProxy;
+  return finalizeHandlerRegistration(handler);
 }
 
 inline auto Dmn_DMesg::openHandlerWithFactory(
     const HandlerSpec &spec, const HandlerFactory &factory) -> HandlerType {
-  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
-
   auto handler = factory(spec);
   if (!handler) {
     throw std::runtime_error("handler factory produced a null handler");
   }
 
-  handler->m_owner = this;
-
-  this->registerSubscriber(handler);
-  handlerProxy.m_handler = handler;
-
-  auto waitHandler = this->addExecTaskWithWait([this, handler]() {
-    this->m_handlers.push_back(handler);
-    this->playbackLastTopicDMesgPbInternal();
-    handler->setAfterInitialPlayback();
-  });
-
-  waitHandler->wait();
-
-  return handlerProxy;
+  return finalizeHandlerRegistration(handler);
 }
 
 } // namespace dmn
