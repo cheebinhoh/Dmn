@@ -2,13 +2,14 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dlock-2.cpp
- * @brief Session lifetime and proxy invalidation tests for the distributed
- * lock.
+ * @brief Handler proxy lifetime and reset behavior for the DLock prototype.
  */
 
 #include <gtest/gtest.h>
 
 #include "dmn-dlock.hpp"
+
+#include <future>
 
 namespace {
 
@@ -38,6 +39,39 @@ TEST(DlockSessionLifetime, OneSessionOneHandler) {
 
   EXPECT_FALSE(first);
   EXPECT_FALSE(second);
+}
+
+TEST(DlockSessionLifetime, ClosingOneProxyCopyLeavesOtherCopiesLive) {
+  dmn::Dmn_DLock dlock{"dlock-proxy-copy"};
+  auto original = dlock.openHandler("session-a");
+  auto copy = original;
+
+  dlock.closeHandler(original);
+  EXPECT_FALSE(original);
+  ASSERT_TRUE(copy);
+  EXPECT_NO_THROW(copy.operator->());
+
+  copy.reset();
+  EXPECT_FALSE(copy);
+  EXPECT_THROW(copy.operator->(), std::runtime_error);
+}
+
+TEST(DlockSessionLifetime, HandlerPostRunsAndSnapshotValidationIsExposed) {
+  dmn::Dmn_DLock dlock{"dlock-handler-api"};
+  auto handler = dlock.openHandler("session-a");
+  std::promise<void> posted;
+  auto postedFuture = posted.get_future();
+  handler->postToOwnContext([&posted]() { posted.set_value(); });
+  ASSERT_EQ(postedFuture.wait_for(std::chrono::seconds(5)),
+            std::future_status::ready);
+
+  dmn::Dmn_DLock_TableSnapshot valid{};
+  valid.m_domain = "domain-a";
+  EXPECT_TRUE(handler->publishSnapshot(valid));
+  valid.m_entries.push_back({});
+  EXPECT_FALSE(handler->publishSnapshot(valid));
+
+  dlock.closeHandler(handler);
 }
 
 } // namespace

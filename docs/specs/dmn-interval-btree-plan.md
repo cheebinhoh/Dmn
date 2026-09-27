@@ -32,8 +32,15 @@ Layer 9 is implemented and verified: canonical move extraction, callback
 registration/reconnection, and transactional reconstruction.
 Layer 10 is implemented and verified: incrementally maintained
 `m_subtreeMaxEnd` and pruned overlap traversal, checked against a linear
-canonical baseline. Layer 11's interval-tree lifecycle tests pass, but direct
-consumer integration is blocked until a `Dmn_DLock` production module exists.
+canonical baseline. Layer 11's interval-tree lifecycle tests pass. A partial
+`Dmn_DLock` prototype now exists, but it does not use the interval B-tree for
+its table mirror; consumer integration remains incomplete.
+
+The public-operation edge cases covered by the focused test target include
+empty-tree no-ops, endpoint insertion validation before moving payloads,
+default duplicate removal order, callback registration validation,
+unregistration of unknown IDs, and protection against reentrant range
+comparators.
 
 ## 1. Delivery rule
 
@@ -109,7 +116,9 @@ Implementation
 Implement Dmn_IntervalRange with:
 - isValid()
 - overlaps()
-- boundary comparisons that do not compute `start - 1` or `end + 1`.
+- inclusive-overlap comparisons that do not compute `start - 1` or
+  `end + 1`; topology coverage may use a guarded successor calculation, as
+  the implementation does, but must not overflow at `INT64_MAX`.
 
 Tests
 - IntervalRangeRejectsReversed
@@ -142,8 +151,11 @@ Use this test-first sequence:
    implementations of the three methods. Build and run the focused test;
    it must pass.
 4. Add `IntervalBTreeRejectsInvalidInsertionWithoutMutation` as a separate
-   test. Verify that adding a reversed range returns `false` and leaves the
-   tree's observable contents unchanged (`empty()` and `size()` at this stage).
+   test. Verify that adding a reversed range throws `std::invalid_argument`
+   and leaves the tree's observable contents unchanged (`empty()` and `size()`
+   at this stage).
+5. Verify endpoint-based copy and move insertion overloads throw for reversed
+   ranges; failed move insertion must leave the source payload intact.
 
 The temporary stubs are a local RED-stage technique, not a finished
 implementation: do not commit or end the increment with them. Keep all
@@ -310,10 +322,11 @@ Traversal rules:
 - check each key in node for overlap,
 - descend into all candidate children; do not prune using metadata yet.
 
-Start with correct traversal without subtree metadata. Invalid queries return
-the documented empty/false result and do not invoke visitors. Visitor results
-must be in canonical order. Layer 10 adds and tests pruning metadata after
-correct unpruned query behavior is established.
+Start with correct traversal without subtree metadata. Invalid
+`hasOverlap()` queries return `false`; invalid `findOverlapping()` and
+`forEachOverlapping()` queries throw `std::invalid_argument`, and do not
+invoke visitors. Visitor results must be in canonical order. Layer 10 adds and
+tests pruning metadata after correct unpruned query behavior is established.
 
 Tests
 - IntervalBTreeFindOverlappingSingle
@@ -326,6 +339,7 @@ Tests
 - IntervalBTreeOverlapVisitorRejectsInvalidQueryWithoutInvocation
 - IntervalBTreeOverlapVisitorRequiresCallableVisitor
 - IntervalBTreeOverlapVisitorSupportsMoveOnlyPayload
+- `EmptyTreeQueriesAndRemovalsAreNoOps`
 
 Exit: overlap queries complete.
 
@@ -404,6 +418,7 @@ Tests
 - TopologyHandlesInt64BoundariesWithoutOverflow
 - QueryTopologyIsHypothetical
 - TopologyPriorityUsesEvaluatorAndDefaultsToTop
+- `PriorityEvaluatorCannotMutateTreeReentrantly`
 - InvalidTopologyQueryReturnsClearWithoutMutation
 - AddWithTopologyMatchesHypotheticalQuery
 - NewEntryCallbackIsNotInvokedOnInsertion
@@ -472,8 +487,10 @@ Tests
 - RemovalCallbackExceptionLeavesTreeValid
 - RemovalCallbacksFollowCanonicalOrder
 - RemovalPredicateCannotMutateTreeReentrantly
+- `EmptyMatcherRemovesFirstDuplicateInInsertionOrder`
 - ClearSuppressesCallbacksAndAllowsReuse
 - ReentrantClearFromCallbackIsRejected
+- `UserComparatorsCannotMutateTreeReentrantly`
 
 This is the only layer that implements deletion balancing. Layer 10 is limited
 to subtree metadata and overlap-query pruning; it must not reimplement
@@ -533,6 +550,7 @@ Tests
 - ReconstructionValidationFailureLeavesTreeUnchanged
 - ReconstructionReconnectsRegisteredCallbacks
 - UnregisterCallbackStopsFutureDispatch
+- `CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId`
 - ReconstructionUsesFirstMatchingRegistration
 - ReconstructionPreservesDuplicateCanonicalOrder
 - RebuildMatchesOriginalCanonicalOrder
@@ -559,9 +577,9 @@ Implementation
 
 Verify the API's snapshot/rebuild and lifecycle behavior at the interval-tree
 boundary. Reconstruction itself is implemented and tested in Layer 9.
-Consumer wiring into Dmn_DLock cannot be completed until a Dmn_DLock
-production module exists; the repository currently contains only its design
-documents, so do not invent a parallel lock implementation in this layer.
+Consumer wiring into Dmn_DLock remains incomplete: the repository has a
+partial DLock prototype, but it does not use `Dmn_IntervalBTree` for its table
+mirror. Do not create a parallel lock implementation in this layer.
 
 Tests
 - RebuildMatchesOriginalCanonicalOrder

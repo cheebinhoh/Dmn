@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-interval-btree.cpp
- * @brief Unit test for Dmn_Interval_Btree.
+ * @brief Unit tests for Dmn_IntervalBTree.
  */
 
 #include <gtest/gtest.h>
@@ -241,6 +241,26 @@ TEST(IntervalBTree, StoresOneEntry) {
   EXPECT_EQ(tree.size(), 1U);
 }
 
+TEST(IntervalBTree, EmptyTreeQueriesAndRemovalsAreNoOps) {
+  dmn::Dmn_IntervalBTree<int> tree;
+  std::size_t visitorCalls = 0;
+
+  EXPECT_TRUE(tree.empty());
+  EXPECT_EQ(tree.size(), 0U);
+  EXPECT_FALSE(tree.hasOverlap({1, 2}));
+  EXPECT_TRUE(tree.findOverlapping({1, 2}).empty());
+  tree.forEachOverlapping(
+      {1, 2}, [&visitorCalls](const auto &, const auto &) { ++visitorCalls; });
+  EXPECT_EQ(visitorCalls, 0U);
+  EXPECT_EQ(tree.queryTopology({1, 2}, 10).m_status,
+            dmn::Dmn_OverlayTopology::Clear);
+  EXPECT_FALSE(tree.remove({1, 2}));
+  EXPECT_FALSE(tree.removeByRange({1, 2}));
+  EXPECT_EQ(tree.removeAllOverlapping({1, 2}), 0U);
+  tree.clear();
+  EXPECT_TRUE(tree.empty());
+}
+
 TEST(IntervalBTree, RejectsInvalidInsertionWithoutMutation) {
   dmn::Dmn_IntervalBTree<int> tree;
 
@@ -250,6 +270,23 @@ TEST(IntervalBTree, RejectsInvalidInsertionWithoutMutation) {
 
   EXPECT_FALSE(tree.empty());
   EXPECT_EQ(tree.size(), 1U);
+}
+
+TEST(IntervalBTree, EndpointInsertionRejectsInvalidRangesBeforeMutation) {
+  dmn::Dmn_IntervalBTree<int> tree;
+  const int copiedValue = 7;
+  EXPECT_THROW(tree.add(5, 2, copiedValue), std::invalid_argument);
+  EXPECT_THROW(tree.add(5, 2, 9), std::invalid_argument);
+  EXPECT_TRUE(tree.empty());
+
+  dmn::Dmn_IntervalBTree<std::unique_ptr<int>> moveTree;
+  auto movedValue = std::make_unique<int>(42);
+  EXPECT_THROW(tree.add(5, 2, copiedValue), std::invalid_argument);
+  EXPECT_THROW(moveTree.add(5, 2, std::move(movedValue)),
+               std::invalid_argument);
+  ASSERT_TRUE(movedValue);
+  EXPECT_EQ(*movedValue, 42);
+  EXPECT_TRUE(moveTree.empty());
 }
 
 TEST(IntervalBTree, CanonicalOrderSimple) {
@@ -335,9 +372,41 @@ TEST(IntervalBTree, DuplicateOrderingCallbackCannotMutateTreeReentrantly) {
     tree.add({10, 15}, 30);
     return lhs < rhs;
   }),
-    std::logic_error);
+               std::logic_error);
 
   EXPECT_EQ(tree.size(), 2U);
+}
+
+TEST(IntervalBTree, UserComparatorsCannotMutateTreeReentrantly) {
+  using Range = dmn::Dmn_IntervalRange;
+  dmn::Dmn_IntervalBTree<int> *treePointer = nullptr;
+  dmn::Dmn_IntervalBTree<int> tree(
+      [&treePointer](const Range &lhs, const Range &rhs) {
+        if (treePointer != nullptr) {
+          treePointer->clear();
+        }
+        return lhs.m_start < rhs.m_start;
+      });
+  treePointer = &tree;
+  ASSERT_TRUE(tree.add({1, 2}, 1));
+
+  EXPECT_THROW(tree.add({3, 4}, 2), std::logic_error);
+  EXPECT_EQ(tree.size(), 1U);
+}
+
+TEST(IntervalBTree, PriorityEvaluatorCannotMutateTreeReentrantly) {
+  dmn::Dmn_IntervalBTree<int> *treePointer = nullptr;
+  dmn::Dmn_IntervalBTree<int> tree({}, [&treePointer](int lhs, int rhs) {
+    if (treePointer != nullptr) {
+      treePointer->clear();
+    }
+    return lhs > rhs;
+  });
+  treePointer = &tree;
+  ASSERT_TRUE(tree.add({1, 5}, 10));
+
+  EXPECT_THROW(tree.queryTopology({3, 8}, 20), std::logic_error);
+  EXPECT_EQ(tree.size(), 1U);
 }
 
 TEST(IntervalBTree, CustomComparatorIsUsed) {
@@ -1124,6 +1193,17 @@ TEST(IntervalBTree, InvalidAndMissingRemovalLeaveTreeUnchanged) {
   EXPECT_EQ(tree.enumerateCanonical()[0].second, 10);
 }
 
+TEST(IntervalBTree, EmptyMatcherRemovesFirstDuplicateInInsertionOrder) {
+  dmn::Dmn_IntervalBTree<int> tree;
+  ASSERT_TRUE(tree.add({1, 5}, 10));
+  ASSERT_TRUE(tree.add({1, 5}, 20));
+
+  EXPECT_TRUE(tree.removeByRange({1, 5}));
+  const auto entries = tree.enumerateCanonical();
+  ASSERT_EQ(entries.size(), 1U);
+  EXPECT_EQ(entries.front().second, 20);
+}
+
 TEST(IntervalBTree, RemoveByRangeMatchesDuplicateByOpaqueValue) {
   dmn::Dmn_IntervalBTree<int> tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
@@ -1589,6 +1669,33 @@ TEST(IntervalBTree, UnregisterCallbackStopsFutureDispatch) {
   ASSERT_TRUE(tree.add({3, 8}, 20));
 
   EXPECT_EQ(calls, 0U);
+}
+
+TEST(IntervalBTree, CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId) {
+  using Tree = dmn::Dmn_IntervalBTree<int>;
+  Tree tree;
+  const Tree::registered_state_callback callback =
+      [](const auto &, const auto &, const auto &, const auto &) {};
+  const std::function<bool(const int &)> matcher = [](const int &) {
+    return true;
+  };
+
+  EXPECT_THROW(tree.registerStateCallback({}, {}, callback),
+               std::invalid_argument);
+  EXPECT_THROW(tree.registerStateCallback(matcher, {},
+                                          Tree::registered_state_callback{}),
+               std::invalid_argument);
+
+  std::size_t calls = 0;
+  const auto id = tree.registerStateCallback(
+      matcher, {},
+      [&calls](const auto &, const auto &, const auto &, const auto &) {
+        ++calls;
+      });
+  tree.unregisterStateCallback(id + 1);
+  tree.reconstructFromCanonical({{{1, 5}, 10}});
+  ASSERT_TRUE(tree.add({3, 8}, 20));
+  EXPECT_EQ(calls, 1U);
 }
 
 TEST(IntervalBTree, ReconstructionUsesFirstMatchingRegistration) {

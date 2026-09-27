@@ -7,7 +7,10 @@
 
 #include <gtest/gtest.h>
 
+#include "dmn-dlock.hpp"
 #include "proto/dmn-dmesg.pb.h"
+
+#include <string>
 
 namespace {
 
@@ -53,10 +56,14 @@ TEST(DlockCanonicalProto, RoundTripTablePayload) {
   EXPECT_EQ(body->lock_table().entries(0).state(),
             dmn::DLockEntryStatePb::DLOCK_ENTRY_STATE_GRANTED);
 
-  dmn::DMesgPb copied = message;
-  EXPECT_TRUE(copied.body().has_lock_table());
-  EXPECT_EQ(copied.body().lock_table().table_version(), 13);
-  EXPECT_EQ(copied.body().lock_table().entries(0).owner_id(), "owner-1");
+  std::string wire;
+  ASSERT_TRUE(message.SerializeToString(&wire));
+  dmn::DMesgPb parsed;
+  ASSERT_TRUE(parsed.ParseFromString(wire));
+  EXPECT_TRUE(parsed.body().has_lock_table());
+  EXPECT_EQ(parsed.body().lock_table().table_version(), 13);
+  EXPECT_EQ(parsed.body().lock_table().entries(0).owner_id(), "owner-1");
+  EXPECT_EQ(parsed.body().lock_table().entries(0).range().end(), 20);
 }
 
 TEST(DlockCanonicalProto, MessageBodyCompatibility) {
@@ -65,7 +72,28 @@ TEST(DlockCanonicalProto, MessageBodyCompatibility) {
   message.mutable_body()->set_message("legacy payload");
 
   EXPECT_FALSE(message.body().has_lock_table());
-  EXPECT_EQ(message.body().message(), "legacy payload");
+  std::string wire;
+  ASSERT_TRUE(message.SerializeToString(&wire));
+  dmn::DMesgPb parsed;
+  ASSERT_TRUE(parsed.ParseFromString(wire));
+  EXPECT_FALSE(parsed.body().has_lock_table());
+  EXPECT_EQ(parsed.body().message(), "legacy payload");
+}
+
+TEST(DlockRange, IntervalConversionPreservesEndpointsAndValidity) {
+  const dmn::Dmn_IntervalRange interval{-1, 7};
+  const auto converted = dmn::Dmn_DLock_Range::fromInterval(interval);
+  EXPECT_EQ(converted.m_start, -1);
+  EXPECT_EQ(converted.m_end, 7);
+  EXPECT_FALSE(converted.isValid());
+
+  const dmn::Dmn_DLock_Range lockRange{4, 9};
+  const auto roundTrip = static_cast<dmn::Dmn_IntervalRange>(lockRange);
+  EXPECT_EQ(roundTrip.m_start, lockRange.m_start);
+  EXPECT_EQ(roundTrip.m_end, lockRange.m_end);
+  EXPECT_TRUE(lockRange.overlaps({9, 12}));
+  EXPECT_FALSE(lockRange.overlaps({10, 12}));
+  EXPECT_FALSE(lockRange.overlaps({-1, 2}));
 }
 
 } // namespace

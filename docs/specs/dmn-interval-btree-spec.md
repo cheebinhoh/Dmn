@@ -1,16 +1,22 @@
 # Feature Specification: DMN Interval B‑Tree (`Dmn_IntervalBTree`)
 
-Status: implementation contract; verified coverage is tracked below and in
+Status: implemented API contract; verified coverage is tracked below and in
 `dmn-interval-btree-plan.md`.
 
 Implementation status: Layers 0-10 of `dmn-interval-btree-plan.md` are
-implemented and verified. This includes range validation, insertion,
-canonical ordering, arbitrary and move-only payload storage, degree-2
-B-tree insertion/deletion, overlap and topology queries, state callbacks,
-canonical move extraction/reconstruction, and incrementally maintained
-subtree metadata for pruned overlap traversal. Layer 11 lifecycle/snapshot
-tests pass; integration into `Dmn_DLock` is blocked until that production
-component is implemented (the repository currently has only its design docs).
+implemented. The focused `dmn-test-interval-btree` target covers range
+validation, insertion, canonical ordering, arbitrary and move-only payload
+storage, degree-2 B-tree insertion/deletion, overlap and topology queries,
+state callbacks, canonical move extraction/reconstruction, and incrementally
+maintained subtree metadata for pruned overlap traversal. Layer 11
+lifecycle/snapshot tests are present. A partial `Dmn_DLock` prototype exists,
+but it currently does not use this tree for its table mirror.
+
+Invalid-range behavior follows the compiled API and unit tests: `add`,
+`addWithTopology`, exact/batch removal, `findOverlapping`,
+`forEachOverlapping`, and `queryTopology` throw `std::invalid_argument`.
+`hasOverlap` is `noexcept` and returns `false` for an invalid range.
+`Dmn_IntervalRange::overlaps` also returns `false` for invalid operands.
 
 ## 1. Purpose and scope
 
@@ -32,7 +38,7 @@ The interval B‑tree is purely in-memory and does not define wire format or com
 
 ### 2.1 Range definition
 
-A range is valid iff: `m_start <= m_end`.
+A generic interval range is valid iff: `m_start <= m_end`.
 
 Overlap is defined as: a.m_start <= b.m_end && b.m_start <= a.m_end
 
@@ -41,12 +47,16 @@ Thus:
 - `[1,2]` conflicts with `[2,3]`
 - `[1,2]` does not conflict with `[3,4]`
 
-Invalid ranges MUST be rejected. `overlaps()` MUST return `false` if either
-operand is invalid; callers must not be able to get a positive overlap result
-from a reversed range.
+Invalid ranges MUST be rejected. `Dmn_IntervalRange::overlaps()` MUST return
+`false` if either operand is invalid; callers must not be able to get a
+positive overlap result from a reversed range. For B-tree operations, invalid
+ranges throw `std::invalid_argument` except `hasOverlap()`, which returns
+`false`; see the API contract in Section 3.2.
 Implementations MUST avoid signed overflow when evaluating boundaries,
-coverage, or subtree metadata; range logic must use comparisons rather than
-computing `end + 1` or `start - 1`.
+coverage, or subtree metadata. Inclusive overlap checks use endpoint
+comparisons rather than predecessor/successor arithmetic. Topology coverage
+may use a successor calculation only with an overflow guard; the current
+implementation checks against `INT64_MAX` before evaluating `coveredEnd + 1`.
 
 Dmn_DLock MAY impose additional domain-specific constraints (e.g., start >= 0).
 These constraints are NOT part of the generic interval B-tree.
@@ -183,7 +193,8 @@ entry whose range overlaps the argument and does not accept a matcher.
 
 `remove` and `removeByRange` are equivalent exact-range operations; the
 preferred name is `removeByRange` when no future value-based overloads are
-planned. Both return `false` without mutation when no candidate matches.
+planned. Both return `false` without mutation when the range is valid but no
+candidate matches. Invalid ranges throw `std::invalid_argument`.
 
 #### 3.1.1 OverlaidBoth
 Condition: The new range's left boundary falls inside one existing lock, and its right boundary falls inside a different existing lock, leaving an uncovered gap in the middle.
@@ -409,11 +420,12 @@ Move-only payloads are supported by plain `add` and the `T&&` overload.
 `findOverlapping`, `queryTopology`, and `enumerateCanonical` use
 copy-returning result types and therefore require a copyable `T` when
 instantiated or called. `forEachOverlapping` visits entries by const
-reference and does not copy payloads; it requires a non-empty visitor,
-invokes it in canonical order after validating the query range, and invokes
-no visitor for an invalid query. The visitor MUST NOT mutate the tree or
-retain references after it returns. Clients with move-only payloads must use
-plain `add`, state callbacks, predicates, `forEachOverlapping`, and
+reference and does not copy payloads; it requires a non-empty visitor and a
+valid query range, and invokes the visitor in canonical order. An empty
+visitor or invalid query throws `std::invalid_argument`. The visitor MUST NOT
+mutate the tree or retain references after it returns. Clients with move-only
+payloads must use plain `add`, state callbacks, predicates,
+`forEachOverlapping`, and
 `enumerateCanonicalMove`.
 `enumerateCanonicalMove` is an extraction operation: it computes its complete
 ordered result, moves every payload into the result, clears the tree, and
@@ -425,9 +437,13 @@ commit decision. Clients may use the result to initialize entry state, but
 must apply their own state filtering and transition rules when stored values
 have lifecycle states such as waiting, granted, or terminal.
 
-All insertion and removal methods reject an invalid range without mutation.
-`add` and `addWithTopology` return `false` in that case; the result from a
-failed `addWithTopology` is default-initialized. `remove` methods return
+All insertion and removal methods reject an invalid range without mutation by
+throwing `std::invalid_argument`. This includes `add`,
+`addWithTopology`, `remove`, `removeByRange`, and `removeAllOverlapping`.
+`hasOverlap` instead returns `false` for an invalid range. `findOverlapping`,
+`forEachOverlapping`, and `queryTopology` throw `std::invalid_argument` for an
+invalid range; `forEachOverlapping` also throws for an empty visitor. For a
+valid range with no removal match, `remove` and `removeByRange` return
 `false`, and `removeAllOverlapping` returns zero. A missing priority evaluator
 means `isTop` is `true` for every entry; topology remains fully supported.
 Plain `add` computes the same initial topology and priority state as
@@ -703,6 +719,21 @@ The following names refer to the executable tests in
   `RebuildMatchesOriginalCanonicalOrder`.
 - Destruction: `DestructorReleasesAllUniqueOwnedEntries`; the registered
   Valgrind test additionally checks for leaks and invalid memory use.
+
+### 5.6 Public API edge cases
+
+- `EmptyTreeQueriesAndRemovalsAreNoOps` checks valid empty-tree queries,
+  visitors, and no-op removals.
+- `EndpointInsertionRejectsInvalidRangesBeforeMutation` checks endpoint
+  overload validation and preservation of an rvalue payload on failure.
+- `EmptyMatcherRemovesFirstDuplicateInInsertionOrder` verifies default
+  duplicate selection.
+- `CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId` covers empty
+  callback/matcher rejection and unknown unregistration.
+- `UserComparatorsCannotMutateTreeReentrantly` checks custom range comparator
+  reentrancy protection.
+- `PriorityEvaluatorCannotMutateTreeReentrantly` checks priority callback
+  reentrancy protection.
 
 ## 6. Definition of done
 

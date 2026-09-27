@@ -187,9 +187,9 @@ using state_change_callback =
  * evaluator is independent of canonical ordering.
  *
  * Overlap result APIs return entries in canonical order. Invalid input ranges
- * are rejected by insertion and removal, and produce empty/false query
- * results. The tree does not impose domain constraints such as non-negative
- * endpoints.
+ * throw std::invalid_argument for insertion, removal, and copying/visitor
+ * queries; hasOverlap() returns false. The tree does not impose domain
+ * constraints such as non-negative endpoints.
  *
  * @note Not thread-safe. External synchronization is required.
  */
@@ -271,7 +271,8 @@ public:
    * @param value Payload to copy into the tree.
    * @param onStateChange Optional callback for later state changes to this
    *        entry; it is not called for the entry's initial state.
-   * @return @c true on insertion, or @c false for an invalid range.
+   * @return @c true on insertion.
+   * @throws std::invalid_argument if @p range is invalid.
    * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   bool add(range_type range, const value_type &value,
@@ -282,7 +283,8 @@ public:
    * @param range Inclusive interval to index.
    * @param value Payload to move into the tree.
    * @param onStateChange Optional callback for later state changes.
-   * @return @c true on insertion, or @c false for an invalid range.
+   * @return @c true on insertion.
+   * @throws std::invalid_argument if @p range is invalid.
    */
   bool add(range_type range, value_type &&value,
            state_change_callback onStateChange = {});
@@ -293,7 +295,8 @@ public:
    * @param end Inclusive upper endpoint.
    * @param value Payload to copy.
    * @param onStateChange Optional callback for later state changes.
-   * @return @c true on insertion, or @c false for a reversed range.
+   * @return @c true on insertion.
+   * @throws std::invalid_argument if the endpoint range is invalid.
    */
   bool add(std::int64_t start, std::int64_t end, const value_type &value,
            state_change_callback onStateChange = {}) {
@@ -306,7 +309,8 @@ public:
    * @param end Inclusive upper endpoint.
    * @param value Payload to move.
    * @param onStateChange Optional callback for later state changes.
-   * @return @c true on insertion, or @c false for a reversed range.
+   * @return @c true on insertion.
+   * @throws std::invalid_argument if the endpoint range is invalid.
    */
   bool add(std::int64_t start, std::int64_t end, value_type &&value,
            state_change_callback onStateChange = {}) {
@@ -326,6 +330,7 @@ public:
    * @param onStateChange Optional callback for later state changes.
    * @return A pair of insertion success and the candidate's initial topology
    *         result. A failed insertion returns a default result.
+   * @throws std::invalid_argument if @p range is invalid.
    * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   std::pair<bool, Dmn_TopologyResult<value_type>>
@@ -338,6 +343,8 @@ public:
    * @param matcher Optional payload predicate; an empty matcher selects the
    *        first exact-range entry in canonical order.
    * @return @c true if one entry was removed.
+   * @throws std::invalid_argument if @p range is invalid.
+   * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   bool remove(range_type range, entry_matcher matcher = {});
 
@@ -346,13 +353,16 @@ public:
    * @param range Exact interval to match.
    * @param matcher Optional payload predicate.
    * @return @c true if one entry was removed.
+   * @throws std::invalid_argument if @p range is invalid.
+   * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   bool removeByRange(range_type range, entry_matcher matcher = {});
 
   /**
    * @brief Remove every entry overlapping a valid range.
    * @param range Interval used to select entries.
-   * @return Number of removed entries, or zero for an invalid range/no match.
+   * @return Number of removed entries, or zero when no entry overlaps.
+   * @throws std::invalid_argument if @p range is invalid.
    */
   std::size_t removeAllOverlapping(range_type range);
 
@@ -448,16 +458,18 @@ public:
   /**
    * @brief Return whether any stored interval overlaps a query interval.
    * @param range Inclusive query interval.
-   * @return @c true if a valid query overlaps at least one stored range.
+   * @return @c true if a valid query overlaps at least one stored range;
+   *         @c false for an invalid query.
    */
   bool hasOverlap(range_type range) const noexcept;
 
   /**
    * @brief Return copies of all overlapping entries in canonical order.
    * @param range Inclusive query interval.
-   * @return Empty for an invalid query or no matches; otherwise matching
+   * @return Empty when there are no matches; otherwise matching
    *         range/value copies in canonical order.
    * @note Requires a copy-constructible @c T when called.
+   * @throws std::invalid_argument if @p range is invalid.
    */
   std::vector<std::pair<range_type, value_type>>
   findOverlapping(range_type range) const;
@@ -468,8 +480,8 @@ public:
    * @param range Inclusive query interval.
    * @param visitor Callable receiving const references to each range and
    *        payload. References must not be retained after the call.
-   * @throws std::invalid_argument if @p visitor is empty, including for an
-   *         invalid query.
+   * @throws std::invalid_argument if @p visitor is empty or @p range is
+   *         invalid.
    * @throws std::logic_error if the visitor attempts reentrant mutation.
    */
   void forEachOverlapping(range_type range, overlap_visitor visitor) const;
@@ -484,6 +496,7 @@ public:
    * @param value Candidate payload used by the priority evaluator.
    * @return Topology, priority status, and canonically ordered overlap copies.
    * @note Requires a copy-constructible @c T when called.
+   * @throws std::invalid_argument if @p range is invalid.
    */
   Dmn_TopologyResult<value_type> queryTopology(range_type range,
                                                const value_type &value) const;

@@ -2,25 +2,22 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dlock.hpp
- * @brief Publisher-serialized distributed range lock for the v1 `Dmn_DMesg`
- *        implementation.
+ * @brief Prototype DLock values and local acquisition API.
  *
  * Overview
  * --------
- * `Dmn_DLock` implements the Phase 1 distributed lock for DMN. It is scoped to
- * a single authoritative `Dmn_DMesg` publisher and serializes a canonical,
- * whole-table lock snapshot over the DMesg transport. Each lock session
- * maintains a private mirror of the current table and applies conflict
- * detection, eligibility checks, and lifecycle transitions locally before
- * publishing a new canonical snapshot.
+ * This header currently provides DLock value types, snapshot/protobuf
+ * conversion helpers, a lightweight DMesg-handler wrapper, and a basic
+ * instance-local mutex/condition-variable acquisition prototype. Despite the
+ * design target described by the companion spec, this implementation does
+ * not publish snapshots, synchronize independent handlers, or implement a
+ * distributed lock protocol.
  *
  * Phase boundary
  * --------------
- * This module intentionally implements only the `Dmn_DMesg`-based v1 model. It
- * is not a manager/back-end authority, and it does not treat `Dmn_DMesgNet` or
- * its election state as a lock source of truth. The lock table remains a plain
- * data structure serialized as a protobuf snapshot, with all grant decisions
- * made by the combined DLock state machine and the authoritative publisher.
+ * The template is restricted to `Dmn_DMesg`, but this type constraint is not
+ * evidence that publisher-serialized v1 is implemented. `Dmn_DMesgNet` and
+ * its election state are not used as a lock authority.
  *
  * Key responsibilities
  * --------------------
@@ -28,25 +25,22 @@
  *   `Dmn_DLock_ResultCode`, and `Dmn_DLock_LifecycleEvent`).
  * - Model a lock range, lock entry, and canonical table snapshot that can be
  *   serialized into `DLockTablePb` and rebuilt from its protobuf form.
- * - Enforce deterministic sorting and overlap validation for the canonical
- *   snapshot so every handler reconstructs the same table state.
- * - Provide a minimal `Dmn_DLock` API surface for acquire/release operations in
- *   the Phase 1 DMesg-only environment.
- * - Keep the protocol additive and transport-safe by storing the table in the
- *   existing `DMesgBodyPb` oneof and preserving existing payload compatibility.
+ * - Provide deterministic snapshot conversion helpers and basic validation.
+ * - Provide a local-only `Dmn_DLock` acquire/release prototype; no transport
+ *   commit or cross-handler synchronization is performed.
+ * - Use the additive `DMesgBodyPb` protobuf payload shape for snapshot values.
  *
  * Thread safety and execution model
  * ---------------------------------
- * The canonical snapshot is a value object, not a live shared cache. Lock
- * operations use the session/instance mutex and the corresponding DMesg handler
- * context to serialize access to the mutable table and to maintain
- * deterministic ordering. The public API is not a replacement for the later
- * consensus-backed protocol; it is a narrow, testable Phase 1 layer on top of
- * Dmn_DMesg.
+ * The current acquire/release operations synchronize a single in-memory table
+ * with a mutex and condition variable. They do not run in a DMesg handler
+ * context or publish state. `acquireLockAsync()` launches a detached thread
+ * that refers to the lock object, so the caller must keep the object alive
+ * until the returned future is ready. This prototype is not safe to use as a
+ * distributed lock.
  *
  * See also
- * - `dmn-dmesg.hpp` : authoritative transport and handler lifecycle used by the
- *   v1 lock.
+ * - `dmn-dmesg.hpp` : DMesg handler type used by the prototype wrapper.
  * - `proto/dmn-dlock.proto` : canonical protobuf payload for the lock table.
  * - `docs/specs/dmn-distributed-lock-spec.md` : current phase specification.
  */
@@ -75,10 +69,9 @@ namespace dmn {
 /**
  * @brief Final status reported by a DLock request.
  *
- * The values define the public contract for acquire/release/close operations in
- * the v1 `Dmn_DMesg` implementation. A caller must distinguish `kConflict`,
- * `kNoWait`, and `kTimeout` from ordinary success and from invalid or terminal
- * states.
+ * The currently declared result codes. The local prototype returns only a
+ * subset; timeout, cancellation, shutdown, and lifecycle outcomes are not yet
+ * implemented.
  */
 enum class Dmn_DLock_ResultCode {
   kOk = 0,
@@ -136,7 +129,7 @@ struct Dmn_DLock_Result {
 };
 
 /**
- * @brief Lifecycle event emitted by a DLock session as it transitions state.
+ * @brief Lifecycle-event value shape; the current prototype does not emit it.
  */
 struct Dmn_DLock_LifecycleEvent {
   enum class Kind {
@@ -157,6 +150,10 @@ struct Dmn_DLock_LifecycleEvent {
 
 /**
  * @brief Request-specific lock intent options.
+ *
+ * The local prototype observes @c m_wait and @c m_no_wait. It copies
+ * @c m_lease_ticks into the snapshot value but does not enforce a lease;
+ * @c m_retries_allowed is not used.
  */
 struct Dmn_DLock_RequestOptions {
   std::string m_request_id{};
@@ -168,7 +165,11 @@ struct Dmn_DLock_RequestOptions {
 };
 
 /**
- * @brief Immutable runtime configuration for a DLock domain.
+ * @brief Configuration values supplied to a DLock instance and handler.
+ *
+ * The local acquisition path currently uses only @c m_domain.
+ * @c m_default_lease_ticks and @c m_require_canonical_snapshot are reserved
+ * for the protocol implementation and are not enforced by the prototype.
  */
 struct Dmn_DLock_Config {
   std::string m_domain{"default"};
@@ -236,11 +237,11 @@ struct Dmn_DLock_Entry {
 };
 
 /**
- * @brief Canonical whole-table snapshot distributed by the lock publisher.
+ * @brief Whole-table snapshot value with protobuf conversion helpers.
  *
- * This object is the DMesg payload model for the v1 lock protocol. It is
- * serialized deterministically so that every handler reconstructs the same
- * state from the same canonical payload.
+ * This object models the intended DMesg payload. The current prototype can
+ * convert it to/from protobuf, but does not publish it or use it to synchronize
+ * handler mirrors.
  */
 struct Dmn_DLock_TableSnapshot {
   std::string m_domain{};
@@ -269,7 +270,7 @@ struct Dmn_DLock_TableSnapshot {
     }
 
     for (const auto &entry : m_entries) {
-      if (!entry.isValid()) {
+      if (!entry.isValid() || entry.m_domain != m_domain) {
         return false;
       }
 
@@ -299,6 +300,10 @@ struct Dmn_DLock_TableSnapshot {
       -> Dmn_DLock_ResultCode {
     if (!candidate.isValid() || !candidate.m_range.isValid()) {
       return Dmn_DLock_ResultCode::kInvalidRange;
+    }
+
+    if (candidate.m_domain != m_domain) {
+      return Dmn_DLock_ResultCode::kInvalidState;
     }
 
     for (const auto &entry : m_entries) {
@@ -476,12 +481,11 @@ struct Dmn_DLock_TableSnapshot {
 };
 
 /**
- * @brief DMesg handler specialized for DLock table publication and local
- *        replay.
+ * @brief Lightweight DMesg handler wrapper used by the DLock prototype.
  *
- * The handler owns a lock-domain configuration and exposes the narrow v1
- * capability needed by the DLock session: publishing a canonical table snapshot
- * and scheduling work in the handler's own execution context.
+ * `publishSnapshot()` only validates the supplied snapshot; it does not write
+ * to DMesg. `postToOwnContext()` schedules work in the inherited handler
+ * context, but the local acquire implementation does not use that path.
  */
 class Dmn_DLock_Handler : public Dmn_DMesg::Dmn_DMesgHandler {
 public:
@@ -538,7 +542,7 @@ private:
 };
 
 /**
- * @brief Shared session-state base used by the v1 DLock implementation.
+ * @brief Minimal local handler/proxy helper used by the DLock prototype.
  */
 class Dmn_DLock_Base {
 public:
@@ -565,13 +569,13 @@ protected:
 };
 
 /**
- * @brief Phase 1 distributed lock built on top of `Dmn_DMesg`.
+ * @brief Local-only DLock prototype constrained to a `Dmn_DMesg` base.
  *
- * This class provides the v1 DMesg-only lock model, where a canonical
- * full-table snapshot is published and then replayed by all sessions in the
- * same domain. It is intentionally restricted to `Dmn_DMesg` and does not
- * permit the later `Dmn_DMesgNet` authority model to be used as a substitute
- * for the current Phase 1 semantics.
+ * This class currently serializes acquisitions only within its own in-memory
+ * table. It does not publish snapshots, synchronize handlers, enforce leases,
+ * or implement the publisher-serialized distributed-lock design. The template
+ * constraint prevents instantiation with `Dmn_DMesgNet`; it does not make this
+ * prototype suitable for distributed use.
  */
 template <class DMesgBase = Dmn_DMesg>
 class Dmn_DLock : public DMesgBase, public Dmn_DLock_Base {
