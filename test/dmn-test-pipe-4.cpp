@@ -1,7 +1,7 @@
 /**
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-test-pipe.cpp
+ * @file dmn-test-pipe-4.cpp
  * @brief Unit test for Dmn_Pipe with sequential write and ordered read
  * operations.
  */

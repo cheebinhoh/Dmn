@@ -332,9 +332,9 @@ private:
 
   std::string m_name{}; ///< Human-readable name forwarded to the async context.
   size_t m_capacity{};  ///< Maximum number of items retained in @c m_buffer.
-  ssize_t m_callbackFailureCapacity{};
   Dmn_Pub_Filter_Task
       m_filter_fn{}; ///< Optional per-(subscriber,item) delivery filter.
+  ssize_t m_callbackFailureCapacity{};
 
   std::deque<T> m_buffer{}; ///< Bounded circular history buffer for replay.
   std::vector<std::shared_ptr<Dmn_Sub>>
@@ -359,8 +359,8 @@ Dmn_Pub<T, QueueType>::Dmn_Pub(std::string_view name, size_t capacity,
                                Dmn_Pub_Filter_Task filter_fn,
                                ssize_t callbackFailureCapacity)
     : Dmn_Async<QueueType>(name), m_name{name}, m_capacity{capacity},
-      m_callbackFailureCapacity{callbackFailureCapacity},
-      m_filter_fn{filter_fn} {}
+      m_filter_fn{filter_fn},
+      m_callbackFailureCapacity{callbackFailureCapacity} {}
 
 template <typename T, template <class> class QueueType>
 Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
@@ -425,15 +425,10 @@ auto Dmn_Pub<T, QueueType>::takeCallbackFailures()
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
-  /* Though through Dmn_Async (parent class), we have a mean to
-   * guarantee that only one thread is executing the core logic
-   * and manipulate the m_subscribers state in a singleton asynchronous
-   * thread context and without the use of mutex to protect the m_subscribers,
-   * but that also requires both registerSubscriber() and
-   * unregisterSubscriber() API methods to have it side effects executed
-   * in the singleton asynchronous thread context, and which means that upon
-   * returning from both API methods, the client is not guaranteed that
-   * it has registered or unregistered successfully.
+  /* Dmn_Async guarantees that publisher state is accessed by only one thread
+   * in the asynchronous context, so m_subscribers does not need a mutex.
+   * registerSubscriber() and unregisterSubscriber() run their mutations in
+   * that context and wait for the corresponding task before returning.
    */
 
   /* Keep the published item in circular ring buffer for

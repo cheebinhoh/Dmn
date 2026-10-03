@@ -57,15 +57,12 @@ outbound work. It is not included in the umbrella header.
    exceptions, define whether the worker continues, and ensure `waitForEmpty()`
    cannot wait forever because a callback failed. Its implementation invokes
    the callback outside the bookkeeping mutex; documentation must match.
-2. Make the pipe's bulk-read timeout behavior explicit and consistent with
-   queue variants. The implementation returns when a timed queue read returns,
-   including an empty vector; it does not re-arm the deadline.
-3. Correct `Dmn_Socket`'s public TCP wording or provide a separate stream
-   adapter with explicit framing. Check `inet_pton()` and port range, report
-   datagram truncation, and distinguish zero-length UDP datagrams from EOF.
-4. If socket construction throws after `socket()` succeeds, close the opened
+2. Decide whether `Dmn_Socket::read()` should preserve zero-length UDP
+   datagrams; it currently maps them to `nullopt`, the same result as a receive
+   error. Also check `inet_pton()` and port range and report datagram truncation.
+3. If socket construction throws after `socket()` succeeds, close the opened
    descriptor before propagating the error. Add failure-path tests.
-5. State whether concurrent reads/writes on the same socket are supported and
+4. State whether concurrent reads/writes on the same socket are supported and
    test shutdown/read coordination.
-6. Either repair and test the deprecated tee-pipe/limited queue against current
+5. Either repair and test the deprecated tee-pipe/limited queue against current
    interfaces or remove them; do not imply they are current supported APIs.

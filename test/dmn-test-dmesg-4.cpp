@@ -5,9 +5,9 @@
  * @brief The unit test that asserts that the dmn-dmesg with two publishers
  *        writes to the same Dmn_DMesg object, first publisher will continue to
  *        write to the Dmn_DMesg object 3 messages, where the 2nd publisher will
- *        in respond to message written by first publisher and write the same
- *        message back to the Dmn_DMesg and which results in a conflict, the
- *        write back always fail besides the last message written back.
+ *        in response to a message written by the first publisher and write the
+ *        same message back to Dmn_DMesg, resulting in a conflict. The
+ *        write-back fails except for the last message.
  */
 
 #include <gtest/gtest.h>

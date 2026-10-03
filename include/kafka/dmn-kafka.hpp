@@ -14,9 +14,10 @@
  * to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself
  * and are not forwarded:
  *  - Dmn_Kafka::Topic         — the Kafka topic to read from / write to.
- *  - Dmn_Kafka::Key           — an alternate topic name that, if set, overrides
- *                                the Topic value when determining which topic
- *                                to read from / write to.
+ *  - Dmn_Kafka::Key         — a legacy key option that is currently parsed as
+ *                                a topic value. If both it and Topic are
+ *                                provided, the selected value is unspecified
+ *                                because the configuration is an unordered map.
  *  - Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.
  *
  * Thread-safety:
@@ -67,8 +68,7 @@ public:
    * entries are passed to @c rd_kafka_conf_set().
    */
   const static std::string Topic; ///< Kafka topic to read from / write to.
-  const static std::string
-      Key; ///< Alternate topic that overrides @c Topic when set.
+  const static std::string Key;   ///< Legacy key option, parsed as a topic.
   const static std::string
       PollTimeoutMs; ///< Consumer poll timeout in milliseconds.
 

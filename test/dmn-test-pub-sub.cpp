@@ -4,7 +4,7 @@
  * @file dmn-test-pub-sub.cpp
  * @brief Unit test for the Dmn_Pub/Dmn_Sub publish-subscribe model.
  *
- * This test program asserts that the Dmn_Pub and Dmn_Pub::Sub model.
+ * This test verifies the Dmn_Pub/Dmn_Sub publish-subscribe model.
  */
 
 #include <gtest/gtest.h>

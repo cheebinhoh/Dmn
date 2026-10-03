@@ -54,7 +54,7 @@
  *   registerSignalHandlerHook(signo, hook).
  * - Enqueue immediate work with addJob() or schedule delayed work with
  *   addTimedJob().
- * - Start processing job and signal handler hooks with enterMainLoop()
+ * - Start processing jobs and signal handler hooks with enterMainLoop()
  *   and stop with exitMainLoop().
  * - job, timedJob and signal handler hooks are all processed in the singleton
  *   asynchronous thread context.
@@ -245,21 +245,21 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
  * A singleton runtime manager that centralizes POSIX signal handling and
  * asynchronous job scheduling/execution. It inherits Dmn_Singleton for
  * singleton lifecycle and privately from Dmn_Async to run an internal
- * runtime asynchronous thread used for processing job.
+ * runtime asynchronous thread used for processing jobs.
  *
  * Public API highlights:
  *  - addJob(fnc, priority, onErrorFnc): enqueue a job for immediate execution
  *    in the singleton asynchronous thread context.
  *  - addTimedJob(fnc, duration, priority, onErrorFnc): schedule job to run
- *    after duration in the singleton asychronous thread context.
+ *    after duration in the singleton asynchronous thread context.
  *  - registerSignalHandlerHook(signo, hook): register a handler hook to be
- *    invoked when the given signal is delivered in the singleton asychronous
+ *    invoked when the given signal is delivered in the singleton asynchronous
  *    thread context.
- *  - clearSignalHandlerHook(signo): clear all register handler hooks for
+ *  - clearSignalHandlerHook(signo): clear all registered handler hooks for
  *    the particular signo.
- *  - enterMainLoop() / exitMainLoop(): control the runtime starts processing
- *    jobs and signal handler hooks in the singleton asynchronous thread
- *    context.
+ *  - enterMainLoop() / exitMainLoop(): control when the runtime starts
+ *    processing jobs and signal handler hooks in the singleton asynchronous
+ *    thread context.
  *
  * Important behaviour:
  *  - Signals used by the runtime are blocked prior to creating the singleton

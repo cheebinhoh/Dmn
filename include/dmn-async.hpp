@@ -14,9 +14,10 @@
  * -------------
  * - A client can inherit from Dmn_Async or hold an instance of it.
  * - The client passes work as a std::function<void()> to Dmn_Async's
- *   write()/addExecTask* APIs. Dmn_Async will schedule the work to be executed
- *   asynchronously in the order of the submitted tasks and avoiding the need
- *   for explicit mutexes in the client API.
+ *   write()/addExecTask* APIs. Immediate tasks are serialized in queue order.
+ *   Delayed tasks may be re-enqueued until due and can therefore be overtaken
+ *   by later immediate tasks. This serialization applies to submitted work; it
+ *   does not synchronize unrelated access to client state.
  * - For callers that need to block until a submitted task finishes, use
  *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
  *   Dmn_Async_Handle object whose wait() method will only return after the task

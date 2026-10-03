@@ -9,14 +9,14 @@
  * --------------
  * - Degenerate Bridge : the blocking queue interface is abstracted from the
  *   underlying implementation (mutex lock or lock-free), this is not a
- *   full-fledge bridge as written in gang of 4, but simplified version with
- *   CRTP template with degenerate bridge where abstraction and implemention
+ *   full-fledged bridge as written in the Gang of Four, but a simplified
+ *   version with a CRTP template where abstraction and implementation
  *   are in one hierarchy tree.
  *
  * Static polymorphism
  * -------------------
  * We use Curiously Recurring Template Pattern (CRTP) to achieve static
- * polymorphism that effectively offsetting the runtime overhead of vtable
+ * polymorphism that effectively offsets the runtime overhead of vtable
  * lookup by moving the function dispatch to compile time.
  *
  * Move and copy behavior
@@ -46,20 +46,20 @@
 namespace dmn {
 
 /**
- * @brief The Dmn_BlockingQueue are top tier class for both the abstraction
- * and implementor classes in the bridge design pattern with support of CRTP
- * to achieve static polymorphism.
+ * @brief Dmn_BlockingQueue is the top-level class for the abstraction and
+ * implementation classes in the Bridge pattern, using CRTP to achieve static
+ * polymorphism.
  *
  * @details
  * - There are a set of primitive methods to be overridden by concrete
- *   implementation subclasses, and those methods are virtual in the public API
- *   without being final. Those methods are defined in this class with CRTP to
- *   achieve static polymorphism to call subclass-overridden methods. Those are
- *   methods in the implementation tree in the Bridge design pattern.
+ *   implementation subclasses. Those methods are protected virtual
+ *   implementation hooks and are defined in this class with CRTP to achieve
+ *   static polymorphism when calling subclass implementations. They correspond
+ *   to methods in the implementation tree in the Bridge design pattern.
  *
  * - There are a set of composite methods that are marked as final and
- *   implemented in term of primitive methods. Those are methods in the
- *   the abstraction tree in Bridge design pattern.
+ *   implemented in terms of primitive methods. These correspond to methods in
+ *   the abstraction tree in the Bridge design pattern.
  */
 template <typename Derived, typename T> class Dmn_BlockingQueue {
 public:
@@ -85,7 +85,7 @@ public:
    * @brief Remove and return up to @p count items, optionally waiting.
    *
    * @param count   Maximum number of items to pop.
-   * @param timeout Optional timeout in milliseconds. A value of 0 indicates
+   * @param timeout Optional timeout in microseconds. A value of 0 indicates
    * an implementation-defined behavior (such as wait indefinitely).
    *
    * @return A vector containing the dequeued items (possibly fewer than @p

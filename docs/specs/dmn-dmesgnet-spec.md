@@ -200,9 +200,9 @@ individually:
 
 - `Dmn_Pipe` is used to build in-process test forwarding links; it is not a
   network guarantee.
-- `Dmn_Socket` currently uses IPv4 UDP datagrams, despite stale header text
-  referring to TCP. `read()` uses a fixed `BUFSIZ` buffer; datagram truncation,
-  send errors, socket binding, and addressing are adapter-level concerns.
+- `Dmn_Socket` uses IPv4 UDP datagrams. `read()` uses a fixed `BUFSIZ` buffer;
+  datagram truncation, zero-length datagrams, send errors, socket binding, and
+  addressing are adapter-level concerns.
 - `Dmn_DMesgNet_Kafka` uses the fixed `Dmn_dmesgnet` topic, a consumer group
   named from the node, and a static producer key. Kafka acknowledgements are
   not translated into per-peer DMesgNet membership or application-apply
@@ -278,9 +278,9 @@ passing evidence:
 - `-7` expects a local handler not to receive its own write. It does not test
   network echo suppression: output targets port 5000 while input binds port
   5001, and local self-delivery is already suppressed by `Dmn_DMesg`.
-- `-8` attempts playback to a later socket-connected node. The first node is
-  output-only; the current fallback does not set `m_ready`, so its application
-  write is queued and the test does not establish successful send or replay.
+- `-8` attempts playback to a later socket-connected node. The first node has
+  both input and output sockets, but the test is disabled and timing-driven;
+  it does not establish deterministic delivery or replay.
 - `-9` attempts one-way pipe-backed delivery. The sender is output-only and
   does not set `m_ready`; its assertions do not establish delivery under the
   current code.
@@ -333,9 +333,9 @@ security-reviewed.
 - **Gap:** The no-both-endpoints fallback sets protobuf state to `Ready` but
   not `m_ready`, leaving output-only application messages queued. **Improve:**
   define readiness consistently and test all four endpoint combinations.
-- **Gap:** Socket documentation says TCP while code uses UDP; generic I/O does
-  not define framing, size, delivery, or concurrency. **Improve:** correct the
-  adapter contract and qualify each supported transport independently.
+- **Gap:** UDP `read()` maps zero-length datagrams to `nullopt`, and generic I/O
+  does not define framing, size, delivery, or concurrency. **Improve:** define
+  the adapter contract and qualify each supported transport independently.
 
 **P2 — Resource bounds and evidence**
 

@@ -75,16 +75,13 @@ provide a shutdown flag.
 
 ## Gaps / improvements
 
-1. `Dmn_BlockingQueue` comments describe the bulk timeout as milliseconds,
-   while the mutex and lock-free implementations interpret it as
-   microseconds. Standardize the API unit and update every caller/comment.
-2. `Dmn_BlockingQueue_Mt::pop(count, timeout)` wakes on the requested count or
+1. `Dmn_BlockingQueue_Mt::pop(count, timeout)` wakes on the requested count or
    shutdown; on shutdown it can drain a partial queue. Specify whether that is
    intended and test it explicitly.
-3. LF `waitForEmpty()` is not protected by an in-flight ticket, as its comment
+2. LF `waitForEmpty()` is not protected by an in-flight ticket, as its comment
    warns. Define a safe external drain protocol or add a coordinated drain API.
-4. Add stress/sanitizer coverage for epoch wrap/reuse, shutdown racing with
+3. Add stress/sanitizer coverage for epoch wrap/reuse, shutdown racing with
    push/pop, throwing element operations, and multiple simultaneous waiters.
-5. The deprecated bounded queue refers to the old one-parameter queue base and
+4. The deprecated bounded queue refers to the old one-parameter queue base and
    old push/pop signatures. Keep it outside public support until repaired and
    independently built/tested, or remove it.

@@ -10,12 +10,10 @@
  *
  * Semantics:
  *  - read(): Returns the next available item wrapped in std::optional<T>.
- *    The call is expected to block until data becomes available in the
- *    normal case. If the underlying data source reaches end-of-stream
- *    (for example EOF or a closed pipe) the function returns std::nullopt to
- *    signal that no further data will be delivered. Concrete implementations
- *    may use timeouts or non-blocking strategies when appropriate, but callers
- *    should rely on std::nullopt to detect end-of-stream.
+ *    The call may block until data becomes available. The meaning of
+ *    std::nullopt is implementation-specific; it may indicate end-of-stream,
+ *    shutdown, timeout, or an error. Callers must consult the concrete
+ *    implementation's contract.
  *
  *  - write(const T &item): Takes a const lvalue reference. This overload does
  *    not take ownership of the provided object; implementations SHOULD copy the
@@ -24,9 +22,9 @@
  *  - write(T &&item): Takes an rvalue reference. Implementations SHOULD move
  *    from the item when possible to avoid unnecessary copies.
  *
- *  - shutdown(): Provides a hook that specific concrete io subclass can
- *    impose specific shutdown process to free the resources which otherwise
- *    will be leak (like kafka consumer thread).
+ *  - shutdown(): Provides a hook that concrete I/O subclasses can use to
+ *    perform shutdown procedures and free resources that would otherwise leak
+ *    (such as a Kafka consumer thread).
  *
  * Thread-safety:
  *  - The interface itself does not mandate any concurrency guarantees. If an
@@ -59,13 +57,11 @@ public:
   /**
    * @brief Read and return the next available item.
    *
-   * The call blocks until data is available. Returns std::nullopt to
-   * signal end-of-stream (e.g. EOF, closed pipe, or unrecoverable
-   * error); callers should treat std::nullopt as a permanent stop
-   * condition and cease further reads.
+   * The call may block until data is available. The meaning of std::nullopt
+   * is implementation-specific and must be defined by subclasses.
    *
    * @return optional<T> containing the next item, or std::nullopt on
-   *         end-of-stream.
+   *         the implementation-specific no-value condition.
    */
   virtual auto read() -> std::optional<T> = 0;
 

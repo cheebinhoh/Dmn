@@ -17,9 +17,9 @@
  *
  * Design summary (master election and heartbeat):
  * - Each node periodically broadcasts a heartbeat that includes:
- *   - the node identifier (creation timestamp, process id, ip),
+ *   - the configured node identifier and initialization/update timestamps,
  *   - the node's current master identifier (if any),
- *   - the node's known neighbor list (including itself).
+ *   - its known remote-node list (the local node is stored separately).
  *
  * - Node states (high-level):
  *   1. Initialized: node starts, sends heartbeats and waits to learn of a
@@ -31,29 +31,30 @@
  *      re-election.
  *   4. Destroyed: final state (optionally persist last state).
  *
- * - Election/co-election rules (summary):
- *   - When a master relinquishes or is absent, nodes choose a master by
- *     selecting the node with the earliest creation timestamp from their
- *     current neighbor list (including themselves).
- *   - If all nodes share the same neighbor list, they will elect the same
- *     master and converge immediately.
- *   - In race conditions where neighbor lists differ, nodes reconcile by
- *     exchanging heartbeats and converging toward the node with the earliest
- *     creation timestamp once they observe the same candidate.
+ * - Election/reconciliation rules (summary):
+ *   - A node in MasterPending self-elects after the configured number of
+ *     heartbeat timer ticks.
+ *   - A Ready node may follow a remote master claim from a node with an
+ *     earlier initialization timestamp.
+ *   - A node returns to MasterPending after enough heartbeat ticks without
+ *     synchronization from its remote master.
  *
  * Examples (brief):
- * - If nodes A and B boot and exchange heartbeats, each records the other as a
- *   neighbor. After initialization timeouts, they will deterministically elect
- *   the node with the earlier creation time as master.
+ * - Nodes A and B exchange system messages. A MasterPending node can
+ *   self-elect after its configured timer ticks; a Ready node can later follow
+ *   a remote Ready node's master claim if that node has an earlier
+ *   initialization timestamp. This is cooperative election, not quorum-based
+ *   agreement.
  * - When a new node C joins later, it learns the cluster through received
  *   heartbeats and follows the elected master.
- * - When the master shuts down, it sends a final heartbeat that relinquishes
- *   leadership; remaining nodes remove it from neighbor lists and re-elect.
+ * - When the master shuts down, it sends a final Destroyed heartbeat; nodes
+ *   receiving it remove that node from their known remote-node lists.
  *
  * Implementation notes:
  * - Heartbeats are periodic (see DMN_DMESGNET_HEARTBEAT_IN_NS).
- * - Nodes prune neighbors when heartbeats are absent for a configurable period.
- * - The class reconciliates local DMesgPb state with remote DMesgPb messages
+ * - Remote nodes are removed from the known-node list on a Destroyed message;
+ *   absent heartbeats alone do not currently remove them.
+ * - The class reconciles local DMesgPb state with remote DMesgPb messages
  *   to maintain consistent view of master and membership.
  */
 

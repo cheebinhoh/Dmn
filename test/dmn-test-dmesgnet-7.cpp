@@ -2,14 +2,11 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-7.cpp
- * @brief Unit test asserting that messages sent by one Dmn_DMesgNet node are
- * received only by other participating nodes.
+ * @brief Unit test asserting that a local handler does not receive its own
+ * write.
  *
- * This test program asserts that two Dmn_DMesgNet objects that
- * participates in the same network through its inbound and outbound
- * Dmn_Io objects are in sync in the Dmn network, and message sent through
- * one Dmn_DMesgNet object is only received by other Dmn_DMesgNet objects
- * which participates in the same Dmn network but not itself.
+ * This single-node test checks local self-delivery suppression. It does not
+ * test delivery between multiple Dmn_DMesgNet nodes.
  */
 
 #include <gtest/gtest.h>

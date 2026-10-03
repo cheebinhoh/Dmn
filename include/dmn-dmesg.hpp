@@ -17,8 +17,8 @@
  * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
  *            Dmn_DMesgHandler instances, offering pointer-like access while
  *            allowing the publisher to control and own handler lifetime.
- * Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built
- *             on top of the Proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
+ * Composite - Dmn_DMesgNet builds network I/O on top of Dmn_DMesg, which uses
+ *             the Dmn_Pub/Dmn_Sub publish-subscribe hierarchy.
  *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
@@ -33,8 +33,8 @@
  *   writes until the conflict is resolved by the client).
  *
  * Handler model and behaviour
- * - Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with
- *   the Dmn_Pub notification system.
+ * - Dmn_DMesgHandler derives from Dmn_Pub::Dmn_Sub and registers with the
+ *   Dmn_Pub notification system.
  * - Handlers can:
  *     * subscribe to a specific topic (empty topic is permitted),
  *     * provide an optional filter functor to drop unwanted messages,

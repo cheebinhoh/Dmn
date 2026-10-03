@@ -159,7 +159,7 @@ tests `-7` through `-9` are disabled there and provide no routine CI evidence:
 | `dmn-test-dmesgnet-5` | An inbound stale/equal topic counter causes a local handler conflict. | Single node with injected counter; does not prove network-wide serialization. |
 | `dmn-test-dmesgnet-6` | Reversed startup order changes the expected senior/master; duplicate/conflicting message traffic exercises conflict and force-playback handling. | Scripted pipe forwarding and sleeps; playback is a current value, not committed-history recovery. |
 | `dmn-test-dmesgnet-7` (disabled) | A one-node test expects its local handler not to receive its own write. | It does not test network echo suppression: output targets port 5000 while input binds port 5001, and local self-delivery is already suppressed by `Dmn_DMesg`; it is not registered in CMake. |
-| `dmn-test-dmesgnet-8` (disabled) | Attempts to test playback to a later socket-connected node. | The first node is output-only; the current fallback does not set `m_ready`, so its application write is queued and the test does not establish successful send or replay; it is not registered in CMake. |
+| `dmn-test-dmesgnet-8` (disabled) | Attempts to test playback to a later socket-connected node. | The first node has both input and output sockets, but the sleep-driven test does not establish deterministic delivery or replay; it is not registered in CMake. |
 | `dmn-test-dmesgnet-9` (disabled) | Attempts one-way pipe-backed application delivery. | The sender is output-only and does not set `m_ready`; the assertions do not establish delivery under current code; it is not registered in CMake. |
 
 These are primarily integration examples with sleeps and wall-clock timer

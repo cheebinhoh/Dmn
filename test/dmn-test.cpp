@@ -19,11 +19,10 @@
 #include "dmn-proc.hpp"
 #include "dmn-teepipe.hpp"
 
-/* An example usage of Dmn async where we can wrap the api body within
- * dmn async call to serialize multiple api called from different threads,
- * and converging those calls into one thread ad and always have one
- * thread responsible to run api call that changes the object, this will
- * de-couple caller and callee and avoid mutex delay
+/* An example of Dmn_Async usage: wrap API work in an async call to serialize
+ * calls from multiple threads on one execution context. This makes one thread
+ * responsible for API calls that mutate the object, decoupling callers from the
+ * callee and avoiding mutex contention for those serialized operations.
  */
 class Dmn_Event : public dmn::Dmn_Async {
 public:
