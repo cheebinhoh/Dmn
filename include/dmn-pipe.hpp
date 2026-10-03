@@ -18,13 +18,20 @@
  *
  * Threading and cancellation
  * --------------------------
- * - push/pop and internal synchronization are handled by QueueType.
+ * - In ordinary mode, push/pop synchronization is handled by QueueType.
+ *   Scheduled-mode queue selection and processed-item accounting are protected
+ *   by the pipe mutex.
+ * - QueueType maintains its own shutdown state independently of this pipe's
+ *   worker shutdown state. Queue implementations with in-flight guards must
+ *   base those guards on their own queue shutdown state.
  * - Dmn_Pipe adds a mutex and condition variable to:
  *   - keep a count of processed items (`m_count`), and
  *   - allow callers to wait until all currently inbound items have been
  *     processed (waitForEmpty()).
  * - readAndProcess() involves the caller-provided task and updates `m_count`
  *   under the mutex.
+ * - An optional scheduled-write mode uses the same background worker and
+ *   waits for the next deadline or a new write; it does not add a thread.
  *
  * Read / Write semantics
  * ----------------------
@@ -54,14 +61,18 @@
  *   A zero timeout value means "wait forever".
  *
  * waitForEmpty() blocks until all items that were inbound into the pipe
- * have been processed (or popped out).
+ * have been processed (or popped out). In scheduled-write mode it snapshots
+ * all accepted ordinary and scheduled writes.
  *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
- *   thread is started via Dmn_Proc::exec which repeatedly calls
- *   readAndProcess(fn).
- * - The destructor stops the background processor (Dmn_Proc::stopExec()),
- *   signals the condition variable.
+ *   thread is started via Dmn_Proc::exec. In ordinary mode it repeatedly calls
+ *   readAndProcess(fn); in scheduled-write mode it selects immediate writes
+ *   before due scheduled writes and waits for new work or the earliest
+ *   deadline.
+ * - Shutdown unblocks and joins the ordinary worker. In scheduled-write mode it
+ *   first stops accepting writes, wakes the worker, and joins it after accepted
+ *   work has drained (including waiting until scheduled deadlines).
  */
 
 #ifndef DMN_PIPE_HPP_
@@ -75,15 +86,47 @@
 #include "dmn-proc.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string_view>
 #include <vector>
 
 namespace dmn {
 
+/**
+ * @brief FIFO I/O pipe with optional background processing and deadline writes.
+ *
+ *
+ * @tparam T Item type stored in the pipe.
+ * @tparam QueueType Queue implementation used for ordinary writes.
+ *
+ * By default, the pipe retains its queue-backed read/write behavior. Supplying
+ * a processing task starts one background worker. Passing
+ * @c enable_scheduled_writes as @c true opts that worker into @c writeAt():
+ * ordinary FIFO writes take priority, while scheduled items are ordered by
+ * steady-clock deadline and become eligible at or after their deadline. When
+ * no item is ready, the worker sleeps until new work arrives or the earliest
+ * scheduled deadline. Calling @c writeAt() when scheduled writes are disabled
+ * throws @c std::logic_error.
+ * Scheduled items are delivered by the background worker; the synchronous
+ * @c read() APIs access only ordinary FIFO writes.
+ *
+ * In scheduled mode, @c waitForEmpty() snapshots accepted writes and waits for
+ * that snapshot to finish. Shutdown serializes its transition against writes
+ * with the pipe mutex, rejects later writes, and drains accepted work before
+ * joining the worker when callbacks complete normally; it can therefore wait
+ * until pending deadlines. If a callback throws, the worker stops and remaining
+ * accepted work is not drained. Callers must serialize concurrent shutdown
+ * calls and ensure the pipe outlives its callers and processing callback.
+ *
+ * A callback exception ends the background worker, matching the existing
+ * ordinary-worker failure policy; failures are not exposed through this class.
+ */
 template <typename T, typename QueueType = Dmn_BlockingQueue_Mt<T>>
 class Dmn_Pipe : public Dmn_Io<T>, private QueueType, private Dmn_Proc {
   static_assert(std::is_base_of_v<Dmn_BlockingQueue<QueueType, T>, QueueType>,
@@ -104,13 +147,25 @@ public:
    * the background thread.  If empty, no background thread is
    * started and items must be consumed via read() or
    * readAndProcess().
-   * @param count   Number of items to dequeue per background-thread iteration.
-   * Defaults to 1.
+   * @param count   Number of items to dequeue per ordinary background-thread
+   * iteration. Defaults to 1; ignored when scheduled writes are enabled.
    * @param timeout Timeout in microseconds passed to each pop call in the
-   * background loop.  0 means wait indefinitely.
+   * ordinary background loop.  0 means wait indefinitely; ignored when
+   * scheduled writes are enabled.
+   * @param enable_scheduled_writes Opt into deadline-scheduled writes with
+   * @c writeAt(). Defaults to @c false, preserving existing behavior. When
+   * enabled, @p fn must be non-empty.
+   *
+   * In this mode ordinary writes take priority over scheduled writes, and the
+   * worker waits until new work arrives or the next scheduled deadline.
+   *
+   * @throws std::invalid_argument if scheduled writes are enabled without a
+   * processing task.
+   * @throws std::runtime_error if the scheduled worker cannot be started.
    */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
-                    size_t count = 1, long timeout = 0);
+                    size_t count = 1, long timeout = 0,
+                    bool enable_scheduled_writes = false);
 
   /**
    * @brief Destroy the pipe, stopping any background processing thread and
@@ -178,7 +233,8 @@ public:
    *
    * This call enqueues a copy of `item` into the FIFO. Writing is non-blocking;
    * any blocking behavior is determined by the underlying Dmn_BlockingQueue
-   * implementation.
+   * implementation. In scheduled-write mode it wakes the background worker
+   * and counts as accepted work for @c waitForEmpty().
    *
    * @param item The data item to be copied into the pipe
    */
@@ -189,19 +245,61 @@ public:
    *
    * This call attempts to move `item` into the FIFO. If move construction is
    * noexcept it will move; otherwise behavior follows Dmn_BlockingQueue push
-   * policy.
+   * policy. In scheduled-write mode it wakes the background worker and counts
+   * as accepted work for @c waitForEmpty().
    *
    * @param item The data item to be moved into the pipe
    */
   void write(T &&item) override;
 
   /**
+   * @brief Schedule an item to be processed no earlier than @p deadline.
+   *
+   * This is only available on pipes constructed with
+   * @c enable_scheduled_writes set to @c true. The scheduled item is ordered by
+   * deadline; ordinary @c write() items retain priority and FIFO ordering.
+   * Equal deadlines are processed in submission order. The worker is notified
+   * so it can adjust an existing timed wait if this deadline is earlier.
+   *
+   * @param deadline Earliest processing time according to
+   * @c std::chrono::steady_clock.
+   * @param item Item to copy into the scheduled queue.
+   * @throws std::logic_error if scheduled writes were not enabled.
+   * @throws std::runtime_error if the pipe is shutting down.
+   * @throws std::exception or another exception propagated by T's copy
+   * constructor or by the scheduled queue's allocator.
+   */
+  void writeAt(std::chrono::steady_clock::time_point deadline, const T &item);
+
+  /**
+   * @brief Schedule a moved item to be processed no earlier than @p deadline.
+   *
+   * This is only available on pipes constructed with
+   * @c enable_scheduled_writes set to @c true. Ordinary @c write() items retain
+   * priority and FIFO ordering; equal scheduled deadlines retain submission
+   * order.
+   *
+   * @param deadline Earliest processing time according to
+   * @c std::chrono::steady_clock.
+   * @param item Item to move into the scheduled queue.
+   * @throws std::logic_error if scheduled writes were not enabled.
+   * @throws std::runtime_error if the pipe is shutting down.
+   * @throws std::exception or another exception propagated by T's move or copy
+   * constructor or by the scheduled queue's allocator.
+   */
+  void writeAt(std::chrono::steady_clock::time_point deadline, T &&item);
+
+  /**
    * @brief Block until the pipe is empty and all inbound items are processed.
    *
    * The function waits until all items that were reported inbound at the
    * time of the call have been popped and processed (i.e., `m_count` has
-   * advanced to cover them). It returns the number of items that were
-   * passed through the pipe during the wait.
+   * advanced to cover them). In scheduled-write mode it snapshots accepted
+   * ordinary and scheduled writes and waits for that snapshot. Shutdown may
+   * cause a waiting call to return before the snapshot has completed.
+   *
+   * Producers must be externally coordinated when callers require the
+   * snapshot to include every write in a larger logical operation.
    *
    * @return The number of items that were passed through the pipe in total
    */
@@ -220,14 +318,36 @@ protected:
   /**
    * @brief Initiate an orderly shutdown of the pipe.
    *
-   * Sets the shutdown flag, calls @c QueueType::shutdown() to unblock any
-   * threads waiting on the queue, and (if a background processing task was
-   * provided at construction) waits for the background thread to finish.
-   * Subsequent calls are no-ops. Callers must serialize concurrent calls to
-   * shutdown(), since the underlying @c Dmn_Proc lifecycle is not synchronized.
+   * In scheduled mode, sets the atomic shutdown flag while holding @c m_mutex,
+   * then notifies and joins the worker before shutting down the underlying
+   * queue so accepted work can drain if callbacks complete normally. Ordinary
+   * mode sets the flag and shuts down the underlying queue first to unblock the
+   * worker. Subsequent calls are no-ops. Callers must serialize concurrent
+   * calls to shutdown(), since the underlying @c Dmn_Proc lifecycle is not
+   * synchronized.
+   *
+   * @throws std::runtime_error if joining the background worker fails.
    */
   virtual void shutdown() override {
     if (isShutdown()) {
+      return;
+    }
+
+    if (m_scheduled_writes_enabled) {
+      {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (isShutdown()) {
+          return;
+        }
+
+        m_shutdown_flag.test_and_set(std::memory_order_release);
+      }
+
+      m_work_cond.notify_all();
+      m_empty_cond.notify_all();
+      Dmn_Proc::wait();
+      QueueType::shutdown();
+
       return;
     }
 
@@ -241,23 +361,65 @@ protected:
   }
 
 private:
+  using ScheduledQueue =
+      std::multimap<std::chrono::steady_clock::time_point, T>;
+
   using QueueType::pop;
   using QueueType::popNoWait;
   using QueueType::push;
 
-  std::mutex m_mutex{}; ///< Protects @c m_count and condition variable.
+  /**
+   * @brief Run the scheduled worker until shutdown and accepted work drain.
+   *
+   * The caller holds no pipe lock on entry. The loop selects ordinary queue
+   * items before due scheduled items, releases @c m_mutex while invoking @p fn,
+   * and waits on @c m_work_cond when no item is ready. A callback exception
+   * propagates to the worker boundary and stops the loop.
+   *
+   * @param fn Callback invoked for each selected item.
+   */
+  void scheduledProcessingLoop(const Dmn_Pipe::Task &fn);
+
+  std::mutex m_mutex{}; ///< Protects scheduled work and processed accounting.
   std::condition_variable
       m_empty_cond{}; ///< Signalled when processed count reaches inbound count.
-  size_t m_count{};   ///< Total number of items processed (popped and handled).
+  std::condition_variable
+      m_work_cond{}; ///< Wakes scheduled worker for new work or shutdown.
+  ScheduledQueue m_scheduled_queue{}; ///< Work ordered by deadline.
+  size_t m_count{}; ///< Total number of items processed (popped and handled).
+  uint64_t m_submitted_count{};       ///< Accepted writes in scheduled mode.
   std::atomic_flag m_shutdown_flag{}; ///< Set when shutdown() is called.
   bool m_hasFn{}; ///< @c true when a background processing task was provided.
+  bool m_scheduled_writes_enabled{}; ///< Selects the deadline-aware worker.
 }; // class Dmn_Pipe
 
 template <typename T, typename QueueType>
 Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
-                                 size_t count, long timeout)
-    : Dmn_Proc{name}, m_hasFn{nullptr != fn} {
+                                 size_t count, long timeout,
+                                 bool enable_scheduled_writes)
+    : Dmn_Proc{name}, m_hasFn{nullptr != fn},
+      m_scheduled_writes_enabled{enable_scheduled_writes} {
+  if (m_scheduled_writes_enabled && !fn) {
+    throw std::invalid_argument(
+        "Dmn_Pipe scheduled writes require a processing task");
+  }
+
   if (fn) {
+    if (m_scheduled_writes_enabled) {
+      if (!exec([this, fn = std::move(fn)]() {
+            try {
+              scheduledProcessingLoop(fn);
+            } catch (...) {
+              // Match the ordinary pipe worker: a callback failure stops
+              // processing.
+            }
+          })) {
+        throw std::runtime_error("failed to start Dmn_Pipe scheduled worker");
+      }
+
+      return;
+    }
+
     exec([this, fn, count, timeout]() {
       while (true) {
         Dmn_Proc::yield();
@@ -330,16 +492,91 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
 
 template <typename T, typename QueueType>
 void Dmn_Pipe<T, QueueType>::write(const T &item) {
+  if (m_scheduled_writes_enabled) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (isShutdown()) {
+      throw std::runtime_error("Dmn_Pipe: write attempted on shutdown pipe");
+    }
+
+    QueueType::push(item);
+    ++m_submitted_count;
+    m_work_cond.notify_one();
+
+    return;
+  }
+
   QueueType::push(item);
 }
 
 template <typename T, typename QueueType>
 void Dmn_Pipe<T, QueueType>::write(T &&item) {
+  if (m_scheduled_writes_enabled) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (isShutdown()) {
+      throw std::runtime_error("Dmn_Pipe: write attempted on shutdown pipe");
+    }
+
+    QueueType::push(std::move_if_noexcept(item));
+    ++m_submitted_count;
+    m_work_cond.notify_one();
+
+    return;
+  }
+
   QueueType::push(std::move_if_noexcept(item));
 }
 
 template <typename T, typename QueueType>
+void Dmn_Pipe<T, QueueType>::writeAt(
+    std::chrono::steady_clock::time_point deadline, const T &item) {
+  if (!m_scheduled_writes_enabled) {
+    throw std::logic_error(
+        "Dmn_Pipe: writeAt requires scheduled writes to be enabled");
+  }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (isShutdown()) {
+    throw std::runtime_error("Dmn_Pipe: writeAt attempted on shutdown pipe");
+  }
+
+  m_scheduled_queue.emplace(deadline, item);
+  ++m_submitted_count;
+  m_work_cond.notify_one();
+}
+
+template <typename T, typename QueueType>
+void Dmn_Pipe<T, QueueType>::writeAt(
+    std::chrono::steady_clock::time_point deadline, T &&item) {
+  if (!m_scheduled_writes_enabled) {
+    throw std::logic_error(
+        "Dmn_Pipe: writeAt requires scheduled writes to be enabled");
+  }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (isShutdown()) {
+    throw std::runtime_error("Dmn_Pipe: writeAt attempted on shutdown pipe");
+  }
+
+  m_scheduled_queue.emplace(deadline, std::move_if_noexcept(item));
+  ++m_submitted_count;
+  m_work_cond.notify_one();
+}
+
+template <typename T, typename QueueType>
 auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
+  if (m_scheduled_writes_enabled) {
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    Dmn_Proc::testcancel();
+    const auto inbound_count = m_submitted_count;
+
+    m_empty_cond.wait(lock, [this, inbound_count] {
+      return m_count >= inbound_count || isShutdown();
+    });
+
+    return inbound_count;
+  }
+
   uint64_t inbound_count{};
 
   inbound_count = QueueType::waitForEmpty();
@@ -353,6 +590,57 @@ auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
   });
 
   return inbound_count;
+}
+
+template <typename T, typename QueueType>
+void Dmn_Pipe<T, QueueType>::scheduledProcessingLoop(const Dmn_Pipe::Task &fn) {
+  while (true) {
+    std::optional<T> item{};
+
+    {
+      std::unique_lock<std::mutex> lock(m_mutex);
+
+      while (true) {
+        auto immediate_item = QueueType::popNoWait();
+        if (immediate_item) {
+          item.emplace(std::move_if_noexcept(*immediate_item));
+
+          break;
+        }
+
+        if (!m_scheduled_queue.empty()) {
+          const auto deadline = m_scheduled_queue.begin()->first;
+          const auto now = std::chrono::steady_clock::now();
+
+          if (deadline <= now) {
+            item.emplace(std::move(m_scheduled_queue.begin()->second));
+            m_scheduled_queue.erase(m_scheduled_queue.begin());
+
+            break;
+          }
+
+          m_work_cond.wait_until(lock, deadline);
+
+          continue;
+        }
+
+        if (isShutdown()) {
+          return;
+        }
+
+        m_work_cond.wait(lock);
+      }
+    }
+
+    fn(std::move_if_noexcept(*item));
+
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      ++m_count;
+    }
+
+    m_empty_cond.notify_all();
+  }
 }
 
 } // namespace dmn

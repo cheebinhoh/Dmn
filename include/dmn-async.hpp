@@ -14,10 +14,13 @@
  * -------------
  * - A client can inherit from Dmn_Async or hold an instance of it.
  * - The client passes work as a std::function<void()> to Dmn_Async's
- *   write()/addExecTask* APIs. Immediate tasks are serialized in queue order.
- *   Delayed tasks may be re-enqueued until due and can therefore be overtaken
- *   by later immediate tasks. This serialization applies to submitted work; it
- *   does not synchronize unrelated access to client state.
+ *   addExecTask* APIs. Immediate tasks are serialized in queue order;
+ *   delayed tasks wait for their steady-clock deadline and can be overtaken by
+ *   immediate tasks. This serialization applies to submitted work; it does not
+ *   synchronize unrelated access to client state.
+ * - Delayed tasks use Dmn_Pipe's deadline-aware scheduled writes, so the worker
+ *   blocks instead of polling while a task is not yet due. Destruction drains
+ *   accepted tasks and can therefore wait until pending deadlines.
  * - For callers that need to block until a submitted task finishes, use
  *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
  *   Dmn_Async_Handle object whose wait() method will only return after the task
@@ -39,6 +42,7 @@
 #include <future>
 #include <memory>
 #include <string_view>
+#include <utility>
 
 /// @name Convenience macros for submitting asynchronous tasks
 /// @{
@@ -118,7 +122,7 @@ public:
      * execution.
      */
     Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
-        : m_fnc{fnc}, m_due_in_future{due_in_future} {
+        : m_fnc{std::move(fnc)}, m_due_in_future{due_in_future} {
       m_fut = m_p.get_future();
     }
 
@@ -194,6 +198,10 @@ public:
    * The task will not be executed before the duration has passed. It may not
    * execute precisely at the moment the duration elapses (scheduling is not
    * real-time), but execution will occur at or after the specified time.
+   * Its handle's @c wait() rethrows exceptions from the task. Immediate tasks
+   * are processed first while a delayed task waits for its deadline.
+   * The worker waits for the deadline rather than repeatedly polling; queued
+   * immediate tasks retain priority over tasks awaiting their deadlines.
    *
    * @param duration Time to wait before executing the task.
    * @param func The callable task to execute asynchronously.
@@ -244,36 +252,20 @@ template <template <class> class QueueType>
 Dmn_Async<QueueType>::Dmn_Async(std::string_view name) : m_name{name} {
   m_pipe = std::make_unique<BasePipe>(
       m_name,
-      [this](std::shared_ptr<Dmn_Async::Dmn_Async_Handle> task) -> void {
+      [](std::shared_ptr<Dmn_Async::Dmn_Async_Handle> task) -> void {
         try {
-          if (task->m_due_in_future > 0) {
-            const long long now =
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    std::chrono::steady_clock::now().time_since_epoch())
-                    .count();
-
-            if (now >= task->m_due_in_future) {
-              if (task->m_fnc) {
-                task->m_fnc();
-              }
-
-              task->m_p.set_value();
-            } else {
-              this->m_pipe->write(task);
-            }
-          } else {
-            if (task->m_fnc) {
-              task->m_fnc();
-            }
-
-            task->m_p.set_value();
+          if (task->m_fnc) {
+            task->m_fnc();
           }
+
+          task->m_p.set_value();
         } catch (...) {
           task->m_p.set_exception(std::current_exception());
         }
 
         Dmn_Proc::yield();
-      });
+      },
+      1, 0, true);
 }
 
 template <template <class> class QueueType>
@@ -313,7 +305,10 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
       std::move(bound_task), time_in_future);
   auto task_ret = task_shared_ptr;
 
-  this->m_pipe->write(task_shared_ptr);
+  const auto deadline = std::chrono::steady_clock::time_point{
+      std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+          std::chrono::nanoseconds{task_shared_ptr->m_due_in_future})};
+  this->m_pipe->writeAt(deadline, task_shared_ptr);
 
   return task_ret;
 }

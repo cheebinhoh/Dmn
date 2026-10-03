@@ -761,7 +761,8 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::isInflightGuardClosed() -> bool {
-  return isShutdown();
+  // The guard tracks this queue's lifecycle, not an enclosing wrapper's.
+  return Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::isShutdown();
 }
 
 template <typename T>

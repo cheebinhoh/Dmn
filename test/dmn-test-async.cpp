@@ -10,6 +10,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdlib>
+#include <ctime>
 #include <stdexcept>
 #include <thread>
 
@@ -33,6 +34,45 @@ private:
 };
 
 static void timer_handler([[maybe_unused]] int sig) { EXPECT_TRUE(false); }
+
+TEST(DmnAsync, DelayedTaskRunsNoEarlierThanDeadline) {
+  using Clock = std::chrono::steady_clock;
+  constexpr auto kDelay = std::chrono::milliseconds{250};
+  dmn::Dmn_Async async{"delayed-deadline"};
+  Clock::time_point executed_at{};
+  const auto earliest_execution = Clock::now() + kDelay;
+
+  auto handle = async.addExecTaskAfterWithWait(
+      kDelay, [&executed_at]() { executed_at = Clock::now(); });
+  handle->wait();
+
+  EXPECT_GE(executed_at, earliest_execution);
+}
+
+TEST(DmnAsync, DelayedTaskDoesNotBusyPollWhileWaiting) {
+  using Clock = std::chrono::steady_clock;
+  constexpr auto kDelay = std::chrono::milliseconds{600};
+  dmn::Dmn_Async async{"delayed-idle-cpu"};
+  Clock::time_point executed_at{};
+  const auto earliest_execution = Clock::now() + kDelay;
+  const auto wall_start = Clock::now();
+  const auto cpu_start = std::clock();
+  auto handle = async.addExecTaskAfterWithWait(
+      kDelay, [&executed_at]() { executed_at = Clock::now(); });
+  handle->wait();
+
+  const auto cpu_end = std::clock();
+  const auto wall_elapsed = Clock::now() - wall_start;
+  const auto wall_seconds = std::chrono::duration<double>(wall_elapsed).count();
+
+  EXPECT_GE(executed_at, earliest_execution);
+  EXPECT_GE(wall_elapsed, kDelay);
+  ASSERT_NE(cpu_start, static_cast<std::clock_t>(-1));
+  ASSERT_NE(cpu_end, static_cast<std::clock_t>(-1));
+  const auto cpu_seconds = static_cast<double>(cpu_end - cpu_start) /
+                           static_cast<double>(CLOCKS_PER_SEC);
+  EXPECT_LT(cpu_seconds, wall_seconds / 2.0);
+}
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -60,12 +100,16 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Async async{"timer"};
   int val = 1;
-  async.addExecTaskAfter(std::chrono::seconds(5),
-                         [&val]() -> void { val = 2; });
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-  EXPECT_TRUE(1 == val);
+  std::chrono::steady_clock::time_point executed_at{};
+  const auto due_time =
+      std::chrono::steady_clock::now() + std::chrono::milliseconds{250};
+  async.addExecTaskAfter(std::chrono::milliseconds{250}, [&]() -> void {
+    val = 2;
+    executed_at = std::chrono::steady_clock::now();
+  });
 
-  std::this_thread::sleep_for(std::chrono::seconds(3));
+  async.waitForEmpty();
+  EXPECT_GE(executed_at, due_time);
   EXPECT_TRUE(2 == val);
 
   bool done{};
@@ -98,6 +142,7 @@ int main(int argc, char *argv[]) {
 
   waitHandler = asyncWithWait.addExecTaskWithWait([]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
+
     throw std::runtime_error("just exception");
   });
 

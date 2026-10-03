@@ -23,9 +23,60 @@ processed accounting to catch up.
 
 `readAndProcess()` performs the dequeue and invokes callbacks before updating
 the processed counter. A callback exception exits before that counter update.
-The background loop catches all exceptions and terminates without exposing the
-failure to the caller. Bulk reads delegate to the selected queue; the pipe
-does not re-arm a timeout after an empty return.
+The background worker catches all exceptions and exits without exposing the
+failure to the caller. Bulk reads delegate to the selected queue; the pipe does
+not re-arm a timeout after an empty return.
+
+### Opt-in scheduled writes
+
+`Dmn_Pipe` also has an opt-in background-worker constructor mode,
+enabled by passing `true` as the final `enable_scheduled_writes` constructor
+argument, and `writeAt(steady_clock::time_point, item)` overloads. Existing
+constructor calls remain valid and retain their existing behavior because
+scheduled writes default to disabled. In scheduled mode the processing callback
+is required; construction throws if it is missing or the worker cannot start.
+Calling `writeAt()` on a pipe constructed without scheduled writes enabled
+throws `std::logic_error`; use ordinary `write()` for immediate FIFO writes.
+The existing batch-count and pop-timeout arguments apply only to the ordinary
+worker loop and are ignored in scheduled mode. Scheduled items are delivered by
+the background worker; the synchronous `read()` and bulk-read APIs access only
+ordinary FIFO writes.
+
+Ordinary writes remain in the underlying FIFO and are selected before
+deadline-scheduled items. Scheduled items are ordered by deadline, with equal
+deadlines retaining submission order. A scheduled item is eligible only at or
+after its deadline, but a continuous stream of ordinary writes can defer it
+because ordinary work has priority. When no work is ready, the worker waits on
+a condition variable until an ordinary/scheduled write arrives or the earliest
+scheduled deadline is reached. Every write wakes the worker so an earlier
+deadline or new ordinary item is noticed; spurious wakeups simply cause the
+worker to re-check its queues.
+
+In scheduled mode, `waitForEmpty()` snapshots accepted ordinary and scheduled
+writes and waits for that snapshot to finish, returning the number accepted in
+the snapshot. Shutdown rejects subsequent writes, drains already accepted
+ordinary work, and runs accepted scheduled items only once due. Consequently,
+shutdown/destruction can wait until the latest pending deadline. `waitForEmpty`
+retains the pre-existing early-return-on-shutdown behavior if shutdown happens
+while another caller is waiting.
+
+Scheduled writes and shutdown use the pipe mutex to order the shutdown
+transition against the write check-and-enqueue operation. The atomic shutdown
+flag is set while holding that mutex; the worker is notified after the lock is
+released and drains before the underlying queue is shut down.
+
+The pipe shutdown flag and underlying queue shutdown flag are separate
+lifecycles. The queue's in-flight guard checks its own shutdown state, so
+setting the pipe flag to stop the scheduled worker does not prematurely reject
+the worker's non-blocking queue polls. The underlying queue is shut down after
+the worker joins.
+
+As with the ordinary pipe worker, a processing callback exception ends the
+scheduled worker; this mode does not yet expose worker failures. Pending
+accepted work then remains unprocessed, and `waitForEmpty()` can remain blocked
+until shutdown wakes it. When the scheduled worker cannot be started,
+construction fails with an exception rather than returning an object that
+would accept work it cannot process.
 
 ## `Dmn_Socket`
 
@@ -55,8 +106,8 @@ outbound work. It is not included in the umbrella header.
 
 1. Fix `Dmn_Pipe` worker failure/accounting: retain or report callback
    exceptions, define whether the worker continues, and ensure `waitForEmpty()`
-   cannot wait forever because a callback failed. Its implementation invokes
-   the callback outside the bookkeeping mutex; documentation must match.
+   cannot wait forever because a callback failed. Callback invocation remains
+   outside the bookkeeping mutex.
 2. Decide whether `Dmn_Socket::read()` should preserve zero-length UDP
    datagrams; it currently maps them to `nullopt`, the same result as a receive
    error. Also check `inet_pton()` and port range and report datagram truncation.

@@ -270,7 +270,8 @@ void Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight(void *arg) {
 
 template <typename T>
 auto Dmn_BlockingQueue_Mt<T>::isInflightGuardClosed() -> bool {
-  return isShutdown();
+  // The guard tracks this queue's lifecycle, not an enclosing wrapper's.
+  return Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::isShutdown();
 }
 
 template <typename T> void Dmn_BlockingQueue_Mt<T>::pushCopy(const T &item) {

@@ -45,12 +45,25 @@ mutexes or in-flight tickets.
 
 ### `Dmn_Async`
 
-Submitted callables execute serially in queue order. `addExecTask()` does not
-wait; `addExecTaskWithWait()` returns a single-use handle whose `wait()` blocks
-and rethrows task exceptions. Delayed forms accept a chrono duration and must
-not execute before their computed steady-clock due time. `waitForEmpty()` waits
-for work to pass through the pipe. Destruction resets the pipe and stops its
-worker.
+Submitted callables execute serially on one worker. Immediate tasks are
+processed in FIFO submission order. `addExecTask()` does not wait;
+`addExecTaskWithWait()` returns a single-use handle whose `wait()` blocks and
+rethrows task exceptions. Delayed forms accept a chrono duration and must not
+execute before their computed steady-clock due time. They are submitted to the
+pipe's deadline-scheduled queue, which blocks the worker until new work arrives
+or the earliest deadline; an overdue delayed task cannot cause a
+dequeue/re-enqueue polling loop. Immediate tasks use the ordinary queue and
+retain priority over delayed tasks, which can therefore be overtaken while
+waiting for their deadlines. `waitForEmpty()` waits for the accepted-work
+snapshot to pass through the pipe. Destruction resets the pipe and stops its
+worker; because the scheduled pipe drains accepted work when callbacks return
+normally, destruction may wait until pending delayed tasks become due. Delayed
+tasks with equal deadlines retain submission order.
+
+Task exceptions are captured by the task handle and do not stop the worker.
+The generic pipe worker itself still has no failure-reporting channel; a
+failure outside the task invocation/handle completion path can stop the worker
+silently and leave pending work unprocessed.
 
 The implementation binds the callable and arguments by move-capturing them,
 then invokes them as rvalues. A callable should therefore be invocable once.
@@ -91,22 +104,17 @@ members its task accesses.
 
 ## Gaps / improvements
 
-1. A delayed `Dmn_Async` task is re-enqueued until due. If it is the only
-   queued task, the worker repeatedly dequeues and re-enqueues it without
-   blocking, consuming CPU while waiting. Use a timer/wait mechanism or
-   otherwise avoid polling; improve the existing sleep-based due-time test and
-   add coverage for idle CPU use.
-2. Define and test behavior for negative durations in `Dmn_Async` and
+1. Define and test behavior for negative durations in `Dmn_Async` and
    `Dmn_Timer`, and detect overflow in the async duration-to-nanoseconds
    conversion and due-time addition. `Dmn_Timer` startup ignores a `false`
    return from `Dmn_Proc::exec()`, while
    `stop()` suppresses cancellation/join exceptions; decide how those failures
    should be reported.
-3. Specify and test the timer callback failure policy. `Dmn_Timer` catches
+2. Specify and test the timer callback failure policy. `Dmn_Timer` catches
    `std::exception` and reports it only through `DMN_DEBUG_PRINT`; a
    non-standard exception reaches the `Dmn_Proc` default policy and terminates
    the process.
-4. `Dmn_Timer::stop()` relies on cooperative pthread cancellation and may wait
+3. `Dmn_Timer::stop()` relies on cooperative pthread cancellation and may wait
    for the sleep or callback to reach a cancellation point; a callback that
    never reaches one can make stopping block indefinitely. Consider an
    interruptible wait if bounded stop latency is required.
