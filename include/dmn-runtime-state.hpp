@@ -114,6 +114,7 @@ public:
 
   /**
    * @brief Construct a runtime-managed state object with a human-readable name.
+   *
    * @param name Human-readable name used for diagnostics.
    */
   explicit Dmn_Runtime_State(std::string_view name);
@@ -141,6 +142,7 @@ public:
 
   /**
    * @brief Add a runtime-aware user-state callback or replace an existing one.
+   *
    * @param fnc Callback invoked with the runtime-managed state object.
    * @param index With N callbacks currently configured, pass 0 (the default)
    * or N+1 to append a callback. Pass 1 through N to replace the
@@ -236,6 +238,7 @@ public:
 
   /**
    * @brief Block until the state is terminal or the timeout expires.
+   *
    * @param timeout Maximum duration to wait.
    * @return true if terminal observed before timeout, false otherwise.
    *
@@ -286,6 +289,7 @@ protected:
 
   /**
    * @brief Called in the runtime thread after a failure is published.
+   *
    * @param ep Exception raised by the failed user-state callback.
    */
   virtual void onFailed(std::exception_ptr ep);
@@ -306,6 +310,7 @@ private:
 
   /**
    * @brief Publish one terminal outcome and invoke its corresponding hook.
+   *
    * @param terminalState Outcome to publish.
    * @param failure Exception to associate with a failed outcome.
    *
@@ -445,6 +450,7 @@ private:
    * @brief Retain and submit a state for its first or subsequent dispatch.
    *
    * The retained handle guarantees state lifetime until @ref releaseState.
+   *
    * @return true when the job was accepted; false if shutdown rejects an
    * initial submission.
    */
@@ -469,6 +475,7 @@ private:
 
   /**
    * @brief Release the manager's retained handle after terminal completion.
+   *
    * @param state State whose manager-owned handle is removed.
    */
   void releaseState(const Dmn_Runtime_State *state);

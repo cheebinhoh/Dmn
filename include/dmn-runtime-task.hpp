@@ -101,8 +101,10 @@ struct Dmn_Runtime_Task {
       // transfer to start the task without re-entrant resume.
       if (m_handle) {
         m_handle.promise().m_continuation = awaiting;
+
         return m_handle;
       }
+
       // Fallback: nothing to resume (should not be hit when await_ready() is
       // false), so transfer to a no-op coroutine.
       return std::noop_coroutine();
@@ -175,6 +177,7 @@ struct Dmn_Runtime_Task {
 
       m_handle = std::exchange(other.m_handle, nullptr);
     }
+
     return *this;
   }
 

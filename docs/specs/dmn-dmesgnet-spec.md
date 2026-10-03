@@ -315,11 +315,6 @@ security-reviewed.
   timestamp and adopts its claimed master; there is no ballot, term, or quorum.
   **Improve:** specify this only as best-effort discovery. Stronger authority
   requires a separate, reviewed protocol with epochs and quorum evidence.
-- **Gap:** The class-header summary says nodes prune silent neighbors and
-  independently select the oldest node from a shared neighbor list; the current
-  implementation does neither. **Improve:** align the header and public
-  documentation with the actual direct-observation list and sender-timestamp
-  reconciliation, then test the documented rule.
 - **Gap:** A peer is removed only on explicit `Destroyed`; silent failure leaves
   stale entries. **Improve:** add monotonic heartbeat expiry for membership
   display/routing, and state clearly that suspicion is not authority revocation.

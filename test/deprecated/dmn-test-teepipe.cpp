@@ -2,7 +2,8 @@
  * Copyright © 2024 - 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-teepipe.cpp
- * @brief Unit test for Dmn_Teepipe verifying that data from two threads is sorted and processed in order.
+ * @brief Unit test for Dmn_Teepipe verifying that data from two threads is
+ * sorted and processed in order.
  *
  * This is a test file for teepipe that two threads are reading data and feed
  * into teepipe that will sort the data and make sure that it is processed

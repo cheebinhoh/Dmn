@@ -11,6 +11,9 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-4
                       dmn-test-blockingqueue-5
                       dmn-test-blockingqueue-6
+                      dmn-test-blockingqueue-shutdown
+                      dmn-test-blockingqueue-lf-wait-empty
+                      dmn-test-blockingqueue-lf-stress
                       dmn-test-blockingqueue-lf-1
                       dmn-test-blockingqueue-lf-2
                       dmn-test-blockingqueue-lf-3
@@ -77,6 +80,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-socket
                       dmn-test-state
                       dmn-test-timer
+                      dmn-test-util
+                      dmn-test-umbrella
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
                    )
@@ -93,6 +98,31 @@ if (BUILD_KAFKA_TEST)
                      )
 endif()
 
+file(GLOB DMN_PUBLIC_HEADERS CONFIGURE_DEPENDS
+     "${PROJECT_SOURCE_DIR}/include/*.hpp"
+     "${PROJECT_SOURCE_DIR}/include/kafka/*.hpp")
+set(DMN_STANDALONE_HEADER_SOURCES)
+foreach(header IN LISTS DMN_PUBLIC_HEADERS)
+  file(RELATIVE_PATH header_relative "${PROJECT_SOURCE_DIR}/include" "${header}")
+  string(MAKE_C_IDENTIFIER "${header_relative}" header_id)
+  set(header_source
+      "${CMAKE_CURRENT_BINARY_DIR}/standalone-headers/${header_id}.cpp")
+  file(WRITE "${header_source}" "#include \"${header}\"\n")
+  list(APPEND DMN_STANDALONE_HEADER_SOURCES "${header_source}")
+endforeach()
+
+add_library(dmn-standalone-header-check OBJECT
+            ${DMN_STANDALONE_HEADER_SOURCES})
+target_link_libraries(dmn-standalone-header-check PRIVATE dmn)
+target_include_directories(dmn-standalone-header-check
+                           PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_compile_options(dmn-standalone-header-check PRIVATE
+                       -Wall -Wextra -Wpedantic)
+add_test(NAME dmn-standalone-header-check
+         COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}"
+                 --target dmn-standalone-header-check)
+set_tests_properties(dmn-standalone-header-check PROPERTIES LABELS "dmn")
+
 if (ENABLE_VALGRIND)
   SET(DMN_VALGRIND_TESTS
         dmn-test-async
@@ -104,6 +134,9 @@ if (ENABLE_VALGRIND)
         dmn-test-blockingqueue-3
         dmn-test-blockingqueue-4
         dmn-test-blockingqueue-5
+        dmn-test-blockingqueue-shutdown
+        dmn-test-blockingqueue-lf-wait-empty
+        dmn-test-blockingqueue-lf-stress
         dmn-test-blockingqueue-lf-1
         dmn-test-blockingqueue-lf-2
         dmn-test-blockingqueue-lf-3

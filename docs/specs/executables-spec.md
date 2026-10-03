@@ -25,7 +25,10 @@ The default CMake test list covers queue variants, async/pipe/pub-sub,
 DMesg/DMesgNet, state, runtime, sockets, and interval-tree. Kafka tests are
 registered only when `BUILD_KAFKA_TEST` is enabled. Several DMesg/DMesgNet tests
 are disabled or commented out, and a general test target is marked
-non-terminating. Deprecated components are not registered as normal tests.
+non-terminating. `dmn-standalone-header-check` also compiles each supported
+public header as an independent translation unit; deprecated headers are
+excluded because they still depend on the obsolete queue API. Deprecated
+components are not registered as normal behavior tests.
 
 ## Gaps / improvements
 

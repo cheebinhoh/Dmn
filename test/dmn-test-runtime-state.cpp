@@ -490,6 +490,7 @@ TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
       if (!state->run(dmn::Dmn_Runtime_Job::Priority::kMedium,
                       cancelState ? 50ms : 0ms)) {
         ++submissionFailures;
+
         return;
       }
 

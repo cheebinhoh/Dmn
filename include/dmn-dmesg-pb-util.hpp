@@ -112,6 +112,7 @@
 /**
  * @def DMESG_PB_SET_MSG_TOPIC
  * @brief Set the topic field of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The topic string value.
  */
@@ -120,6 +121,7 @@
 /**
  * @def DMESG_PB_SET_MSG_CONFLICT
  * @brief Set the conflict flag of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val Boolean conflict value.
  */
@@ -128,6 +130,7 @@
 /**
  * @def DMESG_PB_SET_MSG_RUNNINGCOUNTER
  * @brief Set the running counter field of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The counter value.
  */
@@ -137,6 +140,7 @@
 /**
  * @def DMESG_PB_SET_MSG_SOURCEIDENTIFIER
  * @brief Set the source identifier field of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The source identifier string.
  */
@@ -147,6 +151,7 @@
  * @def DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER
  * @brief Set the source write-handler identifier field of a @c DMesgPb
  * message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The write-handler identifier string.
  */
@@ -156,6 +161,7 @@
 /**
  * @def DMESG_PB_SET_MSG_TYPE
  * @brief Set the type field of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The @c dmn::DMesgTypePb enum value.
  */
@@ -164,6 +170,7 @@
 /**
  * @def DMESG_PB_SET_MSG_PLAYBACK
  * @brief Set the playback flag of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val Boolean playback flag value.
  */
@@ -172,6 +179,7 @@
 /**
  * @def DMESG_PB_SET_MSG_FORCE
  * @brief Set the force flag of a @c DMesgPb message.
+ *
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val Boolean force flag value.
  */
@@ -214,6 +222,7 @@
 /**
  * @def DMESG_PB_SYS_SET_TIMESTAMP_FROM_TV
  * @brief Set the sys sub-message timestamp from a @c struct timeval.
+ *
  * @param pb The @c dmn::DMesgPb message object.
  * @param tv A @c struct timeval.
  */
@@ -224,6 +233,7 @@
 /**
  * @def DMESG_PB_SYS_NODE_SET_IDENTIFIER
  * @brief Set the identifier field on a sys node pointer.
+ *
  * @param node Pointer to a @c dmn::SysNodePb protobuf object.
  * @param val  The identifier string.
  */
@@ -232,6 +242,7 @@
 /**
  * @def DMESG_PB_SYS_NODE_SET_MASTERIDENTIFIER
  * @brief Set the master-identifier field on a sys node pointer.
+ *
  * @param node Pointer to a @c dmn::SysNodePb protobuf object.
  * @param val  The master identifier string.
  */
@@ -241,6 +252,7 @@
 /**
  * @def DMESG_PB_SYS_NODE_SET_STATE
  * @brief Set the state field on a sys node pointer.
+ *
  * @param node Pointer to a @c dmn::SysNodePb protobuf object.
  * @param val  The node state value.
  */
@@ -249,6 +261,7 @@
 /**
  * @def DMESG_PB_SYS_NODE_SET_UPDATEDTIMESTAMP_FROM_TV
  * @brief Set the updated-timestamp on a sys node from a @c struct timeval.
+ *
  * @param node Pointer to a @c dmn::SysNodePb protobuf object.
  * @param tv   A @c struct timeval.
  */
@@ -258,6 +271,7 @@
 /**
  * @def DMESG_PB_SYS_NODE_SET_INITIALIZEDTIMESTAMP_FROM_TV
  * @brief Set the initialized-timestamp on a sys node from a @c struct timeval.
+ *
  * @param node Pointer to a @c dmn::SysNodePb protobuf object.
  * @param tv   A @c struct timeval.
  */
@@ -267,6 +281,7 @@
 /**
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_IDENTIFIER
  * @brief Set the identifier of a node-list entry in a @c DMesgPb sys message.
+ *
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   The identifier string.
@@ -279,6 +294,7 @@
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER
  * @brief Set the master identifier of a node-list entry in a @c DMesgPb sys
  * message.
+ *
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   The master identifier string.
@@ -290,6 +306,7 @@
 /**
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_STATE
  * @brief Set the state of a node-list entry in a @c DMesgPb sys message.
+ *
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   The node state value.
@@ -302,6 +319,7 @@
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_INITIALIZEDTIMESTAMP
  * @brief Set the initialized-timestamp of a node-list entry from a
  *        @c dmn::Timestamp protobuf.
+ *
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   A @c dmn::Timestamp protobuf value.
@@ -326,6 +344,7 @@
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_UPDATEDTIMESTAMP
  * @brief Set the updated-timestamp of a node-list entry from a
  *        @c dmn::Timestamp protobuf.
+ *
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   A @c dmn::Timestamp protobuf value.

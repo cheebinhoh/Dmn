@@ -231,6 +231,7 @@ auto Dmn_Proc::runExec() -> bool {
   err = pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
   if (0 != err) {
     setState(old_state);
+
     return false;
   }
 

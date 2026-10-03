@@ -35,6 +35,8 @@ endif()
 include(CMakeMacro.cmake)
 include(FetchContent)
 
+find_package(ICU REQUIRED COMPONENTS uc)
+
 message(STATUS "find or fetching protobuf...")
 find_package(Protobuf QUIET)
 
@@ -92,4 +94,3 @@ add_subdirectory(src)
 # run unit test for DMN
 message(STATUS "build and run unit test...")
 add_subdirectory(test)
-
