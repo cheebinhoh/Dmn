@@ -5,22 +5,26 @@
  * @brief Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket
  * that implements the Dmn_Io<std::string> interface.
  *
- * The constructor creates an AF_INET/SOCK_DGRAM socket, enables the
- * SO_BROADCAST socket option, and optionally binds to the supplied
- * port (read mode). When write_only is true the bind step is skipped.
+ * The constructor validates the IPv4/port configuration before creating an
+ * AF_INET/SOCK_DGRAM socket, enables SO_BROADCAST, and binds unless
+ * write_only is true. If socket configuration or binding fails after creation,
+ * it closes the descriptor before rethrowing.
  *
  * read() receives one complete UDP datagram. Empty datagrams are returned as
  * empty strings; receive errors and truncated datagrams throw
- * std::system_error.
+ * std::system_error. The receive buffer is BUFSIZ bytes, and oversized
+ * datagrams are consumed and reported as message_size rather than returned
+ * partially.
  *
  * write() reconstructs the destination sockaddr_in from the stored
  * address/port on every call and uses sendto() to transmit the
  * string. The rvalue overload delegates to the lvalue overload without moving
  * from the string.
  *
- * Note: The destination address is rebuilt on every write() call.
- * For write-heavy workloads, caching the sockaddr_in as a member
- * would reduce per-call overhead (see FIXME in write()).
+ * The destination address is rebuilt on every write() call. Wildcard-bound
+ * and port-zero sockets have no configured destination and reject writes.
+ * For write-heavy workloads, caching the sockaddr_in as a member would reduce
+ * per-call overhead (see FIXME in write()).
  */
 
 #include "dmn-socket.hpp"

@@ -52,14 +52,15 @@ namespace dmn {
  * and port; writes send datagrams to the supplied IPv4 address and port.
  *
  * Thread-safety: Instances are not thread-safe. Callers must externally
- * serialize reads and writes if an instance is shared across threads.
+ * serialize all operations if an instance is shared across threads.
  *
  * Lifetime/ownership: The socket file descriptor is owned by the object
- * and closed in the destructor. shutdown() is inherited from Dmn_Io and does
- * not interrupt a blocked read. Callers must stop and join all threads using
- * the socket before destroying it; closing the descriptor is not a
- * cross-thread read-cancellation mechanism. Copy and move operations are
- * deleted to avoid accidental sharing of the descriptor.
+ * and closed in the destructor. The inherited Dmn_Io::shutdown() is a no-op
+ * and does not interrupt a blocked read. Callers must arrange for every
+ * operation to finish and join threads using the socket before destruction;
+ * closing the descriptor is not a cross-thread read-cancellation mechanism.
+ * Copy and move operations are deleted to avoid accidental sharing of the
+ * descriptor.
  */
 class Dmn_Socket : public Dmn_Io<std::string> {
 public:
@@ -73,7 +74,7 @@ public:
    * @param write_only If true, the instance may skip read-specific setup;
    * caller guarantees no calls to read() in that mode.
    *
-   * @throws std::invalid_argument for an invalid address or port.
+   * @throws std::invalid_argument for an invalid address/port combination.
    * @throws std::system_error if creating, configuring, or binding the socket
    * fails.
    */
@@ -105,9 +106,9 @@ public:
    * wake it; the caller must arrange for the reading thread to finish before
    * destroying the socket.
    *
-   * @note The exact boundary semantics (message delimiting, framing) are
-   * implementation-specific. Callers should consult the implementation
-   * or use an application-level protocol to delimit messages.
+   * @note UDP preserves datagram boundaries. Any framing within the payload is
+   * application-defined; the maximum datagram size accepted by this adapter
+   * is BUFSIZ bytes.
    */
   auto read() -> std::optional<std::string> override;
 

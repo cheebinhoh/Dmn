@@ -12,9 +12,11 @@
  *   handler, the optional input-reader thread, and the heartbeat timer.
  *
  * - createInputHandlerProc(): starts a background Dmn_Proc thread that
- *   reads serialised DMesgPb strings from the input Dmn_Io, parses
- *   them, and dispatches them as either sys (reconciliation), conflict,
- *   force-playback, or ordinary messages.
+ *   reads serialised DMesgPb strings from the input Dmn_Io, discards empty or
+ *   malformed payloads, and dispatches valid messages as sys (reconciliation),
+ *   conflict, force-playback, or ordinary messages. Oversized socket datagrams
+ *   are logged and discarded; other socket read errors are logged and stop the
+ *   input worker.
  *
  * - createSubscriptHandler(): registers a Dmn_DMesgHandler that
  *   intercepts every locally published DMesgPb and serialises it to
@@ -167,8 +169,10 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
 /**
  * @brief Start the background input-reader proc that reads serialised
- * DMesgPb strings from the input Dmn_Io, parses them, and dispatches
- * them as sys, conflict, force-playback, or ordinary messages.
+ * DMesgPb strings from the input Dmn_Io, discards empty/malformed payloads,
+ * and dispatches valid messages as sys, conflict, force-playback, or ordinary
+ * messages. Oversized datagrams are logged and discarded; other socket read
+ * errors are logged and stop the input worker.
  *
  * Also opens the internal write handler and the sys handler used for
  * publishing heartbeat sys messages. Has no effect if m_input_handler is null.

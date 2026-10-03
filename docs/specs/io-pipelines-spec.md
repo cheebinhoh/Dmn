@@ -93,11 +93,15 @@ nonzero port. Writing through a wildcard-bound or port-zero socket is rejected
 because neither has a configured datagram destination.
 
 `read()` receives one datagram into a `BUFSIZ` buffer and returns an engaged
-optional, including an empty string for a valid zero-length datagram. Receive
-errors throw `std::system_error`; oversized datagrams are discarded and
-reported as `std::errc::message_size`, not returned as partial strings.
-`write()` throws `std::system_error` on send failure. The rvalue write overload
-delegates to the const overload and does not transfer socket ownership.
+optional, including an empty string for a valid zero-length datagram. UDP
+datagram boundaries are preserved; framing within a datagram is
+application-defined. Receive errors throw `std::system_error`; oversized
+datagrams are consumed, discarded, and reported as
+`std::errc::message_size`, not returned as partial strings. `write()` throws
+`std::system_error` on send failure. The rvalue write overload delegates to
+the const overload and does not transfer socket ownership. If socket creation
+succeeds but configuration or binding fails, construction closes the
+descriptor before propagating the exception.
 
 `Dmn_Socket` is not thread-safe: callers must externally serialize operations
 when sharing an instance. `read()` may block indefinitely, and the inherited
@@ -120,8 +124,6 @@ optionally transforms/reorders the batch, and forwards it to an outbound pipe.
 Source removal waits for its buffer to drain. `wait()` also waits for source
 owners to release their handles; `waitForEmpty()` waits for pending source and
 outbound work. It is not included in the umbrella header.
-
-## Remaining gaps / improvements
 
 The deprecated tee-pipe and limited-queue remain in `include/deprecated/` and
 are intentionally kept outside the supported public API; they do not currently
