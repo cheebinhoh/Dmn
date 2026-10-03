@@ -8,9 +8,11 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <cstdlib>
 #include <ctime>
+#include <limits>
 #include <stdexcept>
 #include <thread>
 
@@ -47,6 +49,64 @@ TEST(DmnAsync, DelayedTaskRunsNoEarlierThanDeadline) {
   handle->wait();
 
   EXPECT_GE(executed_at, earliest_execution);
+}
+
+TEST(DmnAsync, NegativeDelayedDurationsAreRejected) {
+  dmn::Dmn_Async async{"negative-delay"};
+  auto callback = []() {};
+
+  EXPECT_THROW(async.addExecTaskAfter(std::chrono::milliseconds{-1}, callback),
+               std::invalid_argument);
+  EXPECT_THROW(
+      async.addExecTaskAfterWithWait(std::chrono::milliseconds{-1}, callback),
+      std::invalid_argument);
+}
+
+TEST(DmnAsync, UnrepresentableDelayedDurationIsRejectedBeforeEnqueue) {
+  using Clock = std::chrono::steady_clock;
+  using ClockRep = Clock::duration::rep;
+  using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
+  const auto first_unrepresentable_tick =
+      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
+  dmn::Dmn_Async async{"overflow-delay"};
+  bool callback_run{};
+
+  EXPECT_THROW(async.addExecTaskAfterWithWait(
+                   ClockTickDuration{first_unrepresentable_tick},
+                   [&callback_run]() { callback_run = true; }),
+               std::overflow_error);
+  EXPECT_FALSE(callback_run);
+
+  EXPECT_THROW(
+      async.addExecTaskAfter(ClockTickDuration{first_unrepresentable_tick},
+                             [&callback_run]() { callback_run = true; }),
+      std::overflow_error);
+  EXPECT_FALSE(callback_run);
+}
+
+TEST(DmnAsync, DelayedDeadlineOverflowIsRejectedBeforeEnqueue) {
+  using Clock = std::chrono::steady_clock;
+  using ClockRep = Clock::duration::rep;
+  using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
+  if (std::numeric_limits<long double>::digits <
+          std::numeric_limits<ClockRep>::digits ||
+      Clock::now().time_since_epoch().count() <= 0) {
+    GTEST_SKIP() << "steady_clock deadline overflow is not representable "
+                    "for this platform";
+  }
+
+  const auto exclusive_max =
+      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
+  const auto now_ticks =
+      static_cast<long double>(Clock::now().time_since_epoch().count());
+  const ClockTickDuration delay{exclusive_max - now_ticks + 1.0L};
+  dmn::Dmn_Async async{"overflow-deadline"};
+  bool callback_run{};
+
+  EXPECT_THROW(async.addExecTaskAfterWithWait(
+                   delay, [&callback_run]() { callback_run = true; }),
+               std::overflow_error);
+  EXPECT_FALSE(callback_run);
 }
 
 TEST(DmnAsync, DelayedTaskDoesNotBusyPollWhileWaiting) {

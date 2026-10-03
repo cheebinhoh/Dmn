@@ -12,7 +12,7 @@ singleton, and timer helpers. Recommendations are listed separately below.
 - `Dmn_Singleton<T>` (`include/dmn-singleton.hpp`) lazily constructs and shares
   one instance per `T`.
 - `Dmn_Timer<Duration>` (`include/dmn-timer.hpp`) repeats a callback after each
-  relative interval using a `Dmn_Proc` thread.
+  relative interval using a scheduled-mode `Dmn_Pipe`.
 
 ## Contracts
 
@@ -49,11 +49,16 @@ Submitted callables execute serially on one worker. Immediate tasks are
 processed in FIFO submission order. `addExecTask()` does not wait;
 `addExecTaskWithWait()` returns a single-use handle whose `wait()` blocks and
 rethrows task exceptions. Delayed forms accept a chrono duration and must not
-execute before their computed steady-clock due time. They are submitted to the
-pipe's deadline-scheduled queue, which blocks the worker until new work arrives
-or the earliest deadline; an overdue delayed task cannot cause a
-dequeue/re-enqueue polling loop. Immediate tasks use the ordinary queue and
-retain priority over delayed tasks, which can therefore be overtaken while
+execute before their computed steady-clock due time; negative durations are
+rejected synchronously with `std::invalid_argument` before enqueueing, while a
+zero duration is accepted and immediately eligible. They are submitted to the
+pipe's deadline-scheduled queue only after converting the
+delay and checking the due-time addition. An unrepresentable delay or deadline
+throws `std::overflow_error` before enqueueing; positive fractional clock ticks
+are rounded up so a task is not made eligible early. The queue blocks the worker
+until new work arrives or the earliest deadline; an overdue delayed task cannot
+cause a dequeue/re-enqueue polling loop. Immediate tasks use the ordinary queue
+and retain priority over delayed tasks, which can therefore be overtaken while
 waiting for their deadlines. `waitForEmpty()` waits for the accepted-work
 snapshot to pass through the pipe. Destruction resets the pipe and stops its
 worker; because the scheduled pipe drains accepted work when callbacks return
@@ -78,43 +83,78 @@ initialization are used. Later calls return the same `shared_ptr`.
 
 ### `Dmn_Timer`
 
-Construction starts the periodic thread. Each cycle sleeps for the configured
-duration and invokes the callback; it is a relative recurring timer, not a
-real-time deadline scheduler. `start()` stops the old thread and restarts with
-the new duration and optional replacement callback, updating those settings
-only after the old worker has been joined. `start()` propagates stop/join
-errors but currently ignores the boolean result of thread creation, so a failed
-restart is not reported. `stop()` requests cancellation and joins but
-suppresses exceptions from those operations. Callers must serialize `start()`,
-`stop()`, and destruction. Callback exceptions derived from `std::exception`
-are printed only through the debug macro; other exception types escape the
-pthread entry point and normally cause `std::terminate`.
+`Dmn_Timer<T>` owns a scheduled-mode `Dmn_Pipe` and starts its worker during
+construction. The pipe invokes a timer wrapper for each scheduled tick. The
+wrapper invokes the client callback and schedules the next tick one interval
+after callback completion, preserving fixed-delay cadence. A strictly positive
+interval is required; conversion into the steady-clock duration rounds up to
+the next clock tick and throws on an unrepresentable interval or deadline.
+
+Every scheduled tick carries a shared generation token. `start()` and
+`resume()` schedule a new generation; stale ticks are discarded even if they
+wake after a resume. `stop()` pauses by marking the timer inactive under its
+state mutex; it does not cancel a queued pipe item or wait for a callback
+already admitted. The wrapper copies the callback under the mutex, invokes it
+without holding that mutex, then checks the generation and active state before
+scheduling another tick. This prevents stop/resume or restart from producing
+duplicate recurring chains.
+
+`start(reltime, fn)` validates the new interval before modifying existing timer
+state. An empty callback retains the previous callback. `resume()` is a no-op
+when already active and rethrows a previously stored asynchronous failure;
+`start()` can recover from such a failure by scheduling a new generation.
+`start()`, `stop()`, and `resume()` are serialized internally by the timer
+mutex, but destruction must not race public calls or occur from the timer's
+callback.
+
+Destroying the timer marks it inactive, then shuts down and joins the pipe.
+Since scheduled pipe shutdown drains accepted work, destruction can wait until
+stale ticks reach their deadlines. The pipe worker is started during pipe
+construction; a worker-start failure is reported by an exception propagated
+from the timer constructor. The timer no longer uses `Dmn_Proc::exec()`.
+
+Standard client callback exceptions are logged through `DMN_DEBUG_PRINT` and
+the timer continues at the next interval, matching prior behavior. A
+non-standard callback exception pauses the timer and is saved; an asynchronous
+failure to schedule a later tick does the same. `rethrowFailure()` surfaces
+either stored failure. Failures to schedule the first tick from construction,
+`start()`, or `resume()` are reported synchronously and do not publish a
+partially active generation.
+
+Tests cover configured-delay delivery, restart, rejecting non-positive and
+unrepresentable intervals, preserving a running timer after invalid restart,
+no callback from a pending tick after pause, pause/resume generation
+invalidation, pausing during an active callback, continuing after standard
+callback exceptions, and reporting non-standard callback exceptions. A real
+thread-creation failure is not deterministically injected by the current test
+setup.
 
 ## Thread-safety and lifetime requirements
 
 The async queue provides serialized callback execution, but does not make
 captured application state safe to access from other threads. A caller must
-manage captured-object lifetime and synchronization. `Dmn_Proc` and
-`Dmn_Timer` do not synchronize lifecycle calls; callers must serialize them
-with external synchronization, including handoffs between controlling
-threads. For a `Dmn_Pipe` with a background worker, callers must also
-serialize `shutdown()` calls; its shutdown flag does not make concurrent
-shutdown invocations safe. A worker thread must not outlive the object whose
-members its task accesses.
+manage captured-object lifetime and synchronization. `Dmn_Proc` lifecycle calls
+are not internally synchronized; callers must serialize them externally.
+`Dmn_Timer` serializes `start()`, `stop()`, and `resume()` with its state mutex,
+but destruction must not race public calls or run from its callback. For a
+`Dmn_Pipe` with a background worker, callers must serialize `shutdown()` calls;
+its shutdown flag does not make concurrent shutdown invocations safe. A worker
+thread must not outlive the object whose members its task accesses.
 
 ## Gaps / improvements
 
-1. Define and test behavior for negative durations in `Dmn_Async` and
-   `Dmn_Timer`, and detect overflow in the async duration-to-nanoseconds
-   conversion and due-time addition. `Dmn_Timer` startup ignores a `false`
-   return from `Dmn_Proc::exec()`, while
-   `stop()` suppresses cancellation/join exceptions; decide how those failures
-   should be reported.
-2. Specify and test the timer callback failure policy. `Dmn_Timer` catches
-   `std::exception` and reports it only through `DMN_DEBUG_PRINT`; a
-   non-standard exception reaches the `Dmn_Proc` default policy and terminates
-   the process.
-3. `Dmn_Timer::stop()` relies on cooperative pthread cancellation and may wait
-   for the sleep or callback to reach a cancellation point; a callback that
-   never reaches one can make stopping block indefinitely. Consider an
-   interruptible wait if bounded stop latency is required.
+1. Timer worker startup behavior is defined: scheduled-pipe construction
+   failure propagates from the `Dmn_Timer` constructor. The exact thread-creation
+   failure path has no deterministic test because the current implementation
+   provides no thread-start fault injection. This is a test-coverage limitation,
+   not an unresolved runtime policy; add injection only if deterministic
+   coverage becomes a requirement.
+2. Tick-scheduling failure behavior is defined: failure to enqueue the first
+   tick during construction, `start()`, or `resume()` propagates synchronously;
+   failure to enqueue a later tick pauses the timer and is surfaced by
+   `rethrowFailure()`. The worker-side failure path is not deterministically
+   tested because the real steady clock and pipe provide no way to force that
+   enqueue failure after a successful callback. Testing it directly would
+   require an injectable clock or scheduler seam. Defer that seam unless
+   deterministic coverage of this exceptional path becomes a requirement; this
+   is a test-coverage limitation, not an undefined runtime policy.

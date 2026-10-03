@@ -18,6 +18,9 @@
  *   delayed tasks wait for their steady-clock deadline and can be overtaken by
  *   immediate tasks. This serialization applies to submitted work; it does not
  *   synchronize unrelated access to client state.
+ * - Delayed submissions reject negative durations and throw
+ *   std::overflow_error when the duration or computed deadline cannot be
+ *   represented by the steady clock. Zero duration is accepted.
  * - Delayed tasks use Dmn_Pipe's deadline-aware scheduled writes, so the worker
  *   blocks instead of polling while a task is not yet due. Destruction drains
  *   accepted tasks and can therefore wait until pending deadlines.
@@ -37,11 +40,15 @@
 #include "dmn-pipe.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <exception>
 #include <functional>
 #include <future>
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 
 /// @name Convenience macros for submitting asynchronous tasks
@@ -102,6 +109,50 @@ namespace dmn {
 
 template <template <class> class QueueType = Dmn_BlockingQueue_Mt>
 class Dmn_Async {
+  using Clock = std::chrono::steady_clock;
+
+  template <class Rep, class Period>
+  static auto toClockDuration(std::chrono::duration<Rep, Period> duration)
+      -> Clock::duration {
+    using ClockRep = Clock::duration::rep;
+    static_assert(
+        std::is_integral_v<ClockRep> &&
+            std::numeric_limits<ClockRep>::is_signed,
+        "steady_clock duration representation must be signed integer");
+    static_assert(std::numeric_limits<ClockRep>::radix == 2,
+                  "steady_clock duration representation must be binary");
+
+    const std::chrono::duration<long double, Clock::period> clock_ticks{
+        duration};
+    const long double rounded_ticks = std::ceil(clock_ticks.count());
+    const auto max_exponent = std::numeric_limits<long double>::max_exponent;
+    const long double exclusive_max =
+        std::numeric_limits<ClockRep>::digits < max_exponent
+            ? std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)
+            : std::numeric_limits<long double>::infinity();
+    if (!std::isfinite(rounded_ticks) || rounded_ticks < 0 ||
+        rounded_ticks >= exclusive_max) {
+      throw std::overflow_error("Dmn_Async delay exceeds steady_clock range");
+    }
+
+    return Clock::duration{static_cast<ClockRep>(rounded_ticks)};
+  }
+
+  static auto nextDeadline(Clock::duration delay) -> Clock::time_point {
+    using Rep = Clock::duration::rep;
+    const auto now = Clock::now();
+    const auto now_ticks = now.time_since_epoch().count();
+    const auto delay_ticks = delay.count();
+
+    if (now_ticks > 0 &&
+        delay_ticks > std::numeric_limits<Rep>::max() - now_ticks) {
+      throw std::overflow_error(
+          "Dmn_Async deadline exceeds steady_clock range");
+    }
+
+    return Clock::time_point{Clock::duration{now_ticks + delay_ticks}};
+  }
+
 public:
   // A simple rendezvous object returned to callers that want to wait for a
   // previously submitted asynchronous task to finish. Calling wait() blocks
@@ -112,17 +163,19 @@ public:
 
   public:
     /**
-     * @brief Construct a handle for the given task, optionally scheduled at a
-     * future time.
+     * @brief Construct a handle around the task to be executed.
      *
-     * @param fnc           The task callable to wrap.
-     * @param due_in_future Absolute nanosecond timestamp (from
-     *                      @c std::chrono::steady_clock) after which the task
-     * may execute.  Pass 0 (the default) for immediate
-     * execution.
+     * Scheduling is managed by the owning @c Dmn_Async pipe; the handle only
+     * provides task execution and completion synchronization. The optional
+     * timestamp is retained for source compatibility and is not used to
+     * schedule the task; submit delayed work through @c Dmn_Async.
+     *
+     * @param fnc The task callable to wrap.
+     * @param due_in_future Legacy timestamp argument; ignored.
      */
-    Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
-        : m_fnc{std::move(fnc)}, m_due_in_future{due_in_future} {
+    explicit Dmn_Async_Handle(std::function<void()> fnc,
+                              [[maybe_unused]] long long due_in_future = 0)
+        : m_fnc{std::move(fnc)} {
       m_fut = m_p.get_future();
     }
 
@@ -143,8 +196,6 @@ public:
 
   private:
     std::function<void()> m_fnc{}; ///< The task callable.
-    long long m_due_in_future{};   ///< Earliest execution time as a nanosecond
-                                   ///< timestamp; 0 = immediate.
 
     std::promise<void>
         m_p{}; ///< Promise fulfilled when the task completes (or throws).
@@ -206,6 +257,9 @@ public:
    * @param duration Time to wait before executing the task.
    * @param func The callable task to execute asynchronously.
    * @param args The arguments to the callable task.
+   * @throws std::invalid_argument if @p duration is negative.
+   * @throws std::overflow_error if @p duration or its deadline cannot be
+   * represented by the steady clock.
    */
   template <class Rep, class Period, typename Callable, typename... Args>
   void addExecTaskAfter(const std::chrono::duration<Rep, Period> &duration,
@@ -228,6 +282,9 @@ public:
    * @param args The arguments to the callable task.
    *
    * @return shared_ptr<Dmn_Async_Handle> Rendezvous object for task completion.
+   * @throws std::invalid_argument if @p duration is negative.
+   * @throws std::overflow_error if @p duration or its deadline cannot be
+   * represented by the steady clock.
    */
   template <class Rep, class Period, typename Callable, typename... Args>
   auto
@@ -290,24 +347,22 @@ template <class Rep, class Period, typename Callable, typename... Args>
 auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
     const std::chrono::duration<Rep, Period> &duration, Callable &&func,
     Args &&...args) -> std::shared_ptr<Dmn_Async_Handle> {
-  long long time_in_future =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::steady_clock::now().time_since_epoch())
-          .count() +
-      std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  if (duration < std::chrono::duration<Rep, Period>::zero()) {
+    throw std::invalid_argument("Dmn_Async delay must not be negative");
+  }
+
+  const auto clock_duration = toClockDuration(duration);
+  const auto deadline = nextDeadline(clock_duration);
 
   auto bound_task = [f = std::forward<Callable>(func),
                      ... captured_args = std::forward<Args>(args)]() mutable {
     std::invoke(std::move(f), std::move(captured_args)...);
   };
 
-  auto task_shared_ptr = std::make_shared<Dmn_Async::Dmn_Async_Handle>(
-      std::move(bound_task), time_in_future);
+  auto task_shared_ptr =
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task));
   auto task_ret = task_shared_ptr;
 
-  const auto deadline = std::chrono::steady_clock::time_point{
-      std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-          std::chrono::nanoseconds{task_shared_ptr->m_due_in_future})};
   this->m_pipe->writeAt(deadline, task_shared_ptr);
 
   return task_ret;
