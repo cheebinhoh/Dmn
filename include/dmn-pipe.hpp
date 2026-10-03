@@ -223,7 +223,8 @@ protected:
    * Sets the shutdown flag, calls @c QueueType::shutdown() to unblock any
    * threads waiting on the queue, and (if a background processing task was
    * provided at construction) waits for the background thread to finish.
-   * Subsequent calls are no-ops.
+   * Subsequent calls are no-ops. Callers must serialize concurrent calls to
+   * shutdown(), since the underlying @c Dmn_Proc lifecycle is not synchronized.
    */
   virtual void shutdown() override {
     if (isShutdown()) {

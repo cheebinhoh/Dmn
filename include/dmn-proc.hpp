@@ -45,6 +45,8 @@
 #ifndef DMN_PROC_HPP_
 #define DMN_PROC_HPP_
 
+#include <atomic>
+#include <exception>
 #include <functional>
 #include <pthread.h>
 #include <string>
@@ -92,11 +94,15 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
  * - exec(): start the thread and run the given task (or the previously-set
  *   task from the constructor). Returns true on successful start.
  * - wait(): join the thread, blocking until it completes. Returns true if
- *   the join succeeded.
- * - stopExec(): attempt to cancel the running thread. The destructor calls
- *   stopExec() and then waits to join the thread — this makes the object safe
- *   to destroy without leaking the underlying pthread, but it also requires
- *   that the running task be responsive to pthread cancellation.
+ *   the join succeeded; throws if no thread is running or joining fails.
+ *   By default, an uncaught task/setup exception terminates the process.
+ *   The optional capture policy stores it and rethrows it from wait().
+ * - stopExec(): attempt to cancel the running thread and join it. The
+ *   destructor uses this to clean up a running thread, which requires the
+ *   task to be responsive to pthread cancellation.
+ * - ExceptionPolicy defaults to kTerminate to retain legacy behavior. With
+ *   kCaptureAndRethrowFromWait, task/setup exceptions are delivered to the
+ *   caller of wait() after the thread has been joined.
  *
  * Cancellation warning:
  * - pthread cancellation is cooperative. If the task never reaches a
@@ -105,6 +111,17 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
  *   run for a long time, call Dmn_Proc::yield() periodically to create
  *   cancellation points (or otherwise ensure the task calls functions that
  *   are cancellation points).
+ *
+ * Thread-safety:
+ * - State, task, and thread-handle access is not internally synchronized.
+ *   Callers must ensure lifecycle operations do not overlap and that each
+ *   operation happens-before the next one. This may be done by handing control
+ *   between caller threads with external synchronization; a single OS thread is
+ *   not required. Do not replace the task until the worker has been joined or
+ *   destroy the object concurrently with another operation. Destruction stops
+ *   and joins a running worker. Derived classes must stop the worker before
+ *   destroying members accessed by its task. State accessed by both the task
+ *   and callers needs its own synchronization.
  */
 class Dmn_Proc {
   /**
@@ -121,13 +138,25 @@ public:
   using Task = std::function<void()>;
 
   /**
+   * @brief Policy for reporting exceptions thrown by the worker task.
+   */
+  enum class ExceptionPolicy {
+    kTerminate, ///< Preserve legacy behavior and terminate the process.
+    kCaptureAndRethrowFromWait ///< Store the exception and rethrow from wait().
+  };
+
+  /**
    * @brief Construct a Dmn_Proc.
    *
    * @param name Human-readable name for diagnostics/logging.
    * @param fnc Optional task to run when exec() is called. If not provided,
    * a task must be provided to exec().
+   * @param exceptionPolicy How exceptions from the worker task are handled.
+   * Defaults to @c kTerminate to preserve legacy behavior.
    */
-  explicit Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc = {});
+  explicit Dmn_Proc(
+      std::string_view name, const Dmn_Proc::Task &fnc = {},
+      ExceptionPolicy exceptionPolicy = ExceptionPolicy::kTerminate);
   virtual ~Dmn_Proc() noexcept;
 
   Dmn_Proc(const Dmn_Proc &obj) = delete;
@@ -150,7 +179,12 @@ public:
   /**
    * @brief Wait (join) for the asynchronous thread to finish.
    *
+   * If configured with @c ExceptionPolicy::kCaptureAndRethrowFromWait, an
+   * exception captured from thread setup or the task is rethrown after the
+   * thread is joined and the process returns to the ready state.
+   *
    * @return True if the thread was joined successfully.
+   * @throws The captured task/setup exception when using the capture policy.
    */
   auto wait() -> bool;
 
@@ -180,7 +214,10 @@ protected:
   auto getState() const -> Dmn_Proc::State;
 
   /**
-   * @brief Transition to a new lifecycle state and return the previous one.
+   * @brief Set a lifecycle state and return the previous state.
+   *
+   * This operation is not atomic; callers must serialize access to the process
+   * state, as described by the class thread-safety contract.
    *
    * @param state The new state to set.
    * @return The previous @c State value before the transition.
@@ -213,7 +250,9 @@ protected:
    * @c true immediately.
    *
    * @return @c true if the thread was stopped (or was not running).
-   * @throws std::runtime_error if pthread_cancel fails.
+   * @throws std::runtime_error if cancellation or joining fails.
+   * @throws The captured task/setup exception when using
+   * @c ExceptionPolicy::kCaptureAndRethrowFromWait.
    */
   auto stopExec() -> bool;
 
@@ -232,6 +271,11 @@ protected:
   Dmn_Proc::Task m_fnc{};     ///< Task to execute in the thread.
   Dmn_Proc::State m_state{};  ///< Current lifecycle state of this object.
   pthread_t m_th{};           ///< Native pthread handle.
+  Dmn_Proc::ExceptionPolicy
+      m_exception_policy{};       ///< Worker exception behavior.
+  std::exception_ptr m_failure{}; ///< Worker failure handed to the joiner.
+  std::atomic_bool m_cancel_requested{}; ///< Marks cancellation initiated
+                                         ///< through stopExec().
 }; // class Dmn_Proc
 
 } // namespace dmn

@@ -21,6 +21,10 @@
 
 namespace {
 
+constexpr std::size_t kProducerPushLimit = 256;
+constexpr std::size_t kMinimumOperationsBeforeShutdown = 16;
+constexpr auto kOperationStartTimeout = std::chrono::seconds(30);
+
 class ObservableBlockingQueue final : public dmn::Dmn_BlockingQueue_Lf<int> {
 public:
   auto waitForInflightEntries(std::size_t count) -> bool {
@@ -125,7 +129,7 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
 
             try {
               int value = thread_index;
-              while (true) {
+              for (std::size_t i = 0; i < kProducerPushLimit; ++i) {
                 queue.push(value++);
                 pushed.fetch_add(1, std::memory_order_relaxed);
               }
@@ -155,16 +159,17 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
     start.store(true, std::memory_order_release);
 
     const auto deadline =
-        std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while ((pushed.load(std::memory_order_relaxed) == 0 ||
-            popped.load(std::memory_order_relaxed) == 0) &&
+        std::chrono::steady_clock::now() + kOperationStartTimeout;
+    while ((pushed.load(std::memory_order_relaxed) <
+                kMinimumOperationsBeforeShutdown ||
+            popped.load(std::memory_order_relaxed) <
+                kMinimumOperationsBeforeShutdown) &&
            std::chrono::steady_clock::now() < deadline) {
       std::this_thread::yield();
     }
 
-    const auto operations_started =
-        pushed.load(std::memory_order_relaxed) > 0 &&
-        popped.load(std::memory_order_relaxed) > 0;
+    const auto pushes_before_shutdown = pushed.load(std::memory_order_relaxed);
+    const auto pops_before_shutdown = popped.load(std::memory_order_relaxed);
 
     queue.shutdown();
 
@@ -175,7 +180,12 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
       consumer.join();
     }
 
-    EXPECT_TRUE(operations_started);
+    EXPECT_GE(pushes_before_shutdown, kMinimumOperationsBeforeShutdown)
+        << "successful pushes before shutdown: " << pushes_before_shutdown
+        << ", pops: " << pops_before_shutdown;
+    EXPECT_GE(pops_before_shutdown, kMinimumOperationsBeforeShutdown)
+        << "successful pops before shutdown: " << pops_before_shutdown
+        << ", pushes: " << pushes_before_shutdown;
     EXPECT_FALSE(unexpected_exception.load(std::memory_order_relaxed));
     EXPECT_LE(popped.load(std::memory_order_relaxed),
               pushed.load(std::memory_order_relaxed));

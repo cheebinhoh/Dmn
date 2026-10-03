@@ -13,20 +13,22 @@
  * callback's own execution time, or other runtime factors.
  *
  * The implementation uses Dmn_Proc to run a background execution context for
- * the timer loop. Exceptions derived from std::exception thrown by the callback
- * are caught and reported via DMN_DEBUG_PRINT. Other exception types are not
- * caught by the timer callback loop and may terminate its execution thread.
+ * the timer loop. Callback exceptions derived from std::exception are caught
+ * and reported via DMN_DEBUG_PRINT. Other exception types escape the pthread
+ * entry point and normally cause std::terminate.
  *
  * Public API summary:
  *  - Dmn_Timer(const T &reltime, std::function<void()> fn):
  *      Constructs the timer and starts it immediately with the given interval
  *      and callback.
  *  - void start(const T &reltime, std::function<void()> fn = {}):
- *      Stops any existing timer and starts a new one with the provided interval
- *      and optional callback (if fn is empty, the previously set callback is
- *      retained).
+ *      Stops and joins any existing timer before updating its interval and
+ *      optional callback, then attempts to start a new thread. If fn is empty,
+ *      the previously set callback is retained. Thread-creation failure is
+ *      currently not reported.
  *  - void stop():
- *      Stops the running timer.
+ *      Requests cancellation and joins the running timer. Exceptions from
+ *      cancellation or joining are suppressed.
  *
  * Notes:
  *  - Copy and move constructors/operators are deleted.
@@ -44,6 +46,7 @@
 #include <chrono>
 #include <functional>
 #include <thread>
+#include <utility>
 
 namespace dmn {
 
@@ -70,8 +73,10 @@ public:
   /**
    * @brief Start (or restart) the timer with the given interval and callback.
    *
-   * Any currently running timer is stopped before the new one is started.
-   * If @p fn is empty the previously set callback is retained.
+   * Any currently running timer is stopped and joined before the interval or
+   * callback is updated and the new timer is started. If @p fn is empty the
+   * previously set callback is retained. Callers must serialize calls to
+   * start(), stop(), and destruction of this timer.
    *
    * @param reltime Interval between consecutive callback invocations.
    * @param fn      Optional new callback.  If empty, the existing callback
@@ -83,8 +88,9 @@ public:
   /**
    * @brief Stop the running timer.
    *
-   * Cancels and joins the background thread.  The timer may be restarted
-   * later by calling start().
+   * Requests cancellation and joins the background thread. Exceptions from
+   * cancellation or joining are suppressed. The timer may be restarted later
+   * by calling start().
    */
   void stop();
 
@@ -108,13 +114,13 @@ template <typename T> Dmn_Timer<T>::~Dmn_Timer() noexcept try {
 
 template <typename T>
 void Dmn_Timer<T>::start(const T &reltime, std::function<void()> fn) {
+  this->stopExec();
+
   m_reltime = reltime;
 
   if (fn) {
-    m_fn = fn;
+    m_fn = std::move(fn);
   }
-
-  this->stop();
 
   this->exec([this]() {
     while (true) {
