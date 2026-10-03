@@ -245,7 +245,7 @@ public:
    * @brief Construct an empty tree with range and priority evaluators.
    * @param comparator Strict weak ordering over ranges; may be empty.
    * @param priorityEvaluator Returns true when its first value is strictly
-   *        higher priority than its second; ties are allowed.
+   * higher priority than its second; ties are allowed.
    */
   Dmn_IntervalBTree(canonical_comparator comparator,
                     priority_evaluator priorityEvaluator)
@@ -270,7 +270,7 @@ public:
    * @param range Inclusive interval to index.
    * @param value Payload to copy into the tree.
    * @param onStateChange Optional callback for later state changes to this
-   *        entry; it is not called for the entry's initial state.
+   * entry; it is not called for the entry's initial state.
    * @return @c true on insertion.
    * @throws std::invalid_argument if @p range is invalid.
    * @throws std::logic_error if invoked reentrantly from a user callback.
@@ -329,7 +329,7 @@ public:
    * @param value Payload to copy into the tree.
    * @param onStateChange Optional callback for later state changes.
    * @return A pair of insertion success and the candidate's initial topology
-   *         result. A failed insertion returns a default result.
+   * result. A failed insertion returns a default result.
    * @throws std::invalid_argument if @p range is invalid.
    * @throws std::logic_error if invoked reentrantly from a user callback.
    */
@@ -341,7 +341,7 @@ public:
    * @brief Remove the first matching entry with exactly equal endpoints.
    * @param range Exact interval to match.
    * @param matcher Optional payload predicate; an empty matcher selects the
-   *        first exact-range entry in canonical order.
+   * first exact-range entry in canonical order.
    * @return @c true if one entry was removed.
    * @throws std::invalid_argument if @p range is invalid.
    * @throws std::logic_error if invoked reentrantly from a user callback.
@@ -368,7 +368,7 @@ public:
 
   /**
    * @brief Remove all entries without notifying callbacks for destroyed
-   *        entries.
+   * entries.
    * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   void clear();
@@ -386,11 +386,11 @@ public:
    * ranges. Without it, their insertion ordinals determine their order.
    *
    * @param duplicateOrder Optional strict weak ordering for equal-range
-   *        payloads.
+   * payloads.
    * @return Canonically ordered range/value copies.
    * @note Requires a copy-constructible @c T when called.
    * @throws std::logic_error if a supplied ordering callback attempts
-   *         reentrant mutation.
+   * reentrant mutation.
    */
   std::vector<std::pair<range_type, value_type>>
   enumerateCanonical(duplicate_order_evaluator duplicateOrder = {}) const;
@@ -399,11 +399,11 @@ public:
    * @brief Move entries out in canonical order and leave the tree empty.
    *
    * @param duplicateOrder Optional strict weak ordering for equal-range
-   *        payloads.
+   * payloads.
    * @return Canonically ordered range/value pairs owning the extracted
-   *         payloads.
+   * payloads.
    * @throws std::logic_error if invoked reentrantly from a user callback or
-   *         if the ordering callback attempts mutation.
+   * if the ordering callback attempts mutation.
    */
   std::vector<std::pair<range_type, value_type>>
   enumerateCanonicalMove(duplicate_order_evaluator duplicateOrder = {});
@@ -418,12 +418,12 @@ public:
    *
    * @param entries Range/value snapshot to load.
    * @param duplicateOrder Reserved for symmetry with canonical enumeration;
-   *        it is not invoked while loading. The supplied vector order becomes
-   *        the insertion-ordinal order for equal ranges. Pass the evaluator
-   *        to subsequent enumeration when payload-defined duplicate order is
-   *        required.
+   * it is not invoked while loading. The supplied vector order becomes
+   * the insertion-ordinal order for equal ranges. Pass the evaluator
+   * to subsequent enumeration when payload-defined duplicate order is
+   * required.
    * @throws std::invalid_argument if any range is invalid; the current tree
-   *         remains unchanged.
+   * remains unchanged.
    * @throws std::logic_error if invoked reentrantly.
    */
   void reconstructFromCanonical(
@@ -451,7 +451,7 @@ public:
   /**
    * @brief Unregister a callback and detach it from currently stored entries.
    * @param registration Identifier returned by @ref registerStateCallback().
-   *        Unknown identifiers are ignored.
+   * Unknown identifiers are ignored.
    */
   void unregisterStateCallback(callback_registration_id registration);
 
@@ -467,7 +467,7 @@ public:
    * @brief Return copies of all overlapping entries in canonical order.
    * @param range Inclusive query interval.
    * @return Empty when there are no matches; otherwise matching
-   *         range/value copies in canonical order.
+   * range/value copies in canonical order.
    * @note Requires a copy-constructible @c T when called.
    * @throws std::invalid_argument if @p range is invalid.
    */
@@ -479,9 +479,9 @@ public:
    *
    * @param range Inclusive query interval.
    * @param visitor Callable receiving const references to each range and
-   *        payload. References must not be retained after the call.
+   * payload. References must not be retained after the call.
    * @throws std::invalid_argument if @p visitor is empty or @p range is
-   *         invalid.
+   * invalid.
    * @throws std::logic_error if the visitor attempts reentrant mutation.
    */
   void forEachOverlapping(range_type range, overlap_visitor visitor) const;

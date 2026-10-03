@@ -97,11 +97,11 @@ public:
    *
    * @param name           Identification name for this DMesgNet instance.
    * @param input_handler  Optional input handler to receive inbound serialized
-   *                       DMesgPb messages (std::string). If nullptr, no
-   *                       input processing is started.
+   * DMesgPb messages (std::string). If nullptr, no
+   * input processing is started.
    * @param output_handler Optional output handler to send outbound serialized
-   *                       DMesgPb messages (std::string). If nullptr, no
-   *                       network sends are performed.
+   * DMesgPb messages (std::string). If nullptr, no
+   * network sends are performed.
    */
   explicit Dmn_DMesgNet(
       std::string_view name,

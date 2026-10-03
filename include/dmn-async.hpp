@@ -46,7 +46,7 @@
 /**
  * @def DMN_ASYNC_CALL_WITH_COPY_CAPTURE
  * @brief Submit a task with copy-capture semantics (captures everything by
- *        value) to the calling @c Dmn_Async instance.
+ * value) to the calling @c Dmn_Async instance.
  *
  * Expands to a call to @c this->addExecTask() with a lambda that captures
  * all referenced variables by value.
@@ -61,13 +61,13 @@
 /**
  * @def DMN_ASYNC_CALL_WITH_REF_CAPTURE
  * @brief Submit a task with reference-capture semantics (captures everything
- *        by reference) to the calling @c Dmn_Async instance.
+ * by reference) to the calling @c Dmn_Async instance.
  *
  * Expands to a call to @c this->addExecTask() with a lambda that captures
  * all referenced variables by reference.
  *
  * @warning The caller must ensure that all captured variables remain valid
- *          until the task executes.
+ * until the task executes.
  *
  * @param block A complete statement (the body of the lambda).
  */
@@ -79,7 +79,7 @@
 /**
  * @def DMN_ASYNC_CALL_WITH_CAPTURE
  * @brief Submit a task with a custom capture list to the calling @c Dmn_Async
- *        instance.
+ * instance.
  *
  * Expands to a call to @c this->addExecTask() with a lambda whose capture
  * list is provided as a variadic argument.
@@ -109,13 +109,13 @@ public:
   public:
     /**
      * @brief Construct a handle for the given task, optionally scheduled at a
-     *        future time.
+     * future time.
      *
      * @param fnc           The task callable to wrap.
      * @param due_in_future Absolute nanosecond timestamp (from
      *                      @c std::chrono::steady_clock) after which the task
-     *                      may execute.  Pass 0 (the default) for immediate
-     *                      execution.
+     * may execute.  Pass 0 (the default) for immediate
+     * execution.
      */
     Dmn_Async_Handle(std::function<void()> fnc, long long due_in_future = 0)
         : m_fnc{fnc}, m_due_in_future{due_in_future} {

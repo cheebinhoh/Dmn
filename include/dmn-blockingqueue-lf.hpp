@@ -32,7 +32,7 @@
  * - non-blocking pops return empty.
  *
  * @note Memory reclamation is integrated with the inflight-guard interface;
- *       callers do not need to manage hazard pointers/epochs directly.
+ * callers do not need to manage hazard pointers/epochs directly.
  */
 
 #ifndef DMN_BLOCKINGQUEUE_LF_HPP_
@@ -231,7 +231,7 @@ public:
    * the caller can ensure safe coordination.
    *
    * @return Total number of successful pushes observed by this queue since
-   *         construction.
+   * construction.
    */
   virtual auto waitForEmpty() -> uint64_t override;
 
@@ -247,10 +247,10 @@ protected:
    *
    * @param wait True will block the caller if the queue is empty.
    * @param inflightTicket The inflight ticket that keeps track of epochIndex
-   *                       for epoch to store deleted node.
+   * for epoch to store deleted node.
    *
    * @return An optional containing the data from the head of the queue, or
-   *         std::nullopt if the queue is empty and wait is false.
+   * std::nullopt if the queue is empty and wait is false.
    */
   virtual auto
   popOptional(bool wait,
@@ -274,7 +274,7 @@ protected:
    * @param item The item to be enqueued.
    *
    * @throws std::runtime_error if the queue is shutting down when the push
-   *         operation is attempted.
+   * operation is attempted.
    */
   void pushMove(T &&item) override;
 
@@ -358,8 +358,8 @@ private:
 
   /**
    * @brief Defer deletion of @p node by placing it on the epoch's retired
-   *        list; the node is freed when the epoch's in-flight count reaches
-   *        zero.
+   * list; the node is freed when the epoch's in-flight count reaches
+   * zero.
    *
    * @param epochIndex Index of the epoch bucket to which @p node is retired.
    * @param node       Pointer to the node to retire.

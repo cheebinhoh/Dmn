@@ -47,7 +47,7 @@ namespace dmn {
 
 /**
  * @brief Increment an integer-like value by one and ensure the result is at
- *        least 1.
+ * least 1.
  *
  * The function returns std::max<T>(1, value + 1).
  *
@@ -94,7 +94,7 @@ template <typename T> inline T incrementByOne(T value) {
  * @param str1 The first string to compare (string_view).
  * @param str2 The second string to compare (string_view).
  * @param caseInsensitive If true, comparison is performed case-insensitively.
- *                        Defaults to true.
+ * Defaults to true.
  * @return true if the (possibly lowercased) strings are equal, false otherwise.
  */
 inline bool stringCompare(const std::string_view str1,
@@ -121,7 +121,7 @@ inline bool stringCompare(const std::string_view str1,
  * automatic type deduction.
  *
  * @tparam F A callable type (lambda, function pointer, or functor) invoked
- *           with no arguments when the guard is destroyed.
+ * with no arguments when the guard is destroyed.
  */
 template <typename F> struct ScopeGuard {
   F f;                            ///< Callable invoked on scope exit.
@@ -130,7 +130,7 @@ template <typename F> struct ScopeGuard {
 
 /**
  * @brief Factory function that constructs a @c ScopeGuard with automatic
- *        callable-type deduction.
+ * callable-type deduction.
  *
  * @tparam F Callable type; deduced from the argument.
  * @param  f Callable to invoke when the returned guard goes out of scope.

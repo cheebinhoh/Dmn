@@ -3,7 +3,7 @@
  *
  * @file dmn-test-dmesg-1.cpp
  * @brief The unit test that asserts that the dmn-dmesg with one publisher and
- *        two subscribers work.
+ * two subscribers work.
  */
 
 #include <gtest/gtest.h>

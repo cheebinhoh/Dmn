@@ -1,7 +1,7 @@
 /**
  * @file dmn-interval-btree.cpp
  * @brief Provides a template-based B-tree for indexing inclusive intervals
- *        and querying overlapping entries.
+ * and querying overlapping entries.
  */
 
 #include "dmn-interval-btree.hpp"

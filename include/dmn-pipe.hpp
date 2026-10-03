@@ -3,7 +3,7 @@
  *
  * @file dmn-pipe.hpp
  * @brief Dmn_Pipe: a FIFO pipe with non-blocking writers and optional
- *        background processing.
+ * background processing.
  *
  * Overview
  * --------
@@ -97,24 +97,24 @@ public:
 
   /**
    * @brief Construct a Dmn_Pipe and optionally start a background processing
-   *        thread.
+   * thread.
    *
    * @param name    Human-readable name forwarded to the underlying @c Dmn_Proc.
    * @param fn      Optional processing task invoked for each item dequeued by
-   *                the background thread.  If empty, no background thread is
-   *                started and items must be consumed via read() or
-   *                readAndProcess().
+   * the background thread.  If empty, no background thread is
+   * started and items must be consumed via read() or
+   * readAndProcess().
    * @param count   Number of items to dequeue per background-thread iteration.
-   *                Defaults to 1.
+   * Defaults to 1.
    * @param timeout Timeout in microseconds passed to each pop call in the
-   *                background loop.  0 means wait indefinitely.
+   * background loop.  0 means wait indefinitely.
    */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0);
 
   /**
    * @brief Destroy the pipe, stopping any background processing thread and
-   *        releasing resources.
+   * releasing resources.
    */
   virtual ~Dmn_Pipe() noexcept;
 

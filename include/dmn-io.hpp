@@ -61,7 +61,7 @@ public:
    * is implementation-specific and must be defined by subclasses.
    *
    * @return optional<T> containing the next item, or std::nullopt on
-   *         the implementation-specific no-value condition.
+   * the implementation-specific no-value condition.
    */
   virtual auto read() -> std::optional<T> = 0;
 
@@ -75,9 +75,9 @@ public:
    *
    * @param count   Maximum number of items to return (must be > 0).
    * @param timeout Maximum wait time in microseconds; 0 means wait
-   *                indefinitely.
+   * indefinitely.
    * @return Vector of up to @p count items (possibly fewer on
-   *         timeout).
+   * timeout).
    */
   virtual auto read([[maybe_unused]] size_t count,
                     [[maybe_unused]] long timeout = 0) -> std::vector<T> {
@@ -106,7 +106,7 @@ public:
 
   /**
    * @brief Shut down the I/O object and prevent further use to facilitate
-   *        object teardown.
+   * object teardown.
    */
   virtual void shutdown() {}
 };

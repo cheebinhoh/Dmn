@@ -62,10 +62,10 @@ public:
    * @param ip4 IPv4 address as a string (e.g. "127.0.0.1").
    * @param port_no UDP port number.
    * @param write_only If true, the instance may skip read-specific setup;
-   *                   caller guarantees no calls to read() in that mode.
+   * caller guarantees no calls to read() in that mode.
    *
    * @throws std::runtime_error on failure to create, configure, or bind the
-   *         socket.
+   * socket.
    */
   Dmn_Socket(std::string_view ip4, int port_no, bool write_only = false);
 
@@ -86,11 +86,11 @@ public:
    * @brief Read data from the socket.
    *
    * @return std::optional<std::string> containing the received datagram, or
-   *         std::nullopt when recv() returns zero or an error.
+   * std::nullopt when recv() returns zero or an error.
    *
    * @note The exact boundary semantics (message delimiting, framing) are
-   *       implementation-specific. Callers should consult the implementation
-   *       or use an application-level protocol to delimit messages.
+   * implementation-specific. Callers should consult the implementation
+   * or use an application-level protocol to delimit messages.
    */
   auto read() -> std::optional<std::string> override;
 
@@ -101,9 +101,9 @@ public:
    * reference and will typically copy the contents as-is.
    *
    * @note On partial writes or errors, behavior is implementation-defined:
-   *       the method may retry, throw, or log and return. Callers should
-   *       not assume atomicity of large writes unless the implementation
-   *       documents it.
+   * the method may retry, throw, or log and return. Callers should
+   * not assume atomicity of large writes unless the implementation
+   * documents it.
    */
   void write(const std::string &item) override;
 
@@ -111,7 +111,7 @@ public:
    * @brief Write a string to the socket using move semantics.
    *
    * @param item The string to write. This overload delegates to the
-   *             const-reference overload and does not move from the argument.
+   * const-reference overload and does not move from the argument.
    */
   void write(std::string &&item) override;
 

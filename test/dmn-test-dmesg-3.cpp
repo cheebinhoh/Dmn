@@ -3,8 +3,8 @@
  *
  * @file dmn-test-dmesg-3.cpp
  * @brief The unit test that asserts that the dmn-dmesg with two subscribers of
- *        the same Dmn_DMesg object will receive the same DMesgPb message
- *        published by publisher of the Dmn_DMesg object.
+ * the same Dmn_DMesg object will receive the same DMesgPb message
+ * published by publisher of the Dmn_DMesg object.
  */
 
 #include <gtest/gtest.h>

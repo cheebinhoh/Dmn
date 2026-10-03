@@ -96,7 +96,7 @@ Dmn_DMesgNet::Dmn_DMesgNet(std::string_view name,
 
 /**
  * @brief Destructor: stops background procs, closes handlers, and sends a
- *        final Destroyed heartbeat to the network output if available.
+ * final Destroyed heartbeat to the network output if available.
  */
 Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
   // Release the input handler early: a Kafka handler may continue receiving
@@ -164,8 +164,8 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
 /**
  * @brief Start the background input-reader proc that reads serialised
- *        DMesgPb strings from the input Dmn_Io, parses them, and dispatches
- *        them as sys, conflict, force-playback, or ordinary messages.
+ * DMesgPb strings from the input Dmn_Io, parses them, and dispatches
+ * them as sys, conflict, force-playback, or ordinary messages.
  *
  * Also opens the internal write handler and the sys handler used for
  * publishing heartbeat sys messages. Has no effect if m_input_handler is null.
@@ -292,7 +292,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
 
 /**
  * @brief Register the subscriber handler that forwards all locally published
- *        DMesgPb messages (including sys) to the network output Dmn_Io.
+ * DMesgPb messages (including sys) to the network output Dmn_Io.
  *
  * Messages originating from this node's own write handler are filtered out
  * to avoid echoing inbound network messages back to the network.
@@ -470,7 +470,7 @@ auto Dmn_DMesgNet::getLastTopicCacheInternal()
 
 /**
  * @brief Flush all queued outbound messages that were deferred while the node
- *        was not yet ready (m_ready not set).
+ * was not yet ready (m_ready not set).
  *
  * Must only be called when m_ready is set and m_output_handler is non-null.
  */

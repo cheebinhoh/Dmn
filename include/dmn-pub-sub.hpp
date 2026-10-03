@@ -209,18 +209,18 @@ public:
    * @brief Constructor
    *
    * @param name A human-readable name used by Dmn_Async for the publisher
-   *             thread context.
+   * thread context.
    * @param capacity Maximum number of historical items kept for replay to new
-   *                 subscribers. A value of zero disables replay while
-   *                 preserving notifications to currently registered
-   *                 subscribers.
+   * subscribers. A value of zero disables replay while
+   * preserving notifications to currently registered
+   * subscribers.
    * @param filter_fn Optional filter function; if provided, it is invoked for
-   *                  each (subscriber, item) pair to decide whether that
-   *                  subscriber should receive the item.
+   * each (subscriber, item) pair to decide whether that
+   * subscriber should receive the item.
    * @param callbackFailureCapacity Maximum number of callback failures to
-   *                                 retain: -1 means unlimited, 0 disables
-   *                                 storage, and a positive value keeps only
-   *                                 the most recent failures.
+   * retain: -1 means unlimited, 0 disables
+   * storage, and a positive value keeps only
+   * the most recent failures.
    */
   explicit Dmn_Pub(std::string_view name, size_t capacity = 10,
                    Dmn_Pub_Filter_Task filter_fn = {},

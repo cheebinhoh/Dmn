@@ -96,10 +96,10 @@ void Dmn_Kafka::errorCallback([[maybe_unused]] rd_kafka_t *kafka_handle,
  *
  * @param role    kProducer or kConsumer.
  * @param configs Key/value configuration map; recognised keys are
- *                Dmn_Kafka::Topic, Dmn_Kafka::Key, Dmn_Kafka::PollTimeoutMs,
- *                and any standard librdkafka configuration property.
+ * Dmn_Kafka::Topic, Dmn_Kafka::Key, Dmn_Kafka::PollTimeoutMs,
+ * and any standard librdkafka configuration property.
  * @throws std::runtime_error if the handle cannot be created or the
- *         consumer subscription fails.
+ * consumer subscription fails.
  */
 Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     : m_role{role}, m_configs{configs} {
@@ -189,7 +189,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
 
 /**
  * @brief Destructor: shuts down the inflight guard, then closes/flushes the
- *        Kafka handle and destroys it.
+ * Kafka handle and destroys it.
  */
 Dmn_Kafka::~Dmn_Kafka() noexcept try {
   assert(m_kafka);
@@ -287,7 +287,7 @@ auto Dmn_Kafka::read() -> std::optional<std::string> {
 
 /**
  * @brief Signal shutdown: set the flag and wait for all in-flight operations
- *        to complete before returning.
+ * to complete before returning.
  */
 void Dmn_Kafka::shutdown() {
   m_shutdown_flag.test_and_set(std::memory_order_release);
@@ -310,9 +310,9 @@ void Dmn_Kafka::write(std::string &&item) { writeCopy(std::as_const(item)); }
  *
  * @param item Message payload.
  * @param move Hint indicating whether to prefer move semantics; currently
- *             ignored because librdkafka always copies the payload internally
- *             (RD_KAFKA_MSG_F_COPY). The parameter is retained for API
- *             symmetry with the public write(T&&) overload.
+ * ignored because librdkafka always copies the payload internally
+ * (RD_KAFKA_MSG_F_COPY). The parameter is retained for API
+ * symmetry with the public write(T&&) overload.
  * @throws std::runtime_error on enqueue or delivery failure.
  */
 void Dmn_Kafka::writeCopy(const std::string &item) {

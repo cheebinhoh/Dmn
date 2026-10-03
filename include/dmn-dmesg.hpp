@@ -286,7 +286,7 @@ public:
      * @param topic The topic to check, or an empty string to check any topic.
      *
      * @return @c true if the handler is in conflict for the given topic (or for
-     *         any topic when @p topic is empty), @c false otherwise.
+     * any topic when @p topic is empty), @c false otherwise.
      */
     auto isInConflict(std::string_view topic = "") -> bool;
 

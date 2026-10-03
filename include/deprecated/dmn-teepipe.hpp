@@ -3,7 +3,7 @@
  *
  * @file dmn-teepipe.hpp
  * @brief Tee-pipe utility used to merge multiple input sources into a single
- *        outbound pipe in a controlled, ordered way.
+ * outbound pipe in a controlled, ordered way.
  *
  * Overview
  * --------
@@ -123,7 +123,7 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
      * @brief Construct a source with a bounded internal buffer.
      *
      * @param capacity Maximum number of buffered items (should be 1 in normal
-     *                 use; the conveyor reads exactly one item per cycle).
+     * use; the conveyor reads exactly one item per cycle).
      * @param tp       Owning Dmn_TeePipe instance (must not be null).
      */
     Dmn_TeePipeSource(size_t capacity, Dmn_TeePipe *tp);
@@ -157,7 +157,7 @@ template <typename T> class Dmn_TeePipe : private Dmn_Pipe<T> {
      * @brief Pop one item from the internal bounded buffer.
      *
      * @return An optional containing the item, or std::nullopt if the buffer
-     *         is empty.
+     * is empty.
      */
     std::optional<T> read() override;
 
@@ -171,8 +171,8 @@ public:
    * @param name Identifying name for this pipe and its conveyor thread.
    * @param fn   Optional outbound processing task forwarded to Dmn_Pipe.
    * @param pfn  Optional post-processing task invoked on the collected
-   *             vector of items (one per source) before forwarding them
-   *             to the outbound pipe.
+   * vector of items (one per source) before forwarding them
+   * to the outbound pipe.
    */
   explicit Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
                        Dmn_TeePipe::PostProcessingTask pfn = {});
@@ -199,7 +199,7 @@ public:
    * provided shared_ptr is reset.
    *
    * @param tps shared_ptr to the source to remove (must be non-null and
-   *            belong to this Dmn_TeePipe).
+   * belong to this Dmn_TeePipe).
    */
   void removeDmn_TeePipeSource(std::shared_ptr<Dmn_TeePipeSource> &tps);
 
@@ -223,7 +223,7 @@ private:
    * any open sources still held by external owners.
    *
    * @param no_open_source If true, wait until there are no external owners of
-   *                       any Dmn_TeePipeSource before draining.
+   * any Dmn_TeePipeSource before draining.
    */
   auto wait(bool no_open_source) -> uint64_t;
 

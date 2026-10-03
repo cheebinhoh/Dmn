@@ -143,8 +143,8 @@ public:
    * @brief Add a runtime-aware user-state callback or replace an existing one.
    * @param fnc Callback invoked with the runtime-managed state object.
    * @param index With N callbacks currently configured, pass 0 (the default)
-   *              or N+1 to append a callback. Pass 1 through N to replace the
-   *              callback at that state.
+   * or N+1 to append a callback. Pass 1 through N to replace the
+   * callback at that state.
    * @throws std::out_of_range if index is negative or greater than N+1.
    *
    * This is a convenience wrapper over the inherited @ref Dmn_State API. It
@@ -167,10 +167,10 @@ public:
    * @param delay If non-zero, the first runtime dispatch is scheduled via
    * addTimedJob() after this delay. Later dispatches are posted immediately.
    * @param onError Optional error callback forwarded to the runtime job. The
-   *                type matches Dmn_Runtime_Job::OnErrorFncType.
+   * type matches Dmn_Runtime_Job::OnErrorFncType.
    * @return true if the state was successfully queued; false for an already
-   *         terminal, cancelled, active, or unconfigured state, or when the
-   *         manager has shut down.
+   * terminal, cancelled, active, or unconfigured state, or when the
+   * manager has shut down.
    *
    * Notes:
    * - run() is one-shot for a given handle: the first successful call enqueues
@@ -184,7 +184,7 @@ public:
    *         @c std::shared_ptr.
    * @throws std::runtime_error if called from the runtime async thread.
    * @throws Any exception raised by the runtime scheduler while enqueuing.
-   *         The state remains eligible for another submission attempt.
+   * The state remains eligible for another submission attempt.
    */
   bool
   run(Dmn_Runtime_Job::Priority priority = Dmn_Runtime_Job::Priority::kMedium,
@@ -211,13 +211,13 @@ public:
 
   /**
    * @brief Return a shared_future that becomes ready when the state reaches
-   *        a terminal condition (completed/failed/cancelled).
+   * a terminal condition (completed/failed/cancelled).
    *
    * The shared_future is available immediately after the state is created
    * so callers may register waiters before run() is called.
    *
    * @return A copyable completion future. Calling @c get() on it rethrows a
-   *         user-state callback failure.
+   * user-state callback failure.
    */
   std::shared_future<void> getFuture();
 
@@ -280,7 +280,7 @@ protected:
 
   /**
    * @brief Called in the runtime thread after successful completion is
-   *        published.
+   * published.
    */
   virtual void onCompleted();
 
@@ -310,7 +310,7 @@ private:
    * @param failure Exception to associate with a failed outcome.
    *
    * @note A pending cancellation request takes precedence over normal
-   *       completion so shutdown cannot publish conflicting terminal states.
+   * completion so shutdown cannot publish conflicting terminal states.
    */
   void complete(Terminal_State terminalState, std::exception_ptr failure = {});
   /** @brief Clear submission state after the manager declines or cannot queue
@@ -446,7 +446,7 @@ private:
    *
    * The retained handle guarantees state lifetime until @ref releaseState.
    * @return true when the job was accepted; false if shutdown rejects an
-   *         initial submission.
+   * initial submission.
    */
   bool enqueueState(DmnRuntimeStatePtr state,
                     Dmn_Runtime_Job::Priority priority,

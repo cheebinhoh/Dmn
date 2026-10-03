@@ -3,8 +3,8 @@
  *
  * @file dmn-test-dmesg-2.cpp
  * @brief The unit test that asserts that the dmn-dmesg with one publisher and
- *        one subscriber is able to continue reading and writing multiple
- *        messages between them.
+ * one subscriber is able to continue reading and writing multiple
+ * messages between them.
  */
 
 #include <gtest/gtest.h>

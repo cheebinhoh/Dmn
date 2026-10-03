@@ -3,7 +3,7 @@
  *
  * @file dmn-socket.cpp
  * @brief Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket
- *        that implements the Dmn_Io<std::string> interface.
+ * that implements the Dmn_Io<std::string> interface.
  *
  * The constructor creates an AF_INET/SOCK_DGRAM socket, enables the
  * SO_BROADCAST socket option, and optionally binds to the supplied

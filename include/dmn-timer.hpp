@@ -75,8 +75,8 @@ public:
    *
    * @param reltime Interval between consecutive callback invocations.
    * @param fn      Optional new callback.  If empty, the existing callback
-   *                stored from construction or a previous call to start() is
-   *                reused.
+   * stored from construction or a previous call to start() is
+   * reused.
    */
   void start(const T &reltime, std::function<void()> fn = {});
 

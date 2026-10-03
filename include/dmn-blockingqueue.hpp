@@ -146,7 +146,7 @@ protected:
   // they form the concrete details for the methods called by clients.
   /**
    * @brief Remove and return the front item, optionally blocking until one is
-   *        available.
+   * available.
    *
    * Subclasses must implement this primitive.  The composite public methods
    * pop() and popNoWait() delegate here.
@@ -154,8 +154,8 @@ protected:
    * @param wait If @c true, block until an item is available; otherwise return
    *             @c std::nullopt immediately when the queue is empty.
    * @return An @c optional containing the dequeued item, or @c std::nullopt if
-   *         the queue is empty (when @p wait is @c false) or shutdown while
-   *         waiting (when @p wait is @c true).
+   * the queue is empty (when @p wait is @c false) or shutdown while
+   * waiting (when @p wait is @c true).
    */
   virtual auto popOptional(bool wait) -> std::optional<T> {
     return static_cast<Derived *>(this)->popOptional(wait);

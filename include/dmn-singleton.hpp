@@ -84,9 +84,9 @@ public:
    *
    * @tparam T   Concrete singleton type whose instance is managed here.
    * @tparam U   Parameter pack of argument types forwarded to @p T's
-   *             constructor.
+   * constructor.
    * @param  arg Arguments forwarded to @p T's constructor (only used on the
-   *             first call).
+   * first call).
    * @return @c std::shared_ptr<T> pointing to the singleton instance.
    */
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);

@@ -31,14 +31,14 @@ constexpr size_t kKafkaErrorStringLength = 512;
 
 /**
  * @brief Set a single configuration key/value pair on an @c rd_kafka_conf_t
- *        object.
+ * object.
  *
  * @param conf  The @c rd_kafka_conf_t object to configure.
  * @param key   The configuration key.
  * @param value The configuration value.
  *
  * @return @c RD_KAFKA_CONF_OK wrapped in @c std::expected on success, or an
- *         error string describing the failure.
+ * error string describing the failure.
  */
 auto set_config(rd_kafka_conf_t *conf, std::string_view key,
                 std::string_view value)
