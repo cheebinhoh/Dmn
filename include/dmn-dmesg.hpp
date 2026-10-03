@@ -592,6 +592,14 @@ public:
    * @param name Identification name for this DMesg instance.
    */
   explicit Dmn_DMesg(std::string_view name);
+
+  /**
+   * @brief Unregister handlers and drain queued publisher work before teardown.
+   *
+   * Callers must stop and join threads that may use this publisher before
+   * destruction begins. The derived destructor performs handler unregistration
+   * and drains the async context while Dmn_DMesg state is still alive.
+   */
   virtual ~Dmn_DMesg() noexcept;
 
   Dmn_DMesg(const Dmn_DMesg &obj) = delete;

@@ -1,0 +1,41 @@
+# Executables and integration fixtures
+
+**Status:** Current checked-in executable behavior; these programs are not
+production service contracts.
+
+## DMesg daemon
+
+`src/dmn-dmesg-daemon.cpp` obtains the singleton runtime manager, starts a
+separate `Dmn_Proc` that sleeps for ten seconds and then registers a SIGTERM
+hook, and enters the runtime main loop. The source explicitly marks this as a
+test harness; it does not construct a DMesgNet node or wire production I/O.
+Arguments are currently unused.
+
+## Kafka sender and receiver
+
+`src/dmn-kafka-sender.cpp` and `src/dmn-kafka-receiver.cpp` are stand-alone
+producer/consumer smoke examples against an external broker. They configure
+credentials in source, use a fixed topic, and are unsuitable for deployment.
+The sender produces ten values. The receiver polls until SIGINT and prints
+received payloads.
+
+## Test/build surface
+
+The default CMake test list covers queue variants, async/pipe/pub-sub,
+DMesg/DMesgNet, state, runtime, sockets, and interval-tree. Kafka tests are
+registered only when `BUILD_KAFKA_TEST` is enabled. Several DMesg/DMesgNet tests
+are disabled or commented out, and a general test target is marked
+non-terminating. Deprecated components are not registered as normal tests.
+
+## Gaps / improvements
+
+1. Remove secrets from the two Kafka examples, rotate credentials if they were
+   valid, and source configuration from environment/secret-management input
+   that is not committed.
+2. Replace the daemon's placeholder sleep/hook with an explicitly named demo or
+   a real daemon lifecycle. Do not present it as a production service.
+3. Reject or meaningfully parse command-line arguments; currently they are
+   unused.
+4. Re-enable disabled tests only after making them deterministic, and document
+   the reason for each skipped target. Add coverage for cleanup and failures,
+   not just happy-path transport.
