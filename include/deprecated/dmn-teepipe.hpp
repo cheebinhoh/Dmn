@@ -177,7 +177,8 @@ public:
   explicit Dmn_TeePipe(std::string_view name, Dmn_TeePipe::Task fn = {},
                        Dmn_TeePipe::PostProcessingTask pfn = {});
 
-  /// @brief Stop the conveyor thread before destroying synchronization primitives.
+  /// @brief Stop the conveyor thread before destroying synchronization
+  /// primitives.
   virtual ~Dmn_TeePipe() noexcept;
 
   Dmn_TeePipe(const Dmn_TeePipe<T> &obj) = delete;

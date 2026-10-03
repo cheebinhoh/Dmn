@@ -48,8 +48,9 @@ void cleanupFuncToUnlockPthreadMutex(void *arg) {
  * @param fnc Optional task function to be executed. Can be nullptr if task
  * is to be set later via setTask() or exec()
  */
-Dmn_Proc::Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc)
-    : m_name{name} {
+Dmn_Proc::Dmn_Proc(std::string_view name, const Dmn_Proc::Task &fnc,
+                   ExceptionPolicy exceptionPolicy)
+    : m_name{name}, m_exception_policy{exceptionPolicy} {
   setState(State::kNew);
 
   if (fnc) {
@@ -104,8 +105,7 @@ auto Dmn_Proc::getState() const -> Dmn_Proc::State { return m_state; }
 /**
  * @brief Sets a new state and returns the previous state.
  *
- * This is an atomic state transition operation. Useful for comparing and
- * swapping states.
+ * This is a plain state update; callers must serialize access to the process.
  *
  * @param state The new state to set
  *
@@ -127,7 +127,7 @@ auto Dmn_Proc::setState(State state) -> Dmn_Proc::State {
  * execution.
  *
  * @param fnc The task function to assign. Must not be nullptr.
- * @throws std::runtime_error if process is not in New or Ready state
+ * The New-or-Ready precondition is checked with an assertion.
  */
 void Dmn_Proc::setTask(Dmn_Proc::Task fnc) {
   assert(getState() == State::kNew || getState() == State::kReady);
@@ -159,6 +159,12 @@ auto Dmn_Proc::wait() -> bool {
   }
 
   setState(State::kReady);
+  m_cancel_requested.store(false, std::memory_order_release);
+
+  auto failure = std::exchange(m_failure, {});
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return 0 == err;
 }
@@ -197,8 +203,10 @@ auto Dmn_Proc::stopExec() -> bool {
 
   if (getState() == State::kRunning) {
 
+    m_cancel_requested.store(true, std::memory_order_release);
     err = pthread_cancel(m_th);
     if (0 != err) {
+      m_cancel_requested.store(false, std::memory_order_release);
       throw std::runtime_error(std::system_category().message(err));
     }
 
@@ -228,9 +236,12 @@ auto Dmn_Proc::runExec() -> bool {
   }
 
   old_state = setState(State::kRunning);
+  m_failure = {};
+  m_cancel_requested.store(false, std::memory_order_release);
   err = pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
   if (0 != err) {
     setState(old_state);
+
     return false;
   }
 
@@ -241,32 +252,44 @@ auto Dmn_Proc::runExec() -> bool {
  * @brief Helper function executed in the new thread context.
  *
  * Sets up thread-level cancellation policy (enabled with deferred type),
- * then executes the assigned task function. Acts as the entry point for
- * the newly created thread.
+ * then executes the assigned task function. Captures task/setup failures
+ * according to the configured policy, while allowing stopExec() cancellation
+ * to continue unwinding through the pthread entry point.
  *
  * @param context Pointer to the Dmn_Proc instance managing this thread
  *
  * @return Always returns nullptr
- * @throws std::runtime_error if cancellation setup fails
  */
 auto Dmn_Proc::runFnInThreadHelper(void *context) -> void * {
+  auto *proc = static_cast<Dmn_Proc *>(context);
   int old_state{};
   int err{};
 
-  // Enable thread cancellation with deferred cancellation type
-  // (cancellation only occurs at cancellation points, not asynchronously)
-  err = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
-  if (0 != err) {
-    throw std::runtime_error(std::system_category().message(err));
-  }
+  try {
+    // Enable thread cancellation with deferred cancellation type
+    // (cancellation only occurs at cancellation points, not asynchronously)
+    err = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
+    if (0 != err) {
+      throw std::runtime_error(std::system_category().message(err));
+    }
 
-  err = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_state);
-  if (0 != err) {
-    throw std::runtime_error(std::system_category().message(err));
-  }
+    err = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &old_state);
+    if (0 != err) {
+      throw std::runtime_error(std::system_category().message(err));
+    }
 
-  auto *proc = static_cast<Dmn_Proc *>(context);
-  proc->m_fnc();
+    proc->m_fnc();
+  } catch (...) {
+    if (proc->m_cancel_requested.load(std::memory_order_acquire)) {
+      throw;
+    }
+
+    if (proc->m_exception_policy == ExceptionPolicy::kTerminate) {
+      std::terminate();
+    }
+
+    proc->m_failure = std::current_exception();
+  }
 
   return nullptr;
 }

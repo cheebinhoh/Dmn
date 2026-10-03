@@ -353,6 +353,7 @@ TEST(IntervalBTree, DuplicateOrderingCallbackNotCalledForDistinctRanges) {
   const auto entries =
       tree.enumerateCanonical([&callbackCalls](const int &, const int &) {
         ++callbackCalls;
+
         return false;
       });
 
@@ -370,6 +371,7 @@ TEST(IntervalBTree, DuplicateOrderingCallbackCannotMutateTreeReentrantly) {
 
   EXPECT_THROW(tree.enumerateCanonical([&tree](int lhs, int rhs) {
     tree.add({10, 15}, 30);
+
     return lhs < rhs;
   }),
                std::logic_error);
@@ -385,6 +387,7 @@ TEST(IntervalBTree, UserComparatorsCannotMutateTreeReentrantly) {
         if (treePointer != nullptr) {
           treePointer->clear();
         }
+
         return lhs.m_start < rhs.m_start;
       });
   treePointer = &tree;
@@ -400,6 +403,7 @@ TEST(IntervalBTree, PriorityEvaluatorCannotMutateTreeReentrantly) {
     if (treePointer != nullptr) {
       treePointer->clear();
     }
+
     return lhs > rhs;
   });
   treePointer = &tree;
@@ -1428,6 +1432,7 @@ TEST(IntervalBTree, RemovalPredicateCannotMutateTreeReentrantly) {
   EXPECT_THROW(tree.removeByRange({1, 5},
                                   [&tree](const int &) {
                                     tree.add({10, 15}, 20);
+
                                     return true;
                                   }),
                std::logic_error);

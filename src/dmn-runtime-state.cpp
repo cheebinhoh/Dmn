@@ -194,7 +194,6 @@ bool Dmn_Runtime_State::run(Dmn_Runtime_Job::Priority priority,
 
   if (Dmn_Runtime_State_Manager::createInstance()->enqueueState(
           std::move(self), priority, delay, std::move(onError))) {
-
     return true;
   }
 

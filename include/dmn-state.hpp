@@ -60,6 +60,7 @@ class Dmn_State {
 public:
   /**
    * @brief Construct an empty state machine.
+   *
    * @param name Human-readable name for diagnostics.
    */
   explicit Dmn_State(std::string_view name);
@@ -85,6 +86,7 @@ public:
 
   /**
    * @brief Select which user state the next runNext() call will execute.
+   *
    * @param index With N configured user states, values 1 through N select a
    * callback. N+1 selects the end of the machine. Zero is
    * reserved for internal initialization.
@@ -101,6 +103,7 @@ public:
 
   /**
    * @brief Add a user-state callback or replace an existing one.
+   *
    * @param fnc Callback to execute when this state is selected.
    * @param index With N callbacks currently configured, pass 0 (the default)
    * or N+1 to append a callback. Pass 1 through N to replace the
@@ -116,6 +119,7 @@ public:
 
   /**
    * @brief Report whether internal initialization has run.
+   *
    * @return true after runNext() initializes the machine before its first
    * user-state callback.
    */
@@ -123,12 +127,14 @@ public:
 
   /**
    * @brief Report whether internal finalization has run.
+   *
    * @return true after runNext() reaches the end of the machine.
    */
   auto isFinalized() -> bool;
 
   /**
    * @brief Report whether at least one user-state callback is configured.
+   *
    * @return true when the machine contains a user-provided callback.
    */
   bool hasStateFncs() const noexcept;
@@ -167,6 +173,7 @@ protected:
    * @brief Perform the initialization used by runNext().
    *
    * Derived classes normally do not need to call this directly.
+   *
    * @param s Reference to the state object being initialized.
    */
   void init(Dmn_State &s);
@@ -175,6 +182,7 @@ protected:
    * @brief Perform the finalization used by runNext().
    *
    * Derived classes normally do not need to call this directly.
+   *
    * @param s Reference to the state object being finalized.
    */
   void finalize(Dmn_State &s);

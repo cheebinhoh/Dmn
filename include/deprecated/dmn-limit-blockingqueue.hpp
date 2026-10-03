@@ -47,6 +47,7 @@ template <typename T>
 class Dmn_Limit_BlockingQueue : private Dmn_BlockingQueue<T> {
 public:
   /** @brief Construct a bounded blocking queue with the given maximum capacity.
+   *
    * @param capacity Maximum number of items the queue may hold simultaneously.
    */
   explicit Dmn_Limit_BlockingQueue(size_t capacity = 1);
@@ -130,11 +131,14 @@ private:
   auto popOptional(bool wait) -> std::optional<T> override;
 
 private:
-  size_t m_max_capacity{1};          ///< Maximum number of items the queue may hold.
-  size_t m_size{0};                   ///< Current number of items in the queue.
-  std::mutex m_mutex{};               ///< Protects all access to @c m_size and the underlying storage.
-  std::condition_variable m_pop_cond{};  ///< Signalled when a new item is available for consumers.
-  std::condition_variable m_push_cond{}; ///< Signalled when a slot becomes available for producers.
+  size_t m_max_capacity{1}; ///< Maximum number of items the queue may hold.
+  size_t m_size{0};         ///< Current number of items in the queue.
+  std::mutex m_mutex{}; ///< Protects all access to @c m_size and the underlying
+                        ///< storage.
+  std::condition_variable
+      m_pop_cond{}; ///< Signalled when a new item is available for consumers.
+  std::condition_variable
+      m_push_cond{}; ///< Signalled when a slot becomes available for producers.
 }; // class Dmn_Limit_BlockingQueue
 
 template <typename T>

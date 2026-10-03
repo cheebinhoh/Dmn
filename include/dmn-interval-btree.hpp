@@ -94,6 +94,7 @@ struct Dmn_IntervalRange {
 
   /**
    * @brief Return whether the endpoints describe a valid range.
+   *
    * @return @c true exactly when @c m_start <= @c m_end.
    */
   auto isValid() const noexcept -> bool;
@@ -131,6 +132,7 @@ enum class Dmn_OverlayTopology {
 /**
  * @struct Dmn_TopologyResult
  * @brief Initial topology, priority, and overlap snapshot for a query/add.
+ *
  * @tparam T Payload type stored with each interval.
  */
 template <class T> struct Dmn_TopologyResult {
@@ -155,12 +157,14 @@ struct Dmn_OverlayState {
 
 /**
  * @brief Predicate used to select an entry by its opaque payload.
+ *
  * @tparam T Payload type.
  */
 template <class T> using entry_matcher = std::function<bool(const T &)>;
 
 /**
  * @brief Strict weak ordering used to order values of identical ranges.
+ *
  * @tparam T Payload type.
  */
 template <class T>
@@ -168,6 +172,7 @@ using duplicate_order_evaluator = std::function<bool(const T &, const T &)>;
 
 /**
  * @brief Callback invoked when an existing entry's overlay state changes.
+ *
  * @tparam T Payload type.
  */
 template <class T>
@@ -243,6 +248,7 @@ public:
 
   /**
    * @brief Construct an empty tree with range and priority evaluators.
+   *
    * @param comparator Strict weak ordering over ranges; may be empty.
    * @param priorityEvaluator Returns true when its first value is strictly
    * higher priority than its second; ties are allowed.
@@ -267,6 +273,7 @@ public:
 
   /**
    * @brief Insert a copy of a payload for a valid range.
+   *
    * @param range Inclusive interval to index.
    * @param value Payload to copy into the tree.
    * @param onStateChange Optional callback for later state changes to this
@@ -280,6 +287,7 @@ public:
 
   /**
    * @brief Move a payload into the tree for a valid range.
+   *
    * @param range Inclusive interval to index.
    * @param value Payload to move into the tree.
    * @param onStateChange Optional callback for later state changes.
@@ -291,6 +299,7 @@ public:
 
   /**
    * @brief Insert a copied payload using endpoint arguments.
+   *
    * @param start Inclusive lower endpoint.
    * @param end Inclusive upper endpoint.
    * @param value Payload to copy.
@@ -305,6 +314,7 @@ public:
 
   /**
    * @brief Insert a moved payload using endpoint arguments.
+   *
    * @param start Inclusive lower endpoint.
    * @param end Inclusive upper endpoint.
    * @param value Payload to move.
@@ -339,6 +349,7 @@ public:
 
   /**
    * @brief Remove the first matching entry with exactly equal endpoints.
+   *
    * @param range Exact interval to match.
    * @param matcher Optional payload predicate; an empty matcher selects the
    * first exact-range entry in canonical order.
@@ -350,6 +361,7 @@ public:
 
   /**
    * @brief Remove one exact-range entry; equivalent to @ref remove().
+   *
    * @param range Exact interval to match.
    * @param matcher Optional payload predicate.
    * @return @c true if one entry was removed.
@@ -360,6 +372,7 @@ public:
 
   /**
    * @brief Remove every entry overlapping a valid range.
+   *
    * @param range Interval used to select entries.
    * @return Number of removed entries, or zero when no entry overlaps.
    * @throws std::invalid_argument if @p range is invalid.
@@ -369,6 +382,7 @@ public:
   /**
    * @brief Remove all entries without notifying callbacks for destroyed
    * entries.
+   *
    * @throws std::logic_error if invoked reentrantly from a user callback.
    */
   void clear();
@@ -450,6 +464,7 @@ public:
 
   /**
    * @brief Unregister a callback and detach it from currently stored entries.
+   *
    * @param registration Identifier returned by @ref registerStateCallback().
    * Unknown identifiers are ignored.
    */
@@ -457,6 +472,7 @@ public:
 
   /**
    * @brief Return whether any stored interval overlaps a query interval.
+   *
    * @param range Inclusive query interval.
    * @return @c true if a valid query overlaps at least one stored range;
    *         @c false for an invalid query.
@@ -465,6 +481,7 @@ public:
 
   /**
    * @brief Return copies of all overlapping entries in canonical order.
+   *
    * @param range Inclusive query interval.
    * @return Empty when there are no matches; otherwise matching
    * range/value copies in canonical order.
@@ -707,6 +724,7 @@ private:
     }
 
     state.m_topology = classifyTopology(candidate->m_range, overlaps);
+
     return state;
   }
 

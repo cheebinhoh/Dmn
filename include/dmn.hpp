@@ -30,6 +30,7 @@
 #include "dmn-blockingqueue-mt.hpp"
 #include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
+#include "dmn-dlock.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
 #include "dmn-interval-btree.hpp"

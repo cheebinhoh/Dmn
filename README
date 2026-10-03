@@ -27,7 +27,11 @@ The dmn Dockerfile container:
 2. run 'ctest -L dmn'
 3. remove built container - "docker rmi dmn"
 
+Note that for docker buildx:
+docker buildx build -t dmn:latest --load .
+
 ### Native in Linux without docker
-mkdir build 
+mkdir build or make --build build --target clean
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON 
-cmake --build build/
+cmake --build build/ -j
+ctest --test-dir build -L 'dmn|valgrind' --output-on-failure

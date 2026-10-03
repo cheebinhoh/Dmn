@@ -12,37 +12,30 @@ not rely on the argument's side effects.
 
 ## General helpers
 
-`incrementByOne(value)` computes `max(1, value + 1)`. It is intended for
-integer-like types. Signed maximum overflow is undefined; unsigned wrap to zero
-is converted to one.
+`incrementByOne(value)` accepts integral types other than `bool` and computes
+`max(1, value + 1)`. Signed values saturate at their maximum to avoid overflow;
+unsigned maximum wraps to zero and the lower bound converts the result to one.
 
-`stringCompare(lhs, rhs, caseInsensitive=true)` copies both views into
-`std::string`, optionally lowercases bytes with `::tolower`, then compares.
-This is not Unicode case folding, and passing a negative signed `char` to
-`tolower` is undefined unless converted to `unsigned char`.
+`stringCompare(lhs, rhs, caseInsensitive=true)` uses ICU to decode UTF-8,
+apply locale-independent Unicode default case folding, canonically decompose
+the results, and compare them. Case-insensitive comparison throws
+`std::invalid_argument` for malformed UTF-8. With `caseInsensitive=false`, it
+compares bytes directly and does not validate UTF-8. Locale-specific casing
+rules are not applied.
 
-`ScopeGuard<F>` invokes its stored callable unconditionally on destruction.
-There is no dismiss/release operation, and a throwing callable terminates
-because the destructor is `noexcept`.
+`ScopeGuard<F>` is move-only and invokes its stored callable on destruction
+unless `release()` is called. Moving transfers the cleanup responsibility and
+disarms the source. The callable must be nothrow-invocable; throwing cleanup
+callables are rejected at compile time.
 
 ## Umbrella header
 
 `include/dmn.hpp` re-exports the common queue, async, DMesg, I/O, runtime,
-socket, state, timer, interval-tree, and Kafka headers. It does not itself add
-symbols. Consumers needing a narrow dependency surface should include component
-headers directly.
+socket, state, timer, interval-tree, DLock, and Kafka headers, including
+`dmn-runtime-state.hpp`. It does not itself add symbols. Consumers needing a
+narrow dependency surface should include component headers directly.
 
-## Gaps / improvements
-
-1. Convert each input byte to `unsigned char` before `tolower`; specify whether
-   the intended comparison is ASCII-only, locale-based, or Unicode-aware.
-2. Constrain `incrementByOne` to supported integer types and provide explicit
-   overflow semantics for signed types.
-3. Make `ScopeGuard` move-only and add a release operation, or replace it with
-   the standard scope-exit facility where available. Require a non-throwing
-   cleanup callable.
-4. Decide whether `dmn.hpp` intentionally omits `dmn-dlock.hpp` and
-   `dmn-runtime-state.hpp`; document opt-in headers or include them in the
-   umbrella consistently.
-5. Add standalone-header compile tests to detect missing direct includes and
-   guarantee each public header is self-contained.
+The `dmn-standalone-header-check` test compiles each supported public header
+as an independent translation unit. The deprecated headers are excluded; they
+still reference the pre-CRTP blocking-queue API and do not compile against the
+current queue interface.

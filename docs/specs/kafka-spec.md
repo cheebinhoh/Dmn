@@ -34,10 +34,9 @@ clients.
 
 ## Gaps / improvements
 
-1. The subscription failure diagnostic currently has a malformed unary-plus
-   expression, preventing this library translation unit from compiling.
-   Remove the stray operator. The same path destroys the subscription list
-   before reading its count for the diagnostic, so capture that count first.
+1. The subscription failure path destroys the topic list before reading its
+   `cnt` field to format the error, causing a use-after-free. Capture the count
+   before destroying the list, then report the subscription failure.
 2. Correct the reserved `Key` parsing: current construction assigns it to the
    topic member while write uses a separate `m_key` that is never populated.
    Cover explicit topic/key combinations and defaults in tests.

@@ -95,6 +95,7 @@ target_include_directories(dmn
 if(NOT APPLE)
   target_link_libraries(dmn
                           PUBLIC
+                          ICU::uc
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
                           atomic
@@ -102,6 +103,7 @@ if(NOT APPLE)
 else()
   target_link_libraries(dmn
                           PUBLIC
+                          ICU::uc
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
 )

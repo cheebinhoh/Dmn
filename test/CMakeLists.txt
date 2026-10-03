@@ -3,8 +3,8 @@
 ADD_TEST_EXECUTABLE(dmn
                       dmn-test-async
                       dmn-test-async-2
-                      dmn-test-async-queue-lf
                       dmn-test-async-2-queue-lf
+                      dmn-test-async-queue-lf
                       dmn-test-blockingqueue
                       dmn-test-blockingqueue-2
                       dmn-test-blockingqueue-3
@@ -19,8 +19,17 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-lf-6
                       dmn-test-blockingqueue-lf-7
                       dmn-test-blockingqueue-lf-8
+                      dmn-test-blockingqueue-lf-stress
+                      dmn-test-blockingqueue-lf-wait-empty
                       dmn-test-blockingqueue-perf-1
                       dmn-test-blockingqueue-perf-2
+                      dmn-test-blockingqueue-shutdown
+                      dmn-test-dlock-1
+                      dmn-test-dlock-2
+                      dmn-test-dlock-3
+                      dmn-test-dlock-4
+                      dmn-test-dlock-5
+                      dmn-test-dlock-dmesg-seam
                       dmn-test-dmesg-1
                       dmn-test-dmesg-2
                       dmn-test-dmesg-3
@@ -33,12 +42,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
-                      dmn-test-dlock-dmesg-seam
-                      dmn-test-dlock-1
-                      dmn-test-dlock-2
-                      dmn-test-dlock-3
-                      dmn-test-dlock-4
-                      dmn-test-dlock-5
+                      dmn-test-dmesg-pb
+                      dmn-test-dmesg-pb-util
                       dmn-test-dmesgnet-1
                       dmn-test-dmesgnet-2
                       dmn-test-dmesgnet-3
@@ -48,8 +53,6 @@ ADD_TEST_EXECUTABLE(dmn
                       #dmn-test-dmesgnet-7
                       #dmn-test-dmesgnet-8
                       #dmn-test-dmesgnet-9
-                      dmn-test-dmesg-pb
-                      dmn-test-dmesg-pb-util
                       dmn-test-inflight-guard
                       dmn-test-interval-btree
                       dmn-test-io
@@ -61,11 +64,13 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-pipe-queue-lf-2
                       dmn-test-pipe-queue-lf-3
                       dmn-test-pipe-queue-lf-4
+                      dmn-test-pipe-scheduled
+                      dmn-test-proc
                       dmn-test-pub-sub
-                      dmn-test-pub-sub-errors
-                      dmn-test-pub-sub-queue-lf
                       dmn-test-pub-sub-2
                       dmn-test-pub-sub-2-queue-lf
+                      dmn-test-pub-sub-errors
+                      dmn-test-pub-sub-queue-lf
                       dmn-test-runtime
                       dmn-test-runtime-2
                       dmn-test-runtime-3
@@ -77,6 +82,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-socket
                       dmn-test-state
                       dmn-test-timer
+                      dmn-test-umbrella
+                      dmn-test-util
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
                    )
@@ -93,17 +100,43 @@ if (BUILD_KAFKA_TEST)
                      )
 endif()
 
+file(GLOB DMN_PUBLIC_HEADERS CONFIGURE_DEPENDS
+     "${PROJECT_SOURCE_DIR}/include/*.hpp"
+     "${PROJECT_SOURCE_DIR}/include/kafka/*.hpp")
+set(DMN_STANDALONE_HEADER_SOURCES)
+foreach(header IN LISTS DMN_PUBLIC_HEADERS)
+  file(RELATIVE_PATH header_relative "${PROJECT_SOURCE_DIR}/include" "${header}")
+  string(MAKE_C_IDENTIFIER "${header_relative}" header_id)
+  set(header_source
+      "${CMAKE_CURRENT_BINARY_DIR}/standalone-headers/${header_id}.cpp")
+  file(WRITE "${header_source}" "#include \"${header}\"\n")
+  list(APPEND DMN_STANDALONE_HEADER_SOURCES "${header_source}")
+endforeach()
+
+add_library(dmn-standalone-header-check OBJECT
+            ${DMN_STANDALONE_HEADER_SOURCES})
+target_link_libraries(dmn-standalone-header-check PRIVATE dmn)
+target_include_directories(dmn-standalone-header-check
+                           PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_compile_options(dmn-standalone-header-check PRIVATE
+                       -Wall -Wextra -Wpedantic)
+add_test(NAME dmn-standalone-header-check
+         COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}"
+                 --target dmn-standalone-header-check)
+set_tests_properties(dmn-standalone-header-check PROPERTIES LABELS "dmn")
+
 if (ENABLE_VALGRIND)
   SET(DMN_VALGRIND_TESTS
         dmn-test-async
         dmn-test-async-2
-        dmn-test-async-queue-lf
         dmn-test-async-2-queue-lf
+        dmn-test-async-queue-lf
         dmn-test-blockingqueue
         dmn-test-blockingqueue-2
         dmn-test-blockingqueue-3
         dmn-test-blockingqueue-4
         dmn-test-blockingqueue-5
+        dmn-test-blockingqueue-6
         dmn-test-blockingqueue-lf-1
         dmn-test-blockingqueue-lf-2
         dmn-test-blockingqueue-lf-3
@@ -111,14 +144,18 @@ if (ENABLE_VALGRIND)
         dmn-test-blockingqueue-lf-5
         dmn-test-blockingqueue-lf-6
         dmn-test-blockingqueue-lf-7
+        dmn-test-blockingqueue-lf-8
+        dmn-test-blockingqueue-lf-stress
+        dmn-test-blockingqueue-lf-wait-empty
         dmn-test-blockingqueue-perf-1
         dmn-test-blockingqueue-perf-2
-        dmn-test-dlock-dmesg-seam
+        dmn-test-blockingqueue-shutdown
         dmn-test-dlock-1
         dmn-test-dlock-2
         dmn-test-dlock-3
         dmn-test-dlock-4
         dmn-test-dlock-5
+        dmn-test-dlock-dmesg-seam
         dmn-test-dmesg-1
         dmn-test-dmesg-2
         dmn-test-dmesg-3
@@ -129,28 +166,32 @@ if (ENABLE_VALGRIND)
         dmn-test-dmesg-9
         dmn-test-dmesg-10
         dmn-test-dmesg-11
+        dmn-test-dmesg-pb
+        dmn-test-dmesg-pb-util
         dmn-test-dmesgnet-1
         dmn-test-dmesgnet-2
         dmn-test-dmesgnet-3
         dmn-test-dmesgnet-4
         dmn-test-dmesgnet-5
         dmn-test-dmesgnet-6
-        dmn-test-dmesg-pb
-        dmn-test-dmesg-pb-util
         dmn-test-inflight-guard
         dmn-test-interval-btree
         dmn-test-io
         dmn-test-pipe
         dmn-test-pipe-2
         dmn-test-pipe-3
+        dmn-test-pipe-4
         dmn-test-pipe-queue-lf
         dmn-test-pipe-queue-lf-2
         dmn-test-pipe-queue-lf-3
+        dmn-test-pipe-queue-lf-4
+        dmn-test-pipe-scheduled
+        dmn-test-proc
         dmn-test-pub-sub
-        dmn-test-pub-sub-errors
-        dmn-test-pub-sub-queue-lf
         dmn-test-pub-sub-2
         dmn-test-pub-sub-2-queue-lf
+        dmn-test-pub-sub-errors
+        dmn-test-pub-sub-queue-lf
         dmn-test-runtime
         dmn-test-runtime-2
         dmn-test-runtime-3
@@ -162,6 +203,8 @@ if (ENABLE_VALGRIND)
         dmn-test-socket
         dmn-test-state
         dmn-test-timer
+        dmn-test-umbrella
+        dmn-test-util
   )
 
   ADD_TEST_VALGRIND(dmn

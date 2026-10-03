@@ -55,6 +55,9 @@
  *            and `count`).
  *          * If the timeout expires and the queue is still empty, returns
  *            no item.
+ *     3. If shutdown wakes a call that was already admitted, it returns up to
+ *        `count` items currently in the queue, including a partial batch or an
+ *        empty vector. Calls started after shutdown are rejected.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
@@ -139,6 +142,9 @@ public:
    *       items (the current queue size).
    *     * If timeout expires and the queue is still empty, the function returns
    *       no item.
+   * - If shutdown wakes an already-admitted call, return up to @p count items
+   *   currently in the queue. This may be a partial batch or an empty vector.
+   *   Calls started after shutdown are rejected.
    *
    * The returned vector contains moved items removed from the queue.
    *
@@ -146,9 +152,8 @@ public:
    * @param timeout Timeout in microseconds for waiting for the full count.
    * A value of 0 means wait forever.
    *
-   * @return Vector of items (size == count on success without timeout, or
-   * between 1 and count if a timeout occurred after at least one item was
-   * produced).
+   * @return Vector of items (size == count on success without timeout, or up
+   * to count after timeout or shutdown).
    */
   virtual auto pop(size_t count, long timeout = 0) -> std::vector<T> override;
 
@@ -265,7 +270,8 @@ void Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight(void *arg) {
 
 template <typename T>
 auto Dmn_BlockingQueue_Mt<T>::isInflightGuardClosed() -> bool {
-  return isShutdown();
+  // The guard tracks this queue's lifecycle, not an enclosing wrapper's.
+  return Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<T>, T>::isShutdown();
 }
 
 template <typename T> void Dmn_BlockingQueue_Mt<T>::pushCopy(const T &item) {

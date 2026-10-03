@@ -222,13 +222,13 @@ public:
    * @brief Busy-wait until the queue becomes empty.
    *
    * @details
-   * This method repeatedly checks the queue state until it observes an empty
-   * condition. It is intended to be used by a single owning thread to wait for
-   * draining, typically as part of a shutdown protocol external to this queue.
+   * This method waits until the outstanding-item count reaches zero. It may
+   * run concurrently with consumers and is interrupted by shutdown. Producers
+   * must be stopped before calling this method and kept stopped until it
+   * returns; otherwise a producer may enqueue after the zero observation.
    *
-   * @warning This method is not protected by the inflight/epoch guard and
-   * should not be used concurrently with arbitrary producers/consumers unless
-   * the caller can ensure safe coordination.
+   * The in-flight ticket protects this call from teardown and the item count
+   * avoids reading queue nodes that may be reclaimed by the epoch mechanism.
    *
    * @return Total number of successful pushes observed by this queue since
    * construction.
@@ -373,6 +373,9 @@ private:
 
   std::atomic<std::uint64_t>
       m_total_push_count{}; ///< Monotonically increasing push counter.
+  std::atomic<std::uint64_t>
+      m_outstanding_item_count{}; ///< Published or in-progress enqueues not yet
+                                  ///< removed by a consumer.
 
   std::atomic<EpochData>
       m_epochData{}; ///< Current global epoch identifier and in-flight total.
@@ -540,9 +543,12 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
       } else {
         if (m_head.compare_exchange_weak(first, next, std::memory_order_acq_rel,
                                          std::memory_order_acquire)) {
-          res = std::move_if_noexcept(next->m_data);
-
+          // Retire the old dummy before extracting T, which may throw.
           retireNode(inflightTicket->getValue(), first);
+
+          // The head update dequeued one item; record it before extracting T.
+          m_outstanding_item_count.fetch_sub(1, std::memory_order_acq_rel);
+          res = std::move_if_noexcept(next->m_data);
 
           break;
         }
@@ -578,18 +584,24 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
 template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
-  Node *newNode = new Node;
+  // Keep ownership local until the node is linked into the shared queue.
+  auto newNode = std::make_unique<Node>();
 
   newNode->m_data = std::forward<U>(item);
 
+  // Include this enqueue before publication so a concurrent drain cannot
+  // mistake an in-progress push for an empty queue.
+  m_outstanding_item_count.fetch_add(1, std::memory_order_acq_rel);
+
+  auto *newNodeRaw = newNode.get();
   Node *last{};
   Node *next{};
 
   do {
     last = m_tail.load(std::memory_order_acquire);
     if (nullptr == last) {
-      delete newNode;
-      newNode = nullptr;
+      // Shutdown rejected publication; undo the pending-enqueue count.
+      m_outstanding_item_count.fetch_sub(1, std::memory_order_acq_rel);
 
       throw std::runtime_error(
           "Dmn_BlockingQueue_Lf: push attempted on shutdown queue");
@@ -603,9 +615,11 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
       if (next == nullptr) {
         // Release: ensures newNode->m_data is visible to any consumer that
         // acquires this m_next pointer (publish-subscribe ordering).
-        if (last->m_next.compare_exchange_strong(next, newNode,
+        if (last->m_next.compare_exchange_strong(next, newNodeRaw,
                                                  std::memory_order_release,
                                                  std::memory_order_relaxed)) {
+          // Ownership transfers to the queue only after successful linking.
+          newNode.release();
           break;
         }
       } else {
@@ -617,39 +631,38 @@ void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
     }
   } while (true);
 
-  if (newNode) {
-    // Release: publishes the newly linked node so consumers see it via m_tail.
-    m_tail.compare_exchange_strong(last, newNode, std::memory_order_release,
-                                   std::memory_order_relaxed);
-    m_tail.notify_all();
+  // Release: publishes the newly linked node so consumers see it via m_tail.
+  m_tail.compare_exchange_strong(last, newNodeRaw, std::memory_order_release,
+                                 std::memory_order_relaxed);
+  m_tail.notify_all();
 
-    // Relaxed: m_total_push_count is an exact counter (used by waitForEmpty());
-    // we only require atomicity for the increment, not additional ordering.
-    m_total_push_count.fetch_add(1, std::memory_order_relaxed);
-  }
+  // Relaxed: m_total_push_count is an exact counter (used by waitForEmpty());
+  // we only require atomicity for the increment, not additional ordering.
+  m_total_push_count.fetch_add(1, std::memory_order_relaxed);
 }
 
 template <typename T> auto Dmn_BlockingQueue_Lf<T>::waitForEmpty() -> uint64_t {
-  do {
-    Node *last = m_tail.load(std::memory_order_acquire);
-    if (nullptr == last) {
-      break;
+  Inflight_Guard_Ticket inflightTicket{};
+  try {
+    inflightTicket = this->enterInflightGate();
+  } catch (const std::runtime_error &) {
+    if (isShutdown()) {
+      return m_total_push_count.load(std::memory_order_acquire);
     }
 
-    Node *first = m_head.load(std::memory_order_acquire);
-    Node *next = first->m_next.load(std::memory_order_acquire);
+    throw;
+  }
 
-    if (first == m_head.load(std::memory_order_acquire)) {
-      if (first == last) {
-        if (next == nullptr) {
-          break; // empty!
-        }
-      }
-    }
+  DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
+                        &inflightTicket);
 
+  while (m_outstanding_item_count.load(std::memory_order_acquire) > 0 &&
+         !isShutdown()) {
     dmn::Dmn_Proc::testcancel();
     dmn::Dmn_Proc::yield();
-  } while (true);
+  }
+
+  DMN_PROC_CLEANUP_POP(0);
 
   return m_total_push_count.load(std::memory_order_acquire);
 }
@@ -748,7 +761,8 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::isInflightGuardClosed() -> bool {
-  return isShutdown();
+  // The guard tracks this queue's lifecycle, not an enclosing wrapper's.
+  return Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::isShutdown();
 }
 
 template <typename T>
