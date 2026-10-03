@@ -88,6 +88,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <exception>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -121,11 +122,13 @@ namespace dmn {
  * with the pipe mutex, rejects later writes, and drains accepted work before
  * joining the worker when callbacks complete normally; it can therefore wait
  * until pending deadlines. If a callback throws, the worker stops and remaining
- * accepted work is not drained. Callers must serialize concurrent shutdown
- * calls and ensure the pipe outlives its callers and processing callback.
+ * accepted work is not drained. The first processing/worker exception is
+ * retained; waitForEmpty() wakes and rethrows it instead of waiting for
+ * unfinished accounting. Callers must serialize concurrent shutdown calls and
+ * ensure the pipe outlives its callers and processing callback.
  *
- * A callback exception ends the background worker, matching the existing
- * ordinary-worker failure policy; failures are not exposed through this class.
+ * A callback exception ends the background worker. The exception is observable
+ * through waitForEmpty(), which rethrows the first processing/worker failure.
  */
 template <typename T, typename QueueType = Dmn_BlockingQueue_Mt<T>>
 class Dmn_Pipe : public Dmn_Io<T>, private QueueType, private Dmn_Proc {
@@ -161,7 +164,8 @@ public:
    *
    * @throws std::invalid_argument if scheduled writes are enabled without a
    * processing task.
-   * @throws std::runtime_error if the scheduled worker cannot be started.
+   * @throws std::runtime_error if a requested background worker cannot be
+   * started.
    */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0,
@@ -219,11 +223,14 @@ public:
    * Blocks until items are available or the read timeout expires. The task is
    * invoked before the internal bookkeeping mutex is acquired to update the
    * processed-item count (`m_count`) and signal waiting threads. Items are
-   * passed to `fn` using move semantics when possible.
+   * passed to `fn` using move semantics when possible. If a callback throws,
+   * the successful prefix is accounted, the exception is retained, and it is
+   * rethrown to the caller.
    *
    * @param fn The functor to process the next item popped from the pipe
    *
    * @return The number of items read and processed.
+   * @throws The callback exception, if processing fails.
    */
   auto readAndProcess(Dmn_Pipe::Task fn, size_t count = 1,
                       long timeout = 0) -> size_t;
@@ -296,12 +303,14 @@ public:
    * time of the call have been popped and processed (i.e., `m_count` has
    * advanced to cover them). In scheduled-write mode it snapshots accepted
    * ordinary and scheduled writes and waits for that snapshot. Shutdown may
-   * cause a waiting call to return before the snapshot has completed.
+   * cause a waiting call to return before the snapshot has completed. A
+   * processing/worker exception wakes the call and is rethrown.
    *
    * Producers must be externally coordinated when callers require the
    * snapshot to include every write in a larger logical operation.
    *
-   * @return The number of items that were passed through the pipe in total
+   * @return The number of items in the completed snapshot.
+   * @throws The first exception raised during processing or by the worker.
    */
   auto waitForEmpty() -> uint64_t override;
 
@@ -380,6 +389,24 @@ private:
    */
   void scheduledProcessingLoop(const Dmn_Pipe::Task &fn);
 
+  void recordProcessingFailure(std::exception_ptr failure) {
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      if (!m_processing_exception) {
+        m_processing_exception = std::move(failure);
+      }
+    }
+
+    m_empty_cond.notify_all();
+    m_work_cond.notify_all();
+  }
+
+  auto hasProcessingFailure() -> bool {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    return static_cast<bool>(m_processing_exception);
+  }
+
   std::mutex m_mutex{}; ///< Protects scheduled work and processed accounting.
   std::condition_variable
       m_empty_cond{}; ///< Signalled when processed count reaches inbound count.
@@ -387,7 +414,9 @@ private:
       m_work_cond{}; ///< Wakes scheduled worker for new work or shutdown.
   ScheduledQueue m_scheduled_queue{}; ///< Work ordered by deadline.
   size_t m_count{}; ///< Total number of items processed (popped and handled).
-  uint64_t m_submitted_count{};       ///< Accepted writes in scheduled mode.
+  uint64_t m_submitted_count{}; ///< Accepted writes in scheduled mode.
+  std::exception_ptr
+      m_processing_exception{};       ///< First processing/worker failure.
   std::atomic_flag m_shutdown_flag{}; ///< Set when shutdown() is called.
   bool m_hasFn{}; ///< @c true when a background processing task was provided.
   bool m_scheduled_writes_enabled{}; ///< Selects the deadline-aware worker.
@@ -405,36 +434,43 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
   }
 
   if (fn) {
-    if (m_scheduled_writes_enabled) {
-      if (!exec([this, fn = std::move(fn)]() {
-            try {
-              scheduledProcessingLoop(fn);
-            } catch (...) {
-              // Match the ordinary pipe worker: a callback failure stops
-              // processing.
-            }
-          })) {
-        throw std::runtime_error("failed to start Dmn_Pipe scheduled worker");
-      }
+    bool execSuccess{};
 
-      return;
+    if (m_scheduled_writes_enabled) {
+      execSuccess = exec([this, fn = std::move(fn)]() {
+        try {
+          scheduledProcessingLoop(fn);
+        } catch (...) {
+          recordProcessingFailure(std::current_exception());
+        }
+      });
+    } else {
+      execSuccess = exec([this, fn = std::move(fn), count, timeout]() {
+        while (true) {
+          Dmn_Proc::yield();
+
+          try {
+            readAndProcess(fn, count, timeout);
+          } catch (...) {
+            recordProcessingFailure(std::current_exception());
+
+            break;
+          }
+
+          // This check runs inside the worker after startup and determines
+          // when its processing loop should exit.
+          if (isShutdown() || hasProcessingFailure()) {
+            break;
+          }
+        }
+      });
     }
 
-    exec([this, fn, count, timeout]() {
-      while (true) {
-        Dmn_Proc::yield();
-
-        try {
-          readAndProcess(fn, count, timeout);
-        } catch (...) {
-          break;
-        }
-
-        if (isShutdown()) {
-          break;
-        }
-      }
-    });
+    if (!execSuccess) {
+      // Startup failure leaves no worker to process queued work, so fail
+      // construction instead of returning an unusable pipe.
+      throw std::runtime_error("failed to start Dmn_Pipe worker");
+    }
   }
 }
 
@@ -471,19 +507,41 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
                                             long timeout) -> size_t {
   auto dataList = this->pop(count, timeout);
 
-  size_t processedCount = dataList.size();
+  size_t processedCount{};
 
-  if (fn) {
-    for (auto &item : dataList) {
-      Dmn_Proc::testcancel();
+  try {
+    if (fn) {
+      for (auto &item : dataList) {
+        Dmn_Proc::testcancel();
 
-      fn(std::move_if_noexcept(item));
+        fn(std::move_if_noexcept(item));
+        ++processedCount;
+      }
+    } else {
+      processedCount = dataList.size();
     }
+  } catch (...) {
+    const auto failure = std::current_exception();
+
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_count += processedCount;
+
+      if (!m_processing_exception) {
+        m_processing_exception = failure;
+      }
+    }
+
+    m_empty_cond.notify_all();
+    m_work_cond.notify_all();
+
+    throw;
   }
 
-  std::unique_lock<std::mutex> lock(m_mutex);
-
-  m_count += processedCount;
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_count += processedCount;
+  }
 
   m_empty_cond.notify_all();
 
@@ -571,8 +629,12 @@ auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
     const auto inbound_count = m_submitted_count;
 
     m_empty_cond.wait(lock, [this, inbound_count] {
-      return m_count >= inbound_count || isShutdown();
+      return m_count >= inbound_count || m_processing_exception || isShutdown();
     });
+
+    if (m_processing_exception) {
+      std::rethrow_exception(m_processing_exception);
+    }
 
     return inbound_count;
   }
@@ -586,8 +648,12 @@ auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
   Dmn_Proc::testcancel();
 
   m_empty_cond.wait(lock, [this, inbound_count] {
-    return m_count >= inbound_count || isShutdown();
+    return m_count >= inbound_count || m_processing_exception || isShutdown();
   });
+
+  if (m_processing_exception) {
+    std::rethrow_exception(m_processing_exception);
+  }
 
   return inbound_count;
 }
@@ -601,6 +667,10 @@ void Dmn_Pipe<T, QueueType>::scheduledProcessingLoop(const Dmn_Pipe::Task &fn) {
       std::unique_lock<std::mutex> lock(m_mutex);
 
       while (true) {
+        if (m_processing_exception) {
+          return;
+        }
+
         auto immediate_item = QueueType::popNoWait();
         if (immediate_item) {
           item.emplace(std::move_if_noexcept(*immediate_item));

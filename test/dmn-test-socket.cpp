@@ -8,46 +8,50 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <iostream>
-#include <memory>
-#include <thread>
+#include <cstdio>
+#include <stdexcept>
+#include <string>
+#include <system_error>
 
-#include "dmn-proc.hpp"
 #include "dmn-socket.hpp"
+
+TEST(DmnSocketTest, PreservesEmptyDatagramsAndRejectsTruncation) {
+  dmn::Dmn_Socket receiver{"127.0.0.1", 5000};
+  dmn::Dmn_Socket sender{"127.0.0.1", 5000, true};
+
+  sender.write(std::string(BUFSIZ + 1, 'x'));
+  try {
+    static_cast<void>(receiver.read());
+    FAIL() << "Oversized datagram should report truncation";
+  } catch (const std::system_error &error) {
+    EXPECT_EQ(error.code(), std::errc::message_size);
+  }
+
+  sender.write(std::string{});
+  const auto empty = receiver.read();
+  ASSERT_TRUE(empty.has_value());
+  EXPECT_TRUE(empty->empty());
+
+  sender.write("hello socket");
+  const auto message = receiver.read();
+  ASSERT_TRUE(message.has_value());
+  EXPECT_EQ(*message, "hello socket");
+}
+
+TEST(DmnSocketTest, RejectsInvalidIPv4AddressAndPort) {
+  EXPECT_THROW((dmn::Dmn_Socket{"not-an-ip", 5000}), std::invalid_argument);
+  EXPECT_THROW((dmn::Dmn_Socket{"127.0.0.1", -1}), std::invalid_argument);
+  EXPECT_THROW((dmn::Dmn_Socket{"127.0.0.1", 65536}), std::invalid_argument);
+  EXPECT_THROW((dmn::Dmn_Socket{"127.0.0.1", 0, true}), std::invalid_argument);
+  EXPECT_THROW((dmn::Dmn_Socket{"", 5000, true}), std::invalid_argument);
+}
+
+TEST(DmnSocketTest, AllowsWildcardBindToEphemeralPort) {
+  EXPECT_NO_THROW((dmn::Dmn_Socket{"", 0}));
+}
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-
-  dmn::Dmn_Socket writeSocket{"127.0.0.1", 5000, true};
-  std::unique_ptr<dmn::Dmn_Socket> input =
-      std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-  dmn::Dmn_Io<std::string> *output{&writeSocket};
-
-  std::string readData{};
-
-  std::unique_ptr<dmn::Dmn_Socket> inputHandle = std::move(input);
-  dmn::Dmn_Proc readProc{"readProc", [&inputHandle, &readData]() {
-                           auto data = inputHandle->read();
-                           if (data) {
-                             readData = std::move_if_noexcept(*data);
-                           }
-                         }};
-
-  std::string writeData{"hello socket"};
-  dmn::Dmn_Proc writeProc{"readProc",
-                          [output, &writeData]() { output->write(writeData); }};
-
-  readProc.exec();
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  writeProc.exec();
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  writeProc.wait();
-  readProc.wait();
-
-  EXPECT_TRUE(writeData == readData);
 
   return RUN_ALL_TESTS();
 }

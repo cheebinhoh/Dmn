@@ -45,10 +45,13 @@
 
 #include <cassert>
 #include <chrono>
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <sys/time.h>
+#include <system_error>
 #include <utility>
 
 namespace dmn {
@@ -182,7 +185,22 @@ void Dmn_DMesgNet::createInputHandlerProc() {
           while (this->m_input_handler && !m_shutdown) {
             dmn::DMesgPb dmesgpb_read{};
 
-            auto data = this->m_input_handler->read();
+            std::optional<std::string> data{};
+            try {
+              data = this->m_input_handler->read();
+            } catch (const std::system_error &error) {
+              if (m_shutdown) {
+                break;
+              }
+
+              std::cerr << "Dmn_DMesgNet[" << m_name
+                        << "]: input read failed: " << error.what() << '\n';
+              if (error.code() == std::errc::message_size) {
+                continue;
+              }
+
+              break;
+            }
             if (m_shutdown) {
               break;
             }
@@ -190,7 +208,12 @@ void Dmn_DMesgNet::createInputHandlerProc() {
             Dmn_Proc::yield();
 
             if (data) {
-              dmesgpb_read.ParseFromString(*data);
+              if (data->empty() || !dmesgpb_read.ParseFromString(*data)) {
+                std::cerr << "Dmn_DMesgNet[" << m_name
+                          << "]: discarded empty or malformed input message\n";
+                continue;
+              }
+
               if (dmesgpb_read.sourcewritehandleridentifier() == this->m_name) {
                 continue;
               }

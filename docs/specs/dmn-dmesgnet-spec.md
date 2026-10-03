@@ -200,19 +200,25 @@ individually:
 
 - `Dmn_Pipe` is used to build in-process test forwarding links; it is not a
   network guarantee.
-- `Dmn_Socket` uses IPv4 UDP datagrams. `read()` uses a fixed `BUFSIZ` buffer;
-  datagram truncation, zero-length datagrams, send errors, socket binding, and
-  addressing are adapter-level concerns.
+- `Dmn_Socket` uses IPv4 UDP datagrams. It preserves zero-length datagrams,
+  validates IPv4/port configuration, and reports receive errors or truncated
+  datagrams with `std::system_error`. `Dmn_DMesgNet` discards empty or malformed
+  protobuf payloads; it logs and discards oversized datagrams and stops its
+  input worker after other socket read failures. The socket adapter is not
+  thread-safe, and its inherited `shutdown()` does not interrupt a blocked
+  read. `Dmn_DMesgNet` cancels and joins its owned input worker before releasing
+  the adapter; other callers must stop and join their I/O threads before
+  destroying a socket.
 - `Dmn_DMesgNet_Kafka` uses the fixed `Dmn_dmesgnet` topic, a consumer group
   named from the node, and a static producer key. Kafka acknowledgements are
   not translated into per-peer DMesgNet membership or application-apply
   acknowledgements.
 
-The DMesgNet input code ignores the return value of `ParseFromString()`.
-Consequently malformed or truncated protobuf input is not explicitly rejected
-at the bridge boundary. The message envelope also has no authenticated
-transport-sender field; its source identifiers are payload values and can be
-spoofed by a sender able to publish to the configured channel.
+The DMesgNet input code rejects empty payloads and checks the result of
+`ParseFromString()`, logging and discarding invalid messages. The message
+envelope still has no authenticated transport-sender field; its source
+identifiers are payload values and can be spoofed by a sender able to publish
+to the configured channel.
 
 An adapter that fans messages to every subscriber can provide useful
 best-effort dissemination. It still does not supply authenticated peer identity
@@ -328,9 +334,6 @@ security-reviewed.
 - **Gap:** The no-both-endpoints fallback sets protobuf state to `Ready` but
   not `m_ready`, leaving output-only application messages queued. **Improve:**
   define readiness consistently and test all four endpoint combinations.
-- **Gap:** UDP `read()` maps zero-length datagrams to `nullopt`, and generic I/O
-  does not define framing, size, delivery, or concurrency. **Improve:** define
-  the adapter contract and qualify each supported transport independently.
 
 **P2 — Resource bounds and evidence**
 
@@ -362,8 +365,8 @@ deterministic and robust without turning it into Raft:
 5. Separate membership liveness from master eligibility and topic playback.
 6. Make cached-state replay versioned and bounded, and report whether replay was
    sent/received/applied without calling it a committed log.
-7. Reject malformed input and expose transport, parse, queue-overflow, and
-   shutdown errors.
+7. Expose transport, parse, queue-overflow, and shutdown failures through an
+   observable error interface, and add focused malformed/truncated-input tests.
 8. Replace wall-clock sleeps in state-machine tests with injected clock/scheduler
    and controllable message delivery.
 

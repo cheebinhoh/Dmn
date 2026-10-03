@@ -9,8 +9,9 @@
  * SO_BROADCAST socket option, and optionally binds to the supplied
  * port (read mode). When write_only is true the bind step is skipped.
  *
- * read() calls recv() with MSG_WAITALL and returns std::nullopt when recv()
- * returns zero or an error. UDP has no peer-close/stream-EOF notification.
+ * read() receives one complete UDP datagram. Empty datagrams are returned as
+ * empty strings; receive errors and truncated datagrams throw
+ * std::system_error.
  *
  * write() reconstructs the destination sockaddr_in from the stored
  * address/port on every call and uses sendto() to transmit the
@@ -27,15 +28,17 @@
 #include <arpa/inet.h>
 #include <array>
 #include <cerrno>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <netinet/in.h>
 #include <optional>
-#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <system_error>
 #include <unistd.h>
 #include <utility>
@@ -44,40 +47,57 @@ namespace dmn {
 
 Dmn_Socket::Dmn_Socket(std::string_view ip4, int port_no, bool write_only)
     : m_ip4{ip4}, m_port_no{port_no}, m_write_only{write_only} {
+  if (port_no < 0 || port_no > std::numeric_limits<uint16_t>::max() ||
+      (write_only && port_no == 0)) {
+    throw std::invalid_argument("Dmn_Socket: invalid UDP port");
+  }
+
+  if (m_ip4.empty() && write_only) {
+    throw std::invalid_argument(
+        "Dmn_Socket: write-only sockets require a destination IPv4 address");
+  }
+
   constexpr int broadcast{1};
   struct sockaddr_in servaddr {};
   const int type{SOCK_DGRAM};
 
-  m_fd = socket(AF_INET, type, 0);
-  if (m_fd < 0) {
-    throw std::runtime_error("Error creating socket: " +
-                             std::system_category().message(errno));
-  }
-
   memset(&servaddr, 0, sizeof(servaddr));
-
   servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(m_port_no);
+  servaddr.sin_port = htons(static_cast<uint16_t>(m_port_no));
+
   if (m_ip4.empty()) {
     servaddr.sin_addr.s_addr = INADDR_ANY;
-  } else {
-    inet_pton(AF_INET, m_ip4.c_str(), &servaddr.sin_addr);
+  } else if (inet_pton(AF_INET, m_ip4.c_str(), &servaddr.sin_addr) != 1) {
+    throw std::invalid_argument("Dmn_Socket: invalid IPv4 address: " + m_ip4);
   }
 
-  if (setsockopt(m_fd, SOL_SOCKET, SO_BROADCAST, &broadcast,
-                 sizeof(broadcast)) < 0) {
-    throw std::runtime_error("Error in setsockopt: SOL_SOCKET, SO_BROADCAST: " +
-                             std::system_category().message(errno));
+  m_fd = socket(AF_INET, type, 0);
+  if (m_fd < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "Dmn_Socket: socket");
   }
 
-  if (!m_write_only &&
-      bind(
-          m_fd,
-          reinterpret_cast<const struct sockaddr *>(
-              &servaddr), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-          sizeof(servaddr)) < 0) {
-    throw std::runtime_error("Error in bind(" + std::to_string(m_port_no) +
-                             ") : " + std::system_category().message(errno));
+  try {
+    if (setsockopt(m_fd, SOL_SOCKET, SO_BROADCAST, &broadcast,
+                   sizeof(broadcast)) < 0) {
+      throw std::system_error(errno, std::system_category(),
+                              "Dmn_Socket: setsockopt SO_BROADCAST");
+    }
+
+    if (!m_write_only &&
+        bind(
+            m_fd,
+            reinterpret_cast<const struct sockaddr *>(
+                &servaddr), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            sizeof(servaddr)) < 0) {
+      throw std::system_error(errno, std::system_category(),
+                              "Dmn_Socket: bind");
+    }
+  } catch (...) {
+    close(m_fd);
+    m_fd = -1;
+
+    throw;
   }
 }
 
@@ -89,23 +109,40 @@ Dmn_Socket::~Dmn_Socket() noexcept {
 
 auto Dmn_Socket::read() -> std::optional<std::string> {
   std::array<char, BUFSIZ> buf{};
+  struct iovec iov {
+    .iov_base = buf.data(), .iov_len = buf.size(),
+  };
+  struct msghdr msg {};
+  msg.msg_iov = &iov;
+  msg.msg_iovlen = 1;
 
-  // Block until a datagram arrives or recv() returns zero/an error.
-  const ssize_t n_read = recv(m_fd, buf.data(), sizeof(buf), MSG_WAITALL);
-  if (n_read < 0 || n_read == 0) {
-    // A zero-length datagram or recv error is represented as no value.
-    return {};
+  ssize_t n_read{};
+  do {
+    n_read = recvmsg(m_fd, &msg, 0);
+  } while (n_read < 0 && errno == EINTR);
+
+  if (n_read < 0) {
+    throw std::system_error(errno, std::system_category(),
+                            "Dmn_Socket: recvmsg");
   }
 
-  std::string string(std::span<char>(buf).data(), n_read);
+  if ((msg.msg_flags & MSG_TRUNC) != 0) {
+    throw std::system_error(std::make_error_code(std::errc::message_size),
+                            "Dmn_Socket: received UDP datagram exceeds BUFSIZ");
+  }
 
-  return string;
+  return std::string(buf.data(), static_cast<size_t>(n_read));
 }
 
 void Dmn_Socket::write(const std::string &item) {
+  if (m_ip4.empty() || m_port_no == 0) {
+    throw std::logic_error(
+        "Dmn_Socket: socket has no configured datagram destination");
+  }
+
   const char *buf{item.c_str()};
   const size_t n_read{item.size()};
-  size_t n_write{};
+  ssize_t n_write{};
 
   /* FIXME: it might be effective to store the socket address (sockaddr_in)
    *        as a member value per object to avoid reconstructing it on every
@@ -115,10 +152,9 @@ void Dmn_Socket::write(const std::string &item) {
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
   servaddr.sin_port = htons(m_port_no);
-  if (m_ip4.empty()) {
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-  } else {
-    inet_pton(AF_INET, m_ip4.c_str(), &servaddr.sin_addr);
+  if (inet_pton(AF_INET, m_ip4.c_str(), &servaddr.sin_addr) != 1) {
+    throw std::invalid_argument("Dmn_Socket: invalid IPv4 destination: " +
+                                m_ip4);
   }
 
   n_write = sendto(
@@ -126,9 +162,10 @@ void Dmn_Socket::write(const std::string &item) {
       reinterpret_cast<const struct sockaddr *>(
           &servaddr), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
       sizeof(servaddr));
-  if (n_write != n_read) {
-    throw std::runtime_error("Error in sendto: " +
-                             std::system_category().message(errno));
+  if (n_write < 0 || static_cast<size_t>(n_write) != n_read) {
+    const int error = n_write < 0 ? errno : EMSGSIZE;
+    throw std::system_error(error, std::system_category(),
+                            "Dmn_Socket: sendto");
   }
 }
 
