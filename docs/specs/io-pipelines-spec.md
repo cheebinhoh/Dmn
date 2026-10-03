@@ -29,6 +29,9 @@ callback exception stops the worker, and `waitForEmpty()` wakes and rethrows
 the retained exception rather than waiting for failed work to be accounted.
 The callback is invoked outside the bookkeeping mutex. Bulk reads delegate to
 the selected queue; the pipe does not re-arm a timeout after an empty return.
+Synchronous reads delegate shutdown admission to the selected queue; for the
+current queue implementations, reading after shutdown throws
+`std::runtime_error` rather than returning an empty optional.
 
 ### Opt-in scheduled writes
 

@@ -185,10 +185,12 @@ public:
   /**
    * @brief Read and return the item from the pipe.
    *
-   * Blocks until the next item is available. If the pipe has been closed and
-   * no further items will arrive, returns std::nullopt.
+   * Blocks until the next item is available. If shutdown closes the underlying
+   * queue before an item is available, the queue's blocking pop throws.
    *
-   * @return optional item if available, or std::nullopt if the pipe is closed
+   * @return The next item, wrapped in an engaged optional.
+   * @throws std::runtime_error if shutdown closes the empty queue while waiting
+   * or before this call starts.
    */
   auto read() -> std::optional<T> override;
 
@@ -214,6 +216,7 @@ public:
    * @return Vector of items (size == count on success without timeout, or
    * between 1 and count if a timeout occurred after at least one item
    * was produced).
+   * @throws std::runtime_error if the underlying queue has been shut down.
    */
   auto read(size_t count, long timeout = 0) -> std::vector<T> override;
 

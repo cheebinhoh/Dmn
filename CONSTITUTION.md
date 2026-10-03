@@ -113,6 +113,14 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
 - Use an empty line to separate logical segments: include groups, a function
   from the next function, a declaration from an unrelated declaration, and
   distinct steps or phases within a longer function.
+- Separate adjacent, independent control-flow blocks with a blank line when
+  they represent different decisions or processing phases. Keep the branches
+  of one `if`/`else if`/`else`, a `switch`, or a loop together as one unit;
+  do not add blank lines mechanically between each branch or statement.
+- In longer functions, use blank lines to make phase transitions visible
+  (for example, validation, state changes, and notification/return). Keep
+  tightly coupled statements together when splitting them would obscure their
+  relationship.
 - In class definitions, visually separate access sections and meaningful
   groups of members/functions with blank lines. Keep closely related
   declarations together.
