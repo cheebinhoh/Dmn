@@ -53,7 +53,7 @@
 /**
  * @defgroup dmesg_pb_timestamp Timestamp setters
  * @brief Macros for setting timestamp fields on @c dmn::Timestamp protobuf
- *        objects.
+ * objects.
  * @{
  */
 
@@ -82,7 +82,7 @@
  *
  * @param ts Pointer to the @c dmn::Timestamp protobuf object.
  * @param tv A @c struct @c timeval whose @c tv_sec and @c tv_usec fields are
- *           used.
+ * used.
  */
 #define DMESG_PB_SET_TIMESTAMP_FROM_TV(ts, tv)                                 \
   do {                                                                         \
@@ -95,7 +95,7 @@
 /**
  * @defgroup dmesg_pb_msg DMesgPb message field setters
  * @brief Macros for setting top-level fields on @c dmn::DMesgPb protobuf
- *        objects.
+ * objects.
  * @{
  */
 
@@ -146,7 +146,7 @@
 /**
  * @def DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER
  * @brief Set the source write-handler identifier field of a @c DMesgPb
- *        message.
+ * message.
  * @param pb  The @c dmn::DMesgPb message object.
  * @param val The write-handler identifier string.
  */
@@ -207,7 +207,7 @@
 /**
  * @defgroup dmesg_pb_sys DMesgPb sys sub-message setters
  * @brief Macros for setting fields on the @c sys sub-message and its node
- *        list entries inside a @c dmn::DMesgPb object.
+ * list entries inside a @c dmn::DMesgPb object.
  * @{
  */
 
@@ -278,7 +278,7 @@
 /**
  * @def DMESG_PB_SYS_SET_NODELIST_ELEM_MASTERIDENTIFIER
  * @brief Set the master identifier of a node-list entry in a @c DMesgPb sys
- *        message.
+ * message.
  * @param sys   The @c dmn::DMesgPb message object.
  * @param index Zero-based index into the node list.
  * @param val   The master identifier string.

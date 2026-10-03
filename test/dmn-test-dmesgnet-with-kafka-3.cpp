@@ -5,13 +5,12 @@
  * @brief Unit test for two Dmn_DMesgNet instances forming a distributed
  * messaging network over Kafka.
  *
- * This test program asserts that we can have two Dmn_DMesgNet objects with
- * external Dmn_Kafka objects as its input and output handlers and join in
- * a virtual distrbuted messaging network that spans cross a confluent.cloud
- * via Dmn_Kafka I/O and rdkafka, aka the primitive form of Dmn_DMesgNet_Kafka.
+ * This test asserts that two Dmn_DMesgNet objects can join a distributed
+ * messaging network over Confluent Cloud using external Dmn_Kafka input and
+ * output handlers, providing a basic form of Dmn_DMesgNet_Kafka.
  *
- * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
- * another object identifier as its neighbor.
+ * Each object's system-state node list should include the other object's
+ * identifier as a neighbor.
  */
 
 #include <gtest/gtest.h>

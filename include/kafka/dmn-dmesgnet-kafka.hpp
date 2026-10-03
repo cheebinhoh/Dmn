@@ -44,8 +44,8 @@ class Dmn_DMesgNet_Kafka {
 public:
   /**
    * @brief Construct a @c Dmn_DMesgNet_Kafka by creating a Kafka consumer and
-   *        producer from @p configs and wiring them as the input and output
-   *        handlers of the underlying @c Dmn_DMesgNet.
+   * producer from @p configs and wiring them as the input and output
+   * handlers of the underlying @c Dmn_DMesgNet.
    *
    * The caller must supply the common broker connection parameters in @p
    * configs (e.g. @c bootstrap.servers, SASL credentials).  The following keys
@@ -57,7 +57,7 @@ public:
    *  - @c Dmn_Kafka::Key     : set to @c "Dmn_dmesgnet".
    *
    * @param name    Identifier used for both the @c Dmn_DMesgNet instance and
-   *                the Kafka consumer group ID.
+   * the Kafka consumer group ID.
    * @param configs Kafka configuration entries (see above for reserved keys).
    */
   Dmn_DMesgNet_Kafka(std::string_view name, Dmn_Kafka::ConfigType configs);
@@ -72,7 +72,7 @@ public:
 
   /**
    * @brief Forward all arguments to @c Dmn_DMesgNet::openHandler() and return
-   *        the resulting handler proxy.
+   * the resulting handler proxy.
    *
    * @param arg Arguments forwarded verbatim to @c Dmn_DMesgNet::openHandler().
    * @return A @c Dmn_DMesg::HandlerType proxy to the newly opened handler.
@@ -83,7 +83,7 @@ public:
 
   /**
    * @brief Forward all arguments to @c Dmn_DMesgNet::closeHandler() to close
-   *        a previously opened handler.
+   * a previously opened handler.
    *
    * @param arg Arguments forwarded verbatim to @c Dmn_DMesgNet::closeHandler().
    */

@@ -3,7 +3,7 @@
  *
  * @file dmn-test-dmesg-5.cpp
  * @brief The unit test that asserts that the dmn-dmesg' subscriber can
- *        subscribe to certain topic of the Dmn_DMesg object.
+ * subscribe to certain topic of the Dmn_DMesg object.
  */
 
 #include <gtest/gtest.h>

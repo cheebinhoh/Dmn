@@ -84,7 +84,7 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
 
 /**
  * @brief A small RAII-style wrapper around pthreads that runs a user-provided
- *        task (@c std::function<void()>) in a new thread.
+ * task (@c std::function<void()>) in a new thread.
  *
  * Behaviour details:
  * - Construct with an optional name and/or task. The name is stored for
@@ -163,7 +163,7 @@ public:
 
   /**
    * @brief Voluntarily test if the current thread has a pending cancellation
-   *        request.
+   * request.
    *
    * This is a deferred cancellation point: if a cancellation request is
    * pending, the thread is terminated at this call site rather than
@@ -194,7 +194,7 @@ protected:
    * assignment the state transitions to @c kReady.
    *
    * @param fnc The task function to assign. Must be a valid (non-empty)
-   *            callable.
+   * callable.
    */
   void setTask(Dmn_Proc::Task fnc);
 

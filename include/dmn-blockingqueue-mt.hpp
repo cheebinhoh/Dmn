@@ -178,7 +178,7 @@ public:
 protected:
   /**
    * @brief Return @c true if the queue has been shut down
-   *        (@c m_shutdown_flag is set), @c false otherwise.
+   * (@c m_shutdown_flag is set), @c false otherwise.
    *
    * Implements the @c Dmn_Inflight_Guard closed-state predicate.
    *

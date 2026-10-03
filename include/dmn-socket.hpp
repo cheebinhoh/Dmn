@@ -6,7 +6,7 @@
  *
  * @details
  * This header declares Dmn_Socket, a thin wrapper around a BSD-style
- * IPv4 TCP socket that implements the Dmn_Io<std::string> interface.
+ * IPv4 UDP datagram socket that implements the Dmn_Io<std::string> interface.
  * The class provides read and write operations for sending and receiving
  * std::string messages through a network endpoint. It is intended for
  * simple synchronous socket I/O and does not provide its own threading,
@@ -18,7 +18,7 @@
  *  - The optional 'write_only' flag can be used when the instance is
  *    only required to send data (the implementation may avoid setting
  *    up read-specific resources in that case).
- *  - read() returns std::nullopt to indicate EOF or unrecoverable error.
+ *  - read() returns std::nullopt when recv() returns zero or an error.
  *  - write(...) methods send the provided string over the socket; their
  *    semantics and error handling are implementation-defined but documented
  *    here for callers to expect possible exceptions or logging on failure.
@@ -42,8 +42,8 @@ namespace dmn {
  * @details
  * Provides a synchronous socket interface that conforms to the
  * Dmn_Io<std::string> contract. The class manages a single file
- * descriptor (m_fd) representing a connected TCP socket to the
- * specified IPv4 address and port.
+ * descriptor (m_fd) for a UDP socket. Read mode binds to the supplied address
+ * and port; writes send datagrams to the supplied IPv4 address and port.
  *
  * Thread-safety: Instances are NOT inherently thread-safe. Synchronize
  * access externally if multiple threads share an instance.
@@ -57,24 +57,22 @@ public:
   using Dmn_Io<std::string>::write;
 
   /**
-   * @brief Construct a Dmn_Socket connected to the given IPv4 address and port.
+   * @brief Construct a Dmn_Socket using the given address and port.
    *
    * @param ip4 IPv4 address as a string (e.g. "127.0.0.1").
-   * @param port_no TCP port number.
+   * @param port_no UDP port number.
    * @param write_only If true, the instance may skip read-specific setup;
-   *                   caller guarantees no calls to read() in that mode.
+   * caller guarantees no calls to read() in that mode.
    *
-   * @throws std::runtime_error on failure to create or connect the socket
-   *         (implementation-defined; callers should be prepared to handle
-   *         exceptions or the class may choose to set an internal error
-   *         state and make read()/write() return/handle errors).
+   * @throws std::runtime_error on failure to create, configure, or bind the
+   * socket.
    */
   Dmn_Socket(std::string_view ip4, int port_no, bool write_only = false);
 
   /**
    * @brief Destroy the Dmn_Socket and close the underlying socket.
    *
-   * Gracefully closes the connection and releases resources.
+   * Closes the socket and releases its resources.
    */
   virtual ~Dmn_Socket() noexcept;
 
@@ -87,12 +85,12 @@ public:
   /**
    * @brief Read data from the socket.
    *
-   * @return std::optional<std::string> containing the received data on success,
-   *         or std::nullopt to indicate EOF or an unrecoverable error.
+   * @return std::optional<std::string> containing the received datagram, or
+   * std::nullopt when recv() returns zero or an error.
    *
    * @note The exact boundary semantics (message delimiting, framing) are
-   *       implementation-specific. Callers should consult the implementation
-   *       or use an application-level protocol to delimit messages.
+   * implementation-specific. Callers should consult the implementation
+   * or use an application-level protocol to delimit messages.
    */
   auto read() -> std::optional<std::string> override;
 
@@ -103,17 +101,17 @@ public:
    * reference and will typically copy the contents as-is.
    *
    * @note On partial writes or errors, behavior is implementation-defined:
-   *       the method may retry, throw, or log and return. Callers should
-   *       not assume atomicity of large writes unless the implementation
-   *       documents it.
+   * the method may retry, throw, or log and return. Callers should
+   * not assume atomicity of large writes unless the implementation
+   * documents it.
    */
   void write(const std::string &item) override;
 
   /**
    * @brief Write a string to the socket using move semantics.
    *
-   * @param item The string to write; the implementation may move-from this
-   *             parameter to avoid an extra copy.
+   * @param item The string to write. This overload delegates to the
+   * const-reference overload and does not move from the argument.
    */
   void write(std::string &&item) override;
 
@@ -122,7 +120,7 @@ private:
    * Data provided by the caller at construction time.
    */
   std::string m_ip4{}; ///< IPv4 address as text (e.g., "192.0.2.1")
-  int m_port_no{};     ///< TCP port number
+  int m_port_no{};     ///< UDP port number
   bool m_write_only{}; ///< If true, socket is used only for sending
 
   /**

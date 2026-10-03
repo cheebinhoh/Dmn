@@ -2,14 +2,12 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-8.cpp
- * @brief Unit test asserting that prior messages are replayed by the master
- * when a new Dmn_DMesgNet node joins.
+ * @brief Unit test attempting to verify replay of prior messages when a new
+ * Dmn_DMesgNet node joins.
  *
- * This test program asserts that two Dmn_DMesgNet objects that
- * participates in the same network through its inbound and outbound
- * Dmn_Io objects are in sync in the Dmn network, and message sent priorly
- * in one Dmn_DMesgNet will be resent by the master when a new
- * Dmn_DMesgNet object joins the same Dmn network.
+ * This test attempts to verify playback of an earlier message to a later
+ * Dmn_DMesgNet node using paired socket endpoints. Its timing-driven behavior
+ * does not establish a deterministic replay guarantee.
  */
 
 #include <gtest/gtest.h>

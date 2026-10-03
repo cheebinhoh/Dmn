@@ -2,8 +2,9 @@
 
 Status: design target; **not implemented as specified**. The repository has a
 partial DLock prototype and protobuf schema, but no publisher-serialized lock
-protocol yet. `Dmn_DMesgNet` consensus work remains deferred to a separate
-specification.
+protocol yet. `docs/specs/dmn-dmesgnet-spec.md` documents the current network
+layer and its limits; the cross-network DLock design remains a separate
+proposal and test plan.
 
 ### Current implementation snapshot
 
@@ -76,11 +77,13 @@ particular, `Dmn_DMesgNet` master election MUST NOT be treated as a lock
 authority.
 
 The distributed target is different from this v1 serialization mechanism:
-no individual backend or publisher is authoritative.  A consensus group
-replicates the lock-table state machine, and only a quorum-committed log entry
-may grant, renew, release, cancel, or expire a lock.  Section 10 defines that
-evolution boundary.  Substituting `Dmn_DMesgNet` as the template argument does
-not by itself cross that boundary.
+no individual backend or publisher is authoritative. A consensus group
+replicates the lock-table state machine, and only a quorum-committed operation
+may grant, renew, release, or cancel a lock. A log is one implementation of
+that ordered history, not a requirement to use a specific consensus algorithm.
+Any future expiry would also require a separately approved, consensus-safe
+lease protocol. Section 10 defines that evolution boundary. Substituting
+`Dmn_DMesgNet` as the template argument does not by itself cross that boundary.
 
 There is no standalone `Dmn_DLock_Manager`, backend abstraction, authority
 service, command/reply topology, or manager-global mirror in this design.
@@ -89,9 +92,11 @@ Retaining any of those as a second commit authority is forbidden.
 This specification defines the intended Phase 1 `Dmn_DMesg` implementation;
 the implementation is not complete. The future `Dmn_DMesgNet` consensus-backed
 evolution is intentionally moved to a separate specification at
-`docs/specs/dmn-distributed-lock-dmesgnet-spec.md`. The v1 design does not
-grant `Dmn_DMesgNet` any lock authority and does not permit its use as the
-source of truth for this implementation.
+`docs/specs/dmn-distributed-lock-dmesgnet-spec.md`, with its test-first roadmap
+in `docs/specs/dmn-distributed-lock-dmesgnet-plan.md`. Both are proposed design
+documents, not implemented protocol guarantees. The v1 design does not grant
+`Dmn_DMesgNet` any lock authority and does not permit its use as the source of
+truth for this implementation.
 
 ### 1.1 Phase-1 canonical wire contract
 
@@ -895,11 +900,19 @@ synchronization, no-wait conflict, version advancement, fencing allocation,
 conflict backoff and delivery starvation, final timeout predicates, retained
 queries, sibling isolation, shutdown ordering, and invalid-state mutations.
 
-## 10. Future Dmn_DMesgNet mode (deferred to a separate specification)
+## 10. Future Dmn_DMesgNet mode (separate proposed design)
 
 The multi-node, consensus-backed evolution is intentionally not part of this
 v1 `Dmn_DMesg` implementation.  It is defined separately in
-`docs/specs/dmn-distributed-lock-dmesgnet-spec.md`.
+`docs/specs/dmn-distributed-lock-dmesgnet-spec.md` and its companion
+implementation roadmap, `docs/specs/dmn-distributed-lock-dmesgnet-plan.md`.
+The proposed first network profile is fixed-membership DLockNet-Lite with
+quorum-committed lock operations; it excludes dynamic membership and automatic
+lease expiry initially. Its v1 consensus algorithm is fixed-membership
+three-voter Multi-Paxos; changing algorithms requires a reviewed profile
+change. The current
+`Dmn_DMesgNet` behavior is described in `dmn-dmesgnet-spec.md`; its cooperative
+master election is not consensus and is not used as DLock authority.
 
 This v1 specification remains complete and authoritative for the current
 Phase 1 lock design.  No v1 lock code, test, or behavior may treat
@@ -908,10 +921,11 @@ an authority for lock grants, releases, lease expiry, or close semantics.
 
 The future consensus design is expected to cover:
 
-- quorum-backed leader election and log commit semantics;
-- deterministic lock-table transitions applied in committed-log order;
-- consensus fencing, term ordering, and stale-leader rejection;
-- quorum-safe lease expiry and release/cancel persistence;
+- quorum-backed proposer recovery and chosen/applied operation semantics;
+- deterministic lock-table transitions applied in chosen-slot order;
+- consensus fencing using `(cluster_id, cluster_generation, chosen_slot)`;
+- committed release/cancel persistence; any future lease expiry requires a
+  separately approved quorum-safe clock design;
 - minority-partition non-progress and crash/restart recovery.
 
 That design remains future work and is not part of the current implementation.

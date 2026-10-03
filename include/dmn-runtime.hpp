@@ -54,7 +54,7 @@
  *   registerSignalHandlerHook(signo, hook).
  * - Enqueue immediate work with addJob() or schedule delayed work with
  *   addTimedJob().
- * - Start processing job and signal handler hooks with enterMainLoop()
+ * - Start processing jobs and signal handler hooks with enterMainLoop()
  *   and stop with exitMainLoop().
  * - job, timedJob and signal handler hooks are all processed in the singleton
  *   asynchronous thread context.
@@ -168,7 +168,7 @@ struct Dmn_Runtime_Job {
 
 /**
  * @brief Strict-weak-ordering comparator for @c Dmn_Runtime_Job used by
- *        the timed-job min-heap.
+ * the timed-job min-heap.
  *
  * Places the job with the earliest (smallest) @c m_due at the top of a
  * @c std::priority_queue so it is executed first.
@@ -181,7 +181,7 @@ struct TimedJobComparator {
 
 /**
  * @brief Concept that checks whether invoking @p F with @p Args returns
- *        either @c void or @c Dmn_Runtime_Task.
+ * either @c void or @c Dmn_Runtime_Task.
  *
  * @tparam F    The callable type to check.
  * @tparam Args Argument types with which @p F is invoked.
@@ -199,7 +199,7 @@ concept IsStrictJobFnc = requires(F &&f, Args &&...args) {
 
 /**
  * @brief Concept that checks whether @p F is a valid job callable accepting a
- *        single @c const @c Dmn_Runtime_Job& argument.
+ * single @c const @c Dmn_Runtime_Job& argument.
  *
  * Satisfied when @p F can be invoked with @c const @c Dmn_Runtime_Job& and
  * returns either @c void or @c Dmn_Runtime_Task.
@@ -245,21 +245,21 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *,
  * A singleton runtime manager that centralizes POSIX signal handling and
  * asynchronous job scheduling/execution. It inherits Dmn_Singleton for
  * singleton lifecycle and privately from Dmn_Async to run an internal
- * runtime asynchronous thread used for processing job.
+ * runtime asynchronous thread used for processing jobs.
  *
  * Public API highlights:
  *  - addJob(fnc, priority, onErrorFnc): enqueue a job for immediate execution
  *    in the singleton asynchronous thread context.
  *  - addTimedJob(fnc, duration, priority, onErrorFnc): schedule job to run
- *    after duration in the singleton asychronous thread context.
+ *    after duration in the singleton asynchronous thread context.
  *  - registerSignalHandlerHook(signo, hook): register a handler hook to be
- *    invoked when the given signal is delivered in the singleton asychronous
+ *    invoked when the given signal is delivered in the singleton asynchronous
  *    thread context.
- *  - clearSignalHandlerHook(signo): clear all register handler hooks for
+ *  - clearSignalHandlerHook(signo): clear all registered handler hooks for
  *    the particular signo.
- *  - enterMainLoop() / exitMainLoop(): control the runtime starts processing
- *    jobs and signal handler hooks in the singleton asynchronous thread
- *    context.
+ *  - enterMainLoop() / exitMainLoop(): control when the runtime starts
+ *    processing jobs and signal handler hooks in the singleton asynchronous
+ *    thread context.
  *
  * Important behaviour:
  *  - Signals used by the runtime are blocked prior to creating the singleton
@@ -288,11 +288,11 @@ public:
 
   /**
    * @brief Enqueue a job for immediate execution with the given priority.
-   *        The runtime will schedule the job onto the appropriate internal
-   *        priority queue.
+   * The runtime will schedule the job onto the appropriate internal
+   * priority queue.
    *
    * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
-   *            Dmn_Runtime_Job::TaskFncType.
+   * Dmn_Runtime_Job::TaskFncType.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
    */
@@ -315,7 +315,7 @@ public:
    *        earliest-first execution.
    *
    * @param fnc The callable to be executed, either Dmn_Runtime_Job::FncType or
-   *            Dmn_Runtime_Job::TaskFncType.
+   * Dmn_Runtime_Job::TaskFncType.
    * @param duration The duration after that the fnc is posted for execution.
    * @param priority The job priority.
    * @param onErrorFnc The callable for exception thrown inside fnc.
@@ -329,7 +329,7 @@ public:
 
   /**
    * @brief Clear all registered handler hooks for the signal number. Note that
-   *        only client registered signal handler hooks are clear.
+   * only client registered signal handler hooks are clear.
    *
    * @param signo The POSIX signal number
    */
@@ -337,8 +337,8 @@ public:
 
   /**
    * @brief Start processing runtime events / jobs. Blocks until exitMainLoop()
-   *        is called or the runtime decides to stop (a signal handler hook
-   *        calls exitMainLoop).
+   * is called or the runtime decides to stop (a signal handler hook
+   * calls exitMainLoop).
    */
   void enterMainLoop();
 
@@ -357,12 +357,12 @@ public:
 
   /**
    * @brief Register a signal handler hook for a particular signal number.
-   *        Handlers are invoked by the runtime in a safe context (not from
-   *        the raw signal handler) in a singleton asynchronous thread context.
+   * Handlers are invoked by the runtime in a safe context (not from
+   * the raw signal handler) in a singleton asynchronous thread context.
    *
    * @param signo The POSIX signal number
    * @param hook  The signal handler hook function to be called when the
-   *              signal is raised.
+   * signal is raised.
    */
   void registerSignalHandlerHook(int signo, SignalHandlerHook &&hook);
 
@@ -371,7 +371,7 @@ protected:
 
   /**
    * @brief Mask runtime signals (SIGALRM, SIGINT, SIGTERM, SIGQUIT, SIGHUP)
-   *        in the calling thread before the singleton instance is created.
+   * in the calling thread before the singleton instance is created.
    *
    * Must be called once from the main thread before any worker threads are
    * spawned so that all descendant threads inherit the same signal mask.
@@ -583,13 +583,13 @@ void Dmn_Runtime_Manager<QueueType>::addTimedJob(
 
 /**
  * @brief Add the given job to the coroutine scheduler context so it can be
- *        picked up and executed as a coroutine task.
+ * picked up and executed as a coroutine task.
  *
  * Must be called from within the singleton asynchronous thread context
  * (asserted via @c isRunInAsyncThread()).
  *
  * @param job The runtime job to schedule; its @c m_fnc is invoked to produce
- *            the coroutine task that will be driven by the scheduler.
+ * the coroutine task that will be driven by the scheduler.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::addRuntimeJobToCoroutineSchedulerContext(
@@ -665,8 +665,8 @@ auto Dmn_Runtime_Manager<QueueType>::createJobTaskFnc(F &&fnc)
 
 /**
  * @brief Dequeue and dispatch one pending job per priority level (high →
- *        medium → low) as a coroutine task in the singleton asynchronous
- *        thread context.
+ * medium → low) as a coroutine task in the singleton asynchronous
+ * thread context.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
@@ -731,7 +731,7 @@ void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
 
 /**
  * @brief Exit the @c Dmn_Runtime_Manager main loop and return control to the
- *        caller of @c enterMainLoop() (typically @c main()).
+ * caller of @c enterMainLoop() (typically @c main()).
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::exitMainLoop() {
@@ -821,7 +821,7 @@ void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
 
 /**
  * @brief Invoke all registered signal handler hooks for @p signo in the
- *        singleton asynchronous thread context.
+ * singleton asynchronous thread context.
  *
  * @param signo The POSIX signal number that was raised.
  */
@@ -844,7 +844,7 @@ void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
 
 /**
  * @brief Return @c true if the caller is running inside the runtime's
- *        singleton asynchronous thread context.
+ * singleton asynchronous thread context.
  *
  * @return @c true when the calling thread is the runtime's async thread,
  *         @c false otherwise.
@@ -864,7 +864,7 @@ void Dmn_Runtime_Manager<QueueType>::registerSignalHandlerHook(
 
 /**
  * @brief Register an external signal handler hook for @p signo (internal
- *        helper called within the async thread context).
+ * helper called within the async thread context).
  *
  * External hook functions are executed before the default internal handlers
  * registered by @c Dmn_Runtime_Manager.  Note that @c SIGKILL and @c SIGSTOP
@@ -914,8 +914,8 @@ void Dmn_Runtime_Manager<QueueType>::runPriorToCreateInstance() {
  *        the task has been suspended and remains scheduled to be resumed later.
  *
  * @return true if the top task has completed and been removed from the
- *         scheduler; false if the task has suspended and remains in the
- *         scheduler to be resumed later.
+ * scheduler; false if the task has suspended and remains in the
+ * scheduler to be resumed later.
  */
 template <template <class> class QueueType>
 auto Dmn_Runtime_Manager<QueueType>::runRuntimeCoroutineScheduler() -> bool {
@@ -975,7 +975,7 @@ auto Dmn_Runtime_Manager<QueueType>::runRuntimeCoroutineScheduler() -> bool {
 
 /**
  * @brief Schedule a call to @c execRuntimeJobInternal() in the singleton
- *        asynchronous thread context.
+ * asynchronous thread context.
  */
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::runRuntimeJobExecutor() {

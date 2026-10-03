@@ -3,15 +3,15 @@
  *
  * @file dmn-test-dmesgnet-5.cpp
  * @brief Unit test verifying that an out-of-sync topic counter puts
- * Dmn_DMesgNet write handlers into conflict mode.
+ * the affected local write handler into conflict mode.
  *
- * This test verifies that Dmn_DMesgNet instance that receives a DMesgPb
- * message that the topic counter is out of sync will put all local write
- * handlers of the Dmn_DmesgNet in conflict mode.
+ * This test verifies that a Dmn_DMesgNet instance receiving a DMesgPb message
+ * with an out-of-sync topic counter marks the affected local write handler as
+ * conflicted.
  *
  * Test setup and components
  * ------------------------
- * - One Dmn_Pipe<std::string> objects emulate bidirectional pipe
+ * - One pair of Dmn_Pipe<std::string> objects emulates a bidirectional link
  *   (read/write for single node).
  * - One forwarding Dmn_Proc thread (dmesg1_to_dmesg2)
  *   continuously read serialized DMesgPb strings from one pipe, parse a copy
@@ -24,8 +24,7 @@
  * Assertions and sequence
  * -----------------------
  * - the local write handler is able to send out 1st DMesgPb message, and then
- *   put into conflict mode after the inbound DMesgPb feeding into DMesgNet
- *   put all handlers writing the same topic into conflict mode.
+ *   enter conflict mode after an inbound DMesgPb is fed into Dmn_DMesgNet.
  */
 
 #include <gtest/gtest.h>

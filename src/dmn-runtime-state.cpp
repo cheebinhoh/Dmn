@@ -3,7 +3,7 @@
  *
  * @file dmn-runtime-state.cpp
  * @brief Runtime-state lifecycle, scheduling, and manager-retention
- *        implementation.
+ * implementation.
  *
  * Implementation Notes
  * --------------------

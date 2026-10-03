@@ -2,13 +2,10 @@
  * Copyright © 2025 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesgnet-9.cpp
- * @brief Unit test asserting that two Dmn_DMesgNet objects can exchange
- * messages via Dmn_Socket endpoints.
+ * @brief Unit test attempting one-way message delivery through Dmn_Pipe links.
  *
- * This test programs asserts that two Dmn_DMesgNet objects can
- * one send message through a Dmn_Socket at a particular ip and port
- * and another one receive sent message through another Dmn_Socket
- * at the same ip and port.
+ * This test program connects two Dmn_DMesgNet objects using Dmn_Pipe
+ * instances and attempts to deliver a message from one node to the other.
  */
 
 #include <gtest/gtest.h>

@@ -79,7 +79,7 @@ public:
    * @brief Pop and return the front item without blocking.
    *
    * @return An optional containing the front item, or @c std::nullopt if
-   *         the queue is empty.
+   * the queue is empty.
    */
   auto popNoWait() -> std::optional<T>;
 
@@ -89,7 +89,7 @@ public:
    * Blocks if the queue is at maximum capacity until space becomes available.
    *
    * @param item The item to enqueue (moved when the move constructor is
-   *             noexcept).
+   * noexcept).
    */
   void push(T &&item);
 
@@ -112,7 +112,7 @@ public:
 
   /**
    * @brief Block until the queue is empty and return the total number of items
-   *        that have passed through it.
+   * that have passed through it.
    *
    * @return The cumulative number of items that have been pushed and popped.
    */
@@ -123,7 +123,7 @@ private:
    * @brief Internal pop helper that optionally blocks waiting for an item.
    *
    * @param wait If @c true, block until an item is available; if @c false,
-   *             return @c std::nullopt immediately when the queue is empty.
+   * return @c std::nullopt immediately when the queue is empty.
    *
    * @return An optional containing the front item, or @c std::nullopt.
    */

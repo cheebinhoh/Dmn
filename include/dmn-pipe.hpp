@@ -3,7 +3,7 @@
  *
  * @file dmn-pipe.hpp
  * @brief Dmn_Pipe: a FIFO pipe with non-blocking writers and optional
- *        background processing.
+ * background processing.
  *
  * Overview
  * --------
@@ -35,8 +35,8 @@
  *   in std::optional; when the pipe is closed it returns std::nullopt.
  * - readAndProcess(fn) blocks until the next item is available or timeout
  *   and invokes the provided task with the item (moved where possible).
- * - read(count, timeout) and readAndProcss(fn, count, timeout) function
- *   behaves like it counterpart without count and timeout but with the
+ * - read(count, timeout) and readAndProcess(fn, count, timeout) functions
+ *   behave like their counterparts without count and timeout, but with the
  *   following blocking behavior
  *     1. If the pipe already contains >= count items, it returns exactly
  *        `count` items immediately.
@@ -46,15 +46,15 @@
  *        - If timeout > 0: waits up to `timeout` microseconds for items.
  *          * If enough items are available before timeout, returns exactly
  *            `count` items.
- *          * If the timeout expires and it returns whatever items available
- *            up to `count` items or no item.
+ *          * If the timeout expires, it returns whatever items are available
+ *            up to `count` items, or no items if none are available.
  *
  *   Note: The timeout is interpreted as a maximum time to wait for the full
  *   `count` items (measured from the first blocking wait inside the call).
  *   A zero timeout value means "wait forever".
  *
  * waitForEmpty() blocks until all items that were inbound into the pipe
- * has been processed (or pop out).
+ * have been processed (or popped out).
  *
  * Lifetime
  * - If a Task is provided to the constructor, a background processing
@@ -97,24 +97,24 @@ public:
 
   /**
    * @brief Construct a Dmn_Pipe and optionally start a background processing
-   *        thread.
+   * thread.
    *
    * @param name    Human-readable name forwarded to the underlying @c Dmn_Proc.
    * @param fn      Optional processing task invoked for each item dequeued by
-   *                the background thread.  If empty, no background thread is
-   *                started and items must be consumed via read() or
-   *                readAndProcess().
+   * the background thread.  If empty, no background thread is
+   * started and items must be consumed via read() or
+   * readAndProcess().
    * @param count   Number of items to dequeue per background-thread iteration.
-   *                Defaults to 1.
+   * Defaults to 1.
    * @param timeout Timeout in microseconds passed to each pop call in the
-   *                background loop.  0 means wait indefinitely.
+   * background loop.  0 means wait indefinitely.
    */
   explicit Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn = {},
                     size_t count = 1, long timeout = 0);
 
   /**
    * @brief Destroy the pipe, stopping any background processing thread and
-   *        releasing resources.
+   * releasing resources.
    */
   virtual ~Dmn_Pipe() noexcept;
 
@@ -144,9 +144,8 @@ public:
    *   - timeout > 0: wait up to timeout microseconds for items.
    *     * If timeout expires and there is at least one item, return 1..count
    *       items (the current pipe data size).
-   *     * If timeout expires and the pipe is still empty, the function keeps
-   *       waiting (re-arming the absolute deadline) until at least one item is
-   *       available.
+   *     * If timeout expires and the pipe is still empty, the function returns
+   *       an empty vector.
    *
    * The returned vector contains moved items removed from the pipe.
    *
@@ -162,10 +161,10 @@ public:
   /**
    * @brief Read the next item from the pipe and invoke the provided task.
    *
-   * Blocks until the next item is available. The task is invoked while the
-   * internal mutex is held to update processing bookkeeping (`m_count`)
-   * and to signal waiting threads. The item is passed to `fn` using move
-   * semantics when possible.
+   * Blocks until items are available or the read timeout expires. The task is
+   * invoked before the internal bookkeeping mutex is acquired to update the
+   * processed-item count (`m_count`) and signal waiting threads. Items are
+   * passed to `fn` using move semantics when possible.
    *
    * @param fn The functor to process the next item popped from the pipe
    *

@@ -5,17 +5,15 @@
  * @brief Unit test for two Dmn_DMesgNet_Kafka instances exchanging messages via
  * topic subscription and publication over Kafka.
  *
- * This test program asserts that we can have two Dmn_DMesgNet_Kafka object(s)
- * that joins in a virtual distrbuted messaging network that spans cross a
- * confluent.cloud via Dmn_Kafka I/O and rdkafka.
+ * This test asserts that two Dmn_DMesgNet_Kafka objects can exchange messages
+ * over Confluent Cloud using Dmn_Kafka I/O and librdkafka.
  *
- * Each Dmn_DMesgNet_Kafka object has a sys state' nodelist that includes
- * another object identifier as its neighbor.
+ * Each object's system-state node list should include the other object's
+ * identifier as a neighbor.
  *
- * Part of the last test is to have a handler from one Dmn_DMesgNet_Kafka
- * object to subscribe a topic and then another handler of another
- * Dmn_DMesgNet_Kafka object to write a series of topic message over kafka
- * network.
+ * The test also has one handler subscribe to a topic and another handler on
+ * the second Dmn_DMesgNet_Kafka object write a series of messages to that
+ * topic over Kafka.
  */
 
 #include <gtest/gtest.h>

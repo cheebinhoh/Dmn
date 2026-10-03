@@ -5,12 +5,9 @@
  * @brief Unit test for Dmn_DMesgNet integration with Dmn_Kafka, verifying
  * message production and consumption via Kafka.
  *
- * This test program asserts that the Dmn_DMesgNet object can integrate with
- * the external Dmn_Kafka objects that Dmn_DmesgPb message sent by Dmn_DMesgNet
- * object through outbound handler of Dmn_Kafka object (as producer) can be
- * consumed by external Dmn_kafka object serves as consumer of the same topic
- * published through outbound handler of Dmn_kafka object (within Dmn_DMesgNet
- * object).
+ * This test asserts that a DMesgPb message sent by Dmn_DMesgNet through its
+ * outbound Dmn_Kafka producer can be consumed by an external Dmn_Kafka
+ * consumer subscribed to the same topic.
  */
 
 #include <gtest/gtest.h>

@@ -3,7 +3,7 @@
  *
  * @file dmn-state.cpp
  * @brief Generic State machine wrapper and API that clients can drive
- *        the state machine to execute different states.
+ * the state machine to execute different states.
  *
  * Each runNext() call executes at most one user-provided state callback.
  * Initialization before the first callback and finalization after terminal

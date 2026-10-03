@@ -14,9 +14,10 @@
  * to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself
  * and are not forwarded:
  *  - Dmn_Kafka::Topic         — the Kafka topic to read from / write to.
- *  - Dmn_Kafka::Key           — an alternate topic name that, if set, overrides
- *                                the Topic value when determining which topic
- *                                to read from / write to.
+ *  - Dmn_Kafka::Key         — a legacy key option that is currently parsed as
+ *                                a topic value. If both it and Topic are
+ *                                provided, the selected value is unspecified
+ *                                because the configuration is an unordered map.
  *  - Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.
  *
  * Thread-safety:
@@ -46,7 +47,7 @@ namespace dmn {
 
 /**
  * @brief Apache Kafka producer/consumer that implements the Dmn_Io<std::string>
- *        interface.
+ * interface.
  *
  * Wrap librdkafka so that Kafka topics can be used as drop-in Dmn_Io endpoints.
  * Construct with Role::kProducer to send messages or Role::kConsumer to receive
@@ -61,14 +62,13 @@ class Dmn_Kafka : public dmn::Dmn_Io<std::string>,
 public:
   /**
    * @brief Configuration keys specific to the @c Dmn_Kafka module (not
-   *        forwarded to librdkafka).
+   * forwarded to librdkafka).
    *
    * These keys are extracted from the @c ConfigType map before the remaining
    * entries are passed to @c rd_kafka_conf_set().
    */
   const static std::string Topic; ///< Kafka topic to read from / write to.
-  const static std::string
-      Key; ///< Alternate topic that overrides @c Topic when set.
+  const static std::string Key;   ///< Legacy key option, parsed as a topic.
   const static std::string
       PollTimeoutMs; ///< Consumer poll timeout in milliseconds.
 
@@ -84,18 +84,18 @@ public:
 
   /**
    * @brief Construct a Kafka producer or consumer with the supplied
-   *        configuration.
+   * configuration.
    *
    * @param role    Whether this instance acts as a @c kProducer or @c
    * kConsumer.
    * @param configs Key/value configuration map; see class documentation for
-   *                the reserved Dmn_Kafka-specific keys.
+   * the reserved Dmn_Kafka-specific keys.
    */
   Dmn_Kafka(Role role, ConfigType configs = {});
 
   /**
    * @brief Destroy the Kafka handle, flushing any pending producer messages
-   *        and closing the consumer session.
+   * and closing the consumer session.
    */
   ~Dmn_Kafka() noexcept;
 
@@ -130,7 +130,7 @@ public:
 
   /**
    * @brief Initiate an orderly shutdown of the Kafka instance, preventing
-   *        further use and facilitating object teardown.
+   * further use and facilitating object teardown.
    */
   void shutdown() override;
 
@@ -141,7 +141,7 @@ private:
 
   /**
    * @brief librdkafka delivery-report callback invoked after each produced
-   *        message is acknowledged (or fails) by the broker.
+   * message is acknowledged (or fails) by the broker.
    *
    * @param kafka_handle The producer handle (unused).
    * @param rkmessage    Delivery report for the produced message.
@@ -153,7 +153,7 @@ private:
 
   /**
    * @brief librdkafka generic error callback invoked for non-message-specific
-   *        errors (e.g. broker connectivity issues).
+   * errors (e.g. broker connectivity issues).
    *
    * @param kafka_handle The producer/consumer handle (unused).
    * @param err          librdkafka error code.
@@ -165,7 +165,7 @@ private:
 
   /**
    * @brief Internal helper that synchronously produces @p item to the Kafka
-   *        topic and waits for the delivery report.
+   * topic and waits for the delivery report.
    *
    * @param item The message payload to produce.
    */

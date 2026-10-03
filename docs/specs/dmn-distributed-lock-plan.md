@@ -29,7 +29,7 @@ The implementation is intentionally Phase 1 only: a `Dmn_DLock<Dmn_DMesg>` that
 serializes a canonical full lock-table snapshot over the DMesg transport.  This
 plan does not permit a v1 `Dmn_DMesgNet` specialization or any use of
 multi-publisher master election as a lock authority.  A future consensus-backed
-transport is a separate design stream that must pass its own quorum, leader,
+transport is a separate design stream that must pass its own quorum, proposer,
 log, and fencing tests before being enabled.
 
 For every increment:
@@ -548,37 +548,50 @@ DMesgNet safety assertion.
 ## 15. Future consensus-replicated mode
 
 Do not implement `Dmn_DLock<Dmn_DMesgNet>` by replacing the v1 template
-argument and reusing local publisher acceptance as commit.  First write and
-approve a separate consensus protocol specification.  The recommended design
-is a Raft-replicated deterministic lock-table state machine:
+argument and reusing local publisher acceptance as commit. Follow the separate
+proposal and test plan in
+`dmn-distributed-lock-dmesgnet-spec.md` and
+`dmn-distributed-lock-dmesgnet-plan.md`. The recommended design is a
+fixed-membership, quorum-committed deterministic lock-table state machine.
+`dmn-dmesgnet-spec.md` is the source for current DMesgNet behavior and its
+transport limitations. The initial network profile is fixed-membership three-voter Multi-Paxos as
+specified in the linked design; changing the consensus algorithm requires a
+reviewed protocol change. The profile excludes dynamic membership and
+automatic leases:
 
-1. define persistent node identity, term/vote/log storage, leader election,
-   AppendEntries/RequestVote messages, quorum commit, snapshots, and joint
-   consensus membership changes;
+1. preserve persistent member identity, durable ballots/promises/accepted
+   values, safe proposer recovery, chosen-slot ordering, quorum rules, and
+   snapshot/compaction semantics; voter membership is statically provisioned;
 2. transport those messages over `Dmn_DMesgNet` without using its current
    master election as consensus evidence;
-3. submit immutable handler intents to the leader and return success only
-   after the corresponding log index is quorum committed and applied;
+3. submit immutable handler intents to the active proposer and return success
+   only after the corresponding operation slot is chosen by a quorum and
+   applied;
 4. expose fencing order as the lexicographically ordered
-   `(term, committed_log_index)` pair and preserve it through compaction;
+   `(cluster_id, cluster_generation, chosen_slot)` tuple for each chosen grant
+   and preserve it through compaction;
 5. route handler-close cancel/release through the same committed log and retain
-   cleanup state across retries and leader changes;
-6. specify consensus-safe lease expiry before enabling leases--local process
-   clocks cannot independently mutate replicated lock state.
+   cleanup state across retries and proposer changes;
+6. keep automatic lease expiry disabled until a separate consensus-safe clock
+   and fencing design is accepted--local process clocks cannot independently
+   mutate replicated lock state.
 
 Required deterministic fault tests include:
 
 - minority partition cannot grant or mutate;
-- one committed grant survives leader replacement without an overlapping
+- one chosen grant survives proposer replacement without an overlapping
   grant;
 - divergent uncommitted suffixes are reconciled without exposing grants;
 - duplicate acquire/release/handler-close proposals are idempotent;
-- handler close racing leader change commits release once or remains visibly
+- handler close racing proposer change chooses release once or remains visibly
   pending;
-- stale leaders and stale fences are rejected;
-- a fence remains ordered across term change, log compaction, and restart;
-- crash/restart restores term, vote, log, table, and deduplication state;
-- membership change preserves quorum intersection.
+- stale proposers and stale fences are rejected;
+- a fence remains ordered across generation migration, compaction, and
+  restart;
+- crash/restart restores epoch, vote/promise, accepted/committed operations,
+  table, and deduplication state;
+- membership is never changed from DMesgNet neighbor observations; any later
+  reconfiguration must use a separately reviewed safe protocol.
 
 This future layer has its own definition of done and is not part of the v1
 build target.  Until it is complete, the documentation and API MUST reject or

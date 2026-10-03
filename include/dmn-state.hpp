@@ -86,8 +86,8 @@ public:
   /**
    * @brief Select which user state the next runNext() call will execute.
    * @param index With N configured user states, values 1 through N select a
-   *              callback. N+1 selects the end of the machine. Zero is
-   *              reserved for internal initialization.
+   * callback. N+1 selects the end of the machine. Zero is
+   * reserved for internal initialization.
    * @throws std::out_of_range if index is outside 1 through N+1.
    */
   void setNext(int index);
@@ -103,8 +103,8 @@ public:
    * @brief Add a user-state callback or replace an existing one.
    * @param fnc Callback to execute when this state is selected.
    * @param index With N callbacks currently configured, pass 0 (the default)
-   *              or N+1 to append a callback. Pass 1 through N to replace the
-   *              callback at that state.
+   * or N+1 to append a callback. Pass 1 through N to replace the
+   * callback at that state.
    * @throws std::out_of_range if index is negative or greater than N+1.
    *
    * State numbers start at 1. Zero means "append" only in this method and
@@ -117,7 +117,7 @@ public:
   /**
    * @brief Report whether internal initialization has run.
    * @return true after runNext() initializes the machine before its first
-   *         user-state callback.
+   * user-state callback.
    */
   auto isInitialized() -> bool;
 
@@ -144,7 +144,7 @@ public:
    * machine without invoking a callback.
    *
    * @return true when another callback can be executed; false after
-   *         finalization.
+   * finalization.
    * @pre The machine must not already be finalized.
    */
   auto runNext() -> bool;

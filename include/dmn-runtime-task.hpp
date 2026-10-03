@@ -38,7 +38,7 @@ struct Dmn_Runtime_Task {
 
     /**
      * @brief Custom final awaiter that resumes the registered continuation
-     *        (if any) when this coroutine finishes.
+     * (if any) when this coroutine finishes.
      */
     struct FinalAwaiter {
       /** @brief Never ready — always suspend to allow continuation transfer. */
@@ -155,7 +155,7 @@ struct Dmn_Runtime_Task {
    * @brief Move constructor — transfers ownership of the coroutine handle.
    *
    * @param other The source task; its handle is set to @c nullptr after the
-   *              move.
+   * move.
    */
   Dmn_Runtime_Task(Dmn_Runtime_Task &&other) noexcept
       : m_handle(std::exchange(other.m_handle, nullptr)) {}
@@ -164,7 +164,7 @@ struct Dmn_Runtime_Task {
    * @brief Move assignment — transfers ownership of the coroutine handle.
    *
    * @param other The source task; its handle is set to @c nullptr after the
-   *              move.
+   * move.
    * @return Reference to @c *this.
    */
   Dmn_Runtime_Task &operator=(Dmn_Runtime_Task &&other) noexcept {
@@ -180,7 +180,7 @@ struct Dmn_Runtime_Task {
 
   /**
    * @brief Return @c true if this task holds a valid (non-null) coroutine
-   *        frame.
+   * frame.
    *
    * @return @c true when the internal coroutine handle is non-null.
    */

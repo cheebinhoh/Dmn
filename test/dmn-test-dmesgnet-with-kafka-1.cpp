@@ -5,9 +5,8 @@
  * @brief Unit test for Dmn_DMesgNet construction and teardown with Dmn_Kafka as
  * I/O handlers.
  *
- * This test program asserts that the Dmn_DMesgNet object can be constructed
- * with the external Dmn_Kafka objects as its input and output handler and
- * perform object teardown without problem.
+ * This test constructs Dmn_DMesgNet with external Dmn_Kafka input and output
+ * handlers and verifies that teardown completes without problems.
  */
 
 #include <gtest/gtest.h>

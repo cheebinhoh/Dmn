@@ -192,7 +192,7 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
 
 /**
  * @brief Posts an async task to the publisher's context to check the
- *        conflict state, blocking until the result is available.
+ * conflict state, blocking until the result is available.
  *
  * @param topic Topic to check, or "" for any topic.
  * @return true if the handler is in conflict for the given topic.
@@ -224,7 +224,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
 
 /**
  * @brief Block until the initial playback is done, then return the
- *        per-topic running counter from the publisher's async context.
+ * per-topic running counter from the publisher's async context.
  *
  * @param topic Topic whose running counter is requested.
  * @return Current running counter value for the topic.
@@ -322,7 +322,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::read() -> std::optional<dmn::DMesgPb> {
 
 /**
  * @brief Delegate conflict resolution to the publisher's async context via
- *        Dmn_DMesg::resetHandlerConflictState().
+ * Dmn_DMesg::resetHandlerConflictState().
  *
  * @param topic Topic to resolve, or "" for all topics.
  */
@@ -363,7 +363,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(const dmn::DMesgPb &dmesgpb) {
 
 /**
  * @brief Move-write with flags: moves the message and dispatches
- *        writeDMesgInternal() in the async context.
+ * writeDMesgInternal() in the async context.
  *
  * @param dmesgpb Message to publish (moved).
  * @param flags   Bitmask of WriteOptions (kBlock, kForce).
@@ -391,7 +391,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::write(dmn::DMesgPb &&dmesgpb,
 
 /**
  * @brief Copy-write with flags: copies the message and dispatches
- *        writeDMesgInternal() in the async context.
+ * writeDMesgInternal() in the async context.
  *
  * @param dmesgpb Message to publish (copied).
  * @param flags   Bitmask of WriteOptions (kBlock, kForce).
@@ -515,7 +515,7 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
  *
  * @param topic Topic to check, or "" to check any topic.
  * @return true if the handler has at least one conflicted topic (or the
- *         specific topic is in conflict).
+ * specific topic is in conflict).
  */
 auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
     std::string_view topic) const -> bool {
@@ -577,6 +577,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
       m_name{name} {}
 
 Dmn_DMesg::~Dmn_DMesg() noexcept try {
+  // Unregistering is serialized after earlier publications. Drain before
+  // derived state is destroyed; callers must already have stopped new users.
   for (auto &h : m_handlers) {
     this->unregisterSubscriber(h.get());
   }
@@ -591,7 +593,7 @@ Dmn_DMesg::~Dmn_DMesg() noexcept try {
 
 /**
  * @brief Unregister the handler's subscriber, clear its owner pointer, remove
- *        it from the publisher's handler list, and reset the proxy's weak_ptr.
+ * it from the publisher's handler list, and reset the proxy's weak_ptr.
  *
  * @param handler Proxy referencing the handler to close.
  */
@@ -628,7 +630,7 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
 
 /**
  * @brief Return the last published message for @p topic, or std::nullopt if
- *        none has been published yet. The lookup is performed in the async
+ * none has been published yet. The lookup is performed in the async
  * context.
  *
  * @param topic Topic to look up.
@@ -677,8 +679,8 @@ void Dmn_DMesg::playbackLastTopicDMesgPbInternal() {
 
 /**
  * @brief Override of Dmn_Pub::publishInternal() that applies global conflict
- *        detection and advances per-topic running counters before forwarding
- *        to the base class for subscriber notification.
+ * detection and advances per-topic running counters before forwarding
+ * to the base class for subscriber notification.
  *
  * Playback messages bypass conflict detection. For normal messages:
  *  - If the source handler is already in conflict the message is silently
@@ -719,7 +721,7 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
     next_running_counter = copied_dmesgpb.runningcounter();
   }
 
-  // if this is a message is out of date and put the sender in conflict
+  // If this message is out of date, mark the sender as conflicted.
   if (copied_dmesgpb.runningcounter() < next_running_counter ||
       copied_dmesgpb.conflict()) {
     copied_dmesgpb.set_conflict(true);
@@ -761,7 +763,7 @@ void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
 
 /**
  * @brief Force-publish the last known message for @p topic so all handlers
- *        can synchronise to it, clearing their conflict state.
+ * can synchronise to it, clearing their conflict state.
  *
  * @param topic Topic whose last message should be force-republished.
  */
@@ -791,7 +793,7 @@ void Dmn_DMesg::resetConflictStateWithLastTopicMessageInternal(
 
 /**
  * @brief Post an async task to reset the conflict state of a specific handler
- *        for the given topic.
+ * for the given topic.
  *
  * @param handler_ptr Pointer to the handler whose conflict state should be
  * reset.

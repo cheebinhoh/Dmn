@@ -14,8 +14,8 @@
  *
  * The implementation uses Dmn_Proc to run a background execution context for
  * the timer loop. Exceptions derived from std::exception thrown by the callback
- * are caught and reported via DMN_DEBUG_PRINT; other exception types are
- * swallowed to ensure the timer's execution thread continues running.
+ * are caught and reported via DMN_DEBUG_PRINT. Other exception types are not
+ * caught by the timer callback loop and may terminate its execution thread.
  *
  * Public API summary:
  *  - Dmn_Timer(const T &reltime, std::function<void()> fn):
@@ -75,8 +75,8 @@ public:
    *
    * @param reltime Interval between consecutive callback invocations.
    * @param fn      Optional new callback.  If empty, the existing callback
-   *                stored from construction or a previous call to start() is
-   *                reused.
+   * stored from construction or a previous call to start() is
+   * reused.
    */
   void start(const T &reltime, std::function<void()> fn = {});
 

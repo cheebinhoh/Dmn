@@ -17,8 +17,8 @@
  * Proxy    - Dmn_DMesgHandlerProxy provides a lightweight proxy to
  *            Dmn_DMesgHandler instances, offering pointer-like access while
  *            allowing the publisher to control and own handler lifetime.
- * Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built
- *             on top of the Proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.
+ * Composite - Dmn_DMesgNet builds network I/O on top of Dmn_DMesg, which uses
+ *             the Dmn_Pub/Dmn_Sub publish-subscribe hierarchy.
  *
  * Key responsibilities
  * - Represent messages with the Protobuf type `dmn::DMesgPb`. Clients extend
@@ -33,8 +33,8 @@
  *   writes until the conflict is resolved by the client).
  *
  * Handler model and behaviour
- * - Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with
- *   the Dmn_Pub notification system.
+ * - Dmn_DMesgHandler derives from Dmn_Pub::Dmn_Sub and registers with the
+ *   Dmn_Pub notification system.
  * - Handlers can:
  *     * subscribe to a specific topic (empty topic is permitted),
  *     * provide an optional filter functor to drop unwanted messages,
@@ -286,7 +286,7 @@ public:
      * @param topic The topic to check, or an empty string to check any topic.
      *
      * @return @c true if the handler is in conflict for the given topic (or for
-     *         any topic when @p topic is empty), @c false otherwise.
+     * any topic when @p topic is empty), @c false otherwise.
      */
     auto isInConflict(std::string_view topic = "") -> bool;
 
@@ -592,6 +592,14 @@ public:
    * @param name Identification name for this DMesg instance.
    */
   explicit Dmn_DMesg(std::string_view name);
+
+  /**
+   * @brief Unregister handlers and drain queued publisher work before teardown.
+   *
+   * Callers must stop and join threads that may use this publisher before
+   * destruction begins. The derived destructor performs handler unregistration
+   * and drains the async context while Dmn_DMesg state is still alive.
+   */
   virtual ~Dmn_DMesg() noexcept;
 
   Dmn_DMesg(const Dmn_DMesg &obj) = delete;

@@ -84,9 +84,9 @@ public:
    *
    * @tparam T   Concrete singleton type whose instance is managed here.
    * @tparam U   Parameter pack of argument types forwarded to @p T's
-   *             constructor.
+   * constructor.
    * @param  arg Arguments forwarded to @p T's constructor (only used on the
-   *             first call).
+   * first call).
    * @return @c std::shared_ptr<T> pointing to the singleton instance.
    */
   template <class... U> static std::shared_ptr<T> createInstance(U &&...arg);
@@ -109,10 +109,9 @@ template <typename T> std::shared_ptr<T> Dmn_Singleton<T>::s_instance{};
 template <typename T>
 template <class... U>
 std::shared_ptr<T> Dmn_Singleton<T>::createInstance(U &&...arg) {
-  // NOTE that the template type class is supposed to handle
-  // thread-safety (example through std::once_flag) to make
-  // sure that multiple threads calling createInstance is
-  // thread safe and always the singleton instance is returned.
+  // This template class handles thread safety (for example, through
+  // std::once_flag) so that multiple threads calling createInstance are safe
+  // and always receive the singleton instance.
 
   if (!s_allocated.load()) {
     std::call_once(
