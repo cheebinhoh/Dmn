@@ -127,7 +127,7 @@ var searchData=
   ['dmn_5fproc_124',['dmn_proc',['../classdmn_1_1Dmn__Proc.html#afa8aab9ea455fb964b5db912357e9b06',1,'dmn::Dmn_Proc::Dmn_Proc()'],['../classdmn_1_1Dmn__Proc.html',1,'dmn::Dmn_Proc']]],
   ['dmn_5fproc_5fcleanup_5fpop_125',['DMN_PROC_CLEANUP_POP',['../dmn-proc_8hpp.html#aa7da7fe4e959340eec9466edd69fb25d',1,'dmn-proc.hpp']]],
   ['dmn_5fproc_5fcleanup_5fpush_126',['DMN_PROC_CLEANUP_PUSH',['../dmn-proc_8hpp.html#aa633c027e6c017bcb5b8058069bc8c65',1,'dmn-proc.hpp']]],
-  ['dmn_5fpub_127',['dmn_pub',['../classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8',1,'dmn::Dmn_Pub::Dmn_Pub()'],['../classdmn_1_1Dmn__Pub.html',1,'dmn::Dmn_Pub&lt; T, QueueType &gt;']]],
+  ['dmn_5fpub_127',['dmn_pub',['../classdmn_1_1Dmn__Pub.html#aa4f7e66a1ee767892c3835c211086e0b',1,'dmn::Dmn_Pub::Dmn_Pub()'],['../classdmn_1_1Dmn__Pub.html',1,'dmn::Dmn_Pub&lt; T, QueueType &gt;']]],
   ['dmn_5fpub_3c_20dmn_3a_3admesgpb_20_3e_128',['Dmn_Pub&lt; dmn::DMesgPb &gt;',['../classdmn_1_1Dmn__Pub.html',1,'dmn']]],
   ['dmn_5fruntime_5fjob_129',['Dmn_Runtime_Job',['../structdmn_1_1Dmn__Runtime__Job.html',1,'dmn']]],
   ['dmn_5fruntime_5fmanager_130',['Dmn_Runtime_Manager',['../classdmn_1_1Dmn__Runtime__Manager.html',1,'dmn']]],

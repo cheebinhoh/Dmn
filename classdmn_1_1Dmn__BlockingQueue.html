@@ -97,7 +97,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BlockingQueue.html','
 </div><!--header-->
 <div class="contents">
 
-<p>The <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> are top tier class for both the abstraction and implementor classes in the bridge design pattern with support of CRTP to achieve static polymorphism.  
+<p><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> is the top-level class for the abstraction and implementation classes in the Bridge pattern, using CRTP to achieve static polymorphism.  
  <a href="classdmn_1_1Dmn__BlockingQueue.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-blockingqueue_8hpp_source.html">dmn-blockingqueue.hpp</a>&gt;</code></p>
@@ -155,10 +155,10 @@ Protected Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Derived, typename T&gt;<br />
-class dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</div><p>The <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> are top tier class for both the abstraction and implementor classes in the bridge design pattern with support of CRTP to achieve static polymorphism. </p>
+class dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</div><p><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> is the top-level class for the abstraction and implementation classes in the Bridge pattern, using CRTP to achieve static polymorphism. </p>
 <ul>
-<li>There are a set of primitive methods to be overridden by concrete implementation subclasses, and those methods are virtual in the public API without being final. Those methods are defined in this class with CRTP to achieve static polymorphism to call subclass-overridden methods. Those are methods in the implementation tree in the Bridge design pattern.</li>
-<li>There are a set of composite methods that are marked as final and implemented in term of primitive methods. Those are methods in the the abstraction tree in Bridge design pattern. </li>
+<li>There are a set of primitive methods to be overridden by concrete implementation subclasses. Those methods are protected virtual implementation hooks and are defined in this class with CRTP to achieve static polymorphism when calling subclass implementations. They correspond to methods in the implementation tree in the Bridge design pattern.</li>
+<li>There are a set of composite methods that are marked as final and implemented in terms of primitive methods. These correspond to methods in the abstraction tree in the Bridge design pattern. </li>
 </ul>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a13bac196cd31294a957c6a9a8d537eae" name="a13bac196cd31294a957c6a9a8d537eae"></a>
@@ -273,7 +273,7 @@ template&lt;typename Derived , typename T &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">count</td><td>Maximum number of items to pop. </td></tr>
-    <tr><td class="paramname">timeout</td><td>Optional timeout in milliseconds. A value of 0 indicates an implementation-defined behavior (such as wait indefinitely).</td></tr>
+    <tr><td class="paramname">timeout</td><td>Optional timeout in microseconds. A value of 0 indicates an implementation-defined behavior (such as wait indefinitely).</td></tr>
   </table>
   </dd>
 </dl>

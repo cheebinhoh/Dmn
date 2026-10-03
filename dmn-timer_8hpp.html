@@ -114,7 +114,7 @@ Classes</h2></td></tr>
 <div class="textblock"><p>A lightweight recurring timer (watchdog) class template. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <p>Dmn_Timer&lt;T&gt; runs a user-provided callback repeatedly at a fixed relative interval specified by a duration type T (for example, std::chrono::milliseconds or std::chrono::seconds). The timer guarantees the callback will not be invoked before the specified interval has elapsed. However, it does not guarantee immediate invocation at the exact moment the interval expires: callback execution may be delayed due to scheduling, the callback's own execution time, or other runtime factors.</p>
-<p>The implementation uses Dmn_Proc to run a background execution context for the timer loop. Exceptions derived from std::exception thrown by the callback are caught and reported via DMN_DEBUG_PRINT; other exception types are swallowed to ensure the timer's execution thread continues running.</p>
+<p>The implementation uses Dmn_Proc to run a background execution context for the timer loop. Exceptions derived from std::exception thrown by the callback are caught and reported via DMN_DEBUG_PRINT. Other exception types are not caught by the timer callback loop and may terminate its execution thread.</p>
 <p>Public API summary:</p><ul>
 <li>Dmn_Timer(const T &amp;reltime, std::function&lt;void()&gt; fn): Constructs the timer and starts it immediately with the given interval and callback.</li>
 <li>void start(const T &amp;reltime, std::function&lt;void()&gt; fn = {}): Stops any existing timer and starts a new one with the provided interval and optional callback (if fn is empty, the previously set callback is retained).</li>

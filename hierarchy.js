@@ -1,6 +1,7 @@
 var hierarchy =
 [
     [ "dmn::Dmn_Runtime_Task::Awaiter", "structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html", null ],
+    [ "dmn::Dmn_Pub< T, QueueType >::CallbackFailure", "structdmn_1_1Dmn__Pub_1_1CallbackFailure.html", null ],
     [ "dmn::Dmn_Async< QueueType >", "classdmn_1_1Dmn__Async.html", [
       [ "dmn::Dmn_Pub< dmn::DMesgPb >", "classdmn_1_1Dmn__Pub.html", [
         [ "dmn::Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html", [

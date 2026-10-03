@@ -122,7 +122,7 @@ Classes</h2></td></tr>
 <p>Dmn_Kafka wraps the librdkafka C library and exposes a uniform <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface for both producing and consuming Kafka messages. A single instance acts as either a producer or consumer depending on the Role argument supplied to the constructor.</p>
 <p>Configuration is supplied as a ConfigType map (std::unordered_map&lt;std::string, std::string&gt;). Most keys are passed through to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself and are not forwarded:</p><ul>
 <li>Dmn_Kafka::Topic — the Kafka topic to read from / write to.</li>
-<li>Dmn_Kafka::Key — an alternate topic name that, if set, overrides the Topic value when determining which topic to read from / write to.</li>
+<li>Dmn_Kafka::Key — a legacy key option that is currently parsed as a topic value. If both it and Topic are provided, the selected value is unspecified because the configuration is an unordered map.</li>
 <li>Dmn_Kafka::PollTimeoutMs — consumer poll timeout in milliseconds.</li>
 </ul>
 <p>Thread-safety:</p><ul>

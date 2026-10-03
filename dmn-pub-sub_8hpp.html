@@ -103,18 +103,23 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;deque&gt;</code><br />
+<code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 </div>
 <p><a href="dmn-pub-sub_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; T, QueueType &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html">dmn::Dmn_Pub&lt; T, QueueType &gt;::CallbackFailure</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A recorded exception from a filter or subscriber notification.  <a href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,14 +147,14 @@ Key design goals</h2>
 <ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
-<li>Concurrency: deliveries occur asynchronously and subscribers process notifications.</li>
+<li>Concurrency: publish calls enqueue work asynchronously, then the publisher processes subscriber notifications serially.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md36"></a>
 Threading and execution model</h2>
 <ul>
 <li>The Dmn_Pub is derived from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
-<li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and schedules per- subscriber deliveries into each subscriber's publish() method.</li>
-<li>notify(const T&amp;, Dmn_Pub *pub) is a pure virtual callback implemented by subscriber subclasses and is always invoked directly in async publisher context, and it is up to subscriber to decide how does the notify() method being called, note that subscriber is adviced to copy the notification to its context before perform expensive computation.</li>
+<li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and invokes each accepted subscriber's notify() directly in the publisher's async context.</li>
+<li>Notifications are serialized with other publisher work. A subscriber that needs to perform expensive work should copy or enqueue the item into its own execution context before returning from notify().</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md37"></a>
 Synchronization</h2>
@@ -160,6 +165,7 @@ Synchronization</h2>
 Buffering and replay</h2>
 <ul>
 <li>The publisher keeps a bounded history (m_buffer) of up to m_capacity recently-published items.</li>
+<li>A capacity of zero is supported and disables replay: items are removed from the history immediately after publication, while live subscribers still receive notifications.</li>
 <li>When a subscriber registers, missed items from the buffer are replayed to the subscriber according to the subscriber's replay setting:<ul>
 <li>m_replayQuantity == -1 : replay all buffered items</li>
 <li>m_replayQuantity == 0 : replay none</li>
@@ -176,13 +182,15 @@ Filtering</h2>
 Lifetime and cleanup</h2>
 <ul>
 <li>Dmn_Sub stores a list of back-pointer (m_pubs) to its publishers while registered.</li>
-<li>Dmn_Sub destructor automatically unregisters from the publisher (if still registered) and waits for any pending asynchronous tasks to finish so a destroyed subscriber will not receive further notifications.</li>
-<li>Dmn_Pub destructor: unregister all the subscribers still dangling.</li>
-<li>The Dmn_Pub and Dmn_Sub does not maintain object lifetime and ownership, these are left it to the client of the classes.</li>
+<li>Dmn_Sub destruction synchronously unregisters from each publisher. Publisher ownership keeps a registered subscriber alive until the unregister task executes, after earlier queued publisher work.</li>
+<li>Dmn_Pub destruction unlinks subscribers on its async context and drains queued work. It does not make calls that begin concurrently with object destruction safe; callers must stop and join API-calling threads first.</li>
+<li>A derived Dmn_Pub must stop/join callers and drain its async context in its derived destructor before destroying state used by overridden publishInternal(). A derived Dmn_Sub's registered lifetime is retained by the publisher until serialized unregistration completes.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md41"></a>
 Error handling and exception safety</h2>
 <ul>
+<li>Exceptions from each filter or notify callback are recorded and delivery continues for other subscribers. Blocking publish rethrows the first callback exception after completing delivery; callers can retrieve all recorded failures with takeCallbackFailures().</li>
+<li>Callback failures during registration replay are recorded and do not prevent registration from completing.</li>
 <li>Destructors are noexcept; exceptions thrown during cleanup are swallowed to guarantee noexcept finalization.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md42"></a>

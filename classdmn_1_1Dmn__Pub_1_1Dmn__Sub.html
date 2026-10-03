@@ -114,6 +114,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae51e3fbaeffcd472bf2fb96d06780760" id="r_ae51e3fbaeffcd472bf2fb96d06780760"><td class="memItemLeft" align="right" valign="top"><a id="ae51e3fbaeffcd472bf2fb96d06780760" name="ae51e3fbaeffcd472bf2fb96d06780760"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Sub</b> (ssize_t replayQuantity=-1)</td></tr>
 <tr class="separator:ae51e3fbaeffcd472bf2fb96d06780760"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d084675538867e22b26037f46d97241" id="r_a8d084675538867e22b26037f46d97241"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d084675538867e22b26037f46d97241">GetName</a> () const noexcept -&gt; std::string_view</td></tr>
+<tr class="memdesc:a8d084675538867e22b26037f46d97241"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a diagnostic name for this subscriber.  <br /></td></tr>
+<tr class="separator:a8d084675538867e22b26037f46d97241"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19dc4eef8866e1476297c4d7ce55f5b9" id="r_a19dc4eef8866e1476297c4d7ce55f5b9"><td class="memItemLeft" align="right" valign="top"><a id="a19dc4eef8866e1476297c4d7ce55f5b9" name="a19dc4eef8866e1476297c4d7ce55f5b9"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Sub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a19dc4eef8866e1476297c4d7ce55f5b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,9 +144,40 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b></td></tr
 class dmn::Dmn_Pub&lt; T, QueueType &gt;::Dmn_Sub</div><p>Subscriber interface for receiving items published by Dmn_Pub&lt;T&gt;.</p>
 <p>Implementors should derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and override <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a59b33695fe315dce071a74646f5c689f" title="Called to deliver a published item to this subscriber. This method is invoked inside the publisher&#39;s ...">notify(const T&amp;, Dmn_Pub *)</a> to handle delivered items. The notify callback is executed in the publisher's singleton asynchronous context.</p>
 <p>Lifetime notes:</p><ul>
-<li>A <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> holds a back-pointer m_pubs to the publisher while it is registered. The <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> destructor will automatically unregister from its publisher (if still registered) and wait for pending asynchronous tasks to complete before returning. </li>
+<li>A <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> holds back-pointers to publishers while registered. Its destructor synchronously queues unregistration; the publisher's shared ownership keeps it alive until that task runs after earlier queued publisher operations.</li>
+<li>Callers must prevent publisher API calls from racing with publisher destruction. A derived publisher must drain queued work in its own destructor before destroying state used by overridden publication logic. </li>
 </ul>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8d084675538867e22b26037f46d97241" name="a8d084675538867e22b26037f46d97241"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d084675538867e22b26037f46d97241">&#9670;&#160;</a></span>GetName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T  = std::string, template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual auto <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; T, QueueType &gt;::Dmn_Sub::GetName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt; std::string_view </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return a diagnostic name for this subscriber. </p>
+<p>Override this method to identify the subscriber in recorded callback failures. The default name is <code>"unknown"</code>. </p>
+
+</div>
+</div>
 <a id="a59b33695fe315dce071a74646f5c689f" name="a59b33695fe315dce071a74646f5c689f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a59b33695fe315dce071a74646f5c689f">&#9670;&#160;</a></span>notify()</h2>
 

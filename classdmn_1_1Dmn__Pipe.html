@@ -329,7 +329,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 <li>timeout == 0: wait indefinitely for count items (return exactly count).</li>
 <li>timeout &gt; 0: wait up to timeout microseconds for items.<ul>
 <li>If timeout expires and there is at least one item, return 1..count items (the current pipe data size).</li>
-<li>If timeout expires and the pipe is still empty, the function keeps waiting (re-arming the absolute deadline) until at least one item is available.</li>
+<li>If timeout expires and the pipe is still empty, the function returns an empty vector.</li>
 </ul>
 </li>
 </ul>
@@ -384,7 +384,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Read the next item from the pipe and invoke the provided task. </p>
-<p>Blocks until the next item is available. The task is invoked while the internal mutex is held to update processing bookkeeping (<code>m_count</code>) and to signal waiting threads. The item is passed to <code>fn</code> using move semantics when possible.</p>
+<p>Blocks until items are available or the read timeout expires. The task is invoked before the internal bookkeeping mutex is acquired to update the processed-item count (<code>m_count</code>) and signal waiting threads. Items are passed to <code>fn</code> using move semantics when possible.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fn</td><td>The functor to process the next item popped from the pipe</td></tr>
@@ -487,7 +487,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Write (copy) an item into the pipe. </p>
-<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> implementation.</p>
+<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> implementation.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be copied into the pipe </td></tr>
@@ -526,7 +526,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Write (move) an item into the pipe. </p>
-<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> push policy.</p>
+<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> push policy.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be moved into the pipe </td></tr>

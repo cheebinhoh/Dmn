@@ -140,33 +140,32 @@ $(document).ready(function(){initNavTree('dmn-singleton_8hpp_source.html',''); i
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="keyword">template</span> &lt;<span class="keyword">class</span>... U&gt;</div>
 <div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">  111</a></span>std::shared_ptr&lt;T&gt; <a class="code hl_function" href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">Dmn_Singleton&lt;T&gt;::createInstance</a>(U &amp;&amp;...arg) {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  <span class="comment">// NOTE that the template type class is supposed to handle</span></div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="comment">// thread-safety (example through std::once_flag) to make</span></div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>  <span class="comment">// sure that multiple threads calling createInstance is</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>  <span class="comment">// thread safe and always the singleton instance is returned.</span></div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>  <span class="keywordflow">if</span> (!s_allocated.load()) {</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    std::call_once(</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        s_init_once,</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        [](U &amp;&amp;...arg) {</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>          <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance&lt;T&gt;</a>) {</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            T::runPriorToCreateInstance();</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>          }</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>          s_instance = std::shared_ptr&lt;T&gt;(<span class="keyword">new</span> T(std::forward&lt;U&gt;(arg)...));</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>          s_allocated.store(<span class="keyword">true</span>, std::memory_order_release);</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        },</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        std::forward&lt;U&gt;(arg)...);</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  }</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>  <span class="keywordflow">return</span> s_instance;</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>}</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  <span class="comment">// This template class handles thread safety (for example, through</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="comment">// std::once_flag) so that multiple threads calling createInstance are safe</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>  <span class="comment">// and always receive the singleton instance.</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>  <span class="keywordflow">if</span> (!s_allocated.load()) {</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    std::call_once(</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        s_init_once,</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        [](U &amp;&amp;...arg) {</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>          <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<a class="code hl_concept" href="conceptdmn_1_1HasStaticRunPriorToCreateInstance.html">HasStaticRunPriorToCreateInstance&lt;T&gt;</a>) {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            T::runPriorToCreateInstance();</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>          }</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>          s_instance = std::shared_ptr&lt;T&gt;(<span class="keyword">new</span> T(std::forward&lt;U&gt;(arg)...));</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>          s_allocated.store(<span class="keyword">true</span>, std::memory_order_release);</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        },</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        std::forward&lt;U&gt;(arg)...);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>  }</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>  <span class="keywordflow">return</span> s_instance;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>}</div>
 </div>
 </div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="preprocessor">#endif </span><span class="comment">// DMN_SINGLETON_HPP_</span></div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="preprocessor">#endif </span><span class="comment">// DMN_SINGLETON_HPP_</span></div>
 </div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:67</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html_a265bcf7489109bbf0d5a636e9b30dcd6"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html#a265bcf7489109bbf0d5a636e9b30dcd6">dmn::Dmn_Singleton::createInstance</a></div><div class="ttdeci">static std::shared_ptr&lt; T &gt; createInstance(U &amp;&amp;...arg)</div><div class="ttdoc">Create or retrieve the process-wide singleton instance of T.</div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:111</div></div>

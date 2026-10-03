@@ -165,8 +165,8 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Read and return the next available item. </p>
-<p>The call blocks until data is available. Returns std::nullopt to signal end-of-stream (e.g. EOF, closed pipe, or unrecoverable error); callers should treat std::nullopt as a permanent stop condition and cease further reads.</p>
-<dl class="section return"><dt>Returns</dt><dd>optional&lt;T&gt; containing the next item, or std::nullopt on end-of-stream. </dd></dl>
+<p>The call may block until data is available. The meaning of std::nullopt is implementation-specific and must be defined by subclasses.</p>
+<dl class="section return"><dt>Returns</dt><dd>optional&lt;T&gt; containing the next item, or std::nullopt on the implementation-specific no-value condition. </dd></dl>
 
 <p>Implemented in <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73">dmn::Dmn_DMesg::Dmn_DMesgHandler</a>, <a class="el" href="classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9">dmn::Dmn_Socket</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a40ef6a642adbdc8b609dac86390a6e14">dmn::Dmn_Kafka</a>, and <a class="el" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a>.</p>
 

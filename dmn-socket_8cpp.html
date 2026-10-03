@@ -115,8 +115,8 @@ $(document).ready(function(){initNavTree('dmn-socket_8cpp.html',''); initResizab
 <div class="textblock"><p>Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket that implements the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <p>The constructor creates an AF_INET/SOCK_DGRAM socket, enables the SO_BROADCAST socket option, and optionally binds to the supplied port (read mode). When write_only is true the bind step is skipped.</p>
-<p>read() calls recv() with MSG_WAITALL and returns std::nullopt on error or when the peer closes the connection (n_read &lt;= 0).</p>
-<p>write() reconstructs the destination sockaddr_in from the stored address/port on every call and uses sendto() to transmit the string. The rvalue overload simply moves the string into a local variable and delegates to the lvalue overload.</p>
+<p>read() calls recv() with MSG_WAITALL and returns std::nullopt when recv() returns zero or an error. UDP has no peer-close/stream-EOF notification.</p>
+<p>write() reconstructs the destination sockaddr_in from the stored address/port on every call and uses sendto() to transmit the string. The rvalue overload delegates to the lvalue overload without moving from the string.</p>
 <p>Note: The destination address is rebuilt on every write() call. For write-heavy workloads, caching the sockaddr_in as a member would reduce per-call overhead (see FIXME in write()). </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->

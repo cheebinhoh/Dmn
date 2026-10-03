@@ -149,6 +149,9 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>KeyValueConfiguratio
 using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerType</b> = <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">Dmn_DMesgHandlerProxy</a></td></tr>
 <tr class="separator:a213d37f294298f42cda7bad4bb831533"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
+<tr class="memitem:a07142f7a2007bdd567f793f4dcf7b498 inherit pub_types_classdmn_1_1Dmn__Pub" id="r_a07142f7a2007bdd567f793f4dcf7b498"><td class="memItemLeft" align="right" valign="top"><a id="a07142f7a2007bdd567f793f4dcf7b498" name="a07142f7a2007bdd567f793f4dcf7b498"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a07142f7a2007bdd567f793f4dcf7b498">CallbackFailureKind</a> </td></tr>
+<tr class="memdesc:a07142f7a2007bdd567f793f4dcf7b498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies which subscriber callback failed during publication. <br /></td></tr>
+<tr class="separator:a07142f7a2007bdd567f793f4dcf7b498 inherit pub_types_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea3de80ecbb952267713f2dc60eae036 inherit pub_types_classdmn_1_1Dmn__Pub" id="r_aea3de80ecbb952267713f2dc60eae036"><td class="memItemLeft" align="right" valign="top">
 using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task</b> = std::function&lt; bool(const Dmn_Sub *const, const dmn::DMesgPb &amp;t)&gt;</td></tr>
 <tr class="separator:aea3de80ecbb952267713f2dc60eae036 inherit pub_types_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -158,6 +161,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a70ad3a65cf698516f1fff892eeddbdf7" id="r_a70ad3a65cf698516f1fff892eeddbdf7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7">Dmn_DMesg</a> (std::string_view name)</td></tr>
 <tr class="memdesc:a70ad3a65cf698516f1fff892eeddbdf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> publisher instance.  <br /></td></tr>
 <tr class="separator:a70ad3a65cf698516f1fff892eeddbdf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa709e06f590d05f88aea61baba6614ff" id="r_aa709e06f590d05f88aea61baba6614ff"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#aa709e06f590d05f88aea61baba6614ff">~Dmn_DMesg</a> () noexcept</td></tr>
+<tr class="memdesc:aa709e06f590d05f88aea61baba6614ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unregister handlers and drain queued publisher work before teardown.  <br /></td></tr>
+<tr class="separator:aa709e06f590d05f88aea61baba6614ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a487becccc14bb482e5400837b8876c24" id="r_a487becccc14bb482e5400837b8876c24"><td class="memItemLeft" align="right" valign="top"><a id="a487becccc14bb482e5400837b8876c24" name="a487becccc14bb482e5400837b8876c24"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b> (const <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a487becccc14bb482e5400837b8876c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,9 +194,9 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>openHandlerWithFactor
 <tr class="memdesc:a43e3fef6207b48bb8dc34d44fdc7930b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset conflict state by posting last message of the topic.  <br /></td></tr>
 <tr class="separator:a43e3fef6207b48bb8dc34d44fdc7930b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
-<tr class="memitem:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9d64b2532b52140b295e08108ed8dad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={})</td></tr>
-<tr class="memdesc:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
-<tr class="separator:a9d64b2532b52140b295e08108ed8dad8 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4f7e66a1ee767892c3835c211086e0b inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_aa4f7e66a1ee767892c3835c211086e0b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#aa4f7e66a1ee767892c3835c211086e0b">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={}, ssize_t callbackFailureCapacity=-1)</td></tr>
+<tr class="memdesc:aa4f7e66a1ee767892c3835c211086e0b inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
+<tr class="separator:aa4f7e66a1ee767892c3835c211086e0b inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03d7f38a7e8882e51262710c4248c2cb inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a03d7f38a7e8882e51262710c4248c2cb"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a03d7f38a7e8882e51262710c4248c2cb inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,8 +210,11 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a82fec3a9de320410f9853ad7707555ee inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const dmn::DMesgPb &amp;item, bool block=false)</td></tr>
-<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.  <br /></td></tr>
+<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. By default, schedules the delivery in the publisher's asynchronous thread context and returns without waiting. Subscriber notify() callbacks run serially in that publisher context; pass block=true to wait for the publish task to complete. If a callback throws, delivery continues to other subscribers, then the first callback exception is rethrown when <code>block</code> is true and is available through <a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures()</a>.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225 inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9050210c6e7d036c5c26f028140efcdd inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a9050210c6e7d036c5c26f028140efcdd"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures</a> () -&gt; std::vector&lt; CallbackFailure &gt;</td></tr>
+<tr class="memdesc:a9050210c6e7d036c5c26f028140efcdd inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve and clear recorded filter/notification callback failures.  <br /></td></tr>
+<tr class="separator:a9050210c6e7d036c5c26f028140efcdd inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58ad7b5cd1a9e12f0a0ead24da927bea inherit pub_methods_classdmn_1_1Dmn__Pub" id="r_a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a58ad7b5cd1a9e12f0a0ead24da927bea">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
 <tr class="memdesc:a58ad7b5cd1a9e12f0a0ead24da927bea inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a subscriber.  <br /></td></tr>
 <tr class="separator:a58ad7b5cd1a9e12f0a0ead24da927bea inherit pub_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -279,11 +288,11 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:a34bd45668411eff973892aa865d4fbab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post an async action that resets a handler's conflict state in the publisher's singleton async thread context.  <br /></td></tr>
 <tr class="separator:a34bd45668411eff973892aa865d4fbab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const T &amp;item, bool block=false)</td></tr>
-<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.  <br /></td></tr>
+<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. By default, schedules the delivery in the publisher's asynchronous thread context and returns without waiting. Subscriber notify() callbacks run serially in that publisher context; pass block=true to wait for the publish task to complete. If a callback throws, delivery continues to other subscribers, then the first callback exception is rethrown when <code>block</code> is true and is available through <a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures()</a>.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classdmn_1_1Dmn__Pub"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classdmn_1_1Dmn__Pub')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub&lt; dmn::DMesgPb &gt;</a></td></tr>
 <tr class="memitem:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub" id="r_a991e2091744fb33652ee7dc6fc3f862d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">publishInternal</a> (const dmn::DMesgPb &amp;item)</td></tr>
-<tr class="memdesc:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a>)  <br /></td></tr>
+<tr class="memdesc:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">publish()</a>)  <br /></td></tr>
 <tr class="separator:a991e2091744fb33652ee7dc6fc3f862d inherit pro_methods_classdmn_1_1Dmn__Pub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -318,6 +327,34 @@ Protected Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="aa709e06f590d05f88aea61baba6614ff" name="aa709e06f590d05f88aea61baba6614ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa709e06f590d05f88aea61baba6614ff">&#9670;&#160;</a></span>~Dmn_DMesg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_DMesg::~Dmn_DMesg </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Unregister handlers and drain queued publisher work before teardown. </p>
+<p>Callers must stop and join threads that may use this publisher before destruction begins. The derived destructor performs handler unregistration and drains the async context while <a class="el" href="classdmn_1_1Dmn__DMesg.html">Dmn_DMesg</a> state is still alive. </p>
 
 </div>
 </div>
@@ -474,14 +511,15 @@ template&lt;class... U&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__DMesg.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context. </p>
+<p>Publish an item to all registered subscribers. By default, schedules the delivery in the publisher's asynchronous thread context and returns without waiting. Subscriber notify() callbacks run serially in that publisher context; pass block=true to wait for the publish task to complete. If a callback throws, delivery continues to other subscribers, then the first callback exception is rethrown when <code>block</code> is true and is available through <a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures()</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to publish. </td></tr>
-    <tr><td class="paramname">block</td><td>The caller will be blocked waiting for item to be published, default is false. </td></tr>
+    <tr><td class="paramname">block</td><td>The caller will be blocked waiting for item to be published, default is false.</td></tr>
   </table>
   </dd>
 </dl>
+<p>Calls from multiple threads are ordered by the publisher queue's successful enqueue order. The caller must prevent new API calls from racing with publisher destruction. </p>
 
 </div>
 </div>

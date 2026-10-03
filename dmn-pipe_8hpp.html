@@ -148,13 +148,13 @@ Read / Write semantics</h2>
 <li>write(T&amp;&amp;) moves <code>item</code> into the pipe; move will be used when the move constructor is noexcept (via QueueType::push semantics).</li>
 <li>read() blocks until the next item is available and returns it wrapped in std::optional; when the pipe is closed it returns std::nullopt.</li>
 <li>readAndProcess(fn) blocks until the next item is available or timeout and invokes the provided task with the item (moved where possible).</li>
-<li><p class="startli">read(count, timeout) and readAndProcss(fn, count, timeout) function behaves like it counterpart without count and timeout but with the following blocking behavior</p><ol type="1">
+<li><p class="startli">read(count, timeout) and readAndProcess(fn, count, timeout) functions behave like their counterparts without count and timeout, but with the following blocking behavior</p><ol type="1">
 <li>If the pipe already contains &gt;= count items, it returns exactly <code>count</code> items immediately.</li>
 <li>If the pipe contains 0 items, it blocks:<ul>
 <li>If timeout == 0: blocks indefinitely until at least <code>count</code> items become available (returns exactly <code>count</code>).</li>
 <li>If timeout &gt; 0: waits up to <code>timeout</code> microseconds for items.<ul>
 <li>If enough items are available before timeout, returns exactly <code>count</code> items.</li>
-<li>If the timeout expires and it returns whatever items available up to <code>count</code> items or no item.</li>
+<li>If the timeout expires, it returns whatever items are available up to <code>count</code> items, or no items if none are available.</li>
 </ul>
 </li>
 </ul>
@@ -163,7 +163,7 @@ Read / Write semantics</h2>
 <p class="startli">Note: The timeout is interpreted as a maximum time to wait for the full <code>count</code> items (measured from the first blocking wait inside the call). A zero timeout value means "wait forever".</p>
 </li>
 </ul>
-<p>waitForEmpty() blocks until all items that were inbound into the pipe has been processed (or pop out).</p>
+<p>waitForEmpty() blocks until all items that were inbound into the pipe have been processed (or popped out).</p>
 <p>Lifetime</p><ul>
 <li>If a Task is provided to the constructor, a background processing thread is started via Dmn_Proc::exec which repeatedly calls readAndProcess(fn).</li>
 <li>The destructor stops the background processor (Dmn_Proc::stopExec()), signals the condition variable. </li>

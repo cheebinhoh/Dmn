@@ -110,20 +110,28 @@ Inheritance diagram for dmn::Dmn_Pub&lt; T, QueueType &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html">CallbackFailure</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A recorded exception from a filter or subscriber notification.  <a href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:a07142f7a2007bdd567f793f4dcf7b498" id="r_a07142f7a2007bdd567f793f4dcf7b498"><td class="memItemLeft" align="right" valign="top"><a id="a07142f7a2007bdd567f793f4dcf7b498" name="a07142f7a2007bdd567f793f4dcf7b498"></a>enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a07142f7a2007bdd567f793f4dcf7b498">CallbackFailureKind</a> { <b>kFilter</b>
+, <b>kNotify</b>
+ }</td></tr>
+<tr class="memdesc:a07142f7a2007bdd567f793f4dcf7b498"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies which subscriber callback failed during publication. <br /></td></tr>
+<tr class="separator:a07142f7a2007bdd567f793f4dcf7b498"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea3de80ecbb952267713f2dc60eae036" id="r_aea3de80ecbb952267713f2dc60eae036"><td class="memItemLeft" align="right" valign="top"><a id="aea3de80ecbb952267713f2dc60eae036" name="aea3de80ecbb952267713f2dc60eae036"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub_Filter_Task</b> = std::function&lt; bool(const <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> *const, const T &amp;t)&gt;</td></tr>
 <tr class="separator:aea3de80ecbb952267713f2dc60eae036"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9d64b2532b52140b295e08108ed8dad8" id="r_a9d64b2532b52140b295e08108ed8dad8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9d64b2532b52140b295e08108ed8dad8">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={})</td></tr>
-<tr class="memdesc:a9d64b2532b52140b295e08108ed8dad8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
-<tr class="separator:a9d64b2532b52140b295e08108ed8dad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4f7e66a1ee767892c3835c211086e0b" id="r_aa4f7e66a1ee767892c3835c211086e0b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#aa4f7e66a1ee767892c3835c211086e0b">Dmn_Pub</a> (std::string_view name, size_t capacity=10, Dmn_Pub_Filter_Task filter_fn={}, ssize_t callbackFailureCapacity=-1)</td></tr>
+<tr class="memdesc:aa4f7e66a1ee767892c3835c211086e0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <br /></td></tr>
+<tr class="separator:aa4f7e66a1ee767892c3835c211086e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03d7f38a7e8882e51262710c4248c2cb" id="r_a03d7f38a7e8882e51262710c4248c2cb"><td class="memItemLeft" align="right" valign="top"><a id="a03d7f38a7e8882e51262710c4248c2cb" name="a03d7f38a7e8882e51262710c4248c2cb"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Pub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a03d7f38a7e8882e51262710c4248c2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,8 +145,11 @@ const <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td
 <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a82fec3a9de320410f9853ad7707555ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a213323e9a00cf6bbefd5b45fc3891225" id="r_a213323e9a00cf6bbefd5b45fc3891225"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225">publish</a> (const T &amp;item, bool block=false)</td></tr>
-<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context.  <br /></td></tr>
+<tr class="memdesc:a213323e9a00cf6bbefd5b45fc3891225"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish an item to all registered subscribers. By default, schedules the delivery in the publisher's asynchronous thread context and returns without waiting. Subscriber notify() callbacks run serially in that publisher context; pass block=true to wait for the publish task to complete. If a callback throws, delivery continues to other subscribers, then the first callback exception is rethrown when <code>block</code> is true and is available through <a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures()</a>.  <br /></td></tr>
 <tr class="separator:a213323e9a00cf6bbefd5b45fc3891225"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9050210c6e7d036c5c26f028140efcdd" id="r_a9050210c6e7d036c5c26f028140efcdd"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures</a> () -&gt; std::vector&lt; <a class="el" href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html">CallbackFailure</a> &gt;</td></tr>
+<tr class="memdesc:a9050210c6e7d036c5c26f028140efcdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve and clear recorded filter/notification callback failures.  <br /></td></tr>
+<tr class="separator:a9050210c6e7d036c5c26f028140efcdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58ad7b5cd1a9e12f0a0ead24da927bea" id="r_a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memTemplParams" colspan="2">template&lt;typename U , class... X&gt; <br />
 requires (sizeof...(X) != 1 || !std::same_as&lt;std::tuple_element_t&lt;0, std::tuple&lt;X...&gt;&gt;, std::shared_ptr&lt;U&gt;&gt;)</td></tr>
 <tr class="memitem:a58ad7b5cd1a9e12f0a0ead24da927bea"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a58ad7b5cd1a9e12f0a0ead24da927bea">registerSubscriber</a> (X &amp;&amp;...arg) -&gt; std::shared_ptr&lt; U &gt;</td></tr>
@@ -190,12 +201,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>waitForEmpty</b> ()</
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a991e2091744fb33652ee7dc6fc3f862d" id="r_a991e2091744fb33652ee7dc6fc3f862d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub.html#a991e2091744fb33652ee7dc6fc3f862d">publishInternal</a> (const T &amp;item)</td></tr>
-<tr class="memdesc:a991e2091744fb33652ee7dc6fc3f862d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a>)  <br /></td></tr>
+<tr class="memdesc:a991e2091744fb33652ee7dc6fc3f862d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">publish()</a>)  <br /></td></tr>
 <tr class="separator:a991e2091744fb33652ee7dc6fc3f862d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a9d64b2532b52140b295e08108ed8dad8" name="a9d64b2532b52140b295e08108ed8dad8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d64b2532b52140b295e08108ed8dad8">&#9670;&#160;</a></span>Dmn_Pub()</h2>
+<a id="aa4f7e66a1ee767892c3835c211086e0b" name="aa4f7e66a1ee767892c3835c211086e0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4f7e66a1ee767892c3835c211086e0b">&#9670;&#160;</a></span>Dmn_Pub()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -221,7 +232,13 @@ template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">Dmn_Pub_Filter_Task&#160;</td>
-          <td class="paramname"><em>filter_fn</em> = <code>{}</code>&#160;</td>
+          <td class="paramname"><em>filter_fn</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ssize_t&#160;</td>
+          <td class="paramname"><em>callbackFailureCapacity</em> = <code>-1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -240,8 +257,9 @@ template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>A human-readable name used by <a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> for the publisher thread context. </td></tr>
-    <tr><td class="paramname">capacity</td><td>Maximum number of historical items kept for replay to new subscribers. If capacity &lt;= 0, behavior is implementation defined (caller should pass a positive size). </td></tr>
+    <tr><td class="paramname">capacity</td><td>Maximum number of historical items kept for replay to new subscribers. A value of zero disables replay while preserving notifications to currently registered subscribers. </td></tr>
     <tr><td class="paramname">filter_fn</td><td>Optional filter function; if provided, it is invoked for each (subscriber, item) pair to decide whether that subscriber should receive the item. </td></tr>
+    <tr><td class="paramname">callbackFailureCapacity</td><td>Maximum number of callback failures to retain: -1 means unlimited, 0 disables storage, and a positive value keeps only the most recent failures. </td></tr>
   </table>
   </dd>
 </dl>
@@ -277,14 +295,15 @@ template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Publish an item to all registered subscribers. The <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a> call is non-blocking (with blocking optional) with respect to subscriber handling: it schedules the delivery in the publisher's asynchronous thread context (so the caller returns quickly) while delivery to each subscriber is dispatched into the corresponding subscriber's asynchronous context. </p>
+<p>Publish an item to all registered subscribers. By default, schedules the delivery in the publisher's asynchronous thread context and returns without waiting. Subscriber notify() callbacks run serially in that publisher context; pass block=true to wait for the publish task to complete. If a callback throws, delivery continues to other subscribers, then the first callback exception is rethrown when <code>block</code> is true and is available through <a class="el" href="classdmn_1_1Dmn__Pub.html#a9050210c6e7d036c5c26f028140efcdd">takeCallbackFailures()</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to publish. </td></tr>
-    <tr><td class="paramname">block</td><td>The caller will be blocked waiting for item to be published, default is false. </td></tr>
+    <tr><td class="paramname">block</td><td>The caller will be blocked waiting for item to be published, default is false.</td></tr>
   </table>
   </dd>
 </dl>
+<p>Calls from multiple threads are ordered by the publisher queue's successful enqueue order. The caller must prevent new API calls from racing with publisher destruction. </p>
 
 </div>
 </div>
@@ -314,8 +333,8 @@ template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">publish()</a>) </p>
-<p>Subclasses may override to customize behavior, but must honor the locking and delivery expectations used by register/unregister and destructor.</p>
+<p>Core implementation that performs buffering and iterates subscribers to dispatch notifications. This runs inside the publisher's asynchronous context (scheduled by <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">publish()</a>) </p>
+<p>Subclasses may override to customize behavior. They must preserve serialized publisher-context execution and drain queued work in their derived destructor before destroying state accessed by this method.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to deliver to subscribers. </td></tr>
@@ -390,6 +409,29 @@ requires (sizeof...(X) != 1 || !std::same_as&lt;std::tuple_element_t&lt;0, std::
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>std::shared_ptr&lt;U&gt; pointing to the instance of class U. </dd></dl>
+
+</div>
+</div>
+<a id="a9050210c6e7d036c5c26f028140efcdd" name="a9050210c6e7d036c5c26f028140efcdd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9050210c6e7d036c5c26f028140efcdd">&#9670;&#160;</a></span>takeCallbackFailures()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , template&lt; class &gt; class QueueType&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classdmn_1_1Dmn__Pub.html">dmn::Dmn_Pub</a>&lt; T, QueueType &gt;::takeCallbackFailures </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> -&gt; std::vector&lt;<a class="el" href="structdmn_1_1Dmn__Pub_1_1CallbackFailure.html">CallbackFailure</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Retrieve and clear recorded filter/notification callback failures. </p>
+<p>The drain runs in the publisher's asynchronous context and this call waits for it to finish. Do not call from that context (for example, from a subscriber callback), because waiting for a task queued to the same context would deadlock. Failures from non-blocking publication become available after the corresponding work has completed; call <a class="el" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty()</a> before draining when the caller needs to include all currently queued work. Blocking publication also records failures before rethrowing the first callback exception to its caller. Failures during registration replay are recorded as well; registration continues through all retained items and does not rethrow those notification exceptions.</p>
+<dl class="section return"><dt>Returns</dt><dd>Recorded filter/notification failures in invocation order. </dd></dl>
 
 </div>
 </div>

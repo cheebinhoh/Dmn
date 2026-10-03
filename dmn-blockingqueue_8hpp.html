@@ -110,7 +110,7 @@ $(document).ready(function(){initNavTree('dmn-blockingqueue_8hpp.html',''); init
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="The Dmn_BlockingQueue are top tier class for both the abstraction and implementor classes in the brid...">Dmn_BlockingQueue</a> are top tier class for both the abstraction and implementor classes in the bridge design pattern with support of CRTP to achieve static polymorphism.  <a href="classdmn_1_1Dmn__BlockingQueue.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> is the top-level class for the abstraction and implementation classes in the Bridge pattern, using CRTP to achieve static polymorphism.  <a href="classdmn_1_1Dmn__BlockingQueue.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -119,11 +119,11 @@ Classes</h2></td></tr>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Design pattern</h2>
 <ul>
-<li>Degenerate Bridge : the blocking queue interface is abstracted from the underlying implementation (mutex lock or lock-free), this is not a full-fledge bridge as written in gang of 4, but simplified version with CRTP template with degenerate bridge where abstraction and implemention are in one hierarchy tree.</li>
+<li>Degenerate Bridge : the blocking queue interface is abstracted from the underlying implementation (mutex lock or lock-free), this is not a full-fledged bridge as written in the Gang of Four, but a simplified version with a CRTP template where abstraction and implementation are in one hierarchy tree.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md9"></a>
 Static polymorphism</h2>
-<p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsetting the runtime overhead of vtable lookup by moving the function dispatch to compile time.</p>
+<p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsets the runtime overhead of vtable lookup by moving the function dispatch to compile time.</p>
 <h2><a class="anchor" id="autotoc_md10"></a>
 Move and copy behavior</h2>
 <ul>

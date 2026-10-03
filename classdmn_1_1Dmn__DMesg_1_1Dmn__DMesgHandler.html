@@ -220,6 +220,9 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>shutdown</b> 
 <tr class="memitem:ae51e3fbaeffcd472bf2fb96d06780760 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub" id="r_ae51e3fbaeffcd472bf2fb96d06780760"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Sub</b> (ssize_t replayQuantity=-1)</td></tr>
 <tr class="separator:ae51e3fbaeffcd472bf2fb96d06780760 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d084675538867e22b26037f46d97241 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub" id="r_a8d084675538867e22b26037f46d97241"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d084675538867e22b26037f46d97241">GetName</a> () const noexcept -&gt; std::string_view</td></tr>
+<tr class="memdesc:a8d084675538867e22b26037f46d97241 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a diagnostic name for this subscriber.  <br /></td></tr>
+<tr class="separator:a8d084675538867e22b26037f46d97241 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19dc4eef8866e1476297c4d7ce55f5b9 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub" id="r_a19dc4eef8866e1476297c4d7ce55f5b9"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Sub</b> (const <a class="el" href="classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html">Dmn_Sub</a> &amp;obj)=delete</td></tr>
 <tr class="separator:a19dc4eef8866e1476297c4d7ce55f5b9 inherit pub_methods_classdmn_1_1Dmn__Pub_1_1Dmn__Sub"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1279,7 +1282,7 @@ template&lt;typename Callable &gt; </div>
   </table>
   </dd>
 </dl>
-<p>Sets timestamp, source identifiers, and topic (if unset), increments the per-topic running counter, then calls <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. The publish() call is non-blocking (with blocking opti...">Dmn_Pub::publish()</a>.</p>
+<p>Sets timestamp, source identifiers, and topic (if unset), increments the per-topic running counter, then calls <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">Dmn_Pub::publish()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dmesgpb</td><td>Message to publish (modified in-place). </td></tr>

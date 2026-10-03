@@ -98,265 +98,265 @@ $(document).ready(function(){initNavTree('dmn-async_8hpp_source.html',''); initR
 </div><!--header-->
 <div class="contents">
 <a href="dmn-async_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="preprocessor">#ifndef DMN_ASYNC_HPP_</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#define DMN_ASYNC_HPP_</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-pipe_8hpp.html">dmn-pipe.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#include &lt;exception&gt;</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#include &lt;future&gt;</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="foldopen" id="foldopen00055" data-start="" data-end="">
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#ab4b2eb25e58bb851a4447fb7add5d9ee">   55</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="preprocessor">  do {                                                                         \</span></div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="preprocessor">    this-&gt;addExecTask([=]() mutable -&gt; void { block; });                       \</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="preprocessor">  } while (false)</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#ifndef DMN_ASYNC_HPP_</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#define DMN_ASYNC_HPP_</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-pipe_8hpp.html">dmn-pipe.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#include &lt;exception&gt;</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#include &lt;future&gt;</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="foldopen" id="foldopen00056" data-start="" data-end="">
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#ab4b2eb25e58bb851a4447fb7add5d9ee">   56</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_COPY_CAPTURE(block)                                \</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="preprocessor">  do {                                                                         \</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="preprocessor">    this-&gt;addExecTask([=]() mutable -&gt; void { block; });                       \</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="preprocessor">  } while (false)</span></div>
 </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="foldopen" id="foldopen00073" data-start="" data-end="">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#ad6a1ff0c80c7d2b6274c06d6ee1f2b00">   73</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \</span></div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">  do {                                                                         \</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="preprocessor">    this-&gt;addExecTask([&amp;]() mutable -&gt; void { block; });                       \</span></div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">  } while (false)</span></div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="foldopen" id="foldopen00074" data-start="" data-end="">
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#ad6a1ff0c80c7d2b6274c06d6ee1f2b00">   74</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="preprocessor">  do {                                                                         \</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">    this-&gt;addExecTask([&amp;]() mutable -&gt; void { block; });                       \</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="preprocessor">  } while (false)</span></div>
 </div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="foldopen" id="foldopen00089" data-start="" data-end="">
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#abd3a6227f7d38fa67d9982785afe1fed">   89</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_CAPTURE(block, ...)                                \</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">  do {                                                                         \</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">    this-&gt;addExecTask([__VA_ARGS__]() mutable -&gt; void { block; });             \</span></div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">  } while (false)</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="foldopen" id="foldopen00090" data-start="" data-end="">
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="dmn-async_8hpp.html#abd3a6227f7d38fa67d9982785afe1fed">   90</a></span><span class="preprocessor">#define DMN_ASYNC_CALL_WITH_CAPTURE(block, ...)                                \</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">  do {                                                                         \</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">    this-&gt;addExecTask([__VA_ARGS__]() mutable -&gt; void { block; });             \</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="preprocessor">  } while (false)</span></div>
 </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="keyword">namespace </span>dmn {</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType = Dmn_BlockingQueue_Mt&gt;</div>
-<div class="foldopen" id="foldopen00099" data-start="{" data-end="};">
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html">   99</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> {</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  <span class="comment">// A simple rendezvous object returned to callers that want to wait for a</span></div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  <span class="comment">// previously submitted asynchronous task to finish. Calling wait() blocks</span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  <span class="comment">// until the task has completed. If the task threw, the stored exception</span></div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  <span class="comment">// will be rethrown to the waiter.</span></div>
-<div class="foldopen" id="foldopen00105" data-start="{" data-end="};">
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">  105</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> {</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class</span>&gt; <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>;</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  <span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00119" data-start="{" data-end="}">
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">  119</a></span>    <a class="code hl_function" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">Dmn_Async_Handle</a>(std::function&lt;<span class="keywordtype">void</span>()&gt; fnc, <span class="keywordtype">long</span> <span class="keywordtype">long</span> due_in_future = 0)</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        : m_fnc{fnc}, m_due_in_future{due_in_future} {</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>      m_fut = m_p.get_future();</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    }</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">namespace </span>dmn {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType = Dmn_BlockingQueue_Mt&gt;</div>
+<div class="foldopen" id="foldopen00100" data-start="{" data-end="};">
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html">  100</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> {</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  <span class="comment">// A simple rendezvous object returned to callers that want to wait for a</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  <span class="comment">// previously submitted asynchronous task to finish. Calling wait() blocks</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  <span class="comment">// until the task has completed. If the task threw, the stored exception</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  <span class="comment">// will be rethrown to the waiter.</span></div>
+<div class="foldopen" id="foldopen00106" data-start="{" data-end="};">
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">  106</a></span>  <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> {</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class</span>&gt; <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>;</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>  <span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00120" data-start="{" data-end="}">
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">  120</a></span>    <a class="code hl_function" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">Dmn_Async_Handle</a>(std::function&lt;<span class="keywordtype">void</span>()&gt; fnc, <span class="keywordtype">long</span> <span class="keywordtype">long</span> due_in_future = 0)</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>        : m_fnc{fnc}, m_due_in_future{due_in_future} {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>      m_fut = m_p.get_future();</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    }</div>
 </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">~Dmn_Async_Handle</a>() = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">  137</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">wait</a>() { m_fut.get(); }</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    std::function&lt;void()&gt; m_fnc{}; </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keywordtype">long</span> <span class="keywordtype">long</span> m_due_in_future{};   </div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span> </div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    std::promise&lt;void&gt;</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        m_p{}; </div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    std::future&lt;void&gt;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        m_fut{}; </div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>  }; <span class="comment">// class Dmn_Async_Handle</span></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">~Dmn_Async_Handle</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">  138</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">wait</a>() { m_fut.get(); }</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    std::function&lt;void()&gt; m_fnc{}; </div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keywordtype">long</span> <span class="keywordtype">long</span> m_due_in_future{};   </div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    std::promise&lt;void&gt;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>        m_p{}; </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    std::future&lt;void&gt;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        m_fut{}; </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>  }; <span class="comment">// class Dmn_Async_Handle</span></div>
 </div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span> </div>
-<div class="foldopen" id="foldopen00155" data-start="{" data-end="}">
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">  155</a></span>  <span class="keyword">explicit</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  <span class="keyword">virtual</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">~Dmn_Async</a>() noexcept;</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>(const <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj) = delete;</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;operator=(const <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj) = delete;</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj) = delete;</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj) = delete;</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span> </div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>  template &lt;typename Callable, typename... Args&gt;</div>
-<div class="foldopen" id="foldopen00170" data-start="{" data-end="}">
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">  170</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">addExecTask</a>(Callable &amp;&amp;func, Args &amp;&amp;...args);</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>  template &lt;typename Callable, typename... Args&gt;</div>
-<div class="foldopen" id="foldopen00186" data-start="{" data-end="}">
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">  186</a></span>  auto <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">addExecTaskWithWait</a>(Callable &amp;&amp;func,</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                           Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt;;</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>  template &lt;class Rep, class Period, typename Callable, typename... Args&gt;</div>
-<div class="foldopen" id="foldopen00202" data-start="{" data-end="}">
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">  202</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">addExecTaskAfter</a>(const std::chrono::duration&lt;Rep, Period&gt; &amp;duration,</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>                        Callable &amp;&amp;func, Args &amp;&amp;...args);</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>  template &lt;class Rep, class Period, typename Callable, typename... Args&gt;</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>  auto</div>
-<div class="foldopen" id="foldopen00225" data-start="{" data-end="}">
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">  225</a></span>  <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">addExecTaskAfterWithWait</a>(const std::chrono::duration&lt;Rep, Period&gt; &amp;duration,</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                           Callable &amp;&amp;func,</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                           Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt;;</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
-<div class="foldopen" id="foldopen00232" data-start="{" data-end="}">
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">  232</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>private:</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>  using <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">BasePipe</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt;std::shared_ptr&lt;Dmn_Async_Handle&gt;,</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>                            QueueType&lt;std::shared_ptr&lt;Dmn_Async_Handle&gt;&gt;&gt;;</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span> </div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>  std::<span class="keywordtype">string</span> m_name{};</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>  std::unique_ptr&lt;BasePipe&gt; m_pipe{};</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>}; <span class="comment">// class Dmn_Async</span></div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span> </div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="foldopen" id="foldopen00243" data-start="{" data-end="}">
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">  243</a></span><a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async&lt;QueueType&gt;::Dmn_Async</a>(std::string_view name) : m_name{name} {</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>  m_pipe = std::make_unique&lt;BasePipe&gt;(</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>      m_name,</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>      [<span class="keyword">this</span>](std::shared_ptr&lt;Dmn_Async::Dmn_Async_Handle&gt; task) -&gt; <span class="keywordtype">void</span> {</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>        <span class="keywordflow">try</span> {</div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>          <span class="keywordflow">if</span> (task-&gt;m_due_in_future &gt; 0) {</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            const long long now =</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>                std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                    std::chrono::steady_clock::now().time_since_epoch())</div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>                    .count();</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span> </div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>            if (now &gt;= task-&gt;m_due_in_future) {</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>              if (task-&gt;m_fnc) {</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>                task-&gt;m_fnc();</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>              }</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>              task-&gt;m_p.set_value();</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>              this-&gt;m_pipe-&gt;write(task);</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>            }</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>          } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>            <span class="keywordflow">if</span> (task-&gt;m_fnc) {</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>              task-&gt;m_fnc();</div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>            }</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span> </div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>            task-&gt;m_p.set_value();</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>          }</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        } <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>          task-&gt;m_p.set_exception(std::current_exception());</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        }</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span> </div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">Dmn_Proc::yield</a>();</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>      });</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>}</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="foldopen" id="foldopen00156" data-start="{" data-end="}">
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">  156</a></span>  <span class="keyword">explicit</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  <span class="keyword">virtual</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">~Dmn_Async</a>() noexcept;</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>(const <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj) = delete;</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;operator=(const <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;obj) = delete;</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj) = delete;</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a> &amp;&amp;obj) = delete;</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span> </div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>  template &lt;typename Callable, typename... Args&gt;</div>
+<div class="foldopen" id="foldopen00171" data-start="{" data-end="}">
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">  171</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">addExecTask</a>(Callable &amp;&amp;func, Args &amp;&amp;...args);</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>  template &lt;typename Callable, typename... Args&gt;</div>
+<div class="foldopen" id="foldopen00187" data-start="{" data-end="}">
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">  187</a></span>  auto <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">addExecTaskWithWait</a>(Callable &amp;&amp;func,</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>                           Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt;;</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>  template &lt;class Rep, class Period, typename Callable, typename... Args&gt;</div>
+<div class="foldopen" id="foldopen00203" data-start="{" data-end="}">
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">  203</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">addExecTaskAfter</a>(const std::chrono::duration&lt;Rep, Period&gt; &amp;duration,</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>                        Callable &amp;&amp;func, Args &amp;&amp;...args);</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>  template &lt;class Rep, class Period, typename Callable, typename... Args&gt;</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>  auto</div>
+<div class="foldopen" id="foldopen00226" data-start="{" data-end="}">
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">  226</a></span>  <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">addExecTaskAfterWithWait</a>(const std::chrono::duration&lt;Rep, Period&gt; &amp;duration,</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                           Callable &amp;&amp;func,</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>                           Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt;;</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
+<div class="foldopen" id="foldopen00233" data-start="{" data-end="}">
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">  233</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>private:</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>  using <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">BasePipe</a> = <a class="code hl_class" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a>&lt;std::shared_ptr&lt;Dmn_Async_Handle&gt;,</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                            QueueType&lt;std::shared_ptr&lt;Dmn_Async_Handle&gt;&gt;&gt;;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span> </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>  std::<span class="keywordtype">string</span> m_name{};</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>  std::unique_ptr&lt;BasePipe&gt; m_pipe{};</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>}; <span class="comment">// class Dmn_Async</span></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span> </div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="foldopen" id="foldopen00244" data-start="{" data-end="}">
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">  244</a></span><a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">Dmn_Async&lt;QueueType&gt;::Dmn_Async</a>(std::string_view name) : m_name{name} {</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>  m_pipe = std::make_unique&lt;BasePipe&gt;(</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>      m_name,</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>      [<span class="keyword">this</span>](std::shared_ptr&lt;Dmn_Async::Dmn_Async_Handle&gt; task) -&gt; <span class="keywordtype">void</span> {</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="keywordflow">try</span> {</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>          <span class="keywordflow">if</span> (task-&gt;m_due_in_future &gt; 0) {</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            const long long now =</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>                    std::chrono::steady_clock::now().time_since_epoch())</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>                    .count();</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>            if (now &gt;= task-&gt;m_due_in_future) {</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>              if (task-&gt;m_fnc) {</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>                task-&gt;m_fnc();</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>              }</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>              task-&gt;m_p.set_value();</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>            } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>              this-&gt;m_pipe-&gt;write(task);</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>            }</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>          } <span class="keywordflow">else</span> {</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>            <span class="keywordflow">if</span> (task-&gt;m_fnc) {</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>              task-&gt;m_fnc();</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>            }</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span> </div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>            task-&gt;m_p.set_value();</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>          }</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        } <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>          task-&gt;m_p.set_exception(std::current_exception());</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        }</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span> </div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">Dmn_Proc::yield</a>();</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>      });</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>}</div>
 </div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>Dmn_Async&lt;QueueType&gt;::~Dmn_Async() noexcept try {</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>  m_pipe.reset(); <span class="comment">// this will initialize shutdown and destroy process</span></div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>} <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>  <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>}</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span> </div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Rep, <span class="keyword">class </span>Period, <span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
-<div class="foldopen" id="foldopen00288" data-start="{" data-end="}">
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">  288</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskAfter</a>(</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;duration, Callable &amp;&amp;func,</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    Args &amp;&amp;...args) {</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>  this-&gt;addExecTaskAfterWithWait(duration, std::forward&lt;Callable&gt;(func),</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>                                 std::forward&lt;Args&gt;(args)...);</div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>}</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>Dmn_Async&lt;QueueType&gt;::~Dmn_Async() noexcept try {</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>  m_pipe.reset(); <span class="comment">// this will initialize shutdown and destroy process</span></div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>} <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>  <span class="comment">// explicit return to resolve exception as destructor must be noexcept</span></div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>  <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>}</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span> </div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Rep, <span class="keyword">class </span>Period, <span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
+<div class="foldopen" id="foldopen00289" data-start="{" data-end="}">
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">  289</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskAfter</a>(</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;duration, Callable &amp;&amp;func,</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>    Args &amp;&amp;...args) {</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>  this-&gt;addExecTaskAfterWithWait(duration, std::forward&lt;Callable&gt;(func),</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>                                 std::forward&lt;Args&gt;(args)...);</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>}</div>
 </div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span> </div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Rep, <span class="keyword">class </span>Period, <span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
-<div class="foldopen" id="foldopen00297" data-start="{" data-end="}">
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">  297</a></span><span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskAfterWithWait</a>(</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;duration, Callable &amp;&amp;func,</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt; {</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>  <span class="keywordtype">long</span> <span class="keywordtype">long</span> time_in_future =</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>      std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>          std::chrono::steady_clock::now().time_since_epoch())</div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>          .count() +</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>      std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(duration).count();</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span> </div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>  <span class="keyword">auto</span> bound_task = [f = std::forward&lt;Callable&gt;(func),</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>                     ... captured_args = std::forward&lt;Args&gt;(args)]() <span class="keyword">mutable</span> {</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>    std::invoke(std::move(f), std::move(captured_args)...);</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>  };</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span> </div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>  <span class="keyword">auto</span> task_shared_ptr = std::make_shared&lt;Dmn_Async::Dmn_Async_Handle&gt;(</div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>      std::move(bound_task), time_in_future);</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>  <span class="keyword">auto</span> task_ret = task_shared_ptr;</div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span> </div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>  this-&gt;m_pipe-&gt;write(task_shared_ptr);</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span> </div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>  <span class="keywordflow">return</span> task_ret;</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>}</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span> </div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="keyword">template</span> &lt;<span class="keyword">class </span>Rep, <span class="keyword">class </span>Period, <span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
+<div class="foldopen" id="foldopen00298" data-start="{" data-end="}">
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">  298</a></span><span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskAfterWithWait</a>(</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;duration, Callable &amp;&amp;func,</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    Args &amp;&amp;...args) -&gt; std::shared_ptr&lt;Dmn_Async_Handle&gt; {</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>  <span class="keywordtype">long</span> <span class="keywordtype">long</span> time_in_future =</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>      std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>          std::chrono::steady_clock::now().time_since_epoch())</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>          .count() +</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>      std::chrono::duration_cast&lt;std::chrono::nanoseconds&gt;(duration).count();</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>  <span class="keyword">auto</span> bound_task = [f = std::forward&lt;Callable&gt;(func),</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>                     ... captured_args = std::forward&lt;Args&gt;(args)]() <span class="keyword">mutable</span> {</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>    std::invoke(std::move(f), std::move(captured_args)...);</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>  };</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span> </div>
+<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>  <span class="keyword">auto</span> task_shared_ptr = std::make_shared&lt;Dmn_Async::Dmn_Async_Handle&gt;(</div>
+<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span>      std::move(bound_task), time_in_future);</div>
+<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>  <span class="keyword">auto</span> task_ret = task_shared_ptr;</div>
+<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span> </div>
+<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>  this-&gt;m_pipe-&gt;write(task_shared_ptr);</div>
+<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span> </div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>  <span class="keywordflow">return</span> task_ret;</div>
+<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>}</div>
 </div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span> </div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
-<div class="foldopen" id="foldopen00322" data-start="{" data-end="}">
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">  322</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTask</a>(Callable &amp;&amp;func, Args &amp;&amp;...args) {</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>  addExecTaskWithWait(std::forward&lt;Callable&gt;(func),</div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>                      std::forward&lt;Args&gt;(args)...);</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>}</div>
+<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span> </div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
+<div class="foldopen" id="foldopen00323" data-start="{" data-end="}">
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">  323</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTask</a>(Callable &amp;&amp;func, Args &amp;&amp;...args) {</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>  addExecTaskWithWait(std::forward&lt;Callable&gt;(func),</div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>                      std::forward&lt;Args&gt;(args)...);</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>}</div>
 </div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
-<div class="foldopen" id="foldopen00329" data-start="{" data-end="}">
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">  329</a></span><span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskWithWait</a>(Callable &amp;&amp;func, Args &amp;&amp;...args)</div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>    -&gt; std::shared_ptr&lt;Dmn_Async::Dmn_Async_Handle&gt; {</div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>  <span class="keyword">auto</span> bound_task = [f = std::forward&lt;Callable&gt;(func),</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>                     ... captured_args = std::forward&lt;Args&gt;(args)]() <span class="keyword">mutable</span> {</div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>    std::invoke(std::move(f), std::move(captured_args)...);</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>  };</div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span> </div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>  <span class="keyword">auto</span> task_shared_ptr =</div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>      std::make_shared&lt;Dmn_Async::Dmn_Async_Handle&gt;(std::move(bound_task));</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>  <span class="keyword">auto</span> task_ret = task_shared_ptr;</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span> </div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>  this-&gt;m_pipe-&gt;write(task_shared_ptr);</div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span> </div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>  <span class="keywordflow">return</span> task_ret;</div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>}</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Callable, <span class="keyword">typename</span>... Args&gt;</div>
+<div class="foldopen" id="foldopen00330" data-start="{" data-end="}">
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">  330</a></span><span class="keyword">auto</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::addExecTaskWithWait</a>(Callable &amp;&amp;func, Args &amp;&amp;...args)</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>    -&gt; std::shared_ptr&lt;Dmn_Async::Dmn_Async_Handle&gt; {</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>  <span class="keyword">auto</span> bound_task = [f = std::forward&lt;Callable&gt;(func),</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>                     ... captured_args = std::forward&lt;Args&gt;(args)]() <span class="keyword">mutable</span> {</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>    std::invoke(std::move(f), std::move(captured_args)...);</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>  };</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span> </div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>  <span class="keyword">auto</span> task_shared_ptr =</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>      std::make_shared&lt;Dmn_Async::Dmn_Async_Handle&gt;(std::move(bound_task));</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keyword">auto</span> task_ret = task_shared_ptr;</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span> </div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>  this-&gt;m_pipe-&gt;write(task_shared_ptr);</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>  <span class="keywordflow">return</span> task_ret;</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>}</div>
 </div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span> </div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
-<div class="foldopen" id="foldopen00346" data-start="{" data-end="}">
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">  346</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::waitForEmpty</a>() {</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>  m_pipe-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>}</div>
-</div>
-</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span> </div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span> </div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span><span class="preprocessor">#endif </span><span class="comment">// DMN_ASYNC_HPP_</span></div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span> </div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span><span class="keyword">template</span> &lt;<span class="keyword">template</span> &lt;<span class="keyword">class</span>&gt; <span class="keyword">class </span>QueueType&gt;</div>
+<div class="foldopen" id="foldopen00347" data-start="{" data-end="}">
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">  347</a></span><span class="keywordtype">void</span> <a class="code hl_class" href="classdmn_1_1Dmn__Async.html">Dmn_Async&lt;QueueType&gt;::waitForEmpty</a>() {</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>  m_pipe-&gt;<a class="code hl_function" href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">waitForEmpty</a>();</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>}</div>
 </div>
 </div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span> </div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span> </div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="preprocessor">#endif </span><span class="comment">// DMN_ASYNC_HPP_</span></div>
 </div>
 </div>
 </div>
 </div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">dmn::Dmn_Async::Dmn_Async_Handle</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:105</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html_abca802d6d1275e3d93c8dcec98b954cc"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">dmn::Dmn_Async::Dmn_Async_Handle::wait</a></div><div class="ttdeci">void wait()</div><div class="ttdoc">Block until the associated task has finished.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:137</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html_ad4b3f2f36e2573faf89442c24c2aaded"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">dmn::Dmn_Async::Dmn_Async_Handle::Dmn_Async_Handle</a></div><div class="ttdeci">Dmn_Async_Handle(std::function&lt; void()&gt; fnc, long long due_in_future=0)</div><div class="ttdoc">Construct a handle for the given task, optionally scheduled at a future time.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:119</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:99</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a1cdf5e04cc95646759ac91fb69c7657b"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">dmn::Dmn_Async::addExecTask</a></div><div class="ttdeci">void addExecTask(Callable &amp;&amp;func, Args &amp;&amp;...args)</div><div class="ttdoc">Submit a callable task for asynchronous execution.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:322</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a25c09d511f49936c12e5e1bf0185a3cd"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">dmn::Dmn_Async::addExecTaskAfterWithWait</a></div><div class="ttdeci">auto addExecTaskAfterWithWait(const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, Callable &amp;&amp;func, Args &amp;&amp;...args) -&gt; std::shared_ptr&lt; Dmn_Async_Handle &gt;</div><div class="ttdoc">Same as addExecTaskAfter(), but returns a task wait object so the caller can block until the schedule...</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:297</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a34a8bfbd86640e3d1884d656d8433b26"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">dmn::Dmn_Async::waitForEmpty</a></div><div class="ttdeci">void waitForEmpty()</div><div class="ttdoc">Block until the async is empty and no task pending to be executed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:346</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a436392f82a225501d8f41f2a82fac47e"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">dmn::Dmn_Async::addExecTaskAfter</a></div><div class="ttdeci">void addExecTaskAfter(const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, Callable &amp;&amp;func, Args &amp;&amp;...args)</div><div class="ttdoc">Schedule a callable task to run after the given duration has elapsed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:288</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a7b3c978d0e9d4279212ad420c629cf5c"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">dmn::Dmn_Async::Dmn_Async</a></div><div class="ttdeci">Dmn_Async(std::string_view name=&quot;&quot;)</div><div class="ttdoc">Construct a Dmn_Async helper.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:243</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_ad3e5c8150d55fd7b183e5a2866b15260"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">dmn::Dmn_Async::addExecTaskWithWait</a></div><div class="ttdeci">auto addExecTaskWithWait(Callable &amp;&amp;func, Args &amp;&amp;...args) -&gt; std::shared_ptr&lt; Dmn_Async_Handle &gt;</div><div class="ttdoc">Submit a callable task for asynchronous execution and get a task wait object.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:329</div></div>
+</div>
+</div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">dmn::Dmn_Async::Dmn_Async_Handle</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:106</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html_abca802d6d1275e3d93c8dcec98b954cc"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#abca802d6d1275e3d93c8dcec98b954cc">dmn::Dmn_Async::Dmn_Async_Handle::wait</a></div><div class="ttdeci">void wait()</div><div class="ttdoc">Block until the associated task has finished.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:138</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_1_1Dmn__Async__Handle_html_ad4b3f2f36e2573faf89442c24c2aaded"><div class="ttname"><a href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">dmn::Dmn_Async::Dmn_Async_Handle::Dmn_Async_Handle</a></div><div class="ttdeci">Dmn_Async_Handle(std::function&lt; void()&gt; fnc, long long due_in_future=0)</div><div class="ttdoc">Construct a handle for the given task, optionally scheduled at a future time.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:120</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html">dmn::Dmn_Async</a></div><div class="ttdef"><b>Definition</b> dmn-async.hpp:100</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a1cdf5e04cc95646759ac91fb69c7657b"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a1cdf5e04cc95646759ac91fb69c7657b">dmn::Dmn_Async::addExecTask</a></div><div class="ttdeci">void addExecTask(Callable &amp;&amp;func, Args &amp;&amp;...args)</div><div class="ttdoc">Submit a callable task for asynchronous execution.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:323</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a25c09d511f49936c12e5e1bf0185a3cd"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a25c09d511f49936c12e5e1bf0185a3cd">dmn::Dmn_Async::addExecTaskAfterWithWait</a></div><div class="ttdeci">auto addExecTaskAfterWithWait(const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, Callable &amp;&amp;func, Args &amp;&amp;...args) -&gt; std::shared_ptr&lt; Dmn_Async_Handle &gt;</div><div class="ttdoc">Same as addExecTaskAfter(), but returns a task wait object so the caller can block until the schedule...</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:298</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a34a8bfbd86640e3d1884d656d8433b26"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a34a8bfbd86640e3d1884d656d8433b26">dmn::Dmn_Async::waitForEmpty</a></div><div class="ttdeci">void waitForEmpty()</div><div class="ttdoc">Block until the async is empty and no task pending to be executed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:347</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a436392f82a225501d8f41f2a82fac47e"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a436392f82a225501d8f41f2a82fac47e">dmn::Dmn_Async::addExecTaskAfter</a></div><div class="ttdeci">void addExecTaskAfter(const std::chrono::duration&lt; Rep, Period &gt; &amp;duration, Callable &amp;&amp;func, Args &amp;&amp;...args)</div><div class="ttdoc">Schedule a callable task to run after the given duration has elapsed.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:289</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_a7b3c978d0e9d4279212ad420c629cf5c"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#a7b3c978d0e9d4279212ad420c629cf5c">dmn::Dmn_Async::Dmn_Async</a></div><div class="ttdeci">Dmn_Async(std::string_view name=&quot;&quot;)</div><div class="ttdoc">Construct a Dmn_Async helper.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:244</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Async_html_ad3e5c8150d55fd7b183e5a2866b15260"><div class="ttname"><a href="classdmn_1_1Dmn__Async.html#ad3e5c8150d55fd7b183e5a2866b15260">dmn::Dmn_Async::addExecTaskWithWait</a></div><div class="ttdeci">auto addExecTaskWithWait(Callable &amp;&amp;func, Args &amp;&amp;...args) -&gt; std::shared_ptr&lt; Dmn_Async_Handle &gt;</div><div class="ttdoc">Submit a callable task for asynchronous execution and get a task wait object.</div><div class="ttdef"><b>Definition</b> dmn-async.hpp:330</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Pipe_html"><div class="ttname"><a href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a></div><div class="ttdef"><b>Definition</b> dmn-pipe.hpp:88</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Proc_html_a45fd201e765bae2c57ad30417ba1eb8c"><div class="ttname"><a href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c">dmn::Dmn_Proc::yield</a></div><div class="ttdeci">static void yield()</div><div class="ttdoc">Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...</div><div class="ttdef"><b>Definition</b> dmn-proc.cpp:180</div></div>
 <div class="ttc" id="admn-blockingqueue-mt_8hpp_html"><div class="ttname"><a href="dmn-blockingqueue-mt_8hpp.html">dmn-blockingqueue-mt.hpp</a></div><div class="ttdoc">Thread-safe FIFO blocking queue interface for passing items between threads.</div></div>

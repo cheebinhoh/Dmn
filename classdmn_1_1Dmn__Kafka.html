@@ -168,7 +168,7 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:a76d5a2e1c07f753e2c97685a28063c48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1352b4d83c6f50d066a0bb5cafd6646d" id="r_a1352b4d83c6f50d066a0bb5cafd6646d"><td class="memItemLeft" align="right" valign="top"><a id="a1352b4d83c6f50d066a0bb5cafd6646d" name="a1352b4d83c6f50d066a0bb5cafd6646d"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>Key</b> = &quot;Dmn_Kafka.Key&quot;</td></tr>
-<tr class="memdesc:a1352b4d83c6f50d066a0bb5cafd6646d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alternate topic that overrides <code>Topic</code> when set. <br /></td></tr>
+<tr class="memdesc:a1352b4d83c6f50d066a0bb5cafd6646d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Legacy key option, parsed as a topic. <br /></td></tr>
 <tr class="separator:a1352b4d83c6f50d066a0bb5cafd6646d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a88036fbad028cb0f15183c91860c47" id="r_a5a88036fbad028cb0f15183c91860c47"><td class="memItemLeft" align="right" valign="top"><a id="a5a88036fbad028cb0f15183c91860c47" name="a5a88036fbad028cb0f15183c91860c47"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>PollTimeoutMs</b> = &quot;Dmn_Kafka.PollTimeoutMs&quot;</td></tr>
@@ -249,7 +249,7 @@ static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>P
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">role</td><td>kProducer or kConsumer. </td></tr>
-    <tr><td class="paramname">configs</td><td>Key/value configuration map; recognised keys are <a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="Configuration keys specific to the Dmn_Kafka module (not forwarded to librdkafka).">Dmn_Kafka::Topic</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a1352b4d83c6f50d066a0bb5cafd6646d" title="Alternate topic that overrides Topic when set.">Dmn_Kafka::Key</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a5a88036fbad028cb0f15183c91860c47" title="Consumer poll timeout in milliseconds.">Dmn_Kafka::PollTimeoutMs</a>, and any standard librdkafka configuration property. </td></tr>
+    <tr><td class="paramname">configs</td><td>Key/value configuration map; recognised keys are <a class="el" href="classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48" title="Configuration keys specific to the Dmn_Kafka module (not forwarded to librdkafka).">Dmn_Kafka::Topic</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a1352b4d83c6f50d066a0bb5cafd6646d" title="Legacy key option, parsed as a topic.">Dmn_Kafka::Key</a>, <a class="el" href="classdmn_1_1Dmn__Kafka.html#a5a88036fbad028cb0f15183c91860c47" title="Consumer poll timeout in milliseconds.">Dmn_Kafka::PollTimeoutMs</a>, and any standard librdkafka configuration property. </td></tr>
   </table>
   </dd>
 </dl>

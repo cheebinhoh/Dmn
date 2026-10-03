@@ -8,6 +8,7 @@ var classdmn_1_1Dmn__DMesg =
     [ "HandlerConfig", "classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e", null ],
     [ "KeyValueConfiguration", "classdmn_1_1Dmn__DMesg.html#a84a06f06705d551d0fe33d39e76eeab7", null ],
     [ "Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html#a70ad3a65cf698516f1fff892eeddbdf7", null ],
+    [ "~Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html#aa709e06f590d05f88aea61baba6614ff", null ],
     [ "closeHandler", "classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7", null ],
     [ "getLastTopicCacheInternal", "classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65", null ],
     [ "getTopicLastMessage", "classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8", null ],

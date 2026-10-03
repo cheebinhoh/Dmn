@@ -119,7 +119,7 @@ $(document).ready(function(){initNavTree('dmn-dmesgnet_8cpp.html',''); initResiz
 <li>Constructor: initialises the local system DMesgPb (m_sys) with a creation timestamp and node identity, then wires up the subscriber handler, the optional input-reader thread, and the heartbeat timer.</li>
 <li>createInputHandlerProc(): starts a background Dmn_Proc thread that reads serialised DMesgPb strings from the input Dmn_Io, parses them, and dispatches them as either sys (reconciliation), conflict, force-playback, or ordinary messages.</li>
 <li>createSubscriptHandler(): registers a Dmn_DMesgHandler that intercepts every locally published DMesgPb and serialises it to the output Dmn_Io (subject to the m_ready flag and the outbound pending queue).</li>
-<li>createTimerProc(): installs a periodic heartbeat timer that drives the master-election state machine (MasterPending → Ready) and re-sends last-known topic messages when the node becomes master or its neighbour count changes.</li>
+<li>createTimerProc(): installs a periodic heartbeat timer that drives the master-election state machine (MasterPending → Ready) and re-sends last-known topic messages when the node is master and its neighbour count increases.</li>
 <li>reconciliateDMesgPbSys(): applies the remote node's system message to local state; updates master identity, resets election counters, and maintains the neighbour list. </li>
 </ul>
 </div></div><!-- contents -->

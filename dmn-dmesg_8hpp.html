@@ -145,7 +145,7 @@ Overview</h2>
 <p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code>dmn::DMesgPb</code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
 <h2><a class="anchor" id="autotoc_md16"></a>
 Design pattern</h2>
-<p>Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control and own handler lifetime. Composite - Dmn_DMesg and Dmn_DMesgNet form a composite interface built on top of the Proxy-based Dmn_Pub and Dmn_Pub::Sub hierarchy.</p>
+<p>Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control and own handler lifetime. Composite - Dmn_DMesgNet builds network I/O on top of Dmn_DMesg, which uses the Dmn_Pub/Dmn_Sub publish-subscribe hierarchy.</p>
 <p>Key responsibilities</p><ul>
 <li>Represent messages with the Protobuf type <code>dmn::DMesgPb</code>. Clients extend the proto when extra fields are needed (no C++ subclassing required).</li>
 <li>Provide an ergonomic handler API (Dmn_Io-like) for reading and writing DMesgPb messages without requiring clients to subclass publisher-specific subscriber interfaces.</li>
@@ -153,7 +153,7 @@ Design pattern</h2>
 <li>Detect simple publish conflicts based on per-topic running counters and mark only the offending handler as "in conflict" (blocking its subsequent writes until the conflict is resolved by the client).</li>
 </ul>
 <p>Handler model and behaviour</p><ul>
-<li>Handlers (Dmn_DMesgHandler) inherits from Dmn_Pub::Sub is registered with the Dmn_Pub notification system.</li>
+<li>Dmn_DMesgHandler derives from Dmn_Pub::Dmn_Sub and registers with the Dmn_Pub notification system.</li>
 <li>Handlers can:<ul>
 <li>subscribe to a specific topic (empty topic is permitted),</li>
 <li>provide an optional filter functor to drop unwanted messages,</li>

@@ -114,10 +114,10 @@ Classes</h2></td></tr>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <p>Dmn_Io&lt;T&gt; declares a minimal, transport-agnostic interface for reading and writing values of type T. Implementations can represent files, pipes, network sockets, message queues, or other data sources/sinks.</p>
 <p>Semantics:</p><ul>
-<li>read(): Returns the next available item wrapped in std::optional&lt;T&gt;. The call is expected to block until data becomes available in the normal case. If the underlying data source reaches end-of-stream (for example EOF or a closed pipe) the function returns std::nullopt to signal that no further data will be delivered. Concrete implementations may use timeouts or non-blocking strategies when appropriate, but callers should rely on std::nullopt to detect end-of-stream.</li>
+<li>read(): Returns the next available item wrapped in std::optional&lt;T&gt;. The call may block until data becomes available. The meaning of std::nullopt is implementation-specific; it may indicate end-of-stream, shutdown, timeout, or an error. Callers must consult the concrete implementation's contract.</li>
 <li>write(const T &amp;item): Takes a const lvalue reference. This overload does not take ownership of the provided object; implementations SHOULD copy the value if they need to retain or change it.</li>
 <li>write(T &amp;&amp;item): Takes an rvalue reference. Implementations SHOULD move from the item when possible to avoid unnecessary copies.</li>
-<li>shutdown(): Provides a hook that specific concrete io subclass can impose specific shutdown process to free the resources which otherwise will be leak (like kafka consumer thread).</li>
+<li>shutdown(): Provides a hook that concrete I/O subclasses can use to perform shutdown procedures and free resources that would otherwise leak (such as a Kafka consumer thread).</li>
 </ul>
 <p>Thread-safety:</p><ul>
 <li>The interface itself does not mandate any concurrency guarantees. If an implementation is safe to call from multiple threads concurrently, it MUST document those guarantees. </li>
