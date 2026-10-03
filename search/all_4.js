@@ -10,8 +10,9 @@ var searchData=
   ['error_20handling_20and_20exception_20safety_7',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md41',1,'']]],
   ['exception_20cancellation_20notes_8',['Exception / cancellation notes',['../dmn-inflight-guard_8hpp.html#autotoc_md19',1,'']]],
   ['exception_20safety_9',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md41',1,'']]],
-  ['exec_10',['exec',['../classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542',1,'dmn::Dmn_Proc']]],
-  ['execution_20model_11',['execution model',['../dmn-dlock_8hpp.html#autotoc_md14',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md36',1,'Threading and execution model']]],
-  ['exitmainloop_12',['exitMainLoop',['../classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab',1,'dmn::Dmn_Runtime_Manager']]],
-  ['expectations_13',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md31',1,'']]]
+  ['exceptionpolicy_10',['ExceptionPolicy',['../classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc',1,'dmn::Dmn_Proc']]],
+  ['exec_11',['exec',['../classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542',1,'dmn::Dmn_Proc']]],
+  ['execution_20model_12',['execution model',['../dmn-dlock_8hpp.html#autotoc_md14',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md36',1,'Threading and execution model']]],
+  ['exitmainloop_13',['exitMainLoop',['../classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab',1,'dmn::Dmn_Runtime_Manager']]],
+  ['expectations_14',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md31',1,'']]]
 ];

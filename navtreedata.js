@@ -52,8 +52,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classdmn_1_1Dmn__Socket.html#a5359a6dac73c2b0266ccfad619bb7ed9",
-"group__dmesg__pb__timestamp.html"
+"classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d",
+"group__dmesg__pb__msg.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

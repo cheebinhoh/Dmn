@@ -98,61 +98,224 @@ $(document).ready(function(){initNavTree('dmn-util_8hpp_source.html',''); initRe
 </div><!--header-->
 <div class="contents">
 <a href="dmn-util_8hpp.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#ifndef DMN_UTIL_HPP_</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#define DMN_UTIL_HPP_</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="keyword">namespace </span>dmn {</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a54c3932aae9cfc4c170bc38b95802d5f">   71</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">inline</span> T <a class="code hl_function" href="dmn-util_8hpp.html#a54c3932aae9cfc4c170bc38b95802d5f">incrementByOne</a>(T value) {</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>  <span class="keywordflow">return</span> std::max&lt;T&gt;(1, value + 1);</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>}</div>
-</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#ifndef DMN_UTIL_HPP_</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="preprocessor">#define DMN_UTIL_HPP_</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#include &lt;limits&gt;</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#include &lt;unicode/unorm2.h&gt;</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#include &lt;unicode/ustring.h&gt;</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="keyword">namespace </span>dmn {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="keyword">namespace </span>detail {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="foldopen" id="foldopen00065" data-start="{" data-end="}">
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64">   65</a></span><span class="keyword">inline</span> std::vector&lt;UChar&gt; <a class="code hl_function" href="dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64">stringToUnicode</a>(<span class="keyword">const</span> std::string_view value) {</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>  <span class="keywordflow">if</span> (value.size() &gt; <span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(INT32_MAX)) {</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keywordflow">throw</span> std::length_error{<span class="stringliteral">&quot;stringCompare input exceeds ICU&#39;s size limit&quot;</span>};</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>  }</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>  <span class="keyword">const</span> <span class="keyword">auto</span> *utf8 = value.empty() ? <span class="stringliteral">&quot;&quot;</span> : value.data();</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  <span class="keyword">const</span> <span class="keyword">auto</span> length = <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(value.size());</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>  UErrorCode status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  int32_t unicodeLength = 0;</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">  100</a></span><span class="keyword">inline</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">stringCompare</a>(<span class="keyword">const</span> std::string_view str1,</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                          <span class="keyword">const</span> std::string_view str2,</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                          <span class="keywordtype">bool</span> caseInsensitive = <span class="keyword">true</span>) {</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  std::string strValue1{str1};</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  std::string strValue2{str2};</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  <span class="keywordflow">if</span> (caseInsensitive) {</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    std::transform(strValue1.begin(), strValue1.end(), strValue1.begin(),</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                   ::tolower);</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    std::transform(strValue2.begin(), strValue2.end(), strValue2.begin(),</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                   ::tolower);</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  }</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="keywordflow">return</span> strValue1 == strValue2;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>}</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>  u_strFromUTF8(<span class="keyword">nullptr</span>, 0, &amp;unicodeLength, utf8, length, &amp;status);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  <span class="keywordflow">if</span> (status != U_BUFFER_OVERFLOW_ERROR &amp;&amp; U_FAILURE(status)) {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;stringCompare input is not valid UTF-8&quot;</span>};</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  }</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  std::vector&lt;UChar&gt; result(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(unicodeLength) + 1);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  u_strFromUTF8(result.data(), <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(result.size()),</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                &amp;unicodeLength, utf8, length, &amp;status);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>  <span class="keywordflow">if</span> (U_FAILURE(status)) {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;stringCompare input is not valid UTF-8&quot;</span>};</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  }</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  result.resize(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(unicodeLength));</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>  <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>}</div>
 </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="foldopen" id="foldopen00126" data-start="{" data-end="};">
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno"><a class="line" href="structdmn_1_1ScopeGuard.html">  126</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">struct </span><a class="code hl_struct" href="structdmn_1_1ScopeGuard.html">ScopeGuard</a> {</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno"><a class="line" href="structdmn_1_1ScopeGuard.html#a50a576c85ef10c9de89712438ac45464">  127</a></span>  F <a class="code hl_variable" href="structdmn_1_1ScopeGuard.html#a50a576c85ef10c9de89712438ac45464">f</a>;                            </div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">  128</a></span>  <a class="code hl_function" href="structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">~ScopeGuard</a>() noexcept { <a class="code hl_variable" href="structdmn_1_1ScopeGuard.html#a50a576c85ef10c9de89712438ac45464">f</a>(); } </div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>};</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">  102</a></span><span class="keyword">inline</span> std::vector&lt;UChar&gt; <a class="code hl_function" href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">normalizeNfd</a>(<span class="keyword">const</span> std::vector&lt;UChar&gt; &amp;value,</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                                       <span class="keyword">const</span> UNormalizer2 *normalizer) {</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  <span class="keyword">const</span> <span class="keyword">auto</span> *source = value.empty() ? u<span class="stringliteral">&quot;&quot;</span> : value.data();</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  <span class="keyword">const</span> <span class="keyword">auto</span> length = <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(value.size());</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  UErrorCode status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  <span class="keyword">const</span> <span class="keyword">auto</span> resultLength =</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>      unorm2_normalize(normalizer, source, length, <span class="keyword">nullptr</span>, 0, &amp;status);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  <span class="keywordflow">if</span> (status != U_BUFFER_OVERFLOW_ERROR &amp;&amp; U_FAILURE(status)) {</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;ICU failed to normalize a string&quot;</span>};</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  }</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>  status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>  std::vector&lt;UChar&gt; result(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(resultLength) + 1);</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>  <span class="keyword">const</span> <span class="keyword">auto</span> actualLength =</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>      unorm2_normalize(normalizer, source, length, result.data(),</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                       <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(result.size()), &amp;status);</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  <span class="keywordflow">if</span> (U_FAILURE(status)) {</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;ICU failed to normalize a string&quot;</span>};</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>  }</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>  result.resize(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(actualLength));</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>  <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>}</div>
 </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
-<div class="foldopen" id="foldopen00139" data-start="{" data-end="}">
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">  139</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <a class="code hl_struct" href="structdmn_1_1ScopeGuard.html">ScopeGuard&lt;F&gt;</a> <a class="code hl_function" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">make_scope_guard</a>(F f) {</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>  <span class="keywordflow">return</span> <a class="code hl_struct" href="structdmn_1_1ScopeGuard.html">ScopeGuard&lt;F&gt;</a>{f};</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>}</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
+<div class="foldopen" id="foldopen00136" data-start="{" data-end="}">
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b">  136</a></span><span class="keyword">inline</span> std::vector&lt;UChar&gt; <a class="code hl_function" href="dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b">foldUnicodeCase</a>(<span class="keyword">const</span> std::vector&lt;UChar&gt; &amp;value) {</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>  <span class="keyword">const</span> <span class="keyword">auto</span> *source = value.empty() ? u<span class="stringliteral">&quot;&quot;</span> : value.data();</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>  <span class="keyword">const</span> <span class="keyword">auto</span> length = <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(value.size());</div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>  UErrorCode status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>  <span class="keyword">const</span> <span class="keyword">auto</span> resultLength =</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>      u_strFoldCase(<span class="keyword">nullptr</span>, 0, source, length, U_FOLD_CASE_DEFAULT, &amp;status);</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>  <span class="keywordflow">if</span> (status != U_BUFFER_OVERFLOW_ERROR &amp;&amp; U_FAILURE(status)) {</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>    <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;ICU failed to fold a string&quot;</span>};</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>  }</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>  status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>  std::vector&lt;UChar&gt; result(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(resultLength) + 1);</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>  <span class="keyword">const</span> <span class="keyword">auto</span> actualLength =</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>      u_strFoldCase(result.data(), <span class="keyword">static_cast&lt;</span>int32_t<span class="keyword">&gt;</span>(result.size()), source,</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>                    length, U_FOLD_CASE_DEFAULT, &amp;status);</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>  <span class="keywordflow">if</span> (U_FAILURE(status)) {</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;ICU failed to fold a string&quot;</span>};</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>  }</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>  result.resize(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(actualLength));</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  <span class="keywordflow">return</span> result;</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>}</div>
 </div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span><span class="preprocessor">#endif </span><span class="comment">// DMN_UTIL_HPP_</span></div>
-<div class="ttc" id="admn-util_8hpp_html_a54c3932aae9cfc4c170bc38b95802d5f"><div class="ttname"><a href="dmn-util_8hpp.html#a54c3932aae9cfc4c170bc38b95802d5f">dmn::incrementByOne</a></div><div class="ttdeci">T incrementByOne(T value)</div><div class="ttdoc">Increment an integer-like value by one and ensure the result is at least 1.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:71</div></div>
-<div class="ttc" id="admn-util_8hpp_html_ae20c00ac25ccc7527fb0dd05a7defb4f"><div class="ttname"><a href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">dmn::stringCompare</a></div><div class="ttdeci">bool stringCompare(const std::string_view str1, const std::string_view str2, bool caseInsensitive=true)</div><div class="ttdoc">Compare two strings for equality, optionally in a case-insensitive way.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:100</div></div>
-<div class="ttc" id="admn-util_8hpp_html_af827ac779dd7415084b37158de06206e"><div class="ttname"><a href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">dmn::make_scope_guard</a></div><div class="ttdeci">ScopeGuard&lt; F &gt; make_scope_guard(F f)</div><div class="ttdoc">Factory function that constructs a ScopeGuard with automatic callable-type deduction.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:139</div></div>
-<div class="ttc" id="astructdmn_1_1ScopeGuard_html"><div class="ttname"><a href="structdmn_1_1ScopeGuard.html">dmn::ScopeGuard</a></div><div class="ttdoc">Minimal scope-guard analogous to the proposed std::scope_exit.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:126</div></div>
-<div class="ttc" id="astructdmn_1_1ScopeGuard_html_a50a576c85ef10c9de89712438ac45464"><div class="ttname"><a href="structdmn_1_1ScopeGuard.html#a50a576c85ef10c9de89712438ac45464">dmn::ScopeGuard::f</a></div><div class="ttdeci">F f</div><div class="ttdoc">Callable invoked on scope exit.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:127</div></div>
-<div class="ttc" id="astructdmn_1_1ScopeGuard_html_a71c350c56d9e854cf852adbba9d0bec2"><div class="ttname"><a href="structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">dmn::ScopeGuard::~ScopeGuard</a></div><div class="ttdeci">~ScopeGuard() noexcept</div><div class="ttdoc">Invoke f when the guard is destroyed.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:128</div></div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
+<div class="foldopen" id="foldopen00170" data-start="{" data-end="}">
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b">  170</a></span><span class="keyword">inline</span> std::vector&lt;UChar&gt; <a class="code hl_function" href="dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b">unicodeCaseFoldNfd</a>(std::string_view value) {</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>  UErrorCode status = U_ZERO_ERROR;</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>  <span class="keyword">const</span> <span class="keyword">auto</span> *normalizer = unorm2_getNFDInstance(&amp;status);</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>  <span class="keywordflow">if</span> (U_FAILURE(status)) {</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;ICU failed to initialize Unicode normalization&quot;</span>};</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>  }</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>  <span class="keyword">const</span> <span class="keyword">auto</span> decoded = <a class="code hl_function" href="dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64">stringToUnicode</a>(value);</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>  <span class="keyword">const</span> <span class="keyword">auto</span> normalized = <a class="code hl_function" href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">normalizeNfd</a>(decoded, normalizer);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>  <span class="keywordflow">return</span> <a class="code hl_function" href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">normalizeNfd</a>(<a class="code hl_function" href="dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b">foldUnicodeCase</a>(normalized), normalizer);</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>}</div>
+</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="keyword">template</span> &lt;std::<span class="keywordtype">int</span>egral T&gt;</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>  <span class="keyword">requires</span>(!std::same_as&lt;T, bool&gt;)</div>
+<div class="foldopen" id="foldopen00207" data-start="{" data-end="}">
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a2995881e7aa91bf1992c9f8150315d01">  207</a></span><span class="keyword">inline</span> T <a class="code hl_function" href="dmn-util_8hpp.html#a2995881e7aa91bf1992c9f8150315d01">incrementByOne</a>(T value) {</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>  <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::numeric_limits&lt;T&gt;::is_signed) {</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="keywordflow">if</span> (value == std::numeric_limits&lt;T&gt;::max()) {</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>      <span class="keywordflow">return</span> value;</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    }</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>  }</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>  <span class="keywordflow">return</span> std::max&lt;T&gt;(1, value + 1);</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>}</div>
+</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
+<div class="foldopen" id="foldopen00242" data-start="{" data-end="}">
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">  242</a></span><span class="keyword">inline</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">stringCompare</a>(<span class="keyword">const</span> std::string_view str1,</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                          <span class="keyword">const</span> std::string_view str2,</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                          <span class="keywordtype">bool</span> caseInsensitive = <span class="keyword">true</span>) {</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>  <span class="keywordflow">if</span> (!caseInsensitive) {</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    <span class="keywordflow">return</span> str1 == str2;</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>  }</div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>  <span class="keywordflow">return</span> detail::unicodeCaseFoldNfd(str1) == detail::unicodeCaseFoldNfd(str2);</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>}</div>
+</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>  <span class="keyword">requires</span> std::is_nothrow_invocable_v&lt;F &amp;&gt;</div>
+<div class="foldopen" id="foldopen00263" data-start="{" data-end="};">
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html">  263</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> {</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00271" data-start="{" data-end="}">
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415">  271</a></span>  <span class="keyword">explicit</span> <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415">ScopeGuard</a>(F callable) <span class="keyword">noexcept</span>(</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>      std::is_nothrow_move_constructible_v&lt;F&gt;)</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>      : m_callable(std::move(callable)) {}</div>
+</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span> </div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc">  276</a></span>  <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc">ScopeGuard</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#adca63a1e0f8174ade34ca56198047152">  279</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#adca63a1e0f8174ade34ca56198047152">operator=</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp;) -&gt; <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp; = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span> </div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#a8f117d7a7b99f13ea25433bbd8e1f84a">  282</a></span>  <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#a8f117d7a7b99f13ea25433bbd8e1f84a">operator=</a>(<a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp;&amp;) -&gt; <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp; = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span> </div>
+<div class="foldopen" id="foldopen00290" data-start="{" data-end="}">
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e">  290</a></span>  <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e">ScopeGuard</a>(<a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a> &amp;&amp;other) <span class="keyword">noexcept</span>(</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>      std::is_nothrow_move_constructible_v&lt;F&gt;)</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>      : m_callable(std::move(other.m_callable)),</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>        m_active(std::exchange(other.m_active, false)) {}</div>
+</div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span> </div>
+<div class="foldopen" id="foldopen00296" data-start="{" data-end="}">
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">  296</a></span>  <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">~ScopeGuard</a>() noexcept {</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    <span class="keywordflow">if</span> (m_active) {</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>      m_callable();</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    }</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>  }</div>
+</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span> </div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno"><a class="line" href="classdmn_1_1ScopeGuard.html#ad7ba98cade3cd6a64ac36a514adf93d5">  305</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1ScopeGuard.html#ad7ba98cade3cd6a64ac36a514adf93d5">release</a>() noexcept { m_active = <span class="keyword">false</span>; }</div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>  F m_callable;</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>  <span class="keywordtype">bool</span> m_active{<span class="keyword">true</span>};</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>};</div>
+</div>
+<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span> </div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>  <span class="keyword">requires</span>(std::is_nothrow_invocable_v&lt;std::decay_t&lt;F&gt; &amp;&gt; &amp;&amp;</div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>           std::constructible_from&lt;std::decay_t&lt;F&gt;, F&gt;)</div>
+<div class="foldopen" id="foldopen00324" data-start="{" data-end="}">
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno"><a class="line" href="dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7">  324</a></span><span class="keyword">auto</span> <a class="code hl_function" href="dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7">make_scope_guard</a>(F &amp;&amp;f) -&gt; <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard&lt;std::decay_t&lt;F&gt;</a>&gt; {</div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>  <span class="keywordflow">return</span> <a class="code hl_class" href="classdmn_1_1ScopeGuard.html">ScopeGuard&lt;std::decay_t&lt;F&gt;</a>&gt;{std::forward&lt;F&gt;(f)};</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>}</div>
+</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span><span class="preprocessor">#endif </span><span class="comment">// DMN_UTIL_HPP_</span></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html">dmn::ScopeGuard</a></div><div class="ttdoc">Minimal scope guard with move transfer and explicit release.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:263</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_a1eeebb066010a9bb31e5ff549fb8c415"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415">dmn::ScopeGuard::ScopeGuard</a></div><div class="ttdeci">ScopeGuard(F callable) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)</div><div class="ttdoc">Create an armed guard that owns the cleanup callable.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:271</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_a430eb95b89942c18abe4792d59afcb8e"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e">dmn::ScopeGuard::ScopeGuard</a></div><div class="ttdeci">ScopeGuard(ScopeGuard &amp;&amp;other) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)</div><div class="ttdoc">Transfer cleanup responsibility from another guard.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:290</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_a4380d4e727d03a21b61f347d3023e2bc"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc">dmn::ScopeGuard::ScopeGuard</a></div><div class="ttdeci">ScopeGuard(const ScopeGuard &amp;)=delete</div><div class="ttdoc">Copy construction is disabled to prevent duplicate cleanup.</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_a71c350c56d9e854cf852adbba9d0bec2"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2">dmn::ScopeGuard::~ScopeGuard</a></div><div class="ttdeci">~ScopeGuard() noexcept</div><div class="ttdoc">Invoke the cleanup callable if this guard remains armed.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:296</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_a8f117d7a7b99f13ea25433bbd8e1f84a"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#a8f117d7a7b99f13ea25433bbd8e1f84a">dmn::ScopeGuard::operator=</a></div><div class="ttdeci">auto operator=(ScopeGuard &amp;&amp;) -&gt; ScopeGuard &amp;=delete</div><div class="ttdoc">Move assignment is disabled so an armed destination cannot lose cleanup.</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_ad7ba98cade3cd6a64ac36a514adf93d5"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#ad7ba98cade3cd6a64ac36a514adf93d5">dmn::ScopeGuard::release</a></div><div class="ttdeci">void release() noexcept</div><div class="ttdoc">Disarm the guard so its cleanup callable is not invoked.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:305</div></div>
+<div class="ttc" id="aclassdmn_1_1ScopeGuard_html_adca63a1e0f8174ade34ca56198047152"><div class="ttname"><a href="classdmn_1_1ScopeGuard.html#adca63a1e0f8174ade34ca56198047152">dmn::ScopeGuard::operator=</a></div><div class="ttdeci">auto operator=(const ScopeGuard &amp;) -&gt; ScopeGuard &amp;=delete</div><div class="ttdoc">Copy assignment is disabled to prevent duplicate cleanup.</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a1b5c2260f4d5ffd67429f76df004b17b"><div class="ttname"><a href="dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b">dmn::detail::unicodeCaseFoldNfd</a></div><div class="ttdeci">std::vector&lt; UChar &gt; unicodeCaseFoldNfd(std::string_view value)</div><div class="ttdoc">Decode, canonically normalize, and case-fold UTF-8 input.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:170</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a2995881e7aa91bf1992c9f8150315d01"><div class="ttname"><a href="dmn-util_8hpp.html#a2995881e7aa91bf1992c9f8150315d01">dmn::incrementByOne</a></div><div class="ttdeci">T incrementByOne(T value)</div><div class="ttdoc">Increment an integer-like value by one and ensure the result is at least 1.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:207</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a3e60e630f1b9041ed0509ffec151bd64"><div class="ttname"><a href="dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64">dmn::detail::stringToUnicode</a></div><div class="ttdeci">std::vector&lt; UChar &gt; stringToUnicode(const std::string_view value)</div><div class="ttdoc">Decode UTF-8 text into ICU UTF-16 code units.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:65</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a472f895482fc372c40498d10c27b4c0b"><div class="ttname"><a href="dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b">dmn::detail::foldUnicodeCase</a></div><div class="ttdeci">std::vector&lt; UChar &gt; foldUnicodeCase(const std::vector&lt; UChar &gt; &amp;value)</div><div class="ttdoc">Apply ICU's default, locale-independent Unicode case folding.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:136</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a625b2c555a99e3ef0e29355c32f41d6e"><div class="ttname"><a href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">dmn::detail::normalizeNfd</a></div><div class="ttdeci">std::vector&lt; UChar &gt; normalizeNfd(const std::vector&lt; UChar &gt; &amp;value, const UNormalizer2 *normalizer)</div><div class="ttdoc">Normalize UTF-16 code units to canonical decomposition form.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:102</div></div>
+<div class="ttc" id="admn-util_8hpp_html_a9124a03c850ad2c0d69af8a43e7101c7"><div class="ttname"><a href="dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7">dmn::make_scope_guard</a></div><div class="ttdeci">auto make_scope_guard(F &amp;&amp;f) -&gt; ScopeGuard&lt; std::decay_t&lt; F &gt; &gt;</div><div class="ttdoc">Construct a ScopeGuard with automatic callable-type deduction.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:324</div></div>
+<div class="ttc" id="admn-util_8hpp_html_ae20c00ac25ccc7527fb0dd05a7defb4f"><div class="ttname"><a href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">dmn::stringCompare</a></div><div class="ttdeci">bool stringCompare(const std::string_view str1, const std::string_view str2, bool caseInsensitive=true)</div><div class="ttdoc">Compare two strings for equality, optionally in a case-insensitive way.</div><div class="ttdef"><b>Definition</b> dmn-util.hpp:242</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

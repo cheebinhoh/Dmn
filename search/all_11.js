@@ -1,15 +1,15 @@
 var searchData=
 [
-  ['safety_0',['safety',['../dmn-pub-sub_8hpp.html#autotoc_md41',1,'Error handling and exception safety'],['../dmn-runtime-state_8hpp.html#autotoc_md45',1,'Thread Safety'],['../dmn-interval-btree_8hpp.html#autotoc_md25',1,'Thread safety']]],
+  ['safety_0',['safety',['../dmn-pub-sub_8hpp.html#autotoc_md41',1,'Error handling and exception safety'],['../dmn-interval-btree_8hpp.html#autotoc_md25',1,'Thread safety'],['../dmn-runtime-state_8hpp.html#autotoc_md45',1,'Thread Safety']]],
   ['safety_20and_20execution_20model_1',['Thread safety and execution model',['../dmn-dlock_8hpp.html#autotoc_md14',1,'']]],
   ['scheduleinhandlercontext_2',['scheduleInHandlerContext',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a311d2db40e29dbb9639b2aa91269651b',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['scopeguard_3',['ScopeGuard',['../structdmn_1_1ScopeGuard.html',1,'dmn']]],
+  ['scopeguard_3',['scopeguard',['../classdmn_1_1ScopeGuard.html',1,'dmn::ScopeGuard&lt; F &gt;'],['../classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415',1,'dmn::ScopeGuard::ScopeGuard(F callable) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)'],['../classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc',1,'dmn::ScopeGuard::ScopeGuard(const ScopeGuard &amp;)=delete'],['../classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e',1,'dmn::ScopeGuard::ScopeGuard(ScopeGuard &amp;&amp;other) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)']]],
   ['secint_4',['SecInt',['../dmn-runtime_8hpp.html#a7b61b5884cf50fc2473742b8c8dc20a4',1,'dmn']]],
   ['semantics_5',['semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md6',1,'Blocking and timeout semantics'],['../dmn-pipe_8hpp.html#autotoc_md29',1,'Read / Write semantics'],['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'Synchronization and semantics']]],
   ['set_5fconfig_6',['set_config',['../dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51',1,'dmn']]],
   ['setconflictcallbacktask_7',['setConflictCallbackTask',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['setend_8',['setEnd',['../classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b',1,'dmn::Dmn_State']]],
-  ['setnext_9',['setnext',['../classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5',1,'dmn::Dmn_State::setNext(int index)'],['../classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa',1,'dmn::Dmn_State::setNext()']]],
+  ['setnext_9',['setnext',['../classdmn_1_1Dmn__State.html#a99219261e8cdd326bb28ffa09019e6aa',1,'dmn::Dmn_State::setNext()'],['../classdmn_1_1Dmn__State.html#a1b5665100db9d0d1ca15346b373326d5',1,'dmn::Dmn_State::setNext(int index)']]],
   ['setruntimestatefnc_10',['setRuntimeStateFnc',['../classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364',1,'dmn::Dmn_Runtime_State']]],
   ['setstate_11',['setState',['../classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974',1,'dmn::Dmn_Proc']]],
   ['setstatefnc_12',['setStateFnc',['../classdmn_1_1Dmn__State.html#a99eeb5086c5da75102742daf167f2a0a',1,'dmn::Dmn_State']]],
@@ -17,7 +17,7 @@ var searchData=
   ['setters_14',['setters',['../group__dmesg__pb__body.html',1,'DMesgPb message body setters'],['../group__dmesg__pb__msg.html',1,'DMesgPb message field setters'],['../group__dmesg__pb__sys.html',1,'DMesgPb sys sub-message setters'],['../group__dmesg__pb__timestamp.html',1,'Timestamp setters']]],
   ['settopicrunningcounter_15',['setTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#af5e223cd67242f61dd9d2993a2ed96f5',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['settopicrunningcounterinternal_16',['setTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aa6144665f39980c7902700cb413f8497',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['shutdown_17',['shutdown',['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426',1,'dmn::Dmn_BlockingQueue_Lf::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue__Mt.html#a728f2715b8ada8c21dc2170ff323c425',1,'dmn::Dmn_BlockingQueue_Mt::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue.html#ad42c30b1169bb56646b90f38d45cfc6a',1,'dmn::Dmn_BlockingQueue::shutdown()'],['../classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079',1,'dmn::Dmn_Io::shutdown()'],['../classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966',1,'dmn::Dmn_Pipe::shutdown()'],['../classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6',1,'dmn::Dmn_Kafka::shutdown()'],['../classdmn_1_1Dmn__Runtime__State__Manager.html#a7bd32250f576d8e5aacac0ad1f342f1e',1,'dmn::Dmn_Runtime_State_Manager::shutdown()']]],
+  ['shutdown_17',['shutdown',['../classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6',1,'dmn::Dmn_Kafka::shutdown()'],['../classdmn_1_1Dmn__Runtime__State__Manager.html#a7bd32250f576d8e5aacac0ad1f342f1e',1,'dmn::Dmn_Runtime_State_Manager::shutdown()'],['../classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966',1,'dmn::Dmn_Pipe::shutdown()'],['../classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079',1,'dmn::Dmn_Io::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue.html#ad42c30b1169bb56646b90f38d45cfc6a',1,'dmn::Dmn_BlockingQueue::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue__Mt.html#a728f2715b8ada8c21dc2170ff323c425',1,'dmn::Dmn_BlockingQueue_Mt::shutdown()'],['../classdmn_1_1Dmn__BlockingQueue__Lf.html#a8f8a9e7e65653655d215f36e60903426',1,'dmn::Dmn_BlockingQueue_Lf::shutdown()']]],
   ['shutdown_20behavior_18',['Shutdown behavior',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md3',1,'']]],
   ['signal‑safety_20notes_19',['Thread‑Safety &amp; Signal‑Safety Notes',['../dmn-runtime_8hpp.html#autotoc_md49',1,'']]],
   ['size_20',['size',['../classdmn_1_1Dmn__IntervalBTree.html#a4b17d4d9e01f293ccfeb79954e15b92a',1,'dmn::Dmn_IntervalBTree']]],
@@ -27,9 +27,10 @@ var searchData=
   ['stop_24',['stop',['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer']]],
   ['stopexec_25',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
   ['stringcompare_26',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
-  ['sub_20message_20setters_27',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
-  ['summary_28',['summary',['../dmn-runtime_8hpp.html#autotoc_md50',1,'Usage Summary'],['../dmn-pub-sub_8hpp.html#autotoc_md42',1,'Usage summary'],['../dmn-async_8hpp.html#autotoc_md1',1,'Usage summary']]],
-  ['synchronization_29',['Synchronization',['../dmn-pub-sub_8hpp.html#autotoc_md37',1,'']]],
-  ['synchronization_20and_20semantics_30',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
-  ['sys_20sub_20message_20setters_31',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]]
+  ['stringtounicode_27',['stringToUnicode',['../dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64',1,'dmn::detail']]],
+  ['sub_20message_20setters_28',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
+  ['summary_29',['summary',['../dmn-async_8hpp.html#autotoc_md1',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md42',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md50',1,'Usage Summary']]],
+  ['synchronization_30',['Synchronization',['../dmn-pub-sub_8hpp.html#autotoc_md37',1,'']]],
+  ['synchronization_20and_20semantics_31',['Synchronization and semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md5',1,'']]],
+  ['sys_20sub_20message_20setters_32',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]]
 ];

@@ -270,12 +270,19 @@ template&lt;class Rep , class Period , typename Callable , typename... Args&gt; 
 </div><div class="memdoc">
 
 <p>Schedule a callable task to run after the given duration has elapsed. </p>
-<p>The task will not be executed before the duration has passed. It may not execute precisely at the moment the duration elapses (scheduling is not real-time), but execution will occur at or after the specified time.</p>
+<p>The task will not be executed before the duration has passed. It may not execute precisely at the moment the duration elapses (scheduling is not real-time), but execution will occur at or after the specified time. Its handle's <code>wait()</code> rethrows exceptions from the task. Immediate tasks are processed first while a delayed task waits for its deadline. The worker waits for the deadline rather than repeatedly polling; queued immediate tasks retain priority over tasks awaiting their deadlines.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">duration</td><td>Time to wait before executing the task. </td></tr>
     <tr><td class="paramname">func</td><td>The callable task to execute asynchronously. </td></tr>
     <tr><td class="paramname">args</td><td>The arguments to the callable task. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>duration</code> is negative. </td></tr>
+    <tr><td class="paramname">std::overflow_error</td><td>if <code>duration</code> or its deadline cannot be represented by the steady clock. </td></tr>
   </table>
   </dd>
 </dl>
@@ -330,6 +337,13 @@ template&lt;class Rep , class Period , typename Callable , typename... Args&gt; 
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>shared_ptr&lt;Dmn_Async_Handle&gt; Rendezvous object for task completion. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if <code>duration</code> is negative. </td></tr>
+    <tr><td class="paramname">std::overflow_error</td><td>if <code>duration</code> or its deadline cannot be represented by the steady clock. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

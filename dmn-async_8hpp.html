@@ -100,11 +100,16 @@ $(document).ready(function(){initNavTree('dmn-async_8hpp.html',''); initResizabl
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-blockingqueue-mt_8hpp_source.html">dmn-blockingqueue-mt.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
 <code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;future&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
 </div>
 <p><a href="dmn-async_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -138,7 +143,9 @@ Design pattern</h2>
 Usage summary</h2>
 <ul>
 <li>A client can inherit from Dmn_Async or hold an instance of it.</li>
-<li>The client passes work as a std::function&lt;void()&gt; to Dmn_Async's write()/addExecTask* APIs. Immediate tasks are serialized in queue order. Delayed tasks may be re-enqueued until due and can therefore be overtaken by later immediate tasks. This serialization applies to submitted work; it does not synchronize unrelated access to client state.</li>
+<li>The client passes work as a std::function&lt;void()&gt; to Dmn_Async's addExecTask* APIs. Immediate tasks are serialized in queue order; delayed tasks wait for their steady-clock deadline and can be overtaken by immediate tasks. This serialization applies to submitted work; it does not synchronize unrelated access to client state.</li>
+<li>Delayed submissions reject negative durations and throw std::overflow_error when the duration or computed deadline cannot be represented by the steady clock. Zero duration is accepted.</li>
+<li>Delayed tasks use Dmn_Pipe's deadline-aware scheduled writes, so the worker blocks instead of polling while a task is not yet due. Destruction drains accepted tasks and can therefore wait until pending deadlines.</li>
 <li>For callers that need to block until a submitted task finishes, use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a Dmn_Async_Handle object whose wait() method will only return after the task has completed (and propagate exceptions thrown by the task).</li>
 </ul>
 <p>This class is useful for offloading work from fast API paths while preserving ordering and providing optional synchronization points. </p>

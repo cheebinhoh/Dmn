@@ -95,13 +95,21 @@ $(document).ready(function(){initNavTree('dmn-timer_8hpp.html',''); initResizabl
 </div><!--header-->
 <div class="contents">
 
-<p>A lightweight recurring timer (watchdog) class template.  
+<p>A recurring timer driven by Dmn_Pipe's scheduled-write worker.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-debug_8hpp_source.html">dmn-debug.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
-<code>#include &lt;thread&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
 </div>
 <p><a href="dmn-timer_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -111,20 +119,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A lightweight recurring timer (watchdog) class template. </p>
+<div class="textblock"><p>A recurring timer driven by Dmn_Pipe's scheduled-write worker. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>Dmn_Timer&lt;T&gt; runs a user-provided callback repeatedly at a fixed relative interval specified by a duration type T (for example, std::chrono::milliseconds or std::chrono::seconds). The timer guarantees the callback will not be invoked before the specified interval has elapsed. However, it does not guarantee immediate invocation at the exact moment the interval expires: callback execution may be delayed due to scheduling, the callback's own execution time, or other runtime factors.</p>
-<p>The implementation uses Dmn_Proc to run a background execution context for the timer loop. Exceptions derived from std::exception thrown by the callback are caught and reported via DMN_DEBUG_PRINT. Other exception types are not caught by the timer callback loop and may terminate its execution thread.</p>
-<p>Public API summary:</p><ul>
-<li>Dmn_Timer(const T &amp;reltime, std::function&lt;void()&gt; fn): Constructs the timer and starts it immediately with the given interval and callback.</li>
-<li>void start(const T &amp;reltime, std::function&lt;void()&gt; fn = {}): Stops any existing timer and starts a new one with the provided interval and optional callback (if fn is empty, the previously set callback is retained).</li>
-<li>void stop(): Stops the running timer.</li>
-</ul>
-<p>Notes:</p><ul>
-<li>Copy and move constructors/operators are deleted.</li>
-<li>The destructor is noexcept.</li>
-<li>Template parameter T should be a std::chrono::duration-like type. </li>
-</ul>
+<p>Dmn_Timer&lt;T&gt; invokes a client callback after each strictly positive steady-clock interval. The next tick is scheduled relative to completion of the previous callback. stop() pauses without joining; resume() schedules a fresh tick. Generation tokens make ticks queued before a pause or restart stale, even if they wake after the timer has resumed. Standard callback exceptions are logged and recurrence continues; non-standard callback exceptions and asynchronous rescheduling failures pause the timer and can be observed through rethrowFailure(). Timer state is mutex-protected, but destruction must not race public operations or run from the timer callback. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

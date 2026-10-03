@@ -14,6 +14,6 @@ var searchData=
   ['_7edmn_5fsocket_11',['~Dmn_Socket',['../classdmn_1_1Dmn__Socket.html#a1321d794de567003890c7e91b98e5b5e',1,'dmn::Dmn_Socket']]],
   ['_7edmn_5fstate_12',['~Dmn_State',['../classdmn_1_1Dmn__State.html#a8147f0b3c831a0834f82f966bf2be2a2',1,'dmn::Dmn_State']]],
   ['_7edmn_5ftimer_13',['~Dmn_Timer',['../classdmn_1_1Dmn__Timer.html#a1ff7073558731b15a3a675620e877c94',1,'dmn::Dmn_Timer']]],
-  ['_7escopeguard_14',['~ScopeGuard',['../structdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2',1,'dmn::ScopeGuard']]],
+  ['_7escopeguard_14',['~ScopeGuard',['../classdmn_1_1ScopeGuard.html#a71c350c56d9e854cf852adbba9d0bec2',1,'dmn::ScopeGuard']]],
   ['_7eticket_15',['~Ticket',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aa1c6f33a98ce90972522a4391d2ab3ce',1,'dmn::Dmn_Inflight_Guard::Ticket']]]
 ];

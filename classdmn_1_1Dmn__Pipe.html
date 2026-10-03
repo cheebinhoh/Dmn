@@ -96,6 +96,11 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Pipe.html',''); initR
   <div class="headertitle"><div class="title">dmn::Dmn_Pipe&lt; T, QueueType &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>FIFO I/O pipe with optional background processing and deadline writes.  
+ <a href="classdmn_1_1Dmn__Pipe.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
 <div class="dyncontent">
@@ -110,9 +115,9 @@ Inheritance diagram for dmn::Dmn_Pipe&lt; T, QueueType &gt;:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0b8e952a277c68325b96c64608451a4c" id="r_a0b8e952a277c68325b96c64608451a4c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c">Dmn_Pipe</a> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0)</td></tr>
-<tr class="memdesc:a0b8e952a277c68325b96c64608451a4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> and optionally start a background processing thread.  <br /></td></tr>
-<tr class="separator:a0b8e952a277c68325b96c64608451a4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a50ab47ece46dd0ea3f2dcf551f94d2" id="r_a1a50ab47ece46dd0ea3f2dcf551f94d2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a1a50ab47ece46dd0ea3f2dcf551f94d2">Dmn_Pipe</a> (std::string_view name, Dmn_Pipe::Task fn={}, size_t count=1, long timeout=0, bool enable_scheduled_writes=false)</td></tr>
+<tr class="memdesc:a1a50ab47ece46dd0ea3f2dcf551f94d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html" title="FIFO I/O pipe with optional background processing and deadline writes.">Dmn_Pipe</a> and optionally start a background processing thread.  <br /></td></tr>
+<tr class="separator:a1a50ab47ece46dd0ea3f2dcf551f94d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bb79f728f7ea508565600ceb0e1ed95" id="r_a9bb79f728f7ea508565600ceb0e1ed95"><td class="memItemLeft" align="right" valign="top"><a id="a9bb79f728f7ea508565600ceb0e1ed95" name="a9bb79f728f7ea508565600ceb0e1ed95"></a>
 virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () noexcept</td></tr>
 <tr class="memdesc:a9bb79f728f7ea508565600ceb0e1ed95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the pipe, stopping any background processing thread and releasing resources. <br /></td></tr>
@@ -144,6 +149,12 @@ virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_Pipe</b> () n
 <tr class="memitem:a942d0f57d69ac4f925a49cb5847f16a1" id="r_a942d0f57d69ac4f925a49cb5847f16a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1">write</a> (T &amp;&amp;item) override</td></tr>
 <tr class="memdesc:a942d0f57d69ac4f925a49cb5847f16a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write (move) an item into the pipe.  <br /></td></tr>
 <tr class="separator:a942d0f57d69ac4f925a49cb5847f16a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9d046e1c05faf19213920e3e01ff707" id="r_aa9d046e1c05faf19213920e3e01ff707"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707">writeAt</a> (std::chrono::steady_clock::time_point deadline, const T &amp;item)</td></tr>
+<tr class="memdesc:aa9d046e1c05faf19213920e3e01ff707"><td class="mdescLeft">&#160;</td><td class="mdescRight">Schedule an item to be processed no earlier than <code>deadline</code>.  <br /></td></tr>
+<tr class="separator:aa9d046e1c05faf19213920e3e01ff707"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a804d9026fbfd0eaee1eb64b226beeb31" id="r_a804d9026fbfd0eaee1eb64b226beeb31"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#a804d9026fbfd0eaee1eb64b226beeb31">writeAt</a> (std::chrono::steady_clock::time_point deadline, T &amp;&amp;item)</td></tr>
+<tr class="memdesc:a804d9026fbfd0eaee1eb64b226beeb31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Schedule a moved item to be processed no earlier than <code>deadline</code>.  <br /></td></tr>
+<tr class="separator:a804d9026fbfd0eaee1eb64b226beeb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad53942562c30a1d09247433f800b8e12" id="r_ad53942562c30a1d09247433f800b8e12"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12">waitForEmpty</a> () -&gt; uint64_t override</td></tr>
 <tr class="memdesc:ad53942562c30a1d09247433f800b8e12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Block until the pipe is empty and all inbound items are processed.  <br /></td></tr>
 <tr class="separator:ad53942562c30a1d09247433f800b8e12"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,9 +168,22 @@ Protected Member Functions</h2></td></tr>
 <tr class="memdesc:a6f1a36063050f3ed79f7c6799b41d966"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate an orderly shutdown of the pipe.  <br /></td></tr>
 <tr class="separator:a6f1a36063050f3ed79f7c6799b41d966"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0b8e952a277c68325b96c64608451a4c" name="a0b8e952a277c68325b96c64608451a4c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0b8e952a277c68325b96c64608451a4c">&#9670;&#160;</a></span>Dmn_Pipe()</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T, typename QueueType = Dmn_BlockingQueue_Mt&lt;T&gt;&gt;<br />
+class dmn::Dmn_Pipe&lt; T, QueueType &gt;</div><p>FIFO I/O pipe with optional background processing and deadline writes. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>Item type stored in the pipe. </td></tr>
+    <tr><td class="paramname">QueueType</td><td>Queue implementation used for ordinary writes.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>By default, the pipe retains its queue-backed read/write behavior. Supplying a processing task starts one background worker. Passing <code>enable_scheduled_writes</code> as <code>true</code> opts that worker into <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707" title="Schedule an item to be processed no earlier than deadline.">writeAt()</a></code>: ordinary FIFO writes take priority, while scheduled items are ordered by steady-clock deadline and become eligible at or after their deadline. When no item is ready, the worker sleeps until new work arrives or the earliest scheduled deadline. Calling <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707" title="Schedule an item to be processed no earlier than deadline.">writeAt()</a></code> when scheduled writes are disabled throws <code>std::logic_error</code>. Scheduled items are delivered by the background worker; the synchronous <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816" title="Read and return the item from the pipe.">read()</a></code> APIs access only ordinary FIFO writes.</p>
+<p>In scheduled mode, <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a></code> snapshots accepted writes and waits for that snapshot to finish. Shutdown serializes its transition against writes with the pipe mutex, rejects later writes, and drains accepted work before joining the worker when callbacks complete normally; it can therefore wait until pending deadlines. If a callback throws, the worker stops and remaining accepted work is not drained. Callers must serialize concurrent shutdown calls and ensure the pipe outlives its callers and processing callback.</p>
+<p>A callback exception ends the background worker, matching the existing ordinary-worker failure policy; failures are not exposed through this class. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a1a50ab47ece46dd0ea3f2dcf551f94d2" name="a1a50ab47ece46dd0ea3f2dcf551f94d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a50ab47ece46dd0ea3f2dcf551f94d2">&#9670;&#160;</a></span>Dmn_Pipe()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -191,7 +215,13 @@ template&lt;typename T , typename QueueType &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">long&#160;</td>
-          <td class="paramname"><em>timeout</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>timeout</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enable_scheduled_writes</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -206,13 +236,22 @@ template&lt;typename T , typename QueueType &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html">Dmn_Pipe</a> and optionally start a background processing thread. </p>
+<p>Construct a <a class="el" href="classdmn_1_1Dmn__Pipe.html" title="FIFO I/O pipe with optional background processing and deadline writes.">Dmn_Pipe</a> and optionally start a background processing thread. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>Human-readable name forwarded to the underlying <code><a class="el" href="classdmn_1_1Dmn__Proc.html" title="A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in ...">Dmn_Proc</a></code>. </td></tr>
     <tr><td class="paramname">fn</td><td>Optional processing task invoked for each item dequeued by the background thread. If empty, no background thread is started and items must be consumed via <a class="el" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816" title="Read and return the item from the pipe.">read()</a> or <a class="el" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea" title="Read the next item from the pipe and invoke the provided task.">readAndProcess()</a>. </td></tr>
-    <tr><td class="paramname">count</td><td>Number of items to dequeue per background-thread iteration. Defaults to 1. </td></tr>
-    <tr><td class="paramname">timeout</td><td>Timeout in microseconds passed to each pop call in the background loop. 0 means wait indefinitely. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of items to dequeue per ordinary background-thread iteration. Defaults to 1; ignored when scheduled writes are enabled. </td></tr>
+    <tr><td class="paramname">timeout</td><td>Timeout in microseconds passed to each pop call in the ordinary background loop. 0 means wait indefinitely; ignored when scheduled writes are enabled. </td></tr>
+    <tr><td class="paramname">enable_scheduled_writes</td><td>Opt into deadline-scheduled writes with <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707" title="Schedule an item to be processed no earlier than deadline.">writeAt()</a></code>. Defaults to <code>false</code>, preserving existing behavior. When enabled, <code>fn</code> must be non-empty.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>In this mode ordinary writes take priority over scheduled writes, and the worker waits until new work arrives or the next scheduled deadline.</p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if scheduled writes are enabled without a processing task. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if the scheduled worker cannot be started. </td></tr>
   </table>
   </dd>
 </dl>
@@ -421,7 +460,13 @@ template&lt;typename T , typename QueueType  = Dmn_BlockingQueue_Mt&lt;T&gt;&gt;
 </div><div class="memdoc">
 
 <p>Initiate an orderly shutdown of the pipe. </p>
-<p>Sets the shutdown flag, calls <code>QueueType::shutdown()</code> to unblock any threads waiting on the queue, and (if a background processing task was provided at construction) waits for the background thread to finish. Subsequent calls are no-ops. </p>
+<p>In scheduled mode, sets the atomic shutdown flag while holding <code>m_mutex</code>, then notifies and joins the worker before shutting down the underlying queue so accepted work can drain if callbacks complete normally. Ordinary mode sets the flag and shuts down the underlying queue first to unblock the worker. Subsequent calls are no-ops. Callers must serialize concurrent calls to <a class="el" href="classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966" title="Initiate an orderly shutdown of the pipe.">shutdown()</a>, since the underlying <code><a class="el" href="classdmn_1_1Dmn__Proc.html" title="A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in ...">Dmn_Proc</a></code> lifecycle is not synchronized.</p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if joining the background worker fails. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">dmn::Dmn_Io&lt; T &gt;</a>.</p>
 
@@ -453,7 +498,8 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Block until the pipe is empty and all inbound items are processed. </p>
-<p>The function waits until all items that were reported inbound at the time of the call have been popped and processed (i.e., <code>m_count</code> has advanced to cover them). It returns the number of items that were passed through the pipe during the wait.</p>
+<p>The function waits until all items that were reported inbound at the time of the call have been popped and processed (i.e., <code>m_count</code> has advanced to cover them). In scheduled-write mode it snapshots accepted ordinary and scheduled writes and waits for that snapshot. Shutdown may cause a waiting call to return before the snapshot has completed.</p>
+<p>Producers must be externally coordinated when callers require the snapshot to include every write in a larger logical operation.</p>
 <dl class="section return"><dt>Returns</dt><dd>The number of items that were passed through the pipe in total </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a554df36a059533063f21eeb0ea890422">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
@@ -487,7 +533,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Write (copy) an item into the pipe. </p>
-<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> implementation.</p>
+<p>This call enqueues a copy of <code>item</code> into the FIFO. Writing is non-blocking; any blocking behavior is determined by the underlying <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> implementation. In scheduled-write mode it wakes the background worker and counts as accepted work for <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a></code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be copied into the pipe </td></tr>
@@ -526,7 +572,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Write (move) an item into the pipe. </p>
-<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> push policy.</p>
+<p>This call attempts to move <code>item</code> into the FIFO. If move construction is noexcept it will move; otherwise behavior follows <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html" title="Dmn_BlockingQueue is the top-level class for the abstraction and implementation classes in the Bridge...">Dmn_BlockingQueue</a> push policy. In scheduled-write mode it wakes the background worker and counts as accepted work for <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a></code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>The data item to be moved into the pipe </td></tr>
@@ -535,6 +581,102 @@ template&lt;typename T , typename QueueType &gt; </div>
 </dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">dmn::Dmn_Io&lt; T &gt;</a>.</p>
+
+</div>
+</div>
+<a id="aa9d046e1c05faf19213920e3e01ff707" name="aa9d046e1c05faf19213920e3e01ff707"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9d046e1c05faf19213920e3e01ff707">&#9670;&#160;</a></span>writeAt() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename QueueType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; T, QueueType &gt;::writeAt </td>
+          <td>(</td>
+          <td class="paramtype">std::chrono::steady_clock::time_point&#160;</td>
+          <td class="paramname"><em>deadline</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const T &amp;&#160;</td>
+          <td class="paramname"><em>item</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Schedule an item to be processed no earlier than <code>deadline</code>. </p>
+<p>This is only available on pipes constructed with <code>enable_scheduled_writes</code> set to <code>true</code>. The scheduled item is ordered by deadline; ordinary <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ab91e60f5a827d6b611f385c060a29442" title="Write (copy) an item into the pipe.">write()</a></code> items retain priority and FIFO ordering. Equal deadlines are processed in submission order. The worker is notified so it can adjust an existing timed wait if this deadline is earlier.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">deadline</td><td>Earliest processing time according to <code>std::chrono::steady_clock</code>. </td></tr>
+    <tr><td class="paramname">item</td><td>Item to copy into the scheduled queue. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::logic_error</td><td>if scheduled writes were not enabled. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if the pipe is shutting down. </td></tr>
+    <tr><td class="paramname">std::exception</td><td>or another exception propagated by T's copy constructor or by the scheduled queue's allocator. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a804d9026fbfd0eaee1eb64b226beeb31" name="a804d9026fbfd0eaee1eb64b226beeb31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a804d9026fbfd0eaee1eb64b226beeb31">&#9670;&#160;</a></span>writeAt() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename QueueType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe</a>&lt; T, QueueType &gt;::writeAt </td>
+          <td>(</td>
+          <td class="paramtype">std::chrono::steady_clock::time_point&#160;</td>
+          <td class="paramname"><em>deadline</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>item</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Schedule a moved item to be processed no earlier than <code>deadline</code>. </p>
+<p>This is only available on pipes constructed with <code>enable_scheduled_writes</code> set to <code>true</code>. Ordinary <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ab91e60f5a827d6b611f385c060a29442" title="Write (copy) an item into the pipe.">write()</a></code> items retain priority and FIFO ordering; equal scheduled deadlines retain submission order.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">deadline</td><td>Earliest processing time according to <code>std::chrono::steady_clock</code>. </td></tr>
+    <tr><td class="paramname">item</td><td>Item to move into the scheduled queue. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::logic_error</td><td>if scheduled writes were not enabled. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if the pipe is shutting down. </td></tr>
+    <tr><td class="paramname">std::exception</td><td>or another exception propagated by T's move or copy constructor or by the scheduled queue's allocator. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

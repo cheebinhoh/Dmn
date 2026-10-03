@@ -1,6 +1,6 @@
 var classdmn_1_1Dmn__Pipe =
 [
-    [ "Dmn_Pipe", "classdmn_1_1Dmn__Pipe.html#a0b8e952a277c68325b96c64608451a4c", null ],
+    [ "Dmn_Pipe", "classdmn_1_1Dmn__Pipe.html#a1a50ab47ece46dd0ea3f2dcf551f94d2", null ],
     [ "~Dmn_Pipe", "classdmn_1_1Dmn__Pipe.html#a9bb79f728f7ea508565600ceb0e1ed95", null ],
     [ "isShutdown", "classdmn_1_1Dmn__Pipe.html#a8a1f81ce619c3aeb1ec73a82f682be76", null ],
     [ "read", "classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816", null ],
@@ -9,5 +9,7 @@ var classdmn_1_1Dmn__Pipe =
     [ "shutdown", "classdmn_1_1Dmn__Pipe.html#a6f1a36063050f3ed79f7c6799b41d966", null ],
     [ "waitForEmpty", "classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12", null ],
     [ "write", "classdmn_1_1Dmn__Pipe.html#ab91e60f5a827d6b611f385c060a29442", null ],
-    [ "write", "classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1", null ]
+    [ "write", "classdmn_1_1Dmn__Pipe.html#a942d0f57d69ac4f925a49cb5847f16a1", null ],
+    [ "writeAt", "classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707", null ],
+    [ "writeAt", "classdmn_1_1Dmn__Pipe.html#a804d9026fbfd0eaee1eb64b226beeb31", null ]
 ];

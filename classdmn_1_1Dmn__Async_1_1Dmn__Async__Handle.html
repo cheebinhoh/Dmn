@@ -100,7 +100,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__Async_1_1Dmn__Async__
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad4b3f2f36e2573faf89442c24c2aaded" id="r_ad4b3f2f36e2573faf89442c24c2aaded"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html#ad4b3f2f36e2573faf89442c24c2aaded">Dmn_Async_Handle</a> (std::function&lt; void()&gt; fnc, long long due_in_future=0)</td></tr>
-<tr class="memdesc:ad4b3f2f36e2573faf89442c24c2aaded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a handle for the given task, optionally scheduled at a future time.  <br /></td></tr>
+<tr class="memdesc:ad4b3f2f36e2573faf89442c24c2aaded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a handle around the task to be executed.  <br /></td></tr>
 <tr class="separator:ad4b3f2f36e2573faf89442c24c2aaded"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59ac64b31f75580d9e31f190d6b75d3c" id="r_a59ac64b31f75580d9e31f190d6b75d3c"><td class="memItemLeft" align="right" valign="top"><a id="a59ac64b31f75580d9e31f190d6b75d3c" name="a59ac64b31f75580d9e31f190d6b75d3c"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_Async_Handle</b> (const <a class="el" href="classdmn_1_1Dmn__Async_1_1Dmn__Async__Handle.html">Dmn_Async_Handle</a> &amp;obj)=delete</td></tr>
@@ -157,16 +157,17 @@ template&lt;template&lt; class &gt; class QueueType = Dmn_BlockingQueue_Mt&gt; <
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a handle for the given task, optionally scheduled at a future time. </p>
+<p>Construct a handle around the task to be executed. </p>
+<p>Scheduling is managed by the owning <code><a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a></code> pipe; the handle only provides task execution and completion synchronization. The optional timestamp is retained for source compatibility and is not used to schedule the task; submit delayed work through <code><a class="el" href="classdmn_1_1Dmn__Async.html">Dmn_Async</a></code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fnc</td><td>The task callable to wrap. </td></tr>
-    <tr><td class="paramname">due_in_future</td><td>Absolute nanosecond timestamp (from <code>std::chrono::steady_clock</code>) after which the task may execute. Pass 0 (the default) for immediate execution. </td></tr>
+    <tr><td class="paramname">due_in_future</td><td>Legacy timestamp argument; ignored. </td></tr>
   </table>
   </dd>
 </dl>

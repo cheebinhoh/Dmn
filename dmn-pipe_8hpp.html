@@ -103,10 +103,13 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp.html',''); initResizable
 <code>#include &quot;<a class="el" href="dmn-io_8hpp_source.html">dmn-io.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
 <code>#include &lt;atomic&gt;</code><br />
+<code>#include &lt;chrono&gt;</code><br />
 <code>#include &lt;condition_variable&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;map&gt;</code><br />
 <code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div>
@@ -115,6 +118,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp.html',''); initResizable
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Pipe.html">dmn::Dmn_Pipe&lt; T, QueueType &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">FIFO I/O pipe with optional background processing and deadline writes.  <a href="classdmn_1_1Dmn__Pipe.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -133,13 +137,15 @@ Overview</h2>
 <h2><a class="anchor" id="autotoc_md28"></a>
 Threading and cancellation</h2>
 <ul>
-<li>push/pop and internal synchronization are handled by QueueType.</li>
+<li>In ordinary mode, push/pop synchronization is handled by QueueType. Scheduled-mode queue selection and processed-item accounting are protected by the pipe mutex.</li>
+<li>QueueType maintains its own shutdown state independently of this pipe's worker shutdown state. Queue implementations with in-flight guards must base those guards on their own queue shutdown state.</li>
 <li>Dmn_Pipe adds a mutex and condition variable to:<ul>
 <li>keep a count of processed items (<code>m_count</code>), and</li>
 <li>allow callers to wait until all currently inbound items have been processed (waitForEmpty()).</li>
 </ul>
 </li>
 <li>readAndProcess() involves the caller-provided task and updates <code>m_count</code> under the mutex.</li>
+<li>An optional scheduled-write mode uses the same background worker and waits for the next deadline or a new write; it does not add a thread.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md29"></a>
 Read / Write semantics</h2>
@@ -163,10 +169,10 @@ Read / Write semantics</h2>
 <p class="startli">Note: The timeout is interpreted as a maximum time to wait for the full <code>count</code> items (measured from the first blocking wait inside the call). A zero timeout value means "wait forever".</p>
 </li>
 </ul>
-<p>waitForEmpty() blocks until all items that were inbound into the pipe have been processed (or popped out).</p>
+<p>waitForEmpty() blocks until all items that were inbound into the pipe have been processed (or popped out). In scheduled-write mode it snapshots all accepted ordinary and scheduled writes.</p>
 <p>Lifetime</p><ul>
-<li>If a Task is provided to the constructor, a background processing thread is started via Dmn_Proc::exec which repeatedly calls readAndProcess(fn).</li>
-<li>The destructor stops the background processor (Dmn_Proc::stopExec()), signals the condition variable. </li>
+<li>If a Task is provided to the constructor, a background processing thread is started via Dmn_Proc::exec. In ordinary mode it repeatedly calls readAndProcess(fn); in scheduled-write mode it selects immediate writes before due scheduled writes and waits for new work or the earliest deadline.</li>
+<li>Shutdown unblocks and joins the ordinary worker. In scheduled-write mode it first stops accepting writes, wakes the worker, and joins it after accepted work has drained (including waiting until scheduled deadlines). </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->

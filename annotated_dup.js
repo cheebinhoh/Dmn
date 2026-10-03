@@ -42,7 +42,7 @@ var annotated_dup =
       [ "Dmn_State", "classdmn_1_1Dmn__State.html", "classdmn_1_1Dmn__State" ],
       [ "Dmn_Timer", "classdmn_1_1Dmn__Timer.html", "classdmn_1_1Dmn__Timer" ],
       [ "Dmn_TopologyResult", "structdmn_1_1Dmn__TopologyResult.html", "structdmn_1_1Dmn__TopologyResult" ],
-      [ "ScopeGuard", "structdmn_1_1ScopeGuard.html", "structdmn_1_1ScopeGuard" ],
+      [ "ScopeGuard", "classdmn_1_1ScopeGuard.html", "classdmn_1_1ScopeGuard" ],
       [ "TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ]
     ] ]
 ];

@@ -68,8 +68,7 @@ var hierarchy =
     ] ],
     [ "dmn::Dmn_OverlayState", "structdmn_1_1Dmn__OverlayState.html", null ],
     [ "dmn::Dmn_Proc", "classdmn_1_1Dmn__Proc.html", [
-      [ "dmn::Dmn_Pipe< T, QueueType >", "classdmn_1_1Dmn__Pipe.html", null ],
-      [ "dmn::Dmn_Timer< T >", "classdmn_1_1Dmn__Timer.html", null ]
+      [ "dmn::Dmn_Pipe< T, QueueType >", "classdmn_1_1Dmn__Pipe.html", null ]
     ] ],
     [ "dmn::Dmn_Runtime_Job", "structdmn_1_1Dmn__Runtime__Job.html", null ],
     [ "dmn::detail::Dmn_Runtime_Manager_Impl", "structdmn_1_1detail_1_1Dmn__Runtime__Manager__Impl.html", null ],
@@ -87,6 +86,7 @@ var hierarchy =
     [ "dmn::Dmn_Pub< T, QueueType >::Dmn_Sub", "classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html", [
       [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", null ]
     ] ],
+    [ "dmn::Dmn_Timer< T >", "classdmn_1_1Dmn__Timer.html", null ],
     [ "dmn::Dmn_TopologyResult< T >", "structdmn_1_1Dmn__TopologyResult.html", null ],
     [ "std::enable_shared_from_this", null, [
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
@@ -94,7 +94,7 @@ var hierarchy =
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
     [ "dmn::Dmn_DMesg::HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
-    [ "dmn::ScopeGuard< F >", "structdmn_1_1ScopeGuard.html", null ],
+    [ "dmn::ScopeGuard< F >", "classdmn_1_1ScopeGuard.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >::Ticket", "classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html", null ],
     [ "dmn::TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ]
 ];

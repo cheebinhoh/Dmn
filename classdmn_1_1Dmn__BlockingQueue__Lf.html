@@ -651,8 +651,8 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Busy-wait until the queue becomes empty. </p>
-<p>This method repeatedly checks the queue state until it observes an empty condition. It is intended to be used by a single owning thread to wait for draining, typically as part of a shutdown protocol external to this queue.</p>
-<dl class="section warning"><dt>Warning</dt><dd>This method is not protected by the inflight/epoch guard and should not be used concurrently with arbitrary producers/consumers unless the caller can ensure safe coordination.</dd></dl>
+<p>This method waits until the outstanding-item count reaches zero. It may run concurrently with consumers and is interrupted by shutdown. Producers must be stopped before calling this method and kept stopped until it returns; otherwise a producer may enqueue after the zero observation.</p>
+<p>The in-flight ticket protects this call from teardown and the item count avoids reading queue nodes that may be reclaimed by the epoch mechanism.</p>
 <dl class="section return"><dt>Returns</dt><dd>Total number of successful pushes observed by this queue since construction. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue.html#aec70bc8ab391e91af61d5da42a9c3c25">dmn::Dmn_BlockingQueue&lt; Derived, T &gt;</a>.</p>

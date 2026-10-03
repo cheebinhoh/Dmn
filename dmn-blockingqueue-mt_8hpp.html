@@ -167,6 +167,7 @@ Blocking and timeout semantics</h2>
 </li>
 </ul>
 </li>
+<li>If shutdown wakes a call that was already admitted, it returns up to <code>count</code> items currently in the queue, including a partial batch or an empty vector. Calls started after shutdown are rejected.</li>
 </ol>
 <p class="startli">Note: The timeout is interpreted as a maximum time to wait for the full <code>count</code> items (measured from the first blocking wait inside the call). A zero timeout value means "wait forever".</p>
 </li>

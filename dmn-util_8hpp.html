@@ -99,42 +99,65 @@ $(document).ready(function(){initNavTree('dmn-util_8hpp.html',''); initResizable
 <p>Small, header-only utility helpers used across the Dmn project.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;concepts&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
+<code>#include &lt;unicode/unorm2.h&gt;</code><br />
+<code>#include &lt;unicode/ustring.h&gt;</code><br />
 </div>
 <p><a href="dmn-util_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1ScopeGuard.html">dmn::ScopeGuard&lt; F &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimal scope-guard analogous to the proposed <code>std::scope_exit</code>.  <a href="structdmn_1_1ScopeGuard.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1ScopeGuard.html">dmn::ScopeGuard&lt; F &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimal scope guard with move transfer and explicit release.  <a href="classdmn_1_1ScopeGuard.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a54c3932aae9cfc4c170bc38b95802d5f" id="r_a54c3932aae9cfc4c170bc38b95802d5f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a54c3932aae9cfc4c170bc38b95802d5f"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a54c3932aae9cfc4c170bc38b95802d5f">dmn::incrementByOne</a> (T value)</td></tr>
-<tr class="memdesc:a54c3932aae9cfc4c170bc38b95802d5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment an integer-like value by one and ensure the result is at least 1.  <br /></td></tr>
-<tr class="separator:a54c3932aae9cfc4c170bc38b95802d5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e60e630f1b9041ed0509ffec151bd64" id="r_a3e60e630f1b9041ed0509ffec151bd64"><td class="memItemLeft" align="right" valign="top">std::vector&lt; UChar &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64">dmn::detail::stringToUnicode</a> (const std::string_view value)</td></tr>
+<tr class="memdesc:a3e60e630f1b9041ed0509ffec151bd64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode UTF-8 text into ICU UTF-16 code units.  <br /></td></tr>
+<tr class="separator:a3e60e630f1b9041ed0509ffec151bd64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a625b2c555a99e3ef0e29355c32f41d6e" id="r_a625b2c555a99e3ef0e29355c32f41d6e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; UChar &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e">dmn::detail::normalizeNfd</a> (const std::vector&lt; UChar &gt; &amp;value, const UNormalizer2 *normalizer)</td></tr>
+<tr class="memdesc:a625b2c555a99e3ef0e29355c32f41d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalize UTF-16 code units to canonical decomposition form.  <br /></td></tr>
+<tr class="separator:a625b2c555a99e3ef0e29355c32f41d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a472f895482fc372c40498d10c27b4c0b" id="r_a472f895482fc372c40498d10c27b4c0b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; UChar &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b">dmn::detail::foldUnicodeCase</a> (const std::vector&lt; UChar &gt; &amp;value)</td></tr>
+<tr class="memdesc:a472f895482fc372c40498d10c27b4c0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply ICU's default, locale-independent Unicode case folding.  <br /></td></tr>
+<tr class="separator:a472f895482fc372c40498d10c27b4c0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b5c2260f4d5ffd67429f76df004b17b" id="r_a1b5c2260f4d5ffd67429f76df004b17b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; UChar &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b">dmn::detail::unicodeCaseFoldNfd</a> (std::string_view value)</td></tr>
+<tr class="memdesc:a1b5c2260f4d5ffd67429f76df004b17b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode, canonically normalize, and case-fold UTF-8 input.  <br /></td></tr>
+<tr class="separator:a1b5c2260f4d5ffd67429f76df004b17b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2995881e7aa91bf1992c9f8150315d01" id="r_a2995881e7aa91bf1992c9f8150315d01"><td class="memTemplParams" colspan="2">template&lt;std::integral T&gt; <br />
+requires (!std::same_as&lt;T, bool&gt;)</td></tr>
+<tr class="memitem:a2995881e7aa91bf1992c9f8150315d01"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a2995881e7aa91bf1992c9f8150315d01">dmn::incrementByOne</a> (T value)</td></tr>
+<tr class="memdesc:a2995881e7aa91bf1992c9f8150315d01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increment an integer-like value by one and ensure the result is at least 1.  <br /></td></tr>
+<tr class="separator:a2995881e7aa91bf1992c9f8150315d01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae20c00ac25ccc7527fb0dd05a7defb4f" id="r_ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f">dmn::stringCompare</a> (const std::string_view str1, const std::string_view str2, bool caseInsensitive=true)</td></tr>
 <tr class="memdesc:ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compare two strings for equality, optionally in a case-insensitive way.  <br /></td></tr>
 <tr class="separator:ae20c00ac25ccc7527fb0dd05a7defb4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af827ac779dd7415084b37158de06206e" id="r_af827ac779dd7415084b37158de06206e"><td class="memTemplParams" colspan="2">template&lt;typename F &gt; </td></tr>
-<tr class="memitem:af827ac779dd7415084b37158de06206e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structdmn_1_1ScopeGuard.html">ScopeGuard</a>&lt; F &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#af827ac779dd7415084b37158de06206e">dmn::make_scope_guard</a> (F f)</td></tr>
-<tr class="memdesc:af827ac779dd7415084b37158de06206e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory function that constructs a <code><a class="el" href="structdmn_1_1ScopeGuard.html" title="Minimal scope-guard analogous to the proposed std::scope_exit.">ScopeGuard</a></code> with automatic callable-type deduction.  <br /></td></tr>
-<tr class="separator:af827ac779dd7415084b37158de06206e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9124a03c850ad2c0d69af8a43e7101c7" id="r_a9124a03c850ad2c0d69af8a43e7101c7"><td class="memTemplParams" colspan="2">template&lt;typename F &gt; <br />
+requires (std::is_nothrow_invocable_v&lt;std::decay_t&lt;F&gt; &amp;&gt; &amp;&amp; std::constructible_from&lt;std::decay_t&lt;F&gt;, F&gt;)</td></tr>
+<tr class="memitem:a9124a03c850ad2c0d69af8a43e7101c7"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7">dmn::make_scope_guard</a> (F &amp;&amp;f) -&gt; <a class="el" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a>&lt; std::decay_t&lt; F &gt; &gt;</td></tr>
+<tr class="memdesc:a9124a03c850ad2c0d69af8a43e7101c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <code><a class="el" href="classdmn_1_1ScopeGuard.html" title="Minimal scope guard with move transfer and explicit release.">ScopeGuard</a></code> with automatic callable-type deduction.  <br /></td></tr>
+<tr class="separator:a9124a03c850ad2c0d69af8a43e7101c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Small, header-only utility helpers used across the Dmn project. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
 <p>This header provides a couple of lightweight, commonly-used helpers:</p><ul>
-<li>incrementByOne&lt;T&gt;(T) : increment an integral-like value by one while ensuring the returned value is never less than 1.</li>
+<li>incrementByOne&lt;T&gt;(T) : increment an integer value by one while ensuring the returned value is never less than 1.</li>
 <li>stringCompare(...) : compare two strings with optional case-insensitive mode.</li>
 </ul>
 <p>Implementation notes and guarantees:</p><ul>
 <li>These utilities are intentionally minimal and header-only for easy reuse.</li>
-<li>incrementByOne expects a type T that behaves like an integer (supports +, and comparison with integer literal 1). For signed integer types, adding 1 to the maximum representable value is undefined behavior (signed overflow). For unsigned integer types overflow is well-defined (modular arithmetic) and the function will return 1 when wrapping occurs.</li>
-<li>stringCompare makes copies of the provided string_views and applies a simple ASCII-based lowercasing via ::tolower when case-insensitive comparison is requested. This approach is locale-independent and does not perform full Unicode case folding — for locale-aware or Unicode-aware comparisons prefer using std::collate/std::locale or a dedicated Unicode library.</li>
+<li>incrementByOne supports integral types other than bool. At the maximum signed value it saturates; at the maximum unsigned value it wraps and returns 1.</li>
+<li>stringCompare uses ICU's locale-independent Unicode case folding and canonical normalization when case-insensitive comparison is requested. The input must then be valid UTF-8. Case-sensitive comparison is a byte-wise comparison and does not validate UTF-8.</li>
 </ul>
 <p>Complexity:</p><ul>
 <li>incrementByOne: O(1)</li>
@@ -142,18 +165,61 @@ Functions</h2></td></tr>
 </ul>
 <p>Examples:</p><ul>
 <li>incrementByOne&lt;int&gt;(3) -&gt; 4</li>
+<li>incrementByOne&lt;int&gt;(std::numeric_limits&lt;int&gt;::max()) -&gt; same max value</li>
 <li>incrementByOne&lt;unsigned&gt;(std::numeric_limits&lt;unsigned&gt;::max()) -&gt; 1 (wraps modulo)</li>
 <li>stringCompare("Hello", "hello", true) -&gt; true</li>
 <li>stringCompare("Foo", "Bar", false) -&gt; false </li>
 </ul>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a54c3932aae9cfc4c170bc38b95802d5f" name="a54c3932aae9cfc4c170bc38b95802d5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a54c3932aae9cfc4c170bc38b95802d5f">&#9670;&#160;</a></span>incrementByOne()</h2>
+<a id="a472f895482fc372c40498d10c27b4c0b" name="a472f895482fc372c40498d10c27b4c0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a472f895482fc372c40498d10c27b4c0b">&#9670;&#160;</a></span>foldUnicodeCase()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; UChar &gt; dmn::detail::foldUnicodeCase </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; UChar &gt; &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Apply ICU's default, locale-independent Unicode case folding. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>UTF-16 input. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Case-folded UTF-16 code units without a trailing NUL. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if ICU case folding fails. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a2995881e7aa91bf1992c9f8150315d01" name="a2995881e7aa91bf1992c9f8150315d01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2995881e7aa91bf1992c9f8150315d01">&#9670;&#160;</a></span>incrementByOne()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T &gt; </div>
+template&lt;std::integral T&gt; <br />
+requires (!std::same_as&lt;T, bool&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -174,12 +240,8 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Increment an integer-like value by one and ensure the result is at least 1. </p>
-<p>The function returns std::max&lt;T&gt;(1, value + 1).</p>
-<p>Requirements and behaviour:</p><ul>
-<li>T must be a type that supports operator+ with integer literal 1 and comparison with 1 (typically an integral type).</li>
-<li>For signed integer types, adding 1 to the maximum representable value invokes undefined behaviour (signed overflow). Avoid passing such values.</li>
-<li>For unsigned integer types, overflow is well-defined (modular arithmetic); if value is the maximum value and wraps to 0, this function will return 1.</li>
-</ul>
+<p>The function returns <code>max</code>(1, value + 1). Signed integral types saturate at their maximum representable value; unsigned integral types wrap according to modular arithmetic, so the maximum value produces 1.</p>
+<p>Only integral types other than <code>bool</code> are supported.</p>
 <p>Example:</p><ul>
 <li>incrementByOne&lt;int&gt;(0) == 1</li>
 <li>incrementByOne&lt;int&gt;(1) == 2</li>
@@ -187,7 +249,7 @@ template&lt;typename T &gt; </div>
 </ul>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>An integer-like numeric type. </td></tr>
+    <tr><td class="paramname">T</td><td>An integral type other than <code>bool</code>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -197,42 +259,101 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>value + 1, or 1 if value + 1 is less than 1. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The incremented value, bounded below by 1, saturated at the signed maximum, or wrapped to 1 for the maximum unsigned value. </dd></dl>
 
 </div>
 </div>
-<a id="af827ac779dd7415084b37158de06206e" name="af827ac779dd7415084b37158de06206e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af827ac779dd7415084b37158de06206e">&#9670;&#160;</a></span>make_scope_guard()</h2>
+<a id="a9124a03c850ad2c0d69af8a43e7101c7" name="a9124a03c850ad2c0d69af8a43e7101c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9124a03c850ad2c0d69af8a43e7101c7">&#9670;&#160;</a></span>make_scope_guard()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename F &gt; </div>
+template&lt;typename F &gt; <br />
+requires (std::is_nothrow_invocable_v&lt;std::decay_t&lt;F&gt; &amp;&gt; &amp;&amp; std::constructible_from&lt;std::decay_t&lt;F&gt;, F&gt;)</div>
       <table class="memname">
         <tr>
-          <td class="memname">ScopeGuard&lt; F &gt; dmn::make_scope_guard </td>
+          <td class="memname">auto dmn::make_scope_guard </td>
           <td>(</td>
-          <td class="paramtype">F&#160;</td>
+          <td class="paramtype">F &amp;&amp;&#160;</td>
           <td class="paramname"><em>f</em></td><td>)</td>
-          <td></td>
+          <td> -&gt; <a class="el" href="classdmn_1_1ScopeGuard.html">ScopeGuard</a>&lt;std::decay_t&lt;F&gt;&gt; </td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Factory function that constructs a <code>ScopeGuard</code> with automatic callable-type deduction. </p>
+<p>Construct a <code>ScopeGuard</code> with automatic callable-type deduction. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">F</td><td>Callable type; deduced from the argument. </td></tr>
+    <tr><td class="paramname">F</td><td>Callable type; deduced from the argument and stored by value. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">f</td><td>Callable to invoke when the returned guard goes out of scope. </td></tr>
+    <tr><td class="paramname">f</td><td>Nothrow-invocable callable to invoke when the armed guard is destroyed. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <code>ScopeGuard&lt;F&gt;</code> that will call <code>f</code> on destruction. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A move-only guard that calls <code>f</code> on scope exit unless released. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">Any</td><td>exception thrown while constructing the stored callable. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a625b2c555a99e3ef0e29355c32f41d6e" name="a625b2c555a99e3ef0e29355c32f41d6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a625b2c555a99e3ef0e29355c32f41d6e">&#9670;&#160;</a></span>normalizeNfd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; UChar &gt; dmn::detail::normalizeNfd </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; UChar &gt; &amp;&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const UNormalizer2 *&#160;</td>
+          <td class="paramname"><em>normalizer</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Normalize UTF-16 code units to canonical decomposition form. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>UTF-16 input. </td></tr>
+    <tr><td class="paramname">normalizer</td><td>ICU normalizer instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The normalized UTF-16 code units without a trailing NUL. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if ICU normalization fails. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -277,11 +398,8 @@ template&lt;typename F &gt; </div>
 </div><div class="memdoc">
 
 <p>Compare two strings for equality, optionally in a case-insensitive way. </p>
-<p>The function copies the provided string_views into std::string, and when caseInsensitive is true it lowercases both copies using ::tolower prior to comparison.</p>
-<p>Notes:</p><ul>
-<li>The lowercasing uses the C locale's tolower via ::tolower and therefore performs a simple ASCII/byte-wise conversion. It is not suitable for full Unicode case folding.</li>
-<li>Because ::tolower takes an int (typically promoted unsigned char or EOF), converting a signed char directly may yield undefined behaviour on some platforms for negative char values; for a robust implementation cast to unsigned char before calling ::tolower.</li>
-</ul>
+<p>When <code>caseInsensitive</code> is true, the function decodes both inputs as UTF-8, applies locale-independent Unicode default case folding and canonical decomposition, then compares the results. Invalid UTF-8 input throws <code>std::invalid_argument</code>. This is Unicode-aware caseless comparison; it does not apply locale-specific casing rules.</p>
+<p>When <code>caseInsensitive</code> is false, the function compares the input bytes directly without validating UTF-8.</p>
 <p>Complexity: O(N) where N is the length of the longer input string.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -292,6 +410,99 @@ template&lt;typename F &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the (possibly lowercased) strings are equal, false otherwise. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if case-insensitive comparison receives malformed UTF-8. </td></tr>
+    <tr><td class="paramname">std::length_error</td><td>if an input exceeds ICU's length limit. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if ICU normalization or case folding fails. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3e60e630f1b9041ed0509ffec151bd64" name="a3e60e630f1b9041ed0509ffec151bd64"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e60e630f1b9041ed0509ffec151bd64">&#9670;&#160;</a></span>stringToUnicode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; UChar &gt; dmn::detail::stringToUnicode </td>
+          <td>(</td>
+          <td class="paramtype">const std::string_view&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decode UTF-8 text into ICU UTF-16 code units. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>UTF-8 encoded input. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>UTF-16 code units without a trailing NUL. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::length_error</td><td>if the input exceeds ICU's length limit. </td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>if the input is malformed UTF-8. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a1b5c2260f4d5ffd67429f76df004b17b" name="a1b5c2260f4d5ffd67429f76df004b17b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b5c2260f4d5ffd67429f76df004b17b">&#9670;&#160;</a></span>unicodeCaseFoldNfd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; UChar &gt; dmn::detail::unicodeCaseFoldNfd </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decode, canonically normalize, and case-fold UTF-8 input. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>UTF-8 encoded input. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Case-folded text in canonical decomposition form. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>if the input is malformed UTF-8. </td></tr>
+    <tr><td class="paramname">std::length_error</td><td>if the input exceeds ICU's length limit. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if ICU initialization or processing fails. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
