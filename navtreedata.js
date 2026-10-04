@@ -53,7 +53,7 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d",
-"group__dmesg__pb__msg.html"
+"group__dmesg__pb__body.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

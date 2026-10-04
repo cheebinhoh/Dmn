@@ -1,5 +1,7 @@
 var NAVTREEINDEX2 =
 {
+"group__dmesg__pb__body.html":[0,2],
+"group__dmesg__pb__body.html#ga6eee16fd7c8eda9e87f6eabd4c4c8db9":[0,2,0],
 "group__dmesg__pb__msg.html":[0,1],
 "group__dmesg__pb__msg.html#ga7d833d7c945c9291c88a1e80f13af73f":[0,1,4],
 "group__dmesg__pb__msg.html#ga93fb155c2d0f517bc78d7ebc99abebf4":[0,1,5],

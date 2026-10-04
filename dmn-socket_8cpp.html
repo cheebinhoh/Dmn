@@ -115,7 +115,7 @@ $(document).ready(function(){initNavTree('dmn-socket_8cpp.html',''); initResizab
 <code>#include &lt;utility&gt;</code><br />
 </div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket that implements the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <p>The constructor validates the IPv4/port configuration before creating an AF_INET/SOCK_DGRAM socket, enables SO_BROADCAST, and binds unless write_only is true. If socket configuration or binding fails after creation, it closes the descriptor before rethrowing.</p>
 <p>read() receives one complete UDP datagram. Empty datagrams are returned as empty strings; receive errors and truncated datagrams throw std::system_error. The receive buffer is BUFSIZ bytes, and oversized datagrams are consumed and reported as message_size rather than returned partially.</p>
 <p>write() reconstructs the destination sockaddr_in from the stored address/port on every call and uses sendto() to transmit the string. The rvalue overload delegates to the lvalue overload without moving from the string.</p>

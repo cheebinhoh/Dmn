@@ -119,7 +119,7 @@ constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kKaf
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Utility helpers for configuring librdkafka instances. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <p>This header provides a thin, type-safe wrapper around rd_kafka_conf_set() that returns a std::expected value instead of relying on an output error-string buffer. Use set_config() wherever you need to apply a single key/value pair to an rd_kafka_conf_t object and want idiomatic C++ error handling.</p>
 <p>The constant kKafkaErrorStringLength defines the size of the temporary error string buffer required by rd_kafka_conf_set() and should be used whenever that buffer is allocated on the stack. </p>
 </div><h2 class="groupheader">Function Documentation</h2>

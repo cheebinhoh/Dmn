@@ -118,7 +118,7 @@ Classes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Dmn_Kafka — a <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> adapter for Apache Kafka. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <p>Dmn_Kafka wraps the librdkafka C library and exposes a uniform <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface for both producing and consuming Kafka messages. A single instance acts as either a producer or consumer depending on the Role argument supplied to the constructor.</p>
 <p>Configuration is supplied as a ConfigType map (std::unordered_map&lt;std::string, std::string&gt;). Most keys are passed through to rd_kafka_conf_set(); three special keys are consumed by Dmn_Kafka itself and are not forwarded:</p><ul>
 <li>Dmn_Kafka::Topic — the Kafka topic to read from / write to.</li>

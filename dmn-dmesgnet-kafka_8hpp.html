@@ -113,7 +113,7 @@ Classes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Convenience wrapper that wires Dmn_DMesgNet to Apache Kafka I/O. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <p>Dmn_DMesgNet_Kafka is a thin composition class that instantiates a Dmn_Kafka consumer (input) and a Dmn_Kafka producer (output) and passes them to a Dmn_DMesgNet instance. The result is a network-aware DMesg node whose transport layer is backed by a Kafka broker instead of a raw socket.</p>
 <p>The class handles all Kafka-specific configuration detail (consumer group id, topic name, auto.offset.reset, acks, etc.) so callers only need to supply the common broker connection parameters (bootstrap.servers, SASL credentials, etc.) via a Dmn_Kafka::ConfigType map. The fixed Kafka topic used for cluster communication is "Dmn_dmesgnet".</p>
 <p>Handler management (openHandler / closeHandler) is forwarded directly to the underlying Dmn_DMesgNet instance so callers work with the standard Dmn_DMesgHandler API.</p>

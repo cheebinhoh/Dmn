@@ -98,6 +98,7 @@ $(document).ready(function(){initNavTree('dmn-timer_8hpp.html',''); initResizabl
 <p>A recurring timer driven by Dmn_Pipe's scheduled-write worker.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-debug_8hpp_source.html">dmn-debug.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-fault-injection_8hpp_source.html">dmn-fault-injection.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
 <code>#include &lt;chrono&gt;</code><br />
 <code>#include &lt;cmath&gt;</code><br />
@@ -120,7 +121,7 @@ Classes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A recurring timer driven by Dmn_Pipe's scheduled-write worker. </p>
-<p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
+<p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
 <p>Dmn_Timer&lt;T&gt; invokes a client callback after each strictly positive steady-clock interval. The next tick is scheduled relative to completion of the previous callback. stop() pauses without joining; resume() schedules a fresh tick. Generation tokens make ticks queued before a pause or restart stale, even if they wake after the timer has resumed. Standard callback exceptions are logged and recurrence continues; non-standard callback exceptions and asynchronous rescheduling failures pause the timer and can be observed through rethrowFailure(). Timer state is mutex-protected, but destruction must not race public operations or run from the timer callback. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->

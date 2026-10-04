@@ -10,6 +10,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-dmesg-pb-util.hpp", "dmn-dmesg-pb-util_8hpp.html", "dmn-dmesg-pb-util_8hpp" ],
     [ "dmn-dmesg.hpp", "dmn-dmesg_8hpp.html", "dmn-dmesg_8hpp" ],
     [ "dmn-dmesgnet.hpp", "dmn-dmesgnet_8hpp.html", "dmn-dmesgnet_8hpp" ],
+    [ "dmn-fault-injection.hpp", "dmn-fault-injection_8hpp.html", null ],
     [ "dmn-inflight-guard.hpp", "dmn-inflight-guard_8hpp.html", "dmn-inflight-guard_8hpp" ],
     [ "dmn-interval-btree.hpp", "dmn-interval-btree_8hpp.html", "dmn-interval-btree_8hpp" ],
     [ "dmn-io.hpp", "dmn-io_8hpp.html", "dmn-io_8hpp" ],
