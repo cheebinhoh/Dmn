@@ -22,8 +22,14 @@ enable_testing()
 # set build options
 option(BUILD_NDEBUG "build without debug" OFF)
 option(BUILD_KAFKA_TEST "build with kafka test" OFF)
+option(ENABLE_DBUS "Build the optional D-Bus transport" OFF)
 option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
+
+if (ENABLE_DBUS)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
+endif()
 
 if (ENABLE_VALGRIND)
   find_program(VALGRIND_EXECUTABLE valgrind)

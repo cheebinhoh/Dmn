@@ -31,7 +31,7 @@ returned handler proxy for DMesg I/O; it never receives the internal node or
 transport endpoints:
 
 ```cpp
-dmn::Dmn_DMesgDbusConfig config;
+dmn::Dmn_DbusConfig config;
 dmn::Dmn_DMesgDbus node{"worker-a", config};
 dmn::Dmn_DMesgDbus::HandlerSpec spec{"worker", "jobs"};
 auto handler = node.openHandler(spec);
@@ -53,13 +53,13 @@ boundary.
 #include <string_view>
 
 #include "dmn-dmesg.hpp"
-#include "dmn-dmesg-dbus-config.hpp"
+#include "dmn-dbus-config.hpp"
 
 namespace dmn {
 
 struct Dmn_DMesgDbusStatus {
-  Dmn_DMesgDbusIoStatus input;
-  Dmn_DMesgDbusIoStatus output;
+  Dmn_DbusIoStatus input;
+  Dmn_DbusIoStatus output;
 };
 
 class Dmn_DMesgDbus final {
@@ -72,7 +72,7 @@ public:
   using HandlerType = Dmn_DMesg::HandlerType;
 
   Dmn_DMesgDbus(std::string_view node_id,
-                const Dmn_DMesgDbusConfig &config = {});
+                const Dmn_DbusConfig &config = {});
 
   auto openHandler(const HandlerSpec &spec) -> HandlerType;
   auto openHandlerWithFactory(const HandlerSpec &spec,
@@ -99,19 +99,20 @@ private:
 } // namespace dmn
 ```
 
-Treat names/defaults as proposals until the implementation step verifies the
-project's naming, constructor, and build conventions. Keep the signal
-path/interface/member fixed in v1; do not add free-form routing configuration
-unless a concrete use case requires it. `bus_address` must not silently fall
+The facade is DMesg-specific; its internal byte endpoints use the shared
+`Dmn_DbusConfig`, whose default path/interface/member identify the DMesgNet
+wire contract. Applications may select another signal tuple through config
+only when all participants use that same protocol configuration.
+`bus_address` must not silently fall
 back to another bus. Empty address is permitted only for an unprivileged
 session-bus constructor; a system bus or arbitrary address must be explicit
 and must not be selected from an unsafe implicit environment in a privileged
 service.
-`Dmn_DMesgDbusIoStatus` is the proposed read-only snapshot type defined by the
-fields and meanings in the shared transport contract. `Dmn_DMesgDbusConfig`
-and `Dmn_DMesgDbusIoStatus` are declared once in
-`include/dmn-dmesg-dbus-config.hpp`. The facade header includes that small
-shared-types header, not `dmn-dmesg-dbus-io.hpp` or
+`Dmn_DbusIoStatus` is the implemented read-only snapshot type defined by the
+fields and meanings in the shared transport contract. `Dmn_DbusConfig`
+and `Dmn_DbusIoStatus` are declared once in
+`include/dmn-dbus-config.hpp`. The facade header includes that small
+shared-types header, not `dmn-dbus-io.hpp` or
 `dmn-dmesgnet.hpp`; the latter headers remain available to Option A callers.
 
 The forwarded DMesg surface is deliberately limited to handler creation,
@@ -167,15 +168,15 @@ endpoints second:
 namespace dmn {
 
 struct DbusEndpoints {
-  std::shared_ptr<Dmn_DMesgDbusInput> input;
-  std::shared_ptr<Dmn_DMesgDbusOutput> output;
+  std::shared_ptr<Dmn_DbusInput> input;
+  std::shared_ptr<Dmn_DbusOutput> output;
 };
 
 struct Dmn_DMesgDbus::Impl {
   DbusEndpoints endpoints;
   Dmn_DMesgNet node;
 
-  Impl(std::string_view node_id, const Dmn_DMesgDbusConfig &config)
+  Impl(std::string_view node_id, const Dmn_DbusConfig &config)
       : endpoints{makeDbusEndpoints(config)},
         node{node_id, endpoints.input, endpoints.output} {}
 };
@@ -203,7 +204,7 @@ definitions out of the facade header without weakening the public API.
 namespace dmn {
 
 Dmn_DMesgDbus::Dmn_DMesgDbus(
-    std::string_view node_id, const Dmn_DMesgDbusConfig &config)
+    std::string_view node_id, const Dmn_DbusConfig &config)
     : m_impl{std::make_unique<Impl>(node_id, config)} {}
 
 Dmn_DMesgDbus::~Dmn_DMesgDbus() noexcept = default;
@@ -273,7 +274,8 @@ internal node.
 
 The facade uses the common contract:
 
-- fixed `Message(ay)` broadcast signal;
+- configured broadcast signal with an `ay` payload; the default
+  `Dmn_DbusConfig` tuple interoperates with `Dmn_DMesgNet`;
 - one private input D-Bus connection and one private output connection;
 - finite message/queue limits;
 - exact `AddMatch` installation before constructor success;

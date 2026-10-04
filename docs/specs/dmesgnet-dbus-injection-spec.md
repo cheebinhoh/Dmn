@@ -1,9 +1,8 @@
 # Option A: Inject D-Bus I/O into `Dmn_DMesgNet`
 
-**Status:** Option A implementation specification; no transport code is
-implemented. This is phase 1 of the required two-phase delivery. After Option
-A's unit, private-bus, and `Dmn_DMesgNet` composition tests pass, implement the
-Option B wrapper in
+**Status:** Option A is implemented behind the optional `ENABLE_DBUS` build
+flag and covered by private-session-bus endpoint and `Dmn_DMesgNet`
+composition tests. Option B remains design-only; implement its wrapper in
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md). Both use the
 shared transport contract in [`dmesg-dbus-spec.md`](dmesg-dbus-spec.md).
 
@@ -13,19 +12,21 @@ Create public D-Bus-backed `Dmn_Io<std::string>` input and output endpoints
 and pass one of each directly to the existing `Dmn_DMesgNet` constructor:
 
 ```cpp
-auto input = std::make_shared<dmn::Dmn_DMesgDbusInput>(config);
-auto output = std::make_shared<dmn::Dmn_DMesgDbusOutput>(config);
+auto input = std::make_shared<dmn::Dmn_DbusInput>(config);
+auto output = std::make_shared<dmn::Dmn_DbusOutput>(config);
 
 dmn::Dmn_DMesgNet dmesgnet{"node-a", input, output};
 ```
 
-`Dmn_DMesgDbusInput` and `Dmn_DMesgDbusOutput` are proposed public names and
-must both implement `Dmn_Io<std::string>`. Keep the endpoints and their
+`Dmn_DbusInput` and `Dmn_DbusOutput` are the implemented public names and
+both implement `Dmn_Io<std::string>`. Keep the endpoints and their
 private D-Bus connections distinct. A public pair factory may be provided to
 make same-config construction and rollback convenient, but direct
 construction of each endpoint must remain possible for Option A to be a real
-injection API. The wire contract is the fixed `Message(ay)` signal in
-`dmesg-dbus-spec.md`.
+injection API. The endpoints carry arbitrary bytes in a signal with a
+configurable path/interface/member and fixed `ay` signature. Their default
+tuple is the DMesgNet wire contract in `dmesg-dbus-spec.md`; leave those
+defaults unchanged when composing an unmodified `Dmn_DMesgNet`.
 
 The transport stack becomes:
 
@@ -106,7 +107,7 @@ the output connection prematurely.
   `write()`.
 - The current Dmn `Dmn_Io` API does not provide generic asynchronous error
   reporting or metrics. Therefore the public Option A endpoint types expose a
-  thread-safe, read-only `Dmn_DMesgDbusIoStatus` snapshot and use the existing
+  thread-safe, read-only `Dmn_DbusIoStatus` snapshot and use the existing
   stderr-reporting convention for asynchronous errors. Do not add a user
   callback API in v1 or silently discard asynchronous output failures.
 
@@ -152,46 +153,58 @@ Option A is the supported expert/composition API and therefore exposes the
 input endpoint, output endpoint, shared config, and read-only endpoint status
 types in the optional D-Bus public headers. Do not expose `DBusConnection *`,
 libdbus message objects, or callback/filter registration that can bypass the
-fixed wire contract.
+configured byte-signal contract.
 
-The shared config/status types are proposed for
-`include/dmn-dmesg-dbus-config.hpp`; the endpoint classes live in
-`include/dmn-dmesg-dbus-io.hpp`:
+The shared config/status types are in `include/dmn-dbus-config.hpp`; endpoint
+classes are in `include/dmn-dbus-io.hpp`:
 
 ```cpp
-struct Dmn_DMesgDbusConfig {
+struct Dmn_DbusConfig {
   // Empty selects the session bus for an unprivileged process.
   std::string bus_address;
+  // Defaults identify the Dmn_DMesgNet wire signal; choose a separate tuple
+  // for another byte-oriented protocol.
+  std::string signal_path{"/org/dmn/DMesg1"};
+  std::string signal_interface{"org.dmn.DMesg1.Transport"};
+  std::string signal_member{"Message"};
   std::size_t max_message_bytes{1024 * 1024};
   std::size_t max_queued_messages{1024};
   std::size_t max_queued_bytes{16 * 1024 * 1024};
 };
 ```
 
-`Dmn_DMesgDbusIoStatus` is defined in that shared config header with the
-status fields specified in `dmesg-dbus-spec.md`.
+Implemented public headers are `dmn-dbus-config.hpp` and
+`dmn-dbus-io.hpp`; the out-of-line implementation is in
+`src/dmn-dbus-io.cpp`, built as the separate `dmn-dbus` library target.
+`ENABLE_DBUS` defaults to `OFF`, so the core `dmn` target remains independent
+of libdbus. Each configured maximum payload must be positive and no greater
+than `INT_MAX`, because libdbus's fixed-array API accepts an `int` length.
+
+`Dmn_DbusIoStatus` is defined in that shared config header with the status
+fields specified in `dmesg-dbus-spec.md`. The signal tuple is validated as
+D-Bus path/interface/member syntax before opening a connection.
 
 ```cpp
-class Dmn_DMesgDbusInput : public Dmn_Io<std::string> {
+class Dmn_DbusInput : public Dmn_Io<std::string> {
 public:
-  explicit Dmn_DMesgDbusInput(const Dmn_DMesgDbusConfig &config);
-  ~Dmn_DMesgDbusInput() noexcept override;
+  explicit Dmn_DbusInput(const Dmn_DbusConfig &config);
+  ~Dmn_DbusInput() noexcept override;
   auto read() -> std::optional<std::string> override;
   void write(const std::string &item) override;
   void write(std::string &&item) override;
   void shutdown() noexcept override;
-  [[nodiscard]] auto status() const -> Dmn_DMesgDbusIoStatus;
+  [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
 };
 
-class Dmn_DMesgDbusOutput : public Dmn_Io<std::string> {
+class Dmn_DbusOutput : public Dmn_Io<std::string> {
 public:
-  explicit Dmn_DMesgDbusOutput(const Dmn_DMesgDbusConfig &config);
-  ~Dmn_DMesgDbusOutput() noexcept override;
+  explicit Dmn_DbusOutput(const Dmn_DbusConfig &config);
+  ~Dmn_DbusOutput() noexcept override;
   auto read() -> std::optional<std::string> override;
   void write(const std::string &item) override;
   void write(std::string &&item) override;
   void shutdown() noexcept override;
-  [[nodiscard]] auto status() const -> Dmn_DMesgDbusIoStatus;
+  [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
 };
 ```
 
@@ -200,8 +213,8 @@ connections and worker lifetimes. Each concrete destructor must call its
 idempotent `shutdown()` while its dynamic type is still active; relying on
 `Dmn_Io<T>`'s base destructor is insufficient because virtual dispatch during
 base destruction does not invoke the derived shutdown override.
-`Dmn_DMesgDbusConfig` and
-`Dmn_DMesgDbusIoStatus` are shared by Options A and B, declared once in the
+`Dmn_DbusConfig` and
+`Dmn_DbusIoStatus` are shared by Options A and B, declared once in the
 optional public config header, and included by both API headers. The facade
 header does not include the endpoint header.
 All configured size/count limits must be positive, and
@@ -219,9 +232,9 @@ status and diagnostic contract rather than throwing during teardown.
 The direct constructor pattern is:
 
 ```cpp
-Dmn_DMesgDbusConfig config{/* bus and limits */};
-auto input = std::make_shared<Dmn_DMesgDbusInput>(config);
-auto output = std::make_shared<Dmn_DMesgDbusOutput>(config);
+Dmn_DbusConfig config{/* bus and limits */};
+auto input = std::make_shared<Dmn_DbusInput>(config);
+auto output = std::make_shared<Dmn_DbusOutput>(config);
 Dmn_DMesgNet node{"node-a", input, output};
 ```
 
@@ -235,7 +248,8 @@ configuration semantics; do not create a second internal adapter path.
 ### 4.1 Input endpoint
 
 `read()` blocks on a finite queue populated by one D-Bus dispatch worker.
-Dispatch matches exactly:
+Dispatch matches exactly the configured signal tuple and `ay` signature. For
+the default DMesgNet configuration this is:
 
 ```text
 path      /org/dmn/DMesg1
@@ -252,9 +266,12 @@ newest signal and increment an observable counter; do not block the bus
 dispatch thread.
 
 Reject malformed signal arguments and payloads exceeding the configured
-maximum before copying them into the queue. `shutdown()` wakes a blocked
-`read()`, stops dispatch, removes the match/filter where applicable, joins the
-worker, and is safe to call more than once. Preserve already queued input for
+maximum before copying them into the queue. Check both queue caps before
+allocating the payload copy. `shutdown()` wakes a blocked `read()`, stops
+dispatch, removes the local filter after joining the worker, and closes the
+private connection (which releases its daemon-side match without a separate
+blocking `RemoveMatch` call). It is safe to call more than once. Preserve
+already queued input for
 the blocked reader to drain; after the queue empties, throw
 `std::system_error(std::errc::operation_canceled)` rather than returning
 `std::nullopt`. This is important because current `Dmn_DMesgNet` treats
@@ -264,8 +281,9 @@ and would otherwise continue its input loop.
 ### 4.2 Output endpoint
 
 Each `write()` accepts one item into a finite output queue; one writer worker
-creates one broadcast signal whose `ay` argument is byte-for-byte equal to the
-string. Embedded NUL bytes are ordinary payload bytes. Enforce the payload,
+creates one broadcast signal on the configured tuple whose `ay` argument is
+byte-for-byte equal to the string. Embedded NUL bytes are ordinary payload
+bytes. Enforce the payload,
 message-count, and queued-byte limits before queueing. If any queue cap is
 reached, shutdown has begun, or the worker has entered a known failed state,
 throw `std::system_error`. `write()` success means only that the adapter's
@@ -292,7 +310,7 @@ destructor so its final system-state message can be sent.
 
 ### 4.3 Node identity and echo
 
-Each `Dmn_DMesgNet` instance sharing the same signal interface must have a
+Each `Dmn_DMesgNet` instance sharing the same signal tuple must have a
 unique configured name. Its incoming path already ignores messages whose
 `sourceWriteHandlerIdentifier` equals its own name; preserve and test this
 loop-prevention behavior. Do not replace that field with the D-Bus sender
@@ -336,15 +354,15 @@ the node destructor completes. Under Option B, member declaration order must
 keep both endpoints alive until the internal node's destructor returns.
 
 If applications create many nodes in one process, each node needs distinct
-adapter connections but the same fixed bus signal contract. Each node needs a
-unique node ID. A future shared-connection optimization is out of scope until
+adapter connections and matching signal configuration within its protocol.
+Each node needs a unique node ID. A future shared-connection optimization is out of scope until
 its multiplexing, routing, shutdown, and authentication behavior are specified.
 
 ## 6. Comparison with the `Dmn_DMesgDbus` facade
 
 | Concern | Option A: direct injected I/O | Option B: `Dmn_DMesgDbus` composition wrapper |
 |---|---|---|
-| Transport/wire semantics | Same fixed D-Bus signal and endpoint implementation. | Same fixed D-Bus signal and endpoint implementation. |
+| Transport/wire semantics | Same configured D-Bus signal tuple and endpoint implementation. | Same config and endpoint implementation; defaults match Option A. |
 | Construction | Caller creates input and output endpoints and passes both to `Dmn_DMesgNet`. | Caller passes node ID/config; wrapper creates endpoints and initializes a private node member. |
 | `Dmn_DMesgNet` changes | None. | None; wrapper owns a private instance. |
 | Public API | Public input/output adapters, config, status, and optionally a pair factory. | Adds a first-class wrapper/config/status and forwards a selected DMesg API subset. |
@@ -385,7 +403,9 @@ specifically requires:
    observable asynchronously.
 6. Verify distinct private buses do not communicate using the same
    signal-interface strings.
-7. Confirm tests do not infer remote-host reachability, consensus, quorum, or
+7. Verify a custom signal tuple delivers only to endpoints configured for
+   that tuple and the default tuple remains interoperable with `Dmn_DMesgNet`.
+8. Confirm tests do not infer remote-host reachability, consensus, quorum, or
    exactly-once delivery.
 
 ## 8. Go/no-go assessment

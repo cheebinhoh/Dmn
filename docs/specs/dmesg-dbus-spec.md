@@ -1,11 +1,8 @@
-# Shared Design: DMesg transport over the Linux D-Bus message bus
+# Shared Design: byte I/O and DMesg transport over Linux D-Bus
 
-**Status:** Shared transport contract for two alternative APIs; no production
-implementation is included.
-The wire primitive was prototyped against a private `dbus-daemon`: a broadcast
-signal carried a binary `ay` payload byte-for-byte, including NUL and high-bit
-bytes. This confirms the D-Bus mechanism, not production readiness, Dmn
-integration, or multi-host behavior.
+**Status:** Shared contract for implemented Option A endpoints. Option B remains
+design-only. Option A uses the optional `dmn-dbus` target and is verified by
+private-session-bus tests; it does not make D-Bus a cross-host transport.
 
 The two construction alternatives and their implementation order are
 specified in
@@ -15,6 +12,11 @@ required: first implement and validate the direct-injection transport (Option
 A), then build the facade (Option B) as a composition wrapper over that tested
 path. They use the same signal, endpoint implementation, limits, security
 model, and host-local scope; only the public construction/API boundary differs.
+The `Dmn_DbusInput` and `Dmn_DbusOutput` endpoints are generic
+`Dmn_Io<std::string>` byte-signal adapters. Their default routing tuple is the
+DMesgNet wire contract; a caller can configure a separate tuple for another
+byte-oriented protocol. Option B remains the specifically DMesg-facing
+`Dmn_DMesgDbus` facade.
 
 ## 1. Decision and intended meaning
 
@@ -34,9 +36,11 @@ Do not call either design `Dmn_DBusGateway`: that would describe the different
 API-gateway pattern in which applications explicitly tunnel individual D-Bus
 method calls.
 
-The proposed component reuses `Dmn_DMesgNet`'s existing DMesg serialization,
-membership, and local publisher behavior, but supplies D-Bus-backed
-`Dmn_Io<std::string>` endpoints. Its first scope is **inter-process
+The DMesg integration reuses `Dmn_DMesgNet`'s existing DMesg serialization,
+membership, and local publisher behavior, but supplies the reusable
+D-Bus-backed `Dmn_Io<std::string>` endpoints. Their byte-oriented interface
+can also carry other application payloads over a separately configured signal
+tuple. The first scope is **inter-process
 communication on one D-Bus daemon**. The default Linux session and system
 buses are local to a host. D-Bus does not federate separate host daemons, and
 this adapter does not make the existing DMesgNet election a consensus
@@ -55,7 +59,8 @@ Dmn_DMesgDbus facade                           Dmn_DMesgDbus facade
 ```
 
 Each participating process serializes its normal `DMesgPb` envelope to bytes
-and emits one fixed D-Bus signal containing those bytes. Each other Dmn
+and emits one D-Bus signal on the default DMesg routing tuple containing
+those bytes. Each other Dmn
 instance subscribed to that signal reads the byte array and gives the string
 to its existing `Dmn_DMesgNet` input path. D-Bus handles local
 inter-process routing; Dmn retains its existing message envelope, counters,
@@ -121,8 +126,10 @@ schemas:
   echo. Stable node identifiers still must be unique per `Dmn_DMesgNet`
   instance on the shared bus.
 
-Do not modify `DMesgBodyPb`, `DMesgPb`, or introduce a D-Bus-specific
-application payload. This component transports the existing DMesg wire format.
+Do not modify `DMesgBodyPb` or `DMesgPb`, or introduce a D-Bus-specific
+application payload. The DMesg integration sends the existing DMesg wire
+format through the generic byte-signal endpoints; unrelated protocols can use
+those endpoints with their own configured routing tuple and payload format.
 
 ### Construction alternatives
 
@@ -136,9 +143,12 @@ only after that milestone passes and reuses its endpoint implementation.
 
 ## 4. Common transport contract
 
-### 4.1 Fixed D-Bus signal
+### 4.1 D-Bus byte signal
 
-Use a single versioned broadcast signal:
+The generic endpoint sends a D-Bus broadcast signal with a byte-array (`ay`)
+body. `Dmn_DbusConfig` selects its object path, interface, and member; all
+participants using one protocol must use the same tuple. The defaults are
+reserved for the `Dmn_DMesgNet` wire contract:
 
 ```text
 Object path:  /org/dmn/DMesg1
@@ -147,17 +157,18 @@ Member:       Message
 Signature:    ay
 ```
 
-The one argument is the complete serialized `DMesgPb` byte sequence. Use a
-signal rather than a D-Bus method call because DMesg publication is
-one-to-many and `Dmn_Io::write()` returns no remote reply. A per-message
-method call would invent a delivery-acknowledgement meaning that the current
-Dmn API cannot uphold and would serialize each publication through a
-request/reply exchange.
+For DMesgNet, the one argument is the complete serialized `DMesgPb` byte
+sequence. Other `Dmn_Io<std::string>` uses may carry their own byte payload
+formats on a distinct configured tuple. Use a signal rather than a D-Bus
+method call because publication is one-to-many and `Dmn_Io::write()` returns
+no remote reply. A per-message method call would invent a
+delivery-acknowledgement meaning that the current Dmn API cannot uphold and
+would serialize each publication through a request/reply exchange.
 
 No well-known service name is required to emit or receive the signal. This
 avoids a singleton-name ownership race between ordinary Dmn participant
 processes. Each input connection installs one exact match rule for signal
-type, object path, interface, and member; it must wait until the daemon has
+type, configured object path, interface, and member; it must wait until the daemon has
 accepted the match before the endpoint reports ready. No wildcard body/path
 match or monitor/eavesdrop permission is required.
 
@@ -175,28 +186,33 @@ for local bus policy/diagnostics.
   reject as malformed). It drains already queued values, then throws
   `std::system_error(std::errc::operation_canceled)` after explicit shutdown.
   On bus failure it drains already queued values and then throws
-  `std::system_error` with the actual connection error code; do not disguise
-  disconnection as normal shutdown.
+  `std::system_error` with the mapped terminal connection code
+  (`std::errc::connection_reset` for a disconnected libdbus connection); do
+  not disguise disconnection as normal shutdown.
 - The D-Bus dispatch callback must not block waiting for the DMesgNet consumer.
   It copies the byte array into a bounded queue and returns promptly.
 - The input queue is finite. On overflow, drop the newest payload, increment a
   visible drop/error counter, and emit a rate-limited diagnostic using the
   existing `Dmn_DMesgNet` stderr-reporting convention. Do not block the shared
   D-Bus dispatch thread or silently claim delivery. Enforce both a
-  message-count cap and total queued-byte cap. DMesgNet's
-  existing counter/conflict behavior may detect some resulting gaps but is
-  not a reliable delivery recovery protocol.
+  message-count cap and total queued-byte cap. The callback checks both caps
+  before allocating its queue copy. DMesgNet's existing counter/conflict
+  behavior may detect some resulting gaps but is not a reliable delivery
+  recovery protocol.
 - Reject a byte array above `max_message_bytes` before copying it into the
   queue. Count and report malformed signal signatures and oversized payloads.
-- `shutdown()` is idempotent, removes the match/filter, wakes `read()` with
-  the explicit cancellation outcome above, and joins its dispatch activity
-  before releasing its D-Bus connection. Once
-  shutdown begins, no callback may access the destroyed adapter.
+- `shutdown()` is idempotent, stops dispatch and wakes `read()` with the
+  explicit cancellation outcome above. It removes the local filter after
+  joining the dispatch worker and closes the private connection; closing that
+  connection releases its daemon-side match without a separate blocking
+  `RemoveMatch` call. Once shutdown completes, no callback can access the
+  adapter.
 
 ### 4.3 Output endpoint contract
 
 - `write(const std::string&)` accepts one item into a bounded writer queue.
-  The worker submits exactly one `Message(ay)` signal with identical bytes;
+  The   worker submits exactly one signal using the configured member and identical
+  `ay` bytes;
   embedded NUL bytes are valid and must not be treated as a C-string
   terminator.
 - Enforce `max_message_bytes` before queue admission. Queue-full, shutdown,
@@ -239,7 +255,7 @@ fails explicitly. One input worker owns dispatch for its connection. One
 output worker owns send, watch/read-write, timeout, and disconnect processing
 for its connection. Do not call libdbus while holding an endpoint queue mutex.
 
-Expose a thread-safe, read-only `Dmn_DMesgDbusIoStatus` endpoint status
+Expose a thread-safe, read-only `Dmn_DbusIoStatus` endpoint status
 snapshot with these proposed fields:
 
 | Field | Meaning |
@@ -259,7 +275,7 @@ snapshot with these proposed fields:
 | `shutdown_unsent_messages` | Adapter-queued messages not submitted before the finite shutdown deadline. |
 | `shutdown_unsent_bytes` | Payload bytes discarded from the adapter queue at shutdown deadline. |
 | `libdbus_bytes_discarded_on_shutdown` | Pending libdbus output bytes observed immediately before connection close; not a message count. |
-| `terminal_error` | Optional first terminal I/O error, retained until endpoint destruction. |
+| `terminal_error` | First terminal I/O error, or an empty `std::error_code` if none, retained until endpoint destruction. |
 
 Counters and shutdown totals reset only at construction; pending queue values
 change during operation. Reads are thread-safe. Status does not assert peer
@@ -284,7 +300,7 @@ heartbeat. For Option B, declare endpoint owners before the internal
 - Use libdbus public APIs; do not depend on private `dbus-daemon` internals.
 - The bus performs local connection authentication (typically EXTERNAL on
   Unix sockets) and applies its configured send/receive policy. Supply example
-  least-privilege policy for the exact interface/path/signal; do not recommend
+  least-privilege policy for the configured interface/path/signal; do not recommend
   opening unrestricted system-bus access.
 - Treat every signal body as untrusted, even after local bus authentication.
   Validate size before allocation/copy. DMesgNet currently has no general
@@ -308,11 +324,11 @@ sender connections. A single connection's messages may be ordered by that
 connection and daemon processing, but v1 must not promise a total order across
 publishers.
 
-V1 default limits are proposed, not yet implementation constants:
+V1 endpoint defaults are:
 
 | Limit | Proposed default | Required behavior |
 |---|---:|---|
-| Serialized `DMesgPb` payload | 1 MiB | Reject before send/copy. |
+| Payload | 1 MiB | Reject before send/copy; configured values must also fit the libdbus `int` array-length API. |
 | Input queue | 1,024 messages or 16 MiB, whichever is reached first | Drop newest on full; increment counter and rate-limit diagnostics. |
 | D-Bus connection count | 2 per Dmn_DMesgNet instance | Separate input and output lifetimes. |
 | Output queue | 1,024 messages or 16 MiB, whichever is reached first | Reject new writes synchronously on full; no silent loss. |
@@ -354,7 +370,8 @@ For multi-host DMesg:
    inter-host Dmn_DMesgNet instance as a separate component, with loop
    prevention, identity, authorization, and failure tests.
 
-Neither `Dmn_DMesgDbus` nor existing `Dmn_DMesgNet` supplies consensus.
+Neither the `Dmn_Dbus` byte-signal endpoints, the `Dmn_DMesgDbus` facade, nor
+existing `Dmn_DMesgNet` supplies consensus.
 `Ready`, `masterIdentifier`, heartbeat observations, counters, or signal send
 completion are not quorum/commit evidence. A distributed exclusive owner or
 consensus-backed application state requires a separately specified and
@@ -368,9 +385,9 @@ implemented consensus protocol.
   unchanged.
 - Only instances constructed with the D-Bus endpoints—by direct injection or
   inside `Dmn_DMesgDbus`—attach to the D-Bus signal interface.
-- The adapter protocol is versioned by the D-Bus interface name
-  (`org.dmn.DMesg1.Transport`). Incompatible transport changes use a new
-  interface version; do not reinterpret the existing `ay` payload.
+- The default DMesg adapter protocol is versioned by the D-Bus interface name
+  (`org.dmn.DMesg1.Transport`). Incompatible DMesg transport changes use a
+  new interface version; do not reinterpret the existing `ay` payload.
 - Mixed deployments with an older participant simply do not receive or
   understand this signal; announce version/availability through separate
   observability rather than silently falling back to another transport.
@@ -379,18 +396,20 @@ implemented consensus protocol.
 
 The implementation is ready for a same-host, non-privileged pilot only when:
 
-1. The documented fixed signal carries exact `DMesgPb` serialization,
+1. The default DMesg signal carries exact `DMesgPb` serialization,
    including embedded NUL and arbitrary byte values.
-2. Two private-bus participants exchange independent messages without
+2. A custom configured signal tuple is isolated from the default tuple, and
+   matching endpoints exchange exact byte payloads.
+3. Two private-bus participants exchange independent messages without
    observing their own transport echo.
-3. `read()` blocks, wakes on shutdown, never spins on an empty result, and
+4. `read()` blocks, wakes on shutdown, never spins on an empty result, and
    safely joins dispatch before object destruction.
-4. Output remains available long enough for the base destructor's final
+5. Output remains available long enough for the base destructor's final
    Destroyed message.
-5. Match installation is confirmed before readiness; malformed signatures,
+6. Match installation is confirmed before readiness; malformed signatures,
    queue overflow, send failure, and oversize input are observable.
-6. The tests use a private/session bus only, never the host's system bus.
-7. Documentation and diagnostics make clear that signal send is not remote
+7. The tests use a private/session bus only, never the host's system bus.
+8. Documentation and diagnostics make clear that signal send is not remote
    receipt and that the adapter is host-local, best-effort IPC.
 
 System-bus deployment requires a separate least-privilege policy review.
@@ -422,8 +441,11 @@ Official D-Bus references, reviewed 2026-10-04:
 - Repository contracts: [`Dmn_DMesgNet`](dmn-dmesgnet-spec.md) and
   [`Dmn_Io`/pipelines](io-pipelines-spec.md).
 
-Prototype evidence: a temporary C program using the installed libdbus sent a
-private-bus signal with signature `ay`; a separate subscriber verified the
-exact five bytes `00 01 7f 80 ff`. The temporary program was deleted after the
-run. This is a transport-mechanism experiment, not a checked-in test or
-implementation.
+Test evidence: `test/dmn-test-dbus-io.cpp`, registered as
+`dmn-test-dbus-io` with the `dbus` CTest label, exercises the public
+endpoints through `dbus-run-session` and also starts an isolated nested daemon
+for disconnect behavior. It verifies binary and empty payload fidelity,
+multiple subscribers, exact signal matching, malformed/oversized input,
+queue bounds, shutdown cancellation, disconnect errors, and direct
+`Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level
+same-host evidence, not a policy certification or multi-host guarantee.
