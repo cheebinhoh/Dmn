@@ -44,6 +44,7 @@ protected:
       std::lock_guard<std::mutex> lock(m_mutex);
       ++m_inflight_entries;
     }
+
     m_entries_changed.notify_all();
 
     return epoch_index;
@@ -176,6 +177,7 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
     for (auto &producer : producers) {
       producer.join();
     }
+
     for (auto &consumer : consumers) {
       consumer.join();
     }

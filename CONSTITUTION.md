@@ -117,6 +117,13 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
   they represent different decisions or processing phases. Keep the branches
   of one `if`/`else if`/`else`, a `switch`, or a loop together as one unit;
   do not add blank lines mechanically between each branch or statement.
+- When a line ends with `}` closing a block, leave a blank line before the
+  next statement at the same scope. Apply this after control-flow blocks,
+  function bodies, and blocks inside lambdas. Keep parts of one construct
+  together: do not put a blank line between an `if` and its `else`/`else if`,
+  or between a `try` and its `catch` clauses.
+- If the closing `}` is followed by a comma as part of an argument list, keep
+  the arguments together without adding a blank line between them.
 - In longer functions, use blank lines to make phase transitions visible
   (for example, validation, state changes, and notification/return). Keep
   tightly coupled statements together when splitting them would obscure their

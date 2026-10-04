@@ -2,8 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-state.cpp
- * @brief Generic State machine wrapper and API that clients can drive
- * the state machine to execute different states.
+ * @brief Implement caller-driven state transitions for Dmn_State.
  *
  * Each runNext() call executes at most one user-provided state callback.
  * Initialization before the first callback and finalization after terminal
@@ -26,9 +25,8 @@ Dmn_State::Dmn_State(std::string_view name) : m_name{name} {
 Dmn_State::~Dmn_State() {}
 
 void Dmn_State::init([[maybe_unused]] Dmn_State &s) {
-  m_initialized = true;
-
   setNext(1); // Select the first user state; runNext() detects an empty list.
+  m_initialized = true;
 }
 
 void Dmn_State::finalize([[maybe_unused]] Dmn_State &s) { m_finalized = true; }
@@ -48,9 +46,11 @@ auto Dmn_State::isFinalized() -> bool { return m_finalized; }
 bool Dmn_State::hasStateFncs() const noexcept { return m_states.size() > 1; }
 
 auto Dmn_State::runNext() -> bool {
-  beforeRunNext();
+  if (m_runningStateCallback) {
+    throw std::logic_error("runNext: recursive calls are not allowed");
+  }
 
-  assert(!m_finalized && "runNext called after finalize");
+  beforeRunNext();
 
   if (m_finalized) {
     return false;
@@ -80,7 +80,16 @@ auto Dmn_State::runNext() -> bool {
 
   assert(m_next > 0 && "state index 0 is reserved for initialization");
   auto &fn = m_states[m_next];
-  fn(*this);
+  m_runningStateCallback = true;
+
+  try {
+    fn(*this);
+  } catch (...) {
+    m_runningStateCallback = false;
+    throw;
+  }
+
+  m_runningStateCallback = false;
 
   if (m_next >= static_cast<int>(m_states.size())) {
     finalize(*this);
@@ -115,6 +124,15 @@ void Dmn_State::setNext() {
 
 void Dmn_State::setStateFnc(FncType fnc, int index) {
   beforeSetStateFnc();
+
+  if (m_runningStateCallback) {
+    throw std::logic_error(
+        "setStateFnc: cannot modify callbacks while a state is running");
+  }
+
+  if (!fnc) {
+    throw std::invalid_argument("setStateFnc: callback must not be empty");
+  }
 
   if (index < 0) {
     throw std::out_of_range("setStateFnc: index must be >= 0");

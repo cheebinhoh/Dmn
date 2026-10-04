@@ -205,6 +205,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
 
               break;
             }
+
             if (m_shutdown) {
               break;
             }

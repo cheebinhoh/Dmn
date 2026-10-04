@@ -17,26 +17,33 @@ callback. Each call invokes at most one user callback. The selected callback
 remains selected unless it calls `setNext()`, `setNext(index)`, or `setEnd()`.
 `setNext()` selects the next sequential state; from the final state it selects
 termination. `setNext(index)` accepts an existing user state or N+1 for end.
-Finalization occurs as soon as end is selected, including during the same
-`runNext()` call. An empty machine initializes and finalizes without a user
-callback. Repeated execution after finalization is outside the documented
-precondition.
+When `runNext()` processes the end selection, it finalizes the machine and
+returns `false`; if a callback selects the end and then throws, finalization
+waits until the next `runNext()`. An empty machine initializes and finalizes
+without a user callback. Further `runNext()` calls on a base `Dmn_State` return
+`false`; derived classes may reject them in `beforeRunNext()`. Calling
+`setEnd()` before the first `runNext()` finalizes the machine without
+initializing it.
+Before initialization, `setNext()` and `setNext(index)` selections are replaced
+by initialization's selection of the first user state.
 
 The class has lifecycle hooks (`beforeSetStateFnc`, `beforeSetNext`,
 `beforeSetEnd`, and `beforeRunNext`) for derived guards. It is not internally
-thread-safe.
+thread-safe: configure callbacks before execution, and do not configure them
+from a state callback or concurrently with `runNext()`. Such callback-time
+registration is rejected with `std::logic_error`. Empty callbacks are rejected
+with `std::invalid_argument`. Recursive calls to `runNext()` from a state
+callback are rejected with `std::logic_error`.
 
-## Gaps / improvements
+Exceptions from lifecycle guards and state callbacks propagate to the caller.
+They do not roll back the selected state or any transition already made by the
+callback. If the initialization transition guard throws, initialization
+remains pending and a later `runNext()` can retry it. Finalization only updates
+the machine's internal flag; it does not invoke a user callback. If a callback
+selects the end and then throws, the selection is retained and a later
+`runNext()` performs finalization.
 
-1. Decide whether calling `runNext()` after finalization should throw or return
-   false in non-assert builds; the current assertion and fallback differ by
-   build configuration.
-2. Validate empty callbacks at registration or document that invoking one
-   raises `std::bad_function_call`.
-3. Specify exception behavior for initialization, state callbacks, and
-   finalization. The current implementation propagates exceptions and does not
-   roll back machine state.
-4. Enforce or clarify the no-concurrent-configuration rule; vector mutation
-   during callback execution can invalidate the callback reference.
-5. Add tests for empty machine, explicit backward jumps, replacement,
-   end-before-start, callback exceptions, and behavior after finalization.
+Tests cover the empty machine, explicit backward jumps, callback replacement,
+end-before-start, initialization and callback exceptions, empty callback
+rejection, callback-time registration rejection, and repeated calls after
+finalization. They also verify that recursive execution is rejected.

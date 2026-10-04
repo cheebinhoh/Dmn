@@ -494,6 +494,8 @@ private:
   callback needs runtime-only methods such as `isCancelled()`. It adapts a
   `Dmn_Runtime_State &` callback into the same underlying state-machine
   storage.
+- `setStateFnc()` and `setRuntimeStateFnc()` reject empty callbacks with
+  `std::invalid_argument`.
 - The inherited `setStateFnc()` remains available for compatibility. A
   callback that stays on the `Dmn_State &` form and wants to observe
   cancellation must capture its runtime-state handle and call `isCancelled()`

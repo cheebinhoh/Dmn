@@ -36,7 +36,8 @@ namespace dmn {
  *
  * A machine with no callbacks converts to false. Calling runNext() on an empty
  * machine is valid: it initializes and finalizes the machine, then returns
- * false without invoking a callback.
+ * false without invoking a callback. Calling runNext() after finalization
+ * returns false unless a derived beforeRunNext() hook rejects the call.
  *
  * Usage example:
  * @code
@@ -78,14 +79,17 @@ public:
   /**
    * @brief Select the end of the state machine.
    *
-   * When called from a state callback, finalization occurs before the current
-   * runNext() call returns. Otherwise, the next runNext() call finalizes the
-   * machine without invoking a user callback.
+   * When called from a state callback that completes normally, finalization
+   * occurs before the current runNext() call returns. Otherwise, the next
+   * runNext() call finalizes the machine without invoking a user callback.
    */
   void setEnd();
 
   /**
    * @brief Select which user state the next runNext() call will execute.
+   *
+   * This selection applies after initialization has completed. Initialization
+   * always selects the first user state.
    *
    * @param index With N configured user states, values 1 through N select a
    * callback. N+1 selects the end of the machine. Zero is
@@ -97,7 +101,8 @@ public:
   /**
    * @brief Select the next sequential user state.
    *
-   * Calling this from the last user state selects the end of the machine.
+   * Initialization always selects the first user state. After initialization,
+   * calling this from the last user state selects the end of the machine.
    */
   void setNext();
 
@@ -108,12 +113,16 @@ public:
    * @param index With N callbacks currently configured, pass 0 (the default)
    * or N+1 to append a callback. Pass 1 through N to replace the
    * callback at that state.
+   * @throws std::invalid_argument if @p fnc is empty.
+   * @throws std::logic_error if called from a running state callback.
    * @throws std::out_of_range if index is negative or greater than N+1.
    *
    * State numbers start at 1. Zero means "append" only in this method and
    * cannot be selected with setNext().
    *
-   * @pre Do not modify callback registration while a callback is executing.
+   * Callback configuration and execution are not thread-safe. Do not modify
+   * callback registration from a state callback or concurrently with
+   * runNext().
    */
   void setStateFnc(FncType fnc, int index = 0);
 
@@ -150,8 +159,14 @@ public:
    * machine without invoking a callback.
    *
    * @return true when another callback can be executed; false after
-   * finalization.
-   * @pre The machine must not already be finalized.
+   * finalization. A base Dmn_State returns false after finalization; derived
+   * classes may reject the call from beforeRunNext().
+   *
+   * Callback exceptions propagate without rolling back the selected state or
+   * any transition the callback already made. If initialization's transition
+   * hook throws, initialization remains pending and can be retried.
+   *
+   * @throws std::logic_error if called recursively from a state callback.
    */
   auto runNext() -> bool;
 
@@ -241,8 +256,9 @@ private:
    */
   std::vector<FncType> m_states{};
 
-  bool m_initialized{}; ///< true when init() has run
-  bool m_finalized{};   ///< true when finalize() has run
+  bool m_initialized{};          ///< true when init() has run
+  bool m_finalized{};            ///< true when finalize() has run
+  bool m_runningStateCallback{}; ///< true while a user callback is executing
 };
 
 } // namespace dmn

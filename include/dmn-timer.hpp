@@ -143,7 +143,8 @@ public:
    * scheduling or callback operation failed, that exception is rethrown and
    * the timer remains paused; call start() to replace/restart the timer.
    *
-   * @throws std::exception if the timer has a stored asynchronous failure.
+   * @throws The stored asynchronous failure, which may not derive from
+   * std::exception.
    * @throws std::overflow_error if the next deadline cannot be represented.
    */
   void resume() {
