@@ -57,6 +57,7 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pipe.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
