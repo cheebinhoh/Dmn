@@ -183,6 +183,50 @@ TEST(DmnPipeScheduledTest, WorksWithLockFreeUnderlyingQueue) {
   EXPECT_EQ(processed.load(std::memory_order_relaxed), 1);
 }
 
+TEST(DmnPipeScheduledTest, OrdinaryWorkerFailureIsRethrownByWaitForEmpty) {
+  Pipe pipe{"ordinary-failure",
+            [](int) { throw std::runtime_error("ordinary callback failed"); }};
+  pipe.write(1);
+
+  try {
+    static_cast<void>(pipe.waitForEmpty());
+    FAIL() << "waitForEmpty should rethrow the callback failure";
+  } catch (const std::runtime_error &error) {
+    EXPECT_STREQ(error.what(), "ordinary callback failed");
+  }
+}
+
+TEST(DmnPipeScheduledTest, ScheduledWorkerFailureIsRethrownByWaitForEmpty) {
+  Pipe pipe{"scheduled-failure",
+            [](int) { throw std::runtime_error("scheduled callback failed"); },
+            1, 0, kEnableScheduledWrites};
+  pipe.writeAt(Clock::now(), 1);
+
+  try {
+    static_cast<void>(pipe.waitForEmpty());
+    FAIL() << "waitForEmpty should rethrow the callback failure";
+  } catch (const std::runtime_error &error) {
+    EXPECT_STREQ(error.what(), "scheduled callback failed");
+  }
+}
+
+TEST(DmnPipeScheduledTest,
+     SynchronousProcessingFailureIsRethrownByWaitForEmpty) {
+  Pipe pipe{"synchronous-failure"};
+  pipe.write(1);
+
+  EXPECT_THROW(pipe.readAndProcess([](int) {
+    throw std::runtime_error("synchronous callback failed");
+  }),
+               std::runtime_error);
+  try {
+    static_cast<void>(pipe.waitForEmpty());
+    FAIL() << "waitForEmpty should rethrow the callback failure";
+  } catch (const std::runtime_error &error) {
+    EXPECT_STREQ(error.what(), "synchronous callback failed");
+  }
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

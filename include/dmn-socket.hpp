@@ -18,10 +18,16 @@
  *  - The optional 'write_only' flag can be used when the instance is
  *    only required to send data (the implementation may avoid setting
  *    up read-specific resources in that case).
- *  - read() returns std::nullopt when recv() returns zero or an error.
- *  - write(...) methods send the provided string over the socket; their
- *    semantics and error handling are implementation-defined but documented
- *    here for callers to expect possible exceptions or logging on failure.
+ *  - read() returns an engaged optional for every received datagram, including
+ *    zero-length datagrams. Receive errors and datagrams larger than BUFSIZ
+ *    are reported by throwing std::system_error.
+ *  - Addresses must be valid IPv4 literals. Read-mode sockets allow port 0
+ *    for OS-assigned binding and an empty address for wildcard binding;
+ *    write-only sockets require a destination address and nonzero port.
+ *    Writing through a wildcard-bound or port-zero socket is rejected because
+ *    neither has a configured datagram destination.
+ *  - write(...) throws std::system_error if sendto() fails or sends a
+ *    different number of bytes than requested.
  */
 
 #ifndef DMN_SOCKET_HPP_
@@ -45,12 +51,16 @@ namespace dmn {
  * descriptor (m_fd) for a UDP socket. Read mode binds to the supplied address
  * and port; writes send datagrams to the supplied IPv4 address and port.
  *
- * Thread-safety: Instances are NOT inherently thread-safe. Synchronize
- * access externally if multiple threads share an instance.
+ * Thread-safety: Instances are not thread-safe. Callers must externally
+ * serialize all operations if an instance is shared across threads.
  *
  * Lifetime/ownership: The socket file descriptor is owned by the object
- * and closed in the destructor. Copy and move operations are deleted to
- * avoid accidental sharing of the descriptor.
+ * and closed in the destructor. The inherited Dmn_Io::shutdown() is a no-op
+ * and does not interrupt a blocked read. Callers must arrange for every
+ * operation to finish and join threads using the socket before destruction;
+ * closing the descriptor is not a cross-thread read-cancellation mechanism.
+ * Copy and move operations are deleted to avoid accidental sharing of the
+ * descriptor.
  */
 class Dmn_Socket : public Dmn_Io<std::string> {
 public:
@@ -64,15 +74,17 @@ public:
    * @param write_only If true, the instance may skip read-specific setup;
    * caller guarantees no calls to read() in that mode.
    *
-   * @throws std::runtime_error on failure to create, configure, or bind the
-   * socket.
+   * @throws std::invalid_argument for an invalid address/port combination.
+   * @throws std::system_error if creating, configuring, or binding the socket
+   * fails.
    */
   Dmn_Socket(std::string_view ip4, int port_no, bool write_only = false);
 
   /**
    * @brief Destroy the Dmn_Socket and close the underlying socket.
    *
-   * Closes the socket and releases its resources.
+   * Closes the socket and releases its resources. No other thread may be
+   * using the socket when destruction begins.
    */
   virtual ~Dmn_Socket() noexcept;
 
@@ -85,12 +97,18 @@ public:
   /**
    * @brief Read data from the socket.
    *
-   * @return std::optional<std::string> containing the received datagram, or
-   * std::nullopt when recv() returns zero or an error.
+   * @return An engaged optional containing the received datagram. A
+   * zero-length datagram contains an empty string.
+   * @throws std::system_error if receiving fails or the datagram exceeds the
+   * BUFSIZ receive buffer.
    *
-   * @note The exact boundary semantics (message delimiting, framing) are
-   * implementation-specific. Callers should consult the implementation
-   * or use an application-level protocol to delimit messages.
+   * @note This call may block indefinitely. The inherited shutdown() does not
+   * wake it; the caller must arrange for the reading thread to finish before
+   * destroying the socket.
+   *
+   * @note UDP preserves datagram boundaries. Any framing within the payload is
+   * application-defined; the maximum datagram size accepted by this adapter
+   * is BUFSIZ bytes.
    */
   auto read() -> std::optional<std::string> override;
 
@@ -100,10 +118,8 @@ public:
    * @param item The string to write. This overload accepts a const lvalue
    * reference and will typically copy the contents as-is.
    *
-   * @note On partial writes or errors, behavior is implementation-defined:
-   * the method may retry, throw, or log and return. Callers should
-   * not assume atomicity of large writes unless the implementation
-   * documents it.
+   * @throws std::system_error if sending fails or does not send the complete
+   * datagram.
    */
   void write(const std::string &item) override;
 

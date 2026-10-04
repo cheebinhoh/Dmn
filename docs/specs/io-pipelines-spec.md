@@ -22,10 +22,16 @@ batch count and invokes the callback for each item. Writes enqueue immediately.
 processed accounting to catch up.
 
 `readAndProcess()` performs the dequeue and invokes callbacks before updating
-the processed counter. A callback exception exits before that counter update.
-The background worker catches all exceptions and exits without exposing the
-failure to the caller. Bulk reads delegate to the selected queue; the pipe does
-not re-arm a timeout after an empty return.
+the processed counter. If a callback throws, items whose callbacks completed
+successfully are accounted; the failed item and any remaining items in that
+batch are not. The first processing exception is retained. A background
+callback exception stops the worker, and `waitForEmpty()` wakes and rethrows
+the retained exception rather than waiting for failed work to be accounted.
+The callback is invoked outside the bookkeeping mutex. Bulk reads delegate to
+the selected queue; the pipe does not re-arm a timeout after an empty return.
+Synchronous reads delegate shutdown admission to the selected queue; for the
+current queue implementations, reading after shutdown throws
+`std::runtime_error` rather than returning an empty optional.
 
 ### Opt-in scheduled writes
 
@@ -72,21 +78,41 @@ the worker's non-blocking queue polls. The underlying queue is shut down after
 the worker joins.
 
 As with the ordinary pipe worker, a processing callback exception ends the
-scheduled worker; this mode does not yet expose worker failures. Pending
-accepted work then remains unprocessed, and `waitForEmpty()` can remain blocked
-until shutdown wakes it. When the scheduled worker cannot be started,
-construction fails with an exception rather than returning an object that
-would accept work it cannot process.
+scheduled worker. The first processing/worker exception is retained, and
+`waitForEmpty()` wakes and rethrows it; pending accepted work remains
+unprocessed. When the scheduled worker cannot be started, construction fails
+with an exception rather than returning an object that would accept work it
+cannot process.
 
 ## `Dmn_Socket`
 
 The public class implements `Dmn_Io<std::string>` and owns one file descriptor.
-The current implementation creates an `AF_INET` `SOCK_DGRAM` socket, enables
+The implementation creates an `AF_INET` `SOCK_DGRAM` socket, enables
 broadcast, and binds to the configured address/port unless `write_only` is
-true. `read()` receives one datagram into a `BUFSIZ` buffer and returns it as a
-string; writes send a datagram to the configured address/port. Empty/error
-reads return `nullopt`. The rvalue write overload delegates to the const
-overload and does not transfer socket ownership.
+true. IPv4 literals and ports are validated before socket creation. Read-mode
+sockets allow an empty address for wildcard binding and port 0 for an
+OS-assigned local port; write-only sockets require a destination address and a
+nonzero port. Writing through a wildcard-bound or port-zero socket is rejected
+because neither has a configured datagram destination.
+
+`read()` receives one datagram into a `BUFSIZ` buffer and returns an engaged
+optional, including an empty string for a valid zero-length datagram. UDP
+datagram boundaries are preserved; framing within a datagram is
+application-defined. Receive errors throw `std::system_error`; oversized
+datagrams are consumed, discarded, and reported as
+`std::errc::message_size`, not returned as partial strings. `write()` throws
+`std::system_error` on send failure. The rvalue write overload delegates to
+the const overload and does not transfer socket ownership. If socket creation
+succeeds but configuration or binding fails, construction closes the
+descriptor before propagating the exception.
+
+`Dmn_Socket` is not thread-safe: callers must externally serialize operations
+when sharing an instance. `read()` may block indefinitely, and the inherited
+`Dmn_Io::shutdown()` is a no-op for this adapter; it does not interrupt a
+blocked receive. Callers must stop and join all I/O threads before destroying
+the socket. Closing its descriptor during destruction is not a supported way
+to cancel another thread's blocked read. `Dmn_DMesgNet` owns and stops its
+input worker before releasing its input adapter.
 
 This is message-oriented UDP, not TCP: there is no stream framing, connection
 handshake, retry, delivery guarantee, or peer authentication. The receiver's
@@ -102,18 +128,7 @@ Source removal waits for its buffer to drain. `wait()` also waits for source
 owners to release their handles; `waitForEmpty()` waits for pending source and
 outbound work. It is not included in the umbrella header.
 
-## Gaps / improvements
-
-1. Fix `Dmn_Pipe` worker failure/accounting: retain or report callback
-   exceptions, define whether the worker continues, and ensure `waitForEmpty()`
-   cannot wait forever because a callback failed. Callback invocation remains
-   outside the bookkeeping mutex.
-2. Decide whether `Dmn_Socket::read()` should preserve zero-length UDP
-   datagrams; it currently maps them to `nullopt`, the same result as a receive
-   error. Also check `inet_pton()` and port range and report datagram truncation.
-3. If socket construction throws after `socket()` succeeds, close the opened
-   descriptor before propagating the error. Add failure-path tests.
-4. State whether concurrent reads/writes on the same socket are supported and
-   test shutdown/read coordination.
-5. Either repair and test the deprecated tee-pipe/limited queue against current
-   interfaces or remove them; do not imply they are current supported APIs.
+The deprecated tee-pipe and limited-queue remain in `include/deprecated/` and
+are intentionally kept outside the supported public API; they do not currently
+represent a public-contract gap once isolated from the active `Dmn_Io`/
+`Dmn_Pipe` interfaces.

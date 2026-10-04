@@ -12,9 +12,11 @@
  *   handler, the optional input-reader thread, and the heartbeat timer.
  *
  * - createInputHandlerProc(): starts a background Dmn_Proc thread that
- *   reads serialised DMesgPb strings from the input Dmn_Io, parses
- *   them, and dispatches them as either sys (reconciliation), conflict,
- *   force-playback, or ordinary messages.
+ *   reads serialised DMesgPb strings from the input Dmn_Io, discards empty or
+ *   malformed payloads, and dispatches valid messages as sys (reconciliation),
+ *   conflict, force-playback, or ordinary messages. Oversized socket datagrams
+ *   are logged and discarded; other socket read errors are logged and stop the
+ *   input worker.
  *
  * - createSubscriptHandler(): registers a Dmn_DMesgHandler that
  *   intercepts every locally published DMesgPb and serialises it to
@@ -45,10 +47,13 @@
 
 #include <cassert>
 #include <chrono>
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <sys/time.h>
+#include <system_error>
 #include <utility>
 
 namespace dmn {
@@ -164,8 +169,10 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
 
 /**
  * @brief Start the background input-reader proc that reads serialised
- * DMesgPb strings from the input Dmn_Io, parses them, and dispatches
- * them as sys, conflict, force-playback, or ordinary messages.
+ * DMesgPb strings from the input Dmn_Io, discards empty/malformed payloads,
+ * and dispatches valid messages as sys, conflict, force-playback, or ordinary
+ * messages. Oversized datagrams are logged and discarded; other socket read
+ * errors are logged and stop the input worker.
  *
  * Also opens the internal write handler and the sys handler used for
  * publishing heartbeat sys messages. Has no effect if m_input_handler is null.
@@ -182,7 +189,22 @@ void Dmn_DMesgNet::createInputHandlerProc() {
           while (this->m_input_handler && !m_shutdown) {
             dmn::DMesgPb dmesgpb_read{};
 
-            auto data = this->m_input_handler->read();
+            std::optional<std::string> data{};
+            try {
+              data = this->m_input_handler->read();
+            } catch (const std::system_error &error) {
+              if (m_shutdown) {
+                break;
+              }
+
+              std::cerr << "Dmn_DMesgNet[" << m_name
+                        << "]: input read failed: " << error.what() << '\n';
+              if (error.code() == std::errc::message_size) {
+                continue;
+              }
+
+              break;
+            }
             if (m_shutdown) {
               break;
             }
@@ -190,7 +212,12 @@ void Dmn_DMesgNet::createInputHandlerProc() {
             Dmn_Proc::yield();
 
             if (data) {
-              dmesgpb_read.ParseFromString(*data);
+              if (data->empty() || !dmesgpb_read.ParseFromString(*data)) {
+                std::cerr << "Dmn_DMesgNet[" << m_name
+                          << "]: discarded empty or malformed input message\n";
+                continue;
+              }
+
               if (dmesgpb_read.sourcewritehandleridentifier() == this->m_name) {
                 continue;
               }

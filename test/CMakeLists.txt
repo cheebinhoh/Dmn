@@ -56,6 +56,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-inflight-guard
                       dmn-test-interval-btree
                       dmn-test-io
+                      dmn-test-io-contract
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3
