@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-socket.hpp
  * @brief Socket-based implementation of the Dmn_Io interface.

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-timer.hpp
  * @brief A recurring timer driven by Dmn_Pipe's scheduled-write worker.

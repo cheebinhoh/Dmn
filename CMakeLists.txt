@@ -1,4 +1,4 @@
-# Copyright © 2025 Chee Bin HOH. All rights reserved.
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 
 # set project and generic compilation options
 cmake_minimum_required(VERSION 3.26)

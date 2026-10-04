@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-teepipe.hpp
  * @brief Tee-pipe utility used to merge multiple input sources into a single

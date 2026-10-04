@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-kafka.cpp
  * @brief Implementation of Dmn_Kafka — a Dmn_Io adapter for Apache Kafka.

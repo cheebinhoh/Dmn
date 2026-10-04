@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-test-dmesg-5.cpp
  * @brief The unit test that asserts that the dmn-dmesg' subscriber can

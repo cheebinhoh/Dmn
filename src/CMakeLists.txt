@@ -1,4 +1,4 @@
-# Copyright © 2025 Chee Bin HOH. All rights reserved.
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 
 # build the dmn library
 message(STATUS "build dmn...")
@@ -51,22 +51,23 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-mt.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pipe.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
 
                  # kafka
                  ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
@@ -99,6 +100,7 @@ if(ENABLE_FAULT_INJECTION)
                                PUBLIC
                                FIU_ENABLE=1
   )
+
   target_link_libraries(dmn PUBLIC ${DMN_LIBFIU_TARGET})
   if (TARGET libfiu-build)
     add_dependencies(dmn libfiu-build)

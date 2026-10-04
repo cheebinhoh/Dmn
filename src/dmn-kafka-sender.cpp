@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-kafka-sender.cpp
  * @brief Minimal stand-alone Kafka producer example using Dmn_Kafka.

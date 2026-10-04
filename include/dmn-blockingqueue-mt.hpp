@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-blockingqueue-mt.hpp
  * @brief Thread-safe FIFO blocking queue interface for passing items between
