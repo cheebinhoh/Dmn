@@ -33,6 +33,7 @@
 #include "dmn-dlock.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
+#include "dmn-fault-injection.hpp"
 #include "dmn-interval-btree.hpp"
 #include "dmn-io.hpp"
 #include "dmn-pipe.hpp"

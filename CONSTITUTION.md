@@ -129,6 +129,12 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
   and following tags such as `@param`, `@return`, or `@throws`.
 - Do not insert blank lines mechanically between every statement or every
   member. The goal is visible logical grouping, not extra vertical space.
+- In CMake files, use blank lines to distinguish meaningful configuration
+  phases and command groups, such as dependency/tool discovery, path or target
+  setup, and custom-command definitions. Keep commands that form one operation
+  together—for example, a target declaration with its immediately related
+  properties or dependencies—and avoid adding blank lines between every
+  adjacent CMake command.
 - Separate a standalone `return` from preceding executable statements with an
   empty line only when those statements are at the same block level. Do not
   add a blank line when the return is the first statement in its block, such as

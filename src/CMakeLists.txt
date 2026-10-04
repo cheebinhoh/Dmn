@@ -92,6 +92,18 @@ target_include_directories(dmn
                              ${rdkafka_INCLUDE}
 )
 
+if(ENABLE_FAULT_INJECTION)
+  # Expose libfiu's enabled failure-point API to Dmn and its test executables.
+  target_compile_definitions(dmn
+                               PUBLIC
+                               FIU_ENABLE=1
+  )
+  target_link_libraries(dmn PUBLIC ${DMN_LIBFIU_TARGET})
+  if (TARGET libfiu-build)
+    add_dependencies(dmn libfiu-build)
+  endif()
+endif()
+
 if(NOT APPLE)
   target_link_libraries(dmn
                           PUBLIC
@@ -99,23 +111,23 @@ if(NOT APPLE)
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
                           atomic
-)
+  )
 else()
   target_link_libraries(dmn
                           PUBLIC
                           ICU::uc
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
-)
+  )
 endif()
 
 # Install the library binary
 install(TARGETS dmn
-#   EXPORT mylibTargets
-    ARCHIVE DESTINATION lib/dmn
-    LIBRARY DESTINATION lib/dmn
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include/dmn
+          #   EXPORT mylibTargets
+          ARCHIVE DESTINATION lib/dmn
+          LIBRARY DESTINATION lib/dmn
+          RUNTIME DESTINATION bin
+          INCLUDES DESTINATION include/dmn
 )
 
 # Install the public headers
@@ -137,7 +149,8 @@ add_executable(dmn-dmesg-daemon
 
 target_include_directories(dmn-dmesg-daemon
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_link_libraries(dmn-dmesg-daemon
                         PRIVATE
@@ -153,7 +166,8 @@ add_executable(dmn-kafka-receiver
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
@@ -173,7 +187,8 @@ add_executable(dmn-kafka-sender
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE

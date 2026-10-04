@@ -68,10 +68,16 @@ WORKDIR /app
 EXPOSE 9092 2181
 
 
-# Run build
-RUN mkdir build && cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON && cmake --build build/
+# Configure and build every optional test group.
+RUN cmake -B build \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DBUILD_NDEBUG=ON \
+      -DBUILD_KAFKA_TEST=ON \
+      -DENABLE_VALGRIND=ON \
+      -DENABLE_FAULT_INJECTION=ON && \
+    cmake --build build/ -j2
 
-ENV CTEST_LABEL=dmn
+ENV CTEST_LABEL="dmn|kafka|valgrind|fault-injection"
 
 # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure && exec /bin/bash"]

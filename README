@@ -1,37 +1,174 @@
 # Dmn: Distributed Messaging & Synchronization
 
-Dmn is a C++ library providing a lightweight protocol for distributed messaging and data synchronization. 
-
-## Overview
-The goal of Dmn is to abstract away the complexities of networking and concurrency. It allows developers to focus on application logic by handling:
-* **Networking & Transport:** Low-level socket and protocol management.
-* **Message Formatting:** Standardized data exchange.
-* **Concurrency Control:** Distributed synchronization of read/write operations on shared datasets.
-* **Conflict Resolution:** Multi-level conflict detection and resolution strategies.
+Dmn is a C++ library for distributed messaging and data synchronization. It
+provides building blocks for networking, message exchange, concurrency control,
+and conflict resolution, with an emphasis on delegation and integration into
+existing applications.
 
 ## Documentation
-https://cheebinhoh.github.io/Dmn/
 
-## Key Features
-* **Delegation-Based Design:** Implemented using the delegation pattern to ensure the library is extensible and customizable without "class proliferation."
-* **Lightweight C++:** Modern C++ implementation focused on performance and simplicity.
-* **Integrated Logic:** Designed to be easily integrated directly into existing applications.
+Generated documentation: <https://cheebinhoh.github.io/Dmn/>
 
-## Architecture
-Dmn avoids deep inheritance hierarchies. By utilizing delegation, you can inject custom behavior into the protocol stack without modifying the core library, keeping your codebase clean and maintainable.
+## Build and test on Linux
 
-## Build steps
-The dmn Dockerfile container:
-0. build container - "docker build -t dmn ."
-1. run container (interactive mode) - "docker run -it --rm dmn"
-2. run 'ctest -L dmn'
-3. remove built container - "docker rmi dmn"
+The project uses CMake and fetches its third-party dependencies during
+configuration when they are not available locally. ICU development files are
+required. On Ubuntu, install the native build prerequisites with:
 
-Note that for docker buildx:
-docker buildx build -t dmn:latest --load .
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake git libicu-dev
+```
 
-### Native in Linux without docker
-mkdir build or make --build build --target clean
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON 
-cmake --build build/ -j
+Then configure, build, and run the regular unit tests:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j2
+ctest --test-dir build -L dmn --output-on-failure
+```
+
+### Valgrind tests
+
+Install Valgrind (on Ubuntu, `sudo apt-get install valgrind`) and enable its
+test variants at configure time:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_VALGRIND=ON
+cmake --build build -j2
 ctest --test-dir build -L 'dmn|valgrind' --output-on-failure
+```
+
+This runs the regular tests plus their Valgrind variants. The `valgrind`
+variants are only registered when `ENABLE_VALGRIND=ON`.
+
+### Kafka integration tests
+
+Kafka tests are optional and require a broker available at
+`localhost:9092`. Start a broker and create the `timer_counter` topic before
+running them. For example, with Kafka's command-line tools:
+
+```bash
+kafka-topics.sh --create --topic timer_counter --bootstrap-server localhost:9092
+```
+
+Then configure, build, and run the Kafka tests:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_KAFKA_TEST=ON
+cmake --build build -j2
+ctest --test-dir build -L kafka --output-on-failure
+```
+
+The Docker entrypoint starts its bundled broker and creates this topic
+automatically; native runs must provide both themselves.
+
+## Fault-injection tests
+
+Fault-injection support is optional and disabled by default. Enabling it links
+libfiu into the fault-injection build. CMake uses an installed libfiu package
+found through pkg-config when available; otherwise it fetches and builds
+libfiu 1.2 and its `fiu-run` launcher.
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_FAULT_INJECTION=ON
+cmake --build build --target fault-injection-tests -j2
+ctest --test-dir build -L fault-injection --output-on-failure
+```
+
+Fault-injection tests are GoogleTest executables invoked by CTest through
+`fiu-run`. They use the separate `fault-injection` label and are not included
+in the regular `dmn` test group. To run one test by name:
+
+```bash
+ctest --test-dir build -R '^dmn-test-fi-timer-thread-start-failure$' \
+  --output-on-failure
+```
+
+The recurring-reschedule failure test can be run individually with:
+
+```bash
+ctest --test-dir build -R '^dmn-test-fi-timer-reschedule-failure$' \
+  --output-on-failure
+```
+
+## Docker
+
+From the repository root, build the image:
+
+```bash
+docker build -t dmn .
+```
+
+Start it interactively with its normal entrypoint:
+
+```bash
+docker run -it --rm dmn
+```
+
+The image enables every CMake option. On startup, the entrypoint bootstraps
+the Kafka topic and runs the `dmn`, `kafka`, `valgrind`, and `fault-injection`
+CTest groups. If they pass, it opens a Bash prompt in the container; if they
+fail, the entrypoint exits without opening the prompt. The run command removes
+the container when you exit because it uses `--rm`.
+
+To enter a shell immediately without starting Kafka or running tests, bypass
+the entrypoint:
+
+```bash
+docker run -it --rm --entrypoint /bin/bash dmn
+```
+
+The image is built with `BUILD_NDEBUG=ON`, which disables assertions. Use a
+native build with `BUILD_NDEBUG=OFF` when assertions are needed. To build with
+Docker Buildx and load the image into the local Docker engine:
+
+```bash
+docker buildx build -t dmn:latest --load .
+```
+
+Remove the image when it is no longer needed:
+
+```bash
+docker rmi dmn
+```
+
+## CMake options
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `BUILD_NDEBUG` | `OFF` | Define `NDEBUG` for the build. |
+| `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests. |
+| `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
+| `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
+
+The options are cached in the build directory. Reconfigure that directory
+with the desired options before building. The `dmn` CTest label selects the
+regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
+respective optional test groups.
+
+To enable every CMake option, including Kafka integration tests, configure and
+build with the commands below. The first command enables all four options;
+the second builds all targets; the last runs the regular, Kafka, Valgrind, and
+fault-injection test groups:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DBUILD_NDEBUG=ON \
+  -DBUILD_KAFKA_TEST=ON \
+  -DENABLE_VALGRIND=ON \
+  -DENABLE_FAULT_INJECTION=ON
+cmake --build build -j2
+```
+
+This configuration requires Valgrind and a Kafka broker listening at
+`localhost:9092` with the `timer_counter` topic for the Kafka integration
+tests. Run every registered test group with:
+
+```bash
+ctest --test-dir build -L 'dmn|kafka|valgrind|fault-injection' \
+  --output-on-failure
+```
+
+`BUILD_NDEBUG=ON` disables assertions, so use `OFF` if you want assertions
+enabled while running the full test groups.

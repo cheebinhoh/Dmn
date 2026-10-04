@@ -125,9 +125,18 @@ Tests cover configured-delay delivery, restart, rejecting non-positive and
 unrepresentable intervals, preserving a running timer after invalid restart,
 no callback from a pending tick after pause, pause/resume generation
 invalidation, pausing during an active callback, continuing after standard
-callback exceptions, and reporting non-standard callback exceptions. A real
-thread-creation failure is not deterministically injected by the current test
-setup.
+callback exceptions, reporting non-standard callback exceptions, and
+propagating a deterministic worker-thread creation failure through timer
+construction. With `ENABLE_FAULT_INJECTION=ON`, the
+`fault-injection`-labelled `dmn-test-fi-timer-thread-start-failure` test
+activates `dmn/timer/pipe/proc/pthread_create` and verifies that the failure
+propagates from construction. The `dmn-test-fi-timer-reschedule-failure` test
+activates `dmn/timer/reschedule/write_at`, lets the first callback run, then
+verifies that failure to enqueue its next tick pauses the timer, is reported by
+`rethrowFailure()`, and is rethrown by `resume()`. These tests close the
+deterministic-coverage gap for timer worker startup and recurring tick
+rescheduling failures; they do not inject failures into the underlying
+scheduled queue or cover other `Dmn_Proc` callers.
 
 ## Thread-safety and lifetime requirements
 
@@ -140,21 +149,3 @@ but destruction must not race public calls or run from its callback. For a
 `Dmn_Pipe` with a background worker, callers must serialize `shutdown()` calls;
 its shutdown flag does not make concurrent shutdown invocations safe. A worker
 thread must not outlive the object whose members its task accesses.
-
-## Gaps / improvements
-
-1. Timer worker startup behavior is defined: scheduled-pipe construction
-   failure propagates from the `Dmn_Timer` constructor. The exact thread-creation
-   failure path has no deterministic test because the current implementation
-   provides no thread-start fault injection. This is a test-coverage limitation,
-   not an unresolved runtime policy; add injection only if deterministic
-   coverage becomes a requirement.
-2. Tick-scheduling failure behavior is defined: failure to enqueue the first
-   tick during construction, `start()`, or `resume()` propagates synchronously;
-   failure to enqueue a later tick pauses the timer and is surfaced by
-   `rethrowFailure()`. The worker-side failure path is not deterministically
-   tested because the real steady clock and pipe provide no way to force that
-   enqueue failure after a successful callback. Testing it directly would
-   require an injectable clock or scheduler seam. Defer that seam unless
-   deterministic coverage of this exceptional path becomes a requirement; this
-   is a test-coverage limitation, not an undefined runtime policy.
