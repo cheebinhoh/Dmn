@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
     dmesg->waitForEmpty();
     dmesg = {};
   }
+
   google::protobuf::ShutdownProtobufLibrary();
 
   return RUN_ALL_TESTS();

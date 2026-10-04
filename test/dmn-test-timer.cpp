@@ -191,6 +191,7 @@ TEST(DmnTimer, StopReturnsWhileAdmittedCallbackIsRunning) {
     std::lock_guard<std::mutex> lock(mutex);
     release_callback = true;
   }
+
   condition.notify_all();
   EXPECT_TRUE(waitForFlag(callback_finished, std::chrono::seconds(2)));
 }

@@ -74,6 +74,7 @@ TEST(DlockBlockingAcquire, OverlappingGrantBlocksCandidateUntilOwnerReleases) {
                           std::lock_guard<std::mutex> guard(lock);
                           snapshot.m_entries.clear();
                         }
+
                         release.store(true);
                       }};
 

@@ -12,6 +12,188 @@
 
 #include "dmn-state.hpp"
 
+TEST(DmnState, EmptyMachineFinalizesAndRemainsStopped) {
+  dmn::Dmn_State state{"empty"};
+
+  EXPECT_FALSE(state.runNext());
+  EXPECT_TRUE(state.isInitialized());
+  EXPECT_TRUE(state.isFinalized());
+  EXPECT_FALSE(state.runNext());
+}
+
+TEST(DmnState, EndBeforeStartFinalizesWithoutInitialization) {
+  dmn::Dmn_State state{"ended-before-start"};
+  state.setEnd();
+
+  EXPECT_FALSE(state.runNext());
+  EXPECT_FALSE(state.isInitialized());
+  EXPECT_TRUE(state.isFinalized());
+  EXPECT_FALSE(state.runNext());
+}
+
+TEST(DmnState, ExplicitTransitionsCanJumpBackward) {
+  dmn::Dmn_State state{"backward-jump"};
+  int first_count{};
+  int second_count{};
+  int third_count{};
+
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++first_count;
+    current.setNext(3);
+  });
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++second_count;
+    current.setEnd();
+  });
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++third_count;
+    current.setNext(2);
+  });
+
+  EXPECT_TRUE(state.runNext());
+  EXPECT_TRUE(state.runNext());
+  EXPECT_FALSE(state.runNext());
+  EXPECT_EQ(first_count, 1);
+  EXPECT_EQ(second_count, 1);
+  EXPECT_EQ(third_count, 1);
+}
+
+TEST(DmnState, ReplacingCallbackUsesReplacement) {
+  dmn::Dmn_State state{"replacement"};
+  int original_count{};
+  int replacement_count{};
+
+  state.setStateFnc([&](dmn::Dmn_State &) { ++original_count; });
+  state.setStateFnc(
+      [&](dmn::Dmn_State &current) {
+        ++replacement_count;
+        current.setEnd();
+      },
+      1);
+
+  EXPECT_FALSE(state.runNext());
+  EXPECT_EQ(original_count, 0);
+  EXPECT_EQ(replacement_count, 1);
+}
+
+TEST(DmnState, RejectsEmptyCallbackWithoutReplacingExistingState) {
+  dmn::Dmn_State state{"empty-callback"};
+  int callback_count{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++callback_count;
+    current.setEnd();
+  });
+
+  EXPECT_THROW(state.setStateFnc({}, 1), std::invalid_argument);
+  EXPECT_FALSE(state.runNext());
+  EXPECT_EQ(callback_count, 1);
+}
+
+TEST(DmnState, CallbackExceptionPropagatesWithoutAdvancingState) {
+  dmn::Dmn_State state{"callback-exception"};
+  int callback_count{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    if (++callback_count == 1) {
+      throw std::runtime_error{"expected callback failure"};
+    }
+
+    current.setEnd();
+  });
+
+  EXPECT_THROW(state.runNext(), std::runtime_error);
+  EXPECT_TRUE(state.isInitialized());
+  EXPECT_FALSE(state.isFinalized());
+  EXPECT_FALSE(state.runNext());
+  EXPECT_EQ(callback_count, 2);
+}
+
+TEST(DmnState, CallbackExceptionPreservesSelectedTransition) {
+  dmn::Dmn_State state{"callback-exception-after-transition"};
+  int first_count{};
+  int second_count{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++first_count;
+    current.setNext(2);
+    throw std::runtime_error{"expected callback failure"};
+  });
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++second_count;
+    current.setEnd();
+  });
+
+  EXPECT_THROW(state.runNext(), std::runtime_error);
+  EXPECT_FALSE(state.runNext());
+  EXPECT_EQ(first_count, 1);
+  EXPECT_EQ(second_count, 1);
+}
+
+TEST(DmnState, InitializationGuardFailureCanBeRetried) {
+  class ThrowOnceOnTransition final : public dmn::Dmn_State {
+  public:
+    using Dmn_State::Dmn_State;
+
+  protected:
+    void beforeSetNext() override {
+      if (m_shouldThrow) {
+        m_shouldThrow = false;
+        throw std::runtime_error{"expected initialization failure"};
+      }
+    }
+
+  private:
+    bool m_shouldThrow{true};
+  };
+
+  ThrowOnceOnTransition state{"initialization-exception"};
+  int callback_count{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    ++callback_count;
+    current.setEnd();
+  });
+
+  EXPECT_THROW(state.runNext(), std::runtime_error);
+  EXPECT_FALSE(state.isInitialized());
+  EXPECT_EQ(callback_count, 0);
+  EXPECT_FALSE(state.runNext());
+  EXPECT_TRUE(state.isInitialized());
+  EXPECT_TRUE(state.isFinalized());
+  EXPECT_EQ(callback_count, 1);
+}
+
+TEST(DmnState, RejectsCallbackRegistrationDuringCallback) {
+  dmn::Dmn_State state{"callback-registration"};
+  bool rejected{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    try {
+      current.setStateFnc([](dmn::Dmn_State &) {});
+    } catch (const std::logic_error &) {
+      rejected = true;
+    }
+
+    current.setEnd();
+  });
+
+  EXPECT_FALSE(state.runNext());
+  EXPECT_TRUE(rejected);
+}
+
+TEST(DmnState, RejectsRecursiveExecutionFromCallback) {
+  dmn::Dmn_State state{"recursive-execution"};
+  bool rejected{};
+  state.setStateFnc([&](dmn::Dmn_State &current) {
+    try {
+      current.runNext();
+    } catch (const std::logic_error &) {
+      rejected = true;
+    }
+
+    current.setEnd();
+  });
+
+  EXPECT_FALSE(state.runNext());
+  EXPECT_TRUE(rejected);
+}
+
 static std::mutex log_mutex{};
 
 int main(int argc, char *argv[]) {

@@ -37,6 +37,11 @@ Dmn_Runtime_State::Dmn_Runtime_State(std::string_view name)
 Dmn_Runtime_State::~Dmn_Runtime_State() {}
 
 void Dmn_Runtime_State::setRuntimeStateFnc(RuntimeStateFnc fnc, int index) {
+  if (!fnc) {
+    throw std::invalid_argument(
+        "Dmn_Runtime_State::setRuntimeStateFnc callback must not be empty");
+  }
+
   Dmn_State::setStateFnc(
       [fnc = std::move(fnc)](Dmn_State &state) mutable {
         fnc(static_cast<Dmn_Runtime_State &>(state));

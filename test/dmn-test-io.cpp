@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
         std::this_thread::sleep_for(
             std::chrono::milliseconds(input_to_sleep_milliseconds));
       }
+
       system_clock::time_point wakeup = system_clock::now();
       if (std::chrono::duration_cast<std::chrono::seconds>(wakeup - start)
               .count() >= input_to_run_seconds) {

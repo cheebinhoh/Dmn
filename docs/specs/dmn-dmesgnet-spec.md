@@ -303,9 +303,10 @@ security-reviewed.
 
 **P0 — Input and repair-path safety**
 
-- **Gap:** Input ignores protobuf parse failure and may process default or
-  partial objects. **Improve:** reject malformed messages before dispatch,
-  surface parse errors, and test malformed/oversized frames.
+- **Gap:** Input rejects empty and malformed protobuf payloads but does not
+  validate the semantic shape of parseable messages before dispatch. **Improve:**
+  validate required envelope/body fields and add deterministic malformed,
+  semantically invalid, and oversized-frame coverage.
 - **Gap:** Conflict handling assumes a cached last-topic value exists and can
   dereference an empty optional. An input-only node has no output handler,
   while some conflict paths write to it. **Improve:** make missing cache/output

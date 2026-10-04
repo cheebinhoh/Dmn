@@ -69,6 +69,13 @@ TEST(DmnRuntimeState, CreatesSingletonManagerAndStateHandle) {
   EXPECT_NE(first->createState("state"), nullptr);
 }
 
+TEST(DmnRuntimeState, RejectsEmptyRuntimeCallback) {
+  auto state = stateManager()->createState("empty-callback");
+
+  EXPECT_THROW(state->setRuntimeStateFnc({}), std::invalid_argument);
+  EXPECT_FALSE(state->hasStateFncs());
+}
+
 TEST(DmnRuntimeState, RejectsExternalMutationAfterSubmission) {
   using namespace std::chrono_literals;
 
@@ -256,6 +263,7 @@ TEST(DmnRuntimeState, SerializesMultipleStateExecutions) {
     EXPECT_TRUE(state->wait_for(5s));
     EXPECT_TRUE(state->isCompleted());
   }
+
   loop.stop();
 
   EXPECT_EQ(completedSteps.load(), stateCount);
@@ -509,6 +517,7 @@ TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
   for (auto &client : clients) {
     client.join();
   }
+
   loop.stop();
 
   EXPECT_EQ(submissionFailures.load(), 0);
@@ -576,9 +585,11 @@ TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
   for (const auto &queuedStateFuture : queuedStateFutures) {
     EXPECT_EQ(queuedStateFuture.wait_for(0ms), std::future_status::ready);
   }
+
   for (const auto &queuedState : queuedStates) {
     EXPECT_TRUE(queuedState->isCancelled());
   }
+
   EXPECT_EQ(queuedStepCount.load(), 0);
 
   auto postShutdownState = manager->createState("post-shutdown-state");

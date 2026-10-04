@@ -155,6 +155,7 @@ public:
    * rules.
    *
    * @throws std::logic_error if called after successful submission.
+   * @throws std::invalid_argument if @p fnc is empty.
    * @throws std::out_of_range for an invalid index.
    */
   void setRuntimeStateFnc(RuntimeStateFnc fnc, int index = 0);
