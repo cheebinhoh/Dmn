@@ -99,25 +99,27 @@ $(document).ready(function(){initNavTree('dmn-socket_8cpp.html',''); initResizab
 <code>#include &lt;arpa/inet.h&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;cerrno&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;cstdio&gt;</code><br />
 <code>#include &lt;cstring&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;netinet/in.h&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
-<code>#include &lt;span&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;sys/socket.h&gt;</code><br />
+<code>#include &lt;sys/uio.h&gt;</code><br />
 <code>#include &lt;system_error&gt;</code><br />
 <code>#include &lt;unistd.h&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
 </div><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket that implements the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface. </p>
 <p>Copyright © 2025 Chee Bin HOH. All rights reserved.</p>
-<p>The constructor creates an AF_INET/SOCK_DGRAM socket, enables the SO_BROADCAST socket option, and optionally binds to the supplied port (read mode). When write_only is true the bind step is skipped.</p>
-<p>read() calls recv() with MSG_WAITALL and returns std::nullopt when recv() returns zero or an error. UDP has no peer-close/stream-EOF notification.</p>
+<p>The constructor validates the IPv4/port configuration before creating an AF_INET/SOCK_DGRAM socket, enables SO_BROADCAST, and binds unless write_only is true. If socket configuration or binding fails after creation, it closes the descriptor before rethrowing.</p>
+<p>read() receives one complete UDP datagram. Empty datagrams are returned as empty strings; receive errors and truncated datagrams throw std::system_error. The receive buffer is BUFSIZ bytes, and oversized datagrams are consumed and reported as message_size rather than returned partially.</p>
 <p>write() reconstructs the destination sockaddr_in from the stored address/port on every call and uses sendto() to transmit the string. The rvalue overload delegates to the lvalue overload without moving from the string.</p>
-<p>Note: The destination address is rebuilt on every write() call. For write-heavy workloads, caching the sockaddr_in as a member would reduce per-call overhead (see FIXME in write()). </p>
+<p>The destination address is rebuilt on every write() call. Wildcard-bound and port-zero sockets have no configured destination and reject writes. For write-heavy workloads, caching the sockaddr_in as a member would reduce per-call overhead (see FIXME in write()). </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

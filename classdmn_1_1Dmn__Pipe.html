@@ -179,8 +179,8 @@ class dmn::Dmn_Pipe&lt; T, QueueType &gt;</div><p>FIFO I/O pipe with optional ba
   </dd>
 </dl>
 <p>By default, the pipe retains its queue-backed read/write behavior. Supplying a processing task starts one background worker. Passing <code>enable_scheduled_writes</code> as <code>true</code> opts that worker into <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707" title="Schedule an item to be processed no earlier than deadline.">writeAt()</a></code>: ordinary FIFO writes take priority, while scheduled items are ordered by steady-clock deadline and become eligible at or after their deadline. When no item is ready, the worker sleeps until new work arrives or the earliest scheduled deadline. Calling <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#aa9d046e1c05faf19213920e3e01ff707" title="Schedule an item to be processed no earlier than deadline.">writeAt()</a></code> when scheduled writes are disabled throws <code>std::logic_error</code>. Scheduled items are delivered by the background worker; the synchronous <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#a0d38ac4b9523187ef9b492996b21d816" title="Read and return the item from the pipe.">read()</a></code> APIs access only ordinary FIFO writes.</p>
-<p>In scheduled mode, <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a></code> snapshots accepted writes and waits for that snapshot to finish. Shutdown serializes its transition against writes with the pipe mutex, rejects later writes, and drains accepted work before joining the worker when callbacks complete normally; it can therefore wait until pending deadlines. If a callback throws, the worker stops and remaining accepted work is not drained. Callers must serialize concurrent shutdown calls and ensure the pipe outlives its callers and processing callback.</p>
-<p>A callback exception ends the background worker, matching the existing ordinary-worker failure policy; failures are not exposed through this class. </p>
+<p>In scheduled mode, <code><a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a></code> snapshots accepted writes and waits for that snapshot to finish. Shutdown serializes its transition against writes with the pipe mutex, rejects later writes, and drains accepted work before joining the worker when callbacks complete normally; it can therefore wait until pending deadlines. If a callback throws, the worker stops and remaining accepted work is not drained. The first processing/worker exception is retained; <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a> wakes and rethrows it instead of waiting for unfinished accounting. Callers must serialize concurrent shutdown calls and ensure the pipe outlives its callers and processing callback.</p>
+<p>A callback exception ends the background worker. The exception is observable through <a class="el" href="classdmn_1_1Dmn__Pipe.html#ad53942562c30a1d09247433f800b8e12" title="Block until the pipe is empty and all inbound items are processed.">waitForEmpty()</a>, which rethrows the first processing/worker failure. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a1a50ab47ece46dd0ea3f2dcf551f94d2" name="a1a50ab47ece46dd0ea3f2dcf551f94d2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1a50ab47ece46dd0ea3f2dcf551f94d2">&#9670;&#160;</a></span>Dmn_Pipe()</h2>
@@ -251,7 +251,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">std::invalid_argument</td><td>if scheduled writes are enabled without a processing task. </td></tr>
-    <tr><td class="paramname">std::runtime_error</td><td>if the scheduled worker cannot be started. </td></tr>
+    <tr><td class="paramname">std::runtime_error</td><td>if a requested background worker cannot be started. </td></tr>
   </table>
   </dd>
 </dl>
@@ -317,8 +317,14 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Read and return the item from the pipe. </p>
-<p>Blocks until the next item is available. If the pipe has been closed and no further items will arrive, returns std::nullopt.</p>
-<dl class="section return"><dt>Returns</dt><dd>optional item if available, or std::nullopt if the pipe is closed </dd></dl>
+<p>Blocks until the next item is available. If shutdown closes the underlying queue before an item is available, the queue's blocking pop throws.</p>
+<dl class="section return"><dt>Returns</dt><dd>The next item, wrapped in an engaged optional. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if shutdown closes the empty queue while waiting or before this call starts. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25">dmn::Dmn_Io&lt; T &gt;</a>.</p>
 
@@ -383,6 +389,12 @@ template&lt;typename T , typename QueueType &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector of items (size == count on success without timeout, or between 1 and count if a timeout occurred after at least one item was produced). </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::runtime_error</td><td>if the underlying queue has been shut down. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083">dmn::Dmn_Io&lt; T &gt;</a>.</p>
 
@@ -423,7 +435,7 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Read the next item from the pipe and invoke the provided task. </p>
-<p>Blocks until items are available or the read timeout expires. The task is invoked before the internal bookkeeping mutex is acquired to update the processed-item count (<code>m_count</code>) and signal waiting threads. Items are passed to <code>fn</code> using move semantics when possible.</p>
+<p>Blocks until items are available or the read timeout expires. The task is invoked before the internal bookkeeping mutex is acquired to update the processed-item count (<code>m_count</code>) and signal waiting threads. Items are passed to <code>fn</code> using move semantics when possible. If a callback throws, the successful prefix is accounted, the exception is retained, and it is rethrown to the caller.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fn</td><td>The functor to process the next item popped from the pipe</td></tr>
@@ -431,6 +443,12 @@ template&lt;typename T , typename QueueType &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of items read and processed. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">The</td><td>callback exception, if processing fails. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -498,9 +516,15 @@ template&lt;typename T , typename QueueType &gt; </div>
 </div><div class="memdoc">
 
 <p>Block until the pipe is empty and all inbound items are processed. </p>
-<p>The function waits until all items that were reported inbound at the time of the call have been popped and processed (i.e., <code>m_count</code> has advanced to cover them). In scheduled-write mode it snapshots accepted ordinary and scheduled writes and waits for that snapshot. Shutdown may cause a waiting call to return before the snapshot has completed.</p>
+<p>The function waits until all items that were reported inbound at the time of the call have been popped and processed (i.e., <code>m_count</code> has advanced to cover them). In scheduled-write mode it snapshots accepted ordinary and scheduled writes and waits for that snapshot. Shutdown may cause a waiting call to return before the snapshot has completed. A processing/worker exception wakes the call and is rethrown.</p>
 <p>Producers must be externally coordinated when callers require the snapshot to include every write in a larger logical operation.</p>
-<dl class="section return"><dt>Returns</dt><dd>The number of items that were passed through the pipe in total </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of items in the completed snapshot. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">The</td><td>first exception raised during processing or by the worker. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__BlockingQueue__Mt.html#a554df36a059533063f21eeb0ea890422">dmn::Dmn_BlockingQueue_Mt&lt; T &gt;</a>.</p>
 

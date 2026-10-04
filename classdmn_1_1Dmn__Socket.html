@@ -150,8 +150,8 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implements a socket-based <a class="el" href="classdmn_1_1Dmn__Io.html" title="Transport-agnostic interface for reading and writing values of type T.">Dmn_Io</a> for std::string messages. </p>
 <p>Provides a synchronous socket interface that conforms to the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> contract. The class manages a single file descriptor (m_fd) for a UDP socket. Read mode binds to the supplied address and port; writes send datagrams to the supplied IPv4 address and port.</p>
-<p>Thread-safety: Instances are NOT inherently thread-safe. Synchronize access externally if multiple threads share an instance.</p>
-<p>Lifetime/ownership: The socket file descriptor is owned by the object and closed in the destructor. Copy and move operations are deleted to avoid accidental sharing of the descriptor. </p>
+<p>Thread-safety: Instances are not thread-safe. Callers must externally serialize all operations if an instance is shared across threads.</p>
+<p>Lifetime/ownership: The socket file descriptor is owned by the object and closed in the destructor. The inherited <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079" title="Shut down the I/O object and prevent further use to facilitate object teardown.">Dmn_Io::shutdown()</a> is a no-op and does not interrupt a blocked read. Callers must arrange for every operation to finish and join threads using the socket before destruction; closing the descriptor is not a cross-thread read-cancellation mechanism. Copy and move operations are deleted to avoid accidental sharing of the descriptor. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa7da5ee8aeaff18aa2f81472cc747b28" name="aa7da5ee8aeaff18aa2f81472cc747b28"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa7da5ee8aeaff18aa2f81472cc747b28">&#9670;&#160;</a></span>Dmn_Socket()</h2>
@@ -196,7 +196,8 @@ Public Member Functions</h2></td></tr>
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::runtime_error</td><td>on failure to create, configure, or bind the socket. </td></tr>
+    <tr><td class="paramname">std::invalid_argument</td><td>for an invalid address/port combination. </td></tr>
+    <tr><td class="paramname">std::system_error</td><td>if creating, configuring, or binding the socket fails. </td></tr>
   </table>
   </dd>
 </dl>
@@ -227,7 +228,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Destroy the <a class="el" href="classdmn_1_1Dmn__Socket.html" title="Implements a socket-based Dmn_Io for std::string messages.">Dmn_Socket</a> and close the underlying socket. </p>
-<p>Closes the socket and releases its resources. </p>
+<p>Closes the socket and releases its resources. No other thread may be using the socket when destruction begins. </p>
 
 </div>
 </div>
@@ -256,8 +257,16 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Read data from the socket. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::optional&lt;std::string&gt; containing the received datagram, or std::nullopt when recv() returns zero or an error.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>The exact boundary semantics (message delimiting, framing) are implementation-specific. Callers should consult the implementation or use an application-level protocol to delimit messages. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>An engaged optional containing the received datagram. A zero-length datagram contains an empty string. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::system_error</td><td>if receiving fails or the datagram exceeds the BUFSIZ receive buffer.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>This call may block indefinitely. The inherited <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079" title="Shut down the I/O object and prevent further use to facilitate object teardown.">shutdown()</a> does not wake it; the caller must arrange for the reading thread to finish before destroying the socket.</dd>
+<dd>
+UDP preserves datagram boundaries. Any framing within the payload is application-defined; the maximum datagram size accepted by this adapter is BUFSIZ bytes. </dd></dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a9df6d0e4cc80d2d7f91caf70a2155e25">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
 
@@ -294,7 +303,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>On partial writes or errors, behavior is implementation-defined: the method may retry, throw, or log and return. Callers should not assume atomicity of large writes unless the implementation documents it. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::system_error</td><td>if sending fails or does not send the complete datagram. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 <p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
 

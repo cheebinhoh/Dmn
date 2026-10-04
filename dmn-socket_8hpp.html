@@ -117,8 +117,9 @@ Classes</h2></td></tr>
 <p>Notes:</p><ul>
 <li>The constructor takes an IPv4 address (as text) and a port number.</li>
 <li>The optional 'write_only' flag can be used when the instance is only required to send data (the implementation may avoid setting up read-specific resources in that case).</li>
-<li>read() returns std::nullopt when recv() returns zero or an error.</li>
-<li>write(...) methods send the provided string over the socket; their semantics and error handling are implementation-defined but documented here for callers to expect possible exceptions or logging on failure. </li>
+<li>read() returns an engaged optional for every received datagram, including zero-length datagrams. Receive errors and datagrams larger than BUFSIZ are reported by throwing std::system_error.</li>
+<li>Addresses must be valid IPv4 literals. Read-mode sockets allow port 0 for OS-assigned binding and an empty address for wildcard binding; write-only sockets require a destination address and nonzero port. Writing through a wildcard-bound or port-zero socket is rejected because neither has a configured datagram destination.</li>
+<li>write(...) throws std::system_error if sendto() fails or sends a different number of bytes than requested. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
