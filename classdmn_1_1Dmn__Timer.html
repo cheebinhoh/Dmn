@@ -246,7 +246,7 @@ template&lt;typename T &gt; </div>
 <p>Calling <a class="el" href="classdmn_1_1Dmn__Timer.html#a306108568f9d6b0f4f6712b448a90e92" title="Resume a paused timer, scheduling its first tick after one interval.">resume()</a> while active is a no-op. If the previous worker-side scheduling or callback operation failed, that exception is rethrown and the timer remains paused; call <a class="el" href="classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e" title="Start or restart the timer with a new interval and optional callback.">start()</a> to replace/restart the timer.</p>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">std::exception</td><td>if the timer has a stored asynchronous failure. </td></tr>
+    <tr><td class="paramname">The</td><td>stored asynchronous failure, which may not derive from std::exception. </td></tr>
     <tr><td class="paramname">std::overflow_error</td><td>if the next deadline cannot be represented. </td></tr>
   </table>
   </dd>
