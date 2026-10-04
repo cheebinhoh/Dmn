@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file kafka/dmn-kafka.hpp
  * @brief Dmn_Kafka — a Dmn_Io<std::string> adapter for Apache Kafka.

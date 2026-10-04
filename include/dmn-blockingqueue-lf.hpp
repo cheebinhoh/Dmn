@@ -423,7 +423,8 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   freeNodeList(ptr);
 
   auto ep = m_epochData.load(std::memory_order_acquire);
-  auto globalEpochIndex = calc_epoch_index(ep.m_id);
+  // The invariant below disappears when NDEBUG removes assert().
+  [[maybe_unused]] auto globalEpochIndex = calc_epoch_index(ep.m_id);
 
   uint64_t index{};
   for (auto &epRN : m_epochReclaimNode) {

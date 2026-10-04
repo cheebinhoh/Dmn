@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn.hpp
  * @brief Convenience umbrella header for the Distributed Messaging Network
@@ -33,6 +33,7 @@
 #include "dmn-dlock.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
+#include "dmn-fault-injection.hpp"
 #include "dmn-interval-btree.hpp"
 #include "dmn-io.hpp"
 #include "dmn-pipe.hpp"

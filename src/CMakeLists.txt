@@ -1,4 +1,4 @@
-# Copyright © 2025 Chee Bin HOH. All rights reserved.
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 
 # build the dmn library
 message(STATUS "build dmn...")
@@ -51,21 +51,23 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-mt.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pipe.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
 
                  # kafka
                  ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
@@ -92,6 +94,19 @@ target_include_directories(dmn
                              ${rdkafka_INCLUDE}
 )
 
+if(ENABLE_FAULT_INJECTION)
+  # Expose libfiu's enabled failure-point API to Dmn and its test executables.
+  target_compile_definitions(dmn
+                               PUBLIC
+                               FIU_ENABLE=1
+  )
+
+  target_link_libraries(dmn PUBLIC ${DMN_LIBFIU_TARGET})
+  if (TARGET libfiu-build)
+    add_dependencies(dmn libfiu-build)
+  endif()
+endif()
+
 if(NOT APPLE)
   target_link_libraries(dmn
                           PUBLIC
@@ -99,23 +114,23 @@ if(NOT APPLE)
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
                           atomic
-)
+  )
 else()
   target_link_libraries(dmn
                           PUBLIC
                           ICU::uc
                           protobuf::libprotobuf
                           ${rdkafka_LIB}
-)
+  )
 endif()
 
 # Install the library binary
 install(TARGETS dmn
-#   EXPORT mylibTargets
-    ARCHIVE DESTINATION lib/dmn
-    LIBRARY DESTINATION lib/dmn
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include/dmn
+          #   EXPORT mylibTargets
+          ARCHIVE DESTINATION lib/dmn
+          LIBRARY DESTINATION lib/dmn
+          RUNTIME DESTINATION bin
+          INCLUDES DESTINATION include/dmn
 )
 
 # Install the public headers
@@ -137,7 +152,8 @@ add_executable(dmn-dmesg-daemon
 
 target_include_directories(dmn-dmesg-daemon
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_link_libraries(dmn-dmesg-daemon
                         PRIVATE
@@ -153,7 +169,8 @@ add_executable(dmn-kafka-receiver
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_include_directories(dmn-kafka-receiver
                              PRIVATE
@@ -173,7 +190,8 @@ add_executable(dmn-kafka-sender
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include)
+                             ${PROJECT_SOURCE_DIR}/include
+)
 
 target_include_directories(dmn-kafka-sender
                              PRIVATE

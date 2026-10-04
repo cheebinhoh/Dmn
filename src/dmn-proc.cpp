@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-proc.cpp
  * @brief Lightweight RAII wrapper around native pthread functionality.
@@ -10,8 +10,10 @@
  */
 
 #include "dmn-proc.hpp"
+#include "dmn-fault-injection.hpp"
 
 #include <cassert>
+#include <cerrno>
 #include <cstring>
 #include <functional>
 #include <pthread.h>
@@ -238,7 +240,15 @@ auto Dmn_Proc::runExec() -> bool {
   old_state = setState(State::kRunning);
   m_failure = {};
   m_cancel_requested.store(false, std::memory_order_release);
-  err = pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
+
+  if (DMN_FI_TIMER_PIPE_PROC_PTHREAD_CREATE()) {
+    // Use the normal pthread startup-failure path for deterministic injection.
+    err = EAGAIN;
+  } else {
+    err =
+        pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
+  }
+
   if (0 != err) {
     setState(old_state);
 

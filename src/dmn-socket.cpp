@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-socket.cpp
  * @brief Implementation of Dmn_Socket — a UDP (SOCK_DGRAM) socket

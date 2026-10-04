@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Chee Bin HOH. All rights reserved.
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-timer.hpp
  * @brief A recurring timer driven by Dmn_Pipe's scheduled-write worker.
@@ -20,6 +20,7 @@
 #define DMN_TIMER_HPP_
 
 #include "dmn-debug.hpp"
+#include "dmn-fault-injection.hpp"
 #include "dmn-pipe.hpp"
 
 #include <chrono>
@@ -253,6 +254,12 @@ private:
 
       const auto deadline = nextDeadline(m_interval);
       try {
+        // Keep this injection point on recurring writes, not initial
+        // scheduling.
+        if (DMN_FI_TIMER_RESCHEDULE_WRITE_AT()) {
+          throw std::runtime_error("injected timer tick rescheduling failure");
+        }
+
         m_pipe->writeAt(deadline, Tick{tick.generation});
       } catch (...) {
         storeFailureLocked(tick.generation, std::current_exception());

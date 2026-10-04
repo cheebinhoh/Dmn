@@ -1,4 +1,4 @@
-# Copyright © 2025 Chee Bin HOH. All rights reserved.
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 
 ADD_TEST_EXECUTABLE(dmn
                       dmn-test-async
@@ -87,10 +87,20 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-util
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
-                   )
+)
+
+# Keep fault-injection targets out of builds that do not enable libfiu.
+if (ENABLE_FAULT_INJECTION)
+  ADD_TEST_FAULT_INJECTION_EXECUTABLE(dmn-test-fi-timer-thread-start-failure
+                                        dmn/timer/pipe/proc/pthread_create
+  )
+  ADD_TEST_FAULT_INJECTION_EXECUTABLE(dmn-test-fi-timer-reschedule-failure
+                                        dmn/timer/reschedule/write_at
+  )
+endif()
 
 if (BUILD_KAFKA_TEST)
-  ADD_TEST_EXECUTABLE(dmn-kafka
+  ADD_TEST_EXECUTABLE(kafka
                         dmn-test-dmesgnet-with-kafka-1
                         dmn-test-dmesgnet-with-kafka-2
                         dmn-test-dmesgnet-with-kafka-3
@@ -98,32 +108,41 @@ if (BUILD_KAFKA_TEST)
                         dmn-test-dmesgnet-with-kafka-5
                         dmn-test-kafka
                         dmn-test-kafka-protobuf
-                     )
+  )
 endif()
 
 file(GLOB DMN_PUBLIC_HEADERS CONFIGURE_DEPENDS
-     "${PROJECT_SOURCE_DIR}/include/*.hpp"
-     "${PROJECT_SOURCE_DIR}/include/kafka/*.hpp")
+       "${PROJECT_SOURCE_DIR}/include/*.hpp"
+       "${PROJECT_SOURCE_DIR}/include/kafka/*.hpp"
+)
+
 set(DMN_STANDALONE_HEADER_SOURCES)
+
 foreach(header IN LISTS DMN_PUBLIC_HEADERS)
   file(RELATIVE_PATH header_relative "${PROJECT_SOURCE_DIR}/include" "${header}")
   string(MAKE_C_IDENTIFIER "${header_relative}" header_id)
   set(header_source
-      "${CMAKE_CURRENT_BINARY_DIR}/standalone-headers/${header_id}.cpp")
+        "${CMAKE_CURRENT_BINARY_DIR}/standalone-headers/${header_id}.cpp"
+  )
   file(WRITE "${header_source}" "#include \"${header}\"\n")
   list(APPEND DMN_STANDALONE_HEADER_SOURCES "${header_source}")
 endforeach()
 
 add_library(dmn-standalone-header-check OBJECT
-            ${DMN_STANDALONE_HEADER_SOURCES})
-target_link_libraries(dmn-standalone-header-check PRIVATE dmn)
+              ${DMN_STANDALONE_HEADER_SOURCES}
+)
+target_link_libraries(dmn-standalone-header-check PRIVATE dmn
+)
 target_include_directories(dmn-standalone-header-check
-                           PRIVATE ${PROJECT_SOURCE_DIR}/include)
+                             PRIVATE ${PROJECT_SOURCE_DIR}/include
+)
 target_compile_options(dmn-standalone-header-check PRIVATE
-                       -Wall -Wextra -Wpedantic)
+                         -Wall -Wextra -Wpedantic
+)
 add_test(NAME dmn-standalone-header-check
-         COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}"
-                 --target dmn-standalone-header-check)
+           COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}"
+           --target dmn-standalone-header-check
+)
 set_tests_properties(dmn-standalone-header-check PROPERTIES LABELS "dmn")
 
 if (ENABLE_VALGRIND)
