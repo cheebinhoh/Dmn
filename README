@@ -63,6 +63,32 @@ ctest --test-dir build -L kafka --output-on-failure
 The Docker entrypoint starts its bundled broker and creates this topic
 automatically; native runs must provide both themselves.
 
+### D-Bus extension
+
+The optional D-Bus extension provides byte-oriented input/output adapters that
+send and receive D-Bus signals. They can carry serialized DMesg messages
+through `Dmn_DMesgNet` or other application payloads using a configured signal
+routing tuple. It is intended for inter-process communication on one host and
+does not provide cross-host transport. The core `dmn` library does not depend
+on D-Bus; the extension is built separately as `dmn-dbus` and is disabled by
+default.
+
+On Ubuntu, install the libdbus development files, pkg-config, and daemon used
+by the private-bus unit test:
+
+```bash
+sudo apt-get install libdbus-1-dev pkg-config dbus-daemon
+```
+
+Enable the extension and run its test (registered under the regular `dmn`
+CTest label):
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_DBUS=ON
+cmake --build build -j2
+ctest --test-dir build -R '^dmn-test-dbus-io$' --output-on-failure
+```
+
 ## Fault-injection tests
 
 Fault-injection support is optional and disabled by default. Enabling it links
@@ -139,6 +165,7 @@ docker rmi dmn
 | --- | --- | --- |
 | `BUILD_NDEBUG` | `OFF` | Define `NDEBUG` for the build. |
 | `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests. |
+| `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and its private-bus test. Requires libdbus development files, pkg-config, and `dbus-daemon`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
 
@@ -147,23 +174,25 @@ with the desired options before building. The `dmn` CTest label selects the
 regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
 respective optional test groups.
 
-To enable every CMake option, including Kafka integration tests, configure and
-build with the commands below. The first command enables all four options;
-the second builds all targets; the last runs the regular, Kafka, Valgrind, and
-fault-injection test groups:
+To enable every CMake option, including Kafka and D-Bus integration tests,
+configure and build with the commands below. The first command enables all
+five options; the second builds all targets. The D-Bus test runs with the
+regular `dmn` test group:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DBUILD_NDEBUG=ON \
   -DBUILD_KAFKA_TEST=ON \
+  -DENABLE_DBUS=ON \
   -DENABLE_VALGRIND=ON \
   -DENABLE_FAULT_INJECTION=ON
 cmake --build build -j2
 ```
 
-This configuration requires Valgrind and a Kafka broker listening at
-`localhost:9092` with the `timer_counter` topic for the Kafka integration
-tests. Run every registered test group with:
+This configuration requires libdbus development files, pkg-config,
+`dbus-daemon`, Valgrind, and a Kafka broker listening at `localhost:9092` with
+the `timer_counter` topic for Kafka integration tests. Run every registered
+test group with:
 
 ```bash
 ctest --test-dir build -L 'dmn|kafka|valgrind|fault-injection' \

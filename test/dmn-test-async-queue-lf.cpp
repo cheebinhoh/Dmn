@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
 
   waitHandler = asyncWithWait.addExecTaskWithWait([]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
+
     throw std::runtime_error("just exception");
   });
 

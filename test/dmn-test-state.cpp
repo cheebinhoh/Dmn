@@ -114,6 +114,7 @@ TEST(DmnState, CallbackExceptionPreservesSelectedTransition) {
   state.setStateFnc([&](dmn::Dmn_State &current) {
     ++first_count;
     current.setNext(2);
+
     throw std::runtime_error{"expected callback failure"};
   });
   state.setStateFnc([&](dmn::Dmn_State &current) {
@@ -136,6 +137,7 @@ TEST(DmnState, InitializationGuardFailureCanBeRetried) {
     void beforeSetNext() override {
       if (m_shouldThrow) {
         m_shouldThrow = false;
+
         throw std::runtime_error{"expected initialization failure"};
       }
     }

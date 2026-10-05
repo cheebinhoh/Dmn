@@ -778,6 +778,7 @@ private:
         splitChild(*newRoot, 0);
       } catch (...) {
         m_root = std::move(newRoot->m_children.front());
+
         throw;
       }
 

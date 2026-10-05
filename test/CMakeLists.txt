@@ -89,11 +89,29 @@ ADD_TEST_EXECUTABLE(dmn
                       # dmn-test
 )
 
+if (ENABLE_DBUS)
+  find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
+
+  ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-dbus-io
+  )
+
+  target_compile_definitions(dmn-test-dbus-io
+                               PRIVATE
+                               DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
+  )
+
+  target_link_libraries(dmn-test-dbus-io
+                          PRIVATE dmn-dbus PkgConfig::DBUS
+  )
+endif()
+
 # Keep fault-injection targets out of builds that do not enable libfiu.
 if (ENABLE_FAULT_INJECTION)
   ADD_TEST_FAULT_INJECTION_EXECUTABLE(dmn-test-fi-timer-thread-start-failure
                                         dmn/timer/pipe/proc/pthread_create
   )
+
   ADD_TEST_FAULT_INJECTION_EXECUTABLE(dmn-test-fi-timer-reschedule-failure
                                         dmn/timer/reschedule/write_at
   )
@@ -121,9 +139,11 @@ set(DMN_STANDALONE_HEADER_SOURCES)
 foreach(header IN LISTS DMN_PUBLIC_HEADERS)
   file(RELATIVE_PATH header_relative "${PROJECT_SOURCE_DIR}/include" "${header}")
   string(MAKE_C_IDENTIFIER "${header_relative}" header_id)
+
   set(header_source
         "${CMAKE_CURRENT_BINARY_DIR}/standalone-headers/${header_id}.cpp"
   )
+
   file(WRITE "${header_source}" "#include \"${header}\"\n")
   list(APPEND DMN_STANDALONE_HEADER_SOURCES "${header_source}")
 endforeach()
@@ -131,18 +151,23 @@ endforeach()
 add_library(dmn-standalone-header-check OBJECT
               ${DMN_STANDALONE_HEADER_SOURCES}
 )
+
 target_link_libraries(dmn-standalone-header-check PRIVATE dmn
 )
+
 target_include_directories(dmn-standalone-header-check
                              PRIVATE ${PROJECT_SOURCE_DIR}/include
 )
+
 target_compile_options(dmn-standalone-header-check PRIVATE
                          -Wall -Wextra -Wpedantic
 )
+
 add_test(NAME dmn-standalone-header-check
            COMMAND ${CMAKE_COMMAND} --build "${PROJECT_BINARY_DIR}"
            --target dmn-standalone-header-check
 )
+
 set_tests_properties(dmn-standalone-header-check PROPERTIES LABELS "dmn")
 
 if (ENABLE_VALGRIND)

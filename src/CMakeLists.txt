@@ -124,6 +124,34 @@ else()
   )
 endif()
 
+if (ENABLE_DBUS)
+  add_library(dmn-dbus
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-io.cpp
+  )
+
+  target_include_directories(dmn-dbus
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+
+  target_sources(dmn-dbus
+                   PUBLIC
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dbus-config.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dbus-io.hpp
+  )
+
+  target_compile_options(dmn-dbus PRIVATE -Wall -Wextra -Wpedantic)
+  target_link_libraries(dmn-dbus
+                          PUBLIC dmn
+                          PRIVATE PkgConfig::DBUS
+  )
+
+  install(TARGETS dmn-dbus
+            ARCHIVE DESTINATION lib/dmn
+            LIBRARY DESTINATION lib/dmn
+            RUNTIME DESTINATION bin
+  )
+endif()
+
 # Install the library binary
 install(TARGETS dmn
           #   EXPORT mylibTargets
@@ -134,7 +162,14 @@ install(TARGETS dmn
 )
 
 # Install the public headers
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include/dmn)
+if (ENABLE_DBUS)
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include/dmn)
+else()
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+            DESTINATION include/dmn
+            PATTERN "dmn-dbus-*.hpp" EXCLUDE
+  )
+endif()
 
 # Export the targets for use with find_package()
 #install(EXPORT mylibTargets
