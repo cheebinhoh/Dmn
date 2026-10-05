@@ -31,6 +31,8 @@ var hierarchy =
     [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< T >, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
       [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ]
     ] ],
+    [ "dmn::Dmn_DbusConfig", "structdmn_1_1Dmn__DbusConfig.html", null ],
+    [ "dmn::Dmn_DbusIoStatus", "structdmn_1_1Dmn__DbusIoStatus.html", null ],
     [ "dmn::Dmn_DLock_Base", "classdmn_1_1Dmn__DLock__Base.html", [
       [ "dmn::Dmn_DLock< DMesgBase >", "classdmn_1_1Dmn__DLock.html", null ]
     ] ],
@@ -63,6 +65,8 @@ var hierarchy =
       [ "dmn::Dmn_DMesg::Dmn_DMesgHandler", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html", null ]
     ] ],
     [ "dmn::Dmn_Io< std::string >", "classdmn_1_1Dmn__Io.html", [
+      [ "dmn::Dmn_DbusInput", "classdmn_1_1Dmn__DbusInput.html", null ],
+      [ "dmn::Dmn_DbusOutput", "classdmn_1_1Dmn__DbusOutput.html", null ],
       [ "dmn::Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html", null ],
       [ "dmn::Dmn_Socket", "classdmn_1_1Dmn__Socket.html", null ]
     ] ],
@@ -93,6 +97,8 @@ var hierarchy =
     ] ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
     [ "dmn::Dmn_DMesg::HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
+    [ "dmn::Dmn_DbusInput::Impl", "classdmn_1_1Dmn__DbusInput_1_1Impl.html", null ],
+    [ "dmn::Dmn_DbusOutput::Impl", "classdmn_1_1Dmn__DbusOutput_1_1Impl.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "classdmn_1_1ScopeGuard.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >::Ticket", "classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html", null ],

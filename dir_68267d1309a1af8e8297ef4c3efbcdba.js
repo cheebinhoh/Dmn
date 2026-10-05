@@ -1,6 +1,7 @@
 var dir_68267d1309a1af8e8297ef4c3efbcdba =
 [
     [ "kafka", "dir_b1f85b4500d4f866a4815ca77f1375fe.html", "dir_b1f85b4500d4f866a4815ca77f1375fe" ],
+    [ "dmn-dbus-io.cpp", "dmn-dbus-io_8cpp.html", "dmn-dbus-io_8cpp" ],
     [ "dmn-dmesg-daemon.cpp", "dmn-dmesg-daemon_8cpp.html", null ],
     [ "dmn-dmesg.cpp", "dmn-dmesg_8cpp.html", null ],
     [ "dmn-dmesgnet.cpp", "dmn-dmesgnet_8cpp.html", null ],

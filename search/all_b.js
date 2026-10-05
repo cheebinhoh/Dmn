@@ -20,10 +20,13 @@ var searchData=
   ['m_5fth_17',['m_th',['../classdmn_1_1Dmn__Proc.html#a9a0a6e20baaf449c37613d26f65c6e84',1,'dmn::Dmn_Proc']]],
   ['m_5ftopology_18',['m_topology',['../structdmn_1_1Dmn__OverlayState.html#a97a97d30392fc63f4084f92fc8f3d637',1,'dmn::Dmn_OverlayState']]],
   ['make_5fscope_5fguard_19',['make_scope_guard',['../dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7',1,'dmn']]],
-  ['memory_20order_20notes_20',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md18',1,'']]],
-  ['message_20body_20setters_21',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
-  ['message_20field_20setters_22',['DMesgPb message field setters',['../group__dmesg__pb__msg.html',1,'']]],
-  ['message_20setters_23',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
-  ['model_24',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-dlock_8hpp.html#autotoc_md14',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md36',1,'Threading and execution model']]],
-  ['move_20and_20copy_20behavior_25',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]]
+  ['max_5fmessage_5fbytes_20',['max_message_bytes',['../structdmn_1_1Dmn__DbusConfig.html#a379a8686cc5a3433a4ebe912ae79f650',1,'dmn::Dmn_DbusConfig']]],
+  ['max_5fqueued_5fbytes_21',['max_queued_bytes',['../structdmn_1_1Dmn__DbusConfig.html#adfbb9e7b729fb85015b8edd80fe7e7dd',1,'dmn::Dmn_DbusConfig']]],
+  ['max_5fqueued_5fmessages_22',['max_queued_messages',['../structdmn_1_1Dmn__DbusConfig.html#a6f929b55a0c2c646db97baf77bc7cefe',1,'dmn::Dmn_DbusConfig']]],
+  ['memory_20order_20notes_23',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md18',1,'']]],
+  ['message_20body_20setters_24',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
+  ['message_20field_20setters_25',['DMesgPb message field setters',['../group__dmesg__pb__msg.html',1,'']]],
+  ['message_20setters_26',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
+  ['model_27',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-dlock_8hpp.html#autotoc_md14',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md36',1,'Threading and execution model']]],
+  ['move_20and_20copy_20behavior_28',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]]
 ];

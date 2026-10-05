@@ -9,5 +9,6 @@ var searchData=
   ['blocking_20model_6',['Blocking model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'']]],
   ['body_20setters_7',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
   ['boundary_8',['Phase boundary',['../dmn-dlock_8hpp.html#autotoc_md12',1,'']]],
-  ['buffering_20and_20replay_9',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md38',1,'']]]
+  ['buffering_20and_20replay_9',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md38',1,'']]],
+  ['bus_5faddress_10',['bus_address',['../structdmn_1_1Dmn__DbusConfig.html#aca6e334e44e6d7605df65dd5d817a96a',1,'dmn::Dmn_DbusConfig']]]
 ];
