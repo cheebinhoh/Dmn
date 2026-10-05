@@ -7,6 +7,10 @@
 
 #include "dmn-dbus-io.hpp"
 
+#ifdef FIU_ENABLE
+#include <fiu.h>
+#endif
+
 #include <dbus/dbus.h>
 
 #include <algorithm>
@@ -18,6 +22,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
@@ -342,6 +347,13 @@ private:
       return;
     }
 
+#ifdef FIU_ENABLE
+    // Exercise the callback's allocation-failure handling deterministically.
+    if (fiu_fail("dmn/dbus/input/payload_allocation") != 0) {
+      throw std::bad_alloc{};
+    }
+#endif
+
     std::string payload;
     if (size != 0) {
       payload.assign(reinterpret_cast<const char *>(bytes), size);
@@ -610,6 +622,11 @@ private:
       while (true) {
         std::string payload;
         bool havePayload{};
+        bool stallOutput{};
+#ifdef FIU_ENABLE
+        // Keep queued data pending while still allowing bounded bus dispatch.
+        stallOutput = fiu_fail("dmn/dbus/output/send_stall") != 0;
+#endif
         const auto outgoingBytes{
             dbus_connection_get_outgoing_size(m_connection.get())};
         {
@@ -627,7 +644,7 @@ private:
             break;
           }
 
-          if (!m_queue.empty() &&
+          if (!stallOutput && !m_queue.empty() &&
               static_cast<std::size_t>(std::max(outgoingBytes, 0L)) <
                   m_config.max_queued_bytes) {
             payload = m_queue.front();

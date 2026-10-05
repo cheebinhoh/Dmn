@@ -10,7 +10,9 @@
  */
 
 #include "dmn-proc.hpp"
+#ifdef FIU_ENABLE
 #include "dmn-fault-injection.hpp"
+#endif
 
 #include <cassert>
 #include <cerrno>
@@ -242,13 +244,17 @@ auto Dmn_Proc::runExec() -> bool {
   m_failure = {};
   m_cancel_requested.store(false, std::memory_order_release);
 
+#ifdef FIU_ENABLE
   if (DMN_FI_TIMER_PIPE_PROC_PTHREAD_CREATE()) {
     // Use the normal pthread startup-failure path for deterministic injection.
     err = EAGAIN;
   } else {
+#endif
     err =
         pthread_create(&m_th, nullptr, &(Dmn_Proc::runFnInThreadHelper), this);
+#ifdef FIU_ENABLE
   }
+#endif
 
   if (0 != err) {
     setState(old_state);

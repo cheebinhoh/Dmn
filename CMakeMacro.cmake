@@ -24,6 +24,7 @@ macro(ADD_TEST_EXECUTABLE ...)
     target_include_directories(${arg}
                                  PRIVATE
                                  ${PROJECT_SOURCE_DIR}/include
+                                 ${PROJECT_SOURCE_DIR}/test/include
     )
 
     target_compile_options(${arg}
@@ -53,6 +54,8 @@ endmacro()
 #
 # The executable is registered with the CTest label "fault-injection" and is
 # invoked through fiu-run.
+# Use separate test executables when different test cases require different
+# failure points, so each CTest invocation enables only the intended point.
 #
 # Example:
 # @code
@@ -81,6 +84,7 @@ function(ADD_TEST_FAULT_INJECTION_EXECUTABLE test_program)
   target_include_directories(${test_program}
                                PRIVATE
                                ${PROJECT_SOURCE_DIR}/include
+                               ${PROJECT_SOURCE_DIR}/test/include
   )
 
   target_compile_options(${test_program}

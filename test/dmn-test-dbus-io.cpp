@@ -8,6 +8,7 @@
 #include "dmn-dbus-io.hpp"
 
 #include "dmn-dmesgnet.hpp"
+#include "dmn-test-dbus-support.hpp"
 
 #include <dbus/dbus.h>
 #include <gtest/gtest.h>
@@ -25,67 +26,15 @@
 #include <thread>
 #include <utility>
 
-#include <csignal>
-#include <cstdio>
-#include <cstdlib>
-#include <sys/types.h>
-#include <unistd.h>
-
 namespace {
 
 using namespace std::chrono_literals;
-
-struct DbusConnectionDeleter {
-  void operator()(DBusConnection *connection) const noexcept {
-    if (connection != nullptr) {
-      dbus_connection_close(connection);
-      dbus_connection_unref(connection);
-    }
-  }
-};
-
-struct DbusMessageDeleter {
-  void operator()(DBusMessage *message) const noexcept {
-    if (message != nullptr) {
-      dbus_message_unref(message);
-    }
-  }
-};
-
-using DbusConnectionPtr =
-    std::unique_ptr<DBusConnection, DbusConnectionDeleter>;
-using DbusMessagePtr = std::unique_ptr<DBusMessage, DbusMessageDeleter>;
-
-class DbusErrorGuard {
-public:
-  DbusErrorGuard() { dbus_error_init(&m_error); }
-  ~DbusErrorGuard() { dbus_error_free(&m_error); }
-
-  DbusErrorGuard(const DbusErrorGuard &) = delete;
-  auto operator=(const DbusErrorGuard &) -> DbusErrorGuard & = delete;
-
-  auto get() -> DBusError * { return &m_error; }
-
-private:
-  DBusError m_error{};
-};
-
-auto makeConfig() -> dmn::Dmn_DbusConfig { return {}; }
-
-template <typename Predicate>
-auto waitUntil(Predicate predicate,
-               std::chrono::milliseconds timeout = 3s) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
-  while (std::chrono::steady_clock::now() < deadline) {
-    if (predicate()) {
-      return true;
-    }
-
-    std::this_thread::sleep_for(5ms);
-  }
-
-  return predicate();
-}
+using dmn_test_dbus::DbusConnectionPtr;
+using dmn_test_dbus::DbusErrorGuard;
+using dmn_test_dbus::DbusMessagePtr;
+using dmn_test_dbus::makeConfig;
+using dmn_test_dbus::PrivateBus;
+using dmn_test_dbus::waitUntil;
 
 auto makeSignal(std::string_view path, std::string_view interface,
                 std::string_view member) -> DBusMessage * {
@@ -93,60 +42,6 @@ auto makeSignal(std::string_view path, std::string_view interface,
                                  std::string{interface}.c_str(),
                                  std::string{member}.c_str());
 }
-
-auto shellQuote(std::string_view value) -> std::string {
-  std::string quoted{"'"};
-  for (const auto character : value) {
-    if (character == '\'') {
-      quoted += "'\\''";
-    } else {
-      quoted += character;
-    }
-  }
-  quoted += '\'';
-
-  return quoted;
-}
-
-class PrivateBus {
-public:
-  PrivateBus() {
-    using Pipe = std::unique_ptr<FILE, int (*)(FILE *)>;
-    const std::string command{
-        shellQuote(DMN_DBUS_DAEMON_EXECUTABLE) +
-        " --session --fork --print-address=1 --print-pid=1"};
-    Pipe process{popen(command.c_str(), "r"), pclose};
-    if (!process) {
-      return;
-    }
-
-    char address[4096]{};
-    char pid[64]{};
-    if (fgets(address, sizeof(address), process.get()) != nullptr &&
-        fgets(pid, sizeof(pid), process.get()) != nullptr) {
-      m_address = address;
-      m_address.erase(m_address.find_last_not_of("\r\n") + 1);
-      m_pid = static_cast<pid_t>(std::strtol(pid, nullptr, 10));
-    }
-  }
-
-  ~PrivateBus() { stop(); }
-
-  auto address() const -> const std::string & { return m_address; }
-
-  auto valid() const -> bool { return !m_address.empty() && m_pid > 0; }
-
-  void stop() noexcept {
-    if (m_pid > 0) {
-      kill(m_pid, SIGTERM);
-      m_pid = -1;
-    }
-  }
-
-private:
-  std::string m_address;
-  pid_t m_pid{-1};
-};
 
 class InputThreadGuard {
 public:
@@ -742,17 +637,11 @@ int main(int argc, char **argv) {
 
   // Keep session-bus tests isolated from the caller's environment.
   PrivateBus bus;
-  if (!bus.valid()) {
-    std::fprintf(stderr, "unable to start private D-Bus session daemon\n");
-
+  if (!bus.setAsSessionBus()) {
     return EXIT_FAILURE;
   }
 
-  if (setenv("DBUS_SESSION_BUS_ADDRESS", bus.address().c_str(), 1) != 0) {
-    std::perror("unable to set private D-Bus session address");
+  const int result{RUN_ALL_TESTS()};
 
-    return EXIT_FAILURE;
-  }
-
-  return RUN_ALL_TESTS();
+  return result;
 }

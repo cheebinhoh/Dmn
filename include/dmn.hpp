@@ -15,6 +15,9 @@
  * - Purpose: Provide a single, easy-to-use entry point to the DMN public API.
  * - Behavior: This file only forwards includes and does not introduce new
  *   symbols or definitions beyond those in the included headers.
+ * - Optional APIs: D-Bus headers are included when the dmn-dbus target defines
+ *   DMN_ENABLE_DBUS; fault-injection helpers are included when FIU_ENABLE is
+ *   defined.
  * - Include guard: The guard below prevents multiple inclusion across the
  * build.
  *
@@ -33,13 +36,15 @@
 #include "dmn-dlock.hpp"
 #include "dmn-dmesg-pb-util.hpp"
 #include "dmn-dmesg.hpp"
-#include "dmn-fault-injection.hpp"
+#include "dmn-dmesgnet.hpp"
+#include "dmn-inflight-guard.hpp"
 #include "dmn-interval-btree.hpp"
 #include "dmn-io.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-proc.hpp"
 #include "dmn-pub-sub.hpp"
 #include "dmn-runtime-state.hpp"
+#include "dmn-runtime-task.hpp"
 #include "dmn-runtime.hpp"
 #include "dmn-singleton.hpp"
 #include "dmn-socket.hpp"
@@ -50,5 +55,15 @@
 #include "kafka/dmn-dmesgnet-kafka.hpp"
 #include "kafka/dmn-kafka-util.hpp"
 #include "kafka/dmn-kafka.hpp"
+
+#if defined(FIU_ENABLE)
+#include "dmn-fault-injection.hpp"
+#endif
+
+#if defined(DMN_ENABLE_DBUS)
+#include "dmn-dbus-config.hpp"
+#include "dmn-dbus-io.hpp"
+#include "dmn-dmesgnet-dbus.hpp"
+#endif
 
 #endif // DMN_HPP_

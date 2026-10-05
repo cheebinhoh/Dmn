@@ -1,8 +1,8 @@
 # Shared Design: byte I/O and DMesg transport over Linux D-Bus
 
-**Status:** Shared contract for implemented Option A endpoints. Option B remains
-design-only. Option A uses the optional `dmn-dbus` target and is verified by
-private-session-bus tests; it does not make D-Bus a cross-host transport.
+**Status:** Shared contract for the implemented Option A endpoints and Option
+B facade. Both use the optional `dmn-dbus` target and private-session-bus
+tests; D-Bus remains a same-host transport.
 
 The two construction alternatives and their implementation order are
 specified in
@@ -137,9 +137,9 @@ The direct injection contract is in
 [`dmesgnet-dbus-injection-spec.md`](dmesgnet-dbus-injection-spec.md). The
 facade wrapper API and lifecycle contract is in
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md). Both must use
-the following common transport requirements. Option A and all its required
-unit/integration tests are the first implementation milestone; Option B begins
-only after that milestone passes and reuses its endpoint implementation.
+the following common transport requirements. Option A and its focused
+unit/integration tests were implemented first; Option B was implemented after
+that milestone passed and reuses its endpoint implementation.
 
 ## 4. Common transport contract
 
@@ -463,3 +463,8 @@ multiple subscribers, exact signal matching, malformed/oversized input,
 queue bounds, shutdown cancellation, disconnect errors, and direct
 `Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level
 same-host evidence, not a policy certification or multi-host guarantee.
+With `ENABLE_FAULT_INJECTION=ON`, the same private-bus test executable
+verifies input allocation-failure reporting, finite shutdown with a retained
+output queue, and facade rollback after injected output-endpoint construction
+failure. `test/dmn-test-dmesgnet-shutdown.cpp` separately checks that injected
+input is shut down before the final Destroyed heartbeat write.

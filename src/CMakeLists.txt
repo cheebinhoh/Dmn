@@ -55,7 +55,6 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
@@ -80,6 +79,13 @@ target_sources(dmn
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
 )
+
+if (ENABLE_FAULT_INJECTION)
+  target_sources(dmn
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/dmn-fault-injection.hpp
+  )
+endif()
 
 target_include_directories(dmn
                              INTERFACE
@@ -127,6 +133,7 @@ endif()
 if (ENABLE_DBUS)
   add_library(dmn-dbus
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-io.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet-dbus.cpp
   )
 
   target_include_directories(dmn-dbus
@@ -137,9 +144,13 @@ if (ENABLE_DBUS)
                    PUBLIC
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-config.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-io.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet-dbus.hpp
   )
 
   target_compile_options(dmn-dbus PRIVATE -Wall -Wextra -Wpedantic)
+
+  target_compile_definitions(dmn-dbus PUBLIC DMN_ENABLE_DBUS=1)
+
   target_link_libraries(dmn-dbus
                           PUBLIC dmn
                           PRIVATE PkgConfig::DBUS
@@ -161,15 +172,26 @@ install(TARGETS dmn
           INCLUDES DESTINATION include/dmn
 )
 
-# Install the public headers
-if (ENABLE_DBUS)
-  install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include/dmn)
-else()
-  install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-            DESTINATION include/dmn
-            PATTERN "dmn-dbus-*.hpp" EXCLUDE
+# Install only headers for enabled optional features.
+set(DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS)
+
+if (NOT ENABLE_DBUS)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-dbus-*.hpp" EXCLUDE
+         PATTERN "dmn-dmesgnet-dbus.hpp" EXCLUDE
   )
 endif()
+
+if (NOT ENABLE_FAULT_INJECTION)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-fault-injection.hpp" EXCLUDE
+  )
+endif()
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+          DESTINATION include/dmn
+          ${DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS}
+)
 
 # Export the targets for use with find_package()
 #install(EXPORT mylibTargets

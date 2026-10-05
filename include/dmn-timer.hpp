@@ -20,8 +20,11 @@
 #define DMN_TIMER_HPP_
 
 #include "dmn-debug.hpp"
-#include "dmn-fault-injection.hpp"
 #include "dmn-pipe.hpp"
+
+#ifdef FIU_ENABLE
+#include "dmn-fault-injection.hpp"
+#endif
 
 #include <chrono>
 #include <cmath>
@@ -257,9 +260,11 @@ private:
       try {
         // Keep this injection point on recurring writes, not initial
         // scheduling.
+#ifdef FIU_ENABLE
         if (DMN_FI_TIMER_RESCHEDULE_WRITE_AT()) {
           throw std::runtime_error("injected timer tick rescheduling failure");
         }
+#endif
 
         m_pipe->writeAt(deadline, Tick{tick.generation});
       } catch (...) {

@@ -71,7 +71,16 @@ through `Dmn_DMesgNet` or other application payloads using a configured signal
 routing tuple. It is intended for inter-process communication on one host and
 does not provide cross-host transport. The core `dmn` library does not depend
 on D-Bus; the extension is built separately as `dmn-dbus` and is disabled by
-default.
+default. `Dmn_DMesgDbus` is the DMesg-specific composition facade for
+applications that do not need to construct the underlying D-Bus endpoints
+directly; advanced callers can continue to inject `Dmn_DbusInput` and
+`Dmn_DbusOutput` into `Dmn_DMesgNet`. When an application links `dmn-dbus`,
+the target defines `DMN_ENABLE_DBUS`, so `dmn.hpp` also includes the D-Bus
+configuration, endpoint, and facade headers. Without that target and macro,
+the umbrella header does not include the optional D-Bus API. The
+`dmn-fault-injection.hpp` header is included by `dmn.hpp` only when
+`ENABLE_FAULT_INJECTION=ON` defines `FIU_ENABLE`; its CMake target-source
+registration is gated by the same option.
 
 On Ubuntu, install the libdbus development files, pkg-config, and daemon used
 by the private-bus unit test:
@@ -87,6 +96,7 @@ CTest label):
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_DBUS=ON
 cmake --build build -j2
 ctest --test-dir build -R '^dmn-test-dbus-io$' --output-on-failure
+ctest --test-dir build -R '^dmn-test-dbus-facade$' --output-on-failure
 ```
 
 ## Fault-injection tests

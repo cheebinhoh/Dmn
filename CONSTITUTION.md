@@ -78,6 +78,12 @@ implementation basenames consistent.
   required.
 - Compile-time macros use uppercase names with underscores. Project macros
   are commonly prefixed with `DMN_`.
+- Keep fault-injection seams visibly distinct from normal implementation
+  helpers. A private method or function used only to inject a failure should
+  include `ForFaultInjection` in its name (for example,
+  `createOutputForFaultInjection`). Prefer named libfiu failure points for
+  injection embedded in normal code paths; do not add test-only methods to the
+  public API. Guard injection-only code with `FIU_ENABLE`.
 - Test suites and test names use descriptive PascalCase components, e.g.
   `TEST(DmnUtilTest, StringCompareUsesUnicodeCaseFolding)`.
 

@@ -130,13 +130,15 @@ propagating a deterministic worker-thread creation failure through timer
 construction. With `ENABLE_FAULT_INJECTION=ON`, the
 `fault-injection`-labelled `dmn-test-fi-timer-thread-start-failure` test
 activates `dmn/timer/pipe/proc/pthread_create` and verifies that the failure
-propagates from construction. The `dmn-test-fi-timer-reschedule-failure` test
+propagates from construction. The `dmn-test-fi-proc-thread-start-failure`
+test activates the same point directly against `Dmn_Proc::exec()` and verifies
+that the task does not run. The `dmn-test-fi-timer-reschedule-failure` test
 activates `dmn/timer/reschedule/write_at`, lets the first callback run, then
 verifies that failure to enqueue its next tick pauses the timer, is reported by
 `rethrowFailure()`, and is rethrown by `resume()`. These tests close the
-deterministic-coverage gap for timer worker startup and recurring tick
-rescheduling failures; they do not inject failures into the underlying
-scheduled queue or cover other `Dmn_Proc` callers.
+deterministic-coverage gap for direct process startup, timer worker startup,
+and recurring tick rescheduling failures; they do not inject failures into the
+underlying scheduled queue or cover other `Dmn_Proc` callers.
 
 ## Thread-safety and lifetime requirements
 
