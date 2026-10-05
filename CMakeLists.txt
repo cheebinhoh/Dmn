@@ -53,6 +53,7 @@ if (ENABLE_FAULT_INJECTION)
 
   if (TARGET PkgConfig::LIBFIU)
     set(DMN_LIBFIU_TARGET PkgConfig::LIBFIU)
+    set(DMN_LIBFIU_LIBRARY_DIR "${LIBFIU_LIBRARY_DIRS}")
     find_program(LIBFIU_RUN NAMES fiu-run REQUIRED)
   else()
     message(STATUS "find or fetching libfiu...")
@@ -70,6 +71,7 @@ if (ENABLE_FAULT_INJECTION)
     find_program(LIBFIU_MAKE_EXECUTABLE NAMES gmake make REQUIRED)
 
     set(LIBFIU_SHARED "${libfiu_SOURCE_DIR}/libfiu/libfiu.so.1.2")
+    set(DMN_LIBFIU_LIBRARY_DIR "${libfiu_SOURCE_DIR}/libfiu")
 
     add_custom_command(OUTPUT "${LIBFIU_SHARED}"
                          COMMAND "${LIBFIU_MAKE_EXECUTABLE}" libs

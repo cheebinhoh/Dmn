@@ -1,8 +1,8 @@
 # Shared Design: byte I/O and DMesg transport over Linux D-Bus
 
-**Status:** Shared contract for implemented Option A endpoints. Option B remains
-design-only. Option A uses the optional `dmn-dbus` target and is verified by
-private-session-bus tests; it does not make D-Bus a cross-host transport.
+**Status:** Shared contract for the implemented Option A endpoints and Option
+B facade. Both use the optional `dmn-dbus` target and private-session-bus
+tests; D-Bus remains a same-host transport.
 
 The two construction alternatives and their implementation order are
 specified in
@@ -137,9 +137,9 @@ The direct injection contract is in
 [`dmesgnet-dbus-injection-spec.md`](dmesgnet-dbus-injection-spec.md). The
 facade wrapper API and lifecycle contract is in
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md). Both must use
-the following common transport requirements. Option A and all its required
-unit/integration tests are the first implementation milestone; Option B begins
-only after that milestone passes and reuses its endpoint implementation.
+the following common transport requirements. Option A and its focused
+unit/integration tests were implemented first; Option B was implemented after
+that milestone passed and reuses its endpoint implementation.
 
 ## 4. Common transport contract
 
@@ -257,13 +257,16 @@ fails explicitly. One input worker owns dispatch for its connection. One
 output worker owns send, watch/read-write, timeout, and disconnect processing
 for its connection. Do not call libdbus while holding an endpoint queue mutex.
 
-The implementation uses endpoint-owned `std::thread`s. Each loop has an
-endpoint-specific cooperative stop flag and bounded libdbus dispatch wait, so
-shutdown can signal it and join it without thread cancellation. `Dmn_Proc`
-could host the loops, but its cancellation-capable lifecycle adds no required
-behavior here. `Dmn_Pipe` is not a suitable worker abstraction: its worker
-consumes application queue items, whereas these workers must drive libdbus
-connection dispatch as well as operate on the endpoint queues.
+The implementation uses one `Dmn_Proc` pthread per endpoint. Each endpoint
+owns an atomic stop flag captured by the worker task; the loops check it
+between bounded libdbus dispatch waits. Shutdown sets the endpoint stop state
+and atomic flag, wakes local waiters, then joins with `Dmn_Proc::wait()` before
+removing the input filter or closing the connection. It does not use
+`stopExec()` or pthread cancellation for normal shutdown. Cooperative exit is
+provided by the endpoint-owned task state and does not extend the `Dmn_Proc`
+API. `Dmn_Pipe` is not a suitable worker abstraction: its worker consumes
+application queue items, whereas these workers must drive libdbus connection
+dispatch as well as operate on the endpoint queues.
 
 Expose a thread-safe, read-only `Dmn_DbusIoStatus` endpoint status
 snapshot with these proposed fields:
@@ -419,8 +422,10 @@ The implementation is ready for a same-host, non-privileged pilot only when:
    safely joins dispatch before object destruction.
 5. Output remains available long enough for the base destructor's final
    Destroyed message.
-6. Match installation is confirmed before readiness; malformed signatures,
-   queue overflow, send failure, and oversize input are observable.
+6. Match installation is confirmed before readiness; a private-daemon policy
+   denial of the client's AddMatch method call fails construction explicitly;
+   malformed signatures, queue overflow, send failure, and oversize input are
+   observable.
 7. The tests use a private/session bus only, never the host's system bus.
 8. Documentation and diagnostics make clear that signal send is not remote
    receipt and that the adapter is host-local, best-effort IPC.
@@ -462,4 +467,22 @@ bus-isolation behavior. It verifies binary and empty payload fidelity,
 multiple subscribers, exact signal matching, malformed/oversized input,
 queue bounds, shutdown cancellation, disconnect errors, and direct
 `Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level
-same-host evidence, not a policy certification or multi-host guarantee.
+same-host evidence, not a policy certification or multi-host guarantee. A
+focused private-daemon fixture denies the client's AddMatch method call and
+verifies explicit constructor failure and connection cleanup; it does not
+validate general send/receive policy behavior.
+With `ENABLE_FAULT_INJECTION=ON`, the separate
+`dmn-test-fi-dbus-input-allocation`, `dmn-test-fi-dbus-output-stall`, and
+`dmn-test-fi-dbus-facade-rollback` executables verify allocation-failure
+reporting, finite shutdown with a retained output queue, and facade rollback
+after injected output-endpoint construction failure, respectively. The
+`dmn-test-fi-dbus-worker-start-failure` and
+`dmn-test-fi-dbus-output-worker-start-failure` executables inject endpoint
+worker startup failure. These fault tests are registered with
+`ADD_TEST_FAULT_INJECTION_EXECUTABLE` and the `fault-injection` CTest label.
+The regular endpoint suite also starts a private bus with send policy denying
+the client's AddMatch method call; it verifies AddMatch rejection and
+connection cleanup, not general policy correctness.
+`test/dmn-test-dmesgnet-shutdown.cpp` uses a blocking fake input with a
+read-started handshake to verify shutdown wakes an already-blocked read before
+the final serialized Destroyed heartbeat write.

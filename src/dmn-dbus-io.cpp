@@ -6,10 +6,16 @@
  */
 
 #include "dmn-dbus-io.hpp"
+#include "dmn-proc.hpp"
+
+#ifdef FIU_ENABLE
+#include <fiu.h>
+#endif
 
 #include <dbus/dbus.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
@@ -18,9 +24,9 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <stdexcept>
 #include <system_error>
-#include <thread>
 #include <utility>
 
 namespace dmn {
@@ -170,11 +176,8 @@ void reportDiagnostic(std::mutex &mutex,
 
 } // namespace
 
-// Use endpoint-owned std::threads for these long-running libdbus loops:
-// shutdown is cooperative via the stop flag and bounded dispatch timeout.
-// Dmn_Proc adds cancellation-capable lifecycle behavior we do not need, while
-// Dmn_Pipe's worker is designed to consume queued items rather than drive a
-// libdbus connection.
+// Keep cooperative stop conditions in the endpoint loops; Dmn_Proc owns and
+// joins the pthread without using its cancellation-based stopExec() path.
 class Dmn_DbusInput::Impl {
 public:
   explicit Impl(const Dmn_DbusConfig &config)
@@ -200,7 +203,13 @@ public:
         throw std::system_error(code, "Dmn_DbusInput: " + message);
       }
 
-      m_worker = std::thread{[this] { dispatchLoop(); }};
+      if (!m_worker.exec([this, &workerStop = m_worker_stop] {
+            dispatchLoop(workerStop);
+          })) {
+        throw std::system_error(
+            std::make_error_code(std::errc::resource_unavailable_try_again),
+            "Dmn_DbusInput: unable to start dispatch worker");
+      }
     } catch (...) {
       closeConnection();
 
@@ -242,10 +251,9 @@ public:
         m_stopping = true;
       }
 
+      m_worker_stop.store(true, std::memory_order_release);
       m_ready.notify_all();
-      if (m_worker.joinable()) {
-        m_worker.join();
-      }
+      m_worker.wait();
 
       closeConnection();
     });
@@ -342,6 +350,13 @@ private:
       return;
     }
 
+#ifdef FIU_ENABLE
+    // Exercise the callback's allocation-failure handling deterministically.
+    if (fiu_fail("dmn/dbus/input/payload_allocation") != 0) {
+      throw std::bad_alloc{};
+    }
+#endif
+
     std::string payload;
     if (size != 0) {
       payload.assign(reinterpret_cast<const char *>(bytes), size);
@@ -364,13 +379,10 @@ private:
     m_ready.notify_one();
   }
 
-  void dispatchLoop() noexcept {
+  void dispatchLoop(const std::atomic_bool &workerStop) noexcept {
     while (true) {
-      {
-        std::lock_guard lock{m_mutex};
-        if (m_stopping) {
-          break;
-        }
+      if (workerStop.load(std::memory_order_acquire)) {
+        break;
       }
 
       if (!dbus_connection_read_write_dispatch(
@@ -438,15 +450,27 @@ private:
   bool m_stopping{};
   Dmn_DbusIoStatus m_status{};
   std::chrono::steady_clock::time_point m_last_diagnostic{};
-  std::thread m_worker;
   std::once_flag m_shutdown_once;
+  std::atomic_bool m_worker_stop{}; ///< Captured state outlives the worker.
+  Dmn_Proc m_worker{"Dmn_DbusInput"};
 };
 
 class Dmn_DbusOutput::Impl {
 public:
   explicit Impl(const Dmn_DbusConfig &config)
       : m_config{config}, m_connection{connectBus(config)} {
-    m_worker = std::thread{[this] { sendLoop(); }};
+#ifdef FIU_ENABLE
+    if (fiu_fail("dmn/dbus/output/worker_start") != 0 ||
+        !m_worker.exec(
+            [this, &workerStop = m_worker_stop] { sendLoop(workerStop); })) {
+#else
+    if (!m_worker.exec(
+            [this, &workerStop = m_worker_stop] { sendLoop(workerStop); })) {
+#endif
+      throw std::system_error(
+          std::make_error_code(std::errc::resource_unavailable_try_again),
+          "Dmn_DbusOutput: unable to start send worker");
+    }
   }
 
   ~Impl() noexcept { shutdown(); }
@@ -528,10 +552,9 @@ public:
             std::chrono::steady_clock::now() + kShutdownDeadline;
       }
 
+      m_worker_stop.store(true, std::memory_order_release);
       m_ready.notify_all();
-      if (m_worker.joinable()) {
-        m_worker.join();
-      }
+      m_worker.wait();
 
       if (m_connection != nullptr) {
         const auto outgoingBytes{static_cast<std::size_t>(std::max(
@@ -605,18 +628,25 @@ private:
     return message;
   }
 
-  void sendLoop() noexcept {
+  void sendLoop(const std::atomic_bool &workerStop) noexcept {
     try {
       while (true) {
         std::string payload;
         bool havePayload{};
+        bool stallOutput{};
+#ifdef FIU_ENABLE
+        // Keep queued data pending while still allowing bounded bus dispatch.
+        stallOutput = fiu_fail("dmn/dbus/output/send_stall") != 0;
+#endif
         const auto outgoingBytes{
             dbus_connection_get_outgoing_size(m_connection.get())};
         {
           std::unique_lock lock{m_mutex};
-          m_ready.wait_for(lock, kWorkerWait,
-                           [this] { return m_stopping || !m_queue.empty(); });
-          if (m_stopping &&
+          m_ready.wait_for(lock, kWorkerWait, [this, &workerStop] {
+            return workerStop.load(std::memory_order_acquire) ||
+                   !m_queue.empty();
+          });
+          if (workerStop.load(std::memory_order_acquire) &&
               (m_queue.empty() ||
                std::chrono::steady_clock::now() >= m_shutdown_deadline)) {
             m_status.shutdown_unsent_messages = m_queue.size();
@@ -627,7 +657,7 @@ private:
             break;
           }
 
-          if (!m_queue.empty() &&
+          if (!stallOutput && !m_queue.empty() &&
               static_cast<std::size_t>(std::max(outgoingBytes, 0L)) <
                   m_config.max_queued_bytes) {
             payload = m_queue.front();
@@ -706,8 +736,9 @@ private:
   std::chrono::steady_clock::time_point m_shutdown_deadline{};
   Dmn_DbusIoStatus m_status{};
   std::chrono::steady_clock::time_point m_last_diagnostic{};
-  std::thread m_worker;
   std::once_flag m_shutdown_once;
+  std::atomic_bool m_worker_stop{}; ///< Captured state outlives the worker.
+  Dmn_Proc m_worker{"Dmn_DbusOutput"};
 };
 
 Dmn_DbusInput::Dmn_DbusInput(const Dmn_DbusConfig &config) {

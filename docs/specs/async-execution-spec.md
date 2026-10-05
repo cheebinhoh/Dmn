@@ -20,11 +20,15 @@ singleton, and timer helpers. Recommendations are listed separately below.
 
 Construction optionally supplies the task. `exec()` may replace it and starts
 a new thread only from the ready state. `wait()` joins a running thread;
-`stopExec()` requests deferred pthread cancellation and joins. `yield()` checks
-for cancellation and yields the scheduler; `testcancel()` is a cancellation
-point. Destruction cancels a running thread and sets the internal state to
-unknown. Copy and move are disabled. Lifecycle operations and destruction are
-not internally synchronized. Callers must ensure `exec()`, `wait()`,
+`stopExec()` requests deferred pthread cancellation and joins. A caller can
+implement cooperative exit in its task by capturing synchronized caller-owned
+state, checking it, and arranging to wake any blocking operation; `wait()`
+then joins after the task returns. This does not change `Dmn_Proc`'s API.
+`yield()` checks for cancellation and yields the scheduler; `testcancel()` is
+a cancellation point. Destruction cancels a running thread and sets the
+internal state to unknown. Copy and move are disabled. Lifecycle operations
+and destruction are not internally
+synchronized. Callers must ensure `exec()`, `wait()`,
 `stopExec()`, task replacement, and destruction do not overlap and that each
 operation happens-before the next. A caller may hand off lifecycle control to
 another thread using external synchronization; all calls need not originate on
@@ -38,10 +42,12 @@ captures task/setup exceptions and rethrows them from `wait()` after the join;
 `stopExec()` also propagates a captured failure through its call to `wait()`.
 The destructor remains non-throwing and suppresses failures while cleaning up.
 
-Cancellation is cooperative. A task blocked outside a cancellation point may
-delay `stopExec()` and destruction. Cleanup macros are thin wrappers around
-pthread cleanup registration and are intended to release resources such as
-mutexes or in-flight tickets.
+Pthread cancellation is deferred. A task blocked outside a cancellation point
+may delay `stopExec()` and destruction. Client-owned cooperative stopping
+requires the task to check synchronized caller-owned state and the owner to
+wake blocking operations. Cleanup macros are thin wrappers around pthread
+cleanup registration and are intended to release resources such as mutexes or
+in-flight tickets.
 
 ### `Dmn_Async`
 
@@ -130,13 +136,15 @@ propagating a deterministic worker-thread creation failure through timer
 construction. With `ENABLE_FAULT_INJECTION=ON`, the
 `fault-injection`-labelled `dmn-test-fi-timer-thread-start-failure` test
 activates `dmn/timer/pipe/proc/pthread_create` and verifies that the failure
-propagates from construction. The `dmn-test-fi-timer-reschedule-failure` test
+propagates from construction. The `dmn-test-fi-proc-thread-start-failure`
+test activates the same point directly against `Dmn_Proc::exec()` and verifies
+that the task does not run. The `dmn-test-fi-timer-reschedule-failure` test
 activates `dmn/timer/reschedule/write_at`, lets the first callback run, then
 verifies that failure to enqueue its next tick pauses the timer, is reported by
 `rethrowFailure()`, and is rethrown by `resume()`. These tests close the
-deterministic-coverage gap for timer worker startup and recurring tick
-rescheduling failures; they do not inject failures into the underlying
-scheduled queue or cover other `Dmn_Proc` callers.
+deterministic-coverage gap for direct process startup, timer worker startup,
+and recurring tick rescheduling failures; they do not inject failures into the
+underlying scheduled queue or cover other `Dmn_Proc` callers.
 
 ## Thread-safety and lifetime requirements
 

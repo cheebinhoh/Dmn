@@ -2,8 +2,8 @@
 
 **Status:** Option A is implemented behind the optional `ENABLE_DBUS` build
 flag and covered by private-session-bus endpoint and `Dmn_DMesgNet`
-composition tests. Option B remains design-only; implement its wrapper in
-[`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md). Both use the
+composition tests. Option B is implemented as the composition facade specified
+in [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md). Both use the
 shared transport contract in [`dmesg-dbus-spec.md`](dmesg-dbus-spec.md).
 
 ## 1. Alternative under review
@@ -229,7 +229,7 @@ unsupported direction.
 `shutdown()` is `noexcept`, idempotent, and records/report errors through the
 status and diagnostic contract rather than throwing during teardown.
 
-The direct constructor pattern is:
+The implemented direct-construction pattern is:
 
 ```cpp
 Dmn_DbusConfig config{/* bus and limits */};
@@ -238,12 +238,11 @@ auto output = std::make_shared<Dmn_DbusOutput>(config);
 Dmn_DMesgNet node{"node-a", input, output};
 ```
 
-The pair factory, if provided, returns strong typed input/output shared
-pointers and creates them atomically. Direct constructors remain part of the
-public API regardless of whether a pair factory exists. The endpoints must retain independent
-connections even when they share the same bus address and limits. The
-facade's private endpoint factory must use these exact endpoint classes and
-configuration semantics; do not create a second internal adapter path.
+The current API has no endpoint-pair factory: callers construct the two
+strongly typed endpoints directly. They retain independent connections even
+when they share the same bus address and limits. The facade also constructs
+these endpoint classes directly in its private implementation; it has no
+endpoint-factory seam or second adapter path.
 
 ### 4.1 Input endpoint
 
@@ -322,28 +321,28 @@ must be trusted under the v1 security model.
 
 ## 5. Composition lifecycle and constructor concerns
 
-Direct composition allows construction to make its resource order visible:
+Direct composition makes construction resource order visible:
 
 ```cpp
-auto input = makeDbusInput(config);   // private connection + AddMatch
-auto output = makeDbusOutput(config); // separate private connection
+auto input = std::make_shared<dmn::Dmn_DbusInput>(config);
+auto output = std::make_shared<dmn::Dmn_DbusOutput>(config);
 dmn::Dmn_DMesgNet node{"node-a", input, output};
 ```
 
 Do not expose `node` before both adapter constructors and match installation
-have succeeded. If output construction fails after input succeeds, destroy
-input and leave no active subscriber behind. Provide a helper to make
-all-or-nothing pair construction easy:
+have succeeded. If output construction fails after input succeeds, normal
+RAII destroys input and leaves no active subscriber behind. A typed pair
+helper was considered as an optional future convenience:
 
 ```cpp
 auto endpoints = dmn::makeDmnDbusIoPair(config);
 dmn::Dmn_DMesgNet node{"node-a", endpoints.input, endpoints.output};
 ```
 
-The pair helper is optional because direct endpoint construction is supported;
-it is recommended as a convenience for callers that want pair-level rollback.
-If public, document its connection ownership and explicit `shutdown()`
-behavior. Do not expose raw `DBusConnection *`.
+No pair helper is currently implemented or required; direct endpoint
+construction is the supported API. If a pair helper is added later, document
+its connection ownership and explicit `shutdown()` behavior. Do not expose raw
+`DBusConnection *`.
 
 Because `Dmn_DMesgNet` owns copies of the adapter `shared_ptr`s, the caller may
 drop its local pointers after construction. During teardown, the base
@@ -365,7 +364,7 @@ its multiplexing, routing, shutdown, and authentication behavior are specified.
 | Transport/wire semantics | Same configured D-Bus signal tuple and endpoint implementation. | Same config and endpoint implementation; defaults match Option A. |
 | Construction | Caller creates input and output endpoints and passes both to `Dmn_DMesgNet`. | Caller passes node ID/config; wrapper creates endpoints and initializes a private node member. |
 | `Dmn_DMesgNet` changes | None. | None; wrapper owns a private instance. |
-| Public API | Public input/output adapters, config, status, and optionally a pair factory. | Adds a first-class wrapper/config/status and forwards a selected DMesg API subset. |
+| Public API | Public input/output adapters, config, and status; no pair factory. | Adds a first-class wrapper/config/status and forwards a selected DMesg API subset. |
 | Application ergonomics | More explicit and flexible; caller can accidentally pair wrong buses/configs. | Small, safe default constructor; fewer assembly mistakes. |
 | Ownership | Caller owns endpoint refs; node also shares ownership. | Wrapper owns endpoints before the internal node member so node teardown runs first. |
 | Lifecycle risk | Caller can mismatch config or shut down an endpoint early. | Constructor rollback and member declaration/destruction order must be tested. |
@@ -378,42 +377,59 @@ its multiplexing, routing, shutdown, and authentication behavior are specified.
 | Operational configuration | Explicit endpoint construction can support custom factories/options. | Central validated defaults are easier; only stable user-facing options should be exposed. |
 | Best fit | Advanced users, tests, custom transports, and explicit lifecycle control. | Application users who want a small DMesg API without endpoint assembly. |
 
-### Required sequence
+### Implementation sequence
 
-Option A is implemented and validated first as the standalone adapter and
-direct-injection API. Do not begin Option B implementation until all Option A
-exit criteria—including private-bus and `Dmn_DMesgNet` composition tests—pass.
-Option B then wraps the same public Option A endpoint implementation and
-forwards the DMesg application subset specified in
-`dmesgnet-dbus-facade-spec.md`. It must not add a second transport path.
+Option A was implemented and validated first as the standalone adapter and
+direct-injection API. After its exit criteria, including private-bus and
+`Dmn_DMesgNet` composition tests, passed, Option B was implemented as a wrapper
+over the same public Option A endpoints. It forwards the DMesg application
+subset specified in `dmesgnet-dbus-facade-spec.md` and adds no second transport
+path.
 
-## 7. Acceptance tests specific to injection
+## 7. Test coverage and remaining requirements
 
-The complete test-first checklist is in `dmesg-dbus-plan.md`. Option A
-specifically requires:
+`test/dmn-test-dbus-io.cpp` covers byte-signal matching and delivery,
+configuration/address failures, queue limits and overflow, malformed and
+oversized payloads, endpoint shutdown/disconnect behavior, and
+`Dmn_DMesgNet` composition over a private bus. The Option B facade test also
+checks bidirectional message exchange with a directly injected Option A peer.
+With `ENABLE_FAULT_INJECTION=ON`, separate test programs inject input payload
+allocation failure, retain output messages through the finite drain deadline,
+fail D-Bus worker startup, and fail facade output-endpoint creation after
+input setup to verify rollback. Each fault-injection test enables only its
+corresponding libfiu point through `ADD_TEST_FAULT_INJECTION_EXECUTABLE`; all
+have the `fault-injection` CTest label and run with
+`ctest --test-dir build -L fault-injection`. The facade's private construction
+helper is explicitly named `createOutputForFaultInjection`; the seam is
+compiled only with fault injection enabled and is not public API.
 
-1. Construct `Dmn_DMesgNet` with fake input/output `Dmn_Io<std::string>`
-   endpoints and verify input shutdown precedes the final output write.
-2. Verify pair creation is all-or-nothing when the first or second endpoint
-   setup fails.
-3. Verify two simultaneously active `Dmn_DMesgNet` objects receive peer
-   messages and ignore their own source-write-handler echo.
-4. Verify input shutdown wakes the reader and does not stop output.
-5. Verify queue-full behavior is synchronous and output worker failures are
-   observable asynchronously.
-6. Verify distinct private buses do not communicate using the same
-   signal-interface strings.
-7. Verify a custom signal tuple delivers only to endpoints configured for
-   that tuple and the default tuple remains interoperable with `Dmn_DMesgNet`.
-8. Confirm tests do not infer remote-host reachability, consensus, quorum, or
-   exactly-once delivery.
+The regular endpoint suite includes a private-daemon send-policy fixture that
+denies the client's `org.freedesktop.DBus.AddMatch` method call. It verifies
+input construction fails with an explicit error and releases the connection
+rather than exposing a partially initialized endpoint. This exercises
+AddMatch setup failure only; it is not a general bus-policy certification.
+
+`test/dmn-test-dmesgnet-shutdown.cpp` uses fake endpoints to verify that
+`Dmn_DMesgNet` calls input shutdown before writing the final serialized
+`Destroyed` heartbeat. Its blocking fake input must signal when `read()` has
+entered its wait; the test waits for that signal before destroying the node
+and verifies the read exits after shutdown and before the final heartbeat.
+This proves shutdown wakes an already-blocked input read, not merely that a
+read started after shutdown returns promptly.
+
+These tests make no claims about remote-host reachability, consensus, quorum,
+or exactly-once delivery.
+
+No public endpoint-pair factory was added; callers construct the independently
+owned input and output endpoints directly. Broader send/receive policy
+behavior and deployment policy certification remain outside this test scope.
 
 ## 8. Go/no-go assessment
 
-**Go** for Option A under the existing `Dmn_DMesgNet` constructor using
-private-bus tests and trusted local participants. Option A's tests are the
-phase gate for Option B. The type seam and binary signal mechanism are already
-confirmed.
+**Go** for the implemented Option A `Dmn_DMesgNet` injection API and Option B
+composition facade, using private-bus tests and trusted local participants.
+Option A's tests served as the phase gate for Option B. The type seam and
+binary signal mechanism are confirmed.
 
 **No-go** to describing this as a replacement for `Dmn_Socket` for remote
 machines, a secure node-identity transport, reliable/acknowledged delivery, or

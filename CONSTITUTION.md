@@ -78,6 +78,12 @@ implementation basenames consistent.
   required.
 - Compile-time macros use uppercase names with underscores. Project macros
   are commonly prefixed with `DMN_`.
+- Keep fault-injection seams visibly distinct from normal implementation
+  helpers. A private method or function used only to inject a failure should
+  include `ForFaultInjection` in its name (for example,
+  `createOutputForFaultInjection`). Prefer named libfiu failure points for
+  injection embedded in normal code paths; do not add test-only methods to the
+  public API. Guard injection-only code with `FIU_ENABLE`.
 - Test suites and test names use descriptive PascalCase components, e.g.
   `TEST(DmnUtilTest, StringCompareUsesUnicodeCaseFolding)`.
 
@@ -177,6 +183,14 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
   templates and small inline helpers may be implemented beside their
   declarations; non-template method bodies generally belong in the paired
   `.cpp`.
+- Within a class or struct, declare or define member functions before
+  non-static data members, regardless of access level. Treat callable methods
+  as the type's interface and stored data as implementation details; keep the
+  state declarations after the methods, including private methods and state.
+  This is a source-layout convention and does not change access control.
+- Preserve required data-member declaration order when applying this layout:
+  C++ initializes members in declaration order and destroys them in reverse
+  order, regardless of the constructor's initializer-list order.
 - Use `public`, `protected`, and `private` access sections intentionally.
   Keep implementation state private unless derived classes genuinely require
   access.

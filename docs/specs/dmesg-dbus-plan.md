@@ -1,30 +1,28 @@
 # Implementation and Test Plan: DMesg over D-Bus
 
-**Status:** Option A is implemented with a focused private-bus test target.
-Option B remains unimplemented and must not start until Option A's build/test
-gate is complete. The shared transport contract is in
+**Status:** Options A and B are implemented behind `ENABLE_DBUS` and have
+focused private-bus test targets. Option A provides direct endpoint injection;
+Option B is the composition facade. The shared transport contract is in
 [`dmesg-dbus-spec.md`](dmesg-dbus-spec.md); the options are detailed in
 [`dmesgnet-dbus-injection-spec.md`](dmesgnet-dbus-injection-spec.md) and
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md).
 
 Option A consists of `include/dmn-dbus-config.hpp`,
 `include/dmn-dbus-io.hpp`, and `src/dmn-dbus-io.cpp`, built by the
-optional `dmn-dbus` target. The checked-in
-`test/dmn-test-dbus-io.cpp` is registered through the existing
-`ADD_TEST_EXECUTABLE(dmn ...)` mechanism and includes real D-Bus endpoint,
-disconnect, queue-limit, and `Dmn_DMesgNet` composition cases. The test
-executable starts a private session daemon and points its session-bus clients
-at that daemon, so CTest does not depend on the caller's session bus. It
-validates behavior against libdbus rather than a fake dispatch backend.
+optional `dmn-dbus` target. The checked-in `dmn-test-dbus-io` and
+`dmn-test-dbus-facade` executables are registered through the existing
+`ADD_TEST_EXECUTABLE(dmn ...)` mechanism. Each starts a private session daemon
+for its session-bus clients, so CTest does not depend on the caller's session
+bus; tests exercise the real libdbus path rather than a fake dispatch backend.
 
 ## 1. Architectural contract
 
-Phase 1 implements Option A end-to-end: public byte-oriented D-Bus input/output
+Phase 1 implemented Option A end-to-end: public byte-oriented D-Bus input/output
 `Dmn_Io<std::string>` endpoints, direct construction of `Dmn_DMesgNet`, and
-all endpoint/private-bus/DMesgNet composition tests. Phase 2 implements Option
-B as a composition wrapper around the same Option A endpoint classes and an
-internal `Dmn_DMesgNet`, forwarding only the selected application DMesg API.
-Do not start phase 2 until every phase 1 exit criterion passes. Carry the
+endpoint/private-bus/DMesgNet composition tests. After its exit criteria
+passed, Phase 2 implemented Option B as a composition wrapper around the same
+Option A endpoint classes and an internal `Dmn_DMesgNet`, forwarding only the
+selected application DMesg API. Carry the
 existing serialized `DMesgPb` in the body of the default D-Bus signal with
 signature `ay`; the generic endpoints also accept a validated custom signal
 tuple for other byte protocols. Keep separate input and output
@@ -42,7 +40,7 @@ implementation.
 
 ## 2. Checked-in test target and remaining validation
 
-The current `dmn-test-dbus-io` executable is registered through
+The `dmn-test-dbus-io` executable is registered through
 `ADD_TEST_EXECUTABLE(dmn ...)` and uses the existing `dmn` CTest label; it
 does not have a dedicated D-Bus label or a `dbus-run-session` command wrapper.
 The executable starts a private session daemon for its session-bus clients. It
@@ -52,9 +50,11 @@ input/output queue limits, unsupported `Dmn_Io` directions, input shutdown and
 disconnect semantics, output failure state, and two-way `Dmn_DMesgNet`
 application/lifecycle exchange.
 
-Daemon send/receive policy fixtures, deterministic allocator-failure
-injection, and a fake backend for forcing an output connection to stall
-through the shutdown deadline remain separate test-infrastructure work.
+Deterministic allocation-failure and retained-output-queue tests are in the
+separate fault-injection executables described in Steps 2 and 3. Daemon
+policy coverage includes a private-daemon denial of the client's AddMatch
+method call; broader send/receive policy fixtures remain future
+test-infrastructure work.
 Private-bus tests must never connect to the host system bus.
 
 ## 3. Implementation steps with test-first exits
@@ -70,7 +70,7 @@ inheritance facade—with its API limited to the agreed DMesg subset.
 
 **Exit:** No acceptance statement implies D-Bus signal delivery is acknowledged,
 cross-host, or consensus-backed. The Option A phase gate and Option B wrapper
-surface are agreed; phase 2 cannot begin before phase 1 passes.
+surface were agreed; the phase gate passed before Option B implementation.
 
 ### Step 1 — Implement and test signal encoding/decoding
 
@@ -154,8 +154,14 @@ not silently substitute another bus.
 **Current coverage:** The checked-in tests cover blocked-reader cancellation,
 queued-input draining, bus disconnect, input count/byte overflow, malformed
 and oversized signals, explicit-address errors, repeated shutdown, and a
-concurrent shutdown/delivery race. Allocation-failure injection and a
-separate AddMatch-denial policy fixture remain untested.
+concurrent shutdown/delivery race. With `ENABLE_FAULT_INJECTION=ON`, the
+dedicated `dmn-test-fi-dbus-input-allocation` executable enables the private
+`dmn/dbus/input/payload_allocation` point to exercise allocation-failure
+status accounting. This test is labeled `fault-injection`; a separate
+private-daemon policy fixture denies the client's AddMatch method call and
+verifies that input construction fails with an explicit error and releases the
+connection. This exercises match-setup failure handling, not general bus
+policy correctness.
 
 ### Step 3 — Implement the output-only endpoint
 
@@ -183,16 +189,21 @@ stderr-reporting convention. Do not silently discard accepted items.
   destruction; shutdown stops at its finite deadline and reports unsent
   application-queue count/bytes and remaining libdbus outgoing bytes in the
   final status snapshot and diagnostic.
-- The output worker never calls blocking `dbus_connection_flush()`; a fake
-  read/write-dispatch backend verifies bounded progress and shutdown behavior.
+- The output worker never calls blocking `dbus_connection_flush()`; a
+  fault-injected retained-queue condition verifies bounded progress and
+  shutdown behavior.
 - Shutdown is idempotent and rejects writes after it is called.
 - Destroying the output endpoint without an earlier explicit shutdown applies
   the finite drain policy, closes the connection, and joins the worker.
 
 **Current coverage:** Tests cover exact accepted payloads, synchronous
 oversize/queue-cap rejection, shutdown rejection, and output worker failure
-after bus disconnect. A deterministic stalled-writer/deadline test still
-needs an internal test backend.
+after bus disconnect. With `ENABLE_FAULT_INJECTION=ON`, the dedicated
+`dmn-test-fi-dbus-output-stall` executable exercises the private
+`dmn/dbus/output/send_stall` point, holding accepted messages in the
+application queue and verifying shutdown reaches its finite drain deadline
+and reports unsent messages. The test is labeled `fault-injection` and runs
+with `ctest --test-dir build -L fault-injection`.
 
 ### Step 4 — Option A: Inject endpoints into `Dmn_DMesgNet`
 
@@ -205,7 +216,8 @@ queue message-count, and queue-byte limits explicit configuration.
 **Unit/lifecycle tests**
 
 - A fake-I/O composition test proves that `Dmn_DMesgNet` uses only the
-  existing input/output contract.
+  existing input/output contract and records that input shutdown occurs before
+  its final serialized `Destroyed` heartbeat write.
 - Both D-Bus input and output endpoints are present and use separate
   connections.
 - If a pair factory is exposed, it is all-or-nothing when input or output
@@ -222,12 +234,10 @@ queue message-count, and queue-byte limits explicit configuration.
 
 **Exit:** No use-after-free, leaked D-Bus connection, or blocked destructor.
 
-### Option A phase gate — Required before Option B
+### Option A phase gate — Passed
 
-Do not begin facade implementation until Steps 1–6 pass, Option A's public
-endpoint/config/status API is documented, and the default build without D-Bus
-remains unaffected. Failures or unresolved endpoint/API behavior return to
-Option A work; do not paper over them with wrapper-specific behavior.
+Steps 1–6 and the documented endpoint/config/status API were completed, and
+the default build without D-Bus was verified before beginning the facade work.
 
 ### Step 5 — Private-bus transport integration (Option A)
 
@@ -250,7 +260,8 @@ address. Start at least two input subscribers and one output publisher.
   undelivered queued items.
 - Send-policy denial is surfaced as output failure. Receive-policy denial
   does not imply a per-message error notification.
-- Match setup denial fails input endpoint construction before a usable
+- A private-daemon send-policy denial of the client's AddMatch method call
+  fails input endpoint construction with an explicit error before a usable
   `Dmn_DMesgNet` instance is exposed.
 - Signal flood reaches input queue cap; memory stays bounded, newest-message
   drop counter increments, and dispatch remains responsive.
@@ -286,52 +297,56 @@ arbitrary sleeps as the only wait condition.
 **Exit:** Composition tests demonstrate same-host IPC only; no test implies
 cross-host D-Bus federation or consensus.
 
-**Option A completion gate:** Steps 1–6 pass, public direct injection is
-usable without the facade, all required private-bus tests use an isolated
-daemon, and no regression is introduced when the optional feature is off.
-Before starting Option B, configure/build/test with `ENABLE_DBUS=OFF`, then
-configure/build Option A and run its focused unit, private-bus, and
-`Dmn_DMesgNet` composition test targets with `ENABLE_DBUS=ON`.
+**Option A completion gate:** Complete. Direct injection is usable without
+the facade, private-bus tests use an isolated daemon, and the core build works
+with the optional feature disabled.
 
 ### Step 7 — Option B: Implement the composition wrapper
 
-Only after the Option A completion gate passes, implement `Dmn_DMesgDbus` as
-specified in `dmesgnet-dbus-facade-spec.md`. It owns an endpoint pair and a
-private `Dmn_DMesgNet` member; it must not derive from the node class. Forward
-the specified DMesg handler/topic/conflict operations and expose read-only
-input/output status. Keep endpoint types private in the facade's API while
-retaining their independent public Option A API.
+**Status:** Implemented in `include/dmn-dmesgnet-dbus.hpp` and
+`src/dmn-dmesgnet-dbus.cpp`. `Dmn_DMesgDbus` owns a private Option A endpoint
+pair and a `Dmn_DMesgNet`; it forwards the documented handler/topic/conflict
+operations and exposes endpoint status without exposing the node or endpoint
+types. The optional target and private-bus test are controlled by
+`ENABLE_DBUS`; the facade test is registered with the existing `dmn` test
+macro.
 
 **Facade-specific tests**
 
-- Wrapper construction creates the same Option A endpoint types and applies
-  the exact shared config; default and explicit addresses never silently
-  fall back.
-- Invalid config and failures while constructing input, match, or output
-  throw and release every resource acquired earlier.
-- Configured maximum payload, queue-count, and queue-byte limits reach both
-  endpoints unchanged.
-- `openHandler(HandlerSpec)` preserves all spec fields and handler
-  read/write/conflict behavior. Test `openHandlerWithFactory` delegation and
-  exception propagation, `closeHandler` proxy invalidation, topic lookup
-  before/after publication, and conflict reset.
-- `Dmn_DMesgDbus` is not derived from `Dmn_DMesgNet`; no public method accepts
-  `Dmn_Io<std::string>` or returns the internal node/endpoints.
-- A compile-only API test verifies supported aliases/forwarders, confirms the
-  facade header exposes no endpoint declarations, and checks the wrapper is
-  not a `Dmn_DMesgNet` base or constructible with injected endpoints.
-- Endpoint owners outlive the internal node in the `Impl`; destruction shuts
-  input down, sends the best-effort final heartbeat through output, then
-  releases the endpoints. A private, test-only endpoint factory seam verifies
-  rollback and destruction ordering without adding public test hooks.
-- A facade participant exchanges messages with an Option A directly injected
-  participant over one private bus, proving both use the same wire path.
-- Copy/move is disabled unless separately designed; verify that rule at
-  compile time.
+- Tests verify invalid tuple/address rejection; handler spec and factory
+  forwarding, including factory exception propagation; async/filter handler
+  delivery; close/proxy invalidation; topic lookup; conflict reset; and
+  separate input/output status snapshots.
+- Compile-time assertions verify the facade is non-copyable/non-movable and
+  does not derive from `Dmn_DMesgNet`. The generated standalone-header target
+  compiles the facade header without libdbus declarations.
+- A private-bus test exchanges application messages in both directions
+  between a facade node and an Option A directly injected participant.
+- The facade status test stops its configured private bus and verifies the
+  input and output status snapshots report their respective terminal errors.
+- Member order keeps endpoint owners alive through node destruction, allowing
+  input shutdown before the final best-effort output heartbeat.
+- With `ENABLE_FAULT_INJECTION=ON`, the dedicated
+  `dmn-test-fi-dbus-facade-rollback` test activates the private
+  `dmn/dbus/facade/output_endpoint_creation` point, which throws after input
+  setup; the test verifies RAII closes the input connection. The private
+  FIU-guarded helper is named `createOutputForFaultInjection` to distinguish
+  it from ordinary endpoint construction; the injection adds no facade API or
+  endpoint factory.
+- With `ENABLE_FAULT_INJECTION=ON`, the dedicated
+  `dmn-test-fi-dbus-output-worker-start-failure` test fails startup inside the
+  output endpoint after the input endpoint has started. It verifies the
+  endpoint startup error is propagated and both connections are released.
+- The regular D-Bus endpoint tests start a private daemon with a send policy
+  denying the client's AddMatch method call. Input construction must report
+  the AddMatch error and release its connection; this fixture does not certify
+  broader bus policy behavior.
+- The fake-I/O shutdown test waits until `Dmn_DMesgNet`'s input task is inside
+  the blocking `read()` before destroying the node, then verifies the read
+  exits after input shutdown and before the final heartbeat write.
 
-**Exit:** The facade adds only construction, configuration, status, and the
-explicitly listed forwarders; no D-Bus protocol or DMesg state logic is
-duplicated.
+**Exit:** The facade adds only construction, status, and the documented
+forwarders; no D-Bus protocol or DMesg state logic is duplicated.
 
 ### Step 8 — Build, packaging, and security gate
 
@@ -354,8 +369,10 @@ least-privilege policy example, which this specification does not provide.
   target are built only with `ENABLE_DBUS=ON`.
 - Review bus match policy, local-user trust, signal visibility, queue flood
   limits, and source-identity assumptions.
-- Add policy-fixture tests and deterministic allocation/stalled-writer failure
-  injection before treating those behaviors as fully verified.
+- Add policy-fixture tests before treating bus authorization behavior as fully
+  verified. Allocation failure and bounded stalled-output shutdown have
+  deterministic fault-injection coverage when the optional injection feature
+  is enabled.
 - Run relevant CTest groups, repeated private-bus tests, and sanitizers or
   Valgrind when available.
 

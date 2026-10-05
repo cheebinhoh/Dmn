@@ -12,6 +12,7 @@ module inventory together.
 | Module(s) | Specification | Main implementation |
 |---|---|---|
 | `Dmn_Async`, `Dmn_Proc`, `Dmn_Timer`, `Dmn_Singleton` | [Asynchronous execution and lifetime](async-execution-spec.md) | `include/dmn-async.hpp`, `include/dmn-proc.hpp`, `src/dmn-proc.cpp`, `include/dmn-timer.hpp`, `include/dmn-singleton.hpp` |
+| `Dmn_Proc` client-owned cooperative exit and D-Bus endpoint worker integration | [D-Bus endpoint workers using `Dmn_Proc`](dmn-proc-dbus-worker-integration-spec.md) | `src/dmn-dbus-io.cpp`, `include/dmn-dbus-io.hpp`, `include/dmn-proc.hpp`, `src/dmn-proc.cpp` |
 | Blocking queue API, mutex queue, lock-free queue, in-flight guard, deprecated bounded queue | [Queues and shutdown safety](blocking-queues-spec.md) | `include/dmn-blockingqueue*.hpp`, `include/dmn-inflight-guard.hpp`, `include/deprecated/dmn-limit-blockingqueue.hpp` |
 | `Dmn_Io`, `Dmn_Pipe`, deprecated `Dmn_TeePipe`, `Dmn_Socket` | [I/O and pipelines](io-pipelines-spec.md) | `include/dmn-io.hpp`, `include/dmn-pipe.hpp`, `include/deprecated/dmn-teepipe.hpp`, `include/dmn-socket.hpp`, `src/dmn-socket.cpp` |
 | `Dmn_Pub` / `Dmn_Sub` | [Publish/subscribe](pub-sub-spec.md) | `include/dmn-pub-sub.hpp` |
@@ -22,7 +23,7 @@ module inventory together.
 | Debug/utility helpers and umbrella include | [Utility and public-header surface](utility-headers-spec.md) | `include/dmn-debug.hpp`, `include/dmn-util.hpp`, `include/dmn.hpp` |
 | Daemon and standalone transport examples | [Executables and fixtures](executables-spec.md) | `src/dmn-dmesg-daemon.cpp`, `src/dmn-kafka-{sender,receiver}.cpp` |
 | `Dmn_DMesgNet` | Existing [network-layer specification](dmn-dmesgnet-spec.md) | `include/dmn-dmesgnet.hpp`, `src/dmn-dmesgnet.cpp` |
-| Generic D-Bus byte-signal I/O and `Dmn_DMesgNet` integration | [Shared signal/transport contract](dmesg-dbus-spec.md), [Option A direct I/O injection](dmesgnet-dbus-injection-spec.md), [Option B composition wrapper](dmesgnet-dbus-facade-spec.md), and [two-phase implementation/test plan](dmesg-dbus-plan.md) | `Dmn_DbusInput`/`Dmn_DbusOutput` and private-bus tests implemented behind `ENABLE_DBUS`; DMesg-specific Option B remains design-only |
+| Generic D-Bus byte-signal I/O and `Dmn_DMesgNet` integration | [Shared signal/transport contract](dmesg-dbus-spec.md), [Option A direct I/O injection](dmesgnet-dbus-injection-spec.md), [Option B composition wrapper](dmesgnet-dbus-facade-spec.md), and [two-phase implementation/test plan](dmesg-dbus-plan.md) | `Dmn_DbusInput`/`Dmn_DbusOutput` and `Dmn_DMesgDbus` facade are implemented behind `ENABLE_DBUS`; private-bus tests cover both |
 | `Dmn_IntervalBTree` | Existing [interval B-tree specification](dmn-interval-btree-spec.md) | `include/dmn-interval-btree.hpp`, `src/dmn-interval-btree.cpp` |
 | `Dmn_DLock` and its protobuf | Existing [DLock specification](dmn-distributed-lock-spec.md) and [network design](dmn-distributed-lock-dmesgnet-spec.md) | `include/dmn-dlock.hpp`, `src/proto/dmn-dlock.proto` |
 | Runtime-managed state and manager | Existing [runtime-state specification](runtime-state-machine-spec.md) | `include/dmn-runtime-state.hpp`, `src/dmn-runtime-state.cpp` |
