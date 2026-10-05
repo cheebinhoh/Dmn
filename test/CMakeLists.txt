@@ -133,6 +133,10 @@ if (ENABLE_FAULT_INJECTION)
 
   if (ENABLE_DBUS)
     ADD_TEST_FAULT_INJECTION_EXECUTABLE(
+      dmn-test-fi-dbus-worker-start-failure
+      dmn/timer/pipe/proc/pthread_create
+    )
+    ADD_TEST_FAULT_INJECTION_EXECUTABLE(
       dmn-test-fi-dbus-input-allocation
       dmn/dbus/input/payload_allocation
     )
@@ -146,6 +150,7 @@ if (ENABLE_FAULT_INJECTION)
     )
 
     foreach(test_target IN ITEMS
+            dmn-test-fi-dbus-worker-start-failure
             dmn-test-fi-dbus-input-allocation
             dmn-test-fi-dbus-output-stall
             dmn-test-fi-dbus-facade-rollback)
@@ -179,6 +184,7 @@ if (ENABLE_FAULT_INJECTION)
       dmn-test-fi-dbus-input-allocation
       dmn-test-fi-dbus-output-stall
       dmn-test-fi-dbus-facade-rollback
+      dmn-test-fi-dbus-worker-start-failure
       PROPERTIES ENVIRONMENT
                  "${fiu_loader_path}=${fiu_library_path}:${fiu_existing_loader_path}"
     )

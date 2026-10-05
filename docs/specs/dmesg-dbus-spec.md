@@ -257,13 +257,16 @@ fails explicitly. One input worker owns dispatch for its connection. One
 output worker owns send, watch/read-write, timeout, and disconnect processing
 for its connection. Do not call libdbus while holding an endpoint queue mutex.
 
-The implementation uses endpoint-owned `std::thread`s. Each loop has an
-endpoint-specific cooperative stop flag and bounded libdbus dispatch wait, so
-shutdown can signal it and join it without thread cancellation. `Dmn_Proc`
-could host the loops, but its cancellation-capable lifecycle adds no required
-behavior here. `Dmn_Pipe` is not a suitable worker abstraction: its worker
-consumes application queue items, whereas these workers must drive libdbus
-connection dispatch as well as operate on the endpoint queues.
+The implementation uses one `Dmn_Proc` pthread per endpoint. Each endpoint
+owns an atomic stop flag captured by the worker task; the loops check it
+between bounded libdbus dispatch waits. Shutdown sets the endpoint stop state
+and atomic flag, wakes local waiters, then joins with `Dmn_Proc::wait()` before
+removing the input filter or closing the connection. It does not use
+`stopExec()` or pthread cancellation for normal shutdown. Cooperative exit is
+provided by the endpoint-owned task state and does not extend the `Dmn_Proc`
+API. `Dmn_Pipe` is not a suitable worker abstraction: its worker consumes
+application queue items, whereas these workers must drive libdbus connection
+dispatch as well as operate on the endpoint queues.
 
 Expose a thread-safe, read-only `Dmn_DbusIoStatus` endpoint status
 snapshot with these proposed fields:
