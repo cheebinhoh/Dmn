@@ -463,8 +463,12 @@ multiple subscribers, exact signal matching, malformed/oversized input,
 queue bounds, shutdown cancellation, disconnect errors, and direct
 `Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level
 same-host evidence, not a policy certification or multi-host guarantee.
-With `ENABLE_FAULT_INJECTION=ON`, the same private-bus test executable
-verifies input allocation-failure reporting, finite shutdown with a retained
-output queue, and facade rollback after injected output-endpoint construction
-failure. `test/dmn-test-dmesgnet-shutdown.cpp` separately checks that injected
-input is shut down before the final Destroyed heartbeat write.
+With `ENABLE_FAULT_INJECTION=ON`, the separate
+`dmn-test-fi-dbus-input-allocation`, `dmn-test-fi-dbus-output-stall`, and
+`dmn-test-fi-dbus-facade-rollback` executables verify allocation-failure
+reporting, finite shutdown with a retained output queue, and facade rollback
+after injected output-endpoint construction failure, respectively. They are
+registered with `ADD_TEST_FAULT_INJECTION_EXECUTABLE` and the
+`fault-injection` CTest label. `test/dmn-test-dmesgnet-shutdown.cpp` separately
+uses fake endpoints to check that input shutdown precedes the final serialized
+Destroyed heartbeat write.

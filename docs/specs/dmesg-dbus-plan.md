@@ -50,9 +50,9 @@ input/output queue limits, unsupported `Dmn_Io` directions, input shutdown and
 disconnect semantics, output failure state, and two-way `Dmn_DMesgNet`
 application/lifecycle exchange.
 
-Daemon send/receive policy fixtures, deterministic allocator-failure
-injection, and a fake backend for forcing an output connection to stall
-through the shutdown deadline remain separate test-infrastructure work.
+Deterministic allocation-failure and retained-output-queue tests are in the
+separate fault-injection executables described in Steps 2 and 3. Daemon
+send/receive policy fixtures remain future test-infrastructure work.
 Private-bus tests must never connect to the host system bus.
 
 ## 3. Implementation steps with test-first exits
@@ -155,7 +155,7 @@ and oversized signals, explicit-address errors, repeated shutdown, and a
 concurrent shutdown/delivery race. With `ENABLE_FAULT_INJECTION=ON`, the
 dedicated `dmn-test-fi-dbus-input-allocation` executable enables the private
 `dmn/dbus/input/payload_allocation` point to exercise allocation-failure
-reporting. This test is labeled `fault-injection`; a separate
+status accounting. This test is labeled `fault-injection`; a separate
 AddMatch-denial policy fixture remains untested.
 
 ### Step 3 — Implement the output-only endpoint
