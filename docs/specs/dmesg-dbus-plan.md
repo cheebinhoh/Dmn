@@ -10,10 +10,12 @@ gate is complete. The shared transport contract is in
 Option A consists of `include/dmn-dbus-config.hpp`,
 `include/dmn-dbus-io.hpp`, and `src/dmn-dbus-io.cpp`, built by the
 optional `dmn-dbus` target. The checked-in
-`test/dmn-test-dbus-io.cpp` runs under `dbus-run-session` and includes
-real private-bus endpoint, disconnect, queue-limit, and `Dmn_DMesgNet`
-composition cases. It validates behavior against libdbus rather than a fake
-dispatch backend.
+`test/dmn-test-dbus-io.cpp` is registered through the existing
+`ADD_TEST_EXECUTABLE(dmn ...)` mechanism and includes real D-Bus endpoint,
+disconnect, queue-limit, and `Dmn_DMesgNet` composition cases. The test
+executable starts a private session daemon and points its session-bus clients
+at that daemon, so CTest does not depend on the caller's session bus. It
+validates behavior against libdbus rather than a fake dispatch backend.
 
 ## 1. Architectural contract
 
@@ -40,9 +42,11 @@ implementation.
 
 ## 2. Checked-in test target and remaining validation
 
-The current `dmn-test-dbus-io` executable is registered with the CTest
-label `dbus` and launched inside `dbus-run-session`. It covers
-configuration/address failures, exact byte and empty-payload delivery,
+The current `dmn-test-dbus-io` executable is registered through
+`ADD_TEST_EXECUTABLE(dmn ...)` and uses the existing `dmn` CTest label; it
+does not have a dedicated D-Bus label or a `dbus-run-session` command wrapper.
+The executable starts a private session daemon for its session-bus clients. It
+covers configuration/limit/address failures, exact byte and empty-payload delivery,
 multiple subscribers, exact signal matching, malformed/oversized input,
 input/output queue limits, unsupported `Dmn_Io` directions, input shutdown and
 disconnect semantics, output failure state, and two-way `Dmn_DMesgNet`
@@ -213,7 +217,8 @@ queue message-count, and queue-byte limits explicit configuration.
 - Caller may release its original `shared_ptr`s after construction; base
   ownership keeps adapters alive through base destruction.
 - Input/output status counters and queue byte/message depths remain readable
-  during active operation and after terminal failure.
+  during active operation and after terminal failure. Input depths include
+  only unread queued payloads; output depths exclude libdbus's internal queue.
 
 **Exit:** No use-after-free, leaked D-Bus connection, or blocked destructor.
 
@@ -332,17 +337,21 @@ duplicated.
 
 `ENABLE_DBUS` (off by default), pkg-config discovery for `dbus-1`, and the
 separate `dmn-dbus` target are implemented. The optional endpoint headers are
-installed only when the feature is enabled. Document session-bus invocation
-and provide a least-privilege policy example before system-bus deployment.
+installed only when the feature is enabled. The private-bus test requires
+`dbus-daemon`; system-bus deployment still requires a separately reviewed
+least-privilege policy example, which this specification does not provide.
 
 **Tests/review**
 
 - Configure/build/test with `ENABLE_DBUS=OFF`.
 - Configure/build/test with `ENABLE_DBUS=ON`.
+- Enabling the private-bus test target requires `dbus-daemon` to be available.
 - Missing libdbus with option off remains a successful core configuration;
   missing libdbus with option on fails with an explicit actionable message.
-- Core standalone-header check passes with the option off; optional D-Bus
-  endpoint/facade headers have their own enabled-build check.
+- The standalone-header check includes the D-Bus endpoint headers in either
+  build mode because they expose no libdbus types; it must pass with the
+  option both on and off. The optional implementation and private-bus test
+  target are built only with `ENABLE_DBUS=ON`.
 - Review bus match policy, local-user trust, signal visibility, queue flood
   limits, and source-identity assumptions.
 - Add policy-fixture tests and deterministic allocation/stalled-writer failure

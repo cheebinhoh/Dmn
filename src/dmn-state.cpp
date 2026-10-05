@@ -86,6 +86,7 @@ auto Dmn_State::runNext() -> bool {
     fn(*this);
   } catch (...) {
     m_runningStateCallback = false;
+
     throw;
   }
 

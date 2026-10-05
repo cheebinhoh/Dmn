@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
 
                 if (3 == lowRun) {
                   std::cout << "********* throw\n";
+
                   throw std::runtime_error("Error in lowRun to 3");
                 }
 
@@ -116,6 +117,7 @@ int main(int argc, char *argv[]) {
                     std::cout << "******* exception: " << e.what() << "\n";
                   } catch (...) {
                     hasExcept = true;
+
                     throw;
                   }
                 }

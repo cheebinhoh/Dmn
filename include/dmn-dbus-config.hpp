@@ -55,6 +55,8 @@ struct Dmn_DbusIoStatus {
   std::uint64_t oversized_received{};
   std::uint64_t input_allocation_errors{};
   std::uint64_t input_queue_drops{};
+  std::size_t pending_input_messages{};
+  std::size_t pending_input_bytes{};
   std::uint64_t output_queue_rejections{};
   std::uint64_t output_worker_errors{};
   std::size_t pending_output_messages{};

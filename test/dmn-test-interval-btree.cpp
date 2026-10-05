@@ -1389,6 +1389,7 @@ TEST(IntervalBTree, RemovalCallbackExceptionLeavesTreeValid) {
                                           const auto &, const auto &) {
                          if (throwOnCallback) {
                            throwOnCallback = false;
+
                            throw std::runtime_error("callback failure");
                          }
                        }));

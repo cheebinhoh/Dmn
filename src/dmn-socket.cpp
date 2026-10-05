@@ -168,6 +168,7 @@ void Dmn_Socket::write(const std::string &item) {
       sizeof(servaddr));
   if (n_write < 0 || static_cast<size_t>(n_write) != n_read) {
     const int error = n_write < 0 ? errno : EMSGSIZE;
+
     throw std::system_error(error, std::system_category(),
                             "Dmn_Socket: sendto");
   }

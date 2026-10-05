@@ -90,20 +90,18 @@ ADD_TEST_EXECUTABLE(dmn
 )
 
 if (ENABLE_DBUS)
-  find_program(DBUS_RUN_SESSION_EXECUTABLE dbus-run-session REQUIRED)
+  find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
 
-  add_executable(dmn-test-dbus-io
-                   dmn-test-dbus-io.cpp
+  ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-dbus-io
   )
-  target_compile_options(dmn-test-dbus-io PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_definitions(dmn-test-dbus-io
+                               PRIVATE
+                               DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
+  )
   target_link_libraries(dmn-test-dbus-io
-                          PRIVATE gtest_main dmn-dbus PkgConfig::DBUS
+                          PRIVATE dmn-dbus PkgConfig::DBUS
   )
-  add_test(NAME dmn-test-dbus-io
-             COMMAND ${DBUS_RUN_SESSION_EXECUTABLE} --
-                     $<TARGET_FILE:dmn-test-dbus-io>
-  )
-  set_tests_properties(dmn-test-dbus-io PROPERTIES LABELS "dbus")
 endif()
 
 # Keep fault-injection targets out of builds that do not enable libfiu.

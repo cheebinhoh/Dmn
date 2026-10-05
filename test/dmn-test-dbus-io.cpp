@@ -14,9 +14,13 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <future>
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <utility>
@@ -30,6 +34,41 @@
 namespace {
 
 using namespace std::chrono_literals;
+
+struct DbusConnectionDeleter {
+  void operator()(DBusConnection *connection) const noexcept {
+    if (connection != nullptr) {
+      dbus_connection_close(connection);
+      dbus_connection_unref(connection);
+    }
+  }
+};
+
+struct DbusMessageDeleter {
+  void operator()(DBusMessage *message) const noexcept {
+    if (message != nullptr) {
+      dbus_message_unref(message);
+    }
+  }
+};
+
+using DbusConnectionPtr =
+    std::unique_ptr<DBusConnection, DbusConnectionDeleter>;
+using DbusMessagePtr = std::unique_ptr<DBusMessage, DbusMessageDeleter>;
+
+class DbusErrorGuard {
+public:
+  DbusErrorGuard() { dbus_error_init(&m_error); }
+  ~DbusErrorGuard() { dbus_error_free(&m_error); }
+
+  DbusErrorGuard(const DbusErrorGuard &) = delete;
+  auto operator=(const DbusErrorGuard &) -> DbusErrorGuard & = delete;
+
+  auto get() -> DBusError * { return &m_error; }
+
+private:
+  DBusError m_error{};
+};
 
 auto makeConfig() -> dmn::Dmn_DbusConfig { return {}; }
 
@@ -55,25 +94,40 @@ auto makeSignal(std::string_view path, std::string_view interface,
                                  std::string{member}.c_str());
 }
 
+auto shellQuote(std::string_view value) -> std::string {
+  std::string quoted{"'"};
+  for (const auto character : value) {
+    if (character == '\'') {
+      quoted += "'\\''";
+    } else {
+      quoted += character;
+    }
+  }
+  quoted += '\'';
+
+  return quoted;
+}
+
 class PrivateBus {
 public:
   PrivateBus() {
-    FILE *process{popen("dbus-daemon --session --fork --print-address=1 "
-                        "--print-pid=1",
-                        "r")};
-    if (process == nullptr) {
+    using Pipe = std::unique_ptr<FILE, int (*)(FILE *)>;
+    const std::string command{
+        shellQuote(DMN_DBUS_DAEMON_EXECUTABLE) +
+        " --session --fork --print-address=1 --print-pid=1"};
+    Pipe process{popen(command.c_str(), "r"), pclose};
+    if (!process) {
       return;
     }
 
     char address[4096]{};
     char pid[64]{};
-    if (fgets(address, sizeof(address), process) != nullptr &&
-        fgets(pid, sizeof(pid), process) != nullptr) {
+    if (fgets(address, sizeof(address), process.get()) != nullptr &&
+        fgets(pid, sizeof(pid), process.get()) != nullptr) {
       m_address = address;
       m_address.erase(m_address.find_last_not_of("\r\n") + 1);
       m_pid = static_cast<pid_t>(std::strtol(pid, nullptr, 10));
     }
-    pclose(process);
   }
 
   ~PrivateBus() { stop(); }
@@ -112,61 +166,54 @@ private:
 };
 
 void sendMalformedSignal() {
-  DBusError error;
-  dbus_error_init(&error);
-  DBusConnection *connection = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
-  ASSERT_NE(connection, nullptr) << (error.message ? error.message : "");
-  dbus_connection_set_exit_on_disconnect(connection, FALSE);
+  DbusErrorGuard error;
+  DbusConnectionPtr connection{
+      dbus_bus_get_private(DBUS_BUS_SESSION, error.get())};
+  ASSERT_NE(connection.get(), nullptr)
+      << (error.get()->message ? error.get()->message : "");
+  dbus_connection_set_exit_on_disconnect(connection.get(), FALSE);
 
-  DBusMessage *message =
-      makeSignal("/org/dmn/DMesg1", "org.dmn.DMesg1.Transport", "Message");
-  ASSERT_NE(message, nullptr);
+  DbusMessagePtr message{
+      makeSignal("/org/dmn/DMesg1", "org.dmn.DMesg1.Transport", "Message")};
+  ASSERT_NE(message.get(), nullptr);
   const char *invalidPayload{"not-an-array"};
-  ASSERT_TRUE(dbus_message_append_args(message, DBUS_TYPE_STRING,
+  ASSERT_TRUE(dbus_message_append_args(message.get(), DBUS_TYPE_STRING,
                                        &invalidPayload, DBUS_TYPE_INVALID));
-  ASSERT_TRUE(dbus_connection_send(connection, message, nullptr));
-  dbus_connection_flush(connection);
-
-  dbus_message_unref(message);
-  dbus_connection_close(connection);
-  dbus_connection_unref(connection);
-  dbus_error_free(&error);
+  ASSERT_TRUE(dbus_connection_send(connection.get(), message.get(), nullptr));
+  dbus_connection_flush(connection.get());
 }
 
 void sendMethodCall() {
-  DBusError error;
-  dbus_error_init(&error);
-  DBusConnection *connection = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
-  ASSERT_NE(connection, nullptr) << (error.message ? error.message : "");
-  dbus_connection_set_exit_on_disconnect(connection, FALSE);
+  DbusErrorGuard error;
+  DbusConnectionPtr connection{
+      dbus_bus_get_private(DBUS_BUS_SESSION, error.get())};
+  ASSERT_NE(connection.get(), nullptr)
+      << (error.get()->message ? error.get()->message : "");
+  dbus_connection_set_exit_on_disconnect(connection.get(), FALSE);
 
-  DBusMessage *message{
+  DbusMessagePtr message{
       dbus_message_new_method_call("org.freedesktop.DBus", "/org/dmn/DMesg1",
                                    "org.dmn.DMesg1.Transport", "Message")};
-  ASSERT_NE(message, nullptr);
-  ASSERT_TRUE(dbus_connection_send(connection, message, nullptr));
-  dbus_connection_flush(connection);
-
-  dbus_message_unref(message);
-  dbus_connection_close(connection);
-  dbus_connection_unref(connection);
-  dbus_error_free(&error);
+  ASSERT_NE(message.get(), nullptr);
+  ASSERT_TRUE(dbus_connection_send(connection.get(), message.get(), nullptr));
+  dbus_connection_flush(connection.get());
 }
 
 void sendByteSignal(std::string_view path, const std::string &payload,
                     std::string_view interface = "org.dmn.DMesg1.Transport",
                     std::string_view member = "Message",
                     bool appendExtraArgument = false) {
-  DBusError error;
-  dbus_error_init(&error);
-  DBusConnection *connection = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
-  ASSERT_NE(connection, nullptr) << (error.message ? error.message : "");
-  dbus_connection_set_exit_on_disconnect(connection, FALSE);
+  DbusErrorGuard error;
+  DbusConnectionPtr connection{
+      dbus_bus_get_private(DBUS_BUS_SESSION, error.get())};
+  ASSERT_NE(connection.get(), nullptr)
+      << (error.get()->message ? error.get()->message : "");
+  dbus_connection_set_exit_on_disconnect(connection.get(), FALSE);
 
-  DBusMessage *message = makeSignal(path, interface, member);
-  ASSERT_NE(message, nullptr);
+  DbusMessagePtr message{makeSignal(path, interface, member)};
+  ASSERT_NE(message.get(), nullptr);
   DBusMessageIter iterator;
-  dbus_message_iter_init_append(message, &iterator);
+  dbus_message_iter_init_append(message.get(), &iterator);
   DBusMessageIter array;
   ASSERT_TRUE(dbus_message_iter_open_container(
       &iterator, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING, &array));
@@ -177,16 +224,12 @@ void sendByteSignal(std::string_view path, const std::string &payload,
   ASSERT_TRUE(dbus_message_iter_close_container(&iterator, &array));
   if (appendExtraArgument) {
     const char *extra{"extra"};
-    ASSERT_TRUE(dbus_message_append_args(message, DBUS_TYPE_STRING, &extra,
-                                         DBUS_TYPE_INVALID));
+    ASSERT_TRUE(dbus_message_append_args(message.get(), DBUS_TYPE_STRING,
+                                         &extra, DBUS_TYPE_INVALID));
   }
-  ASSERT_TRUE(dbus_connection_send(connection, message, nullptr));
-  dbus_connection_flush(connection);
 
-  dbus_message_unref(message);
-  dbus_connection_close(connection);
-  dbus_connection_unref(connection);
-  dbus_error_free(&error);
+  ASSERT_TRUE(dbus_connection_send(connection.get(), message.get(), nullptr));
+  dbus_connection_flush(connection.get());
 }
 
 TEST(DmnDbusIoTest, RejectsInvalidQueueLimitsBeforeOpeningBus) {
@@ -195,9 +238,22 @@ TEST(DmnDbusIoTest, RejectsInvalidQueueLimitsBeforeOpeningBus) {
   EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::invalid_argument);
 
   config = makeConfig();
+  config.max_queued_messages = 0;
+  EXPECT_THROW(dmn::Dmn_DbusOutput output{config}, std::invalid_argument);
+
+  config = makeConfig();
+  config.max_queued_bytes = 0;
+  EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::invalid_argument);
+
+  config = makeConfig();
   config.max_message_bytes = 8;
   config.max_queued_bytes = 7;
   EXPECT_THROW(dmn::Dmn_DbusOutput output{config}, std::invalid_argument);
+
+  config = makeConfig();
+  config.max_message_bytes =
+      static_cast<std::size_t>(std::numeric_limits<int>::max()) + 1;
+  EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::invalid_argument);
 }
 
 TEST(DmnDbusIoTest, RejectsInvalidSignalTupleBeforeOpeningBus) {
@@ -239,6 +295,7 @@ TEST(DmnDbusIoTest, ConfiguredSignalTupleIsIsolatedFromDefaultTuple) {
     EXPECT_THROW(customRead.get(), std::system_error);
     FAIL() << "custom signal tuple did not deliver its payload";
   }
+
   EXPECT_EQ(customRead.get(), payload);
   EXPECT_EQ(defaultRead.wait_for(100ms), std::future_status::timeout);
 
@@ -353,11 +410,16 @@ TEST(DmnDbusIoTest, DropsNewestWhenInputMessageQueueIsFull) {
 
   ASSERT_TRUE(waitUntil([&input] {
     const auto status = input.status();
+
     return status.messages_received + status.input_queue_drops == 2;
   }));
   EXPECT_EQ(input.status().messages_received, 1U);
   EXPECT_EQ(input.status().input_queue_drops, 1U);
+  EXPECT_EQ(input.status().pending_input_messages, 1U);
+  EXPECT_EQ(input.status().pending_input_bytes, 4U);
   EXPECT_EQ(input.read(), "one!");
+  EXPECT_EQ(input.status().pending_input_messages, 0U);
+  EXPECT_EQ(input.status().pending_input_bytes, 0U);
 }
 
 TEST(DmnDbusIoTest, EnforcesInputByteLimitIndependentlyOfMessageCount) {
@@ -377,11 +439,16 @@ TEST(DmnDbusIoTest, EnforcesInputByteLimitIndependentlyOfMessageCount) {
 
   ASSERT_TRUE(waitUntil([&input] {
     const auto status = input.status();
+
     return status.messages_received + status.input_queue_drops == 2;
   }));
   EXPECT_EQ(input.status().messages_received, 1U);
   EXPECT_EQ(input.status().input_queue_drops, 1U);
+  EXPECT_EQ(input.status().pending_input_messages, 1U);
+  EXPECT_EQ(input.status().pending_input_bytes, 4U);
   EXPECT_EQ(input.read(), "full");
+  EXPECT_EQ(input.status().pending_input_messages, 0U);
+  EXPECT_EQ(input.status().pending_input_bytes, 0U);
 }
 
 TEST(DmnDbusIoTest, OutputQueueLimitsRejectSynchronouslyAndStayBounded) {
@@ -402,6 +469,7 @@ TEST(DmnDbusIoTest, OutputQueueLimitsRejectSynchronouslyAndStayBounded) {
       ++byteRejections;
     }
   }
+
   EXPECT_GT(byteRejections, 0U);
   EXPECT_EQ(byteLimited.status().output_queue_rejections, byteRejections);
   EXPECT_LE(byteLimited.status().pending_output_bytes, kPayloadBytes);
@@ -420,6 +488,7 @@ TEST(DmnDbusIoTest, OutputQueueLimitsRejectSynchronouslyAndStayBounded) {
       ++countRejections;
     }
   }
+
   EXPECT_GT(countRejections, 0U);
   EXPECT_EQ(countLimited.status().output_queue_rejections, countRejections);
   EXPECT_LE(countLimited.status().pending_output_messages, 1U);
@@ -481,6 +550,7 @@ TEST(DmnDbusIoTest, DrainsQueuedInputBeforeReportingBusDisconnect) {
   } catch (const std::system_error &error) {
     EXPECT_EQ(error.code(), std::make_error_code(std::errc::connection_reset));
   }
+
   EXPECT_THROW(output.write(std::string{"after-disconnect"}),
                std::system_error);
 }
@@ -529,6 +599,7 @@ TEST(DmnDbusIoTest, ConcurrentSignalDeliveryAndInputShutdownCompleteSafely) {
     EXPECT_EQ(error.code(),
               std::make_error_code(std::errc::operation_canceled));
   }
+
   EXPECT_EQ(input.status().terminal_error, std::error_code{});
 }
 
@@ -564,10 +635,12 @@ TEST(DmnDbusIoTest,
           ++messagesFromA;
           continue;
         }
+
         if (message.topic() == "from-b") {
           ++messagesFromB;
           continue;
         }
+
         if (message.type() != dmn::DMesgTypePb::sys) {
           continue;
         }
@@ -651,6 +724,7 @@ TEST(DmnDbusIoTest,
   }));
   ASSERT_TRUE(waitUntil([&outputA] {
     const auto status = outputA->status();
+
     return status.messages_queued_to_libdbus == status.messages_written;
   }));
   ASSERT_TRUE(waitUntil([&destroyedA] { return destroyedA.load(); }));
@@ -662,3 +736,23 @@ TEST(DmnDbusIoTest,
 }
 
 } // namespace
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  // Keep session-bus tests isolated from the caller's environment.
+  PrivateBus bus;
+  if (!bus.valid()) {
+    std::fprintf(stderr, "unable to start private D-Bus session daemon\n");
+
+    return EXIT_FAILURE;
+  }
+
+  if (setenv("DBUS_SESSION_BUS_ADDRESS", bus.address().c_str(), 1) != 0) {
+    std::perror("unable to set private D-Bus session address");
+
+    return EXIT_FAILURE;
+  }
+
+  return RUN_ALL_TESTS();
+}

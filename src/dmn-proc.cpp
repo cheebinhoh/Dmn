@@ -209,6 +209,7 @@ auto Dmn_Proc::stopExec() -> bool {
     err = pthread_cancel(m_th);
     if (0 != err) {
       m_cancel_requested.store(false, std::memory_order_release);
+
       throw std::runtime_error(std::system_category().message(err));
     }
 

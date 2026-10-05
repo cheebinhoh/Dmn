@@ -149,6 +149,13 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
   precedes a return that is separated from prior statements, keep the comment
   attached and put the empty line before the comment. Inline return
   expressions are not split solely to add vertical spacing.
+- Separate a standalone `throw` from preceding executable statements with an
+  empty line only when those statements are at the same block level. Do not
+  add a blank line when the throw is the only statement in its block, such as
+  `if (condition) { throw error; }`. If an explanatory comment immediately
+  precedes a throw that is separated from prior statements, keep the comment
+  attached and put the empty line before the comment. Keep a throw expression
+  together; do not split it solely to add vertical spacing.
 - Keep braces, indentation, continuation alignment, and other whitespace
   consistent with clang-format's LLVM output.
 

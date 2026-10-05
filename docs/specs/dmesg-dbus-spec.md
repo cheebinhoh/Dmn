@@ -238,7 +238,9 @@ for local bus policy/diagnostics.
   `max_message_bytes` item.
 - On shutdown, stop admission and attempt to submit application-queued
   messages until a finite deadline (proposed default: 1 second). At deadline,
-  report the remaining application-queue count/bytes and close the connection.
+  record remaining application-queue count/bytes and pending libdbus bytes
+  before closing the connection. If either queue still contains pending output,
+  emit a rate-limited shutdown diagnostic.
   Messages already accepted into libdbus may still be discarded on close;
   this is best effort and not a remote-delivery guarantee. The endpoint
   destructor must not wait indefinitely for a blocked flush.
@@ -255,6 +257,14 @@ fails explicitly. One input worker owns dispatch for its connection. One
 output worker owns send, watch/read-write, timeout, and disconnect processing
 for its connection. Do not call libdbus while holding an endpoint queue mutex.
 
+The implementation uses endpoint-owned `std::thread`s. Each loop has an
+endpoint-specific cooperative stop flag and bounded libdbus dispatch wait, so
+shutdown can signal it and join it without thread cancellation. `Dmn_Proc`
+could host the loops, but its cancellation-capable lifecycle adds no required
+behavior here. `Dmn_Pipe` is not a suitable worker abstraction: its worker
+consumes application queue items, whereas these workers must drive libdbus
+connection dispatch as well as operate on the endpoint queues.
+
 Expose a thread-safe, read-only `Dmn_DbusIoStatus` endpoint status
 snapshot with these proposed fields:
 
@@ -267,6 +277,8 @@ snapshot with these proposed fields:
 | `oversized_received` | Matching signals rejected for exceeding the payload limit. |
 | `input_allocation_errors` | Valid matched signals that could not be copied/enqueued due to allocation failure. |
 | `input_queue_drops` | Valid matching signals dropped because the input queue was full. |
+| `pending_input_messages` | Items currently waiting in the bounded input queue. |
+| `pending_input_bytes` | Payload bytes currently waiting in the bounded input queue. |
 | `output_queue_rejections` | Writes rejected because the output queue's message-count or byte cap was full. |
 | `output_worker_errors` | Worker-level libdbus/send/disconnect failures; not a count of messages lost inside libdbus. |
 | `pending_output_messages` | Items waiting in the adapter's bounded output queue, excluding libdbus's internal queue. |
@@ -277,9 +289,9 @@ snapshot with these proposed fields:
 | `libdbus_bytes_discarded_on_shutdown` | Pending libdbus output bytes observed immediately before connection close; not a message count. |
 | `terminal_error` | First terminal I/O error, or an empty `std::error_code` if none, retained until endpoint destruction. |
 
-Counters and shutdown totals reset only at construction; pending queue values
-change during operation. Reads are thread-safe. Status does not assert peer
-receipt. V1 uses the repository's
+Counters and shutdown totals reset only at construction; pending input and
+output queue values change as items are admitted or removed. Reads are
+thread-safe. Status does not assert peer receipt. V1 uses the repository's
 existing stderr diagnostic convention rather than adding a user callback
 whose blocking, reentrancy, and exception behavior would need a separate
 contract. Direct-injection users must be able to query endpoint snapshots;
@@ -299,9 +311,10 @@ heartbeat. For Option B, declare endpoint owners before the internal
 
 - Use libdbus public APIs; do not depend on private `dbus-daemon` internals.
 - The bus performs local connection authentication (typically EXTERNAL on
-  Unix sockets) and applies its configured send/receive policy. Supply example
-  least-privilege policy for the configured interface/path/signal; do not recommend
-  opening unrestricted system-bus access.
+  Unix sockets) and applies its configured send/receive policy. System-bus
+  deployments need a separately reviewed least-privilege policy for the
+  configured interface/path/signal; this specification does not provide a
+  deployment policy example. Do not recommend unrestricted system-bus access.
 - Treat every signal body as untrusted, even after local bus authentication.
   Validate size before allocation/copy. DMesgNet currently has no general
   authenticated peer identity or complete validation of remote DMesg claims.
@@ -441,10 +454,11 @@ Official D-Bus references, reviewed 2026-10-04:
 - Repository contracts: [`Dmn_DMesgNet`](dmn-dmesgnet-spec.md) and
   [`Dmn_Io`/pipelines](io-pipelines-spec.md).
 
-Test evidence: `test/dmn-test-dbus-io.cpp`, registered as
-`dmn-test-dbus-io` with the `dbus` CTest label, exercises the public
-endpoints through `dbus-run-session` and also starts an isolated nested daemon
-for disconnect behavior. It verifies binary and empty payload fidelity,
+Test evidence: `test/dmn-test-dbus-io.cpp`, registered through
+`ADD_TEST_EXECUTABLE(dmn ...)` with the existing `dmn` CTest label, exercises
+the public endpoints on a private session daemon started by the test
+executable; it also starts isolated nested daemons for disconnect and
+bus-isolation behavior. It verifies binary and empty payload fidelity,
 multiple subscribers, exact signal matching, malformed/oversized input,
 queue bounds, shutdown cancellation, disconnect errors, and direct
 `Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level

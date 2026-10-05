@@ -215,6 +215,7 @@ TEST(DmnTimer, NonStandardCallbackExceptionCanBeReported) {
   std::atomic_bool callback_run{};
   dmn::Dmn_Timer timer{std::chrono::milliseconds(20), [&]() {
                          callback_run.store(true, std::memory_order_release);
+
                          throw 7;
                        }};
 
