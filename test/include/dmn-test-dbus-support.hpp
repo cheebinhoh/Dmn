@@ -13,6 +13,7 @@
 #include <dbus/dbus.h>
 #include <gtest/gtest.h>
 
+#include <cerrno>
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
@@ -21,6 +22,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <thread>
 
 #include <csignal>
@@ -91,6 +93,64 @@ inline auto shellQuote(std::string_view value) -> std::string {
   return quoted;
 }
 
+class TempConfigFile {
+public:
+  TempConfigFile() {
+    m_fd = mkstemp(m_path);
+    if (m_fd < 0) {
+      throw std::system_error(errno, std::generic_category(),
+                              "unable to create private D-Bus config file");
+    }
+  }
+
+  ~TempConfigFile() {
+    if (m_fd >= 0) {
+      close(m_fd);
+    }
+
+    if (m_path[0] != '\0') {
+      unlink(m_path);
+    }
+  }
+
+  TempConfigFile(const TempConfigFile &) = delete;
+  auto operator=(const TempConfigFile &) -> TempConfigFile & = delete;
+
+  void write(std::string_view contents) {
+    std::size_t written{};
+    while (written < contents.size()) {
+      const auto result{
+          ::write(m_fd, contents.data() + written, contents.size() - written)};
+      if (result < 0 && errno == EINTR) {
+        continue;
+      }
+
+      if (result <= 0) {
+        const auto error{result < 0 ? errno : EIO};
+        throw std::system_error(error, std::generic_category(),
+                                "unable to write private D-Bus config file");
+      }
+
+      written += static_cast<std::size_t>(result);
+    }
+
+    const auto fd{m_fd};
+    m_fd = -1;
+    if (close(fd) != 0) {
+      const auto error{errno};
+      throw std::system_error(error, std::generic_category(),
+                              "unable to close private D-Bus config file");
+    }
+  }
+
+  auto path() const -> const char * { return m_path; }
+
+private:
+  char m_path[sizeof("/tmp/dmn-test-dbus-config-XXXXXX")]{
+      "/tmp/dmn-test-dbus-config-XXXXXX"};
+  int m_fd{-1};
+};
+
 /**
  * @brief Own a temporary private session bus for one test process.
  *
@@ -100,12 +160,30 @@ inline auto shellQuote(std::string_view value) -> std::string {
  */
 class PrivateBus {
 public:
-  /** @brief Start a session daemon and capture its address and process ID. */
-  PrivateBus() {
+  /**
+   * @brief Start a private session daemon and capture its address and process
+   * ID.
+   *
+   * @param daemonConfig Optional complete dbus-daemon XML configuration.
+   */
+  explicit PrivateBus(std::string_view daemonConfig = {}) {
+    std::unique_ptr<TempConfigFile> configFile;
+    if (!daemonConfig.empty()) {
+      configFile = std::make_unique<TempConfigFile>();
+      configFile->write(daemonConfig);
+    }
+
     using Pipe = std::unique_ptr<FILE, int (*)(FILE *)>;
-    const std::string command{
-        shellQuote(DMN_DBUS_DAEMON_EXECUTABLE) +
-        " --session --fork --print-address=1 --print-pid=1"};
+    std::string command{shellQuote(DMN_DBUS_DAEMON_EXECUTABLE)};
+    if (configFile == nullptr) {
+      command += " --session";
+    } else {
+      command += " --config-file=";
+      command += shellQuote(configFile->path());
+    }
+
+    command += " --fork --print-address=1 --print-pid=1";
+
     Pipe process{popen(command.c_str(), "r"), pclose};
     if (!process) {
       return;
@@ -119,6 +197,8 @@ public:
       m_address.erase(m_address.find_last_not_of("\r\n") + 1);
       m_pid = static_cast<pid_t>(std::strtol(pid, nullptr, 10));
     }
+
+    process.reset();
   }
 
   ~PrivateBus() { stop(); }
@@ -194,23 +274,13 @@ inline auto waitUntil(Predicate predicate,
 }
 
 /**
- * @brief Count names currently registered with the private session bus.
+ * @brief Count names registered on a connected private D-Bus bus.
  *
- * This is useful for checking connection cleanup after construction rollback;
- * callers should compare counts on the same bus and allow asynchronous cleanup
- * to settle with `waitUntil()`.
- *
- * @throws std::runtime_error if the bus cannot be queried or returns an
- *         invalid reply.
+ * @throws std::runtime_error if the bus returns an invalid reply or the
+ *         `ListNames` call fails.
  */
-inline auto sessionBusNameCount() -> std::size_t {
+inline auto connectionNameCount(DBusConnection *connection) -> std::size_t {
   DbusErrorGuard error;
-  DbusConnectionPtr connection{
-      dbus_bus_get_private(DBUS_BUS_SESSION, error.get())};
-  if (connection == nullptr) {
-    throw std::runtime_error("unable to connect to private bus for name count");
-  }
-
   DbusMessagePtr request{dbus_message_new_method_call(
       "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus",
       "ListNames")};
@@ -219,7 +289,7 @@ inline auto sessionBusNameCount() -> std::size_t {
   }
 
   DbusMessagePtr reply{dbus_connection_send_with_reply_and_block(
-      connection.get(), request.get(), 3000, error.get())};
+      connection, request.get(), 3000, error.get())};
   if (reply == nullptr) {
     throw std::runtime_error("unable to list private bus connection names");
   }
@@ -242,6 +312,44 @@ inline auto sessionBusNameCount() -> std::size_t {
   }
 
   return count;
+}
+
+/**
+ * @brief Count names registered with the private bus at @p address.
+ *
+ * @throws std::runtime_error if the bus cannot be queried or returns an
+ *         invalid reply.
+ */
+inline auto busNameCount(std::string_view address) -> std::size_t {
+  DbusErrorGuard error;
+  DbusConnectionPtr connection{
+      dbus_connection_open_private(std::string{address}.c_str(), error.get())};
+  if (connection == nullptr ||
+      !dbus_bus_register(connection.get(), error.get())) {
+    throw std::runtime_error(
+        error.get()->message == nullptr
+            ? "unable to connect to private bus for name count"
+            : error.get()->message);
+  }
+
+  return connectionNameCount(connection.get());
+}
+
+/**
+ * @brief Count names currently registered with the private session bus.
+ *
+ * @throws std::runtime_error if the bus cannot be queried or returns an
+ *         invalid reply.
+ */
+inline auto sessionBusNameCount() -> std::size_t {
+  DbusErrorGuard error;
+  DbusConnectionPtr connection{
+      dbus_bus_get_private(DBUS_BUS_SESSION, error.get())};
+  if (connection == nullptr) {
+    throw std::runtime_error("unable to connect to private bus for name count");
+  }
+
+  return connectionNameCount(connection.get());
 }
 
 } // namespace dmn_test_dbus

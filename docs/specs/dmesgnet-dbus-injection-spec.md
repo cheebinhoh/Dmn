@@ -393,22 +393,36 @@ configuration/address failures, queue limits and overflow, malformed and
 oversized payloads, endpoint shutdown/disconnect behavior, and
 `Dmn_DMesgNet` composition over a private bus. The Option B facade test also
 checks bidirectional message exchange with a directly injected Option A peer.
-`test/dmn-test-dmesgnet-shutdown.cpp` uses fake endpoints to assert input
-shutdown precedes the final serialized `Destroyed` heartbeat. With
-`ENABLE_FAULT_INJECTION=ON`, separate test programs inject input payload
+With `ENABLE_FAULT_INJECTION=ON`, separate test programs inject input payload
 allocation failure, retain output messages through the finite drain deadline,
-and fail facade output-endpoint creation after input setup to verify rollback.
-Each test enables only its corresponding libfiu point through
-`ADD_TEST_FAULT_INJECTION_EXECUTABLE`; all have the `fault-injection` CTest
-label and run with `ctest --test-dir build -L fault-injection`. The facade's
-private construction helper is explicitly named
-`createOutputForFaultInjection`; the seam is compiled only with fault
-injection enabled and is not public API. These tests make no claims about
-remote-host reachability, consensus, quorum, or exactly-once delivery.
+fail D-Bus worker startup, and fail facade output-endpoint creation after
+input setup to verify rollback. Each fault-injection test enables only its
+corresponding libfiu point through `ADD_TEST_FAULT_INJECTION_EXECUTABLE`; all
+have the `fault-injection` CTest label and run with
+`ctest --test-dir build -L fault-injection`. The facade's private construction
+helper is explicitly named `createOutputForFaultInjection`; the seam is
+compiled only with fault injection enabled and is not public API.
+
+The regular endpoint suite includes a private-daemon send-policy fixture that
+denies the client's `org.freedesktop.DBus.AddMatch` method call. It verifies
+input construction fails with an explicit error and releases the connection
+rather than exposing a partially initialized endpoint. This exercises
+AddMatch setup failure only; it is not a general bus-policy certification.
+
+`test/dmn-test-dmesgnet-shutdown.cpp` uses fake endpoints to verify that
+`Dmn_DMesgNet` calls input shutdown before writing the final serialized
+`Destroyed` heartbeat. Its blocking fake input must signal when `read()` has
+entered its wait; the test waits for that signal before destroying the node
+and verifies the read exits after shutdown and before the final heartbeat.
+This proves shutdown wakes an already-blocked input read, not merely that a
+read started after shutdown returns promptly.
+
+These tests make no claims about remote-host reachability, consensus, quorum,
+or exactly-once delivery.
 
 No public endpoint-pair factory was added; callers construct the independently
-owned input and output endpoints directly. Separate fake-I/O coverage of input
-shutdown wakeup semantics and AddMatch-denial policy fixtures remain.
+owned input and output endpoints directly. Broader send/receive policy
+behavior and deployment policy certification remain outside this test scope.
 
 ## 8. Go/no-go assessment
 

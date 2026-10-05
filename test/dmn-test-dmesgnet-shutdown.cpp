@@ -10,20 +10,27 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
 
 struct ShutdownEvents {
-  std::mutex mutex;
-  std::condition_variable inputShutdown;
-  std::vector<std::string> sequence;
-  bool stopped{};
+  std::mutex m_mutex;
+  std::condition_variable m_input_shutdown;
+  std::condition_variable m_read_started;
+  std::condition_variable m_read_exited;
+  std::vector<std::string> m_sequence;
+  bool m_stopped{};
+  bool m_read_entered{};
+  bool m_reader_exited{};
+  bool m_shutdown_woke_reader{};
 };
 
 class BlockingInput final : public dmn::Dmn_Io<std::string> {
@@ -32,8 +39,14 @@ public:
       : m_events{std::move(events)} {}
 
   auto read() -> std::optional<std::string> override {
-    std::unique_lock lock{m_events->mutex};
-    m_events->inputShutdown.wait(lock, [this] { return m_events->stopped; });
+    std::unique_lock lock{m_events->m_mutex};
+    m_events->m_read_entered = true;
+    m_events->m_read_started.notify_all();
+    m_events->m_input_shutdown.wait(lock,
+                                    [this] { return m_events->m_stopped; });
+    m_events->m_reader_exited = true;
+    m_events->m_sequence.emplace_back("input-read-exit");
+    m_events->m_read_exited.notify_all();
 
     return std::nullopt;
   }
@@ -43,14 +56,19 @@ public:
 
   void shutdown() override {
     {
-      std::lock_guard lock{m_events->mutex};
-      if (!m_events->stopped) {
-        m_events->sequence.emplace_back("input-shutdown");
-        m_events->stopped = true;
+      std::lock_guard lock{m_events->m_mutex};
+      if (!m_events->m_stopped) {
+        m_events->m_sequence.emplace_back("input-shutdown");
+        m_events->m_stopped = true;
       }
     }
 
-    m_events->inputShutdown.notify_all();
+    m_events->m_input_shutdown.notify_all();
+    std::unique_lock lock{m_events->m_mutex};
+    m_events->m_shutdown_woke_reader =
+        m_events->m_read_exited.wait_for(lock, std::chrono::seconds(2), [this] {
+          return m_events->m_reader_exited;
+        });
   }
 
 private:
@@ -73,8 +91,8 @@ private:
     if (message.ParseFromString(payload) &&
         message.type() == dmn::DMesgTypePb::sys &&
         message.body().sys().self().state() == dmn::DMesgStatePb::Destroyed) {
-      std::lock_guard lock{m_events->mutex};
-      m_events->sequence.emplace_back("destroyed-heartbeat");
+      std::lock_guard lock{m_events->m_mutex};
+      m_events->m_sequence.emplace_back("destroyed-heartbeat");
     }
   }
 
@@ -87,13 +105,26 @@ TEST(DmnDmesgNetShutdownTest, StopsInputBeforeWritingDestroyedHeartbeat) {
   auto events{std::make_shared<ShutdownEvents>()};
   auto input{std::make_shared<BlockingInput>(events)};
   auto output{std::make_shared<RecordingOutput>(events)};
+  auto node{
+      std::make_unique<dmn::Dmn_DMesgNet>("shutdown-order", input, output)};
 
-  { dmn::Dmn_DMesgNet node{"shutdown-order", input, output}; }
+  std::unique_lock lock{events->m_mutex};
+  const bool readBlocked{
+      events->m_read_started.wait_for(lock, std::chrono::seconds(2), [&events] {
+        return events->m_read_entered;
+      })};
+  lock.unlock();
+  ASSERT_TRUE(readBlocked) << "Dmn_DMesgNet input task did not enter read()";
 
-  std::lock_guard lock{events->mutex};
-  ASSERT_EQ(events->sequence.size(), 2U);
-  EXPECT_EQ(events->sequence[0], "input-shutdown");
-  EXPECT_EQ(events->sequence[1], "destroyed-heartbeat");
+  node.reset();
+
+  lock.lock();
+  EXPECT_TRUE(events->m_reader_exited);
+  EXPECT_TRUE(events->m_shutdown_woke_reader);
+  ASSERT_EQ(events->m_sequence.size(), 3U);
+  EXPECT_EQ(events->m_sequence[0], "input-shutdown");
+  EXPECT_EQ(events->m_sequence[1], "input-read-exit");
+  EXPECT_EQ(events->m_sequence[2], "destroyed-heartbeat");
 }
 
 int main(int argc, char **argv) {

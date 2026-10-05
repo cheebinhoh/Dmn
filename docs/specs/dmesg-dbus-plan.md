@@ -52,7 +52,9 @@ application/lifecycle exchange.
 
 Deterministic allocation-failure and retained-output-queue tests are in the
 separate fault-injection executables described in Steps 2 and 3. Daemon
-send/receive policy fixtures remain future test-infrastructure work.
+policy coverage includes a private-daemon denial of the client's AddMatch
+method call; broader send/receive policy fixtures remain future
+test-infrastructure work.
 Private-bus tests must never connect to the host system bus.
 
 ## 3. Implementation steps with test-first exits
@@ -156,7 +158,10 @@ concurrent shutdown/delivery race. With `ENABLE_FAULT_INJECTION=ON`, the
 dedicated `dmn-test-fi-dbus-input-allocation` executable enables the private
 `dmn/dbus/input/payload_allocation` point to exercise allocation-failure
 status accounting. This test is labeled `fault-injection`; a separate
-AddMatch-denial policy fixture remains untested.
+private-daemon policy fixture denies the client's AddMatch method call and
+verifies that input construction fails with an explicit error and releases the
+connection. This exercises match-setup failure handling, not general bus
+policy correctness.
 
 ### Step 3 — Implement the output-only endpoint
 
@@ -255,7 +260,8 @@ address. Start at least two input subscribers and one output publisher.
   undelivered queued items.
 - Send-policy denial is surfaced as output failure. Receive-policy denial
   does not imply a per-message error notification.
-- Match setup denial fails input endpoint construction before a usable
+- A private-daemon send-policy denial of the client's AddMatch method call
+  fails input endpoint construction with an explicit error before a usable
   `Dmn_DMesgNet` instance is exposed.
 - Signal flood reaches input queue cap; memory stays bounded, newest-message
   drop counter increments, and dispatch remains responsive.
@@ -316,15 +322,28 @@ macro.
   compiles the facade header without libdbus declarations.
 - A private-bus test exchanges application messages in both directions
   between a facade node and an Option A directly injected participant.
+- The facade status test stops its configured private bus and verifies the
+  input and output status snapshots report their respective terminal errors.
 - Member order keeps endpoint owners alive through node destruction, allowing
   input shutdown before the final best-effort output heartbeat.
 - With `ENABLE_FAULT_INJECTION=ON`, the dedicated
   `dmn-test-fi-dbus-facade-rollback` test activates the private
   `dmn/dbus/facade/output_endpoint_creation` point, which throws after input
   setup; the test verifies RAII closes the input connection. The private
-  helper is named
-  `createOutputForFaultInjection` to distinguish it from ordinary endpoint
-  construction; the injection adds no facade API or endpoint factory.
+  FIU-guarded helper is named `createOutputForFaultInjection` to distinguish
+  it from ordinary endpoint construction; the injection adds no facade API or
+  endpoint factory.
+- With `ENABLE_FAULT_INJECTION=ON`, the dedicated
+  `dmn-test-fi-dbus-output-worker-start-failure` test fails startup inside the
+  output endpoint after the input endpoint has started. It verifies the
+  endpoint startup error is propagated and both connections are released.
+- The regular D-Bus endpoint tests start a private daemon with a send policy
+  denying the client's AddMatch method call. Input construction must report
+  the AddMatch error and release its connection; this fixture does not certify
+  broader bus policy behavior.
+- The fake-I/O shutdown test waits until `Dmn_DMesgNet`'s input task is inside
+  the blocking `read()` before destroying the node, then verifies the read
+  exits after input shutdown and before the final heartbeat write.
 
 **Exit:** The facade adds only construction, status, and the documented
 forwarders; no D-Bus protocol or DMesg state logic is duplicated.

@@ -459,8 +459,14 @@ class Dmn_DbusOutput::Impl {
 public:
   explicit Impl(const Dmn_DbusConfig &config)
       : m_config{config}, m_connection{connectBus(config)} {
+#ifdef FIU_ENABLE
+    if (fiu_fail("dmn/dbus/output/worker_start") != 0 ||
+        !m_worker.exec(
+            [this, &workerStop = m_worker_stop] { sendLoop(workerStop); })) {
+#else
     if (!m_worker.exec(
             [this, &workerStop = m_worker_stop] { sendLoop(workerStop); })) {
+#endif
       throw std::system_error(
           std::make_error_code(std::errc::resource_unavailable_try_again),
           "Dmn_DbusOutput: unable to start send worker");

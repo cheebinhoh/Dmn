@@ -128,7 +128,8 @@ They must not access the developer's session or system bus.
 
 - Compile the facade header on its own; verify aliases and supported operations
   are usable, the class is not derived from `Dmn_DMesgNet`, and copying/moving
-  is disabled.
+  is disabled. The `dmn-standalone-header-check` target compiles every public
+  header in an otherwise empty translation unit, including this header.
 - Verify invalid configuration and an unusable explicit address fail during
   construction rather than falling back to another bus.
 - Verify `HandlerSpec` fields are forwarded; exercise the handler factory,
@@ -139,13 +140,16 @@ They must not access the developer's session or system bus.
   payloads in both directions.
 - Verify input and output status are separately observable and that facade
   destruction leaves output available long enough for the node's final
-  best-effort heartbeat.
+  best-effort heartbeat. After stopping the configured private bus, verify
+  both status snapshots expose their endpoint's terminal disconnect error.
+- With `ENABLE_FAULT_INJECTION=ON`, fail output worker startup inside the
+  output endpoint after the facade has created its input endpoint. Verify the
+  startup error propagates and construction rollback releases both endpoint
+  connections. This complements the facade-level injected output-creation
+  failure, which verifies rollback before output endpoint construction.
 - With `ENABLE_FAULT_INJECTION=ON`, fail output-endpoint creation after input
   creation and verify construction unwinds the input connection without
-  exposing a partially constructed facade or adding a public test hook. Keep
-  the private helper visibly fault-injection-specific
-  (`createOutputForFaultInjection`) and compile it only when fault injection
-  is enabled.
+  exposing a partially constructed facade or adding a public test hook.
 
 The tests should use predicates/time bounds for asynchronous readiness and
 delivery rather than relying on fixed sleeps. They assert the facade boundary

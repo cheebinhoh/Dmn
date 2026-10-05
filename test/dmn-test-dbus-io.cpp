@@ -168,6 +168,40 @@ TEST(DmnDbusIoTest, RejectsInvalidExplicitBusAddressWithoutFallback) {
   EXPECT_THROW(dmn::Dmn_DbusOutput output{config}, std::system_error);
 }
 
+TEST(DmnDbusIoTest, AddMatchPolicyDenialFailsConstructionAndClosesConnection) {
+  constexpr std::string_view daemonConfig{R"xml(
+<busconfig>
+  <type>session</type>
+  <listen>unix:tmpdir=/tmp</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+    <deny send_destination="org.freedesktop.DBus"
+          send_interface="org.freedesktop.DBus" send_member="AddMatch"/>
+  </policy>
+</busconfig>
+)xml"};
+  PrivateBus bus{daemonConfig};
+  ASSERT_TRUE(bus.valid());
+
+  auto config = makeConfig();
+  config.bus_address = bus.address();
+  const auto initialNameCount{dmn_test_dbus::busNameCount(bus.address())};
+
+  try {
+    dmn::Dmn_DbusInput input{config};
+    FAIL() << "Expected AddMatch to be denied by the private bus policy";
+  } catch (const std::system_error &error) {
+    EXPECT_EQ(error.code(), std::make_error_code(std::errc::io_error));
+  }
+
+  EXPECT_TRUE(waitUntil([&bus, initialNameCount] {
+    return dmn_test_dbus::busNameCount(bus.address()) == initialNameCount;
+  }));
+}
+
 TEST(DmnDbusIoTest, ConfiguredSignalTupleIsIsolatedFromDefaultTuple) {
   auto customConfig = makeConfig();
   customConfig.signal_path = "/org/example/ByteIo";

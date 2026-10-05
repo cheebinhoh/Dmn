@@ -258,6 +258,35 @@ TEST(DmnDbusFacadeTest, ExchangesDmesgWithOptionAEndpointPeer) {
   peer.closeHandler(peerSender);
 }
 
+TEST(DmnDbusFacadeTest, StatusReportsInputAndOutputDisconnect) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+
+  auto config = makeConfig();
+  config.bus_address = bus.address();
+  dmn::Dmn_DMesgDbus facade{"facade-disconnect", config};
+
+  const auto initialStatus = facade.status();
+  EXPECT_FALSE(initialStatus.input.terminal_error);
+  EXPECT_FALSE(initialStatus.output.terminal_error);
+
+  bus.stop();
+  ASSERT_TRUE(waitUntil(
+      [&facade] {
+        const auto currentStatus = facade.status();
+
+        return currentStatus.input.terminal_error &&
+               currentStatus.output.terminal_error;
+      },
+      5s));
+
+  const auto disconnectedStatus = facade.status();
+  EXPECT_EQ(disconnectedStatus.input.terminal_error,
+            std::make_error_code(std::errc::connection_reset));
+  EXPECT_EQ(disconnectedStatus.output.terminal_error,
+            std::make_error_code(std::errc::connection_reset));
+}
+
 } // namespace
 
 int main(int argc, char **argv) {

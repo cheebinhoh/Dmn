@@ -20,13 +20,24 @@
 
 namespace dmn {
 
-struct Dmn_DMesgDbus::Impl {
-  // Keep endpoints alive through Dmn_DMesgNet destruction: its teardown stops
-  // input first, then sends the final best-effort heartbeat through output.
-  std::shared_ptr<Dmn_DbusInput> input;
-  std::shared_ptr<Dmn_DbusOutput> output;
-  Dmn_DMesgNet node;
+#ifdef FIU_ENABLE
+namespace {
 
+auto createOutputForFaultInjection(const Dmn_DbusConfig &config)
+    -> std::shared_ptr<Dmn_DbusOutput> {
+  // Fail after input setup to verify constructor rollback without a public
+  // endpoint factory or test hook.
+  if (fiu_fail("dmn/dbus/facade/output_endpoint_creation") != 0) {
+    throw std::bad_alloc{};
+  }
+
+  return std::make_shared<Dmn_DbusOutput>(config);
+}
+
+} // namespace
+#endif
+
+struct Dmn_DMesgDbus::Impl {
   Impl(std::string_view node_id, const Dmn_DbusConfig &config)
       : input{std::make_shared<Dmn_DbusInput>(config)},
 #ifdef FIU_ENABLE
@@ -37,19 +48,11 @@ struct Dmn_DMesgDbus::Impl {
         node{node_id, input, output} {
   }
 
-#ifdef FIU_ENABLE
-private:
-  static auto createOutputForFaultInjection(const Dmn_DbusConfig &config)
-      -> std::shared_ptr<Dmn_DbusOutput> {
-    // Fail after input setup to verify constructor rollback without a public
-    // endpoint factory or test hook.
-    if (fiu_fail("dmn/dbus/facade/output_endpoint_creation") != 0) {
-      throw std::bad_alloc{};
-    }
-
-    return std::make_shared<Dmn_DbusOutput>(config);
-  }
-#endif
+  // Keep endpoints alive through Dmn_DMesgNet destruction: its teardown stops
+  // input first, then sends the final best-effort heartbeat through output.
+  std::shared_ptr<Dmn_DbusInput> input;
+  std::shared_ptr<Dmn_DbusOutput> output;
+  Dmn_DMesgNet node;
 };
 
 Dmn_DMesgDbus::Dmn_DMesgDbus(std::string_view node_id,

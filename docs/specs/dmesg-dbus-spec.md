@@ -422,8 +422,10 @@ The implementation is ready for a same-host, non-privileged pilot only when:
    safely joins dispatch before object destruction.
 5. Output remains available long enough for the base destructor's final
    Destroyed message.
-6. Match installation is confirmed before readiness; malformed signatures,
-   queue overflow, send failure, and oversize input are observable.
+6. Match installation is confirmed before readiness; a private-daemon policy
+   denial of the client's AddMatch method call fails construction explicitly;
+   malformed signatures, queue overflow, send failure, and oversize input are
+   observable.
 7. The tests use a private/session bus only, never the host's system bus.
 8. Documentation and diagnostics make clear that signal send is not remote
    receipt and that the adapter is host-local, best-effort IPC.
@@ -465,13 +467,22 @@ bus-isolation behavior. It verifies binary and empty payload fidelity,
 multiple subscribers, exact signal matching, malformed/oversized input,
 queue bounds, shutdown cancellation, disconnect errors, and direct
 `Dmn_DMesgNet` message/lifecycle behavior. This is implementation-level
-same-host evidence, not a policy certification or multi-host guarantee.
+same-host evidence, not a policy certification or multi-host guarantee. A
+focused private-daemon fixture denies the client's AddMatch method call and
+verifies explicit constructor failure and connection cleanup; it does not
+validate general send/receive policy behavior.
 With `ENABLE_FAULT_INJECTION=ON`, the separate
 `dmn-test-fi-dbus-input-allocation`, `dmn-test-fi-dbus-output-stall`, and
 `dmn-test-fi-dbus-facade-rollback` executables verify allocation-failure
 reporting, finite shutdown with a retained output queue, and facade rollback
-after injected output-endpoint construction failure, respectively. They are
-registered with `ADD_TEST_FAULT_INJECTION_EXECUTABLE` and the
-`fault-injection` CTest label. `test/dmn-test-dmesgnet-shutdown.cpp` separately
-uses fake endpoints to check that input shutdown precedes the final serialized
-Destroyed heartbeat write.
+after injected output-endpoint construction failure, respectively. The
+`dmn-test-fi-dbus-worker-start-failure` and
+`dmn-test-fi-dbus-output-worker-start-failure` executables inject endpoint
+worker startup failure. These fault tests are registered with
+`ADD_TEST_FAULT_INJECTION_EXECUTABLE` and the `fault-injection` CTest label.
+The regular endpoint suite also starts a private bus with send policy denying
+the client's AddMatch method call; it verifies AddMatch rejection and
+connection cleanup, not general policy correctness.
+`test/dmn-test-dmesgnet-shutdown.cpp` uses a blocking fake input with a
+read-started handshake to verify shutdown wakes an already-blocked read before
+the final serialized Destroyed heartbeat write.
