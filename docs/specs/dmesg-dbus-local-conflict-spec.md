@@ -112,11 +112,13 @@ error names, limits, and installation policy must be frozen before
 implementation. The gateway protocol is a separate versioned service from
 `org.dmn.DMesg1.Transport.Message(ay)`; do not tunnel service calls through
 that signal.
-`Dmn_DMesg::openHandler()` waits for its initial-playback handler-context work
-to complete before returning. The daemon must therefore perform the blocking
-open on a worker that does not block shared D-Bus dispatch. `ActivateHandler`
-is still required to ensure the client receives its handler ID before the
-daemon starts delivering the staged events.
+`Dmn_DMesg::openHandler()` waits for publisher-side registration and playback,
+but may return before the queued handler-context callbacks complete. The
+gateway must perform an additional handler-context barrier before declaring
+the staging queue populated; run the blocking open and barrier on a worker
+that does not block shared D-Bus dispatch. `ActivateHandler` is still required
+to ensure the client receives its handler ID before the daemon delivers staged
+events.
 
 ## 4. Existing DMesg conflict behavior relevant to the gateway
 

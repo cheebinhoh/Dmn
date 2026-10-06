@@ -21,12 +21,12 @@ architecture, not another mode of either option. Its Phase 1 DMesg observer
 seam is implemented and covered by `dmn-test-dmesg-conflict`; the daemon
 handler core, D-Bus RPC service, and client proxy remain future work described
 in [`dmesg-dbus-local-conflict-spec.md`](dmesg-dbus-local-conflict-spec.md).
-`Dmn_DMesg::openHandler()` completes publisher-side registration and waits for a
-handler-context barrier behind initial-playback callbacks before returning.
-The future `OpenHandler` service therefore must perform the blocking open on a
-worker rather than the shared D-Bus dispatch thread. `ActivateHandler` remains
-necessary so the client receives its handler ID before the daemon begins
-delivering the staged callbacks.
+`Dmn_DMesg::openHandler()` waits for publisher-side registration and playback,
+but may return before initial-playback callbacks finish on the handler context.
+The future `OpenHandler` service must explicitly await a handler-context barrier
+before declaring its staging queue populated, and perform that wait off the
+shared D-Bus dispatch thread. `ActivateHandler` remains necessary so the client
+receives its handler ID before the daemon begins delivering staged callbacks.
 
 ## 1. Architectural contract
 

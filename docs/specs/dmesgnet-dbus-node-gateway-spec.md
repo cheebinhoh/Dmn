@@ -181,12 +181,13 @@ Activation drains that buffer in sequence order before later live events; if
 the buffer limit is exceeded, activation reports an explicit overflow and
 requires the client to reopen/resynchronize rather than silently skipping
 messages.
-`Dmn_DMesg::openHandler()` waits for initial-playback handler-context work
-before returning. The service can therefore reply only after those callbacks
-have populated its staged queue, but it must perform the blocking open on a
-worker rather than the shared D-Bus dispatch thread. `ActivateHandler` remains
+`Dmn_DMesg::openHandler()` waits for publisher-side registration and playback,
+but may return before initial-playback handler-context callbacks finish. The
+service must explicitly await a handler-context barrier before replying that
+its staged queue is populated; run the blocking open and barrier on a worker
+rather than the shared D-Bus dispatch thread. `ActivateHandler` remains
 necessary because the client must receive its handler ID before the service
-starts delivering the staged events.
+starts delivering staged events.
 
 ### 3.4 D-Bus method and delivery meanings
 

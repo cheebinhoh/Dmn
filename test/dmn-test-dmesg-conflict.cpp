@@ -78,6 +78,49 @@ auto openObservedHandler(dmn::Dmn_DMesg &publisher, std::string_view name,
       });
 }
 
+TEST(DmnDMesgConflictTest, AppliesConfiguredTopicBeforeIncrementingItsCounter) {
+  dmn::Dmn_DMesg publisher{"configured-topic-counter-test"};
+  std::promise<void> publisherPaused;
+  std::promise<void> resumePublisher;
+  auto resumePublisherFuture = resumePublisher.get_future().share();
+  auto writer = publisher.openHandler("writer", "orders");
+  // Hold publisher delivery so the writer can issue its next write first.
+  auto observer = publisher.openHandler(
+      "observer", "orders",
+      [&publisherPaused, &resumePublisherFuture](const dmn::DMesgPb &message) {
+        if ("first" == message.body().message()) {
+          publisherPaused.set_value();
+          resumePublisherFuture.wait();
+        }
+
+        return true;
+      });
+  ASSERT_TRUE(writer);
+  ASSERT_TRUE(observer);
+
+  auto firstMessage = makeMessage("first");
+  firstMessage.clear_topic();
+  writer->write(firstMessage);
+
+  const auto pauseStatus = publisherPaused.get_future().wait_for(5s);
+  if (std::future_status::ready != pauseStatus) {
+    resumePublisher.set_value();
+    FAIL() << "publisher did not pause on first message";
+    return;
+  }
+
+  writer->write(makeMessage("second"));
+  EXPECT_EQ(writer->getTopicRunningCounter("orders"), 2U);
+
+  resumePublisher.set_value();
+  publisher.waitForEmpty();
+  EXPECT_FALSE(writer->isInConflict("orders"));
+  EXPECT_EQ(writer->getTopicRunningCounter("orders"), 2U);
+
+  publisher.closeHandler(writer);
+  publisher.closeHandler(observer);
+}
+
 TEST(DmnDMesgConflictTest,
      NotifiesOnlyHandlersWithAnEstablishedMatchingTopicCounter) {
   dmn::Dmn_DMesg publisher{"conflict-test"};

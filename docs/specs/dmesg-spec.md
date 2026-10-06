@@ -40,9 +40,11 @@ Handler registration completes in the publisher's async context and performs
 initial last-message playback before marking playback complete. A handler's
 `read()` waits for that initialization and then blocks on its internal queue.
 Accepted-message and event callbacks from initial playback are queued in the
-handler context before the playback-complete marker. Registration then waits
-for a handler-context task behind those callbacks, so `openHandler()` returns
-only after initial-playback callback work has completed.
+handler context before the playback-complete marker. `openHandler()` waits for
+publisher-side registration and playback to finish, but does not wait for the
+queued handler-context callbacks to complete. Handler-context work remains
+ordered, and `read()` waits for the playback-complete marker before returning
+messages.
 The handler's `FilterTask` runs synchronously in the publisher context because
 it decides whether delivery is accepted. Accepted notifications are queued to
 the handler's async context for `AsyncProcessTask`; with no such callback, they

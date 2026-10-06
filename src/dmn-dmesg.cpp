@@ -287,8 +287,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
 }
 
 /**
- * @brief Queue the playback-complete marker and wait for preceding handler
- * work.
+ * @brief Queue the playback-complete marker behind pending handler work.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
   [[maybe_unused]] auto waitHandler = this->addExecTaskWithWait(
@@ -496,8 +495,8 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(
  * @brief Stamp and publish the message; must be called from the handler's
  * async context.
  *
- * Sets timestamp, source identifiers, and topic (if unset), increments the
- * per-topic running counter, then calls Dmn_Pub::publish().
+ * Resolves the configured topic before checking and incrementing its counter,
+ * stamps the message, then calls Dmn_Pub::publish().
  *
  * @param dmesgpb Message to publish (modified in-place).
  * @param move    If true, publish via std::move_if_noexcept; otherwise copy.
@@ -508,6 +507,10 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(
 void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
+
+  if (dmesgpb.topic().empty() && !m_topic.empty()) {
+    DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
+  }
 
   const std::string &topic = dmesgpb.topic();
   uint64_t next_running_counter{};
@@ -524,10 +527,6 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
 
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tval);
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
-
-  if (dmesgpb.topic().empty() && (!m_topic.empty())) {
-    DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
-  }
 
   if (dmesgpb.sourceidentifier().empty()) {
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgpb, m_name);

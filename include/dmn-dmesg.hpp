@@ -138,21 +138,28 @@ public:
    */
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
 
+  /**
+   * @brief Kind of handler event reported by HandlerEventCallbackTask.
+   */
   enum class HandlerEventType {
-    kMessage,
-    kConflictEntered,
-    kConflictResolved,
+    kMessage,          ///< An eligible message delivery.
+    kConflictEntered,  ///< The handler entered conflict for a topic.
+    kConflictResolved, ///< The handler resolved conflict for a topic.
   };
 
   /**
    * @brief A publisher-ordered handler delivery or conflict-state transition.
+   *
+   * The event is a snapshot for this handler. @c m_message is absent for a
+   * clear-only conflict resolution.
    */
   struct HandlerEvent {
-    HandlerEventType m_type{};
-    std::string m_topic{};
-    uint64_t m_handler_running_counter{};
-    uint64_t m_conflict_generation{};
-    std::optional<dmn::DMesgPb> m_message{};
+    HandlerEventType m_type{};            ///< Event kind.
+    std::string m_topic{};                ///< Topic associated with the event.
+    uint64_t m_handler_running_counter{}; ///< Post-event handler counter.
+    uint64_t m_conflict_generation{}; ///< Handler conflict-state generation.
+    std::optional<dmn::DMesgPb>
+        m_message{}; ///< Associated message; absent for clear-only resolution.
   };
 
   /**
@@ -176,14 +183,27 @@ public:
    * @brief Normalized constructor inputs for a standard or derived handler.
    */
   struct HandlerSpec {
-    std::string m_name{};
-    std::string m_topic{};
-    FilterTask m_filter_fn{};
-    AsyncProcessTask m_async_process_fn{};
-    HandlerConfig m_configs{};
-    HandlerEventCallbackTask m_handler_event_fn{};
+    std::string m_name{};     ///< Handler name.
+    std::string m_topic{};    ///< Subscription and default write topic.
+    FilterTask m_filter_fn{}; ///< Publisher-context delivery filter.
+    AsyncProcessTask m_async_process_fn{}; ///< Handler-context message task.
+    HandlerConfig m_configs{};             ///< Handler configuration values.
+    HandlerEventCallbackTask
+        m_handler_event_fn{}; ///< Optional ordered handler-event observer.
 
     HandlerSpec() = default;
+
+    /**
+     * @brief Construct a normalized handler specification.
+     *
+     * @param name Handler name.
+     * @param topic Subscription and default write topic.
+     * @param filter_fn Optional publisher-context delivery filter.
+     * @param async_process_fn Optional handler-context message callback.
+     * @param configs Handler-specific configuration values.
+     * @param handler_event_fn Optional publisher-ordered event observer, called
+     *                         in handler context.
+     */
     HandlerSpec(std::string_view name, std::string_view topic,
                 FilterTask filter_fn = {},
                 AsyncProcessTask async_process_fn = {},
@@ -195,6 +215,9 @@ public:
           m_handler_event_fn{std::move(handler_event_fn)} {}
   };
 
+  /**
+   * @brief Factory for constructing a standard or derived DMesg handler.
+   */
   using HandlerFactory =
       std::function<std::shared_ptr<Dmn_DMesgHandler>(const HandlerSpec &)>;
 
@@ -524,12 +547,15 @@ public:
      */
     void isAfterInitialPlayback();
 
+    /**
+     * @brief Queue an ordered publisher snapshot and callbacks in handler
+     * context.
+     */
     void enqueuePublisherEvent(HandlerEvent event, bool notifyObserver,
                                bool invokeConflictCallback);
 
     /**
-     * @brief Queue the playback-complete marker in handler context and wait
-     * until preceding handler-context work has completed.
+     * @brief Queue the playback-complete marker behind pending handler work.
      */
     void setAfterInitialPlayback();
 
@@ -647,9 +673,9 @@ public:
    * @brief Create, register and return a new Dmn_DMesgHandler.
    *
    * This template forwards its arguments to the Dmn_DMesgHandler constructor.
-   * Registration and the initial playback of last-known messages are performed
-   * asynchronously in the publisher's serialized async context so that handler
-   * construction remains lock-free for fast paths.
+   * Registration and initial playback complete in the publisher's serialized
+   * async context before this method returns. Message and event callbacks are
+   * queued on the handler's async context and may still be pending at return.
    *
    * @return the handler proxy to internal shared_ptr handler registered
    * with DMesg.
@@ -662,12 +688,23 @@ public:
   /**
    * @brief Open a standard handler from normalized inputs, including its
    * optional publisher-ordered event observer.
+   *
+   * @param spec Handler name, topic, callbacks, and configuration.
+   * @return Proxy to the registered handler.
    */
   auto openHandler(const HandlerSpec &spec) -> HandlerType;
 
   /**
    * @brief Open a handler using a normalized spec and factory for derived
    * types.
+   *
+   * The optional event observer in @p spec is installed before registration
+   * and initial playback.
+   *
+   * @param spec Handler name, topic, callbacks, and configuration.
+   * @param factory Factory that creates the handler from @p spec.
+   * @return Proxy to the registered handler.
+   * @throws std::runtime_error if @p factory returns a null handler.
    */
   auto openHandlerWithFactory(const HandlerSpec &spec,
                               const HandlerFactory &factory) -> HandlerType;
@@ -768,20 +805,40 @@ private:
   void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr,
                                          std::string_view = "");
 
+  /**
+   * @brief Publisher-context authoritative state mirrored by each handler.
+   */
   struct HandlerState {
-    std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
-    std::set<std::string> m_topic_in_conflict{};
-    uint64_t m_conflict_generation{};
+    std::unordered_map<std::string, uint64_t>
+        m_topic_running_counter{}; ///< Per-topic handler counter snapshot.
+    std::set<std::string> m_topic_in_conflict{}; ///< Conflicted topics.
+    uint64_t m_conflict_generation{}; ///< Handler conflict-state generation.
   };
 
+  /**
+   * @brief Update publisher-owned counter state from a handler-context write.
+   */
   void setHandlerTopicRunningCounter(const Dmn_DMesgHandler *handler_ptr,
                                      std::string_view topic,
                                      uint64_t runningCounter);
+
+  /**
+   * @brief Record and enqueue a handler's transition into conflict.
+   */
   void throwHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
                             const dmn::DMesgPb &message);
+
+  /**
+   * @brief Record and enqueue resolution of one or more handler conflicts.
+   */
   void resolveHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
                               std::string_view topic,
                               const dmn::DMesgPb *message = nullptr);
+
+  /**
+   * @brief Build and enqueue an ordered event snapshot for a registered
+   * handler.
+   */
   void enqueueHandlerEvent(const Dmn_DMesgHandler *handler_ptr,
                            HandlerEventType type, std::string_view topic,
                            const dmn::DMesgPb *message, bool notifyObserver,
@@ -795,6 +852,7 @@ private:
   /**
    * Internal state:
    *  - list of active handlers
+   *  - authoritative counter/conflict snapshots for each handler
    *  - per-topic running counters
    *  - last published message per topic
    */
@@ -812,7 +870,7 @@ inline auto Dmn_DMesg::finalizeHandlerRegistration(
   this->registerSubscriber(handler);
   handlerProxy.m_handler = handler;
 
-  // Registration, playback, and the handler-context barrier run in order.
+  // Queue the handler's playback-complete marker after playback deliveries.
   auto waitHandler = this->addExecTaskWithWait([this, handler]() {
     this->m_handlers.push_back(handler);
     this->m_handler_states.try_emplace(handler.get());
@@ -837,8 +895,7 @@ auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   //  - schedules an async task on the publisher's singleton async thread to:
   //      * add the handler and initialize its publisher-owned state snapshot
   //      * playback last-known messages per topic
-  //      * wait for the handler context to finish initial-playback work and
-  //        mark the handler as initialized
+  //      * queue the handler initialization marker after playback deliveries
   //
   // Publisher-owned handler snapshots and registration/playback are
   // serialized on the publisher context. Each handler receives snapshots on
