@@ -11,6 +11,14 @@ hook, and enters the runtime main loop. The source explicitly marks this as a
 test harness; it does not construct a DMesgNet node or wire production I/O.
 Arguments are currently unused.
 
+The proposed per-host daemon gateway and local D-Bus client architecture is
+documented in
+[`dmesgnet-dbus-node-gateway-spec.md`](dmesgnet-dbus-node-gateway-spec.md);
+that design is not implemented by this executable or by the
+`Dmn_DMesgDbus` facade. Implementation should add a distinct D-Bus RPC service
+and client-proxy API rather than turning this signal-handling stub or the
+existing facade into the gateway.
+
 ## Kafka sender and receiver
 
 `src/dmn-kafka-sender.cpp` and `src/dmn-kafka-receiver.cpp` are stand-alone
@@ -28,7 +36,11 @@ are disabled or commented out, and a general test target is marked
 non-terminating. `dmn-standalone-header-check` also compiles each supported
 public header as an independent translation unit; deprecated headers are
 excluded because they still depend on the obsolete queue API. Deprecated
-components are not registered as normal behavior tests.
+components are not registered as normal behavior tests. The focused
+`dmn-test-dmesg-conflict` target covers current handler-scoped conflict
+behavior and the Phase 1 ordered handler-event observer without the fixed
+sleeps used by older DMesg conflict tests. It does not implement or prove the
+proposed D-Bus gateway service/client-proxy contract.
 
 ## Gaps / improvements
 

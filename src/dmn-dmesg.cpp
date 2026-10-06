@@ -36,6 +36,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -46,6 +47,23 @@
 #include <vector>
 
 namespace dmn {
+namespace {
+
+template <typename Callable>
+void invokeHandlerCallback(std::string_view callbackName,
+                           Callable &&callback) noexcept {
+  try {
+    std::forward<Callable>(callback)();
+  } catch (const std::exception &exception) {
+    std::cerr << "Dmn_DMesg " << callbackName << " failed: " << exception.what()
+              << '\n';
+  } catch (...) {
+    std::cerr << "Dmn_DMesg " << callbackName
+              << " failed with a non-standard exception\n";
+  }
+}
+
+} // namespace
 
 const char *const kDMesgSysIdentifier = "sys.dmn-dmesg";
 
@@ -54,28 +72,32 @@ const Dmn_DMesg::HandlerConfig Dmn_DMesg::kHandlerConfig_Default = {};
 void Dmn_DMesg::Dmn_DMesgHandler::notify(const dmn::DMesgPb &dmesgpb,
                                          Dmn_Pub<dmn::DMesgPb> *) {
   const std::string &topic = dmesgpb.topic();
-  auto iter = this->m_topic_running_counter.find(topic);
+  auto stateIter = m_owner->m_handler_states.find(this);
+  if (stateIter == m_owner->m_handler_states.end()) {
+    return;
+  }
+
+  auto &state = stateIter->second;
 
   if (dmesgpb.conflict()) {
     if (dmesgpb.sourcewritehandleridentifier() != this->m_name &&
         (this->m_no_topic_filter || this->m_topic.empty() ||
          dmesgpb.topic() == this->m_topic)) {
-      if (this->m_topic_running_counter.end() != iter) {
-        this->throwConflictInternal(dmesgpb);
+      if (state.m_topic_running_counter.contains(topic)) {
+        m_owner->throwHandlerConflict(this, dmesgpb);
       }
     }
   } else {
-    const auto runningCounter =
-        (this->m_topic_running_counter.end() != iter ? iter->second : 0);
+    const auto counterIter = state.m_topic_running_counter.find(topic);
+    const uint64_t runningCounter =
+        counterIter == state.m_topic_running_counter.end()
+            ? 0
+            : counterIter->second;
 
     if (dmesgpb.runningcounter() > runningCounter || dmesgpb.force()) {
-      if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        this->m_last_dmesgpb_sys = dmesgpb;
-      }
-
       if (dmesgpb.force()) {
-        this->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-        this->resolveConflictInternal(dmesgpb.topic());
+        state.m_topic_running_counter[topic] = dmesgpb.runningcounter();
+        m_owner->resolveHandlerConflict(this, topic, &dmesgpb);
       } else if (dmesgpb.sourcewritehandleridentifier() != this->m_name ||
                  dmesgpb.type() == dmn::DMesgTypePb::sys) {
         if ((dmn::DMesgTypePb::sys != dmesgpb.type() ||
@@ -83,11 +105,18 @@ void Dmn_DMesg::Dmn_DMesgHandler::notify(const dmn::DMesgPb &dmesgpb,
             (this->m_no_topic_filter || this->m_topic.empty() ||
              dmesgpb.topic() == this->m_topic) &&
             (!this->m_filter_fn || this->m_filter_fn(dmesgpb))) {
-          this->m_topic_running_counter[topic] = dmesgpb.runningcounter();
-          this->resolveConflictInternal(dmesgpb.topic());
+          state.m_topic_running_counter[topic] = dmesgpb.runningcounter();
+          m_owner->resolveHandlerConflict(this, topic, &dmesgpb);
+          m_owner->enqueueHandlerEvent(this, HandlerEventType::kMessage, topic,
+                                       &dmesgpb, true, false);
 
           if (this->m_async_process_fn) {
-            this->m_async_process_fn(dmesgpb);
+            auto callback = this->m_async_process_fn;
+            this->scheduleInHandlerContext([callback = std::move(callback),
+                                            message = dmesgpb]() mutable {
+              invokeHandlerCallback("async-process callback",
+                                    [&]() { callback(std::move(message)); });
+            });
           } else {
             this->m_buffers->push(dmesgpb);
           }
@@ -191,8 +220,8 @@ Dmn_DMesg::Dmn_DMesgHandler::~Dmn_DMesgHandler() noexcept try {
 }
 
 /**
- * @brief Posts an async task to the publisher's context to check the
- * conflict state, blocking until the result is available.
+ * @brief Posts an async task to the handler's context to check the conflict
+ * state, blocking until the result is available.
  *
  * @param topic Topic to check, or "" for any topic.
  * @return true if the handler is in conflict for the given topic.
@@ -213,8 +242,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflict(std::string_view topic) -> bool {
 }
 
 /**
- * @brief Spin-waits until the initial playback of last-known messages
- * completes.
+ * @brief Wait until the handler's initial playback work completes.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
   while (!m_after_initial_playback.test()) {
@@ -223,8 +251,8 @@ void Dmn_DMesg::Dmn_DMesgHandler::isAfterInitialPlayback() {
 }
 
 /**
- * @brief Block until the initial playback is done, then return the
- * per-topic running counter from the publisher's async context.
+ * @brief Block until initial playback is done, then read the per-topic running
+ * counter in the handler's async context.
  *
  * @param topic Topic whose running counter is requested.
  * @return Current running counter value for the topic.
@@ -246,7 +274,7 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounter(std::string_view topic)
 }
 
 /**
- * @brief Look up the running counter for @p topic directly (no locking).
+ * @brief Look up the running counter for @p topic on the handler context.
  */
 auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
     std::string_view topic) -> uint64_t {
@@ -258,7 +286,9 @@ auto Dmn_DMesg::Dmn_DMesgHandler::getTopicRunningCounterInternal(
   return iter->second;
 }
 
-/** @brief Schedule setAfterInitialPlaybackInternal() in the async context. */
+/**
+ * @brief Queue the playback-complete marker behind pending handler work.
+ */
 void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlayback() {
   [[maybe_unused]] auto waitHandler = this->addExecTaskWithWait(
       [this]() -> void { this->setAfterInitialPlaybackInternal(); });
@@ -274,16 +304,15 @@ void Dmn_DMesg::Dmn_DMesgHandler::setAfterInitialPlaybackInternal() {
 }
 
 /**
- * @brief Set the running counter for @p topic from the publisher's async
- * context.
+ * @brief Set the running counter for @p topic in the handler's async context.
  *
  * @param topic          Topic to update.
  * @param runningCounter New counter value.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
     std::string_view topic, uint64_t runningCounter) {
-  auto waitHandler =
-      this->addExecTaskWithWait([this, &runningCounter, topic]() -> void {
+  auto waitHandler = this->addExecTaskWithWait(
+      [this, runningCounter, topic = std::string{topic}]() -> void {
         this->setTopicRunningCounterInternal(topic, runningCounter);
       });
 
@@ -291,11 +320,12 @@ void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounter(
 }
 
 /**
- * @brief Directly update the counter map entry for @p topic (no locking).
+ * @brief Update the handler-context counter map entry for @p topic.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::setTopicRunningCounterInternal(
     std::string_view topic, uint64_t runningCounter) {
   m_topic_running_counter[std::string{topic}] = runningCounter;
+  m_owner->setHandlerTopicRunningCounter(this, topic, runningCounter);
 }
 
 /**
@@ -330,14 +360,17 @@ void Dmn_DMesg::Dmn_DMesgHandler::resolveConflict(std::string_view topic) {
   this->isAfterInitialPlayback();
 
   m_owner->resetHandlerConflictState(this, topic);
+  auto waitHandler = this->addExecTaskWithWait([]() {});
+
+  waitHandler->wait();
 }
 
 /**
- * @brief Post the conflict callback update to the async context and wait.
+ * @brief Post the conflict callback update to the handler's async context and
+ * wait.
  */
 void Dmn_DMesg::Dmn_DMesgHandler::setConflictCallbackTask(
     ConflictCallbackTask conflict_fn) {
-
   auto waitHandler = this->addExecTaskWithWait([this, &conflict_fn]() -> void {
     m_conflict_callback_fn = std::move(conflict_fn);
   });
@@ -459,10 +492,11 @@ auto Dmn_DMesg::Dmn_DMesgHandler::writeAndCheckConflict(
 }
 
 /**
- * @brief Stamp and publish the message; must be called from the async context.
+ * @brief Stamp and publish the message; must be called from the handler's
+ * async context.
  *
- * Sets timestamp, source identifiers, and topic (if unset), increments the
- * per-topic running counter, then calls Dmn_Pub::publish().
+ * Resolves the configured topic before checking and incrementing its counter,
+ * stamps the message, then calls Dmn_Pub::publish().
  *
  * @param dmesgpb Message to publish (modified in-place).
  * @param move    If true, publish via std::move_if_noexcept; otherwise copy.
@@ -474,10 +508,19 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
                                                      bool move, bool block) {
   assert(nullptr != m_owner);
 
-  if (m_topic_in_conflict.contains(dmesgpb.topic()) && !dmesgpb.force()) {
+  if (dmesgpb.topic().empty() && !m_topic.empty()) {
+    DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
+  }
+
+  const std::string &topic = dmesgpb.topic();
+  uint64_t next_running_counter{};
+  if (m_topic_in_conflict.contains(topic) && !dmesgpb.force()) {
     throw std::runtime_error("last write results in conflicted, "
                              "handler needs to be reset");
   }
+
+  next_running_counter = incrementByOne(m_topic_running_counter[topic]);
+  m_topic_running_counter[topic] = next_running_counter;
 
   struct timeval tval {};
   gettimeofday(&tval, nullptr);
@@ -485,33 +528,24 @@ void Dmn_DMesg::Dmn_DMesgHandler::writeDMesgInternal(dmn::DMesgPb &dmesgpb,
   DMESG_PB_SET_MSG_TIMESTAMP_FROM_TV(dmesgpb, tval);
   DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb, m_name);
 
-  if (dmesgpb.topic().empty() && (!m_topic.empty())) {
-    DMESG_PB_SET_MSG_TOPIC(dmesgpb, m_topic);
-  }
-
   if (dmesgpb.sourceidentifier().empty()) {
     DMESG_PB_SET_MSG_SOURCEIDENTIFIER(dmesgpb, m_name);
   }
 
-  const std::string &topic = dmesgpb.topic();
-
-  const auto next_running_counter =
-      incrementByOne(m_topic_running_counter[topic]);
-
   DMESG_PB_SET_MSG_RUNNINGCOUNTER(dmesgpb, next_running_counter);
-
-  m_topic_running_counter[topic] = next_running_counter;
-  m_topic_in_conflict.erase(topic);
+  // The publisher notification owns conflict resolution for forced writes.
+  // Wait for it before allowing the handler's next queued write to run.
+  const bool waitForPublisher = block || dmesgpb.force();
 
   if (move) {
-    m_owner->publish(std::move_if_noexcept(dmesgpb), block);
+    m_owner->publish(std::move_if_noexcept(dmesgpb), waitForPublisher);
   } else {
-    m_owner->publish(dmesgpb, block);
+    m_owner->publish(dmesgpb, waitForPublisher);
   }
 }
 
 /**
- * @brief Check conflict state directly (no async dispatch).
+ * @brief Check conflict state on the handler's async context.
  *
  * @param topic Topic to check, or "" to check any topic.
  * @return true if the handler has at least one conflicted topic (or the
@@ -523,39 +557,59 @@ auto Dmn_DMesg::Dmn_DMesgHandler::isInConflictInternal(
                      : m_topic_in_conflict.contains(std::string{topic});
 }
 
-/**
- * @brief Remove @p topic (or all topics if empty) from the conflict set.
- *
- * Must be called from within the publisher's async context.
- *
- * @param topic Topic to clear, or "" to clear all conflicted topics.
- */
-void Dmn_DMesg::Dmn_DMesgHandler::resolveConflictInternal(
-    std::string_view topic) {
-  if ("" == topic) {
-    m_topic_in_conflict.clear();
-  } else {
-    m_topic_in_conflict.erase(std::string{topic});
-  }
-}
+void Dmn_DMesg::Dmn_DMesgHandler::enqueuePublisherEvent(
+    HandlerEvent event, bool notifyObserver, bool invokeConflictCallback) {
+  this->scheduleInHandlerContext([this, event = std::move(event),
+                                  notifyObserver, invokeConflictCallback]() {
+    switch (event.m_type) {
+    case HandlerEventType::kMessage:
+      if (event.m_message.has_value() && event.m_message->force()) {
+        m_topic_running_counter[event.m_topic] =
+            event.m_handler_running_counter;
+      } else {
+        m_topic_running_counter[event.m_topic] =
+            std::max(m_topic_running_counter[event.m_topic],
+                     event.m_handler_running_counter);
+      }
 
-/**
- * @brief Mark the topic as conflicted and schedule the conflict callback.
- *
- * Inserts the message's topic into the conflict set and, if a conflict
- * callback is registered, posts it for execution on the async thread.
- *
- * @param dmesgpb The message that triggered the conflict.
- */
-void Dmn_DMesg::Dmn_DMesgHandler::throwConflictInternal(
-    const dmn::DMesgPb &dmesgpb) {
-  m_topic_in_conflict.insert(dmesgpb.topic());
+      break;
 
-  if (m_conflict_callback_fn) {
-    this->addExecTask([this, dmesgpb]() -> void {
-      this->m_conflict_callback_fn(*this, dmesgpb);
-    });
-  }
+    case HandlerEventType::kConflictEntered:
+      m_topic_in_conflict.insert(event.m_topic);
+      break;
+
+    case HandlerEventType::kConflictResolved:
+      m_topic_in_conflict.erase(event.m_topic);
+      if (event.m_message.has_value() && event.m_message->force()) {
+        m_topic_running_counter[event.m_topic] =
+            event.m_handler_running_counter;
+      } else {
+        m_topic_running_counter[event.m_topic] =
+            std::max(m_topic_running_counter[event.m_topic],
+                     event.m_handler_running_counter);
+      }
+
+      break;
+
+    default:
+      assert(false && "Unknown handler event type");
+      return;
+    }
+
+    m_conflict_generation = event.m_conflict_generation;
+
+    if (notifyObserver && m_handler_event_fn) {
+      invokeHandlerCallback("handler event callback",
+                            [&]() { m_handler_event_fn(event); });
+    }
+
+    if (invokeConflictCallback && m_conflict_callback_fn &&
+        event.m_message.has_value()) {
+      invokeHandlerCallback("conflict callback", [&]() {
+        m_conflict_callback_fn(*this, *event.m_message);
+      });
+    }
+  });
 }
 
 // class Dmn_DMesg
@@ -621,6 +675,8 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
     if (iter != m_handlers.end()) {
       m_handlers.erase(iter);
     }
+
+    m_handler_states.erase(handler_ptr);
   });
 
   waitHandler->wait();
@@ -704,11 +760,22 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
       [&dmesgpb](const auto &handler) -> bool {
         return handler->m_name == dmesgpb.sourcewritehandleridentifier();
       });
+  if (iter != m_handlers.end()) {
+    auto stateIter = m_handler_states.find(iter->get());
+    if (stateIter != m_handler_states.end()) {
+      stateIter->second.m_topic_running_counter[dmesgpb.topic()] =
+          dmesgpb.runningcounter();
+    }
+  }
 
   // if source is still in conflict, we do not allow it to send any message
   // until it resolves conflict state.
-  if (iter != m_handlers.end() &&
-      (*iter)->isInConflictInternal(dmesgpb.topic()) && !dmesgpb.force()) {
+  auto sourceState = iter == m_handlers.end()
+                         ? m_handler_states.end()
+                         : m_handler_states.find(iter->get());
+  if (sourceState != m_handler_states.end() &&
+      sourceState->second.m_topic_in_conflict.contains(dmesgpb.topic()) &&
+      !dmesgpb.force()) {
     // avoid throw conflict multiple times
     return;
   }
@@ -726,7 +793,7 @@ void Dmn_DMesg::publishInternal(const dmn::DMesgPb &dmesgpb) {
       copied_dmesgpb.conflict()) {
     copied_dmesgpb.set_conflict(true);
     if (iter != m_handlers.end()) {
-      (*iter)->throwConflictInternal(copied_dmesgpb);
+      this->throwHandlerConflict(iter->get(), copied_dmesgpb);
     }
   } else {
     DMESG_PB_SET_MSG_RUNNINGCOUNTER(copied_dmesgpb, next_running_counter);
@@ -768,7 +835,6 @@ void Dmn_DMesg::publishSysInternal(const dmn::DMesgPb &dmesgpb_sys) {
  * @param topic Topic whose last message should be force-republished.
  */
 void Dmn_DMesg::resetConflictStateWithLastTopicMessage(std::string_view topic) {
-
   auto waitHandler = this->addExecTaskWithWait([this, topic]() -> void {
     this->resetConflictStateWithLastTopicMessageInternal(topic);
   });
@@ -803,25 +869,122 @@ void Dmn_DMesg::resetHandlerConflictState(const Dmn_DMesgHandler *handler_ptr,
                                           std::string_view topic) {
   std::string topicToBeReset{topic};
 
-  this->addExecTask([this, handler_ptr, topicToBeReset]() {
-    this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset);
-  });
+  auto waitHandler =
+      this->addExecTaskWithWait([this, handler_ptr, topicToBeReset]() {
+        this->resetHandlerConflictStateInternal(handler_ptr, topicToBeReset);
+      });
+
+  waitHandler->wait();
 }
 
 /**
- * @brief Locate @p handler_ptr in the handler list and call
- * resolveConflictInternal().
+ * @brief Resolve publisher-owned conflict state for @p handler_ptr.
  */
 void Dmn_DMesg::resetHandlerConflictStateInternal(
     const Dmn_DMesgHandler *handler_ptr, std::string_view topic) {
-  auto iter = std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
-                                   [handler_ptr](const auto &handler) -> bool {
-                                     return handler.get() == handler_ptr;
-                                   });
+  this->resolveHandlerConflict(handler_ptr, topic);
+}
 
-  if (iter != m_handlers.end()) {
-    (*iter)->resolveConflictInternal(topic);
+void Dmn_DMesg::setHandlerTopicRunningCounter(
+    const Dmn_DMesgHandler *handler_ptr, std::string_view topic,
+    uint64_t runningCounter) {
+  const std::string topicCopy{topic};
+  auto waitHandler = this->addExecTaskWithWait(
+      [this, handler_ptr, topicCopy, runningCounter]() {
+        const auto state = m_handler_states.find(handler_ptr);
+        if (state != m_handler_states.end()) {
+          state->second.m_topic_running_counter[topicCopy] = runningCounter;
+        }
+      });
+
+  waitHandler->wait();
+}
+
+void Dmn_DMesg::throwHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
+                                     const dmn::DMesgPb &message) {
+  const auto state = m_handler_states.find(handler_ptr);
+  if (state == m_handler_states.end()) {
+    return;
   }
+
+  const bool inserted =
+      state->second.m_topic_in_conflict.insert(message.topic()).second;
+  if (inserted) {
+    ++state->second.m_conflict_generation;
+  }
+
+  this->enqueueHandlerEvent(handler_ptr, HandlerEventType::kConflictEntered,
+                            message.topic(), &message, inserted, true);
+}
+
+void Dmn_DMesg::resolveHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
+                                       std::string_view topic,
+                                       const dmn::DMesgPb *message) {
+  const auto state = m_handler_states.find(handler_ptr);
+  if (state == m_handler_states.end()) {
+    return;
+  }
+
+  const std::string topicCopy{topic};
+  if (topicCopy.empty()) {
+    while (!state->second.m_topic_in_conflict.empty()) {
+      const std::string resolvedTopic =
+          *state->second.m_topic_in_conflict.begin();
+      state->second.m_topic_in_conflict.erase(
+          state->second.m_topic_in_conflict.begin());
+      ++state->second.m_conflict_generation;
+
+      this->enqueueHandlerEvent(handler_ptr,
+                                HandlerEventType::kConflictResolved,
+                                resolvedTopic, message, true, false);
+    }
+
+    return;
+  }
+
+  const bool resolved = state->second.m_topic_in_conflict.erase(topicCopy) != 0;
+  if (resolved) {
+    ++state->second.m_conflict_generation;
+  }
+
+  if (resolved || message != nullptr) {
+    this->enqueueHandlerEvent(handler_ptr, HandlerEventType::kConflictResolved,
+                              topicCopy, message, resolved, false);
+  }
+}
+
+void Dmn_DMesg::enqueueHandlerEvent(const Dmn_DMesgHandler *handler_ptr,
+                                    HandlerEventType type,
+                                    std::string_view topic,
+                                    const dmn::DMesgPb *message,
+                                    bool notifyObserver,
+                                    bool invokeConflictCallback) {
+  const auto state = m_handler_states.find(handler_ptr);
+  const auto handler =
+      std::ranges::find_if(m_handlers.begin(), m_handlers.end(),
+                           [handler_ptr](const auto &candidate) {
+                             return candidate.get() == handler_ptr;
+                           });
+  if (state == m_handler_states.end() || handler == m_handlers.end()) {
+    return;
+  }
+
+  HandlerEvent event;
+  event.m_type = type;
+  event.m_topic = topic;
+  const auto counter =
+      state->second.m_topic_running_counter.find(event.m_topic);
+  if (counter != state->second.m_topic_running_counter.end()) {
+    event.m_handler_running_counter = counter->second;
+  }
+
+  event.m_conflict_generation = state->second.m_conflict_generation;
+  if (message != nullptr) {
+    event.m_message = *message;
+  }
+
+  (*handler)->enqueuePublisherEvent(std::move(event), notifyObserver,
+                                    invokeConflictCallback);
 }
 
 } // namespace dmn

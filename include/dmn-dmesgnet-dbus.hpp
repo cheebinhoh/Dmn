@@ -37,8 +37,16 @@ struct Dmn_DMesgDbusStatus {
  */
 class Dmn_DMesgDbus final {
 public:
+  /** Callback aliases forwarded from the wrapped DMesg node. */
   using AsyncProcessTask = Dmn_DMesg::AsyncProcessTask;
   using FilterTask = Dmn_DMesg::FilterTask;
+
+  /** Ordered handler-event contract aliases forwarded from Dmn_DMesg. */
+  using HandlerEvent = Dmn_DMesg::HandlerEvent;
+  using HandlerEventCallbackTask = Dmn_DMesg::HandlerEventCallbackTask;
+  using HandlerEventType = Dmn_DMesg::HandlerEventType;
+
+  /** Handler configuration, factory, specification, and proxy aliases. */
   using HandlerConfig = Dmn_DMesg::HandlerConfig;
   using HandlerFactory = Dmn_DMesg::HandlerFactory;
   using HandlerSpec = Dmn_DMesg::HandlerSpec;
@@ -64,6 +72,9 @@ public:
   /**
    * @brief Open a standard handler using normalized constructor arguments.
    *
+   * The full spec, including its optional handler-event observer, is forwarded
+   * to the wrapped DMesg node.
+   *
    * @param spec Handler name/topic, callbacks, and handler configuration.
    * @return Proxy to the registered handler.
    */
@@ -71,6 +82,8 @@ public:
 
   /**
    * @brief Open a handler using a custom derived-handler factory.
+   *
+   * The spec and factory are forwarded unchanged to the wrapped DMesg node.
    *
    * @param spec Normalized handler construction arguments.
    * @param factory Factory that creates a handler from @p spec.

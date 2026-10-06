@@ -380,11 +380,25 @@ and failure domains and is not included in this v1 design.
 For multi-host DMesg:
 
 1. Keep `Dmn_DMesgNet` on its chosen network transport between nodes.
-2. Optionally use a separate local D-Bus adapter/facade to let local
-   applications communicate with a host-local Dmn service.
-3. Specify any bridge between the local D-Bus DMesg instance and the
-   inter-host Dmn_DMesgNet instance as a separate component, with loop
-   prevention, identity, authorization, and failure tests.
+2. Optionally use the existing local D-Bus signal transport when local
+   applications should participate as independent `Dmn_DMesgNet` nodes.
+3. For a per-host daemon that owns the node, use a distinct local D-Bus RPC
+   service that binds each client's server-side handlers to the authenticated
+   D-Bus connection and that node's `Dmn_DMesg` publisher. Do not use the
+   existing `Dmn_DMesgDbus` facade as if it were a remote proxy: each instance
+   is a complete DMesgNet participant.
+4. Specify any transparent bridge between independent local D-Bus
+   `Dmn_DMesgNet` participants and a
+   separate inter-host DMesgNet as its own protocol, with loop prevention,
+   identity, topic-counter mapping, authorization, conflict, and failure
+   semantics.
+
+The proposed per-host daemon and client-proxy design is detailed in
+[`dmesgnet-dbus-node-gateway-spec.md`](dmesgnet-dbus-node-gateway-spec.md).
+Its first two-client phase and handler conflict events are specified
+separately in
+[`dmesg-dbus-local-conflict-spec.md`](dmesg-dbus-local-conflict-spec.md).
+Neither is implemented, and neither changes the current Option A/B contract.
 
 Neither the `Dmn_Dbus` byte-signal endpoints, the `Dmn_DMesgDbus` facade, nor
 existing `Dmn_DMesgNet` supplies consensus.

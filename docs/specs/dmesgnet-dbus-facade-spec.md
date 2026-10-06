@@ -24,6 +24,14 @@ playback, and handler behavior remain in `Dmn_DMesgNet`/`Dmn_DMesg`. It does
 not provide cross-host transport, delivery acknowledgement, persistence,
 reliability, or consensus.
 
+This facade is a complete DMesgNet participant, not a client proxy to a
+daemon-owned node. The proposed per-host daemon/client-proxy architecture is
+specified separately in
+[`dmesgnet-dbus-node-gateway-spec.md`](dmesgnet-dbus-node-gateway-spec.md).
+No changes to this facade are required to implement that separate service:
+the gateway should own the daemon's `Dmn_DMesgNet` and register its own
+server-side handlers on the shared `Dmn_DMesg` publisher.
+
 ## Public API
 
 The public header is `include/dmn-dmesgnet-dbus.hpp`, in namespace `dmn`. It
@@ -42,6 +50,9 @@ class Dmn_DMesgDbus final {
 public:
   using AsyncProcessTask = Dmn_DMesg::AsyncProcessTask;
   using FilterTask = Dmn_DMesg::FilterTask;
+  using HandlerEvent = Dmn_DMesg::HandlerEvent;
+  using HandlerEventCallbackTask = Dmn_DMesg::HandlerEventCallbackTask;
+  using HandlerEventType = Dmn_DMesg::HandlerEventType;
   using HandlerConfig = Dmn_DMesg::HandlerConfig;
   using HandlerFactory = Dmn_DMesg::HandlerFactory;
   using HandlerSpec = Dmn_DMesg::HandlerSpec;
@@ -71,10 +82,15 @@ private:
 };
 ```
 
-`openHandler` maps every field of the normalized `HandlerSpec` to the ordinary
-`Dmn_DMesg::openHandler` constructor inputs. `openHandlerWithFactory` preserves
-the existing derived-handler extension point and delegates the factory and
-spec unchanged. `closeHandler`, `getTopicLastMessage`, and
+`openHandler` forwards the complete `HandlerSpec` to `Dmn_DMesg::openHandler`,
+including the optional publisher-ordered handler-event observer.
+`openHandlerWithFactory` preserves the existing derived-handler extension
+point and delegates the factory and spec unchanged. Handler-event, message
+processing, and conflict callbacks run on the handler's async context in
+publisher event order and must return promptly without blocking; the
+handler-event observer must enqueue bounded gateway work. The handler filter
+remains synchronous on the publisher context.
+`closeHandler`, `getTopicLastMessage`, and
 `resetConflictStateWithLastTopicMessage` directly forward to the internal
 `Dmn_DMesgNet`. `status()` returns snapshots of the two owned endpoints; its
 fields describe local endpoint activity only and do not indicate peer
@@ -133,8 +149,8 @@ They must not access the developer's session or system bus.
 - Verify invalid configuration and an unusable explicit address fail during
   construction rather than falling back to another bus.
 - Verify `HandlerSpec` fields are forwarded; exercise the handler factory,
-  handler read/write, topic lookup, conflict reset, and close/proxy
-  invalidation.
+  handler read/write, handler-event observer delivery, topic lookup, conflict
+  reset, and close/proxy invalidation.
 - Exchange DMesg messages between a facade node and an Option A
   `Dmn_DMesgNet` using the same configured signal tuple. Check topics and
   payloads in both directions.

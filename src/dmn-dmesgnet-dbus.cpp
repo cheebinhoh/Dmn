@@ -62,8 +62,7 @@ Dmn_DMesgDbus::Dmn_DMesgDbus(std::string_view node_id,
 Dmn_DMesgDbus::~Dmn_DMesgDbus() noexcept = default;
 
 auto Dmn_DMesgDbus::openHandler(const HandlerSpec &spec) -> HandlerType {
-  return m_impl->node.openHandler(spec.m_name, spec.m_topic, spec.m_filter_fn,
-                                  spec.m_async_process_fn, spec.m_configs);
+  return m_impl->node.openHandler(spec);
 }
 
 auto Dmn_DMesgDbus::openHandlerWithFactory(

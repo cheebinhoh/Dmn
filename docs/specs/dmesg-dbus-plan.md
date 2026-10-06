@@ -2,7 +2,8 @@
 
 **Status:** Options A and B are implemented behind `ENABLE_DBUS` and have
 focused private-bus test targets. Option A provides direct endpoint injection;
-Option B is the composition facade. The shared transport contract is in
+Option B is the composition facade. Neither is the proposed daemon RPC/client
+proxy. The shared transport contract is in
 [`dmesg-dbus-spec.md`](dmesg-dbus-spec.md); the options are detailed in
 [`dmesgnet-dbus-injection-spec.md`](dmesgnet-dbus-injection-spec.md) and
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md).
@@ -14,6 +15,18 @@ optional `dmn-dbus` target. The checked-in `dmn-test-dbus-io` and
 `ADD_TEST_EXECUTABLE(dmn ...)` mechanism. Each starts a private session daemon
 for its session-bus clients, so CTest does not depend on the caller's session
 bus; tests exercise the real libdbus path rather than a fake dispatch backend.
+
+The proposed daemon-owned node with local D-Bus handler clients is a separate
+architecture, not another mode of either option. Its Phase 1 DMesg observer
+seam is implemented and covered by `dmn-test-dmesg-conflict`; the daemon
+handler core, D-Bus RPC service, and client proxy remain future work described
+in [`dmesg-dbus-local-conflict-spec.md`](dmesg-dbus-local-conflict-spec.md).
+`Dmn_DMesg::openHandler()` waits for publisher-side registration and playback,
+but may return before initial-playback callbacks finish on the handler context.
+The future `OpenHandler` service must explicitly await a handler-context barrier
+before declaring its staging queue populated, and perform that wait off the
+shared D-Bus dispatch thread. `ActivateHandler` remains necessary so the client
+receives its handler ID before the daemon begins delivering staged callbacks.
 
 ## 1. Architectural contract
 
@@ -68,9 +81,9 @@ error/telemetry contract, finite message/queue limits, and the public Option A
 endpoint names/types. Confirm Option B is a composition wrapper—not an
 inheritance facade—with its API limited to the agreed DMesg subset.
 
-**Exit:** No acceptance statement implies D-Bus signal delivery is acknowledged,
-cross-host, or consensus-backed. The Option A phase gate and Option B wrapper
-surface were agreed; the phase gate passed before Option B implementation.
+**Exit (passed):** No acceptance statement implies D-Bus signal delivery is
+acknowledged, cross-host, or consensus-backed. The Option A phase gate and
+Option B wrapper surface were agreed before Option B implementation.
 
 ### Step 1 — Implement and test signal encoding/decoding
 
@@ -396,17 +409,26 @@ actual deployment policy.
 | Performance | Shared endpoint path | Same path; wrapper adds only method forwarding |
 | Implementation order | Phase 1; completion gate | Phase 2, strictly after Option A tests pass |
 
-Both options are required in the requested delivery. Implement the codec,
-endpoints, public injection API, private-bus behavior, and direct
-`Dmn_DMesgNet` composition under Option A first. Once that is verified,
-implement the Option B wrapper and its specific tests on the exact same
-endpoint path. Do not create two wire or endpoint implementations.
+Both implemented options remain supported as different construction
+boundaries. Option A provides direct endpoint injection; Option B owns those
+same endpoint types and an internal `Dmn_DMesgNet`. They share the signal and
+endpoint implementation and do not provide a daemon-owned shared publisher
+with remote local-client proxies. That RPC/client-proxy architecture is
+separate deferred work; do not extend the Option B facade to imply that role.
 
 ## 5. Explicitly deferred work
 
 - Multi-host D-Bus federation or use of a network-exposed central daemon.
 - Bridging host-local D-Bus traffic into a separate `Dmn_DMesgNet` network
   instance.
+- A per-host daemon exposing its single network-facing `Dmn_DMesgNet` node to
+  local applications through a distinct D-Bus RPC/client-proxy protocol. This
+  architecture and its first two-client conflict milestone are proposed
+  separately in
+  [`dmesgnet-dbus-node-gateway-spec.md`](dmesgnet-dbus-node-gateway-spec.md)
+  and [`dmesg-dbus-local-conflict-spec.md`](dmesg-dbus-local-conflict-spec.md).
+  The DMesg observer foundation is implemented, but the gateway is not part of
+  the implemented Option A/B signal transport.
 - Cross-host service names, method-call proxying, remote credentials, Unix FD
   forwarding, activation, signal subscription federation, or bus policy
   replication.

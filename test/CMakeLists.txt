@@ -44,6 +44,7 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-9
                       dmn-test-dmesg-10
                       dmn-test-dmesg-11
+                      dmn-test-dmesg-conflict
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
                       dmn-test-dmesgnet-1
