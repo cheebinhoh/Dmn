@@ -97,38 +97,121 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__DMesg_1_1HandlerSpec
 </div><!--header-->
 <div class="contents">
 
-<p>Normalized constructor inputs for a derived DMesg handler.  
+<p>Normalized constructor inputs for a standard or derived handler.  
  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9ce7aba03366e9999c93651f42171daf" id="r_a9ce7aba03366e9999c93651f42171daf"><td class="memItemLeft" align="right" valign="top"><a id="a9ce7aba03366e9999c93651f42171daf" name="a9ce7aba03366e9999c93651f42171daf"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerSpec</b> (std::string_view name, std::string_view topic, <a class="el" href="classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2">FilterTask</a> filter_fn={}, <a class="el" href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">AsyncProcessTask</a> async_process_fn={}, <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a> configs={})</td></tr>
-<tr class="separator:a9ce7aba03366e9999c93651f42171daf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa47b4092cdcdaf7a7eb8d9162e6e1f3c" id="r_aa47b4092cdcdaf7a7eb8d9162e6e1f3c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#aa47b4092cdcdaf7a7eb8d9162e6e1f3c">HandlerSpec</a> (std::string_view name, std::string_view topic, <a class="el" href="classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2">FilterTask</a> filter_fn={}, <a class="el" href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">AsyncProcessTask</a> async_process_fn={}, <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a> configs={}, <a class="el" href="classdmn_1_1Dmn__DMesg.html#a242d50d5a9ca235e45f7e854abbcd3ff">HandlerEventCallbackTask</a> handler_event_fn={})</td></tr>
+<tr class="memdesc:aa47b4092cdcdaf7a7eb8d9162e6e1f3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a normalized handler specification.  <br /></td></tr>
+<tr class="separator:aa47b4092cdcdaf7a7eb8d9162e6e1f3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a98e250af95f30dcfa2c854b59441fb74" id="r_a98e250af95f30dcfa2c854b59441fb74"><td class="memItemLeft" align="right" valign="top"><a id="a98e250af95f30dcfa2c854b59441fb74" name="a98e250af95f30dcfa2c854b59441fb74"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>m_name</b> {}</td></tr>
+<tr class="memdesc:a98e250af95f30dcfa2c854b59441fb74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handler name. <br /></td></tr>
 <tr class="separator:a98e250af95f30dcfa2c854b59441fb74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ac4554745469cf703c032a3c1f72918" id="r_a9ac4554745469cf703c032a3c1f72918"><td class="memItemLeft" align="right" valign="top"><a id="a9ac4554745469cf703c032a3c1f72918" name="a9ac4554745469cf703c032a3c1f72918"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>m_topic</b> {}</td></tr>
+<tr class="memdesc:a9ac4554745469cf703c032a3c1f72918"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subscription and default write topic. <br /></td></tr>
 <tr class="separator:a9ac4554745469cf703c032a3c1f72918"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a754a06135740700cede437ddc9bbbbbe" id="r_a754a06135740700cede437ddc9bbbbbe"><td class="memItemLeft" align="right" valign="top"><a id="a754a06135740700cede437ddc9bbbbbe" name="a754a06135740700cede437ddc9bbbbbe"></a>
 <a class="el" href="classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2">FilterTask</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_filter_fn</b> {}</td></tr>
+<tr class="memdesc:a754a06135740700cede437ddc9bbbbbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publisher-context delivery filter. <br /></td></tr>
 <tr class="separator:a754a06135740700cede437ddc9bbbbbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ff963fea805673d1e40c63034b64ed3" id="r_a8ff963fea805673d1e40c63034b64ed3"><td class="memItemLeft" align="right" valign="top"><a id="a8ff963fea805673d1e40c63034b64ed3" name="a8ff963fea805673d1e40c63034b64ed3"></a>
 <a class="el" href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">AsyncProcessTask</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_async_process_fn</b> {}</td></tr>
+<tr class="memdesc:a8ff963fea805673d1e40c63034b64ed3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handler-context message task. <br /></td></tr>
 <tr class="separator:a8ff963fea805673d1e40c63034b64ed3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b1a0e4960274ce3bbe54bbd94334ecf" id="r_a2b1a0e4960274ce3bbe54bbd94334ecf"><td class="memItemLeft" align="right" valign="top"><a id="a2b1a0e4960274ce3bbe54bbd94334ecf" name="a2b1a0e4960274ce3bbe54bbd94334ecf"></a>
 <a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_configs</b> {}</td></tr>
+<tr class="memdesc:a2b1a0e4960274ce3bbe54bbd94334ecf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handler configuration values. <br /></td></tr>
 <tr class="separator:a2b1a0e4960274ce3bbe54bbd94334ecf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d940be74cca7084bb82bd279d468769" id="r_a1d940be74cca7084bb82bd279d468769"><td class="memItemLeft" align="right" valign="top"><a id="a1d940be74cca7084bb82bd279d468769" name="a1d940be74cca7084bb82bd279d468769"></a>
+<a class="el" href="classdmn_1_1Dmn__DMesg.html#a242d50d5a9ca235e45f7e854abbcd3ff">HandlerEventCallbackTask</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_handler_event_fn</b> {}</td></tr>
+<tr class="memdesc:a1d940be74cca7084bb82bd279d468769"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional ordered handler-event observer. <br /></td></tr>
+<tr class="separator:a1d940be74cca7084bb82bd279d468769"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Normalized constructor inputs for a derived DMesg handler. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<div class="textblock"><p>Normalized constructor inputs for a standard or derived handler. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="aa47b4092cdcdaf7a7eb8d9162e6e1f3c" name="aa47b4092cdcdaf7a7eb8d9162e6e1f3c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa47b4092cdcdaf7a7eb8d9162e6e1f3c">&#9670;&#160;</a></span>HandlerSpec()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_DMesg::HandlerSpec::HandlerSpec </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>topic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg.html#aaf0ec9191b5b3a71c01e3e025c1be2f2">FilterTask</a>&#160;</td>
+          <td class="paramname"><em>filter_fn</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">AsyncProcessTask</a>&#160;</td>
+          <td class="paramname"><em>async_process_fn</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg.html#afd97af87f1df0ac7f10a0dfe8339910e">HandlerConfig</a>&#160;</td>
+          <td class="paramname"><em>configs</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__DMesg.html#a242d50d5a9ca235e45f7e854abbcd3ff">HandlerEventCallbackTask</a>&#160;</td>
+          <td class="paramname"><em>handler_event_fn</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Construct a normalized handler specification. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>Handler name. </td></tr>
+    <tr><td class="paramname">topic</td><td>Subscription and default write topic. </td></tr>
+    <tr><td class="paramname">filter_fn</td><td>Optional publisher-context delivery filter. </td></tr>
+    <tr><td class="paramname">async_process_fn</td><td>Optional handler-context message callback. </td></tr>
+    <tr><td class="paramname">configs</td><td>Handler-specific configuration values. </td></tr>
+    <tr><td class="paramname">handler_event_fn</td><td>Optional publisher-ordered event observer, called in handler context. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a></li>
 </ul>
 </div><!-- contents -->

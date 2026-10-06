@@ -5,7 +5,7 @@ var searchData=
   ['getlasttopiccacheinternal_2',['getlasttopiccacheinternal',['../classdmn_1_1Dmn__DMesg.html#a14e645b4bb04c008fa1ef0aa30face65',1,'dmn::Dmn_DMesg::getLastTopicCacheInternal()'],['../classdmn_1_1Dmn__DMesgNet.html#a4506ace95796353ae1e2a4b1262d822d',1,'dmn::Dmn_DMesgNet::getLastTopicCacheInternal()']]],
   ['getname_3',['GetName',['../classdmn_1_1Dmn__Pub_1_1Dmn__Sub.html#a8d084675538867e22b26037f46d97241',1,'dmn::Dmn_Pub::Dmn_Sub']]],
   ['getstate_4',['getState',['../classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32',1,'dmn::Dmn_Proc']]],
-  ['gettopiclastmessage_5',['getTopicLastMessage',['../classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8',1,'dmn::Dmn_DMesg']]],
+  ['gettopiclastmessage_5',['gettopiclastmessage',['../classdmn_1_1Dmn__DMesg.html#a996d15b108694b2642d950835e75c6a8',1,'dmn::Dmn_DMesg::getTopicLastMessage()'],['../classdmn_1_1Dmn__DMesgDbus.html#ab641722275f25a1dacec7f316fc0d357',1,'dmn::Dmn_DMesgDbus::getTopicLastMessage()']]],
   ['gettopicrunningcounter_6',['getTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['gettopicrunningcounterinternal_7',['getTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['getvalue_8',['getValue',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a',1,'dmn::Dmn_Inflight_Guard::Ticket']]]

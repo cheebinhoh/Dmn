@@ -44,6 +44,8 @@ var hierarchy =
     [ "dmn::Dmn_DLock_RequestOptions", "structdmn_1_1Dmn__DLock__RequestOptions.html", null ],
     [ "dmn::Dmn_DLock_Result", "structdmn_1_1Dmn__DLock__Result.html", null ],
     [ "dmn::Dmn_DLock_TableSnapshot", "structdmn_1_1Dmn__DLock__TableSnapshot.html", null ],
+    [ "dmn::Dmn_DMesgDbus", "classdmn_1_1Dmn__DMesgDbus.html", null ],
+    [ "dmn::Dmn_DMesgDbusStatus", "structdmn_1_1Dmn__DMesgDbusStatus.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
     [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [
@@ -96,9 +98,11 @@ var hierarchy =
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
+    [ "dmn::Dmn_DMesg::HandlerEvent", "structdmn_1_1Dmn__DMesg_1_1HandlerEvent.html", null ],
     [ "dmn::Dmn_DMesg::HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
     [ "dmn::Dmn_DbusInput::Impl", "classdmn_1_1Dmn__DbusInput_1_1Impl.html", null ],
     [ "dmn::Dmn_DbusOutput::Impl", "classdmn_1_1Dmn__DbusOutput_1_1Impl.html", null ],
+    [ "dmn::Dmn_DMesgDbus::Impl", "structdmn_1_1Dmn__DMesgDbus_1_1Impl.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "classdmn_1_1ScopeGuard.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >::Ticket", "classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html", null ],

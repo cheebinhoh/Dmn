@@ -179,10 +179,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a25821706f53d3714ee33d3456aa52b73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocking read: return the next available DMesgPb or nullopt if the read fails / on shutdown.  <br /></td></tr>
 <tr class="separator:a25821706f53d3714ee33d3456aa52b73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aade5c44c0a5cb3a0d2462f7d2c752de5" id="r_aade5c44c0a5cb3a0d2462f7d2c752de5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aade5c44c0a5cb3a0d2462f7d2c752de5">resolveConflict</a> (std::string_view topic=&quot;&quot;)</td></tr>
-<tr class="memdesc:aade5c44c0a5cb3a0d2462f7d2c752de5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the handler's conflict as resolved. This posts an async task to the publisher's singleton async thread to clear the handler's conflict state (so the handler need not manage mutexes itself).  <br /></td></tr>
+<tr class="memdesc:aade5c44c0a5cb3a0d2462f7d2c752de5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark the handler's conflict as resolved. This posts the state change to the publisher context and waits until its snapshot has been applied on the handler context.  <br /></td></tr>
 <tr class="separator:aade5c44c0a5cb3a0d2462f7d2c752de5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a565fdb6ac2cb66b3bece968f16c457ee" id="r_a565fdb6ac2cb66b3bece968f16c457ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee">setConflictCallbackTask</a> (ConflictCallbackTask conflict_fn)</td></tr>
-<tr class="memdesc:a565fdb6ac2cb66b3bece968f16c457ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a callback to be invoked when the handler enters a conflict state.  <br /></td></tr>
+<tr class="memdesc:a565fdb6ac2cb66b3bece968f16c457ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a callback to be invoked when the handler enters a conflict state, in the handler's async context.  <br /></td></tr>
 <tr class="separator:a565fdb6ac2cb66b3bece968f16c457ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb8d84a63a5f5709166609dfef3163c2" id="r_aeb8d84a63a5f5709166609dfef3163c2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#aeb8d84a63a5f5709166609dfef3163c2">write</a> (dmn::DMesgPb &amp;&amp;dmesgpb) override</td></tr>
 <tr class="memdesc:aeb8d84a63a5f5709166609dfef3163c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish the provided DMesgPb by moving it into the publisher queue (efficient path).  <br /></td></tr>
@@ -206,7 +206,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a4535dbde60d3e2b4bfe034165db5eed0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish the message and return true if no conflict, or false otherwise.  <br /></td></tr>
 <tr class="separator:a4535dbde60d3e2b4bfe034165db5eed0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3fd2aeeb8159a7fd69cc022bdfdda2d0" id="r_a3fd2aeeb8159a7fd69cc022bdfdda2d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a3fd2aeeb8159a7fd69cc022bdfdda2d0">notify</a> (const dmn::DMesgPb &amp;dmesgpb, <a class="el" href="classdmn_1_1Dmn__Pub.html">Dmn_Pub</a>&lt; dmn::DMesgPb &gt; *pub) override</td></tr>
-<tr class="memdesc:a3fd2aeeb8159a7fd69cc022bdfdda2d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by the publisher to notify this subscriber of a new DMesgPb message.  <br /></td></tr>
+<tr class="memdesc:a3fd2aeeb8159a7fd69cc022bdfdda2d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by the publisher to notify this subscriber of a new DMesgPb message. Runs synchronously on the publisher's async context.  <br /></td></tr>
 <tr class="separator:a3fd2aeeb8159a7fd69cc022bdfdda2d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classdmn_1_1Dmn__Io"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classdmn_1_1Dmn__Io')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classdmn_1_1Dmn__Io.html">dmn::Dmn_Io&lt; dmn::DMesgPb &gt;</a></td></tr>
 <tr class="memitem:ab1335492bced949742f48c2098e87083 inherit pub_methods_classdmn_1_1Dmn__Io" id="r_ab1335492bced949742f48c2098e87083"><td class="memItemLeft" align="right" valign="top">virtual auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Io.html#ab1335492bced949742f48c2098e87083">read</a> (size_t count, long timeout=0) -&gt; std::vector&lt; dmn::DMesgPb &gt;</td></tr>
@@ -316,8 +316,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
   <table class="params">
     <tr><td class="paramname">name</td><td>Unique name/identifier for the handler. </td></tr>
     <tr><td class="paramname">topic</td><td>Topic string to subscribe/publish to. </td></tr>
-    <tr><td class="paramname">filter_fn</td><td>Optional filter functor: return false exclude message. </td></tr>
-    <tr><td class="paramname">async_process_fn</td><td>Optional functor to process messages. </td></tr>
+    <tr><td class="paramname">filter_fn</td><td>Optional filter functor: return false exclude message; runs synchronously on the publisher context. </td></tr>
+    <tr><td class="paramname">async_process_fn</td><td>Optional functor to process accepted messages on the handler's async context. </td></tr>
     <tr><td class="paramname">configs</td><td>Optional handler-specific configuration. </td></tr>
   </table>
   </dd>
@@ -594,7 +594,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </div><div class="memdoc">
 
 <p>Return the current running counter for the given topic. </p>
-<p>Block until the initial playback is done, then return the per-topic running counter from the publisher's async context.</p>
+<p>Block until initial playback is done, then read the per-topic running counter in the handler's async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic whose running counter is queried.</td></tr>
@@ -637,7 +637,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </div><div class="memdoc">
 
 <p>Return the running counter for the given topic (internal helper). </p>
-<p>Look up the running counter for <code>topic</code> directly (no locking).</p>
+<p>Look up the running counter for <code>topic</code> on the handler context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic whose running counter is queried.</td></tr>
@@ -665,7 +665,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </div><div class="memdoc">
 
 <p>Check whether this handler is currently in a conflict state. </p>
-<p>Posts an async task to the publisher's context to check the conflict state, blocking until the result is available.</p>
+<p>Posts an async task to the handler's context to check the conflict state, blocking until the result is available.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic to check, or an empty string to check any topic.</td></tr>
@@ -717,12 +717,12 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
 </table>
 </div><div class="memdoc">
 
-<p>Called by the publisher to notify this subscriber of a new DMesgPb message. </p>
+<p>Called by the publisher to notify this subscriber of a new DMesgPb message. Runs synchronously on the publisher's async context. </p>
 <p>Behavior summary:</p><ul>
 <li>Messages published by the same handler are skipped (handler does not re-receive its own writes), except system messages which can be delivered based on handler configuration.</li>
 <li>Messages with a running counter older than the handler's last seen counter for the topic are skipped (out-of-order / stale).</li>
-<li>System messages may be saved as the handler's last-known system message.</li>
-<li>If configured, system messages can be queued for <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73" title="Blocking read: return the next available DMesgPb or nullopt if the read fails / on shutdown.">read()</a> or passed to m_async_process_fn for asynchronous handling.</li>
+<li>If configured, system messages can be queued for <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a25821706f53d3714ee33d3456aa52b73" title="Blocking read: return the next available DMesgPb or nullopt if the read fails / on shutdown.">read()</a> or passed to m_async_process_fn for handling in this handler's async context.</li>
+<li>The filter runs synchronously here on the publisher context. Accepted-message, handler-event, and conflict callbacks are queued to this handler's async context in publisher order.</li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -781,7 +781,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesg</b></td></
       </table>
 </div><div class="memdoc">
 
-<p>Mark the handler's conflict as resolved. This posts an async task to the publisher's singleton async thread to clear the handler's conflict state (so the handler need not manage mutexes itself). </p>
+<p>Mark the handler's conflict as resolved. This posts the state change to the publisher context and waits until its snapshot has been applied on the handler context. </p>
 <p>Delegate conflict resolution to the publisher's async context via <a class="el" href="classdmn_1_1Dmn__DMesg.html#a34bd45668411eff973892aa865d4fbab" title="Post an async action that resets a handler&#39;s conflict state in the publisher&#39;s singleton async thread...">Dmn_DMesg::resetHandlerConflictState()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -850,11 +850,11 @@ template&lt;typename Callable &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Set a callback to be invoked when the handler enters a conflict state. </p>
-<p>Post the conflict callback update to the async context and wait.</p>
+<p>Set a callback to be invoked when the handler enters a conflict state, in the handler's async context. </p>
+<p>Post the conflict callback update to the handler's async context and wait.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">conflict_fn</td><td>Callback receiving the handler and the message that caused the conflict. </td></tr>
+    <tr><td class="paramname">conflict_fn</td><td>Callback receiving the handler and the message that caused the conflict. Do not synchronously call an API that waits on either async context, re-enter the handler, or close it from within the callback. </td></tr>
   </table>
   </dd>
 </dl>
@@ -888,7 +888,7 @@ template&lt;typename Callable &gt; </div>
 </div><div class="memdoc">
 
 <p>Set the running counter for the given topic. </p>
-<p>Set the running counter for <code>topic</code> from the publisher's async context.</p>
+<p>Set the running counter for <code>topic</code> in the handler's async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic whose running counter is to be updated. </td></tr>
@@ -936,7 +936,7 @@ template&lt;typename Callable &gt; </div>
 </div><div class="memdoc">
 
 <p>Set the running counter for the given topic (internal helper). </p>
-<p>Directly update the counter map entry for <code>topic</code> (no locking).</p>
+<p>Update the handler-context counter map entry for <code>topic</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">topic</td><td>The topic whose running counter is to be updated. </td></tr>
@@ -1273,7 +1273,7 @@ template&lt;typename Callable &gt; </div>
 </div><div class="memdoc">
 
 <p>Internal write implementation used by public write(...) overloads. </p>
-<p>Stamp and publish the message; must be called from the async context.</p>
+<p>Stamp and publish the message; must be called from the handler's async context.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dmesgPb</td><td>The message to publish. </td></tr>
@@ -1282,7 +1282,7 @@ template&lt;typename Callable &gt; </div>
   </table>
   </dd>
 </dl>
-<p>Sets timestamp, source identifiers, and topic (if unset), increments the per-topic running counter, then calls <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">Dmn_Pub::publish()</a>.</p>
+<p>Resolves the configured topic before checking and incrementing its counter, stamps the message, then calls <a class="el" href="classdmn_1_1Dmn__Pub.html#a213323e9a00cf6bbefd5b45fc3891225" title="Publish an item to all registered subscribers. By default, schedules the delivery in the publisher&#39;s ...">Dmn_Pub::publish()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dmesgpb</td><td>Message to publish (modified in-place). </td></tr>

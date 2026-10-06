@@ -111,6 +111,7 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp.html',''); initResizabl
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;sys/time.h&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div>
@@ -120,8 +121,11 @@ $(document).ready(function(){initNavTree('dmn-dmesg_8hpp.html',''); initResizabl
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg.html">dmn::Dmn_DMesg</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerEvent.html">dmn::Dmn_DMesg::HandlerEvent</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A publisher-ordered handler delivery or conflict-state transition.  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerEvent.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html">dmn::Dmn_DMesg::HandlerSpec</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalized constructor inputs for a derived DMesg handler.  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalized constructor inputs for a standard or derived handler.  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume dmn::DMesgPb messages. It implements Dmn_Io&lt;DMesgPb&gt;.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#details">More...</a><br /></td></tr>
@@ -150,7 +154,7 @@ Design pattern</h2>
 <li>Represent messages with the Protobuf type <code>dmn::DMesgPb</code>. Clients extend the proto when extra fields are needed (no C++ subclassing required).</li>
 <li>Provide an ergonomic handler API (Dmn_Io-like) for reading and writing DMesgPb messages without requiring clients to subclass publisher-specific subscriber interfaces.</li>
 <li>Maintain per-topic running counters and last-known messages so new handlers can receive the most recent state for every topic (playback).</li>
-<li>Detect simple publish conflicts based on per-topic running counters and mark only the offending handler as "in conflict" (blocking its subsequent writes until the conflict is resolved by the client).</li>
+<li>Detect simple publish conflicts based on per-topic running counters, marking the writer and eligible subscribed handlers as conflicted.</li>
 </ul>
 <p>Handler model and behaviour</p><ul>
 <li>Dmn_DMesgHandler derives from Dmn_Pub::Dmn_Sub and registers with the Dmn_Pub notification system.</li>
@@ -165,20 +169,23 @@ Design pattern</h2>
 <li>The handler API offers blocking reads, non-blocking/asynchronous delivery, write variants (move/copy), and helpers to check and resolve conflict state.</li>
 </ul>
 <p>Concurrency and async model</p><ul>
-<li>To keep hot paths lock-free, certain operations are executed in the publisher's singleton asynchronous thread context (for example: handler registration, playback of last-known messages, and conflict-state resets).</li>
+<li>Handler registration, publisher notifications, and conflict-state resets are serialized on the publisher's asynchronous context.</li>
+<li>Handler filters run synchronously on the publisher context; accepted message-processing, handler-event, and conflict callbacks run serially on the handler's async context in publisher event order.</li>
+<li>A filter must not synchronously wait on or re-enter the publisher context. Handler callbacks must not synchronously wait on either context, re-enter the same handler, or close the handler from within their callback.</li>
+<li>The publisher owns authoritative per-handler counter/conflict snapshots in its serialized context; handlers apply ordered snapshots to their handler-local state on their own async context.</li>
 <li>Publishing and notification follow Dmn_Pub semantics; the DMESG wrapper implements additional topic/counter logic and schedules async tasks where appropriate.</li>
 </ul>
 <p>Conflict detection summary</p><ul>
 <li>Each topic has an associated running counter tracked by the publisher.</li>
-<li>If a handler publishes a message with a topic counter older than the publisher's current counter for that topic, that handler is placed into a conflict state. Only that handler is affected; other handlers continue to operate normally.</li>
+<li>If a handler publishes a message with a topic counter older than the publisher's current counter for that topic, the writer is placed into conflict. Subscribed handlers with an established counter for that topic can also enter conflict when processing the conflict notification.</li>
 <li>While in conflict, a handler's writes may be rejected until the client resolves the conflict (resolveConflict()). Conflict callbacks can be installed to notify clients when a conflict occurs.</li>
 </ul>
 <p>Configuration and constants</p><ul>
 <li>HandlerConfig keys (Handler_IncludeSys, Handler_NoTopicFilter) are used to control handler behaviour; defaults are provided in kHandlerConfig_Default.</li>
 </ul>
 <p>Design notes</p><ul>
-<li>Dmn_DMesgHandler keeps per-handler buffers, last-seen system message, per-topic running counters and a small internal subscriber object, while Dmn_DMesg stores the global per-topic counters and the last published DMesgPb per topic.</li>
-<li>This separation keeps Dmn_DMesg mostly mutex-free for the common publish and notify paths, relying on the publisher's async context to perform infrequent, potentially blocking operations.</li>
+<li>Dmn_DMesgHandler keeps per-handler buffers, a mirror of per-topic counters and conflict state, and a small internal subscriber object. Dmn_DMesg stores publisher-owned per-handler snapshots alongside its global per-topic counters and last-published-message cache.</li>
+<li>Publisher state is serialized by its async context. Public handler state access and callbacks are serialized by that handler's async context; state crosses the boundary only as ordered snapshots.</li>
 </ul>
 <p>See also</p><ul>
 <li>proto/dmn-dmesg.proto : Protobuf definition for dmn::DMesgPb.</li>

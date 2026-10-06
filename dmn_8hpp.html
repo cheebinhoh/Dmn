@@ -103,13 +103,15 @@ $(document).ready(function(){initNavTree('dmn_8hpp.html',''); initResizable(); }
 <code>#include &quot;<a class="el" href="dmn-dlock_8hpp_source.html">dmn-dlock.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-dmesg-pb-util_8hpp_source.html">dmn-dmesg-pb-util.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="dmn-fault-injection_8hpp_source.html">dmn-fault-injection.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-dmesgnet_8hpp_source.html">dmn-dmesgnet.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-inflight-guard_8hpp_source.html">dmn-inflight-guard.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-interval-btree_8hpp_source.html">dmn-interval-btree.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-io_8hpp_source.html">dmn-io.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-pipe_8hpp_source.html">dmn-pipe.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-pub-sub_8hpp_source.html">dmn-pub-sub.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-runtime-state_8hpp_source.html">dmn-runtime-state.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-runtime-task_8hpp_source.html">dmn-runtime-task.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-runtime_8hpp_source.html">dmn-runtime.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-singleton_8hpp_source.html">dmn-singleton.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-socket_8hpp_source.html">dmn-socket.hpp</a>&quot;</code><br />
@@ -128,6 +130,7 @@ $(document).ready(function(){initNavTree('dmn_8hpp.html',''); initResizable(); }
 <ul>
 <li>Purpose: Provide a single, easy-to-use entry point to the DMN public API.</li>
 <li>Behavior: This file only forwards includes and does not introduce new symbols or definitions beyond those in the included headers.</li>
+<li>Optional APIs: D-Bus headers are included when the dmn-dbus target defines DMN_ENABLE_DBUS; fault-injection helpers are included when FIU_ENABLE is defined.</li>
 <li>Include guard: The guard below prevents multiple inclusion across the build.</li>
 </ul>
 <p>See the project README or the individual header documentation for more information about each component. </p>

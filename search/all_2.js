@@ -15,7 +15,7 @@ var searchData=
   ['clear_12',['clear',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046adc30bc0c7914db5918da4263fce93ad2',1,'Cleardmn'],['../classdmn_1_1Dmn__IntervalBTree.html#a3807f06c1e5369916d85ae7325a65bfe',1,'dmn::Dmn_IntervalBTree::clear()']]],
   ['clearsignalhandlerhook_13',['clearSignalHandlerHook',['../classdmn_1_1Dmn__Runtime__Manager.html#a3a314ec4b1088a6612eaf424113c778a',1,'dmn::Dmn_Runtime_Manager']]],
   ['clock_14',['Clock',['../dmn-runtime_8hpp.html#ab870561dfa06e322c90f6c995f1666ee',1,'dmn']]],
-  ['closehandler_15',['closehandler',['../classdmn_1_1Dmn__DMesgNet__Kafka.html#a73159e8bab3b1d351dcb6aa5e5b0ef0e',1,'dmn::Dmn_DMesgNet_Kafka::closeHandler()'],['../classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7',1,'dmn::Dmn_DMesg::closeHandler()']]],
+  ['closehandler_15',['closehandler',['../classdmn_1_1Dmn__DMesgNet__Kafka.html#a73159e8bab3b1d351dcb6aa5e5b0ef0e',1,'dmn::Dmn_DMesgNet_Kafka::closeHandler()'],['../classdmn_1_1Dmn__DMesgDbus.html#a2d0f5800a359ab59e28aa2109540b089',1,'dmn::Dmn_DMesgDbus::closeHandler()'],['../classdmn_1_1Dmn__DMesg.html#a8855fe9eba1a0576c8e4ba0a16095bc7',1,'dmn::Dmn_DMesg::closeHandler()']]],
   ['concepts_16',['Key concepts',['../dmn-inflight-guard_8hpp.html#autotoc_md17',1,'']]],
   ['copy_20behavior_17',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]],
   ['coveringexisting_18',['CoveringExisting',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046a631eeaf02e95520b0c2bc5fd8a2049f9',1,'dmn']]],

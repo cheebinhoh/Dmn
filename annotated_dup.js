@@ -25,6 +25,8 @@ var annotated_dup =
       [ "Dmn_DLock_Result", "structdmn_1_1Dmn__DLock__Result.html", null ],
       [ "Dmn_DLock_TableSnapshot", "structdmn_1_1Dmn__DLock__TableSnapshot.html", null ],
       [ "Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html", "classdmn_1_1Dmn__DMesg" ],
+      [ "Dmn_DMesgDbus", "classdmn_1_1Dmn__DMesgDbus.html", "classdmn_1_1Dmn__DMesgDbus" ],
+      [ "Dmn_DMesgDbusStatus", "structdmn_1_1Dmn__DMesgDbusStatus.html", null ],
       [ "Dmn_DMesgNet", "classdmn_1_1Dmn__DMesgNet.html", "classdmn_1_1Dmn__DMesgNet" ],
       [ "Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", "classdmn_1_1Dmn__DMesgNet__Kafka" ],
       [ "Dmn_Inflight_Guard", "classdmn_1_1Dmn__Inflight__Guard.html", "classdmn_1_1Dmn__Inflight__Guard" ],
