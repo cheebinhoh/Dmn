@@ -67,6 +67,13 @@ cannot determine whether the item should be delivered. A notification failure
 does not prevent other subscribers from receiving the item. Failed callbacks
 are not retried.
 
+This generic contract does not imply that work performed by a `notify()`
+implementation is also inline. `Dmn_DMesgHandler::notify()` applies its
+delivery filter synchronously on the publisher context, then queues accepted
+message-processing, handler-event, and conflict callbacks on that handler's
+async context. It enqueues those callbacks in publisher order; their execution
+does not block the publisher or change generic `Dmn_Pub` behavior.
+
 `takeCallbackFailures()` schedules its drain as a task in the same serialized
 publisher context used by publication and registration replay, then waits for
 that task. The vector is therefore only accessed in that context and needs no

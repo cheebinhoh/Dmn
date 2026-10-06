@@ -69,6 +69,8 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
   std::atomic<unsigned int> filterCalls{};
   std::promise<std::string> asyncMessage;
   auto asyncMessageFuture = asyncMessage.get_future();
+  std::promise<dmn::Dmn_DMesgDbus::HandlerEvent> handlerEvent;
+  auto handlerEventFuture = handlerEvent.get_future();
   auto receiverSpec = dmn::Dmn_DMesgDbus::HandlerSpec{
       "facade-receiver",
       "facade-topic",
@@ -79,7 +81,12 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
       [&asyncMessage](dmn::DMesgPb message) {
         asyncMessage.set_value(message.body().message());
       },
-      {}};
+      {},
+      [&handlerEvent](const dmn::Dmn_DMesgDbus::HandlerEvent &event) {
+        if (event.m_type == dmn::Dmn_DMesgDbus::HandlerEventType::kMessage) {
+          handlerEvent.set_value(event);
+        }
+      }};
   auto receiver = node.openHandler(receiverSpec);
   ASSERT_TRUE(receiver);
 
@@ -95,6 +102,11 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
   ASSERT_EQ(asyncMessageFuture.wait_for(5s), std::future_status::ready);
   EXPECT_EQ(asyncMessageFuture.get(), "facade-local");
   EXPECT_EQ(filterCalls.load(), 1U);
+  ASSERT_EQ(handlerEventFuture.wait_for(5s), std::future_status::ready);
+  const auto deliveredEvent = handlerEventFuture.get();
+  EXPECT_EQ(deliveredEvent.m_topic, "facade-topic");
+  ASSERT_TRUE(deliveredEvent.m_message.has_value());
+  EXPECT_EQ(deliveredEvent.m_message->body().message(), "facade-local");
 
   std::optional<dmn::DMesgPb> lastMessage{};
   ASSERT_TRUE(waitUntil([&node, &lastMessage] {

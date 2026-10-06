@@ -28,9 +28,8 @@
  *   subscriber interfaces.
  * - Maintain per-topic running counters and last-known messages so new
  *   handlers can receive the most recent state for every topic (playback).
- * - Detect simple publish conflicts based on per-topic running counters and
- *   mark only the offending handler as "in conflict" (blocking its subsequent
- *   writes until the conflict is resolved by the client).
+ * - Detect simple publish conflicts based on per-topic running counters,
+ *   marking the writer and eligible subscribed handlers as conflicted.
  *
  * Handler model and behaviour
  * - Dmn_DMesgHandler derives from Dmn_Pub::Dmn_Sub and registers with the
@@ -48,9 +47,17 @@
  *   state.
  *
  * Concurrency and async model
- * - To keep hot paths lock-free, certain operations are executed in the
- *   publisher's singleton asynchronous thread context (for example: handler
- *   registration, playback of last-known messages, and conflict-state resets).
+ * - Handler registration, publisher notifications, and conflict-state resets
+ *   are serialized on the publisher's asynchronous context.
+ * - Handler filters run synchronously on the publisher context; accepted
+ *   message-processing, handler-event, and conflict callbacks run serially on
+ *   the handler's async context in publisher event order.
+ * - A filter must not synchronously wait on or re-enter the publisher context.
+ *   Handler callbacks must not synchronously wait on either context, re-enter
+ *   the same handler, or close the handler from within their callback.
+ * - The publisher owns authoritative per-handler counter/conflict snapshots
+ *   in its serialized context; handlers apply ordered snapshots to their
+ *   handler-local state on their own async context.
  * - Publishing and notification follow Dmn_Pub semantics; the DMESG wrapper
  *   implements additional topic/counter logic and schedules async tasks where
  *   appropriate.
@@ -58,9 +65,9 @@
  * Conflict detection summary
  * - Each topic has an associated running counter tracked by the publisher.
  * - If a handler publishes a message with a topic counter older than the
- *   publisher's current counter for that topic, that handler is placed into a
- *   conflict state. Only that handler is affected; other handlers continue to
- *   operate normally.
+ *   publisher's current counter for that topic, the writer is placed into
+ *   conflict. Subscribed handlers with an established counter for that topic
+ *   can also enter conflict when processing the conflict notification.
  * - While in conflict, a handler's writes may be rejected until the client
  *   resolves the conflict (resolveConflict()). Conflict callbacks can be
  *   installed to notify clients when a conflict occurs.
@@ -71,13 +78,13 @@
  *   kHandlerConfig_Default.
  *
  * Design notes
- * - Dmn_DMesgHandler keeps per-handler buffers, last-seen system message,
- *   per-topic running counters and a small internal subscriber object, while
- *   Dmn_DMesg stores the global per-topic counters and the last published
- *   DMesgPb per topic.
- * - This separation keeps Dmn_DMesg mostly mutex-free for the common publish
- *   and notify paths, relying on the publisher's async context to perform
- *   infrequent, potentially blocking operations.
+ * - Dmn_DMesgHandler keeps per-handler buffers, a mirror of per-topic counters
+ *   and conflict state, and a small internal subscriber object. Dmn_DMesg
+ *   stores publisher-owned per-handler snapshots alongside its global
+ *   per-topic counters and last-published-message cache.
+ * - Publisher state is serialized by its async context. Public handler state
+ *   access and callbacks are serialized by that handler's async context; state
+ *   crosses the boundary only as ordered snapshots.
  *
  * See also
  * - proto/dmn-dmesg.proto : Protobuf definition for dmn::DMesgPb.
@@ -102,6 +109,7 @@
 #include <string>
 #include <string_view>
 #include <sys/time.h>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -117,16 +125,45 @@ extern const char *const kDMesgSysIdentifier;
 class Dmn_DMesg : public Dmn_Pub<dmn::DMesgPb> {
 public:
   /**
-   * @brief Callback type invoked asynchronously with a copy of each delivered
-   * message.
+   * @brief Callback invoked in the handler's async context with a copy of each
+   * delivered message. It runs serially with other handler-context work; do not
+   * synchronously wait on either async context, re-enter this handler, or close
+   * it from within the callback.
    */
   using AsyncProcessTask = std::function<void(dmn::DMesgPb)>;
 
   /**
    * @brief Predicate that returns false to drop an incoming message before
-   * buffering.
+   * handler delivery.
    */
   using FilterTask = std::function<bool(const dmn::DMesgPb &)>;
+
+  enum class HandlerEventType {
+    kMessage,
+    kConflictEntered,
+    kConflictResolved,
+  };
+
+  /**
+   * @brief A publisher-ordered handler delivery or conflict-state transition.
+   */
+  struct HandlerEvent {
+    HandlerEventType m_type{};
+    std::string m_topic{};
+    uint64_t m_handler_running_counter{};
+    uint64_t m_conflict_generation{};
+    std::optional<dmn::DMesgPb> m_message{};
+  };
+
+  /**
+   * @brief Observer invoked in handler context in publisher event order.
+   *
+   * Implementations should enqueue bounded work and must not block or call
+   * back into the publisher. Do not synchronously wait on either async
+   * context, re-enter this handler, or close it from within the callback.
+   */
+  using HandlerEventCallbackTask =
+      std::function<void(const HandlerEvent &event)>;
 
   /**
    * @brief Key/value map used to pass per-handler configuration options.
@@ -136,7 +173,7 @@ public:
   class Dmn_DMesgHandler;
 
   /**
-   * @brief Normalized constructor inputs for a derived DMesg handler.
+   * @brief Normalized constructor inputs for a standard or derived handler.
    */
   struct HandlerSpec {
     std::string m_name{};
@@ -144,15 +181,18 @@ public:
     FilterTask m_filter_fn{};
     AsyncProcessTask m_async_process_fn{};
     HandlerConfig m_configs{};
+    HandlerEventCallbackTask m_handler_event_fn{};
 
     HandlerSpec() = default;
     HandlerSpec(std::string_view name, std::string_view topic,
                 FilterTask filter_fn = {},
                 AsyncProcessTask async_process_fn = {},
-                HandlerConfig configs = {})
+                HandlerConfig configs = {},
+                HandlerEventCallbackTask handler_event_fn = {})
         : m_name{name}, m_topic{topic}, m_filter_fn{std::move(filter_fn)},
           m_async_process_fn{std::move(async_process_fn)},
-          m_configs{std::move(configs)} {}
+          m_configs{std::move(configs)},
+          m_handler_event_fn{std::move(handler_event_fn)} {}
   };
 
   using HandlerFactory =
@@ -220,8 +260,10 @@ public:
      * @param name             Unique name/identifier for the handler.
      * @param topic            Topic string to subscribe/publish to.
      * @param filter_fn        Optional filter functor: return false exclude
-     * message.
-     * @param async_process_fn Optional functor to process messages.
+     *                         message; runs synchronously on the publisher
+     *                         context.
+     * @param async_process_fn Optional functor to process accepted messages on
+     *                         the handler's async context.
      * @param configs          Optional handler-specific configuration.
      */
     Dmn_DMesgHandler(std::string_view name, std::string_view topic,
@@ -315,18 +357,20 @@ public:
     auto read() -> std::optional<dmn::DMesgPb> override;
 
     /**
-     * @brief Mark the handler's conflict as resolved. This posts an async task
-     * to the publisher's singleton async thread to clear the handler's conflict
-     * state (so the handler need not manage mutexes itself).
+     * @brief Mark the handler's conflict as resolved. This posts the state
+     * change to the publisher context and waits until its snapshot has been
+     * applied on the handler context.
      */
     void resolveConflict(std::string_view topic = "");
 
     /**
      * @brief Set a callback to be invoked when the handler enters a conflict
-     * state.
+     * state, in the handler's async context.
      *
      * @param conflict_fn Callback receiving the handler and the message that
-     * caused the conflict.
+     *                    caused the conflict. Do not synchronously call an
+     *                    API that waits on either async context, re-enter
+     *                    the handler, or close it from within the callback.
      */
     void setConflictCallbackTask(ConflictCallbackTask conflict_fn);
 
@@ -404,7 +448,7 @@ public:
 
     /**
      * @brief Called by the publisher to notify this subscriber of a new
-     * DMesgPb message.
+     * DMesgPb message. Runs synchronously on the publisher's async context.
      *
      * Behavior summary:
      *  - Messages published by the same handler are skipped (handler does
@@ -412,10 +456,11 @@ public:
      *    delivered based on handler configuration.
      *  - Messages with a running counter older than the handler's last seen
      *    counter for the topic are skipped (out-of-order / stale).
-     *  - System messages may be saved as the handler's last-known system
-     *    message.
      *  - If configured, system messages can be queued for read() or passed
-     *    to m_async_process_fn for asynchronous handling.
+     *    to m_async_process_fn for handling in this handler's async context.
+     *  - The filter runs synchronously here on the publisher context.
+     *    Accepted-message, handler-event, and conflict callbacks are queued to
+     *    this handler's async context in publisher order.
      *
      * @param dmesgPb The message delivered by the publisher.
      */
@@ -468,43 +513,32 @@ public:
   private:
     /**
      * @brief Return true if the handler is currently marked in a conflict
-     * state (atomic check) for the topic or any topic if "".
+     * state on its async context.
      *
      * @param topic the topic to check if it is in conflict, or "" any topic.
      */
     auto isInConflictInternal(std::string_view topic) const -> bool;
 
     /**
-     * @brief Pause and wait until m_is_after_initial_playback is set true
-     * (playback has been completed).
+     * @brief Pause and wait until initial playback has completed.
      */
     void isAfterInitialPlayback();
 
-    /**
-     * @brief Internal helper to mark the handler as resolved. Must be called
-     * in the publisher's async thread context.
-     */
-    void resolveConflictInternal(std::string_view topic);
+    void enqueuePublisherEvent(HandlerEvent event, bool notifyObserver,
+                               bool invokeConflictCallback);
 
     /**
-     * @brief Set m_is_after_initial_playback to true and notify all blocking
-     * threads.
+     * @brief Queue the playback-complete marker in handler context and wait
+     * until preceding handler-context work has completed.
      */
     void setAfterInitialPlayback();
 
     /**
-     * @brief Set m_is_after_initial_playback to true and notify all blocking
-     * threads, and this method called and run in internal asynchronous context.
+     * @brief Set the playback-complete flag and notify all blocking threads.
+     *
+     * This method must run in the handler's async context.
      */
     void setAfterInitialPlaybackInternal();
-
-    /**
-     * @brief Put the handler into conflict state and schedule the conflict
-     * callback on the publisher's async thread.
-     *
-     * @param dmesgpb The message that caused the conflict.
-     */
-    void throwConflictInternal(const dmn::DMesgPb &dmesgpb);
 
     /**
      * Data members set during construction.
@@ -526,11 +560,13 @@ public:
     std::unique_ptr<
         Dmn_BlockingQueue<Dmn_BlockingQueue_Mt<dmn::DMesgPb>, dmn::DMesgPb>>
         m_buffers{};
-    dmn::DMesgPb m_last_dmesgpb_sys{};
+    // This is a handler-context mirror of publisher-owned state.
     std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
 
     ConflictCallbackTask m_conflict_callback_fn{};
     std::set<std::string> m_topic_in_conflict{};
+    HandlerEventCallbackTask m_handler_event_fn{};
+    uint64_t m_conflict_generation{};
 
     // Set true after the handler has received the initial playback of
     // last-known messages for each topic.
@@ -612,13 +648,22 @@ public:
    *
    * This template forwards its arguments to the Dmn_DMesgHandler constructor.
    * Registration and the initial playback of last-known messages are performed
-   * asynchronously in the publisher's singleton async context so that handler
+   * asynchronously in the publisher's serialized async context so that handler
    * construction remains lock-free for fast paths.
    *
    * @return the handler proxy to internal shared_ptr handler registered
    * with DMesg.
    */
-  template <class... U> auto openHandler(U &&...arg) -> HandlerType;
+  template <class... U>
+    requires(sizeof...(U) != 1 ||
+             (!std::is_same_v<std::remove_cvref_t<U>, HandlerSpec> && ...))
+  auto openHandler(U &&...arg) -> HandlerType;
+
+  /**
+   * @brief Open a standard handler from normalized inputs, including its
+   * optional publisher-ordered event observer.
+   */
+  auto openHandler(const HandlerSpec &spec) -> HandlerType;
 
   /**
    * @brief Open a handler using a normalized spec and factory for derived
@@ -723,6 +768,25 @@ private:
   void resetHandlerConflictStateInternal(const Dmn_DMesgHandler *handler_ptr,
                                          std::string_view = "");
 
+  struct HandlerState {
+    std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
+    std::set<std::string> m_topic_in_conflict{};
+    uint64_t m_conflict_generation{};
+  };
+
+  void setHandlerTopicRunningCounter(const Dmn_DMesgHandler *handler_ptr,
+                                     std::string_view topic,
+                                     uint64_t runningCounter);
+  void throwHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
+                            const dmn::DMesgPb &message);
+  void resolveHandlerConflict(const Dmn_DMesgHandler *handler_ptr,
+                              std::string_view topic,
+                              const dmn::DMesgPb *message = nullptr);
+  void enqueueHandlerEvent(const Dmn_DMesgHandler *handler_ptr,
+                           HandlerEventType type, std::string_view topic,
+                           const dmn::DMesgPb *message, bool notifyObserver,
+                           bool invokeConflictCallback);
+
   /**
    * Data members provided at construction.
    */
@@ -735,6 +799,7 @@ private:
    *  - last published message per topic
    */
   std::vector<std::shared_ptr<Dmn_DMesgHandler>> m_handlers{};
+  std::unordered_map<const Dmn_DMesgHandler *, HandlerState> m_handler_states{};
   std::unordered_map<std::string, uint64_t> m_topic_running_counter{};
   std::unordered_map<std::string, dmn::DMesgPb> m_topic_last_dmesgpb{};
 }; // class Dmn_DMesg
@@ -747,9 +812,10 @@ inline auto Dmn_DMesg::finalizeHandlerRegistration(
   this->registerSubscriber(handler);
   handlerProxy.m_handler = handler;
 
-  // Execute registration and playback on the publisher's async thread
+  // Registration, playback, and the handler-context barrier run in order.
   auto waitHandler = this->addExecTaskWithWait([this, handler]() {
     this->m_handlers.push_back(handler);
+    this->m_handler_states.try_emplace(handler.get());
     this->playbackLastTopicDMesgPbInternal();
     handler->setAfterInitialPlayback();
   });
@@ -759,23 +825,37 @@ inline auto Dmn_DMesg::finalizeHandlerRegistration(
   return handlerProxy;
 }
 
-template <class... U> auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
+template <class... U>
+  requires(sizeof...(U) != 1 ||
+           (!std::is_same_v<std::remove_cvref_t<U>, Dmn_DMesg::HandlerSpec> &&
+            ...))
+auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   // This function:
   //  - constructs a handler
   //  - registers the handler as a subscriber
   //  - wires handler<->subscriber<->publisher links
   //  - schedules an async task on the publisher's singleton async thread to:
-  //      * add the handler to the internal list
+  //      * add the handler and initialize its publisher-owned state snapshot
   //      * playback last-known messages per topic
-  //      * mark handler as initialized after playback
+  //      * wait for the handler context to finish initial-playback work and
+  //        mark the handler as initialized
   //
-  // The use of the publisher's singleton async context keeps most operations
-  // mutex-free for the hot paths (publish/notify).
+  // Publisher-owned handler snapshots and registration/playback are
+  // serialized on the publisher context. Each handler receives snapshots on
+  // its own async context for public state access and callbacks.
 
   std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
       std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
 
   return finalizeHandlerRegistration(handler);
+}
+
+inline auto Dmn_DMesg::openHandler(const HandlerSpec &spec) -> HandlerType {
+  return openHandlerWithFactory(spec, [](const HandlerSpec &handlerSpec) {
+    return std::make_shared<Dmn_DMesgHandler>(
+        handlerSpec.m_name, handlerSpec.m_topic, handlerSpec.m_filter_fn,
+        handlerSpec.m_async_process_fn, handlerSpec.m_configs);
+  });
 }
 
 inline auto Dmn_DMesg::openHandlerWithFactory(
@@ -784,6 +864,9 @@ inline auto Dmn_DMesg::openHandlerWithFactory(
   if (!handler) {
     throw std::runtime_error("handler factory produced a null handler");
   }
+
+  // Install the observer before registration can trigger initial playback.
+  handler->m_handler_event_fn = spec.m_handler_event_fn;
 
   return finalizeHandlerRegistration(handler);
 }

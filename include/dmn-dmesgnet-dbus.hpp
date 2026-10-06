@@ -39,6 +39,9 @@ class Dmn_DMesgDbus final {
 public:
   using AsyncProcessTask = Dmn_DMesg::AsyncProcessTask;
   using FilterTask = Dmn_DMesg::FilterTask;
+  using HandlerEvent = Dmn_DMesg::HandlerEvent;
+  using HandlerEventCallbackTask = Dmn_DMesg::HandlerEventCallbackTask;
+  using HandlerEventType = Dmn_DMesg::HandlerEventType;
   using HandlerConfig = Dmn_DMesg::HandlerConfig;
   using HandlerFactory = Dmn_DMesg::HandlerFactory;
   using HandlerSpec = Dmn_DMesg::HandlerSpec;

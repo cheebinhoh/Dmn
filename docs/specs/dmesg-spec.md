@@ -11,7 +11,8 @@ The related network bridge has a separate specification at
   per-topic counters and last-value cache, and controls handler registration.
 - `Dmn_DMesgHandler` is an I/O-style publisher/subscriber endpoint. It supports
   optional topic selection, filter callback, async-process callback, buffered
-  reads, writes, per-topic counters, and conflict state.
+  reads, writes, per-topic counters, conflict state, and an optional
+  publisher-ordered handler-event observer configured at registration.
 - `Dmn_DMesgHandlerProxy` is a weak-pointer proxy. The publisher owns active
   handlers and `closeHandler()` unregisters and invalidates the supplied proxy.
 - `dmn-dmesg-pb-util.hpp` provides protobuf field-setting macros; it does not
@@ -38,17 +39,52 @@ macro.
 Handler registration completes in the publisher's async context and performs
 initial last-message playback before marking playback complete. A handler's
 `read()` waits for that initialization and then blocks on its internal queue.
-An async-process callback, when configured, processes accepted notifications
-instead of queueing them.
+Accepted-message and event callbacks from initial playback are queued in the
+handler context before the playback-complete marker. Registration then waits
+for a handler-context task behind those callbacks, so `openHandler()` returns
+only after initial-playback callback work has completed.
+The handler's `FilterTask` runs synchronously in the publisher context because
+it decides whether delivery is accepted. Accepted notifications are queued to
+the handler's async context for `AsyncProcessTask`; with no such callback, they
+are placed in the handler's read queue.
 
 Handler writes stamp the current wall-clock time, source-write-handler name,
 topic (when configured and absent), source identifier (when absent), and next
 handler-local topic counter. A conflicted topic rejects a non-forced write.
 The publisher advances its global topic counter for accepted normal messages
-and marks stale/conflict messages as conflicted; the originating handler is
-blocked until conflict state is reset. Playback bypasses ordinary publisher
-conflict detection. Force messages replace the counter and clear the relevant
-handler conflict state.
+and marks stale/conflict messages as conflicted. The writer enters conflict;
+subscribed handlers with an established counter for that topic can also enter
+conflict when they receive the conflict-marked message. Playback bypasses
+ordinary publisher conflict detection. Force messages replace the counter and
+clear the relevant handler conflict state.
+
+Handlers opened from `HandlerSpec` may receive a
+`HandlerEventCallbackTask`; it is installed before registration and initial
+playback. It reports eligible message delivery plus actual per-topic conflict
+entry/resolution transitions created in publisher order and queued to that
+handler's async context. Each handler has a monotonically incremented conflict
+generation; message events include the current generation but do not change
+it. A resolution event includes a repair/accepted message when available;
+explicit clear-only resolution has no message. The observer supplements, and
+does not replace, the legacy conflict callback; both it and `AsyncProcessTask`
+run in handler context. Exceptions from these handler-context callbacks are
+logged and isolated from publisher processing. These callbacks run serially
+with other handler-context work, so they must not synchronously call APIs that
+wait on either async context, re-enter the handler, or close it from within the
+callback. `FilterTask` runs on the publisher context and must not synchronously
+wait on or re-enter that context.
+
+`Dmn_Pub` still invokes its generic subscriber filter and `notify()` inline in
+publisher context. DMesg's handler filter is part of `notify()` and also runs
+there; accepted application callbacks are dispatched to handler context.
+
+The publisher owns the authoritative per-handler counter/conflict snapshots
+and mutates them only in its serialized context. Each handler keeps a local
+mirror, updated by ordered snapshots queued from the publisher; public handler
+state access and writes execute on that handler's async context. A forced
+handler write waits for publisher notification to finish so its
+conflict-resolution snapshot is queued before the handler processes its next
+task.
 
 System messages use the reserved sys topic/type and have a separate internal
 publish path. System delivery is opt-in through `Handler_IncludeSys`; a handler
