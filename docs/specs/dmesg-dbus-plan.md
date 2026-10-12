@@ -8,6 +8,14 @@ proxy. The shared transport contract is in
 [`dmesgnet-dbus-injection-spec.md`](dmesgnet-dbus-injection-spec.md) and
 [`dmesgnet-dbus-facade-spec.md`](dmesgnet-dbus-facade-spec.md).
 
+This plan covers the Dmn byte-signal transport only. It does not specify a
+general D-Bus method/property client and must not be treated as the BlueZ
+integration layer. The proposed generic Dmn direct-libdbus client capability,
+which will be added to the `dmn-dbus` library without changing these signal
+endpoints, is specified in [`dbus-client-spec.md`](dbus-client-spec.md);
+BlueZ-specific API and behavior are in
+[`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md).
+
 Option A consists of `include/dmn-dbus-config.hpp`,
 `include/dmn-dbus-io.hpp`, and `src/dmn-dbus-io.cpp`, built by the
 optional `dmn-dbus` target. The checked-in `dmn-test-dbus-io` and

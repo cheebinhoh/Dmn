@@ -3,6 +3,8 @@
 # [TEST TYPE: GTEST]
 # Core unit and component tests (CTest label: dmn).
 ADD_TEST_EXECUTABLE(dmn
+                      dmn-test-ancs-parser
+                      dmn-test-bluez-device-list
                       dmn-test-async
                       dmn-test-async-2
                       dmn-test-async-2-queue-lf

@@ -15,6 +15,13 @@ The related network bridge has a separate specification at
   publisher-ordered handler-event observer configured at registration.
 - `Dmn_DMesgHandlerProxy` is a weak-pointer proxy. The publisher owns active
   handlers and `closeHandler()` unregisters and invalidates the supplied proxy.
+  A client may retain a strong handler pointer obtained from the proxy; during
+  publisher destruction, handlers are unregistered, their queued handler work
+  is drained, and their publisher link is cleared before publisher state is
+  released. Such a retained handler object may outlive the publisher and be
+  destroyed later, but it is detached and must not be used after its publisher
+  is destroyed. The client must release its strong reference to complete
+  handler destruction.
 - `dmn-dmesg-pb-util.hpp` provides protobuf field-setting macros; it does not
   validate the whole message.
 
@@ -49,6 +56,17 @@ The handler's `FilterTask` runs synchronously in the publisher context because
 it decides whether delivery is accepted. Accepted notifications are queued to
 the handler's async context for `AsyncProcessTask`; with no such callback, they
 are placed in the handler's read queue.
+
+`closeHandler()` unregisters the handler and waits for already-queued
+handler-context work to finish before detaching it and invalidating the proxy.
+When the publisher is destroyed, it similarly unregisters each active handler,
+drains that handler's queued work, and clears its publisher link before
+releasing publisher-owned handler references. This permits a client-owned
+`shared_ptr<Dmn_DMesgHandler>` to remain alive until a later client-scope exit
+without accessing destroyed publisher state. A handler retained beyond
+publisher destruction is detached, not operational: callers must not invoke
+handler APIs that depend on its publisher. Destroying the handler after
+publisher destruction is supported once its references are released.
 
 Handler writes stamp the current wall-clock time, source-write-handler name,
 topic (when configured and absent), source identifier (when absent), and next

@@ -2,7 +2,14 @@
 
 **Status:** Shared contract for the implemented Option A endpoints and Option
 B facade. Both use the optional `dmn-dbus` target and private-session-bus
-tests; D-Bus remains a same-host transport.
+tests. This document covers only its byte-signal transport; `dmn-dbus` also
+provides the generic D-Bus client capability specified separately.
+
+This specification is intentionally limited to that signal transport. The
+generic Dmn-owned client for method calls, typed properties, ObjectManager
+snapshots, and service signals is specified in
+[`dbus-client-spec.md`](dbus-client-spec.md). BlueZ is built on that generic
+client, not by routing through these signal endpoints.
 
 The two construction alternatives and their implementation order are
 specified in
@@ -107,6 +114,9 @@ authentication, and policy risks; it is not the default v1 architecture.
 The current code supports the adapter approach without changing DMesg message
 schemas:
 
+- This seam models queued byte-stream-like application I/O only. It is not
+  appropriate for request/reply D-Bus methods, typed properties, ObjectManager
+  enumeration, or lifecycle/value signals used by BlueZ.
 - `Dmn_DMesgNet` already accepts `std::shared_ptr<Dmn_Io<std::string>>` for
   both input and output and parses/serializes complete `DMesgPb` strings.
 - `Dmn_Io<T>` already supplies the required `read()`, `write()`, and
@@ -421,6 +431,10 @@ implemented consensus protocol.
 - Mixed deployments with an older participant simply do not receive or
   understand this signal; announce version/availability through separate
   observability rather than silently falling back to another transport.
+- The generic method/property/signal API extends the optional `dmn-dbus`
+  library, but does not alter `Dmn_DbusConfig`, the byte-signal endpoints, or
+  the facade's behavior and compatibility contract. The Linux-only
+  `dmn-bluez` target depends on `dmn-dbus` and uses the generic client API.
 
 ## 9. Acceptance criteria
 
@@ -472,6 +486,8 @@ Official D-Bus references, reviewed 2026-10-04:
   the adapter must not flush synchronously in `write()` or teardown.
 - Repository contracts: [`Dmn_DMesgNet`](dmn-dmesgnet-spec.md) and
   [`Dmn_Io`/pipelines](io-pipelines-spec.md).
+- Future BlueZ control/event client boundary:
+  [`Dmn-Owned libdbus Client Foundation`](dbus-client-spec.md).
 
 Test evidence: `test/dmn-test-dbus-io.cpp`, registered through
 `ADD_TEST_EXECUTABLE(dmn ...)` with the existing `dmn` CTest label, exercises
