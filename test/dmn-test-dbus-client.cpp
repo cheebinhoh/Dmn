@@ -14,8 +14,11 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdint>
+#include <functional>
 #include <future>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -57,6 +60,130 @@ constexpr char kServiceName[] = "org.dmn.TestService";
 constexpr char kObjectPath[] = "/org/dmn/Test";
 constexpr char kInterface[] = "org.dmn.Test";
 constexpr char kPropertyInterface[] = "org.freedesktop.DBus.Properties";
+
+auto encodedEchoCallSize(const std::string &argument) -> std::size_t {
+  DbusMessagePtr message{dbus_message_new_method_call(kServiceName, kObjectPath,
+                                                      kInterface, "Echo")};
+  const char *value = argument.c_str();
+  if (message == nullptr ||
+      !dbus_message_append_args(message.get(), DBUS_TYPE_STRING, &value,
+                                DBUS_TYPE_INVALID)) {
+    throw std::runtime_error("unable to build encoded-size test message");
+  }
+
+  char *bytes{};
+  int length{};
+  if (!dbus_message_marshal(message.get(), &bytes, &length)) {
+    throw std::runtime_error("unable to marshal encoded-size test message");
+  }
+
+  dbus_free(bytes);
+  return static_cast<std::size_t>(length);
+}
+
+TEST(DbusClientHandleTest,
+     SubscriptionMoveAssignmentAndCancellationAreIdempotent) {
+  int firstCancellationCount{};
+  int secondCancellationCount{};
+  {
+    dmn::Dmn_DbusSubscription first{[&] { ++firstCancellationCount; }};
+    dmn::Dmn_DbusSubscription second{[&] { ++secondCancellationCount; }};
+    second = std::move(first);
+    EXPECT_EQ(firstCancellationCount, 0);
+    EXPECT_EQ(secondCancellationCount, 1);
+
+    second.cancel();
+    second.cancel();
+    EXPECT_EQ(firstCancellationCount, 1);
+  }
+
+  EXPECT_EQ(firstCancellationCount, 1);
+  EXPECT_EQ(secondCancellationCount, 1);
+}
+
+TEST(DbusClientHandleTest, SubscriptionMoveConstructorTransfersCancellation) {
+  int cancellationCount{};
+  dmn::Dmn_DbusSubscription source{[&] { ++cancellationCount; }};
+  dmn::Dmn_DbusSubscription moved{std::move(source)};
+  source.cancel();
+  EXPECT_EQ(cancellationCount, 0);
+  moved.cancel();
+  EXPECT_EQ(cancellationCount, 1);
+}
+
+TEST(DbusClientHandleTest, DestroyingActiveSubscriptionCancelsExactlyOnce) {
+  int cancellationCount{};
+  {
+    dmn::Dmn_DbusSubscription subscription{[&] { ++cancellationCount; }};
+  }
+
+  EXPECT_EQ(cancellationCount, 1);
+}
+
+TEST(DbusClientHandleTest, CallMoveWaitGetAndCancelOwnOneResult) {
+  std::promise<dmn::Dmn_DbusCall::Result> promise;
+  int cancellationCount{};
+  dmn::Dmn_DbusCall original{promise.get_future(),
+                             [&] { ++cancellationCount; }};
+  EXPECT_EQ(original.waitFor(0ms), std::future_status::timeout);
+
+  dmn::Dmn_DbusCall moved{std::move(original)};
+  moved.cancel();
+  moved.cancel();
+  EXPECT_EQ(cancellationCount, 1);
+
+  promise.set_value(
+      dmn::Dmn_DbusCall::Arguments{dmn::Dmn_DbusValue{std::uint32_t{42}}});
+  ASSERT_EQ(moved.waitFor(0ms), std::future_status::ready);
+  auto result = moved.get();
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->size(), 1U);
+  EXPECT_EQ(result->front().asUint32(), 42U);
+}
+
+TEST(DbusClientHandleTest, CallMoveAssignmentTransfersResultAndCancellation) {
+  std::promise<dmn::Dmn_DbusCall::Result> sourcePromise;
+  std::promise<dmn::Dmn_DbusCall::Result> replacedPromise;
+  int sourceCancellationCount{};
+  int replacedCancellationCount{};
+  dmn::Dmn_DbusCall source{sourcePromise.get_future(),
+                           [&] { ++sourceCancellationCount; }};
+  dmn::Dmn_DbusCall destination{replacedPromise.get_future(),
+                                [&] { ++replacedCancellationCount; }};
+
+  destination = std::move(source);
+  EXPECT_EQ(sourceCancellationCount, 0);
+  EXPECT_EQ(replacedCancellationCount, 0);
+  destination.cancel();
+  EXPECT_EQ(sourceCancellationCount, 1);
+  EXPECT_EQ(replacedCancellationCount, 0);
+  sourcePromise.set_value(dmn::Dmn_DbusCall::Arguments{});
+  ASSERT_TRUE(destination.get());
+}
+
+TEST(DbusClientHandleTest, DestroyingCallHandleDoesNotCancelOperation) {
+  std::promise<dmn::Dmn_DbusCall::Result> promise;
+  int cancellationCount{};
+  {
+    dmn::Dmn_DbusCall call{promise.get_future(), [&] { ++cancellationCount; }};
+  }
+
+  EXPECT_EQ(cancellationCount, 0);
+  promise.set_value(dmn::Dmn_DbusCall::Arguments{});
+}
+
+TEST(DbusClientHandleTest, HandleCancellationSuppressesCallbackExceptions) {
+  dmn::Dmn_DbusSubscription subscription{
+      [] { throw std::runtime_error("subscription cancellation failure"); }};
+  EXPECT_NO_THROW(subscription.cancel());
+
+  std::promise<dmn::Dmn_DbusCall::Result> promise;
+  dmn::Dmn_DbusCall call{
+      promise.get_future(),
+      [] { throw std::runtime_error("call cancellation failure"); }};
+  EXPECT_NO_THROW(call.cancel());
+  promise.set_value(dmn::Dmn_DbusCall::Arguments{});
+}
 
 class FakeDbusService {
 public:
@@ -116,12 +243,26 @@ private:
       self->emitSignalAt(connection, "/org/dmn/Other", kInterface);
       reply = dbus_message_new_method_return(message);
     } else if (dbus_message_is_method_call(message, kInterface,
+                                           "EmitSiblingSignal")) {
+      self->emitSignalAt(connection, "/org/dmnish/Other", kInterface);
+      reply = dbus_message_new_method_return(message);
+    } else if (dbus_message_is_method_call(message, kInterface,
                                            "EmitSignalBurst")) {
       self->emitSignalBurst(connection, 4);
       reply = dbus_message_new_method_return(message);
     } else if (dbus_message_is_method_call(message, kInterface,
                                            "AcceptObjectManagerShape")) {
       reply = self->acceptObjectManagerShape(message);
+    } else if (dbus_message_is_method_call(message, kInterface,
+                                           "AcceptNestedArray")) {
+      const char *signature = dbus_message_get_signature(message);
+      reply = signature != nullptr && std::string_view{signature} == "aas"
+                  ? dbus_message_new_method_return(message)
+                  : dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                           "unexpected nested array signature");
+    } else if (dbus_message_is_method_call(message, kInterface,
+                                           "AcceptStructVariant")) {
+      reply = self->acceptStructVariant(message);
     } else if (dbus_message_is_method_call(message, kPropertyInterface,
                                            "Get")) {
       reply = self->getProperty(message);
@@ -282,14 +423,67 @@ private:
     return reply;
   }
 
+  static auto acceptStructVariant(DBusMessage *request) -> DBusMessage * {
+    const char *signature = dbus_message_get_signature(request);
+    if (signature == nullptr || std::string_view{signature} != "(is)v") {
+      return dbus_message_new_error(request, DBUS_ERROR_INVALID_ARGS,
+                                    "unexpected struct/variant signature");
+    }
+
+    DBusMessage *reply = dbus_message_new_method_return(request);
+    DBusMessageIter out;
+    DBusMessageIter structure;
+    DBusMessageIter variant;
+    dbus_int32_t number = 17;
+    const char *text = "struct-field";
+    dbus_uint32_t variantValue = 42;
+    dbus_message_iter_init_append(reply, &out);
+    if (!dbus_message_iter_open_container(&out, DBUS_TYPE_STRUCT, nullptr,
+                                          &structure) ||
+        !dbus_message_iter_append_basic(&structure, DBUS_TYPE_INT32, &number) ||
+        !dbus_message_iter_append_basic(&structure, DBUS_TYPE_STRING, &text) ||
+        !dbus_message_iter_close_container(&out, &structure) ||
+        !dbus_message_iter_open_container(
+            &out, DBUS_TYPE_VARIANT, DBUS_TYPE_UINT32_AS_STRING, &variant) ||
+        !dbus_message_iter_append_basic(&variant, DBUS_TYPE_UINT32,
+                                        &variantValue) ||
+        !dbus_message_iter_close_container(&out, &variant)) {
+      dbus_message_unref(reply);
+      return nullptr;
+    }
+
+    return reply;
+  }
+
   auto getProperty(DBusMessage *request) -> DBusMessage * {
     const char *interface{};
     const char *property{};
     if (!dbus_message_get_args(request, nullptr, DBUS_TYPE_STRING, &interface,
                                DBUS_TYPE_STRING, &property,
                                DBUS_TYPE_INVALID) ||
-        std::string_view{interface} != kInterface ||
-        std::string_view{property} != "Level") {
+        std::string_view{interface} != kInterface) {
+      return dbus_message_new_error(request, DBUS_ERROR_UNKNOWN_PROPERTY,
+                                    "unknown property");
+    }
+
+    if (std::string_view{property} == "EmptyReply") {
+      return dbus_message_new_method_return(request);
+    }
+
+    if (std::string_view{property} == "WrongShape") {
+      DBusMessage *reply = dbus_message_new_method_return(request);
+      DBusMessageIter out;
+      dbus_message_iter_init_append(reply, &out);
+      const char *wrongType = "not a variant";
+      if (!dbus_message_iter_append_basic(&out, DBUS_TYPE_STRING, &wrongType)) {
+        dbus_message_unref(reply);
+        return nullptr;
+      }
+
+      return reply;
+    }
+
+    if (std::string_view{property} != "Level") {
       return dbus_message_new_error(request, DBUS_ERROR_UNKNOWN_PROPERTY,
                                     "unknown property");
     }
@@ -330,8 +524,26 @@ private:
     dbus_message_iter_get_basic(&in, &property);
     if (!dbus_message_iter_next(&in) ||
         dbus_message_iter_get_arg_type(&in) != DBUS_TYPE_VARIANT ||
-        std::string_view{interface} != kInterface ||
-        std::string_view{property} != "Level") {
+        std::string_view{interface} != kInterface) {
+      return dbus_message_new_error(request, DBUS_ERROR_UNKNOWN_PROPERTY,
+                                    "unknown property");
+    }
+
+    if (std::string_view{property} == "MalformedSet") {
+      DBusMessage *reply = dbus_message_new_method_return(request);
+      DBusMessageIter out;
+      dbus_message_iter_init_append(reply, &out);
+      const dbus_bool_t unexpectedValue = TRUE;
+      if (!dbus_message_iter_append_basic(&out, DBUS_TYPE_BOOLEAN,
+                                          &unexpectedValue)) {
+        dbus_message_unref(reply);
+        return nullptr;
+      }
+
+      return reply;
+    }
+
+    if (std::string_view{property} != "Level") {
       return dbus_message_new_error(request, DBUS_ERROR_UNKNOWN_PROPERTY,
                                     "unknown property");
     }
@@ -421,8 +633,21 @@ private:
 
   void emitSignalBurst(DBusConnection *connection, std::size_t count) {
     for (std::size_t index = 0; index < count; ++index) {
-      emitSignal(connection);
+      emitIndexedSignal(connection, static_cast<dbus_uint32_t>(index));
     }
+  }
+
+  void emitIndexedSignal(DBusConnection *connection, dbus_uint32_t index) {
+    DbusMessagePtr signal{
+        dbus_message_new_signal(kObjectPath, kInterface, "Changed")};
+    if (signal == nullptr ||
+        !dbus_message_append_args(signal.get(), DBUS_TYPE_UINT32, &index,
+                                  DBUS_TYPE_INVALID)) {
+      return;
+    }
+
+    dbus_connection_send(connection, signal.get(), nullptr);
+    dbus_connection_flush(connection);
   }
 
   void dispatchLoop() {
@@ -500,6 +725,39 @@ TEST(DbusClientInitializationTest, ConcurrentClientsAndLegacyEndpoints) {
   }
 }
 
+TEST(DbusClientInitializationTest,
+     SystemBusSelectionUsesPrivateDaemonOverride) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  const char *previousAddress = std::getenv("DBUS_SYSTEM_BUS_ADDRESS");
+  const bool hadPreviousAddress = previousAddress != nullptr;
+  const std::string savedAddress =
+      previousAddress == nullptr ? std::string{} : previousAddress;
+  ASSERT_EQ(setenv("DBUS_SYSTEM_BUS_ADDRESS", bus.address().c_str(), 1), 0);
+  struct RestoreSystemBusAddress {
+    bool hadPrevious;
+    std::string previous;
+    ~RestoreSystemBusAddress() {
+      if (hadPrevious) {
+        (void)setenv("DBUS_SYSTEM_BUS_ADDRESS", previous.c_str(), 1);
+      } else {
+        (void)unsetenv("DBUS_SYSTEM_BUS_ADDRESS");
+      }
+    }
+  } restore{hadPreviousAddress, savedAddress};
+
+  dmn::Dmn_DbusClientConfig config;
+  config.bus_kind = dmn::Dmn_DbusBusKind::System;
+  dmn::Dmn_DbusClient client{config};
+  ASSERT_TRUE(client.status().connected);
+  const auto id = client.call("org.freedesktop.DBus", "/org/freedesktop/DBus",
+                              "org.freedesktop.DBus", "GetId");
+  ASSERT_TRUE(id) << id.error().message;
+  ASSERT_EQ(id->size(), 1U);
+  EXPECT_EQ(id->front().signature(), "s");
+  EXPECT_FALSE(id->front().asString().empty());
+}
+
 TEST_F(DbusClientTest, CallsMethodsAndPreservesPrimitiveTypesAndBytes) {
   const std::vector<dmn::Dmn_DbusValue> args{
       dmn::Dmn_DbusValue{true},
@@ -561,6 +819,28 @@ TEST_F(DbusClientTest, MethodTimeoutIsFiniteAndDistinctFromRemoteFailure) {
   EXPECT_LT(elapsed, 200ms);
 }
 
+TEST_F(DbusClientTest, AsyncCallValidatesTimeoutAndCallNames) {
+  auto invalidTimeout =
+      m_client
+          ->callAsync(kServiceName, kObjectPath, kInterface, "Echo", {}, -1ms)
+          .get();
+  ASSERT_FALSE(invalidTimeout);
+  EXPECT_EQ(invalidTimeout.error().kind,
+            dmn::Dmn_DbusErrorKind::InvalidArgument);
+
+  auto invalidName =
+      m_client->callAsync(kServiceName, "not/a/path", kInterface, "Echo");
+  ASSERT_EQ(invalidName.waitFor(0ms), std::future_status::ready);
+  auto invalidResult = invalidName.get();
+  ASSERT_FALSE(invalidResult);
+  EXPECT_EQ(invalidResult.error().kind,
+            dmn::Dmn_DbusErrorKind::InvalidArgument);
+
+  auto defaultTimeout =
+      m_client->callAsync(kServiceName, kObjectPath, kInterface, "Delay");
+  ASSERT_TRUE(defaultTimeout.get());
+}
+
 TEST_F(DbusClientTest, GetsAndSetsTypedPropertiesThroughPropertiesInterface) {
   auto initial =
       m_client->getProperty(kServiceName, kObjectPath, kInterface, "Level");
@@ -574,6 +854,32 @@ TEST_F(DbusClientTest, GetsAndSetsTypedPropertiesThroughPropertiesInterface) {
       m_client->getProperty(kServiceName, kObjectPath, kInterface, "Level");
   ASSERT_TRUE(changed.has_value()) << changed.error().message;
   EXPECT_EQ(changed->asUint32(), 19U);
+
+  auto missing =
+      m_client->getProperty(kServiceName, kObjectPath, kInterface, "Missing");
+  ASSERT_FALSE(missing);
+  EXPECT_EQ(missing.error().kind, dmn::Dmn_DbusErrorKind::Remote);
+  EXPECT_EQ(missing.error().remote_name, DBUS_ERROR_UNKNOWN_PROPERTY);
+
+  auto wrongType =
+      m_client->setProperty(kServiceName, kObjectPath, kInterface, "Level",
+                            dmn::Dmn_DbusValue{"not uint32"});
+  ASSERT_FALSE(wrongType);
+  EXPECT_EQ(wrongType.error().kind, dmn::Dmn_DbusErrorKind::Remote);
+  EXPECT_EQ(wrongType.error().remote_name, DBUS_ERROR_INVALID_ARGS);
+
+  for (const auto *property : {"EmptyReply", "WrongShape"}) {
+    auto malformed =
+        m_client->getProperty(kServiceName, kObjectPath, kInterface, property);
+    ASSERT_FALSE(malformed);
+    EXPECT_EQ(malformed.error().kind, dmn::Dmn_DbusErrorKind::Codec);
+  }
+
+  auto malformedSet =
+      m_client->setProperty(kServiceName, kObjectPath, kInterface,
+                            "MalformedSet", dmn::Dmn_DbusValue{true});
+  ASSERT_FALSE(malformedSet);
+  EXPECT_EQ(malformedSet.error().kind, dmn::Dmn_DbusErrorKind::Codec);
 }
 
 TEST_F(DbusClientTest, DeliversOwnedSignalsOffDispatchThreadAndCancels) {
@@ -617,6 +923,36 @@ TEST_F(DbusClientTest, DeliversOwnedSignalsOffDispatchThreadAndCancels) {
   EXPECT_EQ(callbackCount.load(), 1U);
 }
 
+TEST_F(DbusClientTest, RejectsIncompleteAndConflictingSignalMatches) {
+  const auto expectInvalid = [this](const dmn::Dmn_DbusSignalMatch &match) {
+    auto result =
+        m_client->subscribe(match, [](std::vector<dmn::Dmn_DbusValue>) {});
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+  };
+
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  expectInvalid(match);
+  match.interface.clear();
+  match.member = "Changed";
+  expectInvalid(match);
+
+  match.interface = kInterface;
+  match.path = kObjectPath;
+  match.path_namespace = "/org/dmn";
+  expectInvalid(match);
+
+  auto noCallback = m_client->subscribe(match, {});
+  ASSERT_FALSE(noCallback);
+  EXPECT_EQ(noCallback.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+
+  auto noPathCallback = m_client->subscribeWithPath(match, {});
+  ASSERT_FALSE(noPathCallback);
+  EXPECT_EQ(noPathCallback.error().kind,
+            dmn::Dmn_DbusErrorKind::InvalidArgument);
+}
+
 TEST_F(DbusClientTest, DrainsSignalCallbacksQueuedBeforeTheBarrier) {
   std::atomic_bool callbackCompleted{};
   dmn::Dmn_DbusSignalMatch match;
@@ -636,6 +972,93 @@ TEST_F(DbusClientTest, DrainsSignalCallbacksQueuedBeforeTheBarrier) {
 
   ASSERT_TRUE(drained) << drained.error().message;
   EXPECT_TRUE(callbackCompleted.load());
+}
+
+TEST_F(DbusClientTest, DrainFromCallbackWorkerReturnsInvalidArgument) {
+  std::promise<dmn::Dmn_DbusResult<void>> resultPromise;
+  auto resultFuture = resultPromise.get_future();
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  match.member = "Changed";
+  auto subscription = m_client->subscribe(
+      match, [this, &resultPromise](std::vector<dmn::Dmn_DbusValue>) {
+        resultPromise.set_value(m_client->drainSignalCallbacks());
+      });
+  ASSERT_TRUE(subscription) << subscription.error().message;
+
+  auto emitted =
+      m_client->call(kServiceName, kObjectPath, kInterface, "EmitSignal");
+  ASSERT_TRUE(emitted) << emitted.error().message;
+  ASSERT_EQ(resultFuture.wait_for(1s), std::future_status::ready);
+  auto result = resultFuture.get();
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+}
+
+TEST_F(DbusClientTest,
+       SubscribeWithPathRetainsPathAndAppliesNamespaceBoundary) {
+  using Signal = std::pair<std::string, std::vector<dmn::Dmn_DbusValue>>;
+  std::promise<Signal> delivered;
+  auto deliveredFuture = delivered.get_future();
+  std::atomic_size_t callbackCount{};
+
+  dmn::Dmn_DbusSignalMatch match;
+  match.sender = kServiceName;
+  match.interface = kInterface;
+  match.member = "Changed";
+  match.path_namespace = "/org/dmn";
+  auto subscription = m_client->subscribeWithPath(
+      match, [&delivered, &callbackCount](
+                 std::string path, std::vector<dmn::Dmn_DbusValue> args) {
+        if (callbackCount.fetch_add(1) == 0) {
+          delivered.set_value({std::move(path), std::move(args)});
+        }
+      });
+  ASSERT_TRUE(subscription) << subscription.error().message;
+
+  auto sibling = m_client->call(kServiceName, kObjectPath, kInterface,
+                                "EmitSiblingSignal");
+  ASSERT_TRUE(sibling) << sibling.error().message;
+  ASSERT_TRUE(m_client->drainSignalCallbacks());
+  EXPECT_EQ(callbackCount.load(), 0U);
+
+  auto emitted = m_client->call(kServiceName, kObjectPath, kInterface,
+                                "EmitForeignSignal");
+  ASSERT_TRUE(emitted) << emitted.error().message;
+  ASSERT_EQ(deliveredFuture.wait_for(1s), std::future_status::ready);
+  const auto signal = deliveredFuture.get();
+  EXPECT_EQ(signal.first, "/org/dmn/Other");
+  ASSERT_EQ(signal.second.size(), 1U);
+  EXPECT_EQ(signal.second.front().asString(), "ready");
+}
+
+TEST_F(DbusClientTest, OverlappingSubscriptionsPreservePerSubscriptionOrder) {
+  std::mutex mutex;
+  std::vector<std::uint32_t> firstValues;
+  std::vector<std::uint32_t> secondValues;
+  dmn::Dmn_DbusSignalMatch match;
+  match.sender = kServiceName;
+  match.interface = kInterface;
+  match.member = "Changed";
+  auto first = m_client->subscribe(
+      match, [&mutex, &firstValues](std::vector<dmn::Dmn_DbusValue> args) {
+        std::lock_guard lock{mutex};
+        firstValues.push_back(args.front().asUint32());
+      });
+  auto second = m_client->subscribe(
+      match, [&mutex, &secondValues](std::vector<dmn::Dmn_DbusValue> args) {
+        std::lock_guard lock{mutex};
+        secondValues.push_back(args.front().asUint32());
+      });
+  ASSERT_TRUE(first) << first.error().message;
+  ASSERT_TRUE(second) << second.error().message;
+
+  auto emitted =
+      m_client->call(kServiceName, kObjectPath, kInterface, "EmitSignalBurst");
+  ASSERT_TRUE(emitted) << emitted.error().message;
+  ASSERT_TRUE(m_client->drainSignalCallbacks());
+  EXPECT_EQ(firstValues, (std::vector<std::uint32_t>{0, 1, 2, 3}));
+  EXPECT_EQ(secondValues, (std::vector<std::uint32_t>{0, 1, 2, 3}));
 }
 
 TEST_F(DbusClientTest, DecodesObjectManagerShapedNestedValues) {
@@ -678,6 +1101,25 @@ TEST_F(DbusClientTest, EncodesNestedObjectManagerValuesForBluezCalls) {
   EXPECT_TRUE((*result)[0].asBool());
 }
 
+TEST_F(DbusClientTest, EncodesAndDecodesStructAndVariantValues) {
+  using Value = dmn::Dmn_DbusValue;
+  const auto structure =
+      Value::structure({Value{std::int32_t{17}}, Value{"struct-field"}});
+  const auto variant = Value::variant(Value{std::uint32_t{42}});
+  EXPECT_EQ(structure.signature(), "(is)");
+  EXPECT_EQ(variant.signature(), "v");
+
+  auto result = m_client->call(kServiceName, kObjectPath, kInterface,
+                               "AcceptStructVariant", {structure, variant});
+  ASSERT_TRUE(result) << result.error().message;
+  ASSERT_EQ(result->size(), 2U);
+  const auto &fields = (*result)[0].asStruct().fields;
+  ASSERT_EQ(fields.size(), 2U);
+  EXPECT_EQ(fields[0].asInt32(), 17);
+  EXPECT_EQ(fields[1].asString(), "struct-field");
+  EXPECT_EQ((*result)[1].asVariant().asUint32(), 42U);
+}
+
 TEST_F(DbusClientTest, AsyncCallsAreBoundedAndCompleteFromDispatchOwner) {
   auto config = dmn::Dmn_DbusClientConfig{};
   config.bus_kind = dmn::Dmn_DbusBusKind::Address;
@@ -699,6 +1141,86 @@ TEST_F(DbusClientTest, AsyncCallsAreBoundedAndCompleteFromDispatchOwner) {
   EXPECT_EQ(client.status().pending_calls, 0U);
 }
 
+TEST_F(DbusClientTest, QueuedCommandLimitBoundsCallsAndSubscriptions) {
+  auto config = dmn::Dmn_DbusClientConfig{};
+  config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+  config.bus_address = m_bus.address();
+  config.limits.max_in_flight_calls = 8;
+  config.limits.max_queued_commands = 1;
+  config.limits.method_timeout = 500ms;
+  dmn::Dmn_DbusClient client{config};
+
+  auto pending =
+      client.callAsync(kServiceName, kObjectPath, kInterface, "Delay");
+  auto rejected =
+      client.callAsync(kServiceName, kObjectPath, kInterface, "Echo");
+  ASSERT_EQ(rejected.waitFor(0ms), std::future_status::ready);
+  auto rejectedResult = rejected.get();
+  ASSERT_FALSE(rejectedResult);
+  EXPECT_EQ(rejectedResult.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
+  ASSERT_TRUE(pending.get());
+
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  match.member = "Changed";
+  auto subscription =
+      client.subscribe(match, [](std::vector<dmn::Dmn_DbusValue>) {});
+  ASSERT_TRUE(subscription) << subscription.error().message;
+  auto overLimitSubscription =
+      client.subscribe(match, [](std::vector<dmn::Dmn_DbusValue>) {});
+  ASSERT_FALSE(overLimitSubscription);
+  EXPECT_EQ(overLimitSubscription.error().kind,
+            dmn::Dmn_DbusErrorKind::ResourceLimit);
+}
+
+TEST_F(DbusClientTest, EnforcesExactAndExceededValueAndMessageLimits) {
+  dmn::Dmn_DbusClientConfig exactConfig;
+  exactConfig.bus_kind = dmn::Dmn_DbusBusKind::Address;
+  exactConfig.bus_address = m_bus.address();
+  exactConfig.limits.method_timeout = 500ms;
+  exactConfig.limits.max_values = 1;
+  dmn::Dmn_DbusClient exactValueClient{exactConfig};
+  auto atValueLimit =
+      exactValueClient.call(kServiceName, kObjectPath, kInterface, "Echo",
+                            {dmn::Dmn_DbusValue{"one value"}});
+  ASSERT_TRUE(atValueLimit) << atValueLimit.error().message;
+
+  auto overValueLimit = exactValueClient.call(
+      kServiceName, kObjectPath, kInterface, "Echo",
+      {dmn::Dmn_DbusValue{"one"}, dmn::Dmn_DbusValue{"two"}});
+  ASSERT_FALSE(overValueLimit);
+  EXPECT_EQ(overValueLimit.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
+
+  exactConfig.limits.max_values = 2;
+  dmn::Dmn_DbusClient limitedReplyClient{exactConfig};
+  auto overReplyValueLimit = limitedReplyClient.call(
+      kServiceName, kObjectPath, "org.freedesktop.DBus.ObjectManager",
+      "GetManagedObjects");
+  ASSERT_FALSE(overReplyValueLimit);
+  EXPECT_EQ(overReplyValueLimit.error().kind,
+            dmn::Dmn_DbusErrorKind::ResourceLimit);
+
+  exactConfig.limits.max_values = 16;
+  const std::string payload{"x"};
+  const auto exactMessageSize = encodedEchoCallSize(payload);
+  exactConfig.limits.max_values = 16;
+  exactConfig.limits.max_message_bytes = exactMessageSize;
+  dmn::Dmn_DbusClient exactMessageClient{exactConfig};
+  auto atMessageLimit =
+      exactMessageClient.call(kServiceName, kObjectPath, kInterface, "Echo",
+                              {dmn::Dmn_DbusValue{payload}});
+  ASSERT_TRUE(atMessageLimit) << atMessageLimit.error().message;
+
+  exactConfig.limits.max_message_bytes = exactMessageSize - 1;
+  dmn::Dmn_DbusClient smallMessageClient{exactConfig};
+  auto overMessageLimit =
+      smallMessageClient.call(kServiceName, kObjectPath, kInterface, "Echo",
+                              {dmn::Dmn_DbusValue{payload}});
+  ASSERT_FALSE(overMessageLimit);
+  EXPECT_EQ(overMessageLimit.error().kind,
+            dmn::Dmn_DbusErrorKind::ResourceLimit);
+}
+
 TEST_F(DbusClientTest, ShutdownCompletesOutstandingCallsWithShutdownError) {
   dmn::Dmn_DbusClientConfig config;
   config.bus_kind = dmn::Dmn_DbusBusKind::Address;
@@ -716,6 +1238,28 @@ TEST_F(DbusClientTest, ShutdownCompletesOutstandingCallsWithShutdownError) {
   auto result = pending.get();
   ASSERT_FALSE(result.has_value());
   EXPECT_EQ(result.error().kind, dmn::Dmn_DbusErrorKind::Shutdown);
+}
+
+TEST_F(DbusClientTest, ShutdownIsIdempotentAndRejectsNewOperations) {
+  const auto dispatchThread = m_client->dispatchThreadId();
+  EXPECT_NE(dispatchThread, std::thread::id{});
+  EXPECT_TRUE(m_client->status().connected);
+
+  m_client->shutdown();
+  m_client->shutdown();
+  const auto status = m_client->status();
+  EXPECT_TRUE(status.shutting_down);
+  EXPECT_FALSE(status.connected);
+  EXPECT_EQ(status.pending_calls, 0U);
+
+  auto afterShutdown =
+      m_client->callAsync(kServiceName, kObjectPath, kInterface, "Echo");
+  ASSERT_EQ(afterShutdown.waitFor(0ms), std::future_status::ready);
+  auto result = afterShutdown.get();
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().kind, dmn::Dmn_DbusErrorKind::Shutdown);
+  EXPECT_EQ(m_client->drainSignalCallbacks().error().kind,
+            dmn::Dmn_DbusErrorKind::Shutdown);
 }
 
 TEST_F(DbusClientTest, CancelsOutstandingCallAndDiscardsLateReply) {
@@ -798,8 +1342,162 @@ TEST_F(DbusClientTest, SignalQueueOverflowIsVisibleInStatus) {
       [&client] { return client->status().dropped_signal_messages > 0; }, 1s);
   const auto status = client->status();
   releaseCallback.set_value();
+  ASSERT_TRUE(client->drainSignalCallbacks());
   EXPECT_TRUE(overflow);
   EXPECT_GT(status.dropped_signal_messages, 0U);
+  EXPECT_GT(status.dropped_signal_bytes, 0U);
+  EXPECT_LE(status.queued_signal_messages, 1U);
+  EXPECT_LE(callbacks.load(), 2U);
+}
+
+TEST_F(DbusClientTest, SignalQueueEnforcesExactAndExceededByteLimits) {
+  const auto runSignalPair = [this](std::size_t maxBytes)
+      -> std::tuple<std::size_t, std::size_t, std::size_t, std::size_t> {
+    auto config = dmn::Dmn_DbusClientConfig{};
+    config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+    config.bus_address = m_bus.address();
+    config.limits.max_signal_messages = 2;
+    config.limits.max_signal_bytes = maxBytes;
+    auto client = std::make_unique<dmn::Dmn_DbusClient>(config);
+
+    std::promise<void> callbackStartedPromise;
+    auto callbackStarted = callbackStartedPromise.get_future();
+    std::promise<void> releasePromise;
+    auto release = releasePromise.get_future().share();
+    std::atomic_size_t callbackCount{};
+    dmn::Dmn_DbusSignalMatch match;
+    match.interface = kInterface;
+    match.member = "Changed";
+    auto subscription =
+        client->subscribe(match, [&callbackStartedPromise, &callbackCount,
+                                  release](std::vector<dmn::Dmn_DbusValue>) {
+          if (callbackCount.fetch_add(1) == 0) {
+            callbackStartedPromise.set_value();
+          }
+
+          release.wait();
+        });
+    EXPECT_TRUE(subscription) << subscription.error().message;
+    if (!subscription) {
+      return {0, 0, 0, 0};
+    }
+
+    auto firstSignal =
+        client->call(kServiceName, kObjectPath, kInterface, "EmitSignal");
+    EXPECT_TRUE(firstSignal) << firstSignal.error().message;
+    if (callbackStarted.wait_for(1s) != std::future_status::ready) {
+      const auto status = client->status();
+      releasePromise.set_value();
+      if (status.dropped_signal_messages > 0) {
+        return {status.queued_signal_bytes, status.queued_signal_messages,
+                status.dropped_signal_messages, callbackCount.load()};
+      }
+
+      ADD_FAILURE() << "signal callback did not start";
+      return {0, 0, 0, 0};
+    }
+
+    auto secondSignal =
+        client->call(kServiceName, kObjectPath, kInterface, "EmitSignal");
+    EXPECT_TRUE(secondSignal) << secondSignal.error().message;
+    if (!dmn_test_dbus::waitUntil(
+            [&client] {
+              return client->status().queued_signal_messages == 1 ||
+                     client->status().dropped_signal_messages > 0;
+            },
+            1s)) {
+      ADD_FAILURE() << "second signal was neither queued nor dropped";
+      releasePromise.set_value();
+      return {0, 0, 0, 0};
+    }
+
+    const auto signalStatus = client->status();
+    if (signalStatus.queued_signal_messages > 1) {
+      ADD_FAILURE() << "expected queued signals, found "
+                    << signalStatus.queued_signal_messages << " with "
+                    << signalStatus.queued_signal_bytes << " queued bytes and "
+                    << signalStatus.dropped_signal_messages << " drops";
+    }
+
+    const auto queuedBytes = signalStatus.queued_signal_bytes;
+    const auto queuedMessages = signalStatus.queued_signal_messages;
+    const auto droppedMessages = client->status().dropped_signal_messages;
+    releasePromise.set_value();
+    EXPECT_TRUE(client->drainSignalCallbacks());
+    return {queuedBytes, queuedMessages, droppedMessages, callbackCount.load()};
+  };
+
+  const auto [calibrationBytes, calibrationMessages, calibrationDrops,
+              calibrationCallbacks] = runSignalPair(1024 * 1024);
+  ASSERT_EQ(calibrationMessages, 1U);
+  const auto signalBytes = calibrationBytes;
+  EXPECT_GT(signalBytes, 0U);
+  EXPECT_EQ(calibrationDrops, 0U);
+  EXPECT_EQ(calibrationCallbacks, 2U);
+
+  const auto [atLimitBytes, atLimitMessages, atLimitDrops, atLimitCallbacks] =
+      runSignalPair(signalBytes);
+  EXPECT_EQ(atLimitBytes, signalBytes);
+  EXPECT_EQ(atLimitMessages, 1U);
+  EXPECT_EQ(atLimitDrops, 0U);
+  EXPECT_EQ(atLimitCallbacks, 2U);
+
+  const auto [overLimitBytes, overLimitMessages, overLimitDrops,
+              overLimitCallbacks] = runSignalPair(signalBytes - 1);
+  EXPECT_EQ(overLimitBytes, 0U);
+  EXPECT_EQ(overLimitMessages, 0U);
+  EXPECT_EQ(overLimitDrops, 1U);
+  EXPECT_EQ(overLimitCallbacks, 0U);
+}
+
+TEST_F(DbusClientTest, ShutdownReportsQueuedSignalsItDiscards) {
+  auto config = dmn::Dmn_DbusClientConfig{};
+  config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+  config.bus_address = m_bus.address();
+  config.limits.max_signal_messages = 8;
+  auto client = std::make_unique<dmn::Dmn_DbusClient>(config);
+
+  std::promise<void> callbackStartedPromise;
+  auto callbackStarted = callbackStartedPromise.get_future();
+  std::promise<void> releasePromise;
+  auto release = releasePromise.get_future().share();
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  match.member = "Changed";
+  auto subscription =
+      client->subscribe(match, [&callbackStartedPromise,
+                                release](std::vector<dmn::Dmn_DbusValue>) {
+        callbackStartedPromise.set_value();
+        release.wait();
+      });
+  ASSERT_TRUE(subscription) << subscription.error().message;
+
+  auto emitted =
+      client->call(kServiceName, kObjectPath, kInterface, "EmitSignalBurst");
+  ASSERT_TRUE(emitted) << emitted.error().message;
+  if (callbackStarted.wait_for(1s) != std::future_status::ready) {
+    releasePromise.set_value();
+    FAIL() << "signal callback did not start";
+  }
+
+  if (!dmn_test_dbus::waitUntil(
+          [&client] { return client->status().queued_signal_messages > 0; },
+          1s)) {
+    releasePromise.set_value();
+    FAIL() << "additional signals were not queued before shutdown";
+  }
+
+  std::thread releaseThread{[&releasePromise] {
+    std::this_thread::sleep_for(100ms);
+    releasePromise.set_value();
+  }};
+  client->shutdown();
+  releaseThread.join();
+
+  const auto status = client->status();
+  EXPECT_TRUE(status.shutting_down);
+  EXPECT_GT(status.shutdown_discarded_signal_messages, 0U);
+  EXPECT_GT(status.shutdown_discarded_signal_bytes, 0U);
 }
 
 TEST_F(DbusClientTest, RejectsArrayElementTypeMismatchAndContainerDepthLimit) {
@@ -822,12 +1520,32 @@ TEST_F(DbusClientTest, RejectsArrayElementTypeMismatchAndContainerDepthLimit) {
                                     "Echo", {nested});
   ASSERT_FALSE(tooDeep.has_value());
   EXPECT_EQ(tooDeep.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
+
+  config.limits.max_container_depth = 2;
+  dmn::Dmn_DbusClient exactDepthClient{config};
+  auto atDepthLimit = exactDepthClient.call(
+      kServiceName, kObjectPath, kInterface, "AcceptNestedArray", {nested});
+  ASSERT_TRUE(atDepthLimit) << atDepthLimit.error().message;
+
+  config.limits.max_container_depth = 2;
+  dmn::Dmn_DbusClient shallowReplyClient{config};
+  auto deepReply = shallowReplyClient.call(kServiceName, kObjectPath,
+                                           "org.freedesktop.DBus.ObjectManager",
+                                           "GetManagedObjects");
+  ASSERT_FALSE(deepReply);
+  EXPECT_EQ(deepReply.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
 }
 
 TEST_F(DbusClientTest, RejectsInvalidCallNamesAndOversizedInput) {
-  auto invalid = m_client->call(kServiceName, "not/a/path", kInterface, "Echo");
-  ASSERT_FALSE(invalid.has_value());
-  EXPECT_EQ(invalid.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+  for (const auto &[destination, path, interface, member] :
+       {std::tuple{kServiceName, "not/a/path", kInterface, "Echo"},
+        std::tuple{"org.dmn..Invalid", kObjectPath, kInterface, "Echo"},
+        std::tuple{kServiceName, kObjectPath, "invalid-interface", "Echo"},
+        std::tuple{kServiceName, kObjectPath, kInterface, "invalid-member"}}) {
+    auto invalid = m_client->call(destination, path, interface, member);
+    ASSERT_FALSE(invalid);
+    EXPECT_EQ(invalid.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+  }
 
   auto config = dmn::Dmn_DbusClientConfig{};
   config.bus_kind = dmn::Dmn_DbusBusKind::Address;
@@ -889,9 +1607,6 @@ TEST_F(DbusClientTest, RejectsEmbeddedNulInDbusIdentifiers) {
 }
 
 TEST_F(DbusClientTest, RejectsInvalidConnectionConfigurationWithoutFallback) {
-  dmn::Dmn_DbusClient sessionClient;
-  EXPECT_TRUE(sessionClient.status().connected);
-
   auto config = dmn::Dmn_DbusClientConfig{};
   config.bus_kind = dmn::Dmn_DbusBusKind::Address;
   config.bus_address = "unix:path=/dev/null";
@@ -900,6 +1615,48 @@ TEST_F(DbusClientTest, RejectsInvalidConnectionConfigurationWithoutFallback) {
   config.bus_kind = static_cast<dmn::Dmn_DbusBusKind>(255);
   config.bus_address.clear();
   EXPECT_THROW((dmn::Dmn_DbusClient{config}), std::invalid_argument);
+}
+
+TEST_F(DbusClientTest, RejectsEveryZeroOrOutOfRangeResourceLimit) {
+  const auto expectInvalid = [this](dmn::Dmn_DbusClientLimits limits) {
+    dmn::Dmn_DbusClientConfig config;
+    config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+    config.bus_address = m_bus.address();
+    config.limits = limits;
+    EXPECT_THROW((dmn::Dmn_DbusClient{config}), std::invalid_argument);
+  };
+
+  auto limits = dmn::Dmn_DbusClientLimits{};
+  limits.method_timeout = 0ms;
+  expectInvalid(limits);
+  limits.method_timeout =
+      std::chrono::milliseconds{std::numeric_limits<int>::max()} + 1ms;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_in_flight_calls = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_queued_commands = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_signal_messages = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_signal_bytes = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_message_bytes = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_message_bytes =
+      static_cast<std::size_t>(std::numeric_limits<int>::max()) + 1U;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_container_depth = 0;
+  expectInvalid(limits);
+  limits = {};
+  limits.max_values = 0;
+  expectInvalid(limits);
 }
 
 } // namespace

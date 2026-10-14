@@ -107,12 +107,14 @@ if (ENABLE_DBUS)
 
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-dbus-client
+                        dmn-test-dbus-client-session
                         dmn-test-dbus-facade
                         dmn-test-dbus-io
   )
 
   foreach(test_target IN ITEMS
           dmn-test-dbus-client
+          dmn-test-dbus-client-session
           dmn-test-dbus-facade
           dmn-test-dbus-io)
     target_compile_definitions(${test_target}

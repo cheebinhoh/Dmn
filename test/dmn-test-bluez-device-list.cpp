@@ -223,6 +223,14 @@ public:
   }
 
   void emitConnected(bool connected, const std::string &path = kDevicePath) {
+    emitBooleanProperty(path, "org.bluez.Device1", "Connected", connected);
+  }
+
+  void emitAdapterPowered(bool powered) {
+    emitBooleanProperty(kAdapterPath, "org.bluez.Adapter1", "Powered", powered);
+  }
+
+  void emitConnectedInvalidated(const std::string &path = kDevicePath) {
     DbusMessagePtr signal{dbus_message_new_signal(
         path.c_str(), "org.freedesktop.DBus.Properties", "PropertiesChanged")};
     DBusMessageIter out;
@@ -230,7 +238,35 @@ public:
     DBusMessageIter invalidated;
     const char *interface = "org.bluez.Device1";
     const char *property = "Connected";
-    const dbus_bool_t encoded = connected ? TRUE : FALSE;
+    dbus_message_iter_init_append(signal.get(), &out);
+    dbus_message_iter_append_basic(&out, DBUS_TYPE_STRING, &interface);
+    dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY, "{sv}", &changed);
+    dbus_message_iter_close_container(&out, &changed);
+    dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY,
+                                     DBUS_TYPE_STRING_AS_STRING, &invalidated);
+    dbus_message_iter_append_basic(&invalidated, DBUS_TYPE_STRING, &property);
+    dbus_message_iter_close_container(&out, &invalidated);
+    dbus_connection_send(m_connection.get(), signal.get(), nullptr);
+    dbus_connection_flush(m_connection.get());
+  }
+
+  void emitDeviceObject(bool added, const std::string &path = kDevicePath) {
+    emitObject(added, path, "org.bluez.Device1", false);
+  }
+
+  void emitAdapterObject(bool added) {
+    emitObject(added, kAdapterPath, "org.bluez.Adapter1", true);
+  }
+
+private:
+  void emitBooleanProperty(const std::string &path, const char *interface,
+                           const char *property, bool value) {
+    DbusMessagePtr signal{dbus_message_new_signal(
+        path.c_str(), "org.freedesktop.DBus.Properties", "PropertiesChanged")};
+    DBusMessageIter out;
+    DBusMessageIter changed;
+    DBusMessageIter invalidated;
+    const dbus_bool_t encoded = value ? TRUE : FALSE;
     dbus_message_iter_init_append(signal.get(), &out);
     dbus_message_iter_append_basic(&out, DBUS_TYPE_STRING, &interface);
     dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY, "{sv}", &changed);
@@ -252,7 +288,8 @@ public:
     dbus_connection_flush(m_connection.get());
   }
 
-  void emitDeviceObject(bool added, const std::string &path = kDevicePath) {
+  void emitObject(bool added, const std::string &path, const char *interface,
+                  bool adapter) {
     DbusMessagePtr signal{dbus_message_new_signal(
         "/", "org.freedesktop.DBus.ObjectManager",
         added ? "InterfacesAdded" : "InterfacesRemoved")};
@@ -264,11 +301,10 @@ public:
       DBusMessageIter interfaces;
       dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY, "{sa{sv}}",
                                        &interfaces);
-      appendInterface(interfaces, "org.bluez.Device1", false);
+      appendInterface(interfaces, interface, adapter);
       dbus_message_iter_close_container(&out, &interfaces);
     } else {
       DBusMessageIter interfaces;
-      const char *interface = "org.bluez.Device1";
       dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY,
                                        DBUS_TYPE_STRING_AS_STRING, &interfaces);
       dbus_message_iter_append_basic(&interfaces, DBUS_TYPE_STRING, &interface);
@@ -279,7 +315,6 @@ public:
     dbus_connection_flush(m_connection.get());
   }
 
-private:
   static auto filter(DBusConnection *connection, DBusMessage *message,
                      void *data) -> DBusHandlerResult {
     auto *self = static_cast<FakeBluezService *>(data);
@@ -825,6 +860,68 @@ TEST(DmnBluezDeviceList, TracksPropertyUpdatesWithSourcePath) {
   const auto devices = client.devices();
   ASSERT_EQ(devices.size(), 1U);
   EXPECT_TRUE(devices.front().connected.value());
+}
+
+TEST(DmnBluezDeviceList, TracksAdapterPowerChangesAndRemoval) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool poweredOffEvent{};
+  bool removedEvent{};
+  client.setEventHandler([&](const auto &event) {
+    std::lock_guard lock{mutex};
+    poweredOffEvent |= event.kind == dmn::Dmn_BluezEventKind::AdapterChanged &&
+                       event.adapter && !event.adapter->powered.value_or(false);
+    removedEvent |= event.kind == dmn::Dmn_BluezEventKind::AdapterRemoved;
+    condition.notify_all();
+  });
+
+  service.emitAdapterPowered(false);
+  {
+    std::unique_lock lock{mutex};
+    ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return poweredOffEvent; }));
+  }
+
+  service.emitAdapterObject(false);
+  {
+    std::unique_lock lock{mutex};
+    EXPECT_TRUE(condition.wait_for(lock, 2s, [&] { return removedEvent; }));
+  }
+}
+
+TEST(DmnBluezDeviceList, InvalidatedConnectionPropertyBecomesUnknown) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool invalidatedEvent{};
+  client.setEventHandler([&](const auto &event) {
+    if (event.kind == dmn::Dmn_BluezEventKind::DeviceChanged && event.device &&
+        !event.device->connected) {
+      std::lock_guard lock{mutex};
+      invalidatedEvent = true;
+      condition.notify_all();
+    }
+  });
+
+  service.emitConnectedInvalidated();
+  {
+    std::unique_lock lock{mutex};
+    ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return invalidatedEvent; }));
+  }
+
+  const auto devices = client.devices();
+  ASSERT_EQ(devices.size(), 1U);
+  EXPECT_FALSE(devices.front().connected.has_value());
 }
 
 TEST(DmnBluezDeviceList, TracksObjectManagerRemovalAndAddition) {

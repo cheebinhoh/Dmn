@@ -327,17 +327,32 @@ scoping, ObjectManager-shaped decode and encode, in-flight saturation, call
 cancellation/late replies, shutdown and bus disconnect with calls in flight,
 concurrent construction with both legacy endpoints, visible signal queue
 overflow, invalid input/type mismatch, depth and encoded-size rejection, and
-explicit-address failure. Legacy D-Bus endpoint/facade and DMesg
-conflict/lifetime regressions remain required gates.
+explicit-address failure. The suite now also exercises the public handle
+classes' move/cancel/destruction rules, method/property error paths,
+`subscribeWithPath`, path-namespace boundaries, overlapping-subscription
+ordering, callback-drain rejection from its own worker, shutdown admission,
+both bus selectors against private daemons, and exact/over resource
+boundaries. Legacy D-Bus endpoint/facade and DMesg conflict/lifetime
+regressions remain required gates.
 
-Still required before claiming generic-client readiness include malformed and
-deep reply-value tests, exact-at-limit and over-limit coverage for value count,
-message bytes, signal bytes, and callback ordering with multiple overlapping
-subscriptions. The private-bus suite covers a disconnect with a method call
-in flight; it does not yet establish recovery, reconnection, or all disconnect
-timing races. The generic client intentionally treats a bus disconnect as
-terminal rather than reconnecting. `GTEST_SKIP()` ANCS/BlueZ scaffolds are not
-behavioral coverage. There is still no BlueZ API or real-device qualification.
+Every public operation in `dmn-dbus-client.hpp` now has executable success
+and/or failure-path coverage against a standard Linux `dbus-daemon` started by
+the test fixture. Tests use a test-owned private bus address and fake D-Bus
+service; the system-bus selection case sets libdbus's documented
+`DBUS_SYSTEM_BUS_ADDRESS` override to that same private daemon. Tests do not
+connect to the host session/system bus, replace the Dmn client with a mock, or
+use a custom Dmn-specific bus. This validates the actual Dmn client, codec,
+libdbus integration, and bus protocol without relying on host bus policy or
+services.
+
+Remaining readiness work is narrower than basic API usage coverage:
+malformed-but-well-formed wire replies should be explicitly injected for
+property/reply-shape decoder failures; add exhaustive stress/race repetition
+for disconnect versus completion/cancellation; and retain the normal endpoint
+and broader sanitizer/build gates. The client intentionally treats bus
+disconnect as terminal rather than reconnecting. `GTEST_SKIP()` ANCS/BlueZ
+scaffolds are not behavioral coverage. There is still no BlueZ API or
+real-device qualification.
 
 ### Step 1 — Extract shared libdbus runtime (implemented)
 
@@ -355,8 +370,9 @@ shutdown. It is exercised against an owned private bus and fake service; no
 BlueZ dependency has been introduced.
 
 Do not mark this step complete until the remaining Section 6 implementation
-gates and the Section 7 acceptance tests pass. In particular, the current
-tests do not yet prove all boundary cases or real-world BlueZ compatibility.
+gates and the Section 7 acceptance tests pass. The public client API usage
+matrix is covered by private-bus tests; broader stress, malformed-reply, and
+production BlueZ qualification gates remain distinct requirements.
 
 ### Step 3 — BlueZ inventory/discovery API and CLI (initial implementation)
 
@@ -388,22 +404,44 @@ fake-bus tests is not evidence that iPhone ANCS is available.
 
 ## 7. Acceptance tests
 
-Generic D-Bus client coverage must include:
+### 7.1 Generic client API coverage
 
-- Concurrent safe client/endpoint construction and exactly-once libdbus
-  thread initialization.
-- Session, system, and explicit-address connection selection; explicit
-  connection failure never falls back.
-- Round-trip scalar, byte-array, nested array/dictionary/struct/variant values
-  with exact signatures, including ObjectManager-shaped values.
-- Method replies, remote named errors, timeout, cancellation, late reply, bus
-  disconnect, and bounded pending-call behavior.
-- Property get/set and signal add/change/remove flows; exact match scoping and
-  subscription cancellation; callback-queue draining after a method reply.
-- Malformed and oversized values, queue saturation, deterministic callback
-  context/order, and shutdown while calls/signals are in flight.
-- No user callback runs on the libdbus dispatch owner; no callback receives
-  borrowed message storage; every operation has one observable completion.
+The unit-test executables are `dmn-test-dbus-client` and
+`dmn-test-dbus-client-session`. The main fixture starts the standard Linux
+`dbus-daemon` in an isolated private session configuration and registers a
+fake service on that bus. The isolated session-selector test starts its own
+private daemon before the libdbus session address is first resolved. No test
+uses the host session or system bus. The system selector is also exercised
+safely by pointing `DBUS_SYSTEM_BUS_ADDRESS` at the fixture-owned daemon.
+This is the real D-Bus protocol/daemon and real libdbus transport, not a
+custom Dmn bus and not a mocked `Dmn_DbusClient`.
+
+Each public class/API surface is covered as follows:
+
+| Public API | Executable coverage |
+|---|---|
+| `Dmn_DbusSubscription` construction, move construction/assignment, `cancel()`, destruction, idempotence, cancellation callback exceptions | `DbusClientHandleTest.SubscriptionMoveAssignmentAndCancellationAreIdempotent`; `DbusClientHandleTest.SubscriptionMoveConstructorTransfersCancellation`; `DbusClientHandleTest.DestroyingActiveSubscriptionCancelsExactlyOnce`; `DbusClientHandleTest.HandleCancellationSuppressesCallbackExceptions`; client-level token behavior in `DbusClientTest.DeliversOwnedSignalsOffDispatchThreadAndCancels`. |
+| `Dmn_DbusCall` construction, `waitFor()`, `get()`, move construction/assignment, `cancel()`, handle destruction semantics | `DbusClientHandleTest.CallMoveWaitGetAndCancelOwnOneResult`; `DbusClientHandleTest.CallMoveAssignmentTransfersResultAndCancellation`; `DbusClientHandleTest.DestroyingCallHandleDoesNotCancelOperation`; `DbusClientHandleTest.HandleCancellationSuppressesCallbackExceptions`; client cancellation/late-reply, timeout, shutdown, and asynchronous completion tests. |
+| `Dmn_DbusClient` construction and bus configuration | `DbusClientSessionTest.DefaultSessionSelectionUsesPrivateDaemon` runs in an isolated test process for default session selection; `DbusClientInitializationTest.SystemBusSelectionUsesPrivateDaemonOverride`; `DbusClientTest.RejectsInvalidConnectionConfigurationWithoutFallback`; `DbusClientTest.RejectsEveryZeroOrOutOfRangeResourceLimit`; concurrent runtime initialization with legacy endpoints. |
+| `call()` / `callAsync()` | Primitive/byte values, nested array/dictionary/struct/variant calls, remote error, timeout, bad identifiers, exact/over message-byte bounds on arguments and value/depth bounds on arguments and replies, in-flight and queued-command/subscription saturation, cancellation, late reply, disconnect, shutdown, and repeat-shutdown/admission cases. |
+| `getProperty()` / `setProperty()` | Typed get/set, remote unknown-property and wrong-value-type errors, and malformed property reply shapes in `DbusClientTest.GetsAndSetsTypedPropertiesThroughPropertiesInterface`. |
+| `subscribe()` / `subscribeWithPath()` | Callback execution context and ownership, exact path and path namespace filtering, retained path, invalid matches/callbacks, token cancellation, and overlap ordering. |
+| `drainSignalCallbacks()` | Drains already-queued work; rejects invocation from the callback worker; reports shutdown. |
+| `dispatchThreadId()` / `status()` | Stable worker identity, connection/pending/shutdown status, visible message/byte overflow and shutdown discards, and bus-disconnect state. |
+| `Dmn_DbusClientLimits` | Invalid zero/out-of-range configuration; exact and over value/message/signal-byte thresholds; pending/command/subscription and signal-queue caps; recursive depth and oversized reply tests. |
+
+Additional codec/wire cases include scalar and byte-array signatures,
+ObjectManager-shaped nested dictionary/variant values in both directions,
+remote error-name/message preservation, and owned values delivered to callbacks.
+
+### 7.2 Remaining broader integration gates
+
+The public API behavior matrix above is covered. Before declaring the generic
+client fully acceptance-complete, inject malformed generic method replies
+beyond the property operation cases, exercise disconnect/completion/
+cancellation races repeatedly under stress, and run the broader endpoint and
+sanitizer gates. Do not interpret these remaining robustness gates as missing
+API entry-point coverage.
 
 BlueZ coverage must exercise the actual `dmn-bluez` API over the generic Dmn
 client against a private bus with fake `org.bluez` objects. It must not test
