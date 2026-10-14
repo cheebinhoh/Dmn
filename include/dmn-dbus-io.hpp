@@ -7,7 +7,9 @@
  * The endpoints carry arbitrary byte payloads in the configured broadcast
  * signal. The default signal tuple is the wire contract used by
  * Dmn_DMesgNet; other protocols should choose their own tuple. Each endpoint
- * owns a private connection and worker.
+ * owns a private connection and worker. Applications using the same bus and
+ * tuple communicate as peers through the bus daemon; these endpoints do not
+ * create a bus daemon or connect to a Dmn service.
  */
 
 #ifndef DMN_DBUS_IO_HPP_
@@ -25,10 +27,11 @@ namespace dmn {
 /**
  * @brief Blocking input endpoint for the configured D-Bus byte signal.
  *
- * The dispatch callback admits valid payloads to a bounded queue. Explicit
- * shutdown drains queued payloads and then makes read() throw
- * operation_canceled. This class is thread-safe; concurrent destruction with
- * active method calls is not supported.
+ * The endpoint subscribes to matching broadcast signals on its configured
+ * bus and admits valid payloads to a bounded queue. Explicit shutdown drains
+ * queued payloads and then makes read() throw operation_canceled. This class
+ * is thread-safe; concurrent destruction with active method calls is not
+ * supported.
  */
 class Dmn_DbusInput final : public Dmn_Io<std::string> {
 public:
@@ -80,8 +83,9 @@ private:
 /**
  * @brief Bounded output endpoint for the configured D-Bus byte signal.
  *
- * Successful writes mean local queue admission only. They do not acknowledge
- * daemon transmission or subscriber delivery.
+ * The endpoint emits matching broadcast signals on its configured bus.
+ * Successful writes mean local queue admission only; they do not acknowledge
+ * daemon transmission or delivery to any subscriber.
  */
 class Dmn_DbusOutput final : public Dmn_Io<std::string> {
 public:

@@ -1,9 +1,11 @@
 # Generic D-Bus Client Capability and BlueZ Extension
 
-**Status:** The generic client initial implementation and private-bus tests
-are in progress. The existing `dmn-dbus` byte-signal endpoints remain
-implemented. The initial BlueZ inventory/discovery API and CLI are available;
-BlueZ GATT and ANCS APIs are not implemented.
+**Status:** The generic D-Bus client implementation and its focused
+private-bus API tests are implemented. Broader robustness and BlueZ
+qualification gates remain; see Section 6. The existing `dmn-dbus`
+byte-signal endpoints remain implemented. The initial BlueZ
+inventory/discovery API and CLI are available; BlueZ GATT and ANCS APIs are
+not implemented.
 
 The current client slice provides typed scalar/container values, bounded
 method calls with timeout/cancellation, properties, constrained signal
@@ -98,11 +100,17 @@ The initial generic Dmn-owned client API is provided by the public headers
 includes:
 
 - A client connection configuration with an explicit bus kind (`Session`,
-  `System`, or caller-supplied address), finite timeout/resource limits, and
-  no implicit fallback. The generic library may use either standard bus or an
-  intentionally supplied address. The BlueZ API fixes production use to
-  `System`; test address injection is explicit and cannot silently select a
-  production fallback.
+  `System`, or caller-supplied `Address`), finite timeout/resource limits,
+  and no implicit fallback. All three choices create a client-owned private
+  connection: `Session` connects privately to the user's session bus,
+  `System` connects privately to the machine's system bus, and `Address`
+  opens a private connection to the exact supplied bus address. The address
+  may identify an isolated/private test daemon or another explicitly
+  addressed bus. “Private” describes ownership of the connection, not a
+  fourth bus kind; the ordinary system and session buses are bus daemons
+  shared by many clients. The BlueZ API fixes production use to `System`;
+  test address injection is explicit and cannot silently select a production
+  fallback.
 - Owned, type-preserving D-Bus values for all types needed to represent
   BlueZ's public API, including booleans, signed/unsigned integer widths,
   doubles, strings, object paths, signatures, byte arrays, arrays, dictionaries,
@@ -114,9 +122,9 @@ includes:
   member, and typed arguments; it returns a typed reply or a Dmn error that
   preserves a remote D-Bus error name/message separately from local transport,
   timeout, cancellation, and decode failures.
-- Bounded asynchronous calls so the one connection dispatch owner is never
-  blocked waiting for its own reply. A synchronous convenience operation may
-  wait only on a non-dispatch caller thread and must have a finite timeout.
+- Bounded asynchronous calls so the connection dispatch worker is never
+  blocked waiting for a reply. A synchronous convenience operation may wait
+  only on a non-dispatch caller thread and must have a finite timeout.
 - Generic `org.freedesktop.DBus.Properties.Get`/`Set` operations implemented
   through method calls and typed variants; property changes arrive through
   signal subscriptions.
@@ -157,9 +165,9 @@ The initial defaults are deliberately below libdbus's protocol-wide maxima:
 |---|---:|---|
 | Method timeout | 5 seconds | Per call; positive finite millisecond duration |
 | In-flight method calls | 128 | Admission fails with a typed `ResourceLimit` result |
-| Queued commands | 256 | Admission fails synchronously; no silent loss |
-| Signal callback queue | 256 messages / 16 MiB | New signal is dropped and the overflow counter increments |
-| Encoded message body | 8 MiB | Checked during encode/decode before copying oversized values |
+| Additional call/subscription cap (`max_queued_commands`) | 256 | Caps active subscriptions and participates in the effective call cap; there is no separate local command FIFO |
+| Signal callback queue | 256 callback deliveries / 16 MiB serialized bytes | A signal matching multiple subscriptions is queued/charged once per callback; a signal that would exceed either cap is dropped and counted |
+| Serialized method-call/reply/signal message | 8 MiB | Checked during encode/decode; includes D-Bus framing, not only the argument body |
 | Recursive container depth | 32 | Decode/encode rejects deeper trees |
 | Values/entries per message | 65,536 | Decode/encode rejects the first excess item |
 
@@ -189,12 +197,14 @@ callback worker; shutdown from that context would self-join.
 
 ### 3.2 Dispatch, callbacks, and lifetime
 
-- Each client owns one private connection and one documented D-Bus I/O/
-  dispatch owner. All connection operations that require dispatch participate
-  in that ownership model.
-- Method requests are submitted to the dispatch owner and completed through
-  libdbus pending calls or an equivalent event-driven mechanism. Do not use
-  `send_with_reply_and_block()` on the dispatch worker.
+- Each client owns one private connection and one D-Bus I/O/dispatch worker.
+  API caller threads submit method requests through libdbus's thread-safe
+  connection API; the dispatch worker runs the read/dispatch loop and all
+  libdbus message filters.
+- Method requests use `dbus_connection_send_with_reply()` and complete through
+  libdbus pending calls. Submission does not wait for the reply; the dispatch
+  worker processes replies and invokes pending-call completion handlers. Do
+  not use `send_with_reply_and_block()` on the dispatch worker.
 - The D-Bus dispatch callback performs bounded signature/type/size checks and
   copies data into owned values. It never invokes application callbacks or
   waits on a DMesg/BlueZ/application queue.
@@ -202,11 +212,11 @@ callback worker; shutdown from that context would self-join.
   worker after the corresponding D-Bus reply; signals queued before that reply
   are processed before the caller closes its staging window.
 - Signal callbacks run on a documented Dmn-owned callback context, separate
-  from the libdbus I/O/dispatch owner. Callback ordering is defined per
+  from the libdbus I/O/dispatch worker. Callback ordering is defined per
   connection/subscription. Callbacks must not be required to run on the
   process-wide `Dmn_Runtime` unless an explicit executor contract is added.
-- Pending calls, signal subscriptions, callback queues, strings, arrays, and
-  nested values have finite limits. Saturation, timeout, cancellation,
+- Pending calls, signal subscriptions, callback deliveries, strings, arrays,
+  and nested values have finite limits. Saturation, timeout, cancellation,
   malformed data, and disconnect are observable outcomes, never silent
   success.
 - Every call completes at most once. A late reply after timeout/cancellation
@@ -218,16 +228,19 @@ callback worker; shutdown from that context would self-join.
   have joined. Concurrent destruction with active public method calls is
   unsupported unless the eventual public contract explicitly adds shared
   lifetime ownership.
-- A queued command that has not been sent can be canceled without contacting
-  the bus. Once sent, cancellation cancels the libdbus pending call when
-  possible; cancellation racing a reply still produces exactly one result.
-  Timeout and cancellation discard later replies and immediately remove the
-  call from the client's pending registry, releasing its pending-call
-  reference rather than retaining canceled/timed-out calls until shutdown.
-- Shutdown completes queued and pending calls with a shutdown result, discards
+- There is no separate local command FIFO: a call admitted by the in-flight
+  limit is submitted to libdbus immediately. Cancellation cancels the pending
+  call when possible; if the request has already reached the service,
+  cancellation does not undo remote work. Cancellation racing a reply still
+  produces exactly one result. Timeout and cancellation discard later replies
+  and immediately remove the call from the client's pending registry,
+  releasing its pending-call reference rather than retaining canceled/timed
+  out calls until shutdown.
+- Shutdown completes pending calls with a shutdown result, discards
   queued callbacks while recording their count/bytes, and stops all workers
-  before closing the connection. Subscription-token destruction after client
-  shutdown is harmless; tokens must not outlive the client object.
+  before closing the connection. Subscription tokens may outlive the client;
+  destroying one after shutdown is harmless because its cancellation action
+  no longer has a live subscription to remove.
 
 Tests must exercise each configured threshold at and over the boundary rather
 than merely proving that values are nonzero.
@@ -422,7 +435,7 @@ Each public class/API surface is covered as follows:
 |---|---|
 | `Dmn_DbusSubscription` construction, move construction/assignment, `cancel()`, destruction, idempotence, cancellation callback exceptions | `DbusClientHandleTest.SubscriptionMoveAssignmentAndCancellationAreIdempotent`; `DbusClientHandleTest.SubscriptionMoveConstructorTransfersCancellation`; `DbusClientHandleTest.DestroyingActiveSubscriptionCancelsExactlyOnce`; `DbusClientHandleTest.HandleCancellationSuppressesCallbackExceptions`; client-level token behavior in `DbusClientTest.DeliversOwnedSignalsOffDispatchThreadAndCancels`. |
 | `Dmn_DbusCall` construction, `waitFor()`, `get()`, move construction/assignment, `cancel()`, handle destruction semantics | `DbusClientHandleTest.CallMoveWaitGetAndCancelOwnOneResult`; `DbusClientHandleTest.CallMoveAssignmentTransfersResultAndCancellation`; `DbusClientHandleTest.DestroyingCallHandleDoesNotCancelOperation`; `DbusClientHandleTest.HandleCancellationSuppressesCallbackExceptions`; client cancellation/late-reply, timeout, shutdown, and asynchronous completion tests. |
-| `Dmn_DbusClient` construction and bus configuration | `DbusClientSessionTest.DefaultSessionSelectionUsesPrivateDaemon` runs in an isolated test process for default session selection; `DbusClientInitializationTest.SystemBusSelectionUsesPrivateDaemonOverride`; `DbusClientTest.RejectsInvalidConnectionConfigurationWithoutFallback`; `DbusClientTest.RejectsEveryZeroOrOutOfRangeResourceLimit`; concurrent runtime initialization with legacy endpoints. |
+| `Dmn_DbusClient` construction and bus configuration | `DbusClientSessionTest.DefaultSessionSelectionUsesPrivateDaemon` runs in an isolated test process for default session selection; `DbusClientSessionTest.ExplicitAddressSelectsPrivateBusDaemon` connects to an explicitly addressed isolated bus; `DbusClientInitializationTest.SystemBusSelectionUsesPrivateDaemonOverride`; `DbusClientTest.RejectsInvalidConnectionConfigurationWithoutFallback`; `DbusClientTest.RejectsEveryZeroOrOutOfRangeResourceLimit`; concurrent runtime initialization with legacy endpoints. |
 | `call()` / `callAsync()` | Primitive/byte values, nested array/dictionary/struct/variant calls, remote error, timeout, bad identifiers, exact/over message-byte bounds on arguments and value/depth bounds on arguments and replies, in-flight and queued-command/subscription saturation, cancellation, late reply, disconnect, shutdown, and repeat-shutdown/admission cases. |
 | `getProperty()` / `setProperty()` | Typed get/set, remote unknown-property and wrong-value-type errors, and malformed property reply shapes in `DbusClientTest.GetsAndSetsTypedPropertiesThroughPropertiesInterface`. |
 | `subscribe()` / `subscribeWithPath()` | Callback execution context and ownership, exact path and path namespace filtering, retained path, invalid matches/callbacks, token cancellation, and overlap ordering. |

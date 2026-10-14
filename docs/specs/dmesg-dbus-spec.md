@@ -53,6 +53,43 @@ buses are local to a host. D-Bus does not federate separate host daemons, and
 this adapter does not make the existing DMesgNet election a consensus
 protocol.
 
+### Participant topology and bus ownership
+
+The transport is a peer mesh mediated by an already-running D-Bus daemon. The
+`dmn-dbus` library opens connections and exchanges signals; it does not start,
+configure, or own the bus daemon. Every application process that constructs a
+`Dmn_DMesgDbus` facade becomes its own complete `Dmn_DMesgNet` participant,
+with its own node identifier, publisher state, input endpoint, and output
+endpoint. There is no central Dmn service in this topology, and an application
+does not connect to another application's Dmn object directly.
+
+```text
+Application A                Application B                Application C
+Dmn_DMesgDbus / DMesgNet      Dmn_DMesgDbus / DMesgNet      Dmn_DMesgDbus / DMesgNet
+ input + output               input + output               input + output
+       |                             |                            |
+       +-----------------------------+----------------------------+
+                                     |
+                         existing D-Bus daemon
+                    routes each matching broadcast signal
+```
+
+Each participant's output sends a broadcast signal using the configured
+object-path/interface/member tuple. The daemon routes that signal to every
+matching input connection permitted by bus policy. Thus any participant can
+publish to the others, making the arrangement many-to-many over the bus rather
+than a direct application-to-application connection. There is no required
+well-known D-Bus service name. D-Bus routing is local to the selected daemon;
+participants on different daemons do not see one another unless they are
+explicitly configured to use the same daemon.
+
+The D-Bus daemon is distinct from the private connections owned by the
+endpoints. With an empty `Dmn_DbusConfig::bus_address`, both endpoints connect
+privately to the session bus. Supplying an address makes each endpoint connect
+privately to that exact bus daemon; this can select the system bus or an
+isolated test bus. The library does not infer “system bus” from an empty
+address and does not fall back if the selected address cannot be reached.
+
 ```text
 process A                                      process B
 Dmn_DMesgDbus facade                           Dmn_DMesgDbus facade

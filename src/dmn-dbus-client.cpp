@@ -84,6 +84,7 @@ auto signatureTypeLength(std::string_view signature) -> std::size_t {
   }
 
   std::size_t index{};
+
   if (signature[index] == 'a') {
     return 1 + signatureTypeLength(signature.substr(1));
   }
@@ -91,8 +92,10 @@ auto signatureTypeLength(std::string_view signature) -> std::size_t {
   if (signature[index] == '(' || signature[index] == '{') {
     const char close = signature[index] == '(' ? ')' : '}';
     ++index;
+
     while (index < signature.size() && signature[index] != close) {
       const auto length = signatureTypeLength(signature.substr(index));
+
       if (length == 0) {
         return 0;
       }
@@ -114,6 +117,7 @@ auto validSignature(std::string_view signature) -> bool {
 
   ErrorGuard error;
   const std::string owned{signature};
+
   return dbus_signature_validate_single(owned.c_str(), error.get());
 }
 
@@ -123,6 +127,7 @@ auto validText(const std::string &text) -> bool {
   }
 
   ErrorGuard error;
+
   return dbus_validate_utf8(text.c_str(), error.get());
 }
 
@@ -132,6 +137,7 @@ auto validObjectPath(const std::string &path) -> bool {
   }
 
   ErrorGuard error;
+
   return dbus_validate_path(path.c_str(), error.get());
 }
 
@@ -145,12 +151,14 @@ auto validSignatureValue(const std::string &signature) -> bool {
   }
 
   ErrorGuard error;
+
   return dbus_signature_validate(signature.c_str(), error.get());
 }
 
 auto messageSize(DBusMessage *message) -> std::size_t {
   char *bytes{};
   int length{};
+
   if (!dbus_message_marshal(message, &bytes, &length)) {
     throw std::runtime_error("unable to determine encoded D-Bus message size");
   }
@@ -174,6 +182,7 @@ void encodeContainer(DBusMessageIter &parent, int type, const char *signature,
                      const CodecLimits &limits, std::size_t depth,
                      std::size_t &count) {
   DBusMessageIter child;
+
   if (!dbus_message_iter_open_container(&parent, type, signature, &child)) {
     throw std::runtime_error("unable to open D-Bus container");
   }
@@ -202,6 +211,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
   }
 
   const auto signature = value.signature();
+
   if (signature.empty()) {
     throw std::invalid_argument("D-Bus value has no wire type");
   }
@@ -237,6 +247,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     const auto &text = signature == "s"   ? value.asString()
                        : signature == "o" ? value.asObjectPath()
                                           : value.asSignatureValue();
+
     if ((signature == "s" && !validText(text)) ||
         (signature == "o" && !validObjectPath(text)) ||
         (signature == "g" && !validSignatureValue(text))) {
@@ -250,6 +261,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     appendBasic(iter, type, data);
   } else if (signature == "ay") {
     const auto &bytes = value.asByteArray();
+
     if (bytes.size() > limits.max_bytes ||
         bytes.size() >
             static_cast<std::size_t>(std::numeric_limits<int>::max())) {
@@ -277,6 +289,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
   } else if (signature.front() == 'a' && signature.size() > 2 &&
              signature[1] == '{') {
     const auto &dictionary = value.asDictionary();
+
     if (!validSignature(dictionary.key_signature) ||
         !validSignature(dictionary.value_signature) ||
         dictionary.key_signature.size() != 1 ||
@@ -288,6 +301,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     DBusMessageIter array;
     const auto entrySignature =
         "{" + dictionary.key_signature + dictionary.value_signature + "}";
+
     if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
                                           entrySignature.c_str(), &array)) {
       throw std::runtime_error("unable to encode D-Bus dictionary");
@@ -300,6 +314,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       }
 
       DBusMessageIter entry;
+
       if (!dbus_message_iter_open_container(&array, DBUS_TYPE_DICT_ENTRY,
                                             nullptr, &entry)) {
         throw std::runtime_error("unable to encode D-Bus dictionary entry");
@@ -307,6 +322,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
 
       encodeValue(entry, key, limits, depth + 1, count);
       encodeValue(entry, item, limits, depth + 1, count);
+
       if (!dbus_message_iter_close_container(&array, &entry)) {
         throw std::runtime_error("unable to close D-Bus dictionary entry");
       }
@@ -317,6 +333,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     }
   } else if (signature.front() == 'a') {
     const auto &arrayValue = value.asArray();
+
     if (!validSignature(arrayValue.element_signature)) {
       throw std::invalid_argument("invalid D-Bus array element signature");
     }
@@ -332,6 +349,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
   } else if (signature.front() == '(') {
     const auto &fields = value.asStruct().fields;
     DBusMessageIter structure;
+
     if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, nullptr,
                                           &structure)) {
       throw std::runtime_error("unable to encode D-Bus struct");
@@ -346,18 +364,21 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     }
   } else if (signature == "v") {
     const auto &inner = value.asVariant();
+
     if (!validSignature(inner.signature())) {
       throw std::invalid_argument("invalid D-Bus variant value");
     }
 
     DBusMessageIter variant;
     const auto contained = inner.signature();
+
     if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
                                           contained.c_str(), &variant)) {
       throw std::runtime_error("unable to encode D-Bus variant");
     }
 
     encodeValue(variant, inner, limits, depth + 1, count);
+
     if (!dbus_message_iter_close_container(&iter, &variant)) {
       throw std::runtime_error("unable to close D-Bus variant");
     }
@@ -377,18 +398,21 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_BOOLEAN: {
     dbus_bool_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{value != FALSE};
   }
 
   case DBUS_TYPE_BYTE: {
     unsigned char value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::uint8_t>(value)};
   }
 
   case DBUS_TYPE_INT16: {
     dbus_int16_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::int16_t>(value)};
   }
 
@@ -401,30 +425,35 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_INT32: {
     dbus_int32_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::int32_t>(value)};
   }
 
   case DBUS_TYPE_UINT32: {
     dbus_uint32_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::uint32_t>(value)};
   }
 
   case DBUS_TYPE_INT64: {
     dbus_int64_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::int64_t>(value)};
   }
 
   case DBUS_TYPE_UINT64: {
     dbus_uint64_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::uint64_t>(value)};
   }
 
   case DBUS_TYPE_DOUBLE: {
     double value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{value};
   }
 
@@ -433,6 +462,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_SIGNATURE: {
     const char *value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     if (type == DBUS_TYPE_OBJECT_PATH) {
       return Dmn_DbusValue::objectPath(value == nullptr ? "" : value);
     }
@@ -446,12 +476,14 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
 
   case DBUS_TYPE_ARRAY: {
     const char *fullSignature = dbus_message_iter_get_signature(&iter);
+
     if (fullSignature == nullptr) {
       throw std::runtime_error("missing D-Bus array signature");
     }
 
     const std::string signature{fullSignature};
     dbus_free(const_cast<char *>(fullSignature));
+
     if (signature == "ay") {
       DBusMessageIter bytesIter;
       dbus_message_iter_recurse(&iter, &bytesIter);
@@ -459,6 +491,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
       int length{};
       dbus_message_iter_get_fixed_array(&bytesIter, &bytes, &length);
       Dmn_DbusValue::ByteArray values;
+
       if (length > 0) {
         values.assign(bytes, bytes + length);
       }
@@ -469,26 +502,31 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
     DBusMessageIter contents;
     dbus_message_iter_recurse(&iter, &contents);
     const auto elementSignature = signature.substr(1);
+
     if (elementSignature.size() >= 2 && elementSignature.front() == '{' &&
         elementSignature.back() == '}') {
       const auto inner = std::string_view{elementSignature}.substr(
           1, elementSignature.size() - 2);
       const auto keyLength = signatureTypeLength(inner);
+
       if (keyLength == 0 || keyLength >= inner.size()) {
         throw std::runtime_error("invalid D-Bus dictionary signature");
       }
 
       std::vector<std::pair<Dmn_DbusValue, Dmn_DbusValue>> entries;
+
       while (dbus_message_iter_get_arg_type(&contents) != DBUS_TYPE_INVALID) {
         DBusMessageIter entry;
         dbus_message_iter_recurse(&contents, &entry);
         auto key = decodeValue(entry, limits, depth + 1, count);
+
         if (!dbus_message_iter_next(&entry)) {
           throw std::runtime_error("incomplete D-Bus dictionary entry");
         }
 
         auto value = decodeValue(entry, limits, depth + 1, count);
         entries.emplace_back(std::move(key), std::move(value));
+
         if (!dbus_message_iter_next(&contents)) {
           break;
         }
@@ -502,6 +540,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
     std::vector<Dmn_DbusValue> values;
     while (dbus_message_iter_get_arg_type(&contents) != DBUS_TYPE_INVALID) {
       values.push_back(decodeValue(contents, limits, depth + 1, count));
+
       if (!dbus_message_iter_next(&contents)) {
         break;
       }
@@ -514,8 +553,10 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
     DBusMessageIter fieldsIter;
     dbus_message_iter_recurse(&iter, &fieldsIter);
     std::vector<Dmn_DbusValue> fields;
+
     while (dbus_message_iter_get_arg_type(&fieldsIter) != DBUS_TYPE_INVALID) {
       fields.push_back(decodeValue(fieldsIter, limits, depth + 1, count));
+
       if (!dbus_message_iter_next(&fieldsIter)) {
         break;
       }
@@ -527,6 +568,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_VARIANT: {
     DBusMessageIter contained;
     dbus_message_iter_recurse(&iter, &contained);
+
     if (dbus_message_iter_get_arg_type(&contained) == DBUS_TYPE_INVALID) {
       throw std::runtime_error("empty D-Bus variant");
     }
@@ -546,9 +588,11 @@ auto encodeArguments(DBusMessage *message,
   DBusMessageIter iter;
   dbus_message_iter_init_append(message, &iter);
   std::size_t count{};
+
   try {
     for (const auto &value : arguments) {
       encodeValue(iter, value, limits, 0, count);
+
       if (messageSize(message) > limits.max_bytes) {
         return false;
       }
@@ -569,11 +613,13 @@ auto decodeArguments(DBusMessage *message, const CodecLimits &limits)
 
   Dmn_DbusClient::Arguments values;
   DBusMessageIter iter;
+
   if (!dbus_message_iter_init(message, &iter)) {
     return values;
   }
 
   std::size_t count{};
+
   try {
     do {
       values.push_back(decodeValue(iter, limits, 0, count));
@@ -605,6 +651,7 @@ public:
     validateConfig();
     detail::initializeDbusRuntime();
     connect();
+
     if (!dbus_connection_add_filter(m_connection.get(), filter, this,
                                     nullptr)) {
       throw std::runtime_error(
@@ -612,15 +659,18 @@ public:
     }
 
     m_dispatch = std::thread{[this] { dispatchLoop(); }};
+
     try {
       m_callbacks = std::thread{[this] { callbackLoop(); }};
     } catch (...) {
       m_stopping = true;
+
       if (m_dispatch.joinable()) {
         m_dispatch.join();
       }
 
       dbus_connection_remove_filter(m_connection.get(), filter, this);
+
       throw;
     }
 
@@ -637,8 +687,10 @@ public:
     auto request = std::make_shared<CallRequest>();
     auto future = request->promise.get_future();
     const auto validation = validateCall(destination, path, interface, member);
+
     if (validation) {
       request->promise.set_value(std::unexpected(*validation));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
@@ -651,15 +703,19 @@ public:
       request->promise.set_value(
           std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                     "method timeout is outside valid range")));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
     bool atCapacity{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_accepting.load()) {
         request->promise.set_value(std::unexpected(makeError(
             Dmn_DbusErrorKind::Shutdown, "D-Bus client is shut down")));
+
         return Dmn_DbusCall{std::move(future), {}};
       }
 
@@ -667,12 +723,14 @@ public:
         request->promise.set_value(
             std::unexpected(makeError(Dmn_DbusErrorKind::NotConnected,
                                       "D-Bus connection is disconnected")));
+
         return Dmn_DbusCall{std::move(future), {}};
       }
 
       const auto active = m_in_flight.fetch_add(1);
       atCapacity = active >= std::min(m_config.limits.max_in_flight_calls,
                                       m_config.limits.max_queued_commands);
+
       if (atCapacity) {
         m_in_flight.fetch_sub(1);
       }
@@ -682,22 +740,26 @@ public:
       request->promise.set_value(
           std::unexpected(makeError(Dmn_DbusErrorKind::ResourceLimit,
                                     "in-flight D-Bus call limit reached")));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
     MessagePtr message{dbus_message_new_method_call(
         destination.c_str(), path.c_str(), interface.c_str(), member.c_str())};
+
     if (message == nullptr) {
       m_in_flight.fetch_sub(1);
       this->finish(request, std::unexpected(makeError(
                                 Dmn_DbusErrorKind::Transport,
                                 "unable to allocate D-Bus method call")));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
     const CodecLimits limits{m_config.limits.max_message_bytes,
                              m_config.limits.max_container_depth,
                              m_config.limits.max_values};
+
     try {
       if (!encodeArguments(message.get(), arguments, limits)) {
         m_in_flight.fetch_sub(1);
@@ -705,6 +767,7 @@ public:
                      std::unexpected(makeError(
                          Dmn_DbusErrorKind::ResourceLimit,
                          "encoded D-Bus call exceeds configured limits")));
+
         return Dmn_DbusCall{std::move(future), {}};
       }
     } catch (const std::exception &error) {
@@ -712,6 +775,7 @@ public:
       this->finish(request,
                    std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                              error.what())));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
@@ -721,8 +785,10 @@ public:
     DBusPendingCall *pending{};
     bool rejectedByShutdown{};
     bool queued{};
+
     {
       std::lock_guard lock{m_mutex};
+
       rejectedByShutdown = !m_accepting.load();
       if (!rejectedByShutdown &&
           dbus_connection_get_is_connected(m_connection.get())) {
@@ -730,6 +796,7 @@ public:
                      m_connection.get(), message.get(), &pending,
                      static_cast<int>(timeout.count())) &&
                  pending != nullptr;
+
         if (queued) {
           request->pending = pending;
           m_pending.emplace(request.get(), Pending{request, pending});
@@ -742,6 +809,7 @@ public:
       this->finish(request,
                    std::unexpected(makeError(Dmn_DbusErrorKind::Shutdown,
                                              "D-Bus client is shutting down")));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
@@ -750,6 +818,7 @@ public:
       this->finish(request, std::unexpected(makeError(
                                 Dmn_DbusErrorKind::Transport,
                                 "unable to queue D-Bus method call")));
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
@@ -758,8 +827,10 @@ public:
                                       deletePendingContext)) {
       delete context;
       DBusPendingCall *ownedPending{};
+
       {
         std::lock_guard lock{m_mutex};
+
         m_pending.erase(request.get());
         ownedPending = request->pending;
         request->pending = nullptr;
@@ -772,11 +843,13 @@ public:
           makeError(Dmn_DbusErrorKind::Transport,
                     "unable to register D-Bus pending-call completion")));
       request->keep_alive.reset();
+
       return Dmn_DbusCall{std::move(future), {}};
     }
 
     std::weak_ptr<Impl> weakImpl = shared_from_this();
     std::weak_ptr<CallRequest> weakRequest = request;
+
     return Dmn_DbusCall{std::move(future), [weakImpl, weakRequest] {
                           const auto impl = weakImpl.lock();
                           const auto pending = weakRequest.lock();
@@ -792,6 +865,7 @@ public:
     }
 
     m_in_flight.fetch_sub(1);
+
     try {
       request->promise.set_value(std::unexpected(makeError(
           Dmn_DbusErrorKind::Cancelled, "D-Bus method call was cancelled")));
@@ -805,6 +879,7 @@ public:
     DBusPendingCall *pending{};
     {
       std::lock_guard lock{m_mutex};
+
       if (request->pending != nullptr) {
         pending = request->pending;
         dbus_pending_call_ref(pending);
@@ -844,6 +919,7 @@ public:
          dbus_validate_path(match.path.c_str(), error.get())) &&
         (match.path_namespace.empty() ||
          dbus_validate_path(match.path_namespace.c_str(), error.get()));
+
     if (!valid) {
       return std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                        "invalid D-Bus signal match names"));
@@ -851,8 +927,10 @@ public:
 
     const auto rule = makeMatchRule(match);
     std::uint64_t id{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (m_subscriptions.size() >= m_config.limits.max_queued_commands) {
         return std::unexpected(
             makeError(Dmn_DbusErrorKind::ResourceLimit,
@@ -871,16 +949,19 @@ public:
     if (!added) {
       {
         std::lock_guard lock{m_mutex};
+
         m_subscriptions.erase(id);
       }
 
       (void)sendMatchCommand("RemoveMatch", rule);
+
       return std::unexpected(added.error());
     }
 
     if (!added->empty()) {
       {
         std::lock_guard lock{m_mutex};
+
         m_subscriptions.erase(id);
       }
 
@@ -896,7 +977,9 @@ public:
     std::string rule;
     {
       std::lock_guard lock{m_mutex};
+
       const auto found = m_subscriptions.find(id);
+
       if (found == m_subscriptions.end()) {
         return;
       }
@@ -910,6 +993,7 @@ public:
 
   auto dispatchThreadId() const -> std::thread::id {
     std::lock_guard lock{m_mutex};
+
     return m_dispatch_id;
   }
 
@@ -949,14 +1033,18 @@ public:
     std::lock_guard drainLock{m_callbackDrainMutex};
     auto completion = std::make_shared<std::promise<void>>();
     auto completed = completion->get_future();
+
     {
       std::unique_lock lock{m_callbackMutex};
+
       m_callbackCondition.wait(lock, [this] {
         const auto queued = queuedSignalCountLocked();
+
         return m_stopping.load() ||
                queued < m_config.limits.max_signal_messages ||
                (queued == 0 && m_config.limits.max_signal_messages == 0);
       });
+
       if (m_stopping.load()) {
         return std::unexpected(makeError(Dmn_DbusErrorKind::Shutdown,
                                          "D-Bus client is shutting down"));
@@ -967,6 +1055,7 @@ public:
 
     m_callbackCondition.notify_one();
     completed.wait();
+
     if (m_stopping.load()) {
       return std::unexpected(makeError(Dmn_DbusErrorKind::Shutdown,
                                        "D-Bus client is shutting down"));
@@ -981,9 +1070,12 @@ public:
     }
 
     std::vector<std::shared_ptr<CallRequest>> pendingRequests;
+
     {
       std::lock_guard lock{m_mutex};
+
       m_accepting = false;
+
       for (const auto &[raw, pending] : m_pending) {
         (void)raw;
         pendingRequests.push_back(pending.request);
@@ -993,6 +1085,7 @@ public:
     for (const auto &request : pendingRequests) {
       if (!request->completed.exchange(true)) {
         m_in_flight.fetch_sub(1);
+
         try {
           request->promise.set_value(std::unexpected(makeError(
               Dmn_DbusErrorKind::Shutdown, "D-Bus client is shutting down")));
@@ -1005,12 +1098,14 @@ public:
 
     {
       std::unique_lock lock{m_mutex};
+
       m_pendingCondition.wait_for(lock, std::chrono::milliseconds{250},
                                   [this] { return m_pending.empty(); });
     }
 
     m_stopping = true;
     m_callbackCondition.notify_all();
+
     if (m_dispatch.joinable()) {
       m_dispatch.join();
     }
@@ -1021,11 +1116,15 @@ public:
 
     if (m_connection != nullptr) {
       dbus_connection_remove_filter(m_connection.get(), filter, this);
+
       {
         std::lock_guard lock{m_mutex};
+
         m_subscriptions.clear();
+
         for (auto &[raw, pending] : m_pending) {
           (void)raw;
+
           if (pending.call != nullptr) {
             dbus_pending_call_unref(pending.call);
             pending.call = nullptr;
@@ -1050,19 +1149,23 @@ private:
   static void pendingComplete(DBusPendingCall *pending, void *data) {
     auto request = *static_cast<std::shared_ptr<CallRequest> *>(data);
     auto impl = request->keep_alive;
+
     if (impl == nullptr) {
       return;
     }
 
     Dmn_DbusResult<Arguments> result = std::unexpected(makeError(
         Dmn_DbusErrorKind::Transport, "D-Bus call completed without a reply"));
+
     try {
       MessagePtr reply{dbus_pending_call_steal_reply(pending)};
+
       if (reply != nullptr &&
           dbus_message_get_type(reply.get()) == DBUS_MESSAGE_TYPE_ERROR) {
         const char *name = dbus_message_get_error_name(reply.get());
         const char *text{};
         DBusMessageIter iter;
+
         if (dbus_message_iter_init(reply.get(), &iter) &&
             dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING) {
           dbus_message_iter_get_basic(&iter, &text);
@@ -1092,6 +1195,7 @@ private:
       std::lock_guard lock{impl->m_mutex};
       impl->m_pending.erase(request.get());
       impl->m_pendingCondition.notify_all();
+
       if (request->pending != nullptr) {
         dbus_pending_call_unref(request->pending);
         request->pending = nullptr;
@@ -1100,6 +1204,7 @@ private:
 
     if (!request->completed.exchange(true)) {
       impl->m_in_flight.fetch_sub(1);
+
       try {
         request->promise.set_value(std::move(result));
       } catch (...) {
@@ -1126,6 +1231,7 @@ private:
     std::string rule;
     SignalCallbackWithPath callback;
   };
+
   struct QueuedSignal {
     SignalCallbackWithPath callback;
     std::string path;
@@ -1133,6 +1239,7 @@ private:
     std::size_t bytes{};
     std::shared_ptr<std::promise<void>> completion;
   };
+
   struct Pending {
     std::shared_ptr<CallRequest> request;
     DBusPendingCall *call{};
@@ -1143,6 +1250,7 @@ private:
     const bool validBusKind = m_config.bus_kind == Dmn_DbusBusKind::Session ||
                               m_config.bus_kind == Dmn_DbusBusKind::System ||
                               m_config.bus_kind == Dmn_DbusBusKind::Address;
+
     if (!validBusKind ||
         (m_config.bus_kind == Dmn_DbusBusKind::Address &&
          (m_config.bus_address.empty() ||
@@ -1163,6 +1271,7 @@ private:
 
   void connect() {
     ErrorGuard error;
+
     if (m_config.bus_kind == Dmn_DbusBusKind::Address) {
       if (m_config.bus_address.find(':') == std::string::npos) {
         throw std::system_error(
@@ -1172,6 +1281,7 @@ private:
 
       DBusAddressEntry **entries{};
       int count{};
+
       if (!dbus_parse_address(m_config.bus_address.c_str(), &entries, &count,
                               error.get()) ||
           count == 0) {
@@ -1186,12 +1296,14 @@ private:
 
       for (int index = 0; index < count; ++index) {
         const char *method = dbus_address_entry_get_method(entries[index]);
+
         if (method == nullptr || (std::string_view{method} != "unix" &&
                                   std::string_view{method} != "tcp" &&
                                   std::string_view{method} != "nonce-tcp" &&
                                   std::string_view{method} != "launchd" &&
                                   std::string_view{method} != "autolaunch")) {
           dbus_address_entries_free(entries);
+
           throw std::system_error(
               std::make_error_code(std::errc::invalid_argument),
               "Dmn_DbusClient: unsupported D-Bus address transport");
@@ -1201,6 +1313,7 @@ private:
       dbus_address_entries_free(entries);
       m_connection.reset(dbus_connection_open_private(
           m_config.bus_address.c_str(), error.get()));
+
       if (m_connection != nullptr &&
           !dbus_bus_register(m_connection.get(), error.get())) {
         m_connection.reset();
@@ -1216,6 +1329,7 @@ private:
       const auto message = error.value().message == nullptr
                                ? "unable to connect to D-Bus"
                                : error.value().message;
+
       throw std::system_error(std::make_error_code(std::errc::not_connected),
                               message);
     }
@@ -1243,6 +1357,7 @@ private:
   static auto makeMatchRule(const Dmn_DbusSignalMatch &match) -> std::string {
     std::string rule{"type='signal',interface='" + match.interface +
                      "',member='" + match.member + "'"};
+
     if (!match.sender.empty()) {
       rule += ",sender='" + match.sender + "'";
     }
@@ -1266,11 +1381,13 @@ private:
 
     MessagePtr request{dbus_message_new_method_call(
         DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS, member)};
+
     if (request == nullptr) {
       return false;
     }
 
     const char *ruleText = rule.c_str();
+
     if (!dbus_message_append_args(request.get(), DBUS_TYPE_STRING, &ruleText,
                                   DBUS_TYPE_INVALID) ||
         !dbus_connection_send(m_connection.get(), request.get(), nullptr)) {
@@ -1278,12 +1395,14 @@ private:
     }
 
     dbus_connection_flush(m_connection.get());
+
     return true;
   }
 
   static auto filter(DBusConnection *, DBusMessage *message,
                      void *data) -> DBusHandlerResult {
     auto *self = static_cast<Impl *>(data);
+
     try {
       return filterMessage(message, self);
     } catch (const std::exception &error) {
@@ -1310,8 +1429,10 @@ private:
     std::vector<SignalCallbackWithPath> callbacks;
     {
       std::lock_guard lock{self->m_mutex};
+
       for (const auto &[id, subscription] : self->m_subscriptions) {
         (void)id;
+
         if (subscription.match.interface !=
                 (interface == nullptr ? "" : interface) ||
             subscription.match.member != (member == nullptr ? "" : member) ||
@@ -1329,6 +1450,7 @@ private:
                    subscription.match.path_namespace.size() &&
                subscription.match.path_namespace != "/" &&
                path[subscription.match.path_namespace.size()] != '/')))) {
+
           continue;
         }
 
@@ -1344,14 +1466,17 @@ private:
                              self->m_config.limits.max_container_depth,
                              self->m_config.limits.max_values};
     const auto decoded = decodeArguments(message, limits);
+
     if (!decoded) {
       self->recordTerminalError(decoded.error().message);
+
       return DBUS_HANDLER_RESULT_HANDLED;
     }
 
     const auto bytes = messageSize(message);
     std::lock_guard lock{self->m_callbackMutex};
     const auto queuedSignalCount = self->queuedSignalCountLocked();
+
     if (callbacks.size() >
             self->m_config.limits.max_signal_messages -
                 std::min(queuedSignalCount,
@@ -1362,6 +1487,7 @@ private:
                     callbacks.size()) {
       self->m_droppedSignalMessages.fetch_add(1);
       self->m_droppedSignalBytes.fetch_add(bytes);
+
       return DBUS_HANDLER_RESULT_HANDLED;
     }
 
@@ -1372,11 +1498,13 @@ private:
     }
 
     self->m_callbackCondition.notify_one();
+
     return DBUS_HANDLER_RESULT_HANDLED;
   }
 
   void recordTerminalError(std::string error) {
     std::lock_guard lock{m_mutex};
+
     m_terminalError = std::move(error);
   }
 
@@ -1389,15 +1517,18 @@ private:
   void dispatchLoop() {
     {
       std::lock_guard lock{m_mutex};
+
       m_dispatch_id = std::this_thread::get_id();
       m_dispatchReady = true;
     }
 
     m_dispatchCondition.notify_all();
+
     while (!m_stopping.load()) {
       const bool dispatched =
           dbus_connection_read_write_dispatch(m_connection.get(), 25);
       expireCalls();
+
       if (!dispatched) {
         if (!dbus_connection_get_is_connected(m_connection.get())) {
           {
@@ -1406,6 +1537,7 @@ private:
           }
 
           failPendingOnDisconnect();
+
           break;
         }
       }
@@ -1415,10 +1547,13 @@ private:
   void expireCalls() {
     const auto now = std::chrono::steady_clock::now();
     std::vector<std::shared_ptr<CallRequest>> expired;
+
     {
       std::lock_guard lock{m_mutex};
+
       for (const auto &[raw, pending] : m_pending) {
         (void)raw;
+
         if (pending.request->deadline <= now) {
           expired.push_back(pending.request);
         }
@@ -1428,6 +1563,7 @@ private:
     for (const auto &request : expired) {
       if (!request->completed.exchange(true)) {
         m_in_flight.fetch_sub(1);
+
         try {
           request->promise.set_value(std::unexpected(makeError(
               Dmn_DbusErrorKind::Timeout, "D-Bus method call timed out")));
@@ -1443,6 +1579,7 @@ private:
     std::vector<std::shared_ptr<CallRequest>> pendingRequests;
     {
       std::lock_guard lock{m_mutex};
+
       for (const auto &[raw, pending] : m_pending) {
         (void)raw;
         pendingRequests.push_back(pending.request);
@@ -1452,6 +1589,7 @@ private:
     for (const auto &request : pendingRequests) {
       if (!request->completed.exchange(true)) {
         m_in_flight.fetch_sub(1);
+
         try {
           request->promise.set_value(std::unexpected(makeError(
               Dmn_DbusErrorKind::Transport, "D-Bus connection disconnected")));
@@ -1471,11 +1609,13 @@ private:
         m_callbackCondition.wait(lock, [this] {
           return m_stopping.load() || !m_signalQueue.empty();
         });
+
         if (m_stopping.load()) {
           m_shutdownDiscardedSignalMessages.fetch_add(
               queuedSignalCountLocked());
           m_shutdownDiscardedSignalBytes.fetch_add(m_queuedSignalBytes);
           m_queuedSignalBytes = 0;
+
           for (auto &queuedSignal : m_signalQueue) {
             if (queuedSignal.completion) {
               queuedSignal.completion->set_value();
@@ -1488,6 +1628,7 @@ private:
 
         signal = std::move(m_signalQueue.front());
         m_signalQueue.pop_front();
+
         if (!signal.completion) {
           m_queuedSignalBytes -= signal.bytes;
         }
@@ -1564,6 +1705,7 @@ auto Dmn_DbusSubscription::operator=(Dmn_DbusSubscription &&other) noexcept
 void Dmn_DbusSubscription::cancel() noexcept {
   if (m_cancel) {
     auto callback = std::move(m_cancel);
+
     try {
       callback();
     } catch (...) {
@@ -1580,6 +1722,7 @@ auto Dmn_DbusCall::get() -> Result { return m_future.get(); }
 void Dmn_DbusCall::cancel() noexcept {
   if (m_cancel) {
     auto callback = std::move(m_cancel);
+
     try {
       callback();
     } catch (...) {
@@ -1626,6 +1769,7 @@ auto Dmn_DbusClient::getProperty(
   auto result =
       call(destination, path, "org.freedesktop.DBus.Properties", "Get",
            {Dmn_DbusValue{interface}, Dmn_DbusValue{property}});
+
   if (!result) {
     return std::unexpected(result.error());
   }
@@ -1647,6 +1791,7 @@ auto Dmn_DbusClient::setProperty(const std::string &destination,
       call(destination, path, "org.freedesktop.DBus.Properties", "Set",
            {Dmn_DbusValue{interface}, Dmn_DbusValue{property},
             Dmn_DbusValue::variant(std::move(value))});
+
   if (!result) {
     return std::unexpected(result.error());
   }
@@ -1678,12 +1823,14 @@ auto Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &match,
                                        SignalCallbackWithPath callback)
     -> Dmn_DbusResult<Dmn_DbusSubscription> {
   auto subscribed = m_impl->subscribe(match, std::move(callback));
+
   if (!subscribed) {
     return std::unexpected(subscribed.error());
   }
 
   std::weak_ptr<Impl> weak = m_impl;
   const auto id = *subscribed;
+
   return Dmn_DbusSubscription{[weak, id] {
     if (const auto impl = weak.lock()) {
       impl->cancel(id);
