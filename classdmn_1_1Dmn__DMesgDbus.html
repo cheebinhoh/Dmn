@@ -138,7 +138,7 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>HandlerType</b> = <a
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a20196412339289238d245f9660eed2c8" id="r_a20196412339289238d245f9660eed2c8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesgDbus.html#a20196412339289238d245f9660eed2c8">Dmn_DMesgDbus</a> (std::string_view node_id, const <a class="el" href="structdmn_1_1Dmn__DbusConfig.html">Dmn_DbusConfig</a> &amp;config={})</td></tr>
-<tr class="memdesc:a20196412339289238d245f9660eed2c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a DMesg node with private D-Bus input/output endpoints.  <br /></td></tr>
+<tr class="memdesc:a20196412339289238d245f9660eed2c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct an independent DMesg participant on the configured bus.  <br /></td></tr>
 <tr class="separator:a20196412339289238d245f9660eed2c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b38091137d803f0b20075a66ef20839" id="r_a8b38091137d803f0b20075a66ef20839"><td class="memItemLeft" align="right" valign="top"><a id="a8b38091137d803f0b20075a66ef20839" name="a8b38091137d803f0b20075a66ef20839"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_DMesgDbus</b> (const <a class="el" href="classdmn_1_1Dmn__DMesgDbus.html">Dmn_DMesgDbus</a> &amp;)=delete</td></tr>
@@ -177,7 +177,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DMesg handler facade that owns its D-Bus transport and network node. </p>
-<p>The class composes an internal <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> with separate D-Bus input and output endpoints. It forwards the selected handler/topic operations while keeping those transport objects private. The default config selects the <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> signal tuple on the session bus. </p>
+<p>The class composes an internal <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> with separate D-Bus input and output endpoints. It forwards the selected handler/topic operations while keeping those transport objects private. Each instance is a complete, independent <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> participant: its output broadcasts DMesg messages and its input receives matching broadcasts from other participants on the selected D-Bus daemon. Applications link this library and create their own instances; the facade is not a D-Bus service, a client proxy, or a bus daemon, and it does not start or manage one. The default config selects the <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> signal tuple on the session bus. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a76369989b9ec5862b76a18b46a78d005" name="a76369989b9ec5862b76a18b46a78d005"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a76369989b9ec5862b76a18b46a78d005">&#9670;&#160;</a></span>AsyncProcessTask</h2>
@@ -259,11 +259,11 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 </table>
 </div><div class="memdoc">
 
-<p>Construct a DMesg node with private D-Bus input/output endpoints. </p>
+<p>Construct an independent DMesg participant on the configured bus. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">node_id</td><td>DMesg node identifier; must be unique on the bus. </td></tr>
-    <tr><td class="paramname">config</td><td>Shared D-Bus routing and queue configuration. </td></tr>
+    <tr><td class="paramname">config</td><td>Bus selection, D-Bus signal routing, and queue limits. Empty bus_address selects the session bus; an explicit address selects that exact daemon. Other participants must use the same bus and signal tuple to exchange messages. </td></tr>
   </table>
   </dd>
 </dl>

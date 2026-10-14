@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['clear_0',['Clear',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046adc30bc0c7914db5918da4263fce93ad2',1,'dmn']]],
-  ['coveringexisting_1',['CoveringExisting',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046a631eeaf02e95520b0c2bc5fd8a2049f9',1,'dmn']]]
+  ['adapteradded_0',['AdapterAdded',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a220c3b8654ad1ab3584172c87a580741',1,'dmn']]],
+  ['adapterchanged_1',['AdapterChanged',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a2d35ebac1839a3aa1bc09309c4e0e9f8',1,'dmn']]],
+  ['adapterremoved_2',['AdapterRemoved',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a3295be2bb66bfdb223c1d406a5a0c991',1,'dmn']]],
+  ['address_3',['Address',['../dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27',1,'dmn']]]
 ];

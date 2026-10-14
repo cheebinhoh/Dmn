@@ -105,6 +105,7 @@ $(document).ready(function(){initNavTree('dmn-pub-sub_8hpp.html',''); initResiza
 <code>#include &lt;deque&gt;</code><br />
 <code>#include &lt;exception&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;future&gt;</code><br />
 <code>#include &lt;iostream&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
@@ -127,7 +128,7 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight publish/subscribe adaptor classes as wrapper. </p>
 <p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md36"></a>
 Overview</h2>
 <ul>
 <li>This header provides a small, efficient publish/subscribe adaptor classes:<ul>
@@ -136,32 +137,32 @@ Overview</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md37"></a>
 Design pattern</h2>
 <ul>
 <li>Adapter - it allows other subclasses to be adapted as publishers or subscribers.</li>
 <li>Observer - it defines many-to-many dependencies between objects so that when one object publishes a message, all dependent subscribers are notified, and a subscriber can subscribe more than one publishers.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<h2><a class="anchor" id="autotoc_md38"></a>
 Key design goals</h2>
 <ul>
 <li>Simplicity: minimal API to publish, register and unregister subscribers.</li>
 <li>Correctness: clear ownership and lifetime semantics, safe cleanup on destruction.</li>
 <li>Concurrency: publish calls enqueue work asynchronously, then the publisher processes subscriber notifications serially.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md36"></a>
+<h2><a class="anchor" id="autotoc_md39"></a>
 Threading and execution model</h2>
 <ul>
 <li>The Dmn_Pub is derived from Dmn_Async. Each Dmn_Pub object has its own singleton asynchronous execution context as provided by Dmn_Async.</li>
 <li>publish(const T&amp;) schedules a delivery task in the publisher's async context. That task (publishInternal) performs buffering and invokes each accepted subscriber's notify() directly in the publisher's async context.</li>
 <li>Notifications are serialized with other publisher work. A subscriber that needs to perform expensive work should copy or enqueue the item into its own execution context before returning from notify().</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md37"></a>
+<h2><a class="anchor" id="autotoc_md40"></a>
 Synchronization</h2>
 <ul>
 <li>It is piggy back on Dmn_Async's synchronization job queue.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md38"></a>
+<h2><a class="anchor" id="autotoc_md41"></a>
 Buffering and replay</h2>
 <ul>
 <li>The publisher keeps a bounded history (m_buffer) of up to m_capacity recently-published items.</li>
@@ -173,12 +174,12 @@ Buffering and replay</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md39"></a>
+<h2><a class="anchor" id="autotoc_md42"></a>
 Filtering</h2>
 <ul>
 <li>An optional filter function (Dmn_Pub_Filter_Task) can be supplied at construction. If provided, the filter is invoked for each (subscriber, item) pair to decide whether that subscriber should receive the item.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md40"></a>
+<h2><a class="anchor" id="autotoc_md43"></a>
 Lifetime and cleanup</h2>
 <ul>
 <li>Dmn_Sub stores a list of back-pointer (m_pubs) to its publishers while registered.</li>
@@ -186,20 +187,21 @@ Lifetime and cleanup</h2>
 <li>Dmn_Pub destruction unlinks subscribers on its async context and drains queued work. It does not make calls that begin concurrently with object destruction safe; callers must stop and join API-calling threads first.</li>
 <li>A derived Dmn_Pub must stop/join callers and drain its async context in its derived destructor before destroying state used by overridden publishInternal(). A derived Dmn_Sub's registered lifetime is retained by the publisher until serialized unregistration completes.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md41"></a>
+<h2><a class="anchor" id="autotoc_md44"></a>
 Error handling and exception safety</h2>
 <ul>
 <li>Exceptions from each filter or notify callback are recorded and delivery continues for other subscribers. Blocking publish rethrows the first callback exception after completing delivery; callers can retrieve all recorded failures with takeCallbackFailures().</li>
 <li>Callback failures during registration replay are recorded and do not prevent registration from completing.</li>
 <li>Destructors are noexcept; exceptions thrown during cleanup are swallowed to guarantee noexcept finalization.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md42"></a>
+<h2><a class="anchor" id="autotoc_md45"></a>
 Usage summary</h2>
 <ul>
 <li>Create a Dmn_Pub&lt;T&gt; with a name and optional capacity and filter.</li>
 <li>Derive from Dmn_Pub&lt;T&gt;::Dmn_Sub and implement notify(const T&amp;, Dmn_Pub *).</li>
 <li>Call registerSubscriber() to register a subscriber (buffer replay occurs synchronously as part of registration).</li>
 <li>Call publish(item) to enqueue an asynchronous publish. Optionally pass block=true to wait until the publish task completes.</li>
+<li>Call publishAsync(item) to enqueue publication and receive a future for completion or callback failure without waiting for completion. Enqueueing retains the existing queue's backpressure behavior.</li>
 </ul>
 <p>See also</p><ul>
 <li><a class="el" href="dmn-async_8hpp.html" title="Header for Dmn_Async: a small helper that serializes asynchronous execution of client-provided tasks ...">dmn-async.hpp</a> : asynchronous task execution and synchronization helpers.</li>

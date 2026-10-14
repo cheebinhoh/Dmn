@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['topic_0',['Topic',['../classdmn_1_1Dmn__Kafka.html#a76d5a2e1c07f753e2c97685a28063c48',1,'dmn::Dmn_Kafka']]]
+  ['fields_0',['fields',['../structdmn_1_1Dmn__DbusValue_1_1StructData.html#a83e2114e0ddf730b0d2f2fdffc75536a',1,'dmn::Dmn_DbusValue::StructData']]]
 ];

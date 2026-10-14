@@ -156,7 +156,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Blocking input endpoint for the configured D-Bus byte signal. </p>
-<p>The dispatch callback admits valid payloads to a bounded queue. Explicit shutdown drains queued payloads and then makes <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> throw operation_canceled. This class is thread-safe; concurrent destruction with active method calls is not supported. </p>
+<p>The endpoint subscribes to matching broadcast signals on its configured bus and admits valid payloads to a bounded queue. Explicit shutdown drains queued payloads and then makes <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> throw operation_canceled. This class is thread-safe; concurrent destruction with active method calls is not supported. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a658a9458454865b61044ac21f6fbb117" name="a658a9458454865b61044ac21f6fbb117"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a658a9458454865b61044ac21f6fbb117">&#9670;&#160;</a></span>Dmn_DbusInput()</h2>

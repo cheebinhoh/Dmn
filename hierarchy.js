@@ -1,7 +1,10 @@
 var hierarchy =
 [
+    [ "dmn::Dmn_DbusValue::ArrayData", "structdmn_1_1Dmn__DbusValue_1_1ArrayData.html", null ],
     [ "dmn::Dmn_Runtime_Task::Awaiter", "structdmn_1_1Dmn__Runtime__Task_1_1Awaiter.html", null ],
     [ "dmn::Dmn_Pub< T, QueueType >::CallbackFailure", "structdmn_1_1Dmn__Pub_1_1CallbackFailure.html", null ],
+    [ "dmn::Dmn_DbusClient::Impl::CallRequest", "structdmn_1_1Dmn__DbusClient_1_1Impl_1_1CallRequest.html", null ],
+    [ "dmn::Dmn_DbusValue::DictionaryData", "structdmn_1_1Dmn__DbusValue_1_1DictionaryData.html", null ],
     [ "dmn::Dmn_Async< QueueType >", "classdmn_1_1Dmn__Async.html", [
       [ "dmn::Dmn_Pub< dmn::DMesgPb >", "classdmn_1_1Dmn__Pub.html", [
         [ "dmn::Dmn_DMesg", "classdmn_1_1Dmn__DMesg.html", [
@@ -31,8 +34,23 @@ var hierarchy =
     [ "dmn::Dmn_BlockingQueue< Dmn_BlockingQueue_Mt< T >, T >", "classdmn_1_1Dmn__BlockingQueue.html", [
       [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ]
     ] ],
+    [ "dmn::Dmn_BluezAdapter", "structdmn_1_1Dmn__BluezAdapter.html", null ],
+    [ "dmn::Dmn_BluezClient", "classdmn_1_1Dmn__BluezClient.html", null ],
+    [ "dmn::Dmn_BluezClientConfig", "structdmn_1_1Dmn__BluezClientConfig.html", null ],
+    [ "dmn::Dmn_BluezDevice", "structdmn_1_1Dmn__BluezDevice.html", null ],
+    [ "dmn::Dmn_BluezEvent", "structdmn_1_1Dmn__BluezEvent.html", null ],
+    [ "dmn::Dmn_BluezInventory", "structdmn_1_1Dmn__BluezInventory.html", null ],
+    [ "dmn::Dmn_DbusCall", "classdmn_1_1Dmn__DbusCall.html", null ],
+    [ "dmn::Dmn_DbusClient", "classdmn_1_1Dmn__DbusClient.html", null ],
+    [ "dmn::Dmn_DbusClientConfig", "structdmn_1_1Dmn__DbusClientConfig.html", null ],
+    [ "dmn::Dmn_DbusClientLimits", "structdmn_1_1Dmn__DbusClientLimits.html", null ],
+    [ "dmn::Dmn_DbusClientStatus", "structdmn_1_1Dmn__DbusClientStatus.html", null ],
     [ "dmn::Dmn_DbusConfig", "structdmn_1_1Dmn__DbusConfig.html", null ],
+    [ "dmn::Dmn_DbusError", "structdmn_1_1Dmn__DbusError.html", null ],
     [ "dmn::Dmn_DbusIoStatus", "structdmn_1_1Dmn__DbusIoStatus.html", null ],
+    [ "dmn::Dmn_DbusSignalMatch", "structdmn_1_1Dmn__DbusSignalMatch.html", null ],
+    [ "dmn::Dmn_DbusSubscription", "classdmn_1_1Dmn__DbusSubscription.html", null ],
+    [ "dmn::Dmn_DbusValue", "classdmn_1_1Dmn__DbusValue.html", null ],
     [ "dmn::Dmn_DLock_Base", "classdmn_1_1Dmn__DLock__Base.html", [
       [ "dmn::Dmn_DLock< DMesgBase >", "classdmn_1_1Dmn__DLock.html", null ]
     ] ],
@@ -95,16 +113,22 @@ var hierarchy =
     [ "dmn::Dmn_Timer< T >", "classdmn_1_1Dmn__Timer.html", null ],
     [ "dmn::Dmn_TopologyResult< T >", "structdmn_1_1Dmn__TopologyResult.html", null ],
     [ "std::enable_shared_from_this", null, [
+      [ "dmn::Dmn_DbusClient::Impl", "classdmn_1_1Dmn__DbusClient_1_1Impl.html", null ],
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
     [ "dmn::Dmn_Runtime_Task::promise_type::FinalAwaiter", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type_1_1FinalAwaiter.html", null ],
     [ "dmn::Dmn_DMesg::HandlerEvent", "structdmn_1_1Dmn__DMesg_1_1HandlerEvent.html", null ],
     [ "dmn::Dmn_DMesg::HandlerSpec", "structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html", null ],
+    [ "dmn::Dmn_BluezClient::Impl", "classdmn_1_1Dmn__BluezClient_1_1Impl.html", null ],
     [ "dmn::Dmn_DbusInput::Impl", "classdmn_1_1Dmn__DbusInput_1_1Impl.html", null ],
     [ "dmn::Dmn_DbusOutput::Impl", "classdmn_1_1Dmn__DbusOutput_1_1Impl.html", null ],
     [ "dmn::Dmn_DMesgDbus::Impl", "structdmn_1_1Dmn__DMesgDbus_1_1Impl.html", null ],
+    [ "dmn::Dmn_DbusValue::ObjectPath", "structdmn_1_1Dmn__DbusValue_1_1ObjectPath.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "classdmn_1_1ScopeGuard.html", null ],
+    [ "dmn::Dmn_DbusValue::SignatureValue", "structdmn_1_1Dmn__DbusValue_1_1SignatureValue.html", null ],
+    [ "dmn::Dmn_DbusValue::StructData", "structdmn_1_1Dmn__DbusValue_1_1StructData.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >::Ticket", "classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html", null ],
-    [ "dmn::TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ]
+    [ "dmn::TimedJobComparator", "structdmn_1_1TimedJobComparator.html", null ],
+    [ "dmn::Dmn_DbusValue::VariantData", "structdmn_1_1Dmn__DbusValue_1_1VariantData.html", null ]
 ];

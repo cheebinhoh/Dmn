@@ -103,9 +103,8 @@ $(document).ready(function(){initNavTree('structdmn_1_1Dmn__DbusConfig.html','')
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:aca6e334e44e6d7605df65dd5d817a96a" id="r_aca6e334e44e6d7605df65dd5d817a96a"><td class="memItemLeft" align="right" valign="top"><a id="aca6e334e44e6d7605df65dd5d817a96a" name="aca6e334e44e6d7605df65dd5d817a96a"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>bus_address</b> {}</td></tr>
-<tr class="memdesc:aca6e334e44e6d7605df65dd5d817a96a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Empty selects the session bus; otherwise this exact address is used. <br /></td></tr>
+<tr class="memitem:aca6e334e44e6d7605df65dd5d817a96a" id="r_aca6e334e44e6d7605df65dd5d817a96a"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DbusConfig.html#aca6e334e44e6d7605df65dd5d817a96a">bus_address</a> {}</td></tr>
+<tr class="memdesc:aca6e334e44e6d7605df65dd5d817a96a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bus daemon address; empty selects the session bus.  <br /></td></tr>
 <tr class="separator:aca6e334e44e6d7605df65dd5d817a96a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaeb7df0da0d0b1ced79667b66fa644f" id="r_afaeb7df0da0d0b1ced79667b66fa644f"><td class="memItemLeft" align="right" valign="top"><a id="afaeb7df0da0d0b1ced79667b66fa644f" name="afaeb7df0da0d0b1ced79667b66fa644f"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>signal_path</b> {&quot;/org/dmn/DMesg1&quot;}</td></tr>
@@ -134,8 +133,26 @@ std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>max_queued_byt
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Configuration shared by the D-Bus input and output endpoints. </p>
-<p>Endpoints carry byte arrays in D-Bus signals. The default routing tuple is reserved for <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a>; callers can select another tuple for unrelated byte-oriented protocols. An empty bus address selects the session bus. Explicit addresses are opened as private bus connections and never fall back to another bus. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<p>Endpoints carry byte arrays in D-Bus signals. The default routing tuple is reserved for <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a>; callers can select another tuple for unrelated byte-oriented protocols. The bus daemon must already be running; this configuration does not start or manage a daemon or export a Dmn service. An empty bus address selects the session bus. An explicit address selects that exact daemon (for example, the system bus or an isolated test bus). Each endpoint opens its own private connection to the selected daemon, and an address failure never falls back to another bus. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="aca6e334e44e6d7605df65dd5d817a96a" name="aca6e334e44e6d7605df65dd5d817a96a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca6e334e44e6d7605df65dd5d817a96a">&#9670;&#160;</a></span>bus_address</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string dmn::Dmn_DbusConfig::bus_address {}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bus daemon address; empty selects the session bus. </p>
+<p>A non-empty value is used exactly as supplied. It may identify the system bus or a separate test bus. This selects a daemon, not a shared Dmn service; each input/output endpoint opens its own private connection. </p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="dmn-dbus-config_8hpp_source.html">dmn-dbus-config.hpp</a></li>
 </ul>
 </div><!-- contents -->

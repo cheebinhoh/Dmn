@@ -187,104 +187,105 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp_source.html',''
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>  <span class="keywordtype">bool</span> beginStep();</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span> </div>
 <div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>  <span class="keywordtype">void</span> complete(Terminal_State terminalState, std::exception_ptr failure = {});</div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>  <span class="keywordtype">void</span> resetQueuedAfterSubmission();</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span> </div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>  <span class="keywordtype">bool</span> runNextManaged();</div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span> </div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>  <span class="keywordtype">void</span> setEndManaged();</div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span> </div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>  <span class="keywordtype">void</span> enterInternalExecution(<span class="keywordtype">bool</span> permitRunNext);</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span> </div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>  <span class="keywordtype">void</span> leaveInternalExecution() noexcept;</div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>  <span class="keywordtype">void</span> beforeSetStateFnc() override;</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>  <span class="keywordtype">void</span> beforeSetNext() override;</div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>  <span class="keywordtype">void</span> beforeSetEnd() override;</div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>  <span class="keywordtype">void</span> beforeRunNext() override;</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span> </div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>  mutable std::mutex m_mutex{}; </div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>  std::promise&lt;void&gt; m_completionPromise{}; </div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>  std::shared_future&lt;void&gt;</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>      m_completionSharedFuture{}; </div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>  std::exception_ptr m_failure{}; </div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>  <span class="keywordtype">bool</span> m_queued{};                </div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>  <span class="keywordtype">bool</span> m_running{};   </div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>  <span class="keywordtype">bool</span> m_started{};   </div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>  <span class="keywordtype">bool</span> m_completed{}; </div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>  <span class="keywordtype">bool</span> m_failed{};    </div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>  <span class="keywordtype">bool</span> m_cancelled{}; </div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>  <span class="keywordtype">bool</span> m_terminal{};  </div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> m_internalExecutionDepth{}; </div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>  std::thread::id</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>      m_internalExecutionThread{}; </div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>  <span class="keywordtype">bool</span> m_runNextPermitted{}; </div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>};</div>
+<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span> </div>
+<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>  <span class="keywordtype">void</span> resetQueuedAfterSubmission();</div>
+<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span> </div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>  <span class="keywordtype">bool</span> runNextManaged();</div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span> </div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>  <span class="keywordtype">void</span> setEndManaged();</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span> </div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keywordtype">void</span> enterInternalExecution(<span class="keywordtype">bool</span> permitRunNext);</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span> </div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>  <span class="keywordtype">void</span> leaveInternalExecution() noexcept;</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span> </div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>  <span class="keywordtype">void</span> beforeSetStateFnc() override;</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>  <span class="keywordtype">void</span> beforeSetNext() override;</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>  <span class="keywordtype">void</span> beforeSetEnd() override;</div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>  <span class="keywordtype">void</span> beforeRunNext() override;</div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span> </div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>  mutable std::mutex m_mutex{}; </div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>  std::promise&lt;void&gt; m_completionPromise{}; </div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>  std::shared_future&lt;void&gt;</div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>      m_completionSharedFuture{}; </div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>  std::exception_ptr m_failure{}; </div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>  <span class="keywordtype">bool</span> m_queued{};                </div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>  <span class="keywordtype">bool</span> m_running{};   </div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>  <span class="keywordtype">bool</span> m_started{};   </div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>  <span class="keywordtype">bool</span> m_completed{}; </div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>  <span class="keywordtype">bool</span> m_failed{};    </div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>  <span class="keywordtype">bool</span> m_cancelled{}; </div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>  <span class="keywordtype">bool</span> m_terminal{};  </div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> m_internalExecutionDepth{}; </div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>  std::thread::id</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>      m_internalExecutionThread{}; </div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>  <span class="keywordtype">bool</span> m_runNextPermitted{}; </div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>};</div>
 </div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span> </div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno"><a class="line" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">  375</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> = std::shared_ptr&lt;Dmn_Runtime_State&gt;;</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span> </div>
-<div class="foldopen" id="foldopen00385" data-start="{" data-end="};">
-<div class="line"><a id="l00385" name="l00385"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__State__Manager.html">  385</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a></div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>    : <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;Dmn_Runtime_State_Manager&gt; {</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>  <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>&gt;;</div>
-<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
-<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>  <span class="keyword">virtual</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#ad1bebbf1eb594685bc7dab988025ba32">~Dmn_Runtime_State_Manager</a>() <span class="keyword">noexcept</span>;</div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span> </div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;</div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>  operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;</div>
-<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>  operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span> </div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>  <a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d">createState</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span> </div>
-<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#a7bd32250f576d8e5aacac0ad1f342f1e">shutdown</a>();</div>
-<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span> </div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span><span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00445" name="l00445"></a><span class="lineno">  445</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
-<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span> </div>
-<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>  <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a>;</div>
-<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span> </div>
-<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span>  <span class="keywordtype">bool</span> enqueueState(<a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> state,</div>
-<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span>                    Dmn_Runtime_Job::Priority priority,</div>
-<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span>                    <span class="keyword">const</span> std::chrono::steady_clock::duration &amp;delay,</div>
-<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span>                    <a class="code hl_typedef" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">Dmn_Runtime_State::OnErrorFnc</a> onError);</div>
-<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span> </div>
-<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>  <span class="keywordtype">void</span> executeStateStep(std::weak_ptr&lt;Dmn_Runtime_State&gt; state,</div>
-<div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>                        Dmn_Runtime_Job::Priority priority,</div>
-<div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>                        <a class="code hl_typedef" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">Dmn_Runtime_State::OnErrorFnc</a> onError);</div>
-<div class="line"><a id="l00476" name="l00476"></a><span class="lineno">  476</span> </div>
-<div class="line"><a id="l00482" name="l00482"></a><span class="lineno">  482</span>  <span class="keywordtype">void</span> releaseState(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> *state);</div>
-<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span> </div>
-<div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span>  std::mutex m_pendingStatesMutex{}; </div>
-<div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>  std::unordered_map&lt;const Dmn_Runtime_State *, DmnRuntimeStatePtr&gt;</div>
-<div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>      m_pendingStates{}; </div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>  <span class="keywordtype">bool</span> m_shutdown{}; </div>
-<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>  std::string m_name{}; </div>
-<div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>};</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span> </div>
+<div class="line"><a id="l00376" name="l00376"></a><span class="lineno"><a class="line" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">  376</a></span><span class="keyword">using </span><a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> = std::shared_ptr&lt;Dmn_Runtime_State&gt;;</div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span> </div>
+<div class="foldopen" id="foldopen00386" data-start="{" data-end="};">
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__State__Manager.html">  386</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a></div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>    : <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;Dmn_Runtime_State_Manager&gt; {</div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>  <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Singleton.html">Dmn_Singleton</a>&lt;<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>&gt;;</div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span> </div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>  <span class="keyword">virtual</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#ad1bebbf1eb594685bc7dab988025ba32">~Dmn_Runtime_State_Manager</a>() <span class="keyword">noexcept</span>;</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span> </div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>  operator=(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;</div>
+<div class="line"><a id="l00404" name="l00404"></a><span class="lineno">  404</span>  operator=(<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a> &amp;&amp;obj) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span> </div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>  <a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d">createState</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span> </div>
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State__Manager.html#a7bd32250f576d8e5aacac0ad1f342f1e">shutdown</a>();</div>
+<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span> </div>
+<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span><span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>  <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State__Manager.html">Dmn_Runtime_State_Manager</a>(std::string_view name = <span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a id="l00447" name="l00447"></a><span class="lineno">  447</span> </div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>  <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a>;</div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span> </div>
+<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span>  <span class="keywordtype">bool</span> enqueueState(<a class="code hl_typedef" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">DmnRuntimeStatePtr</a> state,</div>
+<div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span>                    Dmn_Runtime_Job::Priority priority,</div>
+<div class="line"><a id="l00461" name="l00461"></a><span class="lineno">  461</span>                    <span class="keyword">const</span> std::chrono::steady_clock::duration &amp;delay,</div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span>                    <a class="code hl_typedef" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">Dmn_Runtime_State::OnErrorFnc</a> onError);</div>
+<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span> </div>
+<div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>  <span class="keywordtype">void</span> executeStateStep(std::weak_ptr&lt;Dmn_Runtime_State&gt; state,</div>
+<div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>                        Dmn_Runtime_Job::Priority priority,</div>
+<div class="line"><a id="l00476" name="l00476"></a><span class="lineno">  476</span>                        <a class="code hl_typedef" href="classdmn_1_1Dmn__Runtime__State.html#a23b4cfb22eafc08d7d53665a4ca05d71">Dmn_Runtime_State::OnErrorFnc</a> onError);</div>
+<div class="line"><a id="l00477" name="l00477"></a><span class="lineno">  477</span> </div>
+<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>  <span class="keywordtype">void</span> releaseState(<span class="keyword">const</span> <a class="code hl_class" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> *state);</div>
+<div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span> </div>
+<div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>  std::mutex m_pendingStatesMutex{}; </div>
+<div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>  std::unordered_map&lt;const Dmn_Runtime_State *, DmnRuntimeStatePtr&gt;</div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>      m_pendingStates{}; </div>
+<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>  <span class="keywordtype">bool</span> m_shutdown{}; </div>
+<div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>  std::string m_name{}; </div>
+<div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>};</div>
 </div>
-<div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span> </div>
-<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Rep, <span class="keyword">typename</span> Period&gt;</div>
-<div class="foldopen" id="foldopen00492" data-start="{" data-end="}">
-<div class="line"><a id="l00492" name="l00492"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">  492</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">Dmn_Runtime_State::wait_for</a>(</div>
-<div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;timeout) {</div>
-<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>  <span class="keywordflow">if</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;&gt;::createInstance</a>()-&gt;isRunInAsyncThread()) {</div>
-<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>    <span class="keywordflow">throw</span> std::runtime_error(</div>
-<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>        <span class="stringliteral">&quot;Dmn_Runtime_State::wait_for cannot run in the runtime async thread&quot;</span>);</div>
-<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>  }</div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
-<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span>  <span class="keywordflow">return</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State.html#a73c4879aae52df6b236c9f486893bea8">getFuture</a>().wait_for(timeout) == std::future_status::ready;</div>
-<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>}</div>
+<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span> </div>
+<div class="line"><a id="l00492" name="l00492"></a><span class="lineno">  492</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Rep, <span class="keyword">typename</span> Period&gt;</div>
+<div class="foldopen" id="foldopen00493" data-start="{" data-end="}">
+<div class="line"><a id="l00493" name="l00493"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">  493</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">Dmn_Runtime_State::wait_for</a>(</div>
+<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>    <span class="keyword">const</span> std::chrono::duration&lt;Rep, Period&gt; &amp;timeout) {</div>
+<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span>  <span class="keywordflow">if</span> (<a class="code hl_class" href="classdmn_1_1Dmn__Runtime__Manager.html">Dmn_Runtime_Manager&lt;&gt;::createInstance</a>()-&gt;isRunInAsyncThread()) {</div>
+<div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>    <span class="keywordflow">throw</span> std::runtime_error(</div>
+<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>        <span class="stringliteral">&quot;Dmn_Runtime_State::wait_for cannot run in the runtime async thread&quot;</span>);</div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  }</div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span> </div>
+<div class="line"><a id="l00500" name="l00500"></a><span class="lineno">  500</span>  <span class="keywordflow">return</span> <a class="code hl_function" href="classdmn_1_1Dmn__Runtime__State.html#a73c4879aae52df6b236c9f486893bea8">getFuture</a>().wait_for(timeout) == std::future_status::ready;</div>
+<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span>}</div>
 </div>
-<div class="line"><a id="l00501" name="l00501"></a><span class="lineno">  501</span> </div>
-<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span> </div>
-<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span><span class="preprocessor">#endif </span><span class="comment">// DMN_RUNTIME_STATE_HPP_</span></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:275</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State__Manager.html">dmn::Dmn_Runtime_State_Manager</a></div><div class="ttdoc">Singleton manager for runtime-managed states.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:386</div></div>
+<div class="line"><a id="l00502" name="l00502"></a><span class="lineno">  502</span> </div>
+<div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span> </div>
+<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span><span class="preprocessor">#endif </span><span class="comment">// DMN_RUNTIME_STATE_HPP_</span></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__Manager.html">dmn::Dmn_Runtime_Manager</a></div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:278</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State__Manager_html"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State__Manager.html">dmn::Dmn_Runtime_State_Manager</a></div><div class="ttdoc">Singleton manager for runtime-managed states.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:387</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State__Manager_html_a6bb0d1a68c95309ae3cb81595529f64d"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State__Manager.html#a6bb0d1a68c95309ae3cb81595529f64d">dmn::Dmn_Runtime_State_Manager::createState</a></div><div class="ttdeci">DmnRuntimeStatePtr createState(std::string_view name=&quot;&quot;)</div><div class="ttdoc">Create a client-owned runtime state handle.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:376</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State__Manager_html_a7bd32250f576d8e5aacac0ad1f342f1e"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State__Manager.html#a7bd32250f576d8e5aacac0ad1f342f1e">dmn::Dmn_Runtime_State_Manager::shutdown</a></div><div class="ttdeci">void shutdown()</div><div class="ttdoc">Cancel submitted states and wait for the runtime to drain them.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:380</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State__Manager_html_ad1bebbf1eb594685bc7dab988025ba32"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State__Manager.html#ad1bebbf1eb594685bc7dab988025ba32">dmn::Dmn_Runtime_State_Manager::~Dmn_Runtime_State_Manager</a></div><div class="ttdeci">virtual ~Dmn_Runtime_State_Manager() noexcept</div><div class="ttdoc">Destroy the runtime state manager singleton.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:364</div></div>
@@ -297,7 +298,7 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp_source.html',''
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a38ebcc7caae25371494681aeff01e1b9"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a38ebcc7caae25371494681aeff01e1b9">dmn::Dmn_Runtime_State::~Dmn_Runtime_State</a></div><div class="ttdeci">virtual ~Dmn_Runtime_State() noexcept</div><div class="ttdoc">Destroy the state after all owning handles have been released.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:37</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a47b927f51bf7fe12b7fe5c99eba671ef"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a47b927f51bf7fe12b7fe5c99eba671ef">dmn::Dmn_Runtime_State::isFailed</a></div><div class="ttdeci">bool isFailed() const</div><div class="ttdoc">Return whether a user-state callback failed.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:237</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a49fa5e5a74c12c0c024a9dd15dadd364"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a49fa5e5a74c12c0c024a9dd15dadd364">dmn::Dmn_Runtime_State::setRuntimeStateFnc</a></div><div class="ttdeci">void setRuntimeStateFnc(RuntimeStateFnc fnc, int index=0)</div><div class="ttdoc">Add a runtime-aware user-state callback or replace an existing one.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:39</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a633b85884e4ae643b10d7c734d8ae401"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">dmn::Dmn_Runtime_State::wait_for</a></div><div class="ttdeci">bool wait_for(const std::chrono::duration&lt; Rep, Period &gt; &amp;timeout)</div><div class="ttdoc">Block until the state is terminal or the timeout expires.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:492</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a633b85884e4ae643b10d7c734d8ae401"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a633b85884e4ae643b10d7c734d8ae401">dmn::Dmn_Runtime_State::wait_for</a></div><div class="ttdeci">bool wait_for(const std::chrono::duration&lt; Rep, Period &gt; &amp;timeout)</div><div class="ttdoc">Block until the state is terminal or the timeout expires.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:493</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_a73c4879aae52df6b236c9f486893bea8"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#a73c4879aae52df6b236c9f486893bea8">dmn::Dmn_Runtime_State::getFuture</a></div><div class="ttdeci">std::shared_future&lt; void &gt; getFuture()</div><div class="ttdoc">Return a shared_future that becomes ready when the state reaches a terminal condition (completed/fail...</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:210</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_ab0aeb89a9d8a28c012c1f25923397e0e"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#ab0aeb89a9d8a28c012c1f25923397e0e">dmn::Dmn_Runtime_State::isCancelled</a></div><div class="ttdeci">bool isCancelled() const</div><div class="ttdoc">Return whether cancellation was requested or completed.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:225</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_ab46ad7e4cab1d54f88d7395dec1ccea2"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#ab46ad7e4cab1d54f88d7395dec1ccea2">dmn::Dmn_Runtime_State::cancel</a></div><div class="ttdeci">void cancel()</div><div class="ttdoc">Request cooperative cancellation of this state.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:155</div></div>
@@ -307,11 +308,11 @@ $(document).ready(function(){initNavTree('dmn-runtime-state_8hpp_source.html',''
 <div class="ttc" id="aclassdmn_1_1Dmn__Runtime__State_html_afcebb4889a46b53b660cf96dbcc1982b"><div class="ttname"><a href="classdmn_1_1Dmn__Runtime__State.html#afcebb4889a46b53b660cf96dbcc1982b">dmn::Dmn_Runtime_State::onCancelled</a></div><div class="ttdeci">virtual void onCancelled()</div><div class="ttdoc">Called after cancellation is published.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.cpp:348</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__Singleton_html"><div class="ttname"><a href="classdmn_1_1Dmn__Singleton.html">dmn::Dmn_Singleton</a></div><div class="ttdef"><b>Definition</b> dmn-singleton.hpp:67</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__State_html"><div class="ttname"><a href="classdmn_1_1Dmn__State.html">dmn::Dmn_State</a></div><div class="ttdoc">A finite-state machine advanced explicitly by its caller.</div><div class="ttdef"><b>Definition</b> dmn-state.hpp:58</div></div>
-<div class="ttc" id="admn-runtime-state_8hpp_html_a210907b43b7fdae14054e27bdcc0d56b"><div class="ttname"><a href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a></div><div class="ttdeci">std::shared_ptr&lt; Dmn_Runtime_State &gt; DmnRuntimeStatePtr</div><div class="ttdoc">Shared ownership handle for a runtime-managed state.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:375</div></div>
+<div class="ttc" id="admn-runtime-state_8hpp_html_a210907b43b7fdae14054e27bdcc0d56b"><div class="ttname"><a href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a></div><div class="ttdeci">std::shared_ptr&lt; Dmn_Runtime_State &gt; DmnRuntimeStatePtr</div><div class="ttdoc">Shared ownership handle for a runtime-managed state.</div><div class="ttdef"><b>Definition</b> dmn-runtime-state.hpp:376</div></div>
 <div class="ttc" id="admn-runtime_8hpp_html"><div class="ttname"><a href="dmn-runtime_8hpp.html">dmn-runtime.hpp</a></div><div class="ttdoc">Runtime manager for centralized signal handling and asynchronous jobs.</div></div>
 <div class="ttc" id="admn-singleton_8hpp_html"><div class="ttname"><a href="dmn-singleton_8hpp.html">dmn-singleton.hpp</a></div><div class="ttdoc">Lightweight helper for implementing argument-forwarding singletons.</div></div>
 <div class="ttc" id="admn-state_8hpp_html"><div class="ttname"><a href="dmn-state_8hpp.html">dmn-state.hpp</a></div><div class="ttdoc">A caller-driven state machine composed of callback functions.</div></div>
-<div class="ttc" id="astructdmn_1_1Dmn__Runtime__Job_html"><div class="ttname"><a href="structdmn_1_1Dmn__Runtime__Job.html">dmn::Dmn_Runtime_Job</a></div><div class="ttdoc">A unit of work that can be scheduled and executed by Dmn_Runtime_Manager.</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:155</div></div>
+<div class="ttc" id="astructdmn_1_1Dmn__Runtime__Job_html"><div class="ttname"><a href="structdmn_1_1Dmn__Runtime__Job.html">dmn::Dmn_Runtime_Job</a></div><div class="ttdoc">A unit of work that can be scheduled and executed by Dmn_Runtime_Manager.</div><div class="ttdef"><b>Definition</b> dmn-runtime.hpp:158</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -147,6 +147,7 @@ Usage summary</h2>
 <li>Delayed submissions reject negative durations and throw std::overflow_error when the duration or computed deadline cannot be represented by the steady clock. Zero duration is accepted.</li>
 <li>Delayed tasks use Dmn_Pipe's deadline-aware scheduled writes, so the worker blocks instead of polling while a task is not yet due. Destruction drains accepted tasks and can therefore wait until pending deadlines.</li>
 <li>For callers that need to block until a submitted task finishes, use addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a Dmn_Async_Handle object whose wait() method will only return after the task has completed (and propagate exceptions thrown by the task).</li>
+<li>For callers that need the task's value or exception without waiting for completion in the submitting thread, use addExecTaskFuture()/addExecTaskAfterFuture(). Enqueueing retains the existing queue's backpressure behavior. The returned std::future is single-consumer and does not cancel accepted work when discarded.</li>
 </ul>
 <p>This class is useful for offloading work from fast API paths while preserving ordering and providing optional synchronization points. </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
