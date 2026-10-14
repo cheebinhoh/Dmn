@@ -1,8 +1,15 @@
 # Generic D-Bus Client Capability and BlueZ Extension
 
-**Status:** Proposed, implementation-ready architecture. The existing
-`dmn-dbus` byte-signal endpoints are implemented. The generic method/property/
-signal client and the BlueZ API described here are not yet implemented.
+**Status:** The generic client initial implementation and private-bus tests
+are in progress. The existing `dmn-dbus` byte-signal endpoints remain
+implemented. The initial BlueZ inventory/discovery API and CLI are available;
+BlueZ GATT and ANCS APIs are not implemented.
+
+The current client slice provides typed scalar/container values, bounded
+method calls with timeout/cancellation, properties, constrained signal
+subscriptions, callback-worker delivery, status snapshots, and a shared
+libdbus thread runtime. It is not yet considered BlueZ-integration-ready:
+see the remaining implementation and acceptance gates in Section 6.
 
 ## 1. Decision
 
@@ -25,6 +32,27 @@ Existing Dmn_DMesgDbus users
        -> same private Dmn libdbus runtime
             -> public libdbus C API
 ```
+
+For method calls, properties, and decoded signals, the typed-value path is:
+
+```text
+BlueZ API                    Generic D-Bus API              Transport boundary
+Dmn_BluezClient  <-------->  Dmn_DbusClient  <----------->  private codec
+service-specific meaning     Dmn_DbusValue arguments/replies  libdbus messages
+                                                             |
+                                                             v
+                                                          D-Bus / BlueZ
+```
+
+`Dmn_DbusValue` is the owned data model carried across the generic client API;
+it is not a transport or a BlueZ model. The private codec in
+`src/dmn-dbus-client.cpp` is responsible for translating between those values
+and libdbus message bodies. `Dmn_DbusClient` handles bus operations and
+delivers owned typed replies/signals. `Dmn_BluezClient` interprets those
+generic values as BlueZ interfaces, properties, and events and exposes
+Bluetooth-specific types to its callers. This separation also lets other
+service clients use `Dmn_DbusClient` and `Dmn_DbusValue` without depending on
+BlueZ.
 
 The `dmn-dbus` library owns the generic client and the existing signal
 transport. The BlueZ library owns Bluetooth concepts and depends on
@@ -49,7 +77,7 @@ The current implementation is deliberately narrower:
 |---|---|---|
 | `Dmn_DbusInput` / `Dmn_DbusOutput` in `src/dmn-dbus-io.cpp` | Private bus connection; exact configured signal match; `ay` payload; bounded queues; worker dispatch/send; status, errors, and idempotent shutdown. | Keep public behavior and payload/routing contract unchanged. Reuse common runtime ownership where suitable, not the endpoint API for BlueZ. |
 | `Dmn_DbusConfig` | Signal tuple and byte-queue limits; empty address selects the session bus. | Keep it signal-specific. Add distinct client configuration; never reinterpret an empty signal address as the BlueZ system bus. |
-| Private `initializeDbus()` in the endpoint translation unit | One `std::call_once` for its translation unit and `dbus_threads_init_default()`. | Move the once-only process initialization behind one compiled private D-Bus runtime entry point used by both existing endpoints and the new client. Do not create independent once-flags in multiple libraries. |
+| Private `initializeDbus()` in the endpoint translation unit | Previously used one translation-unit-local `std::call_once`. | The once-only initialization now lives in `src/dmn-dbus-runtime.cpp` and is used by both existing endpoints and the generic client. Keep this as the only libdbus thread initializer. |
 | Private RAII wrappers and `connectBus()` | Owns libdbus connection/message/error lifetimes; endpoint default is session bus, explicit address is used without fallback. | Reuse or consolidate private ownership/error helpers where doing so does not change endpoint behavior. The new client must support explicit session/system selection and explicit custom addresses; BlueZ must select system bus explicitly. |
 | `Dmn_Proc` workers and endpoint shutdown | Cooperative stop, finite dispatch waits, join before filter removal/connection close. | Reuse the lifecycle pattern, not necessarily the same worker or dispatch implementation. No cancellation-based shutdown; no close while a worker may use the connection. |
 | `dmn-test-dbus-support.hpp` and private-bus tests | Test-owned private D-Bus daemon and endpoint tests without requiring the host bus. | Extend for fake D-Bus services/objects. All new client and BlueZ tests use a private test bus. |
@@ -65,9 +93,9 @@ adding BlueZ.
 
 ### 3.1 Public surface and data model
 
-Add a generic Dmn-owned client API, with proposed public headers
-`dmn-dbus-client.hpp` and `dmn-dbus-value.hpp`. Exact names may be finalized
-before implementation, but the public contract must include:
+The initial generic Dmn-owned client API is provided by the public headers
+`dmn-dbus-client.hpp` and `dmn-dbus-value.hpp`. Its current public contract
+includes:
 
 - A client connection configuration with an explicit bus kind (`Session`,
   `System`, or caller-supplied address), finite timeout/resource limits, and
@@ -96,6 +124,9 @@ before implementation, but the public contract must include:
   path/path namespace, with owned decoded arguments and a cancellation token.
   Subscription callbacks do not receive borrowed `DBusMessage` or iterator
   pointers.
+- A callback-queue drain barrier that waits for signal callbacks already
+  queued before the barrier to finish. It cannot be called from the callback
+  worker itself.
 - Support for the standard `org.freedesktop.DBus.ObjectManager` calls and
   signals through the generic typed value API. The generic layer transports
   and validates D-Bus values; BlueZ interprets its object/interface/property
@@ -110,6 +141,52 @@ call may target any bus service the process is permitted to access, but the
 generic API never bypasses bus policy or claims application-level
 authorization.
 
+#### Initial API and limits
+
+The first implementation uses the public headers `dmn-dbus-value.hpp` and
+`dmn-dbus-client.hpp`. `Dmn_DbusValue` is an owned recursive value; callers
+construct container values with an explicit element/key signature so empty
+arrays and dictionaries retain their D-Bus type. Dictionary entries preserve
+their key and value types. Struct fields preserve order. A variant contains
+exactly one owned value and contributes the contained value's signature inside
+the `v` wrapper.
+
+The initial defaults are deliberately below libdbus's protocol-wide maxima:
+
+| Resource | Default limit | Enforcement |
+|---|---:|---|
+| Method timeout | 5 seconds | Per call; positive finite millisecond duration |
+| In-flight method calls | 128 | Admission fails with a typed `ResourceLimit` result |
+| Queued commands | 256 | Admission fails synchronously; no silent loss |
+| Signal callback queue | 256 messages / 16 MiB | New signal is dropped and the overflow counter increments |
+| Encoded message body | 8 MiB | Checked during encode/decode before copying oversized values |
+| Recursive container depth | 32 | Decode/encode rejects deeper trees |
+| Values/entries per message | 65,536 | Decode/encode rejects the first excess item |
+
+Limits are finite and immutable for the initial API. The maximum per-call
+timeout is also bounded by the platform-supported libdbus integer timeout.
+An empty method argument list is valid. D-Bus message signatures remain subject
+to the protocol's 255-byte signature maximum.
+
+The initial result type distinguishes local invalid input, not connected,
+transport failure/disconnect, timeout, cancellation, shutdown, resource-limit,
+remote named error, and decode/encode failure. Remote error name and text are
+retained separately from the local category. The synchronous `call()` helper
+is a wrapper over `callAsync()` and waits only on its calling thread; it is
+documented as unsuitable on the client's signal-callback thread.
+All D-Bus identifiers and addresses must reject embedded NUL bytes before
+validation or passing them to libdbus, so C-string truncation cannot silently
+change the requested name, path, member, or connection address.
+
+Signal subscription matching supports an optional well-known or unique sender,
+interface, member, exact object path, or path namespace. At least interface
+and member are required. The daemon receives a constrained match rule; the
+client repeats the match locally. Subscription tokens are move-only and
+cancellation is idempotent. Callback arguments are owned values and callbacks
+run serially on one client-owned callback worker, never on the libdbus
+dispatching thread. User callbacks must not destroy the client from that
+callback worker; shutdown from that context would self-join.
+
 ### 3.2 Dispatch, callbacks, and lifetime
 
 - Each client owns one private connection and one documented D-Bus I/O/
@@ -121,6 +198,9 @@ authorization.
 - The D-Bus dispatch callback performs bounded signature/type/size checks and
   copies data into owned values. It never invokes application callbacks or
   waits on a DMesg/BlueZ/application queue.
+- A caller needing a snapshot/event ordering boundary drains the callback
+  worker after the corresponding D-Bus reply; signals queued before that reply
+  are processed before the caller closes its staging window.
 - Signal callbacks run on a documented Dmn-owned callback context, separate
   from the libdbus I/O/dispatch owner. Callback ordering is defined per
   connection/subscription. Callbacks must not be required to run on the
@@ -138,10 +218,19 @@ authorization.
   have joined. Concurrent destruction with active public method calls is
   unsupported unless the eventual public contract explicitly adds shared
   lifetime ownership.
+- A queued command that has not been sent can be canceled without contacting
+  the bus. Once sent, cancellation cancels the libdbus pending call when
+  possible; cancellation racing a reply still produces exactly one result.
+  Timeout and cancellation discard later replies and immediately remove the
+  call from the client's pending registry, releasing its pending-call
+  reference rather than retaining canceled/timed-out calls until shutdown.
+- Shutdown completes queued and pending calls with a shutdown result, discards
+  queued callbacks while recording their count/bytes, and stops all workers
+  before closing the connection. Subscription-token destruction after client
+  shutdown is harmless; tokens must not outlive the client object.
 
-The implementation plan must select concrete default limits and finite call
-timeouts before code is written. Tests must exercise those thresholds at and
-over the boundary rather than merely proving that values are nonzero.
+Tests must exercise each configured threshold at and over the boundary rather
+than merely proving that values are nonzero.
 
 ### 3.3 BlueZ system-bus policy
 
@@ -220,38 +309,70 @@ results. Keep all existing public endpoint tests passing before and after each
 shared-runtime change. Existing ANCS/BlueZ `GTEST_SKIP()` placeholders do not
 count as behavioral coverage.
 
-### Step 1 — Extract shared libdbus runtime
+#### Current implementation review
 
-Move process-wide `dbus_threads_init_default()` behind a single compiled
-private runtime entry point used by both the existing endpoints and the
-generic client. Consolidate only ownership/error/connection helpers that can
-preserve current endpoint semantics. Keep signal endpoints on their existing
-private connections and workers unless a measured, tested design proves a
-shared connection is behaviorally identical. Add tests proving initialization
-is safe across concurrent construction of old and new client types, and retain
-all existing signal queue, routing, status, and shutdown tests.
+`dbus_threads_init_default()` is shared through
+`src/dmn-dbus-runtime.cpp`; both legacy byte endpoints and
+`Dmn_DbusClient` call that entry point. Existing endpoint semantics remain on
+their prior private connections and workers. The generic client is implemented
+in `src/dmn-dbus-client.cpp`, with owned values in `dmn-dbus-value.*`; it uses
+pending calls dispatched by one client-owned I/O thread and a separate serial
+signal-callback worker.
 
-### Step 2 — Generic client and D-Bus value codec
+The first client test commit was deliberately red because the public client
+header and implementation did not exist. The private fake-service suite now
+covers primitive and byte round trips, remote errors, finite timeout,
+properties, callback thread separation and cancellation, exact-path signal
+scoping, ObjectManager-shaped decode and encode, in-flight saturation, call
+cancellation/late replies, shutdown and bus disconnect with calls in flight,
+concurrent construction with both legacy endpoints, visible signal queue
+overflow, invalid input/type mismatch, depth and encoded-size rejection, and
+explicit-address failure. Legacy D-Bus endpoint/facade and DMesg
+conflict/lifetime regressions remain required gates.
 
-Implement generic method calls/replies, type-safe marshalling/unmarshalling,
-properties, signal subscriptions, ObjectManager value support, timeout/error
-mapping, limits, status, and shutdown. Use a private bus with a fake D-Bus
-service. Test exact signatures and values, malformed signatures/types,
-remote errors, timeout, cancellation/late reply, disconnect, queue
-saturation, callback context, and concurrent shutdown. No BlueZ dependency is
-introduced in this step.
+Still required before claiming generic-client readiness include malformed and
+deep reply-value tests, exact-at-limit and over-limit coverage for value count,
+message bytes, signal bytes, and callback ordering with multiple overlapping
+subscriptions. The private-bus suite covers a disconnect with a method call
+in flight; it does not yet establish recovery, reconnection, or all disconnect
+timing races. The generic client intentionally treats a bus disconnect as
+terminal rather than reconnecting. `GTEST_SKIP()` ANCS/BlueZ scaffolds are not
+behavioral coverage. There is still no BlueZ API or real-device qualification.
 
-### Step 3 — BlueZ inventory and discovery
+### Step 1 — Extract shared libdbus runtime (implemented)
 
-Implement the typed adapter/device API on `dmn-dbus`. Against a private bus
-with fake ObjectManager/Adapter1/Device1 objects, test multiple adapters,
-known connected and disconnected devices, live changes/removal, display-name
-fallback, explicit scan filters/start/stop, and proof that listing/scanning
-does not pair or connect devices.
+The process-wide initializer is implemented as one compiled private runtime
+entry point. Legacy signal endpoints retain their existing private connections
+and workers. Existing D-Bus endpoint/facade tests pass after the extraction.
+Concurrent construction across endpoint types remains a test gate.
+
+### Step 2 — Generic client and D-Bus value codec (initial slice implemented)
+
+The current slice implements generic method calls/replies, recursive owned
+values, properties, signal subscriptions, ObjectManager-shaped values,
+timeout/cancellation/error mapping, configured resource limits, status, and
+shutdown. It is exercised against an owned private bus and fake service; no
+BlueZ dependency has been introduced.
+
+Do not mark this step complete until the remaining Section 6 implementation
+gates and the Section 7 acceptance tests pass. In particular, the current
+tests do not yet prove all boundary cases or real-world BlueZ compatibility.
+
+### Step 3 — BlueZ inventory/discovery API and CLI (initial implementation)
+
+The optional `dmn-bluez` target and `dmn-bluez-discovery` CLI provide the first
+typed adapter/device snapshot, updates, and explicit scan. Private-bus tests
+cover known disconnected devices, property changes, discovery filter and
+owned start/stop, and the absence of forbidden Pair/Connect/Disconnect/
+RemoveDevice/SetPowered operations. A physical-adapter CLI scan has also been
+run. Continue with the full multi-adapter, removal, restart, race, failure,
+and CLI acceptance cases in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md); do not block
+this first milestone on GATT or ANCS.
 
 ### Step 4 — BlueZ GATT and ANCS protocol
 
-Implement BlueZ GATT lifecycle and operations on the generic client; test
+Extend `dmn-bluez` with GATT lifecycle and operations on the generic client; test
 methods, properties, characteristic notifications, BlueZ error mapping,
 service resolution and invalidation using fake objects. Implement ANCS parser,
 fragment reassembly, serialized requests, timeout and session state against a
@@ -278,7 +399,7 @@ Generic D-Bus client coverage must include:
 - Method replies, remote named errors, timeout, cancellation, late reply, bus
   disconnect, and bounded pending-call behavior.
 - Property get/set and signal add/change/remove flows; exact match scoping and
-  subscription cancellation.
+  subscription cancellation; callback-queue draining after a method reply.
 - Malformed and oversized values, queue saturation, deterministic callback
   context/order, and shutdown while calls/signals are in flight.
 - No user callback runs on the libdbus dispatch owner; no callback receives

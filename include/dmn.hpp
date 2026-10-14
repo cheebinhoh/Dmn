@@ -16,8 +16,11 @@
  * - Behavior: This file only forwards includes and does not introduce new
  *   symbols or definitions beyond those in the included headers.
  * - Optional APIs: D-Bus headers are included when the dmn-dbus target defines
- *   DMN_ENABLE_DBUS; fault-injection helpers are included when FIU_ENABLE is
+ *   DMN_ENABLE_DBUS; BlueZ headers are included when dmn-bluez defines
+ *   DMN_ENABLE_BLUEZ; fault-injection helpers are included when FIU_ENABLE is
  *   defined.
+ * - Deprecated headers under deprecated/ are unsupported legacy code and are
+ *   intentionally excluded from this umbrella.
  * - Include guard: The guard below prevents multiple inclusion across the
  * build.
  *
@@ -61,9 +64,15 @@
 #endif
 
 #if defined(DMN_ENABLE_DBUS)
+#include "dmn-dbus-client.hpp"
 #include "dmn-dbus-config.hpp"
 #include "dmn-dbus-io.hpp"
+#include "dmn-dbus-value.hpp"
 #include "dmn-dmesgnet-dbus.hpp"
+#endif
+
+#if defined(DMN_ENABLE_BLUEZ)
+#include "dmn-bluez-client.hpp"
 #endif
 
 #endif // DMN_HPP_

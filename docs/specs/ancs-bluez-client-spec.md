@@ -1,20 +1,28 @@
 # iPhone Notifications on Linux with ANCS and BlueZ
 
-**Status:** Proposed. No ANCS or BlueZ GATT client is implemented in libDmn.
-The first delivery is a directly linked Linux application, not a system
-daemon. Hardware compatibility with the target iPhone and Linux/BlueZ
-combination is a release gate, not an assumption.
+**Status:** Proposed follow-on to the separately specified first milestone:
+the BlueZ inventory and `--discovery` CLI in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). No BlueZ
+inventory, discovery, GATT, or ANCS implementation is currently present in
+libDmn. GATT and ANCS are not prerequisites for shipping the discovery CLI.
+The eventual ANCS delivery is a directly linked Linux application, not a
+system daemon. Hardware compatibility with the target iPhone and Linux/BlueZ
+combination is a release gate for GATT/ANCS, not for inventory/discovery.
 
 ## 1. Goal and scope
 
-Provide a Dmn-owned C++ API that lets a Linux application discover BlueZ-known
-Bluetooth devices, select and connect to a device, use remote GATT, and
-optionally run an ANCS session with one user-selected iPhone over Bluetooth
-Low Energy. The implementation calls BlueZ's documented system-D-Bus API
-directly through libdbus; it does not depend on a third-party Bluetooth/GATT
-wrapper. No custom iPhone app is part of this design; visibility of any
-particular notification remains subject to iOS and the notification
-provider's behavior.
+The longer-term goal is a Dmn-owned C++ API that lets a Linux application
+discover BlueZ-known Bluetooth devices, select and connect to a device, use
+remote GATT, and optionally run an ANCS session with one user-selected iPhone
+over Bluetooth Low Energy. The first independently useful increment is only
+BlueZ inventory, explicit discovery, and the `dmn-bluez-discovery` CLI; its
+contract and build/test gates are specified in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). Later
+increments add GATT and ANCS. The implementation calls BlueZ's documented
+system-D-Bus API through the generic Dmn client and does not depend on a
+third-party Bluetooth/GATT wrapper. No custom iPhone app is part of this
+design; visibility of any particular notification remains subject to iOS and
+the notification provider's behavior.
 
 Version 1 includes a live view of BlueZ-known devices and explicit discovery
 controls:
@@ -215,11 +223,15 @@ prove the BLE and ANCS layers.
   `libdbus` calls to BlueZ; enumerate the remote GATT objects through
   BlueZ's `org.freedesktop.DBus.ObjectManager`, and verify `ServicesResolved`
   before discovery. `org.bluez.Device1.Connect` is a generic device/profile
-  operation; its success and the `Connected` property alone are not ANCS
-  readiness. Readiness requires the ANCS service and required characteristics
-  to be discoverable and their operations to succeed. Qualification must
-  confirm that the selected BlueZ path uses the LE bearer even on dual-mode
-  adapters/devices.
+  operation, not an ANCS-specific connect request; BlueZ may connect
+  auto-connectable profiles, and other transports/profiles may need their own
+  documented connection operation. Its success and the `Connected` property
+  alone are not ANCS readiness. Readiness requires the ANCS service and
+  required characteristics to be discoverable and their operations to
+  succeed. Qualification must confirm that the selected BlueZ path uses the
+  LE bearer even on dual-mode adapters/devices. See the selected-device
+  connection boundary in
+  [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md#follow-on-connecting-to-a-selected-device).
 - Match service and characteristic UUIDs at runtime; do not persist GATT
   object paths across disconnects or service changes.
 - The ANCS primary service UUID is

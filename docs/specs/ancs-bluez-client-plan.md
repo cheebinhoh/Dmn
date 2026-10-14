@@ -1,12 +1,15 @@
 # Implementation Plan: Layered ANCS Client for Linux
 
-**Status:** Proposed. This plan implements the contract in
-[`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md). Do not begin
-production integration until the real-device feasibility gate passes.
+**Status:** Proposed follow-on plan. The first, hardware-independent
+Bluetooth deliverable is the BlueZ inventory/discovery CLI described in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). This plan covers
+later GATT/ANCS work and does not make iPhone feasibility a prerequisite for
+shipping that first milestone.
 
 ## 1. Recommended minimal solution
 
-Build a small, directly linked C++ application on top of libDmn:
+After the discovery CLI milestone, build a small, directly linked C++
+application on top of libDmn:
 
 ```text
 dmn-ancs-monitor (example application)
@@ -18,16 +21,14 @@ dmn-ancs-monitor (example application)
        -> BlueZ -> BLE -> iPhone
 ```
 
-The application initially displays the current connected-device inventory and
-updates it as devices change; an explicit scan control shows nearby
-BlueZ-reported devices. The user can select one eligible iPhone to connect and
-start the ANCS session; notification updates are emitted to stdout or an
-application callback. The app can show connected known devices and
-discovered-but-disconnected devices separately. Neither view promises every
-nearby radio device. Do not start by building a system daemon, notification
-database, libnotify dependency, or IPC protocol. Those features do not reduce
-the primary risk: whether the target iPhone exposes usable ANCS to the target
-BlueZ environment.
+The later `dmn-ancs-monitor` may reuse the inventory and discovery API to show
+connected devices and nearby BlueZ-reported devices, then let the user select
+one eligible iPhone for an ANCS session. The separate first CLI milestone
+already provides inventory and explicit scan without any ANCS dependencies.
+Neither view promises every nearby radio device. Do not start by building a
+system daemon, notification database, libnotify dependency, or IPC protocol.
+Those features do not reduce the primary risk: whether the target iPhone
+exposes usable ANCS to the target BlueZ environment.
 
 Implement the BlueZ backend as part of the Dmn codebase and call the public
 `libdbus` C API directly to use BlueZ's documented system-D-Bus API. Do not
@@ -41,50 +42,61 @@ future backend; do not add a plugin framework.
 
 ## 2. Phases and exit gates
 
-### Phase 0 — Physical-device feasibility spike
+### Phase 0 — BlueZ inventory and `--discovery` CLI (first deliverable)
 
-Before designing a broad public API:
+Implement the separate contract in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). This is the
+first independently useful Bluetooth feature and does not require a phone,
+GATT, ANCS, or a physical adapter for normal CI.
+
+**Implementation status:** Initial `dmn-bluez` API and
+`dmn-bluez-discovery` CLI are available. Private-bus tests and a physical
+adapter smoke scan have passed; complete all remaining acceptance gates in the
+linked spec before calling Phase 0 fully qualified.
+
+- Implement adapter/device inventory and live changes over the generic
+  `Dmn_DbusClient`; enumerate BlueZ `GetManagedObjects` and subscribe to
+  ObjectManager, Properties, and BlueZ owner changes without starting a scan.
+- Implement explicit one-adapter discovery with the default `auto` transport,
+  owned start/stop lifecycle, bounded update staging, and no pairing or
+  connection side effects.
+- Add `dmn-bluez-discovery` with read-only snapshot mode and continuous
+  `--discovery` mode. Select the sole powered adapter by default; require an
+  explicit adapter selector if multiple powered adapters exist.
+- Add executable private-bus tests for the actual public BlueZ API, CLI
+  argument/output/lifecycle behavior, and no implicit Bluetooth operations.
+  Retain the hardware smoke test as an opt-in qualification step.
+
+**Exit gate:** follow all API, CLI, private-bus, build-matrix, and smoke-test
+criteria in the linked discovery specification. This milestone makes no GATT,
+ANCS, or complete-radio-visibility claim and is not blocked by iPhone
+feasibility.
+
+### Phase 1 — GATT/ANCS real-device feasibility spike (later gate)
+
+Perform this feasibility work only after the inventory/discovery CLI works:
 
 1. Record Linux distribution/kernel, BlueZ version, adapter chipset/firmware,
    iPhone model, and iOS version.
-2. Pair the phone using the normal BlueZ/user workflow. For any disposable
-   feasibility probe, call BlueZ D-Bus interfaces through libdbus directly;
-   do not use a third-party Bluetooth wrapper.
-3. Verify the inventory enumerates known devices across adapters. Start
-   adapter-scoped discovery explicitly; verify nearby results update live,
-   stopping releases this client's session, and scan/list operations do not
-   pair or connect devices.
-4. Use `bluetoothctl` and a small disposable BlueZ D-Bus probe to establish an
-   LE GATT connection, wait for service resolution, locate the ANCS service
-   and three characteristics, subscribe to Data Source then Notification
-   Source, and request one notification's app identifier/title/message.
-   Confirm the operation is using LE; a generic `Connected` state or a
-   Bluetooth Classic profile connection is not sufficient evidence.
-5. Verify reconnect and whether ANCS stays available after screen lock,
-   phone reboot, BlueZ restart, and power cycling. Record authorization prompts
-   and any required phone settings. Verify whether existing notifications are
-   reported at session start, but do not treat that as a guaranteed snapshot.
+2. Use the normal BlueZ/user pairing flow and direct BlueZ D-Bus calls through
+   libDmn to establish an LE GATT connection and check for ANCS.
+3. Verify service resolution, characteristic availability, authorization,
+   subscriptions, one attribute-response round trip, and behavior across
+   disconnect and BlueZ restart.
 
-**Exit gate:** the target setup demonstrates a repeatable LE GATT connection,
-ANCS discovery, authorization, both subscriptions, and at least one
-attribute-response round trip, with an understood user pairing/authorization
-flow. If this gate fails, stop and investigate OS/device policy instead of
-building higher layers on a false assumption. A successful generic Bluetooth
-pair/connect does not pass this gate.
+**Exit gate:** the target setup demonstrates repeatable usable LE GATT access
+to ANCS, including at least one attribute-response round trip and an understood
+authorization flow. A generic `Connected` state or successful scan does not
+pass this gate. If it fails, the inventory/discovery CLI remains a valid
+standalone deliverable; stop only GATT/ANCS work and investigate platform
+constraints.
 
-### Phase 1 — Freeze protocol model and implement tests first
+### Phase 2 — Freeze GATT/ANCS protocol model and implement tests first
 
-- Turn the acceptance matrix below into executable Google Test assertions;
-  do not count skipped placeholders as coverage.
-- Define the BlueZ device inventory row, snapshot/update event contract, and
-  stable display-name fallback; add a fake ObjectManager fixture with multiple
-  adapters and known, connected, disconnected, and newly discovered devices.
-- Freeze the adapter-scoped discovery API, filter/transport contract, shared
-  session semantics, and idempotent start/stop lifecycle. Include tests for
-  filters, discovery signals, cancellation, and non-interference with other
-  clients' discovery sessions.
-- Freeze public C++ signatures, ownership, lifecycle, typed errors, event
-  semantics, callback execution context, and shutdown behavior from the spec.
+- Turn the ANCS acceptance matrix below into executable Google Test
+  assertions; do not count skipped placeholders as coverage.
+- Freeze public GATT/ANCS signatures, ownership, lifecycle, typed errors,
+  callback execution context, and shutdown behavior from the spec.
 - Add protocol-neutral ANCS value types and a parser that consumes byte spans.
 - Implement Notification Source parsing and Data Source response reassembly.
 - Define limits for attribute values, individual fragments, total response,
@@ -96,18 +108,18 @@ pair/connect does not pass this gate.
 input, arbitrary fragmentation boundaries, UID removal races, request
 serialization, and bounded-resource tests. This gate establishes protocol
 logic correctness only; it does not establish iPhone/BlueZ compatibility.
-The fake-system-bus inventory integration tests must also prove enumeration
-across adapters, live connection/add/remove updates, explicit discovery
-start/stop and filter behavior, and no implicit pairing or connection calls.
 
-### Phase 2 — Generic D-Bus client and BlueZ backend
+### Phase 3 — Generic D-Bus readiness and BlueZ GATT backend
 
-**Phase 2A — generic D-Bus capability**
+**Phase 3A — generic D-Bus capability**
 
-- Extend optional `dmn-dbus` with `Dmn_DbusClient` and owned typed D-Bus
-  values, implemented directly with libdbus. Centralize the process-wide
-  libdbus thread initialization so the existing signal endpoints and generic
-  client use the same once-only runtime entry point.
+The initial `Dmn_DbusClient`/`Dmn_DbusValue` implementation and private-bus
+test fixture are present in `dmn-dbus`; this is initial implementation, not
+complete acceptance. Close only the generic-client gaps required by the
+BlueZ/GATT operations, using the readiness gaps and acceptance gates in
+[`dbus-client-spec.md`](dbus-client-spec.md). The initial discovery CLI is
+specified separately and does not wait for GATT or ANCS readiness.
+
 - Preserve existing `Dmn_DbusInput`/`Dmn_DbusOutput` contracts and tests.
   Their signal tuple, `ay` payload, queues, and delivery semantics remain
   independent from the generic method/property/signal API.
@@ -116,35 +128,22 @@ start/stop and filter behavior, and no implicit pairing or connection calls.
   queue limits, callback context, and shutdown using a private D-Bus daemon
   with a fake service. Do not use the host system bus.
 
-**Phase 2A exit gate:** generic client tests and all existing `dmn-dbus`
-regression tests pass; public headers expose no libdbus types; the core
-`dmn` target still has no libdbus dependency when `ENABLE_DBUS=OFF`.
+**Phase 3A exit gate:** the generic-client acceptance cases needed by GATT and
+all existing `dmn-dbus` regression tests pass; public headers expose no
+libdbus types; core `dmn` still has no libdbus dependency when
+`ENABLE_DBUS=OFF`.
 
-**Phase 2B — BlueZ backend**
+**Phase 3B — Extend `dmn-bluez` with GATT**
 
-- Add optional Linux-only Dmn target `dmn-bluez`, built on
-  `Dmn_DbusClient` from `dmn-dbus`. `ENABLE_BLUEZ` requires
-  `ENABLE_DBUS=ON`; it must not enable that dependency implicitly. BlueZ code
-  uses the generic Dmn client for method calls, ObjectManager/property access,
-  and signals. Do not add or depend on a third-party Bluetooth/GATT client
-  wrapper or GDBus/dbus-glib.
-- Do not route BlueZ traffic through, or change the behavior of,
-  `Dmn_DBusInput`/`Dmn_DBusOutput`; those are broadcast-signal endpoints, not a
-  general BlueZ D-Bus client. Reuse the generic client and the once-only
-  private libdbus runtime shared with those endpoints. Do not expose libdbus
-  types through public headers.
-- Implement ObjectManager enumeration, Adapter/Device lifecycle observation,
-  `Device1.Connect`, service-resolution waiting, UUID lookup,
-  `GattCharacteristic1.StartNotify`/`StopNotify`, and `WriteValue`.
-- Implement `Adapter1.SetDiscoveryFilter`, `StartDiscovery`, and
-  `StopDiscovery` with per-client session ownership and live discovery result
-  updates. Starting/stopping discovery must not pair/connect/disconnect
-  devices, and the API must account for BlueZ's shared scan/filter behavior.
-- Expose a separate inventory API that lists every BlueZ-managed `Device1`
-  across all adapters, then publishes live changes from object/property
-  signals. Applications derive a connected-only view from `Connected` and
-  scan results from active discovery. Inventory enumeration itself must be
-  read-only and must not initiate discovery, pairing, or connections.
+- Extend the `dmn-bluez` target delivered by the discovery milestone; do not
+  duplicate the inventory, ObjectManager, discovery-session, or CLI
+  implementation.
+- Keep all BlueZ calls on `Dmn_DbusClient`; do not route them through or change
+  `Dmn_DbusInput`/`Dmn_DbusOutput`, and do not expose libdbus types publicly.
+- Add explicit user-selected-device connection, service-resolution waiting,
+  GATT UUID lookup, characteristic `StartNotify`/`StopNotify`, and
+  `WriteValue`. Connection must never be an implicit consequence of
+  inventory or scan.
 - Ensure signal/property callbacks are installed before enabling notifications.
 - Map generic D-Bus transport/method failures and BlueZ remote errors to
   explicit library errors; invalidate characteristic paths on disconnect or
@@ -154,13 +153,12 @@ regression tests pass; public headers expose no libdbus types; the core
   generic D-Bus client over a private bus; do not require a physical adapter
   in normal CI and do not use the host system bus in tests.
 
-**Phase 2B exit gate:** the fake BlueZ object tree passes every backend
-contract test; standalone public headers compile when the optional target is
-enabled. The `dmn-bluez` target depends on `dmn-dbus` and has no
-Bluetooth/GATT wrapper dependency; with `ENABLE_DBUS=OFF`, the core target
-does not acquire a libdbus dependency.
+**Phase 3B exit gate:** fake BlueZ GATT objects pass backend contract tests;
+the existing discovery API/CLI tests still pass; standalone public headers
+compile with the optional targets enabled. `dmn-bluez` depends on `dmn-dbus`
+and no third-party Bluetooth/GATT wrapper.
 
-### Phase 3 — ANCS session and command scheduler
+### Phase 4 — ANCS session and command scheduler
 
 - Implement explicit connect/discover/subscribe/ready/reconnect/stop states.
 - Subscribe Data Source first and Notification Source second.
@@ -177,7 +175,7 @@ does not acquire a libdbus dependency.
 reassembly, cache updates/removals, disconnect races, timeout recovery, and
 bounded backpressure.
 
-### Phase 4 — Example application and compatibility qualification
+### Phase 5 — ANCS example application and compatibility qualification
 
 - Add `dmn-ancs-monitor` as an opt-in Linux example. It displays currently
   connected BlueZ-managed devices and provides an explicit discovery control
@@ -196,7 +194,7 @@ diagnostic logs by default.
 remove, and reconnect on the supported matrix without unbounded resource
 growth or leaked subscriptions.
 
-### Phase 1 acceptance matrix
+### Later GATT/ANCS acceptance matrix
 
 Use these names as stable case names in one or more test executables. Each
 case must assert observable results through the public protocol/session
@@ -213,13 +211,6 @@ surface; avoid tests that merely exercise private helpers.
 | `DmnBluezGattClientMapsBluezErrorsToTypedFailures` | Inject service, authorization, property, and write failures | Typed error and recoverable/fatal classification; no raw D-Bus exception escapes |
 | `DmnAncsSessionReconnectsAfterDisconnect` | Disconnect during notification and request handling | Old paths/UIDs/requests invalidated; rediscovery does not reuse stale state |
 | `DmnAncsClientHandlesUnknownAttributeId` | Include an unknown bounded attribute tuple | Unknown tuple is safely skipped; known requested tuples remain correct |
-| `DmnBluezDeviceListIncludesAllConnectedDevices` | Multiple adapters with connected and disconnected devices | Every connected BlueZ-managed device appears once; disconnected devices are absent |
-| `DmnBluezDeviceInventoryIncludesKnownDisconnectedDevices` | Known paired/disconnected and discovered devices | Full inventory includes known objects; connected-only view filters on `Connected` |
-| `DmnBluezDeviceListTracksConnectionAndObjectChanges` | Device property and ObjectManager signals | Inventory emits correct add/update/remove changes without stale entries |
-| `DmnBluezDeviceListDoesNotChangeDeviceState` | Enumerate and observe inventory | No pairing, connection, disconnection, or discovery operation is initiated |
-| `DmnBluezDiscoveryStartsAndStopsOwnedSession` | Start/stop through Adapter1 with active fake BlueZ service | Only this client's scan session is released; no pair/connect/disconnect call occurs |
-| `DmnBluezDiscoveryAppliesFilterAndTracksResults` | LE/service filters and live discovery object/property signals | Requested filter is applied and results update; other clients' merged results are not assumed excluded |
-
 Add focused cases for absent ANCS characteristics, empty requested values,
 unexpected tuple order/UID, malformed UTF-8 policy, hard resource limits,
 Control Point ATT errors, stop during connect, and callback ordering. These
@@ -249,7 +240,8 @@ Names are proposals to keep implementation discussion concrete:
 |---|---|
 | `dmn-dbus` target: `include/dmn-dbus-client.hpp`, `include/dmn-dbus-value.hpp`, private client/runtime implementation under `src/` | Generic owned D-Bus values, method/reply, property and signal client API, and the shared once-only libdbus runtime; existing signal endpoints retain their current behavior |
 | `dmn-ancs` target: `include/dmn-gatt-client.hpp`, `include/dmn-ancs-client.hpp`, `src/dmn-ancs-client.cpp` | Backend-neutral GATT contract plus ANCS states, notification values, request scheduling, parser, and callback API; no BlueZ or D-Bus dependency |
-| Optional Dmn `dmn-bluez` target: `include/dmn-bluez-client.hpp`, `include/dmn-bluez-gatt-client.hpp`; private implementation under `src/` | Linux adapter/device/discovery API and GATT backend built on `Dmn_DbusClient` from `dmn-dbus`; public headers do not expose libdbus types |
+| Optional Dmn `dmn-bluez` target: `include/dmn-bluez-client.hpp`, `include/dmn-bluez-gatt-client.hpp`; private implementation under `src/` | Linux adapter/device/discovery API first; later extended with GATT on `Dmn_DbusClient` from `dmn-dbus`; public headers do not expose libdbus types |
+| `dmn-bluez-discovery` executable | First user-facing milestone: read-only inventory and explicit live `--discovery` scan, no GATT/ANCS dependency |
 | `test/dmn-test-dbus-client.cpp` | Private-bus tests for generic D-Bus method, property, signal, value-codec, timeout, and lifecycle behavior |
 | `test/dmn-test-ancs-parser.cpp` | Pure parser/reassembly/request-scheduler tests |
 | `test/dmn-test-bluez-gatt-client.cpp` | Private-bus fake-BlueZ integration tests |
@@ -263,8 +255,9 @@ byte-signal API and the new generic D-Bus client/value capability, and owns the
 optional `dbus-1` dependency. Build the Dmn-owned adapter/device/GATT client
 behind `ENABLE_BLUEZ` (off by default, Linux-only); it requires
 `ENABLE_DBUS=ON` and builds `dmn-bluez` on top of `dmn-dbus`. `ENABLE_BLUEZ`
-must not require `ENABLE_ANCS`, so device inventory and discovery can be used
-independently. Build the ANCS client when `ENABLE_ANCS` is enabled; build
+must not require `ENABLE_ANCS`, so `dmn-bluez-discovery` and device inventory
+can be built and used independently. `dmn-bluez-discovery` is built whenever
+`ENABLE_BLUEZ` is enabled. Build the ANCS client when `ENABLE_ANCS` is enabled; build
 `dmn-ancs-monitor` only when both `ENABLE_ANCS` and `ENABLE_BLUEZ` are enabled.
 Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 `dmn` when these optional features are disabled.

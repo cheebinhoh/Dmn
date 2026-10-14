@@ -65,19 +65,23 @@ automatically; native runs must provide both themselves.
 
 ### D-Bus extension
 
-The optional D-Bus extension provides byte-oriented input/output adapters that
-send and receive D-Bus signals. They can carry serialized DMesg messages
-through `Dmn_DMesgNet` or other application payloads using a configured signal
-routing tuple. It is intended for inter-process communication on one host and
-does not provide cross-host transport. The core `dmn` library does not depend
-on D-Bus; the extension is built separately as `dmn-dbus` and is disabled by
-default. `Dmn_DMesgDbus` is the DMesg-specific composition facade for
-applications that do not need to construct the underlying D-Bus endpoints
-directly; advanced callers can continue to inject `Dmn_DbusInput` and
-`Dmn_DbusOutput` into `Dmn_DMesgNet`. When an application links `dmn-dbus`,
-the target defines `DMN_ENABLE_DBUS`, so `dmn.hpp` also includes the D-Bus
-configuration, endpoint, and facade headers. Without that target and macro,
-the umbrella header does not include the optional D-Bus API. The
+The optional D-Bus extension provides byte-oriented input/output adapters
+that send and receive D-Bus signals, plus a typed generic client for method
+calls, properties, and signal subscriptions. The signal adapters can carry
+serialized DMesg messages through `Dmn_DMesgNet` or other application
+payloads using a configured signal routing tuple. The extension is intended
+for inter-process communication on one host and does not provide cross-host
+transport. The core `dmn` library does not depend on D-Bus; the extension is
+built separately as `dmn-dbus` and is disabled by default. `Dmn_DMesgDbus` is
+the DMesg-specific composition facade for applications that do not need to
+construct the underlying D-Bus endpoints directly; advanced callers can
+continue to inject `Dmn_DbusInput` and `Dmn_DbusOutput` into `Dmn_DMesgNet`.
+When an application links `dmn-dbus`, the target defines `DMN_ENABLE_DBUS`,
+so `dmn.hpp` also includes the D-Bus configuration, endpoint, and facade
+headers. Generic clients include `dmn-dbus-client.hpp` and
+`dmn-dbus-value.hpp` directly; BlueZ clients include
+`dmn-bluez-client.hpp`. Without the optional target and its compile
+definitions, the umbrella header does not include the optional D-Bus API. The
 `dmn-fault-injection.hpp` header is included by `dmn.hpp` only when
 `ENABLE_FAULT_INJECTION=ON` defines `FIU_ENABLE`; its CMake target-source
 registration is gated by the same option.
@@ -97,6 +101,57 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_DBUS=ON
 cmake --build build -j2
 ctest --test-dir build -R '^dmn-test-dbus-io$' --output-on-failure
 ctest --test-dir build -R '^dmn-test-dbus-facade$' --output-on-failure
+```
+
+### BlueZ discovery CLI
+
+On Linux, the optional `dmn-bluez-discovery` program prints BlueZ's known
+adapter/device inventory and can explicitly start a scan on one powered
+adapter. It depends on the Dmn D-Bus extension, but not on GATT or ANCS.
+Install the D-Bus development package and daemon as above, then configure and
+build the CLI:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DENABLE_DBUS=ON -DENABLE_BLUEZ=ON
+cmake --build build --target dmn-bluez-discovery -j2
+```
+
+Install the built library, CLI, headers, and its manual page (use `sudo` if
+installing to a system prefix):
+
+```bash
+cmake --install build --prefix "$HOME/.local"
+export PATH="$HOME/.local/bin:$PATH"
+man -M "$HOME/.local/share/man" dmn-bluez-discovery
+```
+
+Print the current known-device inventory as CSV without starting discovery:
+
+```bash
+./build/src/dmn-bluez-discovery
+```
+
+The CSV includes the adapter address and path needed to select a scan target.
+Start an explicit scan with either selector; if exactly one powered adapter
+exists, `--adapter` may be omitted:
+
+```bash
+./build/src/dmn-bluez-discovery --discovery \
+  --adapter 'B8:F7:75:BF:F3:C3'
+```
+
+The CLI prints initial known devices, then live add/change/remove rows until
+Ctrl-C or SIGTERM. It stops only the discovery session it started. It does
+not pair, connect, change trust, or power an adapter. Scanning requires a
+working BlueZ system service and local system-bus policy that permits the
+discovery calls; the CLI does not fall back to the session bus. For argument
+syntax, run `./build/src/dmn-bluez-discovery --help`. The private-bus
+integration coverage can be run with:
+
+```bash
+ctest --test-dir build -R '^dmn-test-bluez-device-list$' \
+  --output-on-failure
 ```
 
 ## Fault-injection tests
@@ -175,7 +230,8 @@ docker rmi dmn
 | --- | --- | --- |
 | `BUILD_NDEBUG` | `OFF` | Define `NDEBUG` for the build. |
 | `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests. |
-| `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and its private-bus test. Requires libdbus development files, pkg-config, and `dbus-daemon`. |
+| `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and generic D-Bus client. Requires libdbus development files, pkg-config, and `dbus-daemon`. |
+| `ENABLE_BLUEZ` | `OFF` | Build the Linux BlueZ inventory API and discovery CLI; requires `ENABLE_DBUS=ON`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
 
@@ -184,16 +240,17 @@ with the desired options before building. The `dmn` CTest label selects the
 regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
 respective optional test groups.
 
-To enable every CMake option, including Kafka and D-Bus integration tests,
-configure and build with the commands below. The first command enables all
-five options; the second builds all targets. The D-Bus test runs with the
-regular `dmn` test group:
+On Linux, to enable every CMake option, including Kafka, D-Bus, and BlueZ,
+configure and build with the commands below. The first command enables all six
+options; the second builds all targets. BlueZ tests use a private bus and do
+not require a physical adapter:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DBUILD_NDEBUG=ON \
   -DBUILD_KAFKA_TEST=ON \
   -DENABLE_DBUS=ON \
+  -DENABLE_BLUEZ=ON \
   -DENABLE_VALGRIND=ON \
   -DENABLE_FAULT_INJECTION=ON
 cmake --build build -j2

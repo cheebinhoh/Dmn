@@ -6,6 +6,7 @@
  */
 
 #include "dmn-dbus-io.hpp"
+#include "dmn-dbus-runtime.hpp"
 #include "dmn-proc.hpp"
 
 #ifdef FIU_ENABLE
@@ -99,16 +100,6 @@ void validateConfig(const Dmn_DbusConfig &config) {
 auto makeMatchRule(const Dmn_DbusConfig &config) -> std::string {
   return "type='signal',path='" + config.signal_path + "',interface='" +
          config.signal_interface + "',member='" + config.signal_member + "'";
-}
-
-void initializeDbus() {
-  static std::once_flag initialized;
-  static bool success{};
-
-  std::call_once(initialized, [] { success = dbus_threads_init_default(); });
-  if (!success) {
-    throw std::runtime_error("Dmn_Dbus: libdbus thread initialization failed");
-  }
 }
 
 auto dbusErrorCode(const DBusError &error) -> std::error_code {
@@ -743,7 +734,7 @@ private:
 
 Dmn_DbusInput::Dmn_DbusInput(const Dmn_DbusConfig &config) {
   // Initialize libdbus threading before any other libdbus API is called.
-  initializeDbus();
+  detail::initializeDbusRuntime();
   validateConfig(config);
   m_impl = std::make_unique<Impl>(config);
 }
@@ -777,7 +768,7 @@ auto Dmn_DbusInput::status() const -> Dmn_DbusIoStatus {
 }
 
 Dmn_DbusOutput::Dmn_DbusOutput(const Dmn_DbusConfig &config) {
-  initializeDbus();
+  detail::initializeDbusRuntime();
   validateConfig(config);
   m_impl = std::make_unique<Impl>(config);
 }

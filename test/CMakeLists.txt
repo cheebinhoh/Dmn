@@ -3,8 +3,9 @@
 # [TEST TYPE: GTEST]
 # Core unit and component tests (CTest label: dmn).
 ADD_TEST_EXECUTABLE(dmn
+                      # FIXME: the following test needs to be refactored to avoid none-stop running
+                      # dmn-test
                       dmn-test-ancs-parser
-                      dmn-test-bluez-device-list
                       dmn-test-async
                       dmn-test-async-2
                       dmn-test-async-2-queue-lf
@@ -35,6 +36,8 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dlock-5
                       dmn-test-dlock-dmesg-seam
                       dmn-test-dmesg-1
+                      dmn-test-dmesg-10
+                      dmn-test-dmesg-11
                       dmn-test-dmesg-2
                       dmn-test-dmesg-3
                       # FIXME: the following test is not deterministic
@@ -44,8 +47,6 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesg-7
                       dmn-test-dmesg-8
                       dmn-test-dmesg-9
-                      dmn-test-dmesg-10
-                      dmn-test-dmesg-11
                       dmn-test-dmesg-conflict
                       dmn-test-dmesg-pb
                       dmn-test-dmesg-pb-util
@@ -55,10 +56,10 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-dmesgnet-4
                       dmn-test-dmesgnet-5
                       dmn-test-dmesgnet-6
-                      dmn-test-dmesgnet-shutdown
                       #dmn-test-dmesgnet-7
                       #dmn-test-dmesgnet-8
                       #dmn-test-dmesgnet-9
+                      dmn-test-dmesgnet-shutdown
                       dmn-test-inflight-guard
                       dmn-test-interval-btree
                       dmn-test-io
@@ -91,9 +92,13 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-timer
                       dmn-test-umbrella
                       dmn-test-util
-                      # FIXME: the following test needs to be refactored to avoid none-stop running
-                      # dmn-test
 )
+
+if (ENABLE_BLUEZ)
+  target_link_libraries(dmn-test-umbrella PRIVATE dmn-bluez)
+elseif (ENABLE_DBUS)
+  target_link_libraries(dmn-test-umbrella PRIVATE dmn-dbus)
+endif()
 
 if (ENABLE_DBUS)
   # [TEST TYPE: GTEST - DBUS]
@@ -101,11 +106,15 @@ if (ENABLE_DBUS)
   find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
 
   ADD_TEST_EXECUTABLE(dmn
-                        dmn-test-dbus-io
+                        dmn-test-dbus-client
                         dmn-test-dbus-facade
+                        dmn-test-dbus-io
   )
 
-  foreach(test_target IN ITEMS dmn-test-dbus-io dmn-test-dbus-facade)
+  foreach(test_target IN ITEMS
+          dmn-test-dbus-client
+          dmn-test-dbus-facade
+          dmn-test-dbus-io)
     target_compile_definitions(${test_target}
                                  PRIVATE
                                  DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
@@ -115,6 +124,23 @@ if (ENABLE_DBUS)
                             PRIVATE dmn-dbus PkgConfig::DBUS
     )
   endforeach()
+endif()
+
+if (ENABLE_BLUEZ)
+  ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-bluez-device-list
+  )
+
+  find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
+  target_compile_definitions(dmn-test-bluez-device-list
+                               PRIVATE
+                               DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
+                               DMN_BLUEZ_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluez-discovery-test>"
+  )
+  target_link_libraries(dmn-test-bluez-device-list
+                          PRIVATE dmn-bluez PkgConfig::DBUS
+  )
+  add_dependencies(dmn-test-bluez-device-list dmn-bluez-discovery-test)
 endif()
 
 # Keep fault-injection targets out of builds that do not enable libfiu.
@@ -157,11 +183,11 @@ if (ENABLE_FAULT_INJECTION)
     )
 
     foreach(test_target IN ITEMS
-            dmn-test-fi-dbus-worker-start-failure
-            dmn-test-fi-dbus-output-worker-start-failure
+            dmn-test-fi-dbus-facade-rollback
             dmn-test-fi-dbus-input-allocation
             dmn-test-fi-dbus-output-stall
-            dmn-test-fi-dbus-facade-rollback)
+            dmn-test-fi-dbus-output-worker-start-failure
+            dmn-test-fi-dbus-worker-start-failure)
       target_compile_definitions(${test_target}
                                    PRIVATE
                                    DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
@@ -189,11 +215,11 @@ if (ENABLE_FAULT_INJECTION)
     list(JOIN DMN_LIBFIU_LIBRARY_DIR ":" fiu_library_path)
 
     set_tests_properties(
+      dmn-test-fi-dbus-facade-rollback
       dmn-test-fi-dbus-input-allocation
       dmn-test-fi-dbus-output-stall
-      dmn-test-fi-dbus-facade-rollback
-      dmn-test-fi-dbus-worker-start-failure
       dmn-test-fi-dbus-output-worker-start-failure
+      dmn-test-fi-dbus-worker-start-failure
       PROPERTIES ENVIRONMENT
                  "${fiu_loader_path}=${fiu_library_path}:${fiu_existing_loader_path}"
     )
@@ -291,6 +317,8 @@ if (ENABLE_VALGRIND)
         dmn-test-dlock-5
         dmn-test-dlock-dmesg-seam
         dmn-test-dmesg-1
+        dmn-test-dmesg-10
+        dmn-test-dmesg-11
         dmn-test-dmesg-2
         dmn-test-dmesg-3
         dmn-test-dmesg-5
@@ -298,8 +326,6 @@ if (ENABLE_VALGRIND)
         dmn-test-dmesg-7
         dmn-test-dmesg-8
         dmn-test-dmesg-9
-        dmn-test-dmesg-10
-        dmn-test-dmesg-11
         dmn-test-dmesg-pb
         dmn-test-dmesg-pb-util
         dmn-test-dmesgnet-1

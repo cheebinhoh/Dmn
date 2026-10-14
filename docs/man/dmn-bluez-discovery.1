@@ -1,0 +1,139 @@
+.TH DMN-BLUEZ-DISCOVERY 1 "2025" "Dmn" "User Commands"
+.SH NAME
+dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth adapter
+.SH SYNOPSIS
+.B dmn-bluez-discovery
+[
+.B --discovery
+]
+[
+.B --adapter
+.I address-or-object-path
+]
+[
+.B --help
+]
+.SH DESCRIPTION
+.B dmn-bluez-discovery
+prints BlueZ's known adapter and device inventory as CSV. Without
+.BR --discovery ,
+it performs a read-only inventory query and exits; it does not start a scan.
+.PP
+With
+.BR --discovery ,
+the program prints the initial inventory and then reports device additions,
+changes, and removals while discovery is active. Press Ctrl-C or send SIGTERM
+to stop the scan. The program stops only the discovery session it started.
+.PP
+This program reports devices known to BlueZ. It cannot guarantee that every
+radio-visible device will be found; adapter capability, BlueZ policy, transport,
+and scan conditions can affect results.
+.SH OPTIONS
+.TP
+.B --discovery
+Start an explicit scan after reading the initial inventory. The scan uses
+BlueZ's default automatic transport and does not restrict results by UUID.
+.TP
+.BI "--adapter " address-or-object-path
+Select a powered local adapter by its exact Bluetooth address or BlueZ object
+path. If omitted during discovery, the program selects the adapter only when
+exactly one powered adapter is available. When several are powered, specify
+one explicitly. This option does not power an adapter on.
+.TP
+.B --help
+Print command usage and exit.
+.SH OUTPUT
+Standard output is RFC 4180 CSV, with a header row. Columns are
+.BR action ,
+.BR adapter_name ,
+.BR adapter_address ,
+.BR adapter_path ,
+.BR adapter_powered ,
+.BR device_address ,
+.BR name ,
+.BR alias ,
+.BR reported_name ,
+.BR paired ,
+.BR connected ,
+.BR services_resolved ,
+.BR rssi ,
+.BR device_path ,
+and
+.BR seen_during_discovery .
+Unknown optional values are empty. Boolean values are
+.B true
+or
+.BR false .
+Fields containing commas, quotes, or line breaks are quoted and quotes are
+escaped according to RFC 4180.
+.PP
+The initial inventory rows use the action
+.BR inventory .
+Live scan rows use
+.BR added ,
+.BR changed ,
+or
+.BR removed .
+Diagnostics and errors are written to standard error.
+.SH EXAMPLES
+Print known adapters and devices without starting discovery:
+.PP
+.nf
+dmn-bluez-discovery
+.fi
+.PP
+Scan on one adapter by address:
+.PP
+.nf
+dmn-bluez-discovery --discovery --adapter 'B8:F7:75:BF:F3:C3'
+.fi
+.PP
+Scan by BlueZ object path:
+.PP
+.nf
+dmn-bluez-discovery --discovery --adapter /org/bluez/hci0
+.fi
+.SH SAFETY
+The program only reads inventory and requests adapter-scoped discovery. It
+does not pair, connect, disconnect, remove, or change trust for devices, and
+does not change adapter power. Scanning is an explicit action and requires
+permission under the local system D-Bus policy. The program uses the system
+bus and does not fall back to the session bus.
+.SH EXIT STATUS
+.TP
+.B 0
+Inventory completed, help was printed, or discovery stopped successfully.
+.TP
+.B 2
+Invalid, unknown, duplicate, or incomplete command-line option.
+.TP
+.B 3
+No powered Bluetooth adapter is available for discovery.
+.TP
+.B 4
+BlueZ is unavailable or its service owner disappeared.
+.TP
+.B 5
+Discovery could not start or could not be stopped cleanly.
+.TP
+.B 6
+Adapter selection is ambiguous.
+.TP
+.B 7
+The requested adapter does not match an available powered adapter.
+.TP
+.B 8
+D-Bus connection, policy, inventory, or other runtime error.
+.SH REQUIREMENTS
+Linux, a running BlueZ system service, and an available system D-Bus. Discovery
+also requires an already-powered Bluetooth adapter and system-bus policy that
+allows the requested operations. Build the program with
+.B ENABLE_DBUS=ON
+and
+.BR ENABLE_BLUEZ=ON .
+.SH SEE ALSO
+.BR bluetoothctl (1),
+.BR bluetoothd (8),
+.BR dbus-daemon (1)
+.PP
+Project documentation: https://github.com/cheebinhoh/Dmn

@@ -10,10 +10,13 @@ proxy. The shared transport contract is in
 
 This plan covers the Dmn byte-signal transport only. It does not specify a
 general D-Bus method/property client and must not be treated as the BlueZ
-integration layer. The proposed generic Dmn direct-libdbus client capability,
-which will be added to the `dmn-dbus` library without changing these signal
-endpoints, is specified in [`dbus-client-spec.md`](dbus-client-spec.md);
-BlueZ-specific API and behavior are in
+integration layer. The initial generic Dmn direct-libdbus client capability is
+implemented in the `dmn-dbus` library without changing these signal endpoints;
+its remaining acceptance gaps are recorded in
+[`dbus-client-spec.md`](dbus-client-spec.md). BlueZ-specific API and behavior
+are separate; the first implementation milestone is specified in
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md), and later GATT
+and ANCS behavior is covered by
 [`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md).
 
 Option A consists of `include/dmn-dbus-config.hpp`,

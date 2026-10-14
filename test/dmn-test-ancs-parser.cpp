@@ -14,33 +14,39 @@ namespace {
 // the test suite remains stable and the specification remains executable as a
 // TDD target.
 TEST(DmnAncsParserSpec, NotificationSourceRejectsMalformedInput) {
-  GTEST_SKIP() << "ANCS parser implementation pending; this is the TDD contract "
-                  "for malformed Notification Source payloads.";
+  GTEST_SKIP()
+      << "ANCS parser implementation pending; this is the TDD contract "
+         "for malformed Notification Source payloads.";
 }
 
 TEST(DmnAncsParserSpec, NotificationSourceAcceptsKnownValues) {
-  GTEST_SKIP() << "ANCS parser implementation pending; this is the TDD contract "
-                  "for valid Notification Source decoding.";
+  GTEST_SKIP()
+      << "ANCS parser implementation pending; this is the TDD contract "
+         "for valid Notification Source decoding.";
 }
 
 TEST(DmnAncsParserSpec, ReassemblesFragmentedDataSourceResponse) {
-  GTEST_SKIP() << "ANCS parser implementation pending; this is the TDD contract "
-                  "for Data Source response reassembly.";
+  GTEST_SKIP()
+      << "ANCS parser implementation pending; this is the TDD contract "
+         "for Data Source response reassembly.";
 }
 
 TEST(DmnAncsParserSpec, IgnoresLateRemovedUidResponses) {
-  GTEST_SKIP() << "ANCS parser implementation pending; this is the TDD contract "
-                  "for stale UID removal handling.";
+  GTEST_SKIP()
+      << "ANCS parser implementation pending; this is the TDD contract "
+         "for stale UID removal handling.";
 }
 
 TEST(DmnAncsRequestSchedulerSpec, SerializesOutstandingRequests) {
-  GTEST_SKIP() << "ANCS request scheduler implementation pending; this is the TDD "
-                  "contract for a single outstanding control-point request.";
+  GTEST_SKIP()
+      << "ANCS request scheduler implementation pending; this is the TDD "
+         "contract for a single outstanding control-point request.";
 }
 
 TEST(DmnAncsRequestSchedulerSpec, RecoversFromTimedOutRequest) {
-  GTEST_SKIP() << "ANCS request scheduler implementation pending; this is the TDD "
-                  "contract for timeout recovery and queue resumption.";
+  GTEST_SKIP()
+      << "ANCS request scheduler implementation pending; this is the TDD "
+         "contract for timeout recovery and queue resumption.";
 }
 
 TEST(DmnBluezGattClientSpec, MapsBluezErrorsToTypedFailures) {
@@ -49,8 +55,9 @@ TEST(DmnBluezGattClientSpec, MapsBluezErrorsToTypedFailures) {
 }
 
 TEST(DmnAncsSessionSpec, ReconnectsAfterDisconnect) {
-  GTEST_SKIP() << "ANCS session implementation pending; this is the TDD contract "
-                  "for disconnect and rediscovery recovery.";
+  GTEST_SKIP()
+      << "ANCS session implementation pending; this is the TDD contract "
+         "for disconnect and rediscovery recovery.";
 }
 
 } // namespace

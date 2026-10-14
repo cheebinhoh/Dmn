@@ -85,13 +85,16 @@ TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
   auto releaseCallbackFuture = releaseCallback.get_future().share();
   auto writer = publisher.openHandler("writer", "orders");
   auto observer = publisher.openHandlerWithFactory(
-      dmn::Dmn_DMesg::HandlerSpec{
-          "observer", "orders", {}, {}, {},
-          [&callbackEntered, &releaseCallbackFuture](
-              const dmn::Dmn_DMesg::HandlerEvent &) {
-            callbackEntered.set_value();
-            releaseCallbackFuture.wait();
-          }},
+      dmn::Dmn_DMesg::HandlerSpec{"observer",
+                                  "orders",
+                                  {},
+                                  {},
+                                  {},
+                                  [&callbackEntered, &releaseCallbackFuture](
+                                      const dmn::Dmn_DMesg::HandlerEvent &) {
+                                    callbackEntered.set_value();
+                                    releaseCallbackFuture.wait();
+                                  }},
       [](const dmn::Dmn_DMesg::HandlerSpec &spec) {
         return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
             spec.m_name, spec.m_topic, spec.m_filter_fn,
@@ -102,8 +105,7 @@ TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
   auto observerLifetime = observer.operator->();
 
   writer->write(makeMessage("close"));
-  if (callbackEntered.get_future().wait_for(5s) !=
-      std::future_status::ready) {
+  if (callbackEntered.get_future().wait_for(5s) != std::future_status::ready) {
     releaseCallback.set_value();
     FAIL() << "handler observer callback did not start";
     return;
