@@ -12,6 +12,7 @@ module inventory together.
 | Module(s) | Specification | Main implementation |
 |---|---|---|
 | `Dmn_Async`, `Dmn_Proc`, `Dmn_Timer`, `Dmn_Singleton` | [Asynchronous execution and lifetime](async-execution-spec.md) | `include/dmn-async.hpp`, `include/dmn-proc.hpp`, `src/dmn-proc.cpp`, `include/dmn-timer.hpp`, `include/dmn-singleton.hpp` |
+| Future-based completion APIs: `Dmn_Async` and `Dmn_Pub` implemented; DMesg, Kafka, runtime jobs, and processes proposed | [Future-based asynchronous API extension](future-based-async-api-spec.md) | Existing queues and completion paths in `include/dmn-async.hpp`, `include/dmn-pub-sub.hpp`, `include/dmn-dmesg.hpp`, `src/kafka/dmn-kafka.cpp`, `include/dmn-runtime.hpp`, and `include/dmn-proc.hpp` |
 | `Dmn_Proc` client-owned cooperative exit and D-Bus endpoint worker integration | [D-Bus endpoint workers using `Dmn_Proc`](dmn-proc-dbus-worker-integration-spec.md) | `src/dmn-dbus-io.cpp`, `include/dmn-dbus-io.hpp`, `include/dmn-proc.hpp`, `src/dmn-proc.cpp` |
 | Blocking queue API, mutex queue, lock-free queue, in-flight guard, deprecated bounded queue | [Queues and shutdown safety](blocking-queues-spec.md) | `include/dmn-blockingqueue*.hpp`, `include/dmn-inflight-guard.hpp`, `include/deprecated/dmn-limit-blockingqueue.hpp` |
 | `Dmn_Io`, `Dmn_Pipe`, deprecated `Dmn_TeePipe`, `Dmn_Socket` | [I/O and pipelines](io-pipelines-spec.md) | `include/dmn-io.hpp`, `include/dmn-pipe.hpp`, `include/deprecated/dmn-teepipe.hpp`, `include/dmn-socket.hpp`, `src/dmn-socket.cpp` |

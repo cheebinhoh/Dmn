@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -93,6 +94,33 @@ protected:
 
 private:
   std::shared_ptr<DerivedPublisherState> m_state;
+};
+
+class AsyncReceiver : public Publisher::Dmn_Sub, public dmn::Dmn_Async<> {
+public:
+  AsyncReceiver()
+      : Publisher::Dmn_Sub{0}, dmn::Dmn_Async<>{"async-receiver"},
+        m_releaseSignal{m_releasePromise.get_future().share()} {}
+
+  void notify(const std::string &item, Publisher *) override {
+    this->addExecTask([this, item]() {
+      m_startedPromise.set_value();
+      m_releaseSignal.wait();
+      m_donePromise.set_value();
+    });
+  }
+
+  auto started() -> std::future<void> { return m_startedPromise.get_future(); }
+
+  auto done() -> std::future<void> { return m_donePromise.get_future(); }
+
+  void release() { m_releasePromise.set_value(); }
+
+private:
+  std::promise<void> m_startedPromise{};
+  std::promise<void> m_donePromise{};
+  std::promise<void> m_releasePromise{};
+  std::shared_future<void> m_releaseSignal{};
 };
 
 class NamedReceiver : public Receiver {
@@ -204,6 +232,100 @@ TEST(PubSubCallbackErrors, RecordsFailuresAndContinuesDelivery) {
   EXPECT_EQ(throwingReceiver->m_received.size(), 2U);
   EXPECT_TRUE(filterSkippedReceiver->m_received.empty());
   EXPECT_EQ(laterReceiver->m_received.size(), 2U);
+}
+
+TEST(PubSubCallbackErrors, PublishAsyncOwnsItemAndCompletesAfterDelivery) {
+  Publisher publisher{"publish-async", 0};
+  auto receiver = publisher.registerSubscriber<ReplayReceiver>(0);
+  std::string item{"original"};
+
+  auto completion = publisher.publishAsync(item);
+  item = "changed";
+
+  EXPECT_NO_THROW(completion.get());
+  EXPECT_EQ(receiver->m_received, (std::vector<std::string>{"original"}));
+}
+
+TEST(PubSubCallbackErrors,
+     PublishAsyncPreservesOrderAndSurvivesAbandonedFuture) {
+  Publisher publisher{"publish-async-order", 0};
+  auto receiver = publisher.registerSubscriber<ReplayReceiver>(0);
+
+  auto first = publisher.publishAsync("first");
+  {
+    auto abandoned = publisher.publishAsync("second");
+    static_cast<void>(abandoned);
+  }
+  auto third = publisher.publishAsync("third");
+
+  EXPECT_NO_THROW(first.get());
+  EXPECT_NO_THROW(third.get());
+  EXPECT_EQ(receiver->m_received,
+            (std::vector<std::string>{"first", "second", "third"}));
+}
+
+TEST(PubSubCallbackErrors, PublishAsyncDoesNotWaitForSubscriberQueuedWork) {
+  Publisher publisher{"publish-async-downstream", 0};
+  auto receiver = publisher.registerSubscriber<AsyncReceiver>();
+  auto started = receiver->started();
+  auto done = receiver->done();
+
+  auto completion = publisher.publishAsync("downstream");
+  EXPECT_NO_THROW(completion.get());
+  started.wait();
+  EXPECT_EQ(done.wait_for(std::chrono::milliseconds{0}),
+            std::future_status::timeout);
+
+  receiver->release();
+  EXPECT_NO_THROW(done.get());
+}
+
+TEST(PubSubCallbackErrors, PublishAsyncReportsAndRecordsCallbackFailure) {
+  Publisher publisher{"publish-async-errors", 0};
+  auto throwingReceiver = publisher.registerSubscriber<NamedReceiver>(true);
+  auto laterReceiver = publisher.registerSubscriber<Receiver>();
+
+  auto completion = publisher.publishAsync("async failure");
+  EXPECT_THROW(completion.get(), std::runtime_error);
+
+  EXPECT_EQ(throwingReceiver->m_received,
+            (std::vector<std::string>{"async failure"}));
+  EXPECT_EQ(laterReceiver->m_received,
+            (std::vector<std::string>{"async failure"}));
+
+  auto failures = publisher.takeCallbackFailures();
+  ASSERT_EQ(failures.size(), 1U);
+  EXPECT_EQ(failures.front().m_kind, Publisher::CallbackFailureKind::kNotify);
+  EXPECT_EQ(failures.front().m_subscriberName, "named receiver");
+  expectFailureMessage(failures.front(), "receiver failure");
+}
+
+TEST(PubSubCallbackErrors, PublishAsyncReportsFilterFailure) {
+  NamedReceiver *filterFailureReceiver{};
+  Publisher publisher{
+      "publish-async-filter-error", 0,
+      [&filterFailureReceiver](const Publisher::Dmn_Sub *subscriber,
+                               const std::string &) {
+        if (subscriber == filterFailureReceiver) {
+          throw std::runtime_error{"filter failure"};
+        }
+        return true;
+      }};
+  auto filterSkippedReceiver = publisher.registerSubscriber<NamedReceiver>(0);
+  auto laterReceiver = publisher.registerSubscriber<Receiver>(0);
+  filterFailureReceiver = filterSkippedReceiver.get();
+
+  auto completion = publisher.publishAsync("filter failure");
+  EXPECT_THROW(completion.get(), std::runtime_error);
+  EXPECT_TRUE(filterSkippedReceiver->m_received.empty());
+  EXPECT_EQ(laterReceiver->m_received,
+            (std::vector<std::string>{"filter failure"}));
+
+  auto failures = publisher.takeCallbackFailures();
+  ASSERT_EQ(failures.size(), 1U);
+  EXPECT_EQ(failures.front().m_kind, Publisher::CallbackFailureKind::kFilter);
+  EXPECT_EQ(failures.front().m_subscriberName, "named receiver");
+  expectFailureMessage(failures.front(), "filter failure");
 }
 
 TEST(PubSubCallbackErrors, ReplaysAfterFailureAndKeepsRegistrationSuccessful) {

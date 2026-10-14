@@ -54,7 +54,15 @@ in-flight tickets.
 Submitted callables execute serially on one worker. Immediate tasks are
 processed in FIFO submission order. `addExecTask()` does not wait;
 `addExecTaskWithWait()` returns a single-use handle whose `wait()` blocks and
-rethrows task exceptions. Delayed forms accept a chrono duration and must not
+rethrows task exceptions. `addExecTaskFuture()` and
+`addExecTaskAfterFuture()` are additive result-bearing forms: after accepted
+queue submission, they return a single-consumer `std::future<R>`, fulfill it
+with an owned return value (or `void`), and store task exceptions for `get()` to
+rethrow. Reference-returning callables are rejected. These future submissions
+execute on the existing worker and do not create threads; abandoning their
+futures does not cancel accepted work. Enqueueing retains the existing queue's
+backpressure behavior. Waiting on one from the same worker context deadlocks
+and is prohibited. Delayed forms accept a chrono duration and must not
 execute before their computed steady-clock due time; negative durations are
 rejected synchronously with `std::invalid_argument` before enqueueing, while a
 zero duration is accepted and immediately eligible. They are submitted to the
@@ -79,6 +87,8 @@ silently and leave pending work unprocessed.
 The implementation binds the callable and arguments by move-capturing them,
 then invokes them as rvalues. A callable should therefore be invocable once.
 Reference capture macros require the captured objects to outlive execution.
+Future-returning callables must return an owned value or `void`; their queued
+callables and arguments follow the same owned move-capture behavior.
 
 ### `Dmn_Singleton`
 
