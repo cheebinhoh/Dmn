@@ -28,6 +28,11 @@
  *   addExecTaskWithWait()/addExecTaskAfterWithWait(), which return a
  *   Dmn_Async_Handle object whose wait() method will only return after the task
  *   has completed (and propagate exceptions thrown by the task).
+ * - For callers that need the task's value or exception without waiting for
+ *   completion in the submitting thread, use
+ *   addExecTaskFuture()/addExecTaskAfterFuture(). Enqueueing retains the
+ *   existing queue's backpressure behavior. The returned std::future is
+ *   single-consumer and does not cancel accepted work when discarded.
  *
  * This class is useful for offloading work from fast API paths while
  * preserving ordering and providing optional synchronization points.
@@ -243,6 +248,30 @@ public:
                            Args &&...args) -> std::shared_ptr<Dmn_Async_Handle>;
 
   /**
+   * @brief Submit a callable and return its eventual result as a future.
+   *
+   * The task runs once on this object's existing serialized worker. Its result
+   * or exception becomes available through the returned single-consumer
+   * future. This call does not wait for task completion, but enqueueing
+   * retains the existing pipe's backpressure behavior. Destroying the future
+   * does not cancel accepted work. Do not wait for this future from this
+   * object's worker context, as that would prevent the queued task from
+   * running.
+   *
+   * The callable's result must be void or an owned value; reference results
+   * are rejected at compile time. The callable and arguments are move-captured
+   * and invoked as rvalues, consistent with the other task APIs.
+   *
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments owned by the submitted task.
+   * @return A future containing the callable's value, or void.
+   */
+  template <typename Callable, typename... Args>
+  auto addExecTaskFuture(Callable &&func, Args &&...args)
+      -> std::future<
+          std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>>;
+
+  /**
    * @brief Schedule a callable task to run after the given duration has
    * elapsed.
    *
@@ -291,6 +320,32 @@ public:
   addExecTaskAfterWithWait(const std::chrono::duration<Rep, Period> &duration,
                            Callable &&func,
                            Args &&...args) -> std::shared_ptr<Dmn_Async_Handle>;
+
+  /**
+   * @brief Schedule a callable and return its eventual result as a future.
+   *
+   * This has the same deadline conversion, rejection, queue backpressure, and
+   * worker scheduling semantics as addExecTaskAfterWithWait(). The returned
+   * future is single-consumer; destroying it does not cancel accepted work.
+   * Do not wait for it from this object's worker context.
+   * The callable's result must be void or an owned value; reference results
+   * are rejected at compile time. The callable and arguments are move-captured
+   * and invoked as rvalues, consistent with the other task APIs.
+   *
+   * @param duration Time to wait before executing the task.
+   * @param func The callable task to execute asynchronously.
+   * @param args The arguments owned by the submitted task.
+   * @return A future containing the callable's value, or void.
+   * @throws std::invalid_argument if @p duration is negative.
+   * @throws std::overflow_error if @p duration or its deadline cannot be
+   * represented by the steady clock.
+   */
+  template <class Rep, class Period, typename Callable, typename... Args>
+  auto
+  addExecTaskAfterFuture(const std::chrono::duration<Rep, Period> &duration,
+                         Callable &&func, Args &&...args)
+      -> std::future<
+          std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>>;
 
   /**
    * @brief Block until the async is empty and no task pending to be executed.
@@ -391,6 +446,74 @@ auto Dmn_Async<QueueType>::addExecTaskWithWait(Callable &&func, Args &&...args)
   this->m_pipe->write(task_shared_ptr);
 
   return task_ret;
+}
+
+template <template <class> class QueueType>
+template <typename Callable, typename... Args>
+auto Dmn_Async<QueueType>::addExecTaskFuture(Callable &&func, Args &&...args)
+    -> std::future<
+        std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>> {
+  using Result =
+      std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>;
+  static_assert(!std::is_reference_v<Result>,
+                "Dmn_Async future tasks must return an owned value or void");
+
+  auto promise = std::make_shared<std::promise<Result>>();
+  auto future = promise->get_future();
+  auto completionTask = [promise, callable = std::forward<Callable>(func),
+                         ... captured_args =
+                             std::forward<Args>(args)]() mutable {
+    try {
+      if constexpr (std::is_void_v<Result>) {
+        std::invoke(std::move(callable), std::move(captured_args)...);
+        promise->set_value();
+      } else {
+        promise->set_value(
+            std::invoke(std::move(callable), std::move(captured_args)...));
+      }
+    } catch (...) {
+      promise->set_exception(std::current_exception());
+    }
+  };
+
+  this->addExecTaskWithWait(std::move(completionTask));
+
+  return future;
+}
+
+template <template <class> class QueueType>
+template <class Rep, class Period, typename Callable, typename... Args>
+auto Dmn_Async<QueueType>::addExecTaskAfterFuture(
+    const std::chrono::duration<Rep, Period> &duration, Callable &&func,
+    Args &&...args)
+    -> std::future<
+        std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>> {
+  using Result =
+      std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>;
+  static_assert(!std::is_reference_v<Result>,
+                "Dmn_Async future tasks must return an owned value or void");
+
+  auto promise = std::make_shared<std::promise<Result>>();
+  auto future = promise->get_future();
+  auto completionTask = [promise, callable = std::forward<Callable>(func),
+                         ... captured_args =
+                             std::forward<Args>(args)]() mutable {
+    try {
+      if constexpr (std::is_void_v<Result>) {
+        std::invoke(std::move(callable), std::move(captured_args)...);
+        promise->set_value();
+      } else {
+        promise->set_value(
+            std::invoke(std::move(callable), std::move(captured_args)...));
+      }
+    } catch (...) {
+      promise->set_exception(std::current_exception());
+    }
+  };
+
+  this->addExecTaskAfterWithWait(duration, std::move(completionTask));
+
+  return future;
 }
 
 template <template <class> class QueueType>

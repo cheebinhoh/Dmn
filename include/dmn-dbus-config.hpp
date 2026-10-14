@@ -20,24 +20,38 @@ namespace dmn {
  *
  * Endpoints carry byte arrays in D-Bus signals. The default routing tuple is
  * reserved for Dmn_DMesgNet; callers can select another tuple for unrelated
- * byte-oriented protocols. An empty bus address selects the session bus.
- * Explicit addresses are opened as private bus connections and never fall
- * back to another bus.
+ * byte-oriented protocols. The bus daemon must already be running; this
+ * configuration does not start or manage a daemon or export a Dmn service.
+ * An empty bus address selects the session bus. An explicit address selects
+ * that exact daemon (for example, the system bus or an isolated test bus).
+ * Each endpoint opens its own private connection to the selected daemon, and
+ * an address failure never falls back to another bus.
  */
 struct Dmn_DbusConfig {
-  /** @brief Empty selects the session bus; otherwise this exact address is
-   * used. */
+  /**
+   * @brief Bus daemon address; empty selects the session bus.
+   *
+   * A non-empty value is used exactly as supplied. It may identify the system
+   * bus or a separate test bus. This selects a daemon, not a shared Dmn
+   * service; each input/output endpoint opens its own private connection.
+   */
   std::string bus_address{};
+
   /** @brief Signal object path; defaults to the Dmn_DMesgNet wire path. */
   std::string signal_path{"/org/dmn/DMesg1"};
+
   /** @brief Signal interface; defaults to the Dmn_DMesgNet wire interface. */
   std::string signal_interface{"org.dmn.DMesg1.Transport"};
+
   /** @brief Signal member; defaults to the Dmn_DMesgNet wire member. */
   std::string signal_member{"Message"};
+
   /** @brief Maximum accepted payload size. */
   std::size_t max_message_bytes{1024 * 1024};
+
   /** @brief Maximum items retained by either application queue. */
   std::size_t max_queued_messages{1024};
+
   /** @brief Maximum payload bytes retained by either application queue. */
   std::size_t max_queued_bytes{16 * 1024 * 1024};
 };

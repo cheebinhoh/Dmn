@@ -631,10 +631,12 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
       m_name{name} {}
 
 Dmn_DMesg::~Dmn_DMesg() noexcept try {
-  // Unregistering is serialized after earlier publications. Drain before
-  // derived state is destroyed; callers must already have stopped new users.
+  // Unregistering is serialized after earlier publications. Drain each
+  // handler's queued notifications before releasing its derived state.
   for (auto &h : m_handlers) {
     this->unregisterSubscriber(h.get());
+    h->waitForEmpty();
+    h->m_owner = nullptr;
   }
 
   m_handlers.clear();
@@ -660,8 +662,7 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
   }
 
   this->unregisterSubscriber(inhandler.get());
-
-  inhandler->m_owner = nullptr;
+  inhandler->waitForEmpty();
 
   const Dmn_DMesgHandler *const handler_ptr = inhandler.get();
 
@@ -681,6 +682,7 @@ void Dmn_DMesg::closeHandler(HandlerType &handler) {
 
   waitHandler->wait();
 
+  inhandler->m_owner = nullptr;
   handler.m_handler.reset();
 }
 

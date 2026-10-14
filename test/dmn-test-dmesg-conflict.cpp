@@ -78,6 +78,72 @@ auto openObservedHandler(dmn::Dmn_DMesg &publisher, std::string_view name,
       });
 }
 
+TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
+  dmn::Dmn_DMesg publisher{"handler-close-drain-test"};
+  std::promise<void> callbackEntered;
+  std::promise<void> releaseCallback;
+  auto releaseCallbackFuture = releaseCallback.get_future().share();
+  auto writer = publisher.openHandler("writer", "orders");
+  auto observer = publisher.openHandlerWithFactory(
+      dmn::Dmn_DMesg::HandlerSpec{"observer",
+                                  "orders",
+                                  {},
+                                  {},
+                                  {},
+                                  [&callbackEntered, &releaseCallbackFuture](
+                                      const dmn::Dmn_DMesg::HandlerEvent &) {
+                                    callbackEntered.set_value();
+                                    releaseCallbackFuture.wait();
+                                  }},
+      [](const dmn::Dmn_DMesg::HandlerSpec &spec) {
+        return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
+            spec.m_name, spec.m_topic, spec.m_filter_fn,
+            spec.m_async_process_fn, spec.m_configs);
+      });
+  ASSERT_TRUE(writer);
+  ASSERT_TRUE(observer);
+  auto observerLifetime = observer.operator->();
+
+  writer->write(makeMessage("close"));
+  if (callbackEntered.get_future().wait_for(5s) != std::future_status::ready) {
+    releaseCallback.set_value();
+    FAIL() << "handler observer callback did not start";
+    return;
+  }
+
+  auto closeTask = std::async(std::launch::async, [&publisher, &observer] {
+    publisher.closeHandler(observer);
+  });
+  const auto closeStatus = closeTask.wait_for(100ms);
+  releaseCallback.set_value();
+  static_cast<void>(observerLifetime->isInConflict());
+
+  ASSERT_EQ(closeTask.wait_for(5s), std::future_status::ready);
+  closeTask.get();
+  EXPECT_EQ(closeStatus, std::future_status::timeout);
+  EXPECT_FALSE(observer);
+}
+
+TEST(DmnDMesgConflictTest, HandlerCanOutlivePublisherUntilClientReleasesIt) {
+  std::weak_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> handlerLifetime;
+  {
+    std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> clientHandler;
+    {
+      dmn::Dmn_DMesg publisher{"handler-client-lifetime-test"};
+      auto handler = publisher.openHandler("client-handler", "orders");
+      ASSERT_TRUE(handler);
+
+      clientHandler = handler.operator->();
+      handlerLifetime = clientHandler;
+    }
+
+    EXPECT_FALSE(handlerLifetime.expired());
+    clientHandler.reset();
+  }
+
+  EXPECT_TRUE(handlerLifetime.expired());
+}
+
 TEST(DmnDMesgConflictTest, AppliesConfiguredTopicBeforeIncrementingItsCounter) {
   dmn::Dmn_DMesg publisher{"configured-topic-counter-test"};
   std::promise<void> publisherPaused;

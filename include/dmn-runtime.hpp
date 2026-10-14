@@ -131,10 +131,13 @@ namespace dmn {
 
 /** @brief Monotonic clock used for all timed-job scheduling. */
 using Clock = std::chrono::steady_clock;
+
 /** @brief Absolute time point expressed in terms of Clock. */
 using TimePoint = Clock::time_point;
+
 /** @brief Integer type for whole-second components of timer durations. */
 using SecInt = int64_t;
+
 /** @brief Integer type for nanosecond components of timer durations. */
 using NSecInt = std::chrono::nanoseconds::rep;
 
@@ -394,6 +397,7 @@ private:
 
   /** @brief Dequeue and execute one pending job per priority level. */
   void execRuntimeJobInternal();
+
   /** @brief Invoke all registered hooks for @p signo in the async context. */
   void execSignalHandlerHookInternal(int signo);
 
@@ -403,12 +407,14 @@ private:
   /** @brief Run one iteration of the coroutine scheduler; returns true if work
    * remains. */
   auto runRuntimeCoroutineScheduler() -> bool;
+
   /** @brief Entry point for the job executor coroutine loop. */
   void runRuntimeJobExecutor();
 
   /** @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec
    * nanoseconds. */
   void setNextTimer(SecInt sec, NSecInt nsec);
+
   /** @brief Arm the SIGALRM timer to fire at the absolute time point @p tp. */
   void setNextTimerAt(TimePoint tp);
 

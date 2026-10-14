@@ -7,8 +7,8 @@ add_library(dmn
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-interval-btree.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime-state.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-socket.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-state.cpp
 
@@ -26,8 +26,8 @@ add_library(dmn
 
 GENERATE_PROTOBUF(dmn
                     dmn-dlock.proto
-                    dmn-dmesg-type.proto
                     dmn-dmesg-body.proto
+                    dmn-dmesg-type.proto
                     dmn-dmesg.proto
 )
 
@@ -39,21 +39,17 @@ target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies(dmn rdkafka)
-target_sources(dmn
-                 PRIVATE
-                 ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
-)
-
+# Public core headers: consumers see these through the dmn target interface.
 target_sources(dmn
                  INTERFACE
-                 ${PROJECT_SOURCE_DIR}/include/dmn.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-async.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-lf.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-mt.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dlock.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
@@ -61,12 +57,15 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-pipe.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-proc.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-pub-sub.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-state.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-runtime-task.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-runtime.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-singleton.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-socket.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-state.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-timer.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn-util.hpp
+                 ${PROJECT_SOURCE_DIR}/include/dmn.hpp
 
                  # kafka
                  ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
@@ -78,6 +77,14 @@ target_sources(dmn
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
+)
+
+# Deprecated headers are retained in the source tree for migration reference;
+# they are not supported public interfaces and are intentionally not installed.
+target_sources(dmn
+                 PRIVATE
+                 ${PROJECT_SOURCE_DIR}/include/deprecated/dmn-limit-blockingqueue.hpp
+                 ${PROJECT_SOURCE_DIR}/include/deprecated/dmn-teepipe.hpp
 )
 
 if (ENABLE_FAULT_INJECTION)
@@ -132,7 +139,10 @@ endif()
 
 if (ENABLE_DBUS)
   add_library(dmn-dbus
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-client.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-io.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-runtime.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-value.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet-dbus.cpp
   )
 
@@ -140,11 +150,19 @@ if (ENABLE_DBUS)
                                PUBLIC ${PROJECT_SOURCE_DIR}/include
   )
 
+  # Public optional API; the implementation-only runtime header stays PRIVATE.
   target_sources(dmn-dbus
-                   PUBLIC
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dbus-client.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-config.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-io.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dbus-value.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet-dbus.hpp
+  )
+
+  # Internal implementation header shared only by this target's .cpp files.
+  target_sources(dmn-dbus
+                   PRIVATE ${PROJECT_SOURCE_DIR}/include/dmn-dbus-runtime.hpp
   )
 
   target_compile_options(dmn-dbus PRIVATE -Wall -Wextra -Wpedantic)
@@ -163,6 +181,64 @@ if (ENABLE_DBUS)
   )
 endif()
 
+if (ENABLE_BLUEZ)
+  add_library(dmn-bluez
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-bluez-client.cpp
+  )
+
+  target_include_directories(dmn-bluez
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+
+  target_sources(dmn-bluez
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/dmn-bluez-client.hpp
+  )
+
+  target_compile_definitions(dmn-bluez PUBLIC DMN_ENABLE_BLUEZ=1)
+
+  target_compile_options(dmn-bluez PRIVATE -Wall -Wextra -Wpedantic)
+  target_link_libraries(dmn-bluez PUBLIC dmn-dbus)
+
+  add_executable(dmn-bluez-discovery
+                   dmn-bluez-discovery.cpp
+  )
+  target_compile_options(dmn-bluez-discovery
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+  target_link_libraries(dmn-bluez-discovery PRIVATE dmn-bluez)
+
+  add_executable(dmn-bluez-discovery-test
+                   dmn-bluez-discovery.cpp
+  )
+  target_compile_definitions(dmn-bluez-discovery-test
+                               PRIVATE DMN_BLUEZ_TESTING=1
+  )
+  target_compile_options(dmn-bluez-discovery-test
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+  target_link_libraries(dmn-bluez-discovery-test PRIVATE dmn-bluez)
+
+  add_test(NAME dmn-bluez-discovery-help COMMAND dmn-bluez-discovery --help)
+  set_tests_properties(dmn-bluez-discovery-help PROPERTIES LABELS "dmn")
+  add_test(NAME dmn-bluez-discovery-rejects-duplicate-option
+             COMMAND dmn-bluez-discovery --discovery --discovery
+  )
+  set_tests_properties(dmn-bluez-discovery-rejects-duplicate-option
+                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+
+  install(TARGETS dmn-bluez dmn-bluez-discovery
+            ARCHIVE DESTINATION lib/dmn
+            LIBRARY DESTINATION lib/dmn
+            RUNTIME DESTINATION bin
+  )
+
+  install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluez-discovery.1
+            DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+  )
+endif()
+
 # Install the library binary
 install(TARGETS dmn
           #   EXPORT mylibTargets
@@ -175,10 +251,20 @@ install(TARGETS dmn
 # Install only headers for enabled optional features.
 set(DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS)
 
+list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+       PATTERN "dmn-dbus-runtime.hpp" EXCLUDE
+)
+
 if (NOT ENABLE_DBUS)
   list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
          PATTERN "dmn-dbus-*.hpp" EXCLUDE
          PATTERN "dmn-dmesgnet-dbus.hpp" EXCLUDE
+  )
+endif()
+
+if (NOT ENABLE_BLUEZ)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-bluez-*.hpp" EXCLUDE
   )
 endif()
 
@@ -190,6 +276,7 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
           DESTINATION include/dmn
+          PATTERN "deprecated" EXCLUDE
           ${DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS}
 )
 

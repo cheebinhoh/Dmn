@@ -6,6 +6,7 @@
  */
 
 #include "dmn-dbus-io.hpp"
+#include "dmn-dbus-runtime.hpp"
 #include "dmn-proc.hpp"
 
 #ifdef FIU_ENABLE
@@ -90,6 +91,7 @@ void validateConfig(const Dmn_DbusConfig &config) {
       dbus_validate_path(config.signal_path.c_str(), error.get()) &&
       dbus_validate_interface(config.signal_interface.c_str(), error.get()) &&
       dbus_validate_member(config.signal_member.c_str(), error.get())};
+
   if (!valid) {
     throw std::invalid_argument("Dmn_Dbus: invalid signal path, interface, "
                                 "or member");
@@ -99,16 +101,6 @@ void validateConfig(const Dmn_DbusConfig &config) {
 auto makeMatchRule(const Dmn_DbusConfig &config) -> std::string {
   return "type='signal',path='" + config.signal_path + "',interface='" +
          config.signal_interface + "',member='" + config.signal_member + "'";
-}
-
-void initializeDbus() {
-  static std::once_flag initialized;
-  static bool success{};
-
-  std::call_once(initialized, [] { success = dbus_threads_init_default(); });
-  if (!success) {
-    throw std::runtime_error("Dmn_Dbus: libdbus thread initialization failed");
-  }
 }
 
 auto dbusErrorCode(const DBusError &error) -> std::error_code {
@@ -125,13 +117,14 @@ auto dbusErrorCode(const DBusError &error) -> std::error_code {
 
 auto connectBus(const Dmn_DbusConfig &config) -> DbusConnectionPtr {
   DbusErrorGuard error;
-
   DbusConnectionPtr connection{};
+
   if (config.bus_address.empty()) {
     connection.reset(dbus_bus_get_private(DBUS_BUS_SESSION, error.get()));
   } else {
     connection.reset(
         dbus_connection_open_private(config.bus_address.c_str(), error.get()));
+
     if (connection != nullptr &&
         !dbus_bus_register(connection.get(), error.get())) {
       connection.reset();
@@ -159,6 +152,7 @@ void reportDiagnostic(std::mutex &mutex,
     const auto now{std::chrono::steady_clock::now()};
     {
       std::lock_guard lock{mutex};
+
       if (lastDiagnostic.time_since_epoch().count() != 0 &&
           now - lastDiagnostic < kDiagnosticInterval) {
         return;
@@ -195,6 +189,7 @@ public:
       DbusErrorGuard error;
       const auto matchRule{makeMatchRule(config)};
       dbus_bus_add_match(m_connection.get(), matchRule.c_str(), error.get());
+
       if (dbus_error_is_set(error.get())) {
         const auto code{dbusErrorCode(*error.get())};
         const std::string message{error.get()->message == nullptr
@@ -221,6 +216,7 @@ public:
 
   auto read() -> std::optional<std::string> {
     std::unique_lock lock{m_mutex};
+
     m_ready.wait(lock, [this] {
       return !m_queue.empty() || m_stopping || m_status.terminal_error;
     });
@@ -248,6 +244,7 @@ public:
     std::call_once(m_shutdown_once, [this] {
       {
         std::lock_guard lock{m_mutex};
+
         m_stopping = true;
       }
 
@@ -269,6 +266,7 @@ private:
   static auto filterMessage(DBusConnection *, DBusMessage *message,
                             void *userData) -> DBusHandlerResult {
     auto *self{static_cast<Impl *>(userData)};
+
     try {
       self->handleMessage(message);
     } catch (const std::bad_alloc &) {
@@ -291,6 +289,7 @@ private:
     }
 
     const char *signature{dbus_message_get_signature(message)};
+
     if (signature == nullptr || std::strcmp(signature, "ay") != 0) {
       recordMalformedSignal();
 
@@ -320,6 +319,7 @@ private:
     if (size > m_config.max_message_bytes) {
       {
         std::lock_guard lock{m_mutex};
+
         ++m_status.oversized_received;
       }
 
@@ -332,6 +332,7 @@ private:
     bool queueFull{};
     {
       std::lock_guard lock{m_mutex};
+
       if (m_stopping) {
         return;
       }
@@ -364,6 +365,7 @@ private:
 
     {
       std::lock_guard lock{m_mutex};
+
       if (m_stopping) {
         return;
       }
@@ -398,6 +400,7 @@ private:
                         const std::string &message) noexcept {
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_status.terminal_error) {
         m_status.terminal_error = error;
       }
@@ -410,6 +413,7 @@ private:
   void recordAllocationError() noexcept {
     {
       std::lock_guard lock{m_mutex};
+
       ++m_status.input_allocation_errors;
     }
 
@@ -420,6 +424,7 @@ private:
   void recordMalformedSignal() noexcept {
     {
       std::lock_guard lock{m_mutex};
+
       ++m_status.malformed_received;
     }
 
@@ -516,6 +521,7 @@ public:
     }
 
     std::lock_guard lock{m_mutex};
+
     if (m_status.terminal_error) {
       throw std::system_error(m_status.terminal_error,
                               "Dmn_DbusOutput: bus worker failed");
@@ -547,6 +553,7 @@ public:
     std::call_once(m_shutdown_once, [this] {
       {
         std::lock_guard lock{m_mutex};
+
         m_stopping = true;
         m_shutdown_deadline =
             std::chrono::steady_clock::now() + kShutdownDeadline;
@@ -560,8 +567,10 @@ public:
         const auto outgoingBytes{static_cast<std::size_t>(std::max(
             dbus_connection_get_outgoing_size(m_connection.get()), 0L))};
         bool unsentOutput{};
+
         {
           std::lock_guard lock{m_mutex};
+
           m_status.libdbus_outgoing_bytes = outgoingBytes;
           m_status.shutdown_unsent_messages = m_queue.size();
           m_status.shutdown_unsent_bytes = m_pending_bytes;
@@ -592,6 +601,7 @@ private:
     DbusMessagePtr message{dbus_message_new_signal(
         m_config.signal_path.c_str(), m_config.signal_interface.c_str(),
         m_config.signal_member.c_str())};
+
     if (message == nullptr) {
       throw std::system_error(
           std::make_error_code(std::errc::not_enough_memory),
@@ -601,6 +611,7 @@ private:
     DBusMessageIter iterator;
     dbus_message_iter_init_append(message.get(), &iterator);
     DBusMessageIter array;
+
     if (!dbus_message_iter_open_container(&iterator, DBUS_TYPE_ARRAY,
                                           DBUS_TYPE_BYTE_AS_STRING, &array)) {
       throw std::system_error(
@@ -610,6 +621,7 @@ private:
 
     const auto size{static_cast<int>(payload.size())};
     const auto *bytes{reinterpret_cast<const unsigned char *>(payload.data())};
+
     if (size != 0 && !dbus_message_iter_append_fixed_array(
                          &array, DBUS_TYPE_BYTE, &bytes, size)) {
       dbus_message_iter_abandon_container(&iterator, &array);
@@ -640,12 +652,15 @@ private:
 #endif
         const auto outgoingBytes{
             dbus_connection_get_outgoing_size(m_connection.get())};
+
         {
           std::unique_lock lock{m_mutex};
+
           m_ready.wait_for(lock, kWorkerWait, [this, &workerStop] {
             return workerStop.load(std::memory_order_acquire) ||
                    !m_queue.empty();
           });
+
           if (workerStop.load(std::memory_order_acquire) &&
               (m_queue.empty() ||
                std::chrono::steady_clock::now() >= m_shutdown_deadline)) {
@@ -667,6 +682,7 @@ private:
 
         if (havePayload) {
           auto message{makeSignal(payload)};
+
           if (!dbus_connection_send(m_connection.get(), message.get(),
                                     nullptr)) {
             throw std::system_error(
@@ -676,6 +692,7 @@ private:
 
           {
             std::lock_guard lock{m_mutex};
+
             m_pending_bytes -= m_queue.front().size();
             m_queue.pop_front();
             ++m_status.messages_queued_to_libdbus;
@@ -715,7 +732,9 @@ private:
         std::max(dbus_connection_get_outgoing_size(m_connection.get()), 0L))};
     {
       std::lock_guard lock{m_mutex};
+
       ++m_status.output_worker_errors;
+
       if (!m_status.terminal_error) {
         m_status.terminal_error = error;
       }
@@ -743,8 +762,9 @@ private:
 
 Dmn_DbusInput::Dmn_DbusInput(const Dmn_DbusConfig &config) {
   // Initialize libdbus threading before any other libdbus API is called.
-  initializeDbus();
+  detail::initializeDbusRuntime();
   validateConfig(config);
+
   m_impl = std::make_unique<Impl>(config);
 }
 
@@ -777,8 +797,9 @@ auto Dmn_DbusInput::status() const -> Dmn_DbusIoStatus {
 }
 
 Dmn_DbusOutput::Dmn_DbusOutput(const Dmn_DbusConfig &config) {
-  initializeDbus();
+  detail::initializeDbusRuntime();
   validateConfig(config);
+
   m_impl = std::make_unique<Impl>(config);
 }
 

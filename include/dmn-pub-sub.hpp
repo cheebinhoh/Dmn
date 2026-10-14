@@ -95,6 +95,9 @@
  *   synchronously as part of registration).
  * - Call publish(item) to enqueue an asynchronous publish. Optionally pass
  *   block=true to wait until the publish task completes.
+ * - Call publishAsync(item) to enqueue publication and receive a future for
+ *   completion or callback failure without waiting for completion. Enqueueing
+ *   retains the existing queue's backpressure behavior.
  *
  * See also
  * - dmn-async.hpp : asynchronous task execution and synchronization helpers.
@@ -113,6 +116,7 @@
 #include <deque>
 #include <exception>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -250,6 +254,24 @@ public:
    * racing with publisher destruction.
    */
   void publish(const T &item, bool block = false);
+
+  /**
+   * @brief Publish an owned copy of @p item and return its completion future.
+   *
+   * The future becomes ready after this publisher has completed the
+   * synchronous filtering and notification callbacks for the publication.
+   * Callback failures are still recorded by @ref takeCallbackFailures() and
+   * are also rethrown by @c future.get(). This call does not wait for delivery
+   * to complete, but enqueueing retains the existing queue's backpressure
+   * behavior. Work a subscriber separately enqueues is not part of this
+   * completion. Discarding the future does not cancel the publication. Do not
+   * wait for the future from this publisher's asynchronous context.
+   *
+   * @param item The item to copy and publish.
+   * @return A future that completes after delivery or holds the callback
+   * exception.
+   */
+  auto publishAsync(const T &item) -> std::future<void>;
 
   /**
    * @brief Retrieve and clear recorded filter/notification callback failures.
@@ -390,6 +412,12 @@ void Dmn_Pub<T, QueueType>::publish(const T &item, bool block) {
   } else {
     this->addExecTask([this, item]() { this->publishInternal(item); });
   }
+}
+
+template <typename T, template <class> class QueueType>
+auto Dmn_Pub<T, QueueType>::publishAsync(const T &item) -> std::future<void> {
+  return this->addExecTaskFuture(
+      [this, item]() { this->publishInternal(item); });
 }
 
 template <typename T, template <class> class QueueType>

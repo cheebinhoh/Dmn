@@ -319,6 +319,7 @@ private:
    * completion so shutdown cannot publish conflicting terminal states.
    */
   void complete(Terminal_State terminalState, std::exception_ptr failure = {});
+
   /** @brief Clear submission state after the manager declines or cannot queue
    * it. */
   void resetQueuedAfterSubmission();

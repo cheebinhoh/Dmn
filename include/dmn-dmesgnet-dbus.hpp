@@ -32,7 +32,12 @@ struct Dmn_DMesgDbusStatus {
  *
  * The class composes an internal Dmn_DMesgNet with separate D-Bus input and
  * output endpoints. It forwards the selected handler/topic operations while
- * keeping those transport objects private. The default config selects the
+ * keeping those transport objects private. Each instance is a complete,
+ * independent Dmn_DMesgNet participant: its output broadcasts DMesg messages
+ * and its input receives matching broadcasts from other participants on the
+ * selected D-Bus daemon. Applications link this library and create their own
+ * instances; the facade is not a D-Bus service, a client proxy, or a bus
+ * daemon, and it does not start or manage one. The default config selects the
  * Dmn_DMesgNet signal tuple on the session bus.
  */
 class Dmn_DMesgDbus final {
@@ -53,10 +58,13 @@ public:
   using HandlerType = Dmn_DMesg::HandlerType;
 
   /**
-   * @brief Construct a DMesg node with private D-Bus input/output endpoints.
+   * @brief Construct an independent DMesg participant on the configured bus.
    *
    * @param node_id DMesg node identifier; must be unique on the bus.
-   * @param config Shared D-Bus routing and queue configuration.
+   * @param config Bus selection, D-Bus signal routing, and queue limits.
+   *               Empty bus_address selects the session bus; an explicit
+   *               address selects that exact daemon. Other participants must
+   *               use the same bus and signal tuple to exchange messages.
    * @throws std::invalid_argument if the endpoint configuration is invalid.
    * @throws std::system_error if either endpoint cannot connect or initialize.
    */

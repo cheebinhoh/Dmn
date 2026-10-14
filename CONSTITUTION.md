@@ -258,6 +258,11 @@ pattern; do not perform signature-style churn unrelated to the task.
 - Register new test executables in `test/CMakeLists.txt` using the existing
   `ADD_TEST_EXECUTABLE` convention. Kafka integration tests remain conditional
   on `BUILD_KAFKA_TEST`.
+- Keep entries in independent CMake lists alphabetically sorted by their
+  written names. This includes source/header inventories, test target lists,
+  and option declarations. Preserve meaningful grouping comments; do not
+  reorder sequences whose order affects behavior, such as ordered command
+  arguments or linker inputs.
 - Public headers should be covered by the `dmn-standalone-header-check`
   target, which compiles supported headers independently. Generated and
   deprecated headers may have different build constraints; state exclusions

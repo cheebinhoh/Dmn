@@ -10,6 +10,14 @@ asynchronous publisher context. `publish(item)` schedules processing in that
 context; the default is non-blocking, while `publish(item, true)` waits for
 completion and propagates an exception through the wait handle. The value
 published by the non-blocking overload is copied into its queued closure.
+`publishAsync(item)` also copies the value and returns a `std::future<void>` for
+completion of the synchronous publication and notification callbacks. The
+future reports the first callback exception through `get()`; callback failures
+remain recorded as described below. It does not wait for additional work a
+subscriber separately enqueues, and discarding it does not cancel publication.
+The caller does not wait for delivery to finish, but enqueueing keeps the
+existing queue's backpressure behavior and may wait for queue capacity. Do not
+wait for the future from the publisher's async context.
 
 `publishInternal()` appends each value to a bounded replay history, trims the
 oldest values above capacity, then evaluates the optional per-subscriber filter
@@ -94,6 +102,9 @@ Blocking `publish(item, true)` completes delivery to all eligible subscribers,
 then rethrows the first callback exception to its caller. That failure is also
 present in the recorded error list. Replay notification failures are recorded
 and replay continues; they do not prevent registration from succeeding.
+`publishAsync(item)` has the same delivery and failure-recording behavior, but
+completes the future after the publication task finishes rather than blocking
+the submitting caller.
 
 ## Callback failure retention
 

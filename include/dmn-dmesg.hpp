@@ -656,11 +656,13 @@ public:
   explicit Dmn_DMesg(std::string_view name);
 
   /**
-   * @brief Unregister handlers and drain queued publisher work before teardown.
+   * @brief Unregister handlers and drain publisher and handler work before
+   * teardown.
    *
    * Callers must stop and join threads that may use this publisher before
-   * destruction begins. The derived destructor performs handler unregistration
-   * and drains the async context while Dmn_DMesg state is still alive.
+   * destruction begins. The derived destructor unregisters handlers, drains
+   * their queued callbacks, then drains the publisher context while
+   * Dmn_DMesg state is still alive.
    */
   virtual ~Dmn_DMesg() noexcept;
 
@@ -710,10 +712,9 @@ public:
                               const HandlerFactory &factory) -> HandlerType;
 
   /**
-   * @brief Unregister and free the provided handler.
+   * @brief Unregister the provided handler and drain its queued callbacks.
    *
-   * @param handlerToClose the internal handler will be reset upon return from
-   * this method.
+   * @param handlerToClose The handler proxy is invalidated upon return.
    */
   void closeHandler(HandlerType &handlerToClose);
 

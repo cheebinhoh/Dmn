@@ -42,6 +42,13 @@ D-Bus signal
             -> local DMesg handler
 ```
 
+Each process using this injection path is an independent `Dmn_DMesgNet` node.
+Multiple processes configured for the same bus and signal tuple exchange
+broadcast signals through the bus daemon; they do not connect to a central
+Dmn service. The library opens private connections to an already-running bus
+and never starts or manages that daemon. An empty `bus_address` selects the
+session bus, while an explicit address selects that exact bus instance.
+
 `Dmn_DMesgNet` already accepts independently supplied input and output
 `Dmn_Io<std::string>` shared pointers. The injection path therefore needs no
 changes to DMesg semantics, `DMesgPb`, or the `Dmn_DMesgNet` constructor.

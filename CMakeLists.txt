@@ -16,15 +16,27 @@ set(ABSL_PROPAGATE_CXX_STD ON)
 
 project(dmn)
 
+include(GNUInstallDirs)
+
 enable_testing()
 
 
 # set build options
-option(BUILD_NDEBUG "build without debug" OFF)
 option(BUILD_KAFKA_TEST "build with kafka test" OFF)
-option(ENABLE_DBUS "Build the optional D-Bus transport" OFF)
-option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
+option(BUILD_NDEBUG "build without debug" OFF)
+option(ENABLE_BLUEZ "Build optional Linux BlueZ inventory and discovery CLI" OFF)
+option(ENABLE_DBUS "Build optional D-Bus signal transport and generic client" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
+option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
+
+if (ENABLE_BLUEZ)
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "ENABLE_BLUEZ=ON is supported only on Linux")
+  endif()
+  if (NOT ENABLE_DBUS)
+    message(FATAL_ERROR "ENABLE_BLUEZ=ON requires ENABLE_DBUS=ON")
+  endif()
+endif()
 
 if (ENABLE_DBUS)
   find_package(PkgConfig REQUIRED)

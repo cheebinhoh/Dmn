@@ -12,9 +12,12 @@
 #include <csignal>
 #include <cstdlib>
 #include <ctime>
+#include <future>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include <sys/time.h>
 
@@ -49,6 +52,182 @@ TEST(DmnAsync, DelayedTaskRunsNoEarlierThanDeadline) {
   handle->wait();
 
   EXPECT_GE(executed_at, earliest_execution);
+}
+
+TEST(DmnAsync, FutureTasksReturnValuesAndPropagateExceptions) {
+  dmn::Dmn_Async async{"future-results"};
+
+  auto result = async.addExecTaskFuture(
+      [](int left, int right) { return left + right; }, 20, 22);
+  EXPECT_EQ(result.get(), 42);
+
+  std::string argument{"owned"};
+  auto ownedArgument = async.addExecTaskFuture(
+      [](std::string value) { return value; }, argument);
+  argument = "changed";
+  EXPECT_EQ(ownedArgument.get(), "owned");
+
+  bool voidTaskRan{};
+  auto voidResult =
+      async.addExecTaskFuture([&voidTaskRan]() { voidTaskRan = true; });
+  EXPECT_NO_THROW(voidResult.get());
+  EXPECT_TRUE(voidTaskRan);
+
+  auto failure = async.addExecTaskFuture(
+      []() -> int { throw std::runtime_error{"future task failure"}; });
+  EXPECT_THROW(
+      {
+        try {
+          static_cast<void>(failure.get());
+        } catch (const std::runtime_error &error) {
+          EXPECT_STREQ(error.what(), "future task failure");
+          throw;
+        }
+      },
+      std::runtime_error);
+
+  std::vector<int> executionOrder;
+  auto first = async.addExecTaskFuture([&executionOrder]() {
+    executionOrder.push_back(1);
+    return 1;
+  });
+  auto second = async.addExecTaskFuture([&executionOrder]() {
+    executionOrder.push_back(2);
+    return 2;
+  });
+  EXPECT_EQ(first.get(), 1);
+  EXPECT_EQ(second.get(), 2);
+  EXPECT_EQ(executionOrder, (std::vector<int>{1, 2}));
+
+  EXPECT_EQ(async.addExecTaskFuture([]() { return 7; }).get(), 7);
+}
+
+TEST(DmnAsync, DelayedFutureRespectsDeadlineAndValidatesDuration) {
+  using Clock = std::chrono::steady_clock;
+  constexpr auto kDelay = std::chrono::milliseconds{30};
+  dmn::Dmn_Async async{"delayed-future"};
+  const auto earliestExecution = Clock::now() + kDelay;
+  Clock::time_point executedAt{};
+
+  auto result = async.addExecTaskAfterFuture(kDelay, [&executedAt]() {
+    executedAt = Clock::now();
+    return 17;
+  });
+  EXPECT_EQ(result.get(), 17);
+  EXPECT_GE(executedAt, earliestExecution);
+
+  EXPECT_EQ(async
+                .addExecTaskAfterFuture(std::chrono::milliseconds{0},
+                                        []() { return 21; })
+                .get(),
+            21);
+
+  auto failure =
+      async.addExecTaskAfterFuture(std::chrono::milliseconds{1}, []() -> int {
+        throw std::runtime_error{"delayed future failure"};
+      });
+  EXPECT_THROW(
+      {
+        try {
+          static_cast<void>(failure.get());
+        } catch (const std::runtime_error &error) {
+          EXPECT_STREQ(error.what(), "delayed future failure");
+          throw;
+        }
+      },
+      std::runtime_error);
+
+  EXPECT_THROW(
+      async.addExecTaskAfterFuture(std::chrono::milliseconds{-1}, []() {}),
+      std::invalid_argument);
+
+  using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
+  const auto firstUnrepresentableTick =
+      std::ldexp(1.0L, std::numeric_limits<Clock::duration::rep>::digits);
+  EXPECT_THROW(async.addExecTaskAfterFuture(
+                   ClockTickDuration{firstUnrepresentableTick}, []() {}),
+               std::overflow_error);
+
+  using ClockRep = Clock::duration::rep;
+  if (std::numeric_limits<long double>::digits >=
+          std::numeric_limits<ClockRep>::digits &&
+      Clock::now().time_since_epoch().count() > 0) {
+    const auto exclusiveMax =
+        std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
+    const auto nowTicks =
+        static_cast<long double>(Clock::now().time_since_epoch().count());
+    const ClockTickDuration overflowingDeadline{exclusiveMax - nowTicks + 1.0L};
+    EXPECT_THROW(async.addExecTaskAfterFuture(overflowingDeadline, []() {}),
+                 std::overflow_error);
+  }
+}
+
+TEST(DmnAsync, DiscardingFutureDoesNotCancelAcceptedTask) {
+  dmn::Dmn_Async async{"discarded-future"};
+  std::promise<void> taskStarted;
+  std::promise<void> releaseTask;
+  auto startedSignal = taskStarted.get_future();
+  auto releaseSignal = releaseTask.get_future().share();
+  bool submittedTaskRan{};
+
+  async.addExecTask([&taskStarted, releaseSignal = std::move(releaseSignal)] {
+    taskStarted.set_value();
+    releaseSignal.wait();
+  });
+  startedSignal.wait();
+
+  {
+    auto abandoned = async.addExecTaskFuture(
+        [&submittedTaskRan]() { submittedTaskRan = true; });
+    static_cast<void>(abandoned);
+  }
+
+  releaseTask.set_value();
+  async.waitForEmpty();
+  EXPECT_TRUE(submittedTaskRan);
+}
+
+TEST(DmnAsync, AcceptedFutureCompletesWhenAsyncIsDestroyed) {
+  std::future<int> result;
+  {
+    dmn::Dmn_Async async{"future-destruction"};
+    result = async.addExecTaskFuture([]() {
+      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+      return 23;
+    });
+  }
+
+  EXPECT_EQ(result.get(), 23);
+}
+
+TEST(DmnAsync, DelayedFutureCannotRunBeforeDeadline) {
+  using Clock = std::chrono::steady_clock;
+  constexpr auto kDelay = std::chrono::milliseconds{30};
+  dmn::Dmn_Async async{"delayed-future-deadline"};
+  std::promise<void> taskStarted;
+  std::promise<void> releaseTask;
+  auto startedSignal = taskStarted.get_future();
+  auto releaseSignal = releaseTask.get_future().share();
+  Clock::time_point executedAt{};
+
+  async.addExecTask([&taskStarted, releaseSignal = std::move(releaseSignal)] {
+    taskStarted.set_value();
+    releaseSignal.wait();
+  });
+  startedSignal.wait();
+
+  const auto deadline = Clock::now() + kDelay;
+  auto completion = async.addExecTaskAfterFuture(
+      kDelay, [&executedAt]() { executedAt = Clock::now(); });
+  EXPECT_EQ(completion.wait_for(std::chrono::milliseconds{1}),
+            std::future_status::timeout);
+  std::this_thread::sleep_until(deadline);
+  EXPECT_EQ(completion.wait_for(std::chrono::milliseconds{1}),
+            std::future_status::timeout);
+
+  releaseTask.set_value();
+  completion.get();
+  EXPECT_GE(executedAt, deadline);
 }
 
 TEST(DmnAsync, NegativeDelayedDurationsAreRejected) {

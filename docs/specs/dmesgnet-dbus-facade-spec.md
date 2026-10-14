@@ -32,6 +32,15 @@ No changes to this facade are required to implement that separate service:
 the gateway should own the daemon's `Dmn_DMesgNet` and register its own
 server-side handlers on the shared `Dmn_DMesg` publisher.
 
+For direct peer use, each participating application links `dmn-dbus` and
+constructs its own facade with a unique node ID and the same bus and signal
+tuple. Each facade owns independent input and output connections. Outputs
+broadcast signals through the already-running D-Bus daemon, and matching
+inputs in the other applications receive them. The daemon routes messages but
+does not own the Dmn nodes, aggregate their publisher state, or expose a Dmn
+RPC service. Use a separate D-Bus service and client-proxy API when one
+daemon-owned node serving many local applications is required.
+
 ## Public API
 
 The public header is `include/dmn-dmesgnet-dbus.hpp`, in namespace `dmn`. It

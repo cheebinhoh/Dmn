@@ -2,7 +2,14 @@
 
 **Status:** Shared contract for the implemented Option A endpoints and Option
 B facade. Both use the optional `dmn-dbus` target and private-session-bus
-tests; D-Bus remains a same-host transport.
+tests. This document covers only its byte-signal transport; `dmn-dbus` also
+provides the generic D-Bus client capability specified separately.
+
+This specification is intentionally limited to that signal transport. The
+generic Dmn-owned client for method calls, typed properties, ObjectManager
+snapshots, and service signals is specified in
+[`dbus-client-spec.md`](dbus-client-spec.md). BlueZ is built on that generic
+client, not by routing through these signal endpoints.
 
 The two construction alternatives and their implementation order are
 specified in
@@ -45,6 +52,43 @@ communication on one D-Bus daemon**. The default Linux session and system
 buses are local to a host. D-Bus does not federate separate host daemons, and
 this adapter does not make the existing DMesgNet election a consensus
 protocol.
+
+### Participant topology and bus ownership
+
+The transport is a peer mesh mediated by an already-running D-Bus daemon. The
+`dmn-dbus` library opens connections and exchanges signals; it does not start,
+configure, or own the bus daemon. Every application process that constructs a
+`Dmn_DMesgDbus` facade becomes its own complete `Dmn_DMesgNet` participant,
+with its own node identifier, publisher state, input endpoint, and output
+endpoint. There is no central Dmn service in this topology, and an application
+does not connect to another application's Dmn object directly.
+
+```text
+Application A                Application B                Application C
+Dmn_DMesgDbus / DMesgNet      Dmn_DMesgDbus / DMesgNet      Dmn_DMesgDbus / DMesgNet
+ input + output               input + output               input + output
+       |                             |                            |
+       +-----------------------------+----------------------------+
+                                     |
+                         existing D-Bus daemon
+                    routes each matching broadcast signal
+```
+
+Each participant's output sends a broadcast signal using the configured
+object-path/interface/member tuple. The daemon routes that signal to every
+matching input connection permitted by bus policy. Thus any participant can
+publish to the others, making the arrangement many-to-many over the bus rather
+than a direct application-to-application connection. There is no required
+well-known D-Bus service name. D-Bus routing is local to the selected daemon;
+participants on different daemons do not see one another unless they are
+explicitly configured to use the same daemon.
+
+The D-Bus daemon is distinct from the private connections owned by the
+endpoints. With an empty `Dmn_DbusConfig::bus_address`, both endpoints connect
+privately to the session bus. Supplying an address makes each endpoint connect
+privately to that exact bus daemon; this can select the system bus or an
+isolated test bus. The library does not infer “system bus” from an empty
+address and does not fall back if the selected address cannot be reached.
 
 ```text
 process A                                      process B
@@ -107,6 +151,9 @@ authentication, and policy risks; it is not the default v1 architecture.
 The current code supports the adapter approach without changing DMesg message
 schemas:
 
+- This seam models queued byte-stream-like application I/O only. It is not
+  appropriate for request/reply D-Bus methods, typed properties, ObjectManager
+  enumeration, or lifecycle/value signals used by BlueZ.
 - `Dmn_DMesgNet` already accepts `std::shared_ptr<Dmn_Io<std::string>>` for
   both input and output and parses/serializes complete `DMesgPb` strings.
 - `Dmn_Io<T>` already supplies the required `read()`, `write()`, and
@@ -421,6 +468,10 @@ implemented consensus protocol.
 - Mixed deployments with an older participant simply do not receive or
   understand this signal; announce version/availability through separate
   observability rather than silently falling back to another transport.
+- The generic method/property/signal API extends the optional `dmn-dbus`
+  library, but does not alter `Dmn_DbusConfig`, the byte-signal endpoints, or
+  the facade's behavior and compatibility contract. The Linux-only
+  `dmn-bluez` target depends on `dmn-dbus` and uses the generic client API.
 
 ## 9. Acceptance criteria
 
@@ -472,6 +523,8 @@ Official D-Bus references, reviewed 2026-10-04:
   the adapter must not flush synchronously in `write()` or teardown.
 - Repository contracts: [`Dmn_DMesgNet`](dmn-dmesgnet-spec.md) and
   [`Dmn_Io`/pipelines](io-pipelines-spec.md).
+- Future BlueZ control/event client boundary:
+  [`Dmn-Owned libdbus Client Foundation`](dbus-client-spec.md).
 
 Test evidence: `test/dmn-test-dbus-io.cpp`, registered through
 `ADD_TEST_EXECUTABLE(dmn ...)` with the existing `dmn` CTest label, exercises
