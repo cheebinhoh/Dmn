@@ -4,12 +4,35 @@
  * @file dmn-dbus-io.hpp
  * @brief Byte-oriented D-Bus signal input and output adapters.
  *
- * The endpoints carry arbitrary byte payloads in the configured broadcast
+ * The endpoints carry arbitrary byte payloads in a configured broadcast
  * signal. The default signal tuple is the wire contract used by
  * Dmn_DMesgNet; other protocols should choose their own tuple. Each endpoint
- * owns a private connection and worker. Applications using the same bus and
- * tuple communicate as peers through the bus daemon; these endpoints do not
- * create a bus daemon or connect to a Dmn service.
+ * owns a dedicated libdbus private connection and worker. The selected bus
+ * may be the standard session bus, the system bus, or a separately started
+ * private bus instance (selected by address). The bus daemon routes signals
+ * between matching participants; this is not a direct peer-to-peer D-Bus
+ * connection. These endpoints neither create a bus daemon nor export or call
+ * a Dmn D-Bus service.
+ *
+ * Data flow
+ * ---------
+ * Dmn_DbusOutput::write() admits a byte payload to a bounded local queue and
+ * wakes its output worker. The worker encodes the payload as one D-Bus byte
+ * array signal using the configured path/interface/member tuple. It submits
+ * queued signals to libdbus only while the connection's outgoing queue is
+ * below the configured byte threshold, then calls the read/write/dispatch API
+ * to progress pending transport I/O and observe connection failure. Thus the
+ * worker does more than dequeue and send: it also pumps and monitors the
+ * libdbus connection while idle. A successful write reports local queue
+ * admission only; neither libdbus submission nor signal routing confirms
+ * receipt by a subscriber.
+ *
+ * Dmn_DbusInput's worker dispatches its connection and receives signals through
+ * an installed daemon-side match. The input filter accepts only the configured
+ * signal tuple with a byte-array body, checks payload and queue limits, copies
+ * the bytes into a bounded local queue, and wakes a thread blocked in read().
+ * read() returns the next queued payload; it does not read directly from the
+ * D-Bus connection. Both endpoints own separate connections and workers.
  */
 
 #ifndef DMN_DBUS_IO_HPP_
@@ -27,11 +50,15 @@ namespace dmn {
 /**
  * @brief Blocking input endpoint for the configured D-Bus byte signal.
  *
- * The endpoint subscribes to matching broadcast signals on its configured
- * bus and admits valid payloads to a bounded queue. Explicit shutdown drains
- * queued payloads and then makes read() throw operation_canceled. This class
- * is thread-safe; concurrent destruction with active method calls is not
- * supported.
+ * The endpoint installs a signal match on its configured bus daemon; its
+ * dispatch worker filters incoming messages for the configured signal tuple.
+ * Valid `ay` payloads within size and queue limits are copied to a
+ * bounded local FIFO and wake blocked readers; read() returns from that FIFO,
+ * not directly from libdbus. It does not subscribe to a direct connection
+ * with a sender process. Explicit shutdown preserves already queued payloads
+ * for reads; after they are consumed, read() throws operation_canceled. This
+ * class is thread-safe; concurrent destruction with active method calls is
+ * not supported.
  */
 class Dmn_DbusInput final : public Dmn_Io<std::string> {
 public:
@@ -83,9 +110,14 @@ private:
 /**
  * @brief Bounded output endpoint for the configured D-Bus byte signal.
  *
- * The endpoint emits matching broadcast signals on its configured bus.
- * Successful writes mean local queue admission only; they do not acknowledge
- * daemon transmission or delivery to any subscriber.
+ * The endpoint emits broadcast signals on its configured bus daemon. The bus
+ * routes each signal to connections whose installed matches accept it.
+ * write() validates and admits the payload to a bounded local FIFO; its worker
+ * turns each dequeued payload into an `ay` signal and submits it to libdbus.
+ * The worker also pumps connection I/O and monitors disconnects, and it
+ * applies backpressure based on libdbus's pending outgoing bytes. Successful
+ * writes mean local queue admission only; they do not acknowledge libdbus
+ * submission, daemon routing, or subscriber receipt.
  */
 class Dmn_DbusOutput final : public Dmn_Io<std::string> {
 public:

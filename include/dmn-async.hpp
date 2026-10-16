@@ -163,7 +163,7 @@ public:
   // previously submitted asynchronous task to finish. Calling wait() blocks
   // until the task has completed. If the task threw, the stored exception
   // will be rethrown to the waiter.
-  class Dmn_Async_Handle {
+  class Dmn_Async_Handle final {
     template <template <class> class> friend class Dmn_Async;
 
   public:

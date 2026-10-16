@@ -96,7 +96,9 @@ ADD_TEST_EXECUTABLE(dmn
 
 if (ENABLE_BLUEZ)
   target_link_libraries(dmn-test-umbrella PRIVATE dmn-bluez)
-elseif (ENABLE_DBUS)
+endif()
+
+if (ENABLE_DBUS)
   target_link_libraries(dmn-test-umbrella PRIVATE dmn-dbus)
 endif()
 
@@ -129,19 +131,34 @@ if (ENABLE_DBUS)
 endif()
 
 if (ENABLE_BLUEZ)
+  find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
+
+  add_test(NAME dmn-bluez-discovery-help
+             COMMAND dmn-bluez-discovery --help
+  )
+  set_tests_properties(dmn-bluez-discovery-help PROPERTIES LABELS "dmn")
+
+  add_test(NAME dmn-bluez-discovery-rejects-duplicate-option
+             COMMAND dmn-bluez-discovery --discovery --discovery
+  )
+  set_tests_properties(dmn-bluez-discovery-rejects-duplicate-option
+                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-bluez-device-list
   )
 
-  find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
                                DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
                                DMN_BLUEZ_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluez-discovery-test>"
   )
+
   target_link_libraries(dmn-test-bluez-device-list
                           PRIVATE dmn-bluez PkgConfig::DBUS
   )
+
   add_dependencies(dmn-test-bluez-device-list dmn-bluez-discovery-test)
 endif()
 
@@ -167,18 +184,22 @@ if (ENABLE_FAULT_INJECTION)
       dmn-test-fi-dbus-worker-start-failure
       dmn/timer/pipe/proc/pthread_create
     )
+
     ADD_TEST_FAULT_INJECTION_EXECUTABLE(
       dmn-test-fi-dbus-output-worker-start-failure
       dmn/dbus/output/worker_start
     )
+
     ADD_TEST_FAULT_INJECTION_EXECUTABLE(
       dmn-test-fi-dbus-input-allocation
       dmn/dbus/input/payload_allocation
     )
+
     ADD_TEST_FAULT_INJECTION_EXECUTABLE(
       dmn-test-fi-dbus-output-stall
       dmn/dbus/output/send_stall
     )
+
     ADD_TEST_FAULT_INJECTION_EXECUTABLE(
       dmn-test-fi-dbus-facade-rollback
       dmn/dbus/facade/output_endpoint_creation

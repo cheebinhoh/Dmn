@@ -42,7 +42,8 @@ constexpr auto kDiagnosticInterval{1s};
 struct DbusConnectionDeleter {
   void operator()(DBusConnection *connection) const noexcept {
     if (connection != nullptr) {
-      // Private connections are closed before their final libdbus reference.
+      // Close this endpoint's dedicated connection before releasing its final
+      // libdbus reference. The selected bus daemon itself is not owned here.
       dbus_connection_close(connection);
       dbus_connection_unref(connection);
     }
@@ -120,8 +121,11 @@ auto connectBus(const Dmn_DbusConfig &config) -> DbusConnectionPtr {
   DbusConnectionPtr connection{};
 
   if (config.bus_address.empty()) {
+    // The endpoint default is the standard session bus.
     connection.reset(dbus_bus_get_private(DBUS_BUS_SESSION, error.get()));
   } else {
+    // An explicit address can identify any bus daemon; registering this
+    // connection enables daemon-routed signals and match rules.
     connection.reset(
         dbus_connection_open_private(config.bus_address.c_str(), error.get()));
 
@@ -170,8 +174,10 @@ void reportDiagnostic(std::mutex &mutex,
 
 } // namespace
 
-// Keep cooperative stop conditions in the endpoint loops; Dmn_Proc owns and
-// joins the pthread without using its cancellation-based stopExec() path.
+// Each endpoint uses Dmn_Proc for one worker: input dispatches incoming
+// signals, while output submits queued signals and pumps its own connection.
+// Both loops stop cooperatively; shutdown joins the worker without using
+// Dmn_Proc's cancellation-based stopExec() path.
 class Dmn_DbusInput::Impl {
 public:
   explicit Impl(const Dmn_DbusConfig &config)
@@ -195,6 +201,7 @@ public:
         const std::string message{error.get()->message == nullptr
                                       ? "AddMatch failed"
                                       : error.get()->message};
+
         throw std::system_error(code, "Dmn_DbusInput: " + message);
       }
 
@@ -217,6 +224,8 @@ public:
   auto read() -> std::optional<std::string> {
     std::unique_lock lock{m_mutex};
 
+    // The D-Bus filter copies valid payloads here and notifies this condition;
+    // readers consume local queued data rather than dispatching the connection.
     m_ready.wait(lock, [this] {
       return !m_queue.empty() || m_stopping || m_status.terminal_error;
     });
@@ -280,6 +289,8 @@ private:
   }
 
   void handleMessage(DBusMessage *message) {
+    // The bus match narrows delivery, and this local check enforces the full
+    // configured tuple before interpreting the body as this transport's data.
     if (dbus_message_get_type(message) != DBUS_MESSAGE_TYPE_SIGNAL ||
         !dbus_message_has_path(message, m_config.signal_path.c_str()) ||
         !dbus_message_has_interface(message,
@@ -329,6 +340,8 @@ private:
       return;
     }
 
+    // Admission is bounded by both item count and total payload bytes. Copying
+    // here gives public readers owned storage independent of DBusMessage life.
     bool queueFull{};
     {
       std::lock_guard lock{m_mutex};
@@ -387,6 +400,8 @@ private:
         break;
       }
 
+      // Reading and dispatching delivers bus-routed signals to filterMessage;
+      // that callback validates and queues payloads for public read() calls.
       if (!dbus_connection_read_write_dispatch(
               m_connection.get(), static_cast<int>(kWorkerWait.count()))) {
         setTerminalError(std::make_error_code(std::errc::connection_reset),
@@ -486,7 +501,10 @@ public:
                               "Dmn_DbusOutput: payload exceeds limit");
     }
 
+    // This operation ends at bounded local queue admission. The worker owns
+    // all libdbus sends, so transport progress or peer receipt is not implied.
     std::lock_guard lock{m_mutex};
+
     if (m_status.terminal_error) {
       throw std::system_error(m_status.terminal_error,
                               "Dmn_DbusOutput: bus worker failed");
@@ -554,6 +572,8 @@ public:
       {
         std::lock_guard lock{m_mutex};
 
+        // Stop new writes but let sendLoop submit accepted items until its
+        // deadline; afterward it records whatever remains before close.
         m_stopping = true;
         m_shutdown_deadline =
             std::chrono::steady_clock::now() + kShutdownDeadline;
@@ -656,6 +676,9 @@ private:
         {
           std::unique_lock lock{m_mutex};
 
+          // Wake promptly for new work, but also revisit the connection on a
+          // finite cadence while idle to progress pending libdbus I/O and
+          // detect a disconnected bus.
           m_ready.wait_for(lock, kWorkerWait, [this, &workerStop] {
             return workerStop.load(std::memory_order_acquire) ||
                    !m_queue.empty();
@@ -675,6 +698,8 @@ private:
           if (!stallOutput && !m_queue.empty() &&
               static_cast<std::size_t>(std::max(outgoingBytes, 0L)) <
                   m_config.max_queued_bytes) {
+            // Keep the payload in the application queue until libdbus accepts
+            // the encoded signal; this bounds memory across both queues.
             payload = m_queue.front();
             havePayload = true;
           }
@@ -683,6 +708,9 @@ private:
         if (havePayload) {
           auto message{makeSignal(payload)};
 
+          // send() only admits the signal to libdbus's outgoing queue. The
+          // subsequent read/write/dispatch call drives transport I/O; neither
+          // step acknowledges routing or receipt by a signal subscriber.
           if (!dbus_connection_send(m_connection.get(), message.get(),
                                     nullptr)) {
             throw std::system_error(
@@ -701,6 +729,8 @@ private:
           }
         }
 
+        // Pump both directions even if there was no payload to submit: this
+        // advances pending output and observes connection failure.
         if (!dbus_connection_read_write_dispatch(
                 m_connection.get(), static_cast<int>(kWorkerWait.count()))) {
           throw std::system_error(
@@ -710,8 +740,10 @@ private:
 
         const auto pendingBytes{static_cast<std::size_t>(std::max(
             dbus_connection_get_outgoing_size(m_connection.get()), 0L))};
+
         {
           std::lock_guard lock{m_mutex};
+
           m_status.libdbus_outgoing_bytes = pendingBytes;
         }
       }

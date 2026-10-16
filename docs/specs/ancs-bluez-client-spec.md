@@ -2,21 +2,24 @@
 
 **Status:** Proposed follow-on to the separately specified first milestone:
 the BlueZ inventory and `--discovery` CLI in
-[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). No BlueZ
-inventory, discovery, GATT, or ANCS implementation is currently present in
-libDmn. GATT and ANCS are not prerequisites for shipping the discovery CLI.
+[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). The optional
+`dmn-bluez` inventory/discovery API and CLI, including explicit selected-device
+connect/disconnect, are implemented with extended lifecycle acceptance work
+still outstanding. A GATT client/backend and ANCS protocol client are not
+implemented. GATT and ANCS are not prerequisites for shipping the current CLI.
 The eventual ANCS delivery is a directly linked Linux application, not a
 system daemon. Hardware compatibility with the target iPhone and Linux/BlueZ
-combination is a release gate for GATT/ANCS, not for inventory/discovery.
+combination is a release gate for GATT/ANCS, not for inventory/discovery or
+basic device connection control.
 
 ## 1. Goal and scope
 
 The longer-term goal is a Dmn-owned C++ API that lets a Linux application
 discover BlueZ-known Bluetooth devices, select and connect to a device, use
 remote GATT, and optionally run an ANCS session with one user-selected iPhone
-over Bluetooth Low Energy. The first independently useful increment is only
-BlueZ inventory, explicit discovery, and the `dmn-bluez-discovery` CLI; its
-contract and build/test gates are specified in
+over Bluetooth Low Energy. The first independently useful increment is BlueZ
+inventory, explicit discovery, selected-device connection control, and the
+`dmn-bluez-discovery` CLI; its contract and build/test gates are specified in
 [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). Later
 increments add GATT and ANCS. The implementation calls BlueZ's documented
 system-D-Bus API through the generic Dmn client and does not depend on a
@@ -35,9 +38,10 @@ controls:
   update discovered-device results as BlueZ reports object/property changes.
   Discovery is explicit; enumeration of already-known devices does not start
   a scan.
-- Let the user select one device to connect. Do not auto-pair or auto-connect
-  discovered devices. Pairing remains in the desktop's normal BlueZ/user
-  workflow in V1.
+- Let the user explicitly connect or disconnect one selected device. Do not
+  call `Pair`, register a pairing agent, or auto-connect discovered devices.
+  BlueZ may still initiate its normal system pairing/authorization behavior
+  during `Device1.Connect`.
 - Expose the remote GATT operations required by the Dmn ANCS client through a
   Dmn-owned GATT abstraction backed directly by BlueZ D-Bus.
 - For ANCS, run one selected iPhone session, subscribe to Notification Source
@@ -69,7 +73,9 @@ The Linux host must establish a usable BLE GATT connection to the iPhone, the
 iPhone must publish ANCS on that connection, and iOS must authorize access to
 the required characteristics. A Bluetooth Classic profile connection does
 not provide ANCS. BlueZ reporting the device as `Connected` alone is not proof
-that the ANCS GATT session is usable.
+that the ANCS GATT session is usable. `Device1.ServicesResolved=true` is a
+separate milestone: it means BlueZ has resolved the device's service tree, not
+that ANCS is present, authorized, or usable.
 
 Apple's specification says all three ANCS characteristics require
 authorization and does not guarantee that ANCS is always present. It also
@@ -105,7 +111,7 @@ The layers have these responsibilities:
 
 | Layer | Responsibility | Must not own |
 |---|---|---|
-| `Dmn_BluezClient` | Dmn-owned C++ API for adapter/device snapshots, discovery sessions, selection, and live BlueZ state changes. Uses the generic Dmn D-Bus client API. | ANCS parsing, silent auto-pair/auto-connect, or claiming visibility of devices not known/reported by BlueZ |
+| `Dmn_BluezClient` | Implemented Dmn-owned C++ API for adapter/device snapshots, discovery sessions, live BlueZ state changes, and explicit selected-device connect/disconnect. Uses the generic Dmn D-Bus client API. | ANCS parsing, silent auto-pair/auto-connect, or claiming visibility of devices not known/reported by BlueZ |
 | `Dmn_GattClient` | Small asynchronous contract for connecting to a selected device, discovering a service and characteristics, subscribing/unsubscribing, and writing characteristic values. Reports connection, discovery, value, and error events. | BlueZ object paths, ANCS UUIDs, notification meaning, or desktop UI |
 | `Dmn_BluezGattClient` | Implements the GATT contract through BlueZ D-Bus objects and methods. Resolves BlueZ object paths, tracks `ServicesResolved`, subscribes to characteristic values, and maps BlueZ errors into typed errors. | ANCS parsing, notification policy, or persistence |
 | `Dmn_AncsClient` | Discovers ANCS characteristics, subscribes, parses source events and fragmented data responses, schedules serialized control-point requests, maintains bounded in-memory notification state, and emits typed domain events. | BlueZ-specific D-Bus calls, libnotify, application policy, or durable storage |
@@ -113,14 +119,16 @@ The layers have these responsibilities:
 
 Keep ANCS protocol code testable without Bluetooth hardware. Keep BlueZ support
 optional and Linux-specific; no BlueZ headers or D-Bus object paths should
-leak into the protocol-neutral ANCS API. The BlueZ backend is implemented and
-maintained inside the Dmn codebase as Dmn-owned C++ components. It builds on
-the reusable `Dmn_DbusClient` API in the optional `dmn-dbus` library; that
-generic Dmn layer uses the public `libdbus` C API directly for bus
-connections, method calls, typed values, properties, ObjectManager access,
-and signal dispatch. `libdbus` is the low-level D-Bus transport dependency,
-not a Bluetooth wrapper. Do not introduce `GDBus`/`dbus-glib`, `gattlib`,
-`tinyb`, or another third-party Bluetooth/GATT client wrapper into this path.
+leak into the protocol-neutral ANCS API. The implemented inventory/discovery
+client and any future GATT backend belong inside the Dmn codebase as Dmn-owned
+C++ components. The inventory/discovery client builds on the reusable
+`Dmn_DbusClient` API in the optional `dmn-dbus` library; a future GATT backend
+will use the same API. That generic Dmn layer uses the public `libdbus` C API
+directly for bus connections, method calls, typed values, properties,
+ObjectManager access, and signal dispatch. `libdbus` is the low-level D-Bus
+transport dependency, not a Bluetooth wrapper. Do not introduce
+`GDBus`/`dbus-glib`, `gattlib`, `tinyb`, or another third-party
+Bluetooth/GATT client wrapper into this path.
 
 This backend must use the BlueZ system bus and its documented `org.bluez`
 D-Bus interfaces; it must not use raw HCI/L2CAP in place of BlueZ and must not
@@ -221,17 +229,53 @@ prove the BLE and ANCS layers.
   states and errors.
 - Establish a BLE GATT connection using the Dmn BlueZ backend's direct
   `libdbus` calls to BlueZ; enumerate the remote GATT objects through
-  BlueZ's `org.freedesktop.DBus.ObjectManager`, and verify `ServicesResolved`
-  before discovery. `org.bluez.Device1.Connect` is a generic device/profile
-  operation, not an ANCS-specific connect request; BlueZ may connect
-  auto-connectable profiles, and other transports/profiles may need their own
-  documented connection operation. Its success and the `Connected` property
-  alone are not ANCS readiness. Readiness requires the ANCS service and
-  required characteristics to be discoverable and their operations to
-  succeed. Qualification must confirm that the selected BlueZ path uses the
-  LE bearer even on dual-mode adapters/devices. See the selected-device
-  connection boundary in
-  [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md#follow-on-connecting-to-a-selected-device).
+  BlueZ's `org.freedesktop.DBus.ObjectManager` only after observing
+  `Device1.ServicesResolved=true`. `org.bluez.Device1.Connect` is a generic
+  device/profile operation, not an ANCS-specific connect request; BlueZ may
+  connect auto-connectable profiles, and other transports/profiles may need
+  their own documented connection operation. Its success and the `Connected`
+  property alone are not GATT readiness. BlueZ may report
+  `Connected=true` while `ServicesResolved=false`; this is a valid
+  intermediate state. The client must await the property through BlueZ's
+  property-change/snapshot mechanism with a finite deadline, and must not
+  attempt to write the read-only property or assume a successful Connect call
+  means service discovery has completed.
+- Treat service resolution, service-tree inspection, and ANCS session readiness
+  as distinct states:
+
+  | State | Evidence | Does not imply |
+  |---|---|---|
+  | Link connected | `Device1.Connected=true` | GATT bearer, resolved services, ANCS |
+  | Services resolved | `Device1.ServicesResolved=true` | ANCS service presence, characteristic completeness, authorization |
+  | ANCS service found | Current remote `GattService1` object has ANCS UUID and belongs to selected Device | Required characteristics or usable permissions |
+  | ANCS characteristics found | Current child `GattCharacteristic1` objects match UUIDs and have compatible flags | iOS authorization or successful I/O |
+  | ANCS session ready | Required subscriptions/write behavior succeed under current authorization | Durable notification history or a future-session UID |
+
+  Enumerate current `GattService1` and `GattCharacteristic1` objects from
+  ObjectManager, filter by the selected device's `Device` property and service
+  parent relationship, and match UUIDs rather than relying on object-path
+  text, advertised data, `Device1.UUIDs`, or cached paths. BlueZ's GATT D-Bus
+  API presents remote services and characteristics as objects; characteristic
+  `Flags` and runtime operation results both matter. Re-query after disconnect,
+  BlueZ owner restart, or service change; do not persist GATT paths/handles as
+  durable identity.
+- For the ANCS notification-details client, require Notification Source,
+  Control Point, and Data Source. Apple describes Notification Source as
+  mandatory and Control Point/Data Source as optional in the service
+  definition, but the latter two are necessary for requesting and receiving
+  attributes. Check compatible notify/write flags before starting a session;
+  still handle authorization and operation errors at runtime.
+- ANCS session startup must register property-change handling and subscribe to
+  Data Source before enabling Notification Source. Successful
+  `StartNotify` on Notification Source is the session boundary at which ANCS
+  events may begin; a resolved tree or successful connection does not start
+  the ANCS protocol session. Session-scoped notification UIDs and in-flight
+  fragmented Data Source responses must be discarded on session teardown.
+- `Device1.Connect` does not guarantee selection of the LE bearer for a
+  dual-mode device. ANCS requires BLE GATT; establish and record the actual
+  bearer used in hardware qualification. Do not claim ANCS compatibility from
+  `Connected=true` or `ServicesResolved=true` alone. Any explicit bearer
+  preference/control is a separate future API requirement and must be opt-in.
 - Match service and characteristic UUIDs at runtime; do not persist GATT
   object paths across disconnects or service changes.
 - The ANCS primary service UUID is
@@ -592,6 +636,14 @@ Primary sources consulted:
 - BlueZ, [GATT D-Bus API](https://bluez.readthedocs.io/en/latest/gatt-api/):
   remote service/characteristic objects, `StartNotify`, `StopNotify`,
   `WriteValue`, and characteristic `Value` changes.
+- BlueZ, upstream
+  [`org.bluez.Device1`](https://github.com/bluez/bluez/blob/master/doc/org.bluez.Device.rst),
+  [`GattService1`](https://github.com/bluez/bluez/blob/master/doc/org.bluez.GattService.rst),
+  and
+  [`GattCharacteristic1`](https://github.com/bluez/bluez/blob/master/doc/org.bluez.GattCharacteristic.rst)
+  documentation: connection/bearer behavior, read-only
+  `ServicesResolved`, remote GATT object properties, flags, and characteristic
+  operations. Confirm details against the deployed BlueZ version.
 - BlueZ, [Device D-Bus API](https://bluez.readthedocs.io/en/latest/device-api/)
   and [Adapter D-Bus API](https://bluez.readthedocs.io/en/latest/adapter-api/):
   connection, pairing, service resolution, discovery sessions, and errors.

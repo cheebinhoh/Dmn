@@ -23,25 +23,38 @@
 namespace dmn {
 
 /**
- * @brief Selects the D-Bus daemon for one client-owned private connection.
+ * @brief Selects the D-Bus bus to which this client connects.
  *
- * Session and System select the standard bus by kind. Address selects the
- * exact caller-supplied bus address, which may identify an isolated/private
- * bus daemon. Every option creates a private connection owned by this client;
- * "private" does not mean a separate BusKind.
+ * Session and System select the standard buses by kind. Address selects the
+ * exact caller-supplied address of a D-Bus bus daemon; that address can refer
+ * to either standard bus or to a separately started private bus instance.
+ * Every option creates a dedicated client connection. "Private connection"
+ * means a connection owned by this client, not a separate bus daemon. Direct
+ * peer-to-peer connections to a service process are not supported.
  */
 enum class Dmn_DbusBusKind {
-  /** @brief Connect privately to the current user's session bus. */
+  /**
+   * @brief Open a dedicated client connection to the current user's session
+   * bus.
+   *
+   * This uses the shared session bus; it does not start a separate bus.
+   */
   Session,
 
-  /** @brief Connect privately to the machine's system bus. */
+  /**
+   * @brief Open a dedicated client connection to the machine's system bus.
+   *
+   * This uses the shared system bus; it does not start a separate bus.
+   */
   System,
 
   /**
-   * @brief Connect privately to the exact caller-supplied bus address.
+   * @brief Connect to the bus daemon at the exact caller-supplied address.
    *
-   * Use this for an isolated/private bus daemon or another explicitly
-   * addressed bus. No session/system fallback is attempted.
+   * Use this for an explicitly addressed system/session bus or a separately
+   * started private bus instance. The address must identify a bus daemon, not
+   * a service process accepting a direct peer-to-peer connection. No
+   * session/system fallback is attempted.
    */
   Address
 };
@@ -156,15 +169,20 @@ struct Dmn_DbusClientConfig {
   /**
    * @brief Selects the session bus, system bus, or explicit address.
    *
-   * All choices create a private connection owned by Dmn_DbusClient.
-   * Defaults to Session.
+   * All choices create a dedicated private connection owned by
+   * Dmn_DbusClient. The connection is private to this client; the selected
+   * system, session, or separately started private bus may be shared with
+   * other processes. Defaults to Session.
    */
   Dmn_DbusBusKind bus_kind{Dmn_DbusBusKind::Session};
 
   /**
-   * @brief Exact bus address, required only for `Dmn_DbusBusKind::Address`.
+   * @brief Exact bus-daemon address, required only for
+   * `Dmn_DbusBusKind::Address`.
    *
-   * Commonly used to connect to a test-owned private bus daemon.
+   * The address can identify a standard system/session bus or a separately
+   * started private bus instance. It must identify a bus daemon, not a
+   * service process listening for a direct peer-to-peer connection.
    */
   std::string bus_address;
 
@@ -204,7 +222,7 @@ struct Dmn_DbusSignalMatch {
  * no field indicates that a remote service applied an operation.
  */
 struct Dmn_DbusClientStatus {
-  /** @brief Whether the private connection is currently usable. */
+  /** @brief Whether this client's dedicated connection is currently usable. */
   bool connected{};
 
   /** @brief Whether shutdown has stopped new operation admission. */
@@ -269,7 +287,7 @@ struct Dmn_DbusClientStatus {
  * cancellation then has no effect because shutdown has already removed the
  * subscription.
  */
-class Dmn_DbusSubscription {
+class Dmn_DbusSubscription final {
 public:
   /**
    * @brief Construct an empty subscription token.
@@ -313,7 +331,7 @@ private:
  * get() consumes the result once, and waitFor() observes readiness without
  * consuming it.
  */
-class Dmn_DbusCall {
+class Dmn_DbusCall final {
 public:
   /** @brief Owned sequence of method-reply arguments. */
   using Arguments = std::vector<Dmn_DbusValue>;
@@ -365,10 +383,24 @@ private:
  * Architecture
  * ------------
  * This library is a D-Bus client, not a bus daemon or a D-Bus service. The
- * selected bus daemon must already be running and service methods/objects
- * must be exported by another process. A client sends a method call through
- * its private connection; the daemon routes it to the named service and
- * routes the reply back. Signals are delivered by daemon match rules.
+ * selected bus daemon must already be running. A service process connects to
+ * that same bus, owns the destination name, and exports the requested methods
+ * and objects. A client sends a method call through its dedicated private
+ * connection; the bus daemon routes it to the named service and routes the
+ * reply back. Signal subscriptions install match rules on the bus daemon.
+ * A method call receives either a method-return message or an error message;
+ * a signal is a one-way announcement without a method reply. This client uses
+ * one bidirectional connection: caller threads submit pending calls, while
+ * its dispatch worker reads and dispatches incoming replies. Completion
+ * decodes the result and fulfills the call future; call() waits on the caller
+ * thread, while callAsync() exposes a Dmn_DbusCall handle. The four D-Bus
+ * message types and full request/reply flow are described in
+ * docs/specs/dbus-client-spec.md.
+ *
+ * All supported connection choices use a bus daemon. In Address mode, the
+ * supplied address is opened and registered as a bus connection. This client
+ * does not support direct peer-to-peer D-Bus connections, where a client
+ * connects directly to a service process without bus routing.
  *
  * Dmn_DbusValue is the owned, type-preserving message-body model. The private
  * codec translates values to and from libdbus messages, so callers do not
@@ -396,10 +428,13 @@ private:
  *
  * Bus selection and security
  * --------------------------
- * Dmn_DbusClientConfig selects the session bus, system bus, or one explicit
- * address. In every case this client owns a private connection; an explicit
- * address may point to a separately started private bus daemon. The client
- * never starts or manages a daemon and never falls back to another bus.
+ * Dmn_DbusClientConfig selects the standard session bus, the standard system
+ * bus, or an explicit bus-daemon address. The explicit address may identify
+ * either standard bus or a separately started private bus instance. In every
+ * case this client owns a dedicated private connection to that bus; it does
+ * not start or manage the daemon. A private bus is a separate daemon instance,
+ * not another name for the client's private connection. This client does not
+ * support direct peer-to-peer connections and never falls back to another bus.
  * Successful connection does not imply permission to call every service:
  * the bus daemon's policy and the target service's authorization still apply.
  *
@@ -435,12 +470,12 @@ public:
   explicit Dmn_DbusClient(const Dmn_DbusClientConfig &config = {});
 
   /**
-   * @brief Stop the client and release its private bus connection.
+   * @brief Stop the client and release its dedicated bus connection.
    *
    * Equivalent to shutdown(). Destruction from a client-owned callback or
    * dispatch worker is unsupported because shutdown joins those workers.
    */
-  ~Dmn_DbusClient();
+  virtual ~Dmn_DbusClient();
 
   /**
    * @brief Stop admission, complete outstanding calls, and release resources.
@@ -471,7 +506,8 @@ public:
    * A zero timeout selects the configured default. The returned move-only
    * handle owns the result future and can cancel the operation.
    *
-   * @param destination Destination bus name.
+   * @param destination Well-known or unique destination name on the selected
+   *                    bus.
    * @param path Target object path.
    * @param interface Target interface.
    * @param member Method name.
@@ -491,7 +527,8 @@ public:
    *
    * Do not call this from the client's signal-callback worker.
    *
-   * @param destination Destination bus name.
+   * @param destination Well-known or unique destination name on the selected
+   *                    bus.
    * @param path Target object path.
    * @param interface Target interface.
    * @param member Method name.
@@ -509,7 +546,8 @@ public:
   /**
    * @brief Make a finite-timeout Properties.Get request.
    *
-   * @param destination Well-known or unique destination name.
+   * @param destination Well-known or unique destination name on the selected
+   *                    bus.
    * @param path Object path hosting the property.
    * @param interface Interface that declares the property.
    * @param property Property name.
@@ -523,7 +561,8 @@ public:
   /**
    * @brief Set a remote property using the Properties.Set method.
    *
-   * @param destination Well-known or unique destination name.
+   * @param destination Well-known or unique destination name on the selected
+   *                    bus.
    * @param path Object path hosting the property.
    * @param interface Interface that declares the property.
    * @param property Property name.
@@ -539,8 +578,10 @@ public:
   /**
    * @brief Subscribe to matching signals with owned arguments.
    *
-   * Both interface and member are required in `match`. The callback runs
-   * serially on the client-owned callback worker, not the dispatch thread.
+   * Both interface and member are required in `match`. The bus daemon applies
+   * the match to signals on the selected bus; this is not a subscription over
+   * a direct peer-to-peer connection. The callback runs serially on the
+   * client-owned callback worker, not the dispatch thread.
    *
    * @param match Constrained sender/interface/member/path match.
    * @param callback Receives owned decoded arguments.

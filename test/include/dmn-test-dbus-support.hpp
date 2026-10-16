@@ -152,17 +152,19 @@ private:
 };
 
 /**
- * @brief Own a temporary private session bus for one test process.
+ * @brief Own a temporary, isolated session-type bus daemon for one test.
  *
  * Construct this before creating D-Bus endpoints, then call
- * `setAsSessionBus()` so libdbus clients in the process connect to this bus.
- * The daemon is stopped when the owner is destroyed.
+ * `setAsSessionBus()` so clients using the session-bus selection connect to
+ * this test-owned daemon instead of the developer's normal session bus. This
+ * is a separate bus instance, not merely a private client connection. The
+ * daemon is stopped when the owner is destroyed.
  */
 class PrivateBus {
 public:
   /**
-   * @brief Start a private session daemon and capture its address and process
-   * ID.
+   * @brief Start an isolated session-type bus daemon and capture its address
+   * and process ID.
    *
    * @param daemonConfig Optional complete dbus-daemon XML configuration.
    */
@@ -203,14 +205,14 @@ public:
 
   ~PrivateBus() { stop(); }
 
-  /** @brief Return the address printed by the private session daemon. */
+  /** @brief Return the address printed by this test's isolated bus daemon. */
   auto address() const -> const std::string & { return m_address; }
 
   /** @brief Report whether daemon startup produced a usable address and PID. */
   auto valid() const -> bool { return !m_address.empty() && m_pid > 0; }
 
   /**
-   * @brief Set this private bus as the process's D-Bus session bus.
+   * @brief Make this test bus the process's selected D-Bus session bus.
    *
    * @return `true` on success; otherwise report the setup error and return
    *         `false`.
@@ -274,7 +276,7 @@ inline auto waitUntil(Predicate predicate,
 }
 
 /**
- * @brief Count names registered on a connected private D-Bus bus.
+ * @brief Count names registered on the connected test bus daemon.
  *
  * @throws std::runtime_error if the bus returns an invalid reply or the
  *         `ListNames` call fails.
@@ -315,7 +317,7 @@ inline auto connectionNameCount(DBusConnection *connection) -> std::size_t {
 }
 
 /**
- * @brief Count names registered with the private bus at @p address.
+ * @brief Count names registered with the bus daemon at @p address.
  *
  * @throws std::runtime_error if the bus cannot be queried or returns an
  *         invalid reply.
@@ -336,7 +338,7 @@ inline auto busNameCount(std::string_view address) -> std::size_t {
 }
 
 /**
- * @brief Count names currently registered with the private session bus.
+ * @brief Count names currently registered with the test session bus.
  *
  * @throws std::runtime_error if the bus cannot be queried or returns an
  *         invalid reply.

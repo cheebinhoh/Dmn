@@ -10,6 +10,13 @@
 
 namespace dmn::detail {
 
+/**
+ * @brief Initialize libdbus threading once for this process.
+ *
+ * Call before using any other libdbus API. This setup is independent of
+ * whether clients later connect to the standard system or session bus, or use
+ * an explicit address for either one or a separately started private bus.
+ */
 void initializeDbusRuntime();
 
 } // namespace dmn::detail

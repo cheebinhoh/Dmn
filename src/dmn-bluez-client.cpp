@@ -8,6 +8,7 @@
 #include "dmn-bluez-client.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <condition_variable>
 #include <deque>
 #include <map>
@@ -102,6 +103,15 @@ auto displayName(const std::optional<std::string> &alias,
   return address;
 }
 
+auto normalizedAddress(std::string_view address) -> std::string {
+  std::string normalized{address};
+  std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                 [](unsigned char character) {
+                   return static_cast<char>(std::toupper(character));
+                 });
+  return normalized;
+}
+
 } // namespace
 
 class Dmn_BluezClient::Impl {
@@ -186,7 +196,9 @@ public:
     m_subscriptions.push_back(std::move(*result));
   }
 
-  auto snapshot() -> Dmn_BluezValueResult<Dmn_BluezInventory> {
+  auto snapshot(
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezValueResult<Dmn_BluezInventory> {
     std::lock_guard snapshotLock{m_snapshot_mutex};
     {
       std::lock_guard lock{m_mutex};
@@ -195,8 +207,9 @@ public:
     }
 
     const auto droppedBefore = m_dbus.status().dropped_signal_messages;
-    auto result = m_dbus.call(std::string{kBluez}, "/",
-                              std::string{kObjectManager}, "GetManagedObjects");
+    auto result =
+        m_dbus.call(std::string{kBluez}, "/", std::string{kObjectManager},
+                    "GetManagedObjects", {}, timeout);
     auto callbacksDrained = m_dbus.drainSignalCallbacks();
     if (!callbacksDrained) {
       std::lock_guard eventOrderLock{m_event_order_mutex};
@@ -388,6 +401,77 @@ public:
                            : left.adapter_path < right.adapter_path;
               });
     return result;
+  }
+
+  auto deviceAction(const std::string &deviceSelector,
+                    const std::optional<std::string> &adapterSelector,
+                    std::chrono::milliseconds timeout,
+                    bool requestedConnected) -> Dmn_BluezResult {
+    std::lock_guard actionLock{m_device_action_mutex};
+    std::string devicePath;
+    bool alreadyInRequestedState{};
+    {
+      std::lock_guard lock{m_mutex};
+      if (!m_available) {
+        return std::unexpected(makeError(Dmn_DbusErrorKind::NotConnected,
+                                         "BlueZ inventory is not available"));
+      }
+
+      const bool isObjectPath = deviceSelector.starts_with('/');
+      const auto targetAddress = normalizedAddress(deviceSelector);
+      std::vector<const Dmn_BluezDevice *> matches;
+      for (const auto &[identity, device] : m_devices) {
+        (void)identity;
+        const bool matchesSelector =
+            isObjectPath ? device.object_path == deviceSelector
+                         : normalizedAddress(device.address) == targetAddress;
+        if (!matchesSelector) {
+          continue;
+        }
+
+        const auto adapter = m_adapters.find(device.adapter_path);
+        if (adapterSelector && (adapter == m_adapters.end() ||
+                                (normalizedAddress(adapter->second.address) !=
+                                     normalizedAddress(*adapterSelector) &&
+                                 device.adapter_path != *adapterSelector))) {
+          continue;
+        }
+
+        matches.push_back(&device);
+      }
+
+      if (matches.empty()) {
+        return std::unexpected(
+            makeError(Dmn_DbusErrorKind::InvalidArgument,
+                      "device is not present in the current BlueZ inventory: " +
+                          deviceSelector));
+      }
+
+      if (matches.size() != 1) {
+        return std::unexpected(
+            makeError(Dmn_DbusErrorKind::InvalidArgument,
+                      "device address is ambiguous; specify its adapter: " +
+                          deviceSelector));
+      }
+
+      const auto &device = *matches.front();
+      devicePath = device.object_path;
+      alreadyInRequestedState =
+          device.connected && *device.connected == requestedConnected;
+    }
+
+    if (alreadyInRequestedState) {
+      return {};
+    }
+
+    const auto result =
+        m_dbus.call(std::string{kBluez}, devicePath, std::string{kDevice},
+                    requestedConnected ? "Connect" : "Disconnect", {}, timeout);
+    if (!result) {
+      return std::unexpected(result.error());
+    }
+
+    return {};
   }
 
   auto startDiscovery(const std::string &adapterPath) -> Dmn_BluezResult {
@@ -1003,6 +1087,7 @@ private:
   std::mutex m_event_order_mutex;
   std::mutex m_snapshot_mutex;
   std::mutex m_discovery_mutex;
+  std::mutex m_device_action_mutex;
   std::mutex m_recovery_mutex;
   std::condition_variable m_recovery_condition;
   std::thread m_recovery;
@@ -1038,12 +1123,27 @@ void Dmn_BluezClient::setEventHandler(EventHandler handler) {
   m_impl->setEventHandler(std::move(handler));
 }
 
-auto Dmn_BluezClient::snapshot() -> Dmn_BluezValueResult<Dmn_BluezInventory> {
-  return m_impl->snapshot();
+auto Dmn_BluezClient::snapshot(std::chrono::milliseconds timeout)
+    -> Dmn_BluezValueResult<Dmn_BluezInventory> {
+  return m_impl->snapshot(timeout);
 }
 
 auto Dmn_BluezClient::devices() const -> std::vector<Dmn_BluezDevice> {
   return m_impl->devices();
+}
+
+auto Dmn_BluezClient::connectDevice(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout, true);
+}
+
+auto Dmn_BluezClient::disconnectDevice(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout, false);
 }
 
 auto Dmn_BluezClient::startDiscovery(const std::string &adapterPath)

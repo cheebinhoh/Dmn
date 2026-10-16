@@ -40,7 +40,7 @@
 
 namespace dmn {
 
-class Dmn_DMesgNet_Kafka {
+class Dmn_DMesgNet_Kafka final {
 public:
   /**
    * @brief Construct a @c Dmn_DMesgNet_Kafka by creating a Kafka consumer and

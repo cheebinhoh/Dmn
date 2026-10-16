@@ -33,6 +33,7 @@ if (ENABLE_BLUEZ)
   if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "ENABLE_BLUEZ=ON is supported only on Linux")
   endif()
+
   if (NOT ENABLE_DBUS)
     message(FATAL_ERROR "ENABLE_BLUEZ=ON requires ENABLE_DBUS=ON")
   endif()
@@ -45,6 +46,7 @@ endif()
 
 if (ENABLE_VALGRIND)
   find_program(VALGRIND_EXECUTABLE valgrind)
+
   if (NOT VALGRIND_EXECUTABLE)
     message(FATAL_ERROR "ENABLE_VALGRIND=ON but valgrind was not found in PATH")
   endif()
@@ -59,6 +61,7 @@ find_package(ICU REQUIRED COMPONENTS uc)
 # Fault injection is opt-in; prefer installed libfiu, otherwise fetch and build it.
 if (ENABLE_FAULT_INJECTION)
   find_package(PkgConfig QUIET)
+
   if (PkgConfig_FOUND)
     pkg_check_modules(LIBFIU QUIET IMPORTED_TARGET libfiu)
   endif()
@@ -124,13 +127,13 @@ message(STATUS "find or fetching protobuf...")
 find_package(Protobuf QUIET)
 
 if (NOT Protobuf_FOUND)
-FetchContent_Declare(protobuf
-                       GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-                       GIT_TAG        v30.0-rc1
-                       EXCLUDE_FROM_ALL
-)
+  FetchContent_Declare(protobuf
+                         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+                         GIT_TAG        v30.0-rc1
+                         EXCLUDE_FROM_ALL
+  )
 
-FetchContent_MakeAvailable(protobuf)
+  FetchContent_MakeAvailable(protobuf)
 endif()
 
 message(STATUS "find or fetching googletest...")
@@ -144,6 +147,9 @@ FetchContent_Declare(googletest
 FetchContent_MakeAvailable(googletest)
 
 message(STATUS "fetching rdkafka...")
+# librdkafka registers its own CTest suite, which is not part of Dmn's test
+# suite and requires a separate test runner (and, for some cases, a broker).
+set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL "Build librdkafka tests" FORCE)
 FetchContent_Declare(rdkafka
                        GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
                        GIT_TAG        v2.8.0
@@ -154,6 +160,7 @@ FetchContent_MakeAvailable(rdkafka)
 
 string(REPLACE "-src" "-build" rdkafka_BUILD_DIR "${rdkafka_SOURCE_DIR}")
 set(rdkafka_INCLUDE ${rdkafka_SOURCE_DIR}/src)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   message(STATUS "Running on macOS")
   set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib)

@@ -40,6 +40,7 @@ struct ConnectionDeleter {
     }
   }
 };
+
 using ConnectionPtr = std::unique_ptr<DBusConnection, ConnectionDeleter>;
 
 struct MessageDeleter {
@@ -49,6 +50,7 @@ struct MessageDeleter {
     }
   }
 };
+
 using MessagePtr = std::unique_ptr<DBusMessage, MessageDeleter>;
 
 class ErrorGuard {
@@ -164,6 +166,7 @@ auto messageSize(DBusMessage *message) -> std::size_t {
   }
 
   dbus_free(bytes);
+
   return static_cast<std::size_t>(length);
 }
 
@@ -218,30 +221,39 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
 
   if (signature == "b") {
     const dbus_bool_t data = value.asBool() ? TRUE : FALSE;
+
     appendBasic(iter, DBUS_TYPE_BOOLEAN, data);
   } else if (signature == "n") {
     const dbus_int16_t data = value.asInt16();
+
     appendBasic(iter, DBUS_TYPE_INT16, data);
   } else if (signature == "q") {
     const dbus_uint16_t data = value.asUint16();
+
     appendBasic(iter, DBUS_TYPE_UINT16, data);
   } else if (signature == "i") {
     const dbus_int32_t data = value.asInt32();
+
     appendBasic(iter, DBUS_TYPE_INT32, data);
   } else if (signature == "u") {
     const dbus_uint32_t data = value.asUint32();
+
     appendBasic(iter, DBUS_TYPE_UINT32, data);
   } else if (signature == "x") {
     const dbus_int64_t data = value.asInt64();
+
     appendBasic(iter, DBUS_TYPE_INT64, data);
   } else if (signature == "t") {
     const dbus_uint64_t data = value.asUint64();
+
     appendBasic(iter, DBUS_TYPE_UINT64, data);
   } else if (signature == "d") {
     const double data = value.asDouble();
+
     appendBasic(iter, DBUS_TYPE_DOUBLE, data);
   } else if (signature == "y") {
     const unsigned char data = value.asByte();
+
     appendBasic(iter, DBUS_TYPE_BYTE, data);
   } else if (signature == "s" || signature == "o" || signature == "g") {
     const auto &text = signature == "s"   ? value.asString()
@@ -258,6 +270,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     const int type = signature == "s"   ? DBUS_TYPE_STRING
                      : signature == "o" ? DBUS_TYPE_OBJECT_PATH
                                         : DBUS_TYPE_SIGNATURE;
+
     appendBasic(iter, type, data);
   } else if (signature == "ay") {
     const auto &bytes = value.asByteArray();
@@ -1009,14 +1022,17 @@ public:
         m_shutdownDiscardedSignalMessages.load();
     result.shutdown_discarded_signal_bytes =
         m_shutdownDiscardedSignalBytes.load();
+
     {
       std::lock_guard lock{m_callbackMutex};
+
       result.queued_signal_messages = queuedSignalCountLocked();
       result.queued_signal_bytes = m_queuedSignalBytes;
     }
 
     {
       std::lock_guard lock{m_mutex};
+
       result.terminal_error = m_terminalError;
     }
 
@@ -1273,6 +1289,9 @@ private:
     ErrorGuard error;
 
     if (m_config.bus_kind == Dmn_DbusBusKind::Address) {
+      // Explicit addresses still connect to a bus daemon, not directly to a
+      // service. Registration enables named destinations and daemon-managed
+      // signal match rules.
       if (m_config.bus_address.find(':') == std::string::npos) {
         throw std::system_error(
             std::make_error_code(std::errc::invalid_argument),
@@ -1319,6 +1338,8 @@ private:
         m_connection.reset();
       }
     } else {
+      // Session and System choose the standard daemon by kind while libdbus
+      // still gives this client its own dedicated connection.
       const auto bus = m_config.bus_kind == Dmn_DbusBusKind::System
                            ? DBUS_BUS_SYSTEM
                            : DBUS_BUS_SESSION;
@@ -1393,8 +1414,6 @@ private:
         !dbus_connection_send(m_connection.get(), request.get(), nullptr)) {
       return false;
     }
-
-    dbus_connection_flush(m_connection.get());
 
     return true;
   }
@@ -1623,6 +1642,7 @@ private:
           }
 
           m_signalQueue.clear();
+
           return;
         }
 
@@ -1638,6 +1658,7 @@ private:
 
       if (signal.completion) {
         signal.completion->set_value();
+
         continue;
       }
 

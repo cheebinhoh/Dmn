@@ -19,21 +19,27 @@ namespace dmn {
  * @brief Configuration shared by the D-Bus input and output endpoints.
  *
  * Endpoints carry byte arrays in D-Bus signals. The default routing tuple is
- * reserved for Dmn_DMesgNet; callers can select another tuple for unrelated
- * byte-oriented protocols. The bus daemon must already be running; this
- * configuration does not start or manage a daemon or export a Dmn service.
- * An empty bus address selects the session bus. An explicit address selects
- * that exact daemon (for example, the system bus or an isolated test bus).
- * Each endpoint opens its own private connection to the selected daemon, and
- * an address failure never falls back to another bus.
+ * the Dmn_DMesgNet wire contract; callers can select another tuple for
+ * unrelated byte-oriented protocols.
+ *
+ * The bus daemon must already be running. An empty address selects the
+ * standard session bus. A non-empty address selects that exact bus daemon; it
+ * may be the standard system bus, an explicitly addressed session bus, or a
+ * separately started private bus instance. "Private bus" means a separate
+ * daemon instance; it is distinct from the private client connection that
+ * each endpoint opens to any selected bus. This configuration neither starts
+ * a daemon nor exports a Dmn D-Bus service, and connection failure never
+ * falls back to another bus.
  */
 struct Dmn_DbusConfig {
   /**
-   * @brief Bus daemon address; empty selects the session bus.
+   * @brief Bus daemon address; empty selects the standard session bus.
    *
-   * A non-empty value is used exactly as supplied. It may identify the system
-   * bus or a separate test bus. This selects a daemon, not a shared Dmn
-   * service; each input/output endpoint opens its own private connection.
+   * A non-empty value is used exactly as supplied and must identify a running
+   * bus daemon. It can address the system bus, an explicitly addressed
+   * session bus, or a separately started private bus instance. It
+   * selects a bus, not a Dmn service. Each input/output endpoint opens its own
+   * dedicated private connection to that bus.
    */
   std::string bus_address{};
 
