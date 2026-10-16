@@ -106,6 +106,10 @@ auto Dmn_Proc::exec(const Dmn_Proc::Task &fnc) -> bool {
  */
 auto Dmn_Proc::getState() const -> Dmn_Proc::State { return m_state; }
 
+auto Dmn_Proc::getThreadId() const -> Dmn_Proc::ThreadId {
+  return m_thread_id.load(std::memory_order_acquire);
+}
+
 /**
  * @brief Sets a new state and returns the previous state.
  *
@@ -281,6 +285,9 @@ auto Dmn_Proc::runFnInThreadHelper(void *context) -> void * {
   auto *proc = static_cast<Dmn_Proc *>(context);
   int old_state{};
   int err{};
+
+  proc->m_thread_id.store(std::this_thread::get_id(),
+                          std::memory_order_release);
 
   try {
     // Enable thread cancellation with deferred cancellation type

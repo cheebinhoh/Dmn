@@ -6,6 +6,7 @@
  */
 
 #include "dmn-bluez-client.hpp"
+#include "dmn-proc.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -15,7 +16,6 @@
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
-#include <thread>
 #include <utility>
 
 namespace dmn {
@@ -81,6 +81,7 @@ auto findInterface(const Dmn_DbusValue &interfaces,
 
 auto adapterForDevicePath(const std::string &path) -> std::string {
   const auto separator = path.rfind('/');
+
   return separator == std::string::npos ? std::string{}
                                         : path.substr(0, separator);
 }
@@ -109,6 +110,7 @@ auto normalizedAddress(std::string_view address) -> std::string {
                  [](unsigned char character) {
                    return static_cast<char>(std::toupper(character));
                  });
+
   return normalized;
 }
 
@@ -116,6 +118,8 @@ auto normalizedAddress(std::string_view address) -> std::string {
 
 class Dmn_BluezClient::Impl {
 public:
+  enum class DeviceAction { Connect, Disconnect, Pair };
+
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_dbus(makeDbusConfig(config)) {
     m_loading = true;
@@ -136,8 +140,20 @@ public:
                "NameOwnerChanged",
                "/org/freedesktop/DBus",
                {}});
-    m_event_worker = std::thread{[this] { eventLoop(); }};
-    m_recovery = std::thread{[this] { recoveryLoop(); }};
+    if (!m_event_worker.exec([this] { eventLoop(); })) {
+      throw std::runtime_error("unable to start BlueZ event worker");
+    }
+
+    if (!m_recovery.exec([this] { recoveryLoop(); })) {
+      {
+        std::lock_guard lock{m_event_mutex};
+        m_event_stopping = true;
+      }
+
+      m_event_condition.notify_all();
+      (void)m_event_worker.wait();
+      throw std::runtime_error("unable to start BlueZ recovery worker");
+    }
   }
 
   ~Impl() {
@@ -147,9 +163,7 @@ public:
     }
 
     m_recovery_condition.notify_all();
-    if (m_recovery.joinable()) {
-      m_recovery.join();
-    }
+    (void)m_recovery.wait();
 
     (void)stopDiscovery();
     for (auto &subscription : m_subscriptions) {
@@ -163,9 +177,7 @@ public:
     }
 
     m_event_condition.notify_all();
-    if (m_event_worker.joinable()) {
-      m_event_worker.join();
-    }
+    (void)m_event_worker.wait();
   }
 
   static auto
@@ -221,6 +233,7 @@ public:
       m_adapters.clear();
       m_devices.clear();
       m_device_paths.clear();
+
       return std::unexpected(callbacksDrained.error());
     }
 
@@ -274,6 +287,7 @@ public:
         m_adapters.clear();
         m_devices.clear();
         m_device_paths.clear();
+
         return std::unexpected(makeError(
             Dmn_DbusErrorKind::ResourceLimit,
             "D-Bus signal queue overflow during BlueZ snapshot; retry"));
@@ -287,6 +301,7 @@ public:
         m_adapters.clear();
         m_devices.clear();
         m_device_paths.clear();
+
         return std::unexpected(makeError(
             Dmn_DbusErrorKind::ResourceLimit,
             "BlueZ inventory staging queue overflow; retry snapshot"));
@@ -337,6 +352,7 @@ public:
         m_adapters.clear();
         m_devices.clear();
         m_device_paths.clear();
+
         return std::unexpected(
             makeError(Dmn_DbusErrorKind::Codec, error.what()));
       }
@@ -382,6 +398,7 @@ public:
                            ? left.address < right.address
                            : left.adapter_path < right.adapter_path;
               });
+
     return Dmn_BluezInventory{std::move(adapters), std::move(devices)};
   }
 
@@ -400,13 +417,14 @@ public:
                            ? left.address < right.address
                            : left.adapter_path < right.adapter_path;
               });
+
     return result;
   }
 
   auto deviceAction(const std::string &deviceSelector,
                     const std::optional<std::string> &adapterSelector,
                     std::chrono::milliseconds timeout,
-                    bool requestedConnected) -> Dmn_BluezResult {
+                    DeviceAction action) -> Dmn_BluezResult {
     std::lock_guard actionLock{m_device_action_mutex};
     std::string devicePath;
     bool alreadyInRequestedState{};
@@ -456,8 +474,13 @@ public:
 
       const auto &device = *matches.front();
       devicePath = device.object_path;
-      alreadyInRequestedState =
-          device.connected && *device.connected == requestedConnected;
+      if (action == DeviceAction::Pair) {
+        alreadyInRequestedState = device.paired && *device.paired;
+      } else {
+        const bool requestedConnected = action == DeviceAction::Connect;
+        alreadyInRequestedState =
+            device.connected && *device.connected == requestedConnected;
+      }
     }
 
     if (alreadyInRequestedState) {
@@ -466,7 +489,10 @@ public:
 
     const auto result =
         m_dbus.call(std::string{kBluez}, devicePath, std::string{kDevice},
-                    requestedConnected ? "Connect" : "Disconnect", {}, timeout);
+                    action == DeviceAction::Connect      ? "Connect"
+                    : action == DeviceAction::Disconnect ? "Disconnect"
+                                                         : "Pair",
+                    {}, timeout);
     if (!result) {
       return std::unexpected(result.error());
     }
@@ -545,6 +571,7 @@ public:
     std::lock_guard lock{m_mutex};
     m_discovery_active = true;
     m_discovery_starting = false;
+
     return {};
   }
 
@@ -570,6 +597,7 @@ public:
     m_discovery_active = false;
     m_discovery_starting = false;
     m_discovery_adapter.clear();
+
     return {};
   }
 
@@ -606,6 +634,7 @@ private:
     adapter.name =
         displayName(adapter.alias, adapter.reported_name, adapter.address);
     adapter.powered = boolProperty(properties, "Powered");
+
     return adapter;
   }
 
@@ -623,6 +652,7 @@ private:
     device.paired = boolProperty(properties, "Paired");
     device.connected = boolProperty(properties, "Connected");
     device.services_resolved = boolProperty(properties, "ServicesResolved");
+
     return device;
   }
 
@@ -1046,12 +1076,14 @@ private:
             : adapter->second.address;
     const auto deviceAddress =
         device.address.empty() ? device.object_path : device.address;
+
     return {adapterIdentity, deviceAddress};
   }
 
   auto findDeviceByPath(const std::string &path)
       -> std::map<DeviceIdentity, Dmn_BluezDevice>::iterator {
     const auto pathEntry = m_device_paths.find(path);
+
     return pathEntry == m_device_paths.end()
                ? m_devices.end()
                : m_devices.find(pathEntry->second);
@@ -1077,6 +1109,7 @@ private:
 
     m_device_paths[device.object_path] = identity;
     m_devices[identity] = std::move(device);
+
     return inserted;
   }
 
@@ -1090,11 +1123,11 @@ private:
   std::mutex m_device_action_mutex;
   std::mutex m_recovery_mutex;
   std::condition_variable m_recovery_condition;
-  std::thread m_recovery;
+  Dmn_Proc m_recovery{"dmn-bluez-recovery"};
   std::mutex m_event_mutex;
   std::condition_variable m_event_condition;
   std::deque<Dmn_BluezEvent> m_event_queue;
-  std::thread m_event_worker;
+  Dmn_Proc m_event_worker{"dmn-bluez-event"};
   bool m_recovery_requested{};
   bool m_recovery_stopping{};
   bool m_event_handlerAvailable{};
@@ -1136,14 +1169,24 @@ auto Dmn_BluezClient::connectDevice(
     const std::string &deviceSelector,
     const std::optional<std::string> &adapterSelector,
     std::chrono::milliseconds timeout) -> Dmn_BluezResult {
-  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout, true);
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::Connect);
+}
+
+auto Dmn_BluezClient::pairDevice(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::Pair);
 }
 
 auto Dmn_BluezClient::disconnectDevice(
     const std::string &deviceSelector,
     const std::optional<std::string> &adapterSelector,
     std::chrono::milliseconds timeout) -> Dmn_BluezResult {
-  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout, false);
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::Disconnect);
 }
 
 auto Dmn_BluezClient::startDiscovery(const std::string &adapterPath)

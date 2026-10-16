@@ -432,6 +432,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_UINT16: {
     dbus_uint16_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::uint16_t>(value)};
   }
 
@@ -671,20 +672,27 @@ public:
           "Dmn_DbusClient: unable to install message filter");
     }
 
-    m_dispatch = std::thread{[this] { dispatchLoop(); }};
+    if (!m_dispatch.exec([this] { dispatchLoop(); })) {
+      dbus_connection_remove_filter(m_connection.get(), filter, this);
 
-    try {
-      m_callbacks = std::thread{[this] { callbackLoop(); }};
-    } catch (...) {
+      throw std::runtime_error("unable to start D-Bus dispatch worker");
+    }
+
+    if (!m_callbacks.exec([this] { callbackLoop(); })) {
       m_stopping = true;
+      m_callbackCondition.notify_all();
 
-      if (m_dispatch.joinable()) {
-        m_dispatch.join();
+      try {
+        (void)m_dispatch.wait();
+      } catch (...) {
+        dbus_connection_remove_filter(m_connection.get(), filter, this);
+
+        throw;
       }
 
       dbus_connection_remove_filter(m_connection.get(), filter, this);
 
-      throw;
+      throw std::runtime_error("unable to start D-Bus callback worker");
     }
 
     std::unique_lock lock{m_mutex};
@@ -979,6 +987,7 @@ public:
       }
 
       (void)sendMatchCommand("RemoveMatch", rule);
+
       return std::unexpected(makeError(Dmn_DbusErrorKind::Codec,
                                        "malformed D-Bus AddMatch reply"));
     }
@@ -1004,10 +1013,8 @@ public:
     (void)sendMatchCommand("RemoveMatch", rule);
   }
 
-  auto dispatchThreadId() const -> std::thread::id {
-    std::lock_guard lock{m_mutex};
-
-    return m_dispatch_id;
+  auto dispatchThreadId() const -> Dmn_Proc::ThreadId {
+    return m_dispatch.getThreadId();
   }
 
   auto status() const -> Dmn_DbusClientStatus {
@@ -1040,10 +1047,14 @@ public:
   }
 
   auto drainSignalCallbacks() -> Dmn_DbusResult<void> {
-    if (std::this_thread::get_id() == m_callbacks.get_id()) {
-      return std::unexpected(
-          makeError(Dmn_DbusErrorKind::InvalidArgument,
-                    "cannot drain D-Bus callbacks from the callback worker"));
+    {
+      std::lock_guard lock{m_callbackMutex};
+
+      if (std::this_thread::get_id() == m_callbacks.getThreadId()) {
+        return std::unexpected(
+            makeError(Dmn_DbusErrorKind::InvalidArgument,
+                      "cannot drain D-Bus callbacks from the callback worker"));
+      }
     }
 
     std::lock_guard drainLock{m_callbackDrainMutex};
@@ -1122,13 +1133,9 @@ public:
     m_stopping = true;
     m_callbackCondition.notify_all();
 
-    if (m_dispatch.joinable()) {
-      m_dispatch.join();
-    }
+    (void)m_dispatch.wait();
 
-    if (m_callbacks.joinable()) {
-      m_callbacks.join();
-    }
+    (void)m_callbacks.wait();
 
     if (m_connection != nullptr) {
       dbus_connection_remove_filter(m_connection.get(), filter, this);
@@ -1537,7 +1544,6 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      m_dispatch_id = std::this_thread::get_id();
       m_dispatchReady = true;
     }
 
@@ -1679,15 +1685,14 @@ private:
   std::atomic_bool m_accepting{true};
   std::atomic_bool m_shutdownStarted{};
   std::atomic_size_t m_in_flight{};
-  std::thread m_dispatch;
-  std::thread m_callbacks;
+  Dmn_Proc m_dispatch{"dmn-dbus-dispatch"};
+  Dmn_Proc m_callbacks{"dmn-dbus-callback"};
   mutable std::mutex m_mutex;
   std::condition_variable m_pendingCondition;
   std::condition_variable m_dispatchCondition;
   std::unordered_map<std::uint64_t, Subscription> m_subscriptions;
   std::unordered_map<CallRequest *, Pending> m_pending;
   std::uint64_t m_next_subscription{};
-  std::thread::id m_dispatch_id;
   bool m_dispatchReady{};
   mutable std::mutex m_callbackMutex;
   std::mutex m_callbackDrainMutex;
@@ -1863,7 +1868,7 @@ auto Dmn_DbusClient::drainSignalCallbacks() -> Dmn_DbusResult<void> {
   return m_impl->drainSignalCallbacks();
 }
 
-auto Dmn_DbusClient::dispatchThreadId() const -> std::thread::id {
+auto Dmn_DbusClient::dispatchThreadId() const -> Dmn_Proc::ThreadId {
   return m_impl->dispatchThreadId();
 }
 

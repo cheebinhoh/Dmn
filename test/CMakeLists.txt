@@ -147,16 +147,25 @@ if (ENABLE_BLUEZ)
 
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-bluez-device-list
+                        dmn-test-bluez-gatt-client
   )
+
+  foreach(test_target IN ITEMS
+          dmn-test-bluez-device-list
+          dmn-test-bluez-gatt-client)
+    target_compile_definitions(${test_target}
+                                 PRIVATE
+                                 DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
+    )
+
+    target_link_libraries(${test_target}
+                          PRIVATE dmn-bluez PkgConfig::DBUS
+    )
+  endforeach()
 
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
-                               DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
                                DMN_BLUEZ_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluez-discovery-test>"
-  )
-
-  target_link_libraries(dmn-test-bluez-device-list
-                          PRIVATE dmn-bluez PkgConfig::DBUS
   )
 
   add_dependencies(dmn-test-bluez-device-list dmn-bluez-discovery-test)

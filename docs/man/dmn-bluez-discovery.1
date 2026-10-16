@@ -30,6 +30,14 @@ dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth ad
 .B --adapter
 .I address-or-object-path
 ]
+.B --pair
+.I device-address-or-object-path
+.br
+.B dmn-bluez-discovery
+[
+.B --adapter
+.I address-or-object-path
+]
 .B --disconnect
 .I device-address-or-object-path
 .SH DESCRIPTION
@@ -45,7 +53,8 @@ changes, and removals while discovery is active. Press Ctrl-C or send SIGTERM
 to stop the scan. The program stops only the discovery session it started.
 .PP
 Use
-.B --connect
+.B --pair ,
+.B --connect ,
 or
 .B --disconnect
 to explicitly act on one device selected by Bluetooth address or current
@@ -55,6 +64,16 @@ to scan for that selected target for up to 60 seconds; it never connects to
 other scan results. A successful action is reported only after BlueZ's
 .B Connected
 state reflects the requested result.
+.PP
+Pair calls BlueZ
+.B Device1.Pair
+only for an unpaired device and waits until
+.B Paired
+is observed. Connect/disconnect actions similarly wait for BlueZ's
+.B Connected
+state. Pairing may itself connect the device and resolve services. The
+program relies on BlueZ's configured default pairing agent and does not
+register its own agent or mark the device trusted.
 .PP
 This program reports devices known to BlueZ. It cannot guarantee that every
 radio-visible device will be found; adapter capability, BlueZ policy, transport,
@@ -81,6 +100,13 @@ to wait up to 60 seconds for that specific target. The connection request and
 state confirmation have a 30-second deadline. This does not call
 .BR Device1.Pair ,
 but BlueZ may start its normal system pairing or authorization flow if needed.
+.TP
+.BI "--pair " device-address-or-object-path
+Pair exactly one known device using BlueZ's default agent. An already paired
+device is an idempotent success. Pairing does not start discovery and cannot
+be combined with
+.BR --discovery .
+The action has a 120-second deadline to allow normal user-agent interaction.
 .TP
 .BI "--disconnect " device-address-or-object-path
 Request disconnection of exactly one known device. This does not remove its
@@ -122,11 +148,17 @@ Live scan rows use
 .BR changed ,
 or
 .BR removed .
-Explicit connection actions add a final
-.B connected
+Explicit device actions add a final
+.B paired ,
+.B connected ,
 or
 .B disconnected
 row only after the requested state is observed.
+Explicit pair, connect, and disconnect actions omit the initial full inventory
+and unrelated device-change rows; they print the CSV header and only the
+selected device's final action row. Use
+.B --discovery
+to view full inventory and live device changes.
 Diagnostics and errors are written to standard error.
 .SH EXAMPLES
 Print known adapters and devices without starting discovery:
@@ -146,15 +178,22 @@ Scan by BlueZ object path:
 .nf
 dmn-bluez-discovery --discovery --adapter /org/bluez/hci0
 .fi
+.PP
+Explicitly pair a known device using BlueZ's configured default agent:
+.PP
+.nf
+dmn-bluez-discovery --pair 'AA:BB:CC:DD:EE:FF'
+.fi
 .SH SAFETY
 Inventory and scan-only modes are read-only with respect to devices. Explicit
-connection actions call BlueZ
+pair/connect/disconnect actions call BlueZ
+.B Device1.Pair ,
 .B Device1.Connect
 or
 .BR Device1.Disconnect .
-The program does not call
-.B Device1.Pair
-or register a pairing agent, though BlueZ may initiate system pairing or
+Pairing relies on BlueZ's default agent. The program never automatically pairs
+or connects during inventory or scanning. It does not register a pairing agent
+or set the device's Trusted property. BlueZ may initiate system pairing or
 authorization during a connection. Disconnect may interrupt other
 applications' active profiles. These actions and scanning require permission
 under local system D-Bus policy. The program uses the system bus and does not
@@ -186,10 +225,11 @@ The requested adapter does not match an available powered adapter.
 D-Bus connection, policy, inventory, or other runtime error.
 .TP
 .B 9
-Selected device was not found or its address is ambiguous.
+Selected device was not found or its address is ambiguous, or a D-Bus
+invalid-argument error occurred.
 .TP
 .B 10
-BlueZ rejected the requested connection or disconnection action.
+BlueZ rejected the requested pairing, connection, or disconnection action.
 .TP
 .B 11
 The selected device did not reach the requested state before its deadline, or

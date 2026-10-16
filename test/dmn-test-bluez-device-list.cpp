@@ -101,7 +101,7 @@ void appendInt16Variant(DBusMessageIter &properties, const char *name,
 void appendInterface(DBusMessageIter &interfaces, const char *name,
                      bool adapter, int deviceNameMode = 0,
                      const char *address = nullptr, bool powered = true,
-                     bool connected = false) {
+                     bool connected = false, bool paired = true) {
   DBusMessageIter interfaceEntry;
   DBusMessageIter properties;
   dbus_message_iter_open_container(&interfaces, DBUS_TYPE_DICT_ENTRY, nullptr,
@@ -125,7 +125,7 @@ void appendInterface(DBusMessageIter &interfaces, const char *name,
       appendStringVariant(properties, "Alias", "Headset, \"One\"");
     }
 
-    appendBoolVariant(properties, "Paired", true);
+    appendBoolVariant(properties, "Paired", paired);
     appendBoolVariant(properties, "Connected", connected);
     appendInt16Variant(properties, "RSSI", -47);
   }
@@ -135,8 +135,9 @@ void appendInterface(DBusMessageIter &interfaces, const char *name,
 }
 
 auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
-                             int topologyMode,
-                             bool initialConnected = false) -> DBusMessage * {
+                             int topologyMode, bool initialConnected = false,
+                             bool devicePresent = true,
+                             bool initialPaired = true) -> DBusMessage * {
   DBusMessage *reply = dbus_message_new_method_return(request);
   DBusMessageIter out;
   DBusMessageIter objects;
@@ -155,7 +156,7 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
   if (topologyMode != 1) {
     objectsToAppend.push_back({kAdapterPath, "org.bluez.Adapter1", true,
                                nullptr, topologyMode != 3, false});
-    if (topologyMode != 4) {
+    if (devicePresent) {
       objectsToAppend.push_back({kDevicePath, "org.bluez.Device1", false,
                                  nullptr, true, initialConnected});
     }
@@ -179,12 +180,13 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
     dbus_message_iter_open_container(&object, DBUS_TYPE_ARRAY, "{sa{sv}}",
                                      &interfaces);
     appendInterface(interfaces, spec.interface, spec.adapter, deviceNameMode,
-                    spec.address, spec.powered, spec.connected);
+                    spec.address, spec.powered, spec.connected, initialPaired);
     dbus_message_iter_close_container(&object, &interfaces);
     dbus_message_iter_close_container(&objects, &object);
   }
 
   dbus_message_iter_close_container(&out, &objects);
+
   return reply;
 }
 
@@ -193,7 +195,8 @@ public:
   explicit FakeBluezService(const std::string &address, int deviceNameMode = 0,
                             int topologyMode = 0, bool initialConnected = false)
       : m_deviceNameMode{deviceNameMode}, m_topologyMode{topologyMode},
-        m_initialConnected{initialConnected} {
+        m_initialConnected{initialConnected},
+        m_devicePresent{topologyMode != 4} {
     DbusErrorGuard error;
     m_connection.reset(
         dbus_connection_open_private(address.c_str(), error.get()));
@@ -223,26 +226,58 @@ public:
 
   auto discoveryCounts() const -> std::pair<int, int> {
     std::lock_guard lock{m_mutex};
+
     return {m_startCount, m_stopCount};
   }
 
   auto forbiddenCount() const -> int {
     std::lock_guard lock{m_mutex};
+
     return m_forbiddenCount;
   }
 
   auto deviceActionCounts() const -> std::pair<int, int> {
     std::lock_guard lock{m_mutex};
+
     return {m_connectCount, m_disconnectCount};
+  }
+
+  auto pairCount() const -> int {
+    std::lock_guard lock{m_mutex};
+
+    return m_pairCount;
+  }
+
+  auto pairPath() const -> std::string {
+    std::lock_guard lock{m_mutex};
+
+    return m_pairPath;
+  }
+
+  void setInitialPaired(bool paired) {
+    std::lock_guard lock{m_mutex};
+    m_initialPaired = paired;
+  }
+
+  void setPairFailure(bool failure) {
+    std::lock_guard lock{m_mutex};
+    m_failPair = failure;
+  }
+
+  void setPairTransition(bool enabled) {
+    std::lock_guard lock{m_mutex};
+    m_transitionPaired = enabled;
   }
 
   auto deviceActionPaths() const -> std::pair<std::string, std::string> {
     std::lock_guard lock{m_mutex};
+
     return {m_connectPath, m_disconnectPath};
   }
 
   auto stopBeforeConnect() const -> bool {
     std::lock_guard lock{m_mutex};
+
     return m_stopSequence != 0 && m_connectSequence > m_stopSequence;
   }
 
@@ -257,23 +292,63 @@ public:
     m_transitionConnection = enabled;
   }
 
+  void removeDeviceOnNextAction() {
+    std::lock_guard lock{m_mutex};
+    m_removeDeviceOnNextAction = true;
+  }
+
+  void releaseNameOnNextAction() {
+    std::lock_guard lock{m_mutex};
+    m_releaseNameOnNextAction = true;
+  }
+
+  void restartNameOnNextAction() {
+    std::lock_guard lock{m_mutex};
+    m_restartNameOnNextAction = true;
+  }
+
+  void holdNextDeviceAction() {
+    std::lock_guard lock{m_mutex};
+    m_holdNextDeviceAction = true;
+  }
+
+  auto waitForHeldDeviceAction(std::chrono::milliseconds timeout) -> bool {
+    std::unique_lock lock{m_mutex};
+
+    return m_snapshotCondition.wait_for(lock, timeout,
+                                        [this] { return m_deviceActionHeld; });
+  }
+
+  void releaseHeldDeviceAction() {
+    {
+      std::lock_guard lock{m_mutex};
+      m_releaseDeviceAction = true;
+    }
+
+    m_snapshotCondition.notify_all();
+  }
+
   auto filterSignature() const -> std::string {
     std::lock_guard lock{m_mutex};
+
     return m_filterSignature;
   }
 
   auto filterIsUnrestrictedAuto() const -> bool {
     std::lock_guard lock{m_mutex};
+
     return m_filterIsUnrestrictedAuto;
   }
 
   auto discoveryPaths() const -> std::pair<std::string, std::string> {
     std::lock_guard lock{m_mutex};
+
     return {m_startPath, m_stopPath};
   }
 
   auto nameReleaseFailed() const -> bool {
     std::lock_guard lock{m_mutex};
+
     return m_nameOperationFailed;
   }
 
@@ -317,6 +392,7 @@ public:
 
   auto waitForHeldSnapshot(std::chrono::milliseconds timeout) -> bool {
     std::unique_lock lock{m_mutex};
+
     return m_snapshotCondition.wait_for(lock, timeout,
                                         [this] { return m_snapshotReplyHeld; });
   }
@@ -368,6 +444,11 @@ public:
   }
 
   void emitDeviceObject(bool added, const std::string &path = kDevicePath) {
+    if (path == kDevicePath) {
+      std::lock_guard lock{m_mutex};
+      m_devicePresent = added;
+    }
+
     emitObject(added, path, "org.bluez.Device1", false);
   }
 
@@ -379,6 +460,16 @@ private:
   void emitBooleanProperty(const std::string &path, const char *interface,
                            const char *property, bool value,
                            bool flush = true) {
+    if (path == kDevicePath &&
+        std::string_view{interface} == "org.bluez.Device1") {
+      std::lock_guard lock{m_mutex};
+      if (std::string_view{property} == "Connected") {
+        m_initialConnected = value;
+      } else if (std::string_view{property} == "Paired") {
+        m_initialPaired = value;
+      }
+    }
+
     DbusMessagePtr signal{dbus_message_new_signal(
         path.c_str(), "org.freedesktop.DBus.Properties", "PropertiesChanged")};
     DBusMessageIter out;
@@ -451,10 +542,14 @@ private:
       bool releaseNameDuringSnapshot{};
       bool emitDeviceDuringSnapshot{};
       bool holdSnapshotReply{};
+      bool devicePresent{};
+      bool initialPaired{};
       {
         std::lock_guard lock{self->m_mutex};
         failManagedObjects = self->m_failManagedObjects;
         topologyMode = self->m_topologyMode;
+        devicePresent = self->m_devicePresent;
+        initialPaired = self->m_initialPaired;
         releaseNameDuringSnapshot =
             std::exchange(self->m_releaseNameDuringSnapshot, false);
         emitDeviceDuringSnapshot =
@@ -492,7 +587,8 @@ private:
                                              "injected snapshot failure")
                     : makeManagedObjectsReply(message, self->m_deviceNameMode,
                                               topologyMode,
-                                              self->m_initialConnected);
+                                              self->m_initialConnected,
+                                              devicePresent, initialPaired);
       }
     } else if (dbus_message_is_method_call(message, "org.bluez.Adapter1",
                                            "SetDiscoveryFilter")) {
@@ -541,42 +637,154 @@ private:
                                            "Connect")) {
       bool failConnect{};
       bool transition{};
+      bool removeDevice{};
+      bool releaseName{};
+      bool restartName{};
+      bool holdAction{};
+      const std::string devicePath{dbus_message_get_path(message)};
       {
         std::lock_guard lock{self->m_mutex};
         ++self->m_connectCount;
-        self->m_connectPath = dbus_message_get_path(message);
+        self->m_connectPath = devicePath;
         self->m_connectSequence = ++self->m_operationSequence;
         failConnect = self->m_failConnect;
         transition = self->m_transitionConnection;
+        removeDevice = std::exchange(self->m_removeDeviceOnNextAction, false);
+        releaseName = std::exchange(self->m_releaseNameOnNextAction, false);
+        restartName = std::exchange(self->m_restartNameOnNextAction, false);
+        holdAction = std::exchange(self->m_holdNextDeviceAction, false);
+      }
+
+      if (holdAction) {
+        std::unique_lock lock{self->m_mutex};
+        self->m_deviceActionHeld = true;
+        self->m_snapshotCondition.notify_all();
+        self->m_snapshotCondition.wait(
+            lock, [self] { return self->m_releaseDeviceAction; });
+        self->m_deviceActionHeld = false;
+        self->m_releaseDeviceAction = false;
+      }
+
+      if (removeDevice) {
+        {
+          std::lock_guard lock{self->m_mutex};
+          self->m_devicePresent = false;
+        }
+        self->emitDeviceObject(false, devicePath);
+      }
+
+      if (releaseName) {
+        DbusErrorGuard error;
+        if (dbus_bus_release_name(connection, kService, error.get()) !=
+                DBUS_RELEASE_NAME_REPLY_RELEASED ||
+            dbus_error_is_set(error.get())) {
+          std::lock_guard lock{self->m_mutex};
+          self->m_nameOperationFailed = true;
+        }
+      }
+
+      if (restartName) {
+        DbusErrorGuard error;
+        const auto released =
+            dbus_bus_release_name(connection, kService, error.get());
+        const auto acquired = dbus_bus_request_name(
+            connection, kService, DBUS_NAME_FLAG_DO_NOT_QUEUE, error.get());
+        if (released != DBUS_RELEASE_NAME_REPLY_RELEASED ||
+            acquired != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
+            dbus_error_is_set(error.get())) {
+          std::lock_guard lock{self->m_mutex};
+          self->m_nameOperationFailed = true;
+        }
       }
 
       reply = failConnect
                   ? dbus_message_new_error(message, DBUS_ERROR_ACCESS_DENIED,
                                            "injected connect policy failure")
                   : dbus_message_new_method_return(message);
-      if (!failConnect && transition) {
-        self->emitBooleanProperty(dbus_message_get_path(message),
-                                  "org.bluez.Device1", "Connected", true);
+      if (!failConnect && transition && !removeDevice && !releaseName) {
+        self->emitBooleanProperty(devicePath, "org.bluez.Device1", "Connected",
+                                  true);
       }
     } else if (dbus_message_is_method_call(message, "org.bluez.Device1",
                                            "Disconnect")) {
       bool failDisconnect{};
       bool transition{};
+      bool removeDevice{};
+      bool holdAction{};
+      const std::string devicePath{dbus_message_get_path(message)};
       {
         std::lock_guard lock{self->m_mutex};
         ++self->m_disconnectCount;
-        self->m_disconnectPath = dbus_message_get_path(message);
+        self->m_disconnectPath = devicePath;
         failDisconnect = self->m_failDisconnect;
         transition = self->m_transitionConnection;
+        removeDevice = std::exchange(self->m_removeDeviceOnNextAction, false);
+        holdAction = std::exchange(self->m_holdNextDeviceAction, false);
+      }
+
+      if (holdAction) {
+        std::unique_lock lock{self->m_mutex};
+        self->m_deviceActionHeld = true;
+        self->m_snapshotCondition.notify_all();
+        self->m_snapshotCondition.wait(
+            lock, [self] { return self->m_releaseDeviceAction; });
+        self->m_deviceActionHeld = false;
+        self->m_releaseDeviceAction = false;
+      }
+
+      if (removeDevice) {
+        {
+          std::lock_guard lock{self->m_mutex};
+          self->m_devicePresent = false;
+        }
+        self->emitDeviceObject(false, devicePath);
       }
 
       reply = failDisconnect
                   ? dbus_message_new_error(message, DBUS_ERROR_ACCESS_DENIED,
                                            "injected disconnect policy failure")
                   : dbus_message_new_method_return(message);
-      if (!failDisconnect && transition) {
-        self->emitBooleanProperty(dbus_message_get_path(message),
-                                  "org.bluez.Device1", "Connected", false);
+      if (!failDisconnect && transition && !removeDevice) {
+        self->emitBooleanProperty(devicePath, "org.bluez.Device1", "Connected",
+                                  false);
+      }
+    } else if (dbus_message_is_method_call(message, "org.bluez.Device1",
+                                           "Pair")) {
+      bool failPair{};
+      bool transition{};
+      bool holdAction{};
+      const std::string devicePath{dbus_message_get_path(message)};
+      {
+        std::lock_guard lock{self->m_mutex};
+        ++self->m_pairCount;
+        self->m_pairPath = devicePath;
+        failPair = self->m_failPair;
+        transition = self->m_transitionPaired;
+        holdAction = std::exchange(self->m_holdNextDeviceAction, false);
+      }
+
+      if (holdAction) {
+        std::unique_lock lock{self->m_mutex};
+        self->m_deviceActionHeld = true;
+        self->m_snapshotCondition.notify_all();
+        self->m_snapshotCondition.wait(
+            lock, [self] { return self->m_releaseDeviceAction; });
+        self->m_deviceActionHeld = false;
+        self->m_releaseDeviceAction = false;
+      }
+
+      if (!failPair && transition) {
+        std::lock_guard lock{self->m_mutex};
+        self->m_initialPaired = true;
+      }
+
+      reply = failPair
+                  ? dbus_message_new_error(message, DBUS_ERROR_ACCESS_DENIED,
+                                           "injected pairing agent failure")
+                  : dbus_message_new_method_return(message);
+      if (!failPair && transition) {
+        self->emitBooleanProperty(devicePath, "org.bluez.Device1", "Paired",
+                                  true);
       }
     } else {
       {
@@ -628,6 +836,7 @@ private:
     }
 
     dbus_message_iter_get_basic(&value, &transport);
+
     return transport != nullptr && std::string{transport} == "auto" &&
            !dbus_message_iter_next(&entries);
   }
@@ -673,6 +882,7 @@ private:
   int m_forbiddenCount{};
   int m_connectCount{};
   int m_disconnectCount{};
+  int m_pairCount{};
   int m_operationSequence{};
   int m_stopSequence{};
   int m_connectSequence{};
@@ -681,9 +891,13 @@ private:
   int m_deviceNameMode{};
   int m_topologyMode{};
   bool m_initialConnected{};
+  bool m_initialPaired{true};
+  bool m_devicePresent{true};
   bool m_failConnect{};
   bool m_failDisconnect{};
+  bool m_failPair{};
   bool m_transitionConnection{true};
+  bool m_transitionPaired{true};
   bool m_failManagedObjects{};
   bool m_failFilter{};
   bool m_failStart{};
@@ -696,16 +910,24 @@ private:
   bool m_holdSnapshotReply{};
   bool m_snapshotReplyHeld{};
   bool m_releaseSnapshotReply{};
+  bool m_removeDeviceOnNextAction{};
+  bool m_releaseNameOnNextAction{};
+  bool m_restartNameOnNextAction{};
+  bool m_holdNextDeviceAction{};
+  bool m_deviceActionHeld{};
+  bool m_releaseDeviceAction{};
   std::string m_startPath;
   std::string m_stopPath;
   std::string m_connectPath;
   std::string m_disconnectPath;
+  std::string m_pairPath;
 };
 
 auto makeClientConfig(const std::string &address)
     -> dmn::Dmn_BluezClientConfig {
   dmn::Dmn_BluezClientConfig config;
   config.test_bus_address = address;
+
   return config;
 }
 
@@ -840,11 +1062,13 @@ auto waitForCliText(CliProcess &process, std::string_view expected,
     if (waited == process.pid) {
       process.exited = true;
       collectCliOutput(process);
+
       return process.output.find(expected) != std::string::npos;
     }
   }
 
   collectCliOutput(process);
+
   return process.output.find(expected) != std::string::npos;
 }
 
@@ -862,6 +1086,7 @@ auto waitForCliExit(CliProcess &process,
 
     if (process.exited) {
       collectCliOutput(process);
+
       return true;
     }
 
@@ -965,6 +1190,7 @@ TEST(DmnBluezCli, SnapshotPrintsPortableCsvAndDoesNotStartDiscovery) {
                 "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF,false"),
             std::string::npos);
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.pairCount(), 0);
   EXPECT_EQ(service.forbiddenCount(), 0);
 }
 
@@ -977,6 +1203,8 @@ TEST(DmnBluezCli, ConnectKnownDeviceWaitsForObservedConnectedState) {
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
   EXPECT_NE(process.output.find(
                 "connected,Test adapter,B8:F7:75:BF:F3:C3,/org/bluez/hci0,"
                 "true,AA:BB:CC:DD:EE:FF"),
@@ -995,8 +1223,11 @@ TEST(DmnBluezCli, ConnectAlreadyConnectedIsNoOp) {
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
-  EXPECT_EQ(WEXITSTATUS(process.status), 0);
-  EXPECT_NE(process.output.find("connected,Test adapter"), std::string::npos);
+  ASSERT_EQ(WEXITSTATUS(process.status), 0) << process.output;
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
+  EXPECT_NE(process.output.find("connected,Test adapter"), std::string::npos)
+      << process.output;
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
   EXPECT_EQ(service.forbiddenCount(), 0);
 }
@@ -1010,6 +1241,8 @@ TEST(DmnBluezCli, DisconnectAlreadyDisconnectedIsNoOp) {
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
   EXPECT_NE(process.output.find("disconnected,Test adapter"),
             std::string::npos);
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
@@ -1026,6 +1259,8 @@ TEST(DmnBluezCli, DisconnectConnectedDeviceWaitsForObservedState) {
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
   EXPECT_NE(process.output.find(
                 "disconnected,Test adapter,B8:F7:75:BF:F3:C3,/org/bluez/hci0,"
                 "true,AA:BB:CC:DD:EE:FF"),
@@ -1034,6 +1269,74 @@ TEST(DmnBluezCli, DisconnectConnectedDeviceWaitsForObservedState) {
   EXPECT_EQ(service.deviceActionPaths(),
             (std::pair{std::string{}, std::string{kDevicePath}}));
   EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezCli, PairsSelectedDeviceUsingBluezDefaultAgent) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
+  EXPECT_NE(process.output.find("paired,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 1);
+  EXPECT_EQ(service.pairPath(), kDevicePath);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezCli, PairAlreadyPairedDeviceIsNoOp) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("changed,"), std::string::npos);
+  EXPECT_NE(process.output.find("paired,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 0);
+}
+
+TEST(DmnBluezCli, ReportsPairingAgentFailureWithoutSuccessRow) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  service.setPairFailure(true);
+  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 10);
+  EXPECT_NE(process.output.find("injected pairing agent failure"),
+            std::string::npos);
+  EXPECT_EQ(process.output.find("paired,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 1);
+}
+
+TEST(DmnBluezCli, PairTimesOutWithoutObservedPairedState) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  service.setPairTransition(false);
+  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 11);
+  EXPECT_NE(process.output.find("did not reach the requested paired state"),
+            std::string::npos);
+  EXPECT_EQ(process.output.find("paired,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 1);
 }
 
 TEST(DmnBluezCli, ConnectCanDiscoverOnlyTheSelectedDevice) {
@@ -1048,12 +1351,34 @@ TEST(DmnBluezCli, ConnectCanDiscoverOnlyTheSelectedDevice) {
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
-  EXPECT_EQ(WEXITSTATUS(process.status), 0);
-  EXPECT_NE(process.output.find("connected,Test adapter"), std::string::npos);
+  ASSERT_EQ(WEXITSTATUS(process.status), 0) << process.output;
+  EXPECT_EQ(process.output.find("inventory,"), std::string::npos);
+  EXPECT_EQ(process.output.find("added,"), std::string::npos);
+  EXPECT_NE(process.output.find("connected,Test adapter"), std::string::npos)
+      << process.output;
   EXPECT_EQ(service.discoveryCounts(), (std::pair{1, 1}));
   EXPECT_TRUE(service.stopBeforeConnect());
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezCli, DiscoveryStopFailurePreventsConnect) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 4};
+  auto process = startCli(bus.address(),
+                          {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"});
+  ASSERT_TRUE(waitForCliText(process, "Discovery active while waiting", 15s))
+      << process.output;
+  service.setDiscoveryFailures(false, false, true);
+  service.emitDeviceObject(true);
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 5);
+  EXPECT_NE(process.output.find("Unable to stop discovery"), std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{1, 2}));
 }
 
 TEST(DmnBluezCli, InterruptedTargetDiscoveryStopsWithoutConnecting) {
@@ -1090,6 +1415,7 @@ TEST(DmnBluezCli, DuplicateDeviceAddressRequiresAdapterSelection) {
   ASSERT_TRUE(waitForCliExit(selected, 15s)) << selected.output;
   ASSERT_TRUE(WIFEXITED(selected.status));
   EXPECT_EQ(WEXITSTATUS(selected.status), 0);
+  EXPECT_EQ(selected.output.find("inventory,"), std::string::npos);
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
   EXPECT_EQ(service.forbiddenCount(), 0);
 }
@@ -1128,17 +1454,119 @@ TEST(DmnBluezCli, ReportsDisconnectPolicyFailureWithoutSuccessRow) {
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
 }
 
+TEST(DmnBluezCli, ReportsTargetRemovalAfterConnectWithoutWaitingForTimeout) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.removeDeviceOnNextAction();
+  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 9);
+  EXPECT_NE(process.output.find("Selected device disappeared"),
+            std::string::npos);
+  EXPECT_EQ(process.output.find("connected,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+}
+
+TEST(DmnBluezCli, ReportsTargetRemovalAfterDisconnectWithoutWaitingForTimeout) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.removeDeviceOnNextAction();
+  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 9);
+  EXPECT_NE(process.output.find("Selected device disappeared"),
+            std::string::npos);
+  EXPECT_EQ(process.output.find("disconnected,Test adapter"),
+            std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
+}
+
+TEST(DmnBluezCli, ReportsBluezLossAfterConnectWithoutSuccessRow) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.releaseNameOnNextAction();
+  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 4);
+  EXPECT_EQ(process.output.find("connected,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_FALSE(service.nameReleaseFailed());
+}
+
+TEST(DmnBluezCli, ReportsBluezRestartAfterConnectWithoutSuccessRow) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.restartNameOnNextAction();
+  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 4);
+  EXPECT_EQ(process.output.find("connected,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_FALSE(service.nameReleaseFailed());
+}
+
+TEST(DmnBluezCli, ConnectTimesOutWithoutObservedConnectedState) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setConnectionTransition(false);
+  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 11);
+  EXPECT_NE(process.output.find("did not reach the requested connected state"),
+            std::string::npos);
+  EXPECT_EQ(process.output.find("connected,Test adapter"), std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+}
+
+TEST(DmnBluezCli, DisconnectTimesOutWithoutObservedDisconnectedState) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.setConnectionTransition(false);
+  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 11);
+  EXPECT_NE(
+      process.output.find("did not reach the requested disconnected state"),
+      std::string::npos);
+  EXPECT_EQ(process.output.find("disconnected,Test adapter"),
+            std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
+}
+
 TEST(DmnBluezCli, RejectsInvalidConnectionOptionCombinations) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   for (const auto &arguments :
        {std::vector<std::string>{"--connect"},
+        std::vector<std::string>{"--pair"},
         std::vector<std::string>{"--connect", "AA:BB:CC:DD:EE:FF", "--connect",
+                                 "AA:BB:CC:DD:EE:FF"},
+        std::vector<std::string>{"--pair", "AA:BB:CC:DD:EE:FF", "--pair",
                                  "AA:BB:CC:DD:EE:FF"},
         std::vector<std::string>{"--connect", "AA:BB:CC:DD:EE:FF",
                                  "--disconnect", "AA:BB:CC:DD:EE:FF"},
         std::vector<std::string>{"--disconnect", "AA:BB:CC:DD:EE:FF",
+                                 "--discovery"},
+        std::vector<std::string>{"--pair", "AA:BB:CC:DD:EE:FF",
                                  "--discovery"}}) {
     auto process = startCli(bus.address(), arguments);
     ASSERT_TRUE(waitForCliExit(process, 15s));
@@ -1149,6 +1577,7 @@ TEST(DmnBluezCli, RejectsInvalidConnectionOptionCombinations) {
   }
 
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.pairCount(), 0);
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
 }
 
@@ -1844,6 +2273,112 @@ TEST(DmnBluezClient, DeviceActionResolvesCurrentObjectPath) {
   EXPECT_EQ(service.deviceActionPaths(),
             (std::pair{std::string{alternatePath}, std::string{}}));
   EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezClient, PairUsesCurrentObjectPathAndDefaultAgent) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto paired =
+      client.pairDevice("aa:bb:cc:dd:ee:ff", "B8:F7:75:BF:F3:C3");
+  ASSERT_TRUE(paired) << paired.error().message;
+  EXPECT_EQ(service.pairCount(), 1);
+  EXPECT_EQ(service.pairPath(), kDevicePath);
+
+  const auto inventory = client.snapshot();
+  ASSERT_TRUE(inventory);
+  ASSERT_EQ(inventory->devices.size(), 1);
+  EXPECT_TRUE(inventory->devices.front().paired.value());
+}
+
+TEST(DmnBluezClient, PairAlreadyPairedIsNoOp) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto paired = client.pairDevice("AA:BB:CC:DD:EE:FF");
+  ASSERT_TRUE(paired) << paired.error().message;
+  EXPECT_EQ(service.pairCount(), 0);
+}
+
+TEST(DmnBluezClient, PairReturnsDefaultAgentFailure) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  service.setPairFailure(true);
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto paired = client.pairDevice("AA:BB:CC:DD:EE:FF");
+  ASSERT_FALSE(paired);
+  EXPECT_EQ(paired.error().kind, dmn::Dmn_DbusErrorKind::Remote);
+  EXPECT_EQ(paired.error().message, "injected pairing agent failure");
+  EXPECT_EQ(paired.error().remote_name, DBUS_ERROR_ACCESS_DENIED);
+  EXPECT_EQ(service.pairCount(), 1);
+}
+
+TEST(DmnBluezClient, PairHonorsFiniteMethodTimeout) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setInitialPaired(false);
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  service.holdNextDeviceAction();
+  const auto pairResult =
+      client.pairDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
+  const auto pairHeld = service.waitForHeldDeviceAction(1s);
+  service.releaseHeldDeviceAction();
+  ASSERT_FALSE(pairResult);
+  EXPECT_EQ(pairResult.error().kind, dmn::Dmn_DbusErrorKind::Timeout);
+  ASSERT_TRUE(pairHeld) << pairResult.error().message;
+  EXPECT_EQ(service.pairCount(), 1);
+}
+
+TEST(DmnBluezClient, ConnectHonorsFiniteMethodTimeout) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  service.setConnectionTransition(false);
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  service.holdNextDeviceAction();
+  const auto connectResult =
+      client.connectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
+  const auto connectHeld = service.waitForHeldDeviceAction(1s);
+  service.releaseHeldDeviceAction();
+  ASSERT_FALSE(connectResult);
+  EXPECT_EQ(connectResult.error().kind, dmn::Dmn_DbusErrorKind::Timeout);
+  ASSERT_TRUE(connectHeld) << connectResult.error().message;
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+}
+
+TEST(DmnBluezClient, DisconnectHonorsFiniteMethodTimeout) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.setConnectionTransition(false);
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  service.holdNextDeviceAction();
+  const auto disconnectResult =
+      client.disconnectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
+  const auto disconnectHeld = service.waitForHeldDeviceAction(1s);
+  service.releaseHeldDeviceAction();
+  ASSERT_TRUE(disconnectHeld);
+  ASSERT_FALSE(disconnectResult);
+  EXPECT_EQ(disconnectResult.error().kind, dmn::Dmn_DbusErrorKind::Timeout);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
 }
 
 } // namespace

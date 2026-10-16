@@ -3,9 +3,9 @@
 **Status:** The generic D-Bus client implementation and its focused
 private-bus API tests are implemented. Broader robustness and BlueZ
 qualification gates remain; see Section 6. The existing `dmn-dbus`
-byte-signal endpoints remain implemented. The initial BlueZ
-inventory/discovery API and CLI are available; BlueZ GATT and ANCS APIs are
-not implemented.
+byte-signal endpoints remain implemented. The initial BlueZ inventory/
+discovery API and CLI and the backend-neutral/BlueZ GATT API are implemented.
+The ANCS protocol client and monitor CLI are not implemented.
 
 The current client slice provides typed scalar/container values, bounded
 method calls with timeout/cancellation, properties, constrained signal
@@ -372,11 +372,13 @@ BlueZ owns:
   `PropertiesChanged`, and BlueZ owner-change handling.
 - Explicit adapter-scoped discovery, filter application, and release of only
   the session requested by this client.
-- Explicit user-selected device connect/disconnect behavior. Inventory and
-  scanning never pair or connect.
-- GATT service/characteristic discovery, readiness tracking, reads, writes,
-  notifications, and characteristic path invalidation on disconnect/service
-  change.
+- Explicit user-selected device pair/connect/disconnect behavior. Inventory
+  and scanning never pair or connect.
+- GATT service/characteristic discovery, readiness tracking, acknowledged
+  writes, notifications, and characteristic path invalidation on
+  disconnect/service change. The current GATT API does not expose a generic
+  characteristic-read operation; ANCS attribute responses arrive through its
+  Data Source notification.
 - Mapping of BlueZ remote error names and generic D-Bus errors into typed
   BlueZ outcomes.
 
@@ -462,8 +464,11 @@ property/reply-shape decoder failures; add exhaustive stress/race repetition
 for disconnect versus completion/cancellation; and retain the normal endpoint
 and broader sanitizer/build gates. The client intentionally treats bus
 disconnect as terminal rather than reconnecting. `GTEST_SKIP()` ANCS/BlueZ
-scaffolds are not behavioral coverage. There is still no BlueZ API or
-real-device qualification.
+scaffolds are not behavioral coverage. The initial BlueZ inventory/
+device-action and GATT APIs are implemented, with private-bus coverage for
+their current behavior. Broader BlueZ lifecycle acceptance cases and
+real-device GATT/ANCS qualification remain separate open gates; private-bus
+success does not establish iPhone compatibility.
 
 ### Step 1 — Extract shared libdbus runtime (implemented)
 
@@ -491,19 +496,21 @@ The optional `dmn-bluez` target and `dmn-bluez-discovery` CLI provide the first
 typed adapter/device snapshot, updates, and explicit scan. Private-bus tests
 cover known disconnected devices, property changes, discovery filter and
 owned start/stop, and the absence of forbidden Pair/Connect/Disconnect/
-RemoveDevice/SetPowered operations. A physical-adapter CLI scan has also been
-run. Continue with the full multi-adapter, removal, restart, race, failure,
-and CLI acceptance cases in
+RemoveDevice/SetPowered operations during inventory and scanning. Explicit
+pairing is a separate action and uses the BlueZ default agent. A
+physical-adapter CLI scan has also been run. Continue with the full
+multi-adapter, removal, restart, race, failure, and CLI acceptance cases in
 [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md); do not block
 this first milestone on GATT or ANCS.
 
 ### Step 4 — BlueZ GATT and ANCS protocol
 
-Extend `dmn-bluez` with GATT lifecycle and operations on the generic client; test
-methods, properties, characteristic notifications, BlueZ error mapping,
-service resolution and invalidation using fake objects. Implement ANCS parser,
-fragment reassembly, serialized requests, timeout and session state against a
-fake GATT interface without D-Bus dependency.
+The backend-neutral `Dmn_GattClient` and BlueZ GATT lifecycle/operations are
+implemented and covered by private-bus fake-object tests for methods,
+properties, characteristic notifications, BlueZ error mapping, service
+resolution, and invalidation. Remaining work is the ANCS parser, fragment
+reassembly, serialized requests, timeout, and session state against a fake
+GATT interface without a D-Bus dependency.
 
 ### Step 5 — Example and real-device gate
 

@@ -149,12 +149,14 @@ changes. Avoid introducing leading tabs. Use spaces for indentation.
   properties or dependencies—and avoid adding blank lines between every
   adjacent CMake command.
 - Separate a standalone `return` from preceding executable statements with an
-  empty line only when those statements are at the same block level. Do not
-  add a blank line when the return is the first statement in its block, such as
-  `if (condition) { return false; }`. If an explanatory comment immediately
-  precedes a return that is separated from prior statements, keep the comment
-  attached and put the empty line before the comment. Inline return
-  expressions are not split solely to add vertical spacing.
+  empty line when those statements are at the same block level, including when
+  the preceding statement is a declaration or assignment. Do not add a blank
+  line when the return is the first statement in its block (the preceding line
+  is the opening `{`), such as `if (condition) { return false; }`. If an
+  explanatory comment immediately precedes a return that is separated from
+  prior statements, keep the comment attached and put the empty line before
+  the comment. Inline return expressions are not split solely to add vertical
+  spacing.
 - Separate a standalone `throw` from preceding executable statements with an
   empty line only when those statements are at the same block level. Do not
   add a blank line when the throw is the only statement in its block, such as

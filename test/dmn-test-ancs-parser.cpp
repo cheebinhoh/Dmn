@@ -9,10 +9,9 @@
 
 namespace {
 
-// These acceptance tests define the Phase 1 contract before implementation.
-// They intentionally skip until the actual ANCS parser and scheduler exist so
-// the test suite remains stable and the specification remains executable as a
-// TDD target.
+// These acceptance tests define the Phase 2 ANCS protocol contract before
+// implementation. They intentionally skip until the parser and scheduler
+// exist; skipped placeholders are not acceptance coverage.
 TEST(DmnAncsParserSpec, NotificationSourceRejectsMalformedInput) {
   GTEST_SKIP()
       << "ANCS parser implementation pending; this is the TDD contract "

@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <future>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
@@ -110,6 +111,32 @@ TEST(DmnProc, ClientFlagLetsTaskExitCooperativelyBeforeWait) {
   EXPECT_TRUE(taskStarted);
   EXPECT_TRUE(proc.wait());
   EXPECT_TRUE(completed.load(std::memory_order_acquire));
+}
+
+TEST(DmnProc, ExposesWorkerThreadIdAfterTaskCompletes) {
+  std::promise<dmn::Dmn_Proc::ThreadId> workerIdPromise;
+  auto workerIdFuture = workerIdPromise.get_future();
+  std::promise<void> finishPromise;
+  auto finishFuture = finishPromise.get_future().share();
+  dmn::Dmn_Proc proc{
+      "worker-id",
+      [&] {
+        workerIdPromise.set_value(std::this_thread::get_id());
+        finishFuture.wait();
+      },
+      dmn::Dmn_Proc::ExceptionPolicy::kCaptureAndRethrowFromWait};
+
+  EXPECT_EQ(proc.getThreadId(), dmn::Dmn_Proc::ThreadId{});
+  ASSERT_TRUE(proc.exec());
+  ASSERT_EQ(workerIdFuture.wait_for(std::chrono::seconds(2)),
+            std::future_status::ready);
+  const auto workerId = workerIdFuture.get();
+  EXPECT_NE(workerId, dmn::Dmn_Proc::ThreadId{});
+  EXPECT_EQ(proc.getThreadId(), workerId);
+
+  finishPromise.set_value();
+  EXPECT_TRUE(proc.wait());
+  EXPECT_EQ(proc.getThreadId(), workerId);
 }
 
 TEST(DmnProc, DefaultPolicyPreservesTerminateBehavior) {

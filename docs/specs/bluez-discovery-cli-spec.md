@@ -1,14 +1,17 @@
 # BlueZ Device Inventory and `--discovery` CLI
 
 **Status:** Inventory, adapter-scoped discovery, and explicit selected-device
-connect/disconnect are implemented in `dmn-bluez` and
+pair/connect/disconnect are implemented in `dmn-bluez` and
 `dmn-bluez-discovery`. Private-bus tests cover their primary lifecycle and
-policy-error paths. Inventory and scan-only modes remain read-only; connection
-actions occur only when explicitly requested. A physical-adapter smoke-test
-record and extended lifecycle/error cases remain acceptance work.
+policy-error paths, including the default-agent pairing contract. The Phase 0
+acceptance gates are complete. Inventory and scan-only modes remain read-only;
+device actions occur only when explicitly requested.
 `ServicesResolved` is currently exposed as a reported state, not a connection
-success condition. The service-resolution wait and GATT service-list behavior
-specified below are research/design requirements and are not implemented.
+success condition. The `dmn-bluez` library now provides bounded service
+resolution waits and current GATT service/characteristic discovery through
+`Dmn_GattClient` and `Dmn_BluezGattClient`. The CLI-specific
+`--wait-services-resolved` and GATT service-list behaviors specified below
+remain design requirements and are not implemented.
 
 ## 1. Goal and boundaries
 
@@ -45,7 +48,7 @@ or introduce BlueZ dependencies into core `dmn`.
 - Observe `InterfacesAdded`, `InterfacesRemoved`, `PropertiesChanged`, and
   BlueZ service-owner changes; publish owned, typed inventory updates.
 - Explicitly start and stop discovery on one selected powered adapter.
-- Explicitly connect or disconnect one selected, currently known device.
+- Explicitly pair, connect, or disconnect one selected, currently known device.
 - Optionally discover a specific target before connecting, without connecting
   unrelated scan results.
 - Display initial known devices and live changes during the scan, identifying
@@ -57,7 +60,7 @@ or introduce BlueZ dependencies into core `dmn`.
 
 ### Out of scope
 
-- Pairing, removing devices, or changing trust. Connection control is
+- Removing devices or changing trust. Pairing and connection control are
   supported only through the explicit actions described below.
 - GATT service/characteristic operations, ANCS, notifications, or iPhone
   compatibility.
@@ -92,7 +95,8 @@ implementation exposes only the generic device-level operation; support for a
 particular profile/transport use case must be established before adding a
 profile-specific API.
 
-The current API exposes explicit `connectDevice` and `disconnectDevice`
+The current API exposes explicit `pairDevice`, `connectDevice`, and
+`disconnectDevice`
 operations and resolves a supplied address or current device object path
 against current inventory. Adapter selection disambiguates duplicate
 addresses. Device object paths are transient, so the library resolves the
@@ -102,20 +106,22 @@ profile readiness; a disconnect, BlueZ owner change, or object removal
 invalidates any later in-flight GATT session and cached GATT object paths.
 
 Pairing is a separate operation and must not be silently inferred from
-discovery or selection. The client does not add an application-owned pairing
-agent or call `Pair` as an automatic fallback. `Connect` may trigger
-BlueZ/system pairing prompts or other security side effects depending on
-transport and device policy. Surface authorization, pairing, and policy
+discovery or selection. The explicit `pairDevice` operation calls
+`Device1.Pair` for an unpaired selected device and relies on BlueZ's default
+agent; Dmn does not register an application-owned pairing agent. `Connect` may
+trigger BlueZ/system pairing prompts or other security side effects depending
+on transport and device policy. Surface authorization, pairing, and policy
 failures without claiming that the device is connected or usable.
 
 The implemented feature provides a selected-device link lifecycle, not a
 generic promise that any discovered device can be used. It resolves a current
 inventory target, issues only the explicit action, and confirms the requested
-`Connected` state. Subsequent increments should add complete owner-loss and
-device-removal cancellation semantics, provide LE/GATT service and
-characteristic operations as a separate abstraction, and keep UUID-specific
-protocol logic such as ANCS above that abstraction. Hardware tests must remain
-opt-in and specific to each supported transport/device class.
+`Connected` state. The backend-neutral GATT abstraction and its initial BlueZ
+service/characteristic operations are implemented separately. Remaining CLI
+work should add complete owner-loss and device-removal cancellation semantics
+for device actions and keep UUID-specific protocol logic such as ANCS above
+the GATT abstraction. Hardware tests must remain opt-in and specific to each
+supported transport/device class.
 
 #### Current implementation and remaining readiness work
 
@@ -125,17 +131,19 @@ The shared inventory and event layers underpin the implemented device actions:
 |---|---|---|
 | Generic D-Bus transport | `Dmn_DbusClient` supports typed method calls, remote errors, subscriptions, and bounded call timeouts. | Retain operation-specific deadlines and preserve typed method errors. |
 | BlueZ inventory identity | `Dmn_BluezClient` owns current device snapshots and maps `(adapter identity, device address)` across object-path changes. | Resolve each action against current inventory immediately before calling BlueZ; do not retain a path as durable identity. |
-| Connection observation | `Device1.Connected` and `ServicesResolved` are parsed; property updates become device events. | Extend tests for delayed state, owner loss, and device removal; do not treat `ServicesResolved` as generic profile readiness. |
-| BlueZ API | Snapshot, events, owned discovery, and explicit address/path-resolved connect/disconnect are public. | Add coverage for owner loss, target removal, and method timeout during actions. |
-| CLI | Supports inventory, scan, and explicit `--connect` / `--disconnect`; action success waits for observed `Connected` state. | Extend target-discovery interruption and ambiguous-address cases. |
-| Private fake service | Handles inventory/discovery and device actions, with call/path counts, injected action failures, and property transitions. | Add removal/restart/cleanup-failure cases and more call-order assertions. |
+| Connection observation | `Device1.Connected` and `ServicesResolved` are parsed; property updates become device events. | Private-bus CLI tests verify delayed/unknown final state, target removal, and owner loss; do not treat `ServicesResolved` as generic profile readiness. |
+| BlueZ API | Snapshot, events, owned discovery, and explicit address/path-resolved connect/disconnect are public. | Private-bus tests verify finite connect/disconnect method timeouts and current-path resolution. |
+| CLI | Supports inventory, scan, and explicit `--pair` / `--connect` / `--disconnect`; action output is limited to the selected device and success waits for observed state. | Target-discovery interruption and ambiguous-address cases are covered; continue the full acceptance matrix below. |
+| Private fake service | Handles inventory/discovery and device actions, with call/path counts, injected action failures, and property transitions. | Connect/disconnect target removal, owner-loss/restart during connect, and discovery cleanup failures are covered by private-bus tests. |
 
 No blocking architectural defect was found in the transport, identity, or
-event layers. The implemented tests exercise normal connect/disconnect,
-idempotent connect, policy failure, target discovery, scan cleanup ordering,
-and invalid option combinations. Remaining acceptance gaps include target
-removal, owner restart during an action, disconnect policy/timeout failures,
-and hardware smoke testing; these must not be represented as covered.
+event layers. The private-bus tests exercise normal connect/disconnect,
+idempotent actions, policy failures, method timeouts, delayed state
+confirmation, target removal, BlueZ owner loss during an action, target
+discovery, scan cleanup ordering, and invalid option combinations. Connection
+and disconnection target removal and failure to stop an owned scan before
+connecting are covered. The startup/teardown error paths in the single-client
+Phase 0 acceptance matrix are covered by the private-bus API and CLI tests.
 
 #### Implemented CLI contract
 
@@ -149,13 +157,15 @@ dmn-bluez-discovery [--adapter <adapter-address-or-path>] --discovery
 dmn-bluez-discovery [--adapter <adapter-address-or-path>] \
   --connect <device-address-or-path> [--discovery]
 dmn-bluez-discovery [--adapter <adapter-address-or-path>] \
+  --pair <device-address-or-path>
+dmn-bluez-discovery [--adapter <adapter-address-or-path>] \
   --disconnect <device-address-or-path>
 ```
 
-- `--connect` and `--disconnect` are mutually exclusive, single-use action
-  options. Both require exactly one device selector. Duplicate actions,
-  missing selectors, extra positional arguments, and unsupported combinations
-  fail with usage and a nonzero status.
+- `--pair`, `--connect`, and `--disconnect` are mutually exclusive,
+  single-use action options. Each requires exactly one device selector.
+  Duplicate actions, missing selectors, extra positional arguments, and
+  unsupported combinations fail with usage and a nonzero status.
 - Without a connection action, existing behavior is preserved: no
   `--discovery` prints the inventory and exits; `--discovery` by itself scans
   until Ctrl-C/SIGTERM. Neither mode may issue `Connect`, `Disconnect`, or
@@ -186,12 +196,19 @@ dmn-bluez-discovery [--adapter <adapter-address-or-path>] \
   `org.bluez.Device1.Disconnect`; it does not start discovery. Reject
   `--disconnect` combined with `--discovery`. If already disconnected, report
   that state without making a D-Bus call.
-- Do not invoke `Pair` or register a pairing agent. `Device1.Connect` may cause
-  BlueZ/system pairing or authorization behavior; report its actual remote
-  error and do not claim success based solely on device discovery or pairing
-  state. Document that `Device1.Disconnect` can interrupt all active BlueZ
-  profiles for the selected device, including ones started by another
-  application; it is an explicit, user-requested operation.
+- `--pair SELECTOR` resolves an existing inventory device and requests
+  `org.bluez.Device1.Pair` unless `Paired=true`; it does not start
+  discovery. Reject `--pair` combined with `--discovery`. An already-paired
+  device is an idempotent no-op. Pairing may itself connect the device and
+  resolve GATT services, as defined by BlueZ. Use the configured default agent
+  for prompts; do not request `Trusted=true`, register a Dmn-owned agent, or
+  report success until `Paired=true` is observed. Allow a finite 120-second
+  end-to-end deadline for the user-agent interaction and state confirmation.
+- `Device1.Connect` may cause BlueZ/system pairing or authorization behavior;
+  report its actual remote error and do not claim success based solely on
+  device discovery or pairing state. Document that `Device1.Disconnect` can
+  interrupt all active BlueZ profiles for the selected device, including ones
+  started by another application; it is an explicit, user-requested operation.
 - A successful method reply is not itself the CLI's final state. Observe
   `Device1.Connected` until the requested state is reflected, using the
   inventory event stream and one 30-second end-to-end operation deadline for
@@ -207,24 +224,39 @@ dmn-bluez-discovery [--adapter <adapter-address-or-path>] \
   value; it must not relabel the connection as GATT-ready. The optional
   `--wait-services-resolved` modifier specified below adds a distinct GATT
   service-resolution gate without changing the generic connect default.
-- stdout remains RFC 4180 CSV with the existing columns. Print live inventory
-  changes as before; emit a final action row (`connected` or `disconnected`)
-  only after the method succeeds and the matching `Connected` state is
-  observed. If a method fails or times out, write diagnostics to stderr and do
-  not emit a success-shaped row. Keep logs and errors free of unrelated device
-  payloads.
+- stdout remains RFC 4180 CSV with the existing columns. Explicit
+  `--pair`/`--connect`/`--disconnect` actions omit the initial full-inventory
+  rows and unrelated device-change rows, printing only the header and the
+  selected device's final action row. `--discovery` remains the mode for
+  viewing full inventory and live device changes. Emit the final action row
+  (`paired`, `connected`, or `disconnected`) only after the method succeeds and
+  the corresponding `Paired` or `Connected` state is observed. If a method
+  fails or times out, write diagnostics to stderr and do not emit a
+  success-shaped row. Keep logs and errors free of unrelated device payloads.
 - Keep signal handlers limited to setting the stop flag. On interruption,
   finish pending cleanup and stop an owned scan in normal application context.
-  A connect/disconnect request already sent to BlueZ is not reported as
+  A pair/connect/disconnect request already sent to BlueZ is not reported as
   cancelled unless the method result and resulting state establish that.
 
-Exit statuses are: `0` success/already-in-requested-state; `2`
-invalid CLI; existing discovery/inventory errors retain their current codes;
-`9` target not found or ambiguous; `10` connection/disconnection rejected by
-BlueZ or bus policy; and `11` requested connection state not observed before
-the finite deadline. If a discovery session cannot be stopped, report that
-cleanup failure and return the existing discovery-stop error status even if
-the device operation otherwise succeeded.
+Exit statuses are:
+
+| Status | Meaning |
+| --- | --- |
+| `0` | Inventory/help completed, discovery stopped successfully, or the requested state was observed. |
+| `2` | Invalid, unknown, duplicate, or incomplete command-line option. |
+| `3` | No powered Bluetooth adapter is available for discovery. |
+| `4` | BlueZ is unavailable or its service owner disappeared. |
+| `5` | Discovery could not start or could not be stopped cleanly. |
+| `6` | Adapter selection is ambiguous. |
+| `7` | The requested adapter does not match an available powered adapter. |
+| `8` | D-Bus connection, policy, inventory, or other runtime error. |
+| `9` | Selected device was not found or its address is ambiguous; also used for a D-Bus invalid-argument error. |
+| `10` | BlueZ rejected the requested pairing, connection, or disconnection action. |
+| `11` | The selected device did not reach the requested state before its deadline, or was not discovered before the scan deadline. |
+
+If a discovery session cannot be stopped, report that cleanup failure and
+return the discovery-stop error status even if the device operation otherwise
+succeeded.
 
 #### Connection acceptance matrix
 
@@ -244,6 +276,12 @@ bus or a replacement fake `Dmn_BluezClient`.
 | `DmnBluezCli.RejectsInvalidConnectionOptions` | Duplicate action, both actions, missing selector, disconnect+discovery | Usage and invalid-argument exit status; no BlueZ state-changing method. |
 | `DmnBluezCli.ConnectRemoteErrorAndTimeout` | Fake `Connect` returns a named error or never reaches `Connected=true` | Typed diagnostic/nonzero exit; no success CSV action. |
 | `DmnBluezCli.DisconnectRemoteErrorAndTimeout` | Fake `Disconnect` fails or remains connected | Typed diagnostic/nonzero exit; no success CSV action. |
+| `DmnBluezCli.PairsSelectedDeviceUsingBluezDefaultAgent` | Selected device is unpaired; invoke `--pair` | Exactly one current-path `Device1.Pair`; wait for `Paired=true`; final row says `paired`; no agent registration or trust change. |
+| `DmnBluezCli.PairAlreadyPairedDeviceIsNoOp` | Selected device already has `Paired=true` | Success with no `Pair` call. |
+| `DmnBluezCli.ReportsPairingAgentFailureWithoutSuccessRow` | `Pair` returns an authentication/default-agent error | Preserve the typed remote error and emit no paired success row. |
+| `DmnBluezCli.ReportsTargetRemovalAfterConnectWithoutWaitingForTimeout` | Remove the selected device during `Connect` | Return target-not-found promptly; do not emit a connected row. |
+| `DmnBluezCli.ReportsTargetRemovalAfterDisconnectWithoutWaitingForTimeout` | Remove the selected device during `Disconnect` | Return target-not-found promptly; do not emit a disconnected row. |
+| `DmnBluezCli.DiscoveryStopFailurePreventsConnect` | Target appears during an owned scan; `StopDiscovery` fails | Report cleanup failure and do not issue `Connect`. |
 | `DmnBluezCli.ConnectInterruptedBeforeMatch` | No target appears; send SIGINT/SIGTERM | Scan cleanup is exactly once; no `Connect` call. |
 | `DmnBluezCli.ConnectCleanupOnBluezLoss` | Owner disappears while scanning or connecting | No stale success; owned discovery cleanup is attempted when possible; BlueZ loss is surfaced. |
 | `DmnBluezClient.DeviceActionUsesCurrentIdentity` | Device object path changes for the same adapter/address | Resolve and call using the current path; never call a stale path. |
@@ -258,7 +296,10 @@ remaining work in the implementation table must be added before claiming full
 lifecycle acceptance. The BlueZ API/CLI CTest executable and standalone CLI
 tests carry both `dmn` and `cli` labels and can be run with `ctest -L cli`.
 
-### ServicesResolved gate and GATT service reporting (designed; not implemented)
+### ServicesResolved CLI gate and GATT service reporting
+
+**Status:** CLI behavior designed; not implemented. The library-level service
+wait and GATT service/characteristic discovery are implemented.
 
 `Connected` and `ServicesResolved` represent different milestones. BlueZ
 documents `Device1.Connect` as a generic request to connect supported,
@@ -639,17 +680,13 @@ Required CLI tests:
   owned stop is attempted when BlueZ permits it.
 
 The selected-device tests in the connection acceptance matrix apply to the
-implemented connect/disconnect increment. The core cases for successful
+implemented connect/disconnect increment. Private-bus cases cover successful
 connection, already-connected no-op, discovery of a specific target,
-disconnection, policy errors, invalid arguments, address ambiguity, and
-current-object-path resolution are covered. Owner-loss/removal and timeout
-cases remain outstanding:
-
-- Add executable coverage for `DmnBluezCli.ConnectCleanupOnBluezLoss`,
-  target removal during action, delayed/unknown final state, and connection
-  timeout before claiming complete lifecycle acceptance.
-- Preserve all scan-only/inventory-only forbidden-method assertions after the
-  fake service handles `Connect` and `Disconnect`.
+disconnection, policy errors, invalid arguments, address ambiguity,
+current-object-path resolution, target removal during an action, BlueZ owner
+loss/restart during an action, delayed/unknown final state, and finite method
+timeouts. Preserve all scan-only/inventory-only forbidden-method assertions
+after the fake service handles `Connect` and `Disconnect`.
 
 Current process-level CLI coverage verifies RFC 4180 escaping in snapshot mode
 without starting discovery, explicit adapter-address and object-path
@@ -667,9 +704,12 @@ failure behavior, retry after stop failure, BlueZ loss during scanning, and
 generic signal-queue overflow followed by inventory resynchronization. The
 bounded snapshot-staging overflow path is also tested: it invalidates the
 partial view, returns a resource-limit error, and permits an explicit fresh
-snapshot retry. The complete startup/teardown error matrix and full opt-in
-hardware record remain unverified; do not mark the milestone complete until
-all three minimum gates and the required API/CLI cases above pass. Two
+snapshot retry. The private test CLI uses a compile-time shortened operation
+deadline for deterministic timeout coverage; the installed CLI retains the
+30-second operation deadline. Additional process-level tests verify action
+target removal, BlueZ loss/restart, and timeout without emitting success-shaped
+CSV; API tests verify finite method timeouts for connect and disconnect. The
+required single-client Phase 0 API/CLI gates and build matrix have passed. Two
 concurrent Dmn client instances are outside the planned single-client
 application acceptance gate, but must be tested before the library claims
 safe concurrent discovery ownership.
@@ -679,6 +719,15 @@ verify the CLI prints known devices, starts a user-requested scan, updates
 results, and stops on Ctrl-C without pairing or connecting. Record Linux,
 BlueZ, adapter, and transport details. This qualifies only discovery behavior;
 it says nothing about GATT, iPhone ANCS, or universal radio visibility.
+
+Recorded physical smoke test (2026-10-16): Pop!_OS 24.04 LTS, Linux
+7.1.5-76070105-generic, BlueZ 5.72, Intel USB Bluetooth controller (HCI 5.4;
+host metadata did not expose a more specific adapter model). The CLI printed
+16 inventory rows, started discovery, emitted one live update, and exited
+successfully after Ctrl-C. No pairing or connection action was requested.
+Discovery was already active before the run and remained active afterward;
+the CLI stopped its owned session without stopping the other discovery
+session.
 
 The inventory/discovery milestone is complete only when `ENABLE_BLUEZ=ON` configures and builds,
 the private-bus API and CLI tests pass, standalone headers compile, and the
@@ -705,9 +754,9 @@ environment. Do not block this milestone on iPhone or ANCS feasibility.
 7. Connection control is implemented separately from inventory/discovery.
    Continue closing its owner-loss/removal/timeout acceptance gaps without
    weakening scan-only/inventory-only read-only guarantees.
-8. Implement the designed `--wait-services-resolved` gate and GATT service
+8. Implement the designed `--wait-services-resolved` CLI gate and GATT service
    inventory only after their private-bus tests and output contract are frozen.
-9. Then proceed to GATT operations and ANCS per
+9. Then proceed to ANCS per
    `ancs-bluez-client-spec.md`; do not equate a resolved service tree with
    ANCS readiness or iPhone compatibility.
 

@@ -9,6 +9,7 @@
 #define DMN_DBUS_CLIENT_HPP_
 
 #include "dmn-dbus-value.hpp"
+#include "dmn-proc.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -17,7 +18,6 @@
 #include <future>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 namespace dmn {
@@ -617,7 +617,7 @@ public:
    * @brief Return the identifier of the client-owned libdbus dispatch thread.
    * @return Thread identifier; it is stable for the lifetime of the client.
    */
-  [[nodiscard]] auto dispatchThreadId() const -> std::thread::id;
+  [[nodiscard]] auto dispatchThreadId() const -> Dmn_Proc::ThreadId;
 
   /**
    * @brief Return a thread-safe snapshot of connection and queue status.
