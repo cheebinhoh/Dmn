@@ -156,7 +156,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Bounded output endpoint for the configured D-Bus byte signal. </p>
-<p>The endpoint emits matching broadcast signals on its configured bus. Successful writes mean local queue admission only; they do not acknowledge daemon transmission or delivery to any subscriber. </p>
+<p>The endpoint emits broadcast signals on its configured bus daemon. The bus routes each signal to connections whose installed matches accept it. <a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a4e19c1d383be22b5202b43277030efde" title="Enqueue a payload, or throw if invalid, full, shut down, or failed.">write()</a> validates and admits the payload to a bounded local FIFO; its worker turns each dequeued payload into an <code>ay</code> signal and submits it to libdbus. The worker also pumps connection I/O and monitors disconnects, and it applies backpressure based on libdbus's pending outgoing bytes. Successful writes mean local queue admission only; they do not acknowledge libdbus submission, daemon routing, or subscriber receipt. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae0399f3a262babc710aeb04341c92b0e" name="ae0399f3a262babc710aeb04341c92b0e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae0399f3a262babc710aeb04341c92b0e">&#9670;&#160;</a></span>Dmn_DbusOutput()</h2>

@@ -11,6 +11,6 @@ var searchData=
   ['gettopicrunningcounter_8',['getTopicRunningCounter',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a47931a8d7bd1318e4c646abb59909e72',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['gettopicrunningcounterinternal_9',['getTopicRunningCounterInternal',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#afb123e1174563ee0fee9f5f091bddad1',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['getvalue_10',['getValue',['../classdmn_1_1Dmn__Inflight__Guard_1_1Ticket.html#aaed878ca236fe1211f59cdddad1de18a',1,'dmn::Dmn_Inflight_Guard::Ticket']]],
-  ['goals_11',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md38',1,'']]],
-  ['guidelines_12',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md23',1,'']]]
+  ['goals_11',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md39',1,'']]],
+  ['guidelines_12',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md24',1,'']]]
 ];

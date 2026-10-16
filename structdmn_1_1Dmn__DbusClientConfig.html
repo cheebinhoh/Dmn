@@ -107,7 +107,7 @@ Public Attributes</h2></td></tr>
 <tr class="memdesc:a063dbf0092f186ce7550ee912d1ec8ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects the session bus, system bus, or explicit address.  <br /></td></tr>
 <tr class="separator:a063dbf0092f186ce7550ee912d1ec8ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5babaeae7823ca03a6a1f0978ceb3904" id="r_a5babaeae7823ca03a6a1f0978ceb3904"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__DbusClientConfig.html#a5babaeae7823ca03a6a1f0978ceb3904">bus_address</a></td></tr>
-<tr class="memdesc:a5babaeae7823ca03a6a1f0978ceb3904"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exact bus address, required only for <code><a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" title="Connect privately to the exact caller-supplied bus address.">Dmn_DbusBusKind::Address</a></code>.  <br /></td></tr>
+<tr class="memdesc:a5babaeae7823ca03a6a1f0978ceb3904"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exact bus-daemon address, required only for <code><a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" title="Connect to the bus daemon at the exact caller-supplied address.">Dmn_DbusBusKind::Address</a></code>.  <br /></td></tr>
 <tr class="separator:a5babaeae7823ca03a6a1f0978ceb3904"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add61f75a57a460194b68fd19088a4a56" id="r_add61f75a57a460194b68fd19088a4a56"><td class="memItemLeft" align="right" valign="top"><a id="add61f75a57a460194b68fd19088a4a56" name="add61f75a57a460194b68fd19088a4a56"></a>
 <a class="el" href="structdmn_1_1Dmn__DbusClientLimits.html">Dmn_DbusClientLimits</a>&#160;</td><td class="memItemRight" valign="bottom"><b>limits</b></td></tr>
@@ -129,8 +129,8 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Exact bus address, required only for <code><a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" title="Connect privately to the exact caller-supplied bus address.">Dmn_DbusBusKind::Address</a></code>. </p>
-<p>Commonly used to connect to a test-owned private bus daemon. </p>
+<p>Exact bus-daemon address, required only for <code><a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" title="Connect to the bus daemon at the exact caller-supplied address.">Dmn_DbusBusKind::Address</a></code>. </p>
+<p>The address can identify a standard system/session bus or a separately started private bus instance. It must identify a bus daemon, not a service process listening for a direct peer-to-peer connection. </p>
 
 </div>
 </div>
@@ -147,7 +147,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Selects the session bus, system bus, or explicit address. </p>
-<p>All choices create a private connection owned by <a class="el" href="classdmn_1_1Dmn__DbusClient.html" title="Generic, typed client for calling services on a D-Bus daemon.">Dmn_DbusClient</a>. Defaults to Session. </p>
+<p>All choices create a dedicated private connection owned by <a class="el" href="classdmn_1_1Dmn__DbusClient.html" title="Generic, typed client for calling services on a D-Bus daemon.">Dmn_DbusClient</a>. The connection is private to this client; the selected system, session, or separately started private bus may be shared with other processes. Defaults to Session. </p>
 
 </div>
 </div>

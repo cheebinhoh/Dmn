@@ -5,7 +5,7 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "dmn-bluez-discovery.cpp", "dmn-bluez-discovery_8cpp.html", null ],
     [ "dmn-dbus-client.cpp", "dmn-dbus-client_8cpp.html", "dmn-dbus-client_8cpp" ],
     [ "dmn-dbus-io.cpp", "dmn-dbus-io_8cpp.html", "dmn-dbus-io_8cpp" ],
-    [ "dmn-dbus-runtime.cpp", "dmn-dbus-runtime_8cpp.html", null ],
+    [ "dmn-dbus-runtime.cpp", "dmn-dbus-runtime_8cpp.html", "dmn-dbus-runtime_8cpp" ],
     [ "dmn-dbus-value.cpp", "dmn-dbus-value_8cpp.html", null ],
     [ "dmn-dmesg-daemon.cpp", "dmn-dmesg-daemon_8cpp.html", null ],
     [ "dmn-dmesg.cpp", "dmn-dmesg_8cpp.html", null ],

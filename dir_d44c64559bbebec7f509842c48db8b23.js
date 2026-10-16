@@ -9,7 +9,7 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
     [ "dmn-dbus-client.hpp", "dmn-dbus-client_8hpp.html", "dmn-dbus-client_8hpp" ],
     [ "dmn-dbus-config.hpp", "dmn-dbus-config_8hpp.html", "dmn-dbus-config_8hpp" ],
     [ "dmn-dbus-io.hpp", "dmn-dbus-io_8hpp.html", "dmn-dbus-io_8hpp" ],
-    [ "dmn-dbus-runtime.hpp", "dmn-dbus-runtime_8hpp.html", null ],
+    [ "dmn-dbus-runtime.hpp", "dmn-dbus-runtime_8hpp.html", "dmn-dbus-runtime_8hpp" ],
     [ "dmn-dbus-value.hpp", "dmn-dbus-value_8hpp.html", "dmn-dbus-value_8hpp" ],
     [ "dmn-debug.hpp", "dmn-debug_8hpp.html", null ],
     [ "dmn-dlock.hpp", "dmn-dlock_8hpp.html", "dmn-dlock_8hpp" ],

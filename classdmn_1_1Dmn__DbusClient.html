@@ -128,8 +128,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a577fba99d724fcbede8b7e9d496c8036" id="r_a577fba99d724fcbede8b7e9d496c8036"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusClient.html#a577fba99d724fcbede8b7e9d496c8036">Dmn_DbusClient</a> (const <a class="el" href="structdmn_1_1Dmn__DbusClientConfig.html">Dmn_DbusClientConfig</a> &amp;config={})</td></tr>
 <tr class="memdesc:a577fba99d724fcbede8b7e9d496c8036"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to the explicitly selected bus without fallback.  <br /></td></tr>
 <tr class="separator:a577fba99d724fcbede8b7e9d496c8036"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a4a85f9ef3a1e23b1f47eb888b9aa23" id="r_a4a4a85f9ef3a1e23b1f47eb888b9aa23"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusClient.html#a4a4a85f9ef3a1e23b1f47eb888b9aa23">~Dmn_DbusClient</a> ()</td></tr>
-<tr class="memdesc:a4a4a85f9ef3a1e23b1f47eb888b9aa23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the client and release its private bus connection.  <br /></td></tr>
+<tr class="memitem:a4a4a85f9ef3a1e23b1f47eb888b9aa23" id="r_a4a4a85f9ef3a1e23b1f47eb888b9aa23"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusClient.html#a4a4a85f9ef3a1e23b1f47eb888b9aa23">~Dmn_DbusClient</a> ()</td></tr>
+<tr class="memdesc:a4a4a85f9ef3a1e23b1f47eb888b9aa23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the client and release its dedicated bus connection.  <br /></td></tr>
 <tr class="separator:a4a4a85f9ef3a1e23b1f47eb888b9aa23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2fc7464bfe33c29f60a860bbdf8b63d6" id="r_a2fc7464bfe33c29f60a860bbdf8b63d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusClient.html#a2fc7464bfe33c29f60a860bbdf8b63d6">shutdown</a> () noexcept</td></tr>
 <tr class="memdesc:a2fc7464bfe33c29f60a860bbdf8b63d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop admission, complete outstanding calls, and release resources.  <br /></td></tr>
@@ -182,23 +182,24 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="textblock"><p>Generic, typed client for calling services on a D-Bus daemon. </p>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Architecture</h2>
-<p>This library is a D-Bus client, not a bus daemon or a D-Bus service. The selected bus daemon must already be running and service methods/objects must be exported by another process. A client sends a method call through its private connection; the daemon routes it to the named service and routes the reply back. Signals are delivered by daemon match rules.</p>
-<p><a class="el" href="classdmn_1_1Dmn__DbusValue.html" title="An owned D-Bus value with its wire type preserved.">Dmn_DbusValue</a> is the owned, type-preserving message-body model. The private codec translates values to and from libdbus messages, so callers do not manage DBusMessage, DBusMessageIter, or borrowed message memory. This layer provides generic D-Bus operations; service-specific meaning belongs in a higher-level client such as <a class="el" href="classdmn_1_1Dmn__BluezClient.html" title="Read BlueZ inventory and explicitly own one discovery session.">Dmn_BluezClient</a>.</p>
+<p>This library is a D-Bus client, not a bus daemon or a D-Bus service. The selected bus daemon must already be running. A service process connects to that same bus, owns the destination name, and exports the requested methods and objects. A client sends a method call through its dedicated private connection; the bus daemon routes it to the named service and routes the reply back. Signal subscriptions install match rules on the bus daemon. A method call receives either a method-return message or an error message; a signal is a one-way announcement without a method reply. This client uses one bidirectional connection: caller threads submit pending calls, while its dispatch worker reads and dispatches incoming replies. Completion decodes the result and fulfills the call future; <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f" title="Call a method and wait on the calling thread for its result.">call()</a> waits on the caller thread, while <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a75f011e16959f8a87a7f6047196d0a19" title="Submit a bounded asynchronous method call with a finite timeout.">callAsync()</a> exposes a <a class="el" href="classdmn_1_1Dmn__DbusCall.html" title="Move-only handle for one asynchronous method-call result.">Dmn_DbusCall</a> handle. The four D-Bus message types and full request/reply flow are described in docs/specs/dbus-client-spec.md.</p>
+<p>All supported connection choices use a bus daemon. In Address mode, the supplied address is opened and registered as a bus connection. This client does not support direct peer-to-peer D-Bus connections, where a client connects directly to a service process without bus routing.</p>
+<p><a class="el" href="classdmn_1_1Dmn__DbusValue.html" title="An owned D-Bus value with its wire type preserved.">Dmn_DbusValue</a> is the owned, type-preserving message-body model. The private codec translates values to and from libdbus messages, so callers do not manage DBusMessage, DBusMessageIter, or borrowed message memory. This layer provides generic D-Bus operations; service-specific meaning belongs in a higher-level client such as <a class="el" href="classdmn_1_1Dmn__BluezClient.html" title="Manage BlueZ inventory, explicit device actions, and one scan session.">Dmn_BluezClient</a>.</p>
 <h2><a class="anchor" id="autotoc_md12"></a>
 Concurrency and lifetime</h2>
 <p>Each <a class="el" href="classdmn_1_1Dmn__DbusClient.html" title="Generic, typed client for calling services on a D-Bus daemon.">Dmn_DbusClient</a> owns one connection, one I/O/dispatch worker, and one serial signal-callback worker. Method replies are completed by the dispatch worker. Signal callbacks receive owned values on the callback worker, not on the dispatch worker. Signal callback deliveries and serialized message sizes are bounded by <a class="el" href="structdmn_1_1Dmn__DbusClientLimits.html" title="Finite resource bounds applied to one generic D-Bus client.">Dmn_DbusClientLimits</a>; overload is reflected in <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a02eb942d1db62e415927789000439c9a" title="Return a thread-safe snapshot of connection and queue status.">status()</a>.</p>
 <p>The synchronous <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f" title="Call a method and wait on the calling thread for its result.">call()</a> helper waits on its calling thread and must not be called from the dispatch worker. Do not call it from a signal callback either: that would block the serial callback worker and delay all later callbacks. User callbacks must return promptly and must not destroy the client; concurrent destruction with public calls is unsupported. <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a2fc7464bfe33c29f60a860bbdf8b63d6" title="Stop admission, complete outstanding calls, and release resources.">shutdown()</a> stops new admission, resolves outstanding calls with a shutdown result, joins the workers, and releases the connection. The client does not automatically reconnect after a terminal disconnect.</p>
 <h2><a class="anchor" id="autotoc_md13"></a>
 Bus selection and security</h2>
-<p><a class="el" href="structdmn_1_1Dmn__DbusClientConfig.html" title="Bus selection and resource limits for a Dmn_DbusClient.">Dmn_DbusClientConfig</a> selects the session bus, system bus, or one explicit address. In every case this client owns a private connection; an explicit address may point to a separately started private bus daemon. The client never starts or manages a daemon and never falls back to another bus. Successful connection does not imply permission to call every service: the bus daemon's policy and the target service's authorization still apply.</p>
+<p><a class="el" href="structdmn_1_1Dmn__DbusClientConfig.html" title="Bus selection and resource limits for a Dmn_DbusClient.">Dmn_DbusClientConfig</a> selects the standard session bus, the standard system bus, or an explicit bus-daemon address. The explicit address may identify either standard bus or a separately started private bus instance. In every case this client owns a dedicated private connection to that bus; it does not start or manage the daemon. A private bus is a separate daemon instance, not another name for the client's private connection. This client does not support direct peer-to-peer connections and never falls back to another bus. Successful connection does not imply permission to call every service: the bus daemon's policy and the target service's authorization still apply.</p>
 <p>Typical use: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classdmn_1_1Dmn__DbusClient.html">Dmn_DbusClient</a> client;</div>
 <div class="line"><span class="keyword">auto</span> reply = client.<a class="code hl_function" href="classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f">call</a>(<span class="stringliteral">&quot;org.example.Service&quot;</span>, <span class="stringliteral">&quot;/org/example/Object&quot;</span>,</div>
 <div class="line">                         <span class="stringliteral">&quot;org.example.Interface&quot;</span>, <span class="stringliteral">&quot;GetValue&quot;</span>);</div>
 <div class="line"><span class="keywordflow">if</span> (reply) {</div>
 <div class="line">  <span class="comment">// Inspect the owned Dmn_DbusValue reply arguments.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html">dmn::Dmn_DbusClient</a></div><div class="ttdoc">Generic, typed client for calling services on a D-Bus daemon.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:416</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html_a643b6a0b3ec100d03a6ae53e8689e06f"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f">dmn::Dmn_DbusClient::call</a></div><div class="ttdeci">auto call(const std::string &amp;destination, const std::string &amp;path, const std::string &amp;interface, const std::string &amp;member, const Arguments &amp;arguments={}, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; Dmn_DbusResult&lt; Arguments &gt;</div><div class="ttdoc">Call a method and wait on the calling thread for its result.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1756</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html">dmn::Dmn_DbusClient</a></div><div class="ttdoc">Generic, typed client for calling services on a D-Bus daemon.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:451</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html_a643b6a0b3ec100d03a6ae53e8689e06f"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f">dmn::Dmn_DbusClient::call</a></div><div class="ttdeci">auto call(const std::string &amp;destination, const std::string &amp;path, const std::string &amp;interface, const std::string &amp;member, const Arguments &amp;arguments={}, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; Dmn_DbusResult&lt; Arguments &gt;</div><div class="ttdoc">Call a method and wait on the calling thread for its result.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1777</div></div>
 </div><!-- fragment --> </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a577fba99d724fcbede8b7e9d496c8036" name="a577fba99d724fcbede8b7e9d496c8036"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a577fba99d724fcbede8b7e9d496c8036">&#9670;&#160;</a></span>Dmn_DbusClient()</h2>
@@ -246,6 +247,9 @@ Bus selection and security</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">dmn::Dmn_DbusClient::~Dmn_DbusClient </td>
@@ -254,9 +258,14 @@ Bus selection and security</h2>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Stop the client and release its private bus connection. </p>
+<p>Stop the client and release its dedicated bus connection. </p>
 <p>Equivalent to <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a2fc7464bfe33c29f60a860bbdf8b63d6" title="Stop admission, complete outstanding calls, and release resources.">shutdown()</a>. Destruction from a client-owned callback or dispatch worker is unsupported because shutdown joins those workers. </p>
 
 </div>
@@ -316,7 +325,7 @@ Bus selection and security</h2>
 <p>Do not call this from the client's signal-callback worker.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">destination</td><td>Destination bus name. </td></tr>
+    <tr><td class="paramname">destination</td><td>Well-known or unique destination name on the selected bus. </td></tr>
     <tr><td class="paramname">path</td><td>Target object path. </td></tr>
     <tr><td class="paramname">interface</td><td>Target interface. </td></tr>
     <tr><td class="paramname">member</td><td>Method name. </td></tr>
@@ -383,7 +392,7 @@ Bus selection and security</h2>
 <p>A zero timeout selects the configured default. The returned move-only handle owns the result future and can cancel the operation.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">destination</td><td>Destination bus name. </td></tr>
+    <tr><td class="paramname">destination</td><td>Well-known or unique destination name on the selected bus. </td></tr>
     <tr><td class="paramname">path</td><td>Target object path. </td></tr>
     <tr><td class="paramname">interface</td><td>Target interface. </td></tr>
     <tr><td class="paramname">member</td><td>Method name. </td></tr>
@@ -478,7 +487,7 @@ Bus selection and security</h2>
 <p>Make a finite-timeout Properties.Get request. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">destination</td><td>Well-known or unique destination name. </td></tr>
+    <tr><td class="paramname">destination</td><td>Well-known or unique destination name on the selected bus. </td></tr>
     <tr><td class="paramname">path</td><td>Object path hosting the property. </td></tr>
     <tr><td class="paramname">interface</td><td>Interface that declares the property. </td></tr>
     <tr><td class="paramname">property</td><td>Property name. </td></tr>
@@ -536,7 +545,7 @@ Bus selection and security</h2>
 <p>Set a remote property using the Properties.Set method. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">destination</td><td>Well-known or unique destination name. </td></tr>
+    <tr><td class="paramname">destination</td><td>Well-known or unique destination name on the selected bus. </td></tr>
     <tr><td class="paramname">path</td><td>Object path hosting the property. </td></tr>
     <tr><td class="paramname">interface</td><td>Interface that declares the property. </td></tr>
     <tr><td class="paramname">property</td><td>Property name. </td></tr>
@@ -623,7 +632,7 @@ Bus selection and security</h2>
 </div><div class="memdoc">
 
 <p>Subscribe to matching signals with owned arguments. </p>
-<p>Both interface and member are required in <code>match</code>. The callback runs serially on the client-owned callback worker, not the dispatch thread.</p>
+<p>Both interface and member are required in <code>match</code>. The bus daemon applies the match to signals on the selected bus; this is not a subscription over a direct peer-to-peer connection. The callback runs serially on the client-owned callback worker, not the dispatch thread.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">match</td><td>Constrained sender/interface/member/path match. </td></tr>

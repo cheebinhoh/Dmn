@@ -39,12 +39,12 @@ var searchData=
   ['max_5fsignal_5fmessages_36',['max_signal_messages',['../structdmn_1_1Dmn__DbusClientLimits.html#ae4d8af930c8f716530bd7a9cd5018931',1,'dmn::Dmn_DbusClientLimits']]],
   ['max_5fvalues_37',['max_values',['../structdmn_1_1Dmn__DbusClientLimits.html#a6e2f4ce9bc7be82cf55beba21d41b7fc',1,'dmn::Dmn_DbusClientLimits']]],
   ['member_38',['member',['../structdmn_1_1Dmn__DbusSignalMatch.html#a8f381e6e84e445975f15978c5a4f7108',1,'dmn::Dmn_DbusSignalMatch']]],
-  ['memory_20order_20notes_39',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md21',1,'']]],
+  ['memory_20order_20notes_39',['Threading / memory-order notes',['../dmn-inflight-guard_8hpp.html#autotoc_md22',1,'']]],
   ['message_40',['message',['../structdmn_1_1Dmn__BluezEvent.html#a8abd0b054f6c412ba9a863e0eb88d033',1,'dmn::Dmn_BluezEvent::message'],['../structdmn_1_1Dmn__DbusError.html#a13b94517c0ca29d553ec05a2ba7d4707',1,'dmn::Dmn_DbusError::message']]],
   ['message_20body_20setters_41',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
   ['message_20field_20setters_42',['DMesgPb message field setters',['../group__dmesg__pb__msg.html',1,'']]],
   ['message_20setters_43',['DMesgPb sys sub-message setters',['../group__dmesg__pb__sys.html',1,'']]],
   ['method_5ftimeout_44',['method_timeout',['../structdmn_1_1Dmn__DbusClientLimits.html#ab5e0e1b2321243b14c554c888513f5f7',1,'dmn::Dmn_DbusClientLimits']]],
-  ['model_45',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-dlock_8hpp.html#autotoc_md17',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md39',1,'Threading and execution model']]],
+  ['model_45',['model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md2',1,'Blocking model'],['../dmn-dlock_8hpp.html#autotoc_md18',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md40',1,'Threading and execution model']]],
   ['move_20and_20copy_20behavior_46',['Move and copy behavior',['../dmn-blockingqueue_8hpp.html#autotoc_md10',1,'']]]
 ];

@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__DbusValue.html',''); 
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classdmn_1_1Dmn__DbusValue-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">dmn::Dmn_DbusValue Class Reference</div></div>
+  <div class="headertitle"><div class="title">dmn::Dmn_DbusValue Class Reference<span class="mlabels"><span class="mlabel">final</span></span></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -297,7 +297,7 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An owned D-Bus value with its wire type preserved. </p>
 <p>Container factories require their element/key/value signatures explicitly, which preserves the type of empty arrays and dictionaries. Container access is const-only; copying a value is safe and shares immutable container storage.</p>
-<p>This is the data model at the generic D-Bus client boundary: client methods accept and return these values, and the private client codec translates them to and from libdbus messages. Higher-level clients such as <a class="el" href="classdmn_1_1Dmn__BluezClient.html" title="Read BlueZ inventory and explicitly own one discovery session.">Dmn_BluezClient</a> interpret the typed values as service-specific properties and events. This class is transport-independent; it does not connect to a bus, encode messages, or assign BlueZ meaning to a value. </p>
+<p>This is the data model at the generic D-Bus client boundary: client methods accept and return these values, and the private client codec translates them to and from libdbus messages. Higher-level clients such as <a class="el" href="classdmn_1_1Dmn__BluezClient.html" title="Manage BlueZ inventory, explicit device actions, and one scan session.">Dmn_BluezClient</a> interpret the typed values as service-specific properties and events. This class is transport-independent; it does not connect to a bus, encode messages, or assign BlueZ meaning to a value. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a115d4d5fe766f49b0eb975eef24def88" name="a115d4d5fe766f49b0eb975eef24def88"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a115d4d5fe766f49b0eb975eef24def88">&#9670;&#160;</a></span>array()</h2>

@@ -177,7 +177,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DMesg handler facade that owns its D-Bus transport and network node. </p>
-<p>The class composes an internal <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> with separate D-Bus input and output endpoints. It forwards the selected handler/topic operations while keeping those transport objects private. Each instance is a complete, independent <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> participant: its output broadcasts DMesg messages and its input receives matching broadcasts from other participants on the selected D-Bus daemon. Applications link this library and create their own instances; the facade is not a D-Bus service, a client proxy, or a bus daemon, and it does not start or manage one. The default config selects the <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> signal tuple on the session bus. </p>
+<p>The class composes an internal <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> with separate D-Bus input and output endpoints. It forwards the selected handler/topic operations while keeping those transport objects private. Each instance is a complete, independent <a class="el" href="classdmn_1_1Dmn__DMesgNet.html">Dmn_DMesgNet</a> participant: its output broadcasts DMesg messages and its input receives matching broadcasts from other participants through the selected bus daemon. Applications link this library and create their own instances; the facade is an application participant, not a D-Bus service, a client proxy for a shared Dmn service, or a bus daemon, and it does not start or manage a daemon. The default configuration uses the session bus. A caller may instead set an explicit address for the system bus, an explicitly addressed session bus, or a separately started private bus instance. All participants must use the same bus and signal tuple; they communicate through the bus daemon rather than through direct peer-to-peer D-Bus connections. The output endpoint serializes the node's outgoing payload into a byte-array signal; the daemon routes matching signals to input endpoints, which queue the received bytes for the node. This transport does not create a shared Dmn publisher or acknowledge delivery to a peer. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="a76369989b9ec5862b76a18b46a78d005" name="a76369989b9ec5862b76a18b46a78d005"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a76369989b9ec5862b76a18b46a78d005">&#9670;&#160;</a></span>AsyncProcessTask</h2>
@@ -262,8 +262,8 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -
 <p>Construct an independent DMesg participant on the configured bus. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">node_id</td><td>DMesg node identifier; must be unique on the bus. </td></tr>
-    <tr><td class="paramname">config</td><td>Bus selection, D-Bus signal routing, and queue limits. Empty bus_address selects the session bus; an explicit address selects that exact daemon. Other participants must use the same bus and signal tuple to exchange messages. </td></tr>
+    <tr><td class="paramname">node_id</td><td>DMesg node identifier; must be unique among participants that share the same DMesg network. </td></tr>
+    <tr><td class="paramname">config</td><td>Bus selection, D-Bus signal routing, and queue limits. Empty bus_address selects the session bus; a non-empty address selects that exact bus daemon (the system bus, an explicitly addressed session bus, or a separately started private bus instance). Other participants must use the same bus and signal tuple to exchange messages. </td></tr>
   </table>
   </dd>
 </dl>

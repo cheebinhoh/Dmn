@@ -535,7 +535,7 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp_source.html',''); initR
 </div>
 <div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span> </div>
 <div class="foldopen" id="foldopen00522" data-start="{" data-end="};">
-<div class="line"><a id="l00522" name="l00522"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">  522</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">Dmn_DLock_HandlerProxy</a> {</div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">  522</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">Dmn_DLock_HandlerProxy</a> final {</div>
 <div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span>  <span class="keyword">auto</span> operator-&gt;() <span class="keyword">const</span> -&gt; std::shared_ptr&lt;Dmn_DLock_Handler&gt; {</div>
 <div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span>    <span class="keywordflow">if</span> (!m_handler) {</div>
@@ -565,162 +565,163 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp_source.html',''); initR
 <div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span> </div>
 <div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>  <span class="keyword">explicit</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">Dmn_DLock_Base</a>(std::string_view name, <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Config.html">Dmn_DLock_Config</a> config = {})</div>
 <div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>      : m_name{name}, m_config{std::move(config)} {}</div>
-<div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span> </div>
-<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>  <span class="keyword">auto</span> openHandler(std::string_view session_name = <span class="stringliteral">&quot;session&quot;</span>,</div>
-<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>                   std::string_view topic = <span class="stringliteral">&quot;dlock&quot;</span>) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> {</div>
-<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>    <span class="keyword">auto</span> handler =</div>
-<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>        std::make_shared&lt;Dmn_DLock_Handler&gt;(session_name, topic, m_config);</div>
-<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>    <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> proxy{};</div>
-<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>    proxy.m_handler = handler;</div>
-<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span> </div>
-<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>    <span class="keywordflow">return</span> proxy;</div>
-<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>  }</div>
-<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span> </div>
-<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span>  <span class="keywordtype">void</span> closeHandler(<a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> &amp;handlerToClose) { handlerToClose.reset(); }</div>
-<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span> </div>
-<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span><span class="keyword">protected</span>:</div>
-<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span>  std::string m_name{};</div>
-<div class="line"><a id="l00568" name="l00568"></a><span class="lineno">  568</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Config.html">Dmn_DLock_Config</a> m_config{};</div>
-<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>};</div>
+<div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span>  <span class="keyword">virtual</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">~Dmn_DLock_Base</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span> </div>
+<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>  <span class="keyword">auto</span> openHandler(std::string_view session_name = <span class="stringliteral">&quot;session&quot;</span>,</div>
+<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>                   std::string_view topic = <span class="stringliteral">&quot;dlock&quot;</span>) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> {</div>
+<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>    <span class="keyword">auto</span> handler =</div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>        std::make_shared&lt;Dmn_DLock_Handler&gt;(session_name, topic, m_config);</div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>    <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> proxy{};</div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>    proxy.m_handler = handler;</div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span> </div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>    <span class="keywordflow">return</span> proxy;</div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span>  }</div>
+<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span> </div>
+<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span>  <span class="keywordtype">void</span> closeHandler(<a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> &amp;handlerToClose) { handlerToClose.reset(); }</div>
+<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span> </div>
+<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span><span class="keyword">protected</span>:</div>
+<div class="line"><a id="l00568" name="l00568"></a><span class="lineno">  568</span>  std::string m_name{};</div>
+<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Config.html">Dmn_DLock_Config</a> m_config{};</div>
+<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span>};</div>
 </div>
-<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span> </div>
-<div class="line"><a id="l00580" name="l00580"></a><span class="lineno">  580</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> DMesgBase = Dmn_DMesg&gt;</div>
-<div class="foldopen" id="foldopen00581" data-start="{" data-end="};">
-<div class="line"><a id="l00581" name="l00581"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DLock.html">  581</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock.html">Dmn_DLock</a> : <span class="keyword">public</span> DMesgBase, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">Dmn_DLock_Base</a> {</div>
-<div class="line"><a id="l00582" name="l00582"></a><span class="lineno">  582</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00583" name="l00583"></a><span class="lineno">  583</span>  <span class="keyword">static_assert</span>(</div>
-<div class="line"><a id="l00584" name="l00584"></a><span class="lineno">  584</span>      std::is_same_v&lt;DMesgBase, Dmn_DMesg&gt;,</div>
-<div class="line"><a id="l00585" name="l00585"></a><span class="lineno">  585</span>      <span class="stringliteral">&quot;Dmn_DLock v1 requires Dmn_DMesg and forbids net-authority use&quot;</span>);</div>
-<div class="line"><a id="l00586" name="l00586"></a><span class="lineno">  586</span> </div>
-<div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>  <span class="keyword">using </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> = <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">Dmn_DLock_HandlerProxy</a>;</div>
-<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span> </div>
-<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>  <span class="keyword">explicit</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock.html">Dmn_DLock</a>(std::string_view name, <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Config.html">Dmn_DLock_Config</a> config = {})</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>      : DMesgBase{name}, <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">Dmn_DLock_Base</a>{name, std::move(config)} {</div>
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>    m_table.m_domain = m_config.m_domain;</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>    m_table.m_schema_version = 1;</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>    m_table.m_protocol_version = 1;</div>
-<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>  }</div>
-<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span> </div>
-<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>  <span class="keyword">auto</span> openHandler(std::string_view session_name = <span class="stringliteral">&quot;session&quot;</span>,</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>                   std::string_view topic = <span class="stringliteral">&quot;dlock&quot;</span>) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> {</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>    <span class="keywordflow">return</span> Dmn_DLock_Base::openHandler(session_name, topic);</div>
-<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>  }</div>
-<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span> </div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  <span class="keywordtype">void</span> closeHandler(<a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> &amp;handlerToClose) {</div>
-<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>    Dmn_DLock_Base::closeHandler(handlerToClose);</div>
-<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>  }</div>
-<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span> </div>
-<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>  <span class="keyword">auto</span> acquireLock(<a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Range.html">Dmn_DLock_Range</a> range,</div>
-<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>                   <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__RequestOptions.html">Dmn_DLock_RequestOptions</a> &amp;options = {})</div>
-<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span>      -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Result.html">Dmn_DLock_Result</a> {</div>
-<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>    <span class="keywordflow">if</span> (!range.isValid()) {</div>
-<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kInvalidRange, range, options.m_request_id,</div>
-<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>              <span class="stringliteral">&quot;invalid range&quot;</span>};</div>
-<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>    }</div>
-<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span> </div>
-<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span>    std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</div>
-<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>    std::string request_id = options.m_request_id;</div>
-<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span>    <span class="keywordflow">if</span> (request_id.empty()) {</div>
-<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>      request_id =</div>
-<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>          std::string(<span class="stringliteral">&quot;req-&quot;</span>) + std::to_string(m_table.m_next_sequence + 1);</div>
-<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>    }</div>
-<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span> </div>
-<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>    <span class="keywordflow">while</span> (m_table.isGrantedForRange(range)) {</div>
-<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>      <span class="keywordflow">if</span> (!options.m_wait || options.m_no_wait) {</div>
-<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>        <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kNoWait, range, request_id,</div>
-<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>                <span class="stringliteral">&quot;range is already granted&quot;</span>};</div>
-<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>      }</div>
-<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span> </div>
-<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>      m_cv.wait(lock);</div>
-<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>    }</div>
-<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span> </div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>    <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Entry.html">Dmn_DLock_Entry</a> entry{};</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span> </div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>    entry.m_domain = m_config.m_domain;</div>
-<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>    entry.m_request_id = request_id;</div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>    entry.m_session_id = std::string(<span class="stringliteral">&quot;session-&quot;</span>) + request_id;</div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>    entry.m_owner_id = request_id;</div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>    entry.m_range = range;</div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>    entry.m_priority = 1;</div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>    entry.m_sequence = m_table.m_next_sequence + 1;</div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>    entry.m_fence = m_table.m_next_fencing_token + 1;</div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>    entry.m_state = Dmn_DLock_EntryState::kGranted;</div>
-<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>    entry.m_terminal_reason = Dmn_DLock_TerminalReason::kNone;</div>
-<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>    entry.m_acquire_deadline_ticks = 0;</div>
-<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>    entry.m_lease_deadline_ticks = options.m_lease_ticks;</div>
-<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>    entry.m_waiting = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>    entry.m_granted = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span> </div>
-<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>    <span class="keyword">const</span> <span class="keyword">auto</span> candidate = m_table.withCandidate(entry);</div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>    <span class="keywordflow">if</span> (candidate.m_entries.empty()) {</div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kConflict, range, request_id,</div>
-<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>              <span class="stringliteral">&quot;range already unavailable&quot;</span>};</div>
-<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>    }</div>
-<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span> </div>
-<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>    m_table = candidate;</div>
-<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>    m_table.m_next_sequence = entry.m_sequence;</div>
-<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>    m_table.m_next_fencing_token = entry.m_fence;</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>    m_cv.notify_all();</div>
-<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span> </div>
-<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>    <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kOk, range, request_id, <span class="stringliteral">&quot;granted&quot;</span>};</div>
-<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>  }</div>
-<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span> </div>
-<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>  <span class="keyword">auto</span> acquireLockAsync(<a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Range.html">Dmn_DLock_Range</a> range,</div>
-<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>                        <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__RequestOptions.html">Dmn_DLock_RequestOptions</a> &amp;options = {})</div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>      -&gt; std::future&lt;Dmn_DLock_Result&gt; {</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>    <span class="keyword">auto</span> promise = std::make_shared&lt;std::promise&lt;Dmn_DLock_Result&gt;&gt;();</div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>    <span class="keyword">auto</span> future = promise-&gt;get_future();</div>
-<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>    std::thread([<span class="keyword">this</span>, range, options, promise]() {</div>
-<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>      <span class="keyword">auto</span> result = acquireLock(range, options);</div>
-<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span> </div>
-<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>      promise-&gt;set_value(result);</div>
-<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>    }).detach();</div>
-<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span> </div>
-<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>    <span class="keywordflow">return</span> future;</div>
-<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>  }</div>
-<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span> </div>
-<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span>  <span class="keyword">auto</span> releaseLock(std::string_view request_id) -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Result.html">Dmn_DLock_Result</a> {</div>
-<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>    std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</div>
-<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span> </div>
-<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span>    <span class="keyword">auto</span> it = std::find_if(m_table.m_entries.begin(), m_table.m_entries.end(),</div>
-<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>                           [&amp;](<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Entry.html">Dmn_DLock_Entry</a> &amp;entry) {</div>
-<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>                             return entry.m_request_id == request_id;</div>
-<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>                           });</div>
-<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>    <span class="keywordflow">if</span> (it == m_table.m_entries.end()) {</div>
-<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kInvalidState,</div>
-<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>              {},</div>
-<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>              std::string(request_id),</div>
-<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>              <span class="stringliteral">&quot;request not found&quot;</span>};</div>
-<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>    }</div>
-<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span> </div>
-<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span>    <span class="keyword">const</span> <span class="keyword">auto</span> range = it-&gt;m_range;</div>
-<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>    m_table.m_entries.erase(it);</div>
-<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>    m_cv.notify_all();</div>
-<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span> </div>
-<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span>    <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kOk, range, std::string(request_id),</div>
-<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>            <span class="stringliteral">&quot;released&quot;</span>};</div>
-<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>  }</div>
-<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span> </div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>  <span class="keyword">auto</span> currentSnapshot() <span class="keyword">const</span> -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__TableSnapshot.html">Dmn_DLock_TableSnapshot</a> {</div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>    std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span> </div>
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>    <span class="keywordflow">return</span> m_table;</div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>  }</div>
-<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span> </div>
-<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>  <span class="keyword">mutable</span> std::mutex m_mutex{};</div>
-<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>  std::condition_variable m_cv{};</div>
-<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__TableSnapshot.html">Dmn_DLock_TableSnapshot</a> m_table{};</div>
-<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>};</div>
+<div class="line"><a id="l00571" name="l00571"></a><span class="lineno">  571</span> </div>
+<div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span><span class="keyword">template</span> &lt;<span class="keyword">class</span> DMesgBase = Dmn_DMesg&gt;</div>
+<div class="foldopen" id="foldopen00582" data-start="{" data-end="};">
+<div class="line"><a id="l00582" name="l00582"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__DLock.html">  582</a></span><span class="keyword">class </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock.html">Dmn_DLock</a> : <span class="keyword">public</span> DMesgBase, <span class="keyword">public</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">Dmn_DLock_Base</a> {</div>
+<div class="line"><a id="l00583" name="l00583"></a><span class="lineno">  583</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00584" name="l00584"></a><span class="lineno">  584</span>  <span class="keyword">static_assert</span>(</div>
+<div class="line"><a id="l00585" name="l00585"></a><span class="lineno">  585</span>      std::is_same_v&lt;DMesgBase, Dmn_DMesg&gt;,</div>
+<div class="line"><a id="l00586" name="l00586"></a><span class="lineno">  586</span>      <span class="stringliteral">&quot;Dmn_DLock v1 requires Dmn_DMesg and forbids net-authority use&quot;</span>);</div>
+<div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span> </div>
+<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>  <span class="keyword">using </span><a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> = <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">Dmn_DLock_HandlerProxy</a>;</div>
+<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span> </div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>  <span class="keyword">explicit</span> <a class="code hl_class" href="classdmn_1_1Dmn__DLock.html">Dmn_DLock</a>(std::string_view name, <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Config.html">Dmn_DLock_Config</a> config = {})</div>
+<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>      : DMesgBase{name}, <a class="code hl_class" href="classdmn_1_1Dmn__DLock__Base.html">Dmn_DLock_Base</a>{name, std::move(config)} {</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>    m_table.m_domain = m_config.m_domain;</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>    m_table.m_schema_version = 1;</div>
+<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>    m_table.m_protocol_version = 1;</div>
+<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>  }</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span> </div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>  <span class="keyword">auto</span> openHandler(std::string_view session_name = <span class="stringliteral">&quot;session&quot;</span>,</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>                   std::string_view topic = <span class="stringliteral">&quot;dlock&quot;</span>) -&gt; <a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> {</div>
+<div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>    <span class="keywordflow">return</span> Dmn_DLock_Base::openHandler(session_name, topic);</div>
+<div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>  }</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span> </div>
+<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>  <span class="keywordtype">void</span> closeHandler(<a class="code hl_class" href="classdmn_1_1Dmn__DLock__HandlerProxy.html">HandlerType</a> &amp;handlerToClose) {</div>
+<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>    Dmn_DLock_Base::closeHandler(handlerToClose);</div>
+<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>  }</div>
+<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span> </div>
+<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>  <span class="keyword">auto</span> acquireLock(<a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Range.html">Dmn_DLock_Range</a> range,</div>
+<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span>                   <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__RequestOptions.html">Dmn_DLock_RequestOptions</a> &amp;options = {})</div>
+<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>      -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Result.html">Dmn_DLock_Result</a> {</div>
+<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>    <span class="keywordflow">if</span> (!range.isValid()) {</div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kInvalidRange, range, options.m_request_id,</div>
+<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>              <span class="stringliteral">&quot;invalid range&quot;</span>};</div>
+<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span>    }</div>
+<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span> </div>
+<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>    std::unique_lock&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span>    std::string request_id = options.m_request_id;</div>
+<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>    <span class="keywordflow">if</span> (request_id.empty()) {</div>
+<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>      request_id =</div>
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>          std::string(<span class="stringliteral">&quot;req-&quot;</span>) + std::to_string(m_table.m_next_sequence + 1);</div>
+<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>    }</div>
+<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span> </div>
+<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span>    <span class="keywordflow">while</span> (m_table.isGrantedForRange(range)) {</div>
+<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>      <span class="keywordflow">if</span> (!options.m_wait || options.m_no_wait) {</div>
+<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>        <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kNoWait, range, request_id,</div>
+<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>                <span class="stringliteral">&quot;range is already granted&quot;</span>};</div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span>      }</div>
+<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span> </div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>      m_cv.wait(lock);</div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>    }</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span> </div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>    <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Entry.html">Dmn_DLock_Entry</a> entry{};</div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span> </div>
+<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span>    entry.m_domain = m_config.m_domain;</div>
+<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>    entry.m_request_id = request_id;</div>
+<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span>    entry.m_session_id = std::string(<span class="stringliteral">&quot;session-&quot;</span>) + request_id;</div>
+<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span>    entry.m_owner_id = request_id;</div>
+<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>    entry.m_range = range;</div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>    entry.m_priority = 1;</div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>    entry.m_sequence = m_table.m_next_sequence + 1;</div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span>    entry.m_fence = m_table.m_next_fencing_token + 1;</div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>    entry.m_state = Dmn_DLock_EntryState::kGranted;</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>    entry.m_terminal_reason = Dmn_DLock_TerminalReason::kNone;</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>    entry.m_acquire_deadline_ticks = 0;</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>    entry.m_lease_deadline_ticks = options.m_lease_ticks;</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>    entry.m_waiting = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>    entry.m_granted = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span> </div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>    <span class="keyword">const</span> <span class="keyword">auto</span> candidate = m_table.withCandidate(entry);</div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>    <span class="keywordflow">if</span> (candidate.m_entries.empty()) {</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kConflict, range, request_id,</div>
+<div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span>              <span class="stringliteral">&quot;range already unavailable&quot;</span>};</div>
+<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span>    }</div>
+<div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span> </div>
+<div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span>    m_table = candidate;</div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>    m_table.m_next_sequence = entry.m_sequence;</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>    m_table.m_next_fencing_token = entry.m_fence;</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>    m_cv.notify_all();</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span> </div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>    <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kOk, range, request_id, <span class="stringliteral">&quot;granted&quot;</span>};</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>  }</div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span> </div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>  <span class="keyword">auto</span> acquireLockAsync(<a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Range.html">Dmn_DLock_Range</a> range,</div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>                        <span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__RequestOptions.html">Dmn_DLock_RequestOptions</a> &amp;options = {})</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>      -&gt; std::future&lt;Dmn_DLock_Result&gt; {</div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>    <span class="keyword">auto</span> promise = std::make_shared&lt;std::promise&lt;Dmn_DLock_Result&gt;&gt;();</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>    <span class="keyword">auto</span> future = promise-&gt;get_future();</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>    std::thread([<span class="keyword">this</span>, range, options, promise]() {</div>
+<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>      <span class="keyword">auto</span> result = acquireLock(range, options);</div>
+<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span> </div>
+<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>      promise-&gt;set_value(result);</div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>    }).detach();</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span> </div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span>    <span class="keywordflow">return</span> future;</div>
+<div class="line"><a id="l00673" name="l00673"></a><span class="lineno">  673</span>  }</div>
+<div class="line"><a id="l00674" name="l00674"></a><span class="lineno">  674</span> </div>
+<div class="line"><a id="l00675" name="l00675"></a><span class="lineno">  675</span>  <span class="keyword">auto</span> releaseLock(std::string_view request_id) -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Result.html">Dmn_DLock_Result</a> {</div>
+<div class="line"><a id="l00676" name="l00676"></a><span class="lineno">  676</span>    std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00677" name="l00677"></a><span class="lineno">  677</span> </div>
+<div class="line"><a id="l00678" name="l00678"></a><span class="lineno">  678</span>    <span class="keyword">auto</span> it = std::find_if(m_table.m_entries.begin(), m_table.m_entries.end(),</div>
+<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span>                           [&amp;](<span class="keyword">const</span> <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__Entry.html">Dmn_DLock_Entry</a> &amp;entry) {</div>
+<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>                             return entry.m_request_id == request_id;</div>
+<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>                           });</div>
+<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span>    <span class="keywordflow">if</span> (it == m_table.m_entries.end()) {</div>
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span>      <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kInvalidState,</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>              {},</div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>              std::string(request_id),</div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span>              <span class="stringliteral">&quot;request not found&quot;</span>};</div>
+<div class="line"><a id="l00687" name="l00687"></a><span class="lineno">  687</span>    }</div>
+<div class="line"><a id="l00688" name="l00688"></a><span class="lineno">  688</span> </div>
+<div class="line"><a id="l00689" name="l00689"></a><span class="lineno">  689</span>    <span class="keyword">const</span> <span class="keyword">auto</span> range = it-&gt;m_range;</div>
+<div class="line"><a id="l00690" name="l00690"></a><span class="lineno">  690</span>    m_table.m_entries.erase(it);</div>
+<div class="line"><a id="l00691" name="l00691"></a><span class="lineno">  691</span>    m_cv.notify_all();</div>
+<div class="line"><a id="l00692" name="l00692"></a><span class="lineno">  692</span> </div>
+<div class="line"><a id="l00693" name="l00693"></a><span class="lineno">  693</span>    <span class="keywordflow">return</span> {Dmn_DLock_ResultCode::kOk, range, std::string(request_id),</div>
+<div class="line"><a id="l00694" name="l00694"></a><span class="lineno">  694</span>            <span class="stringliteral">&quot;released&quot;</span>};</div>
+<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>  }</div>
+<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span> </div>
+<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>  <span class="keyword">auto</span> currentSnapshot() <span class="keyword">const</span> -&gt; <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__TableSnapshot.html">Dmn_DLock_TableSnapshot</a> {</div>
+<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>    std::lock_guard&lt;std::mutex&gt; lock(m_mutex);</div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span> </div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>    <span class="keywordflow">return</span> m_table;</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>  }</div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span> </div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span>  <span class="keyword">mutable</span> std::mutex m_mutex{};</div>
+<div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>  std::condition_variable m_cv{};</div>
+<div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span>  <a class="code hl_struct" href="structdmn_1_1Dmn__DLock__TableSnapshot.html">Dmn_DLock_TableSnapshot</a> m_table{};</div>
+<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>};</div>
 </div>
-<div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span> </div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span> </div>
-<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DLOCK_HPP_</span></div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span> </div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span> </div>
+<div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DLOCK_HPP_</span></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DLock__Base_html"><div class="ttname"><a href="classdmn_1_1Dmn__DLock__Base.html">dmn::Dmn_DLock_Base</a></div><div class="ttdoc">Minimal local handler/proxy helper used by the DLock prototype.</div><div class="ttdef"><b>Definition</b> dmn-dlock.hpp:547</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DLock__HandlerProxy_html"><div class="ttname"><a href="classdmn_1_1Dmn__DLock__HandlerProxy.html">dmn::Dmn_DLock_HandlerProxy</a></div><div class="ttdoc">Lightweight proxy to the lock-specific DMesg handler.</div><div class="ttdef"><b>Definition</b> dmn-dlock.hpp:522</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DLock__Handler_html"><div class="ttname"><a href="classdmn_1_1Dmn__DLock__Handler.html">dmn::Dmn_DLock_Handler</a></div><div class="ttdoc">Lightweight DMesg handler wrapper used by the DLock prototype.</div><div class="ttdef"><b>Definition</b> dmn-dlock.hpp:490</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DLock_html"><div class="ttname"><a href="classdmn_1_1Dmn__DLock.html">dmn::Dmn_DLock</a></div><div class="ttdoc">Local-only DLock prototype constrained to a Dmn_DMesg base.</div><div class="ttdef"><b>Definition</b> dmn-dlock.hpp:581</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DLock_html"><div class="ttname"><a href="classdmn_1_1Dmn__DLock.html">dmn::Dmn_DLock</a></div><div class="ttdoc">Local-only DLock prototype constrained to a Dmn_DMesg base.</div><div class="ttdef"><b>Definition</b> dmn-dlock.hpp:582</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler_html"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></div><div class="ttdoc">Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:268</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler_html_a311d2db40e29dbb9639b2aa91269651b"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a311d2db40e29dbb9639b2aa91269651b">dmn::Dmn_DMesg::Dmn_DMesgHandler::scheduleInHandlerContext</a></div><div class="ttdeci">void scheduleInHandlerContext(Callable &amp;&amp;fnc)</div><div class="ttdoc">Schedule a callable task to be executed within the handler's asynchronous execution context.</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:532</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DMesg_html_a38fd9b978f1f0be6b69199a32af66f95"><div class="ttname"><a href="classdmn_1_1Dmn__DMesg.html#a38fd9b978f1f0be6b69199a32af66f95">dmn::Dmn_DMesg::AsyncProcessTask</a></div><div class="ttdeci">std::function&lt; void(dmn::DMesgPb)&gt; AsyncProcessTask</div><div class="ttdoc">Callback invoked in the handler's async context with a copy of each delivered message....</div><div class="ttdef"><b>Definition</b> dmn-dmesg.hpp:133</div></div>

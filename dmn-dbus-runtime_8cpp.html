@@ -104,14 +104,35 @@ $(document).ready(function(){initNavTree('dmn-dbus-runtime_8cpp.html',''); initR
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a9b764a8d643f986266076368ff6bf2bc" id="r_a9b764a8d643f986266076368ff6bf2bc"><td class="memItemLeft" align="right" valign="top"><a id="a9b764a8d643f986266076368ff6bf2bc" name="a9b764a8d643f986266076368ff6bf2bc"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::detail::initializeDbusRuntime</b> ()</td></tr>
+<tr class="memitem:a9b764a8d643f986266076368ff6bf2bc" id="r_a9b764a8d643f986266076368ff6bf2bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dbus-runtime_8hpp.html#a9b764a8d643f986266076368ff6bf2bc">dmn::detail::initializeDbusRuntime</a> ()</td></tr>
+<tr class="memdesc:a9b764a8d643f986266076368ff6bf2bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize libdbus threading once for this process.  <br /></td></tr>
 <tr class="separator:a9b764a8d643f986266076368ff6bf2bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Shared process-wide libdbus initialization. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved. </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a9b764a8d643f986266076368ff6bf2bc" name="a9b764a8d643f986266076368ff6bf2bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b764a8d643f986266076368ff6bf2bc">&#9670;&#160;</a></span>initializeDbusRuntime()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void dmn::detail::initializeDbusRuntime </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize libdbus threading once for this process. </p>
+<p>Call before using any other libdbus API. This setup is independent of whether clients later connect to the standard system or session bus, or use an explicit address for either one or a separately started private bus. </p>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

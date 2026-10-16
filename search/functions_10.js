@@ -18,7 +18,7 @@ var searchData=
   ['signature_15',['signature',['../classdmn_1_1Dmn__DbusValue.html#a4b65f29c3b3d289858d4512f1090ef20',1,'dmn::Dmn_DbusValue']]],
   ['signaturevalue_16',['signatureValue',['../classdmn_1_1Dmn__DbusValue.html#a0dd0520a982cd8af4a786fc47dd18bd0',1,'dmn::Dmn_DbusValue']]],
   ['size_17',['size',['../classdmn_1_1Dmn__IntervalBTree.html#a4b17d4d9e01f293ccfeb79954e15b92a',1,'dmn::Dmn_IntervalBTree']]],
-  ['snapshot_18',['snapshot',['../classdmn_1_1Dmn__BluezClient.html#a6ddef29f98fed7d0bb42f47f5fa53a30',1,'dmn::Dmn_BluezClient']]],
+  ['snapshot_18',['snapshot',['../classdmn_1_1Dmn__BluezClient.html#a8fed5d36ea37b7b749e0c770efb53e0d',1,'dmn::Dmn_BluezClient']]],
   ['start_19',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
   ['startdiscovery_20',['startDiscovery',['../classdmn_1_1Dmn__BluezClient.html#a7415b3e81f7bb1b7072f287b94572154',1,'dmn::Dmn_BluezClient']]],
   ['status_21',['status',['../classdmn_1_1Dmn__DbusInput.html#a66b5f5d8d2632b28567f6bdd28d47ab3',1,'dmn::Dmn_DbusInput::status()'],['../classdmn_1_1Dmn__DMesgDbus.html#a2b62fe1666e822026fa2891747325c28',1,'dmn::Dmn_DMesgDbus::status()'],['../classdmn_1_1Dmn__DbusOutput.html#a63efd039a83fa14feb07102e324a859a',1,'dmn::Dmn_DbusOutput::status()'],['../classdmn_1_1Dmn__DbusClient.html#a02eb942d1db62e415927789000439c9a',1,'dmn::Dmn_DbusClient::status()']]],

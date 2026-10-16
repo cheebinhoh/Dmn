@@ -10,12 +10,12 @@ var searchData=
   ['enumeratecanonical_7',['enumerateCanonical',['../classdmn_1_1Dmn__IntervalBTree.html#a5b29b9f0646240c00ea531c004c79e5c',1,'dmn::Dmn_IntervalBTree']]],
   ['enumeratecanonicalmove_8',['enumerateCanonicalMove',['../classdmn_1_1Dmn__IntervalBTree.html#a0ccb2d483342e09da5acc8d7a20addcb',1,'dmn::Dmn_IntervalBTree']]],
   ['error_9',['Error',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a902b0d55fddef6f8d651fe1035b7d4bd',1,'dmn']]],
-  ['error_20handling_20and_20exception_20safety_10',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md44',1,'']]],
-  ['exception_20cancellation_20notes_11',['Exception / cancellation notes',['../dmn-inflight-guard_8hpp.html#autotoc_md22',1,'']]],
-  ['exception_20safety_12',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md44',1,'']]],
+  ['error_20handling_20and_20exception_20safety_10',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md45',1,'']]],
+  ['exception_20cancellation_20notes_11',['Exception / cancellation notes',['../dmn-inflight-guard_8hpp.html#autotoc_md23',1,'']]],
+  ['exception_20safety_12',['Error handling and exception safety',['../dmn-pub-sub_8hpp.html#autotoc_md45',1,'']]],
   ['exceptionpolicy_13',['ExceptionPolicy',['../classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc',1,'dmn::Dmn_Proc']]],
   ['exec_14',['exec',['../classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542',1,'dmn::Dmn_Proc']]],
-  ['execution_20model_15',['execution model',['../dmn-dlock_8hpp.html#autotoc_md17',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md39',1,'Threading and execution model']]],
+  ['execution_20model_15',['execution model',['../dmn-dlock_8hpp.html#autotoc_md18',1,'Thread safety and execution model'],['../dmn-pub-sub_8hpp.html#autotoc_md40',1,'Threading and execution model']]],
   ['exitmainloop_16',['exitMainLoop',['../classdmn_1_1Dmn__Runtime__Manager.html#aa88c4a09c5cc919f4fa2412ac8e0a7ab',1,'dmn::Dmn_Runtime_Manager']]],
-  ['expectations_17',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md34',1,'']]]
+  ['expectations_17',['Key characteristics and expectations',['../dmn-proc_8hpp.html#autotoc_md35',1,'']]]
 ];

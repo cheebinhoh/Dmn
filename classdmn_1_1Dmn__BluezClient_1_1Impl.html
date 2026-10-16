@@ -106,12 +106,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad076a1591704b6d1f84c8ad67e86b050" id="r_ad076a1591704b6d1f84c8ad67e86b050"><td class="memItemLeft" align="right" valign="top"><a id="ad076a1591704b6d1f84c8ad67e86b050" name="ad076a1591704b6d1f84c8ad67e86b050"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>subscribe</b> (const <a class="el" href="structdmn_1_1Dmn__DbusSignalMatch.html">Dmn_DbusSignalMatch</a> &amp;match)</td></tr>
 <tr class="separator:ad076a1591704b6d1f84c8ad67e86b050"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbcc24e2d86950971efd50ceca2876cf" id="r_afbcc24e2d86950971efd50ceca2876cf"><td class="memItemLeft" align="right" valign="top"><a id="afbcc24e2d86950971efd50ceca2876cf" name="afbcc24e2d86950971efd50ceca2876cf"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>snapshot</b> () -&gt; Dmn_BluezValueResult&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
-<tr class="separator:afbcc24e2d86950971efd50ceca2876cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e3133679df955cf263e6bb20e73c5f4" id="r_a9e3133679df955cf263e6bb20e73c5f4"><td class="memItemLeft" align="right" valign="top"><a id="a9e3133679df955cf263e6bb20e73c5f4" name="a9e3133679df955cf263e6bb20e73c5f4"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>snapshot</b> (std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; Dmn_BluezValueResult&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
+<tr class="separator:a9e3133679df955cf263e6bb20e73c5f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93697eb1b5590b4df22b4c4dcdf0ae2b" id="r_a93697eb1b5590b4df22b4c4dcdf0ae2b"><td class="memItemLeft" align="right" valign="top"><a id="a93697eb1b5590b4df22b4c4dcdf0ae2b" name="a93697eb1b5590b4df22b4c4dcdf0ae2b"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>devices</b> () const -&gt; std::vector&lt; <a class="el" href="structdmn_1_1Dmn__BluezDevice.html">Dmn_BluezDevice</a> &gt;</td></tr>
 <tr class="separator:a93697eb1b5590b4df22b4c4dcdf0ae2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d50138e21bf109562063ae2ac0320c8" id="r_a7d50138e21bf109562063ae2ac0320c8"><td class="memItemLeft" align="right" valign="top"><a id="a7d50138e21bf109562063ae2ac0320c8" name="a7d50138e21bf109562063ae2ac0320c8"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>deviceAction</b> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector, std::chrono::milliseconds timeout, bool requestedConnected) -&gt; Dmn_BluezResult</td></tr>
+<tr class="separator:a7d50138e21bf109562063ae2ac0320c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af154938349bf04682e1876fc1a207447" id="r_af154938349bf04682e1876fc1a207447"><td class="memItemLeft" align="right" valign="top"><a id="af154938349bf04682e1876fc1a207447" name="af154938349bf04682e1876fc1a207447"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>startDiscovery</b> (const std::string &amp;adapterPath) -&gt; Dmn_BluezResult</td></tr>
 <tr class="separator:af154938349bf04682e1876fc1a207447"><td class="memSeparator" colspan="2">&#160;</td></tr>

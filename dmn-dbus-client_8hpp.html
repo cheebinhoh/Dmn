@@ -153,7 +153,7 @@ Enumerations</h2></td></tr>
 , <a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72aa45da96d0bf6575970f2d27af22be28a">System</a>
 , <a class="el" href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27">Address</a>
  }</td></tr>
-<tr class="memdesc:a6d7af7167f66da4bd4b6993dbd361a72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects the D-Bus daemon for one client-owned private connection.  <a href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72">More...</a><br /></td></tr>
+<tr class="memdesc:a6d7af7167f66da4bd4b6993dbd361a72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects the D-Bus bus to which this client connects.  <a href="dmn-dbus-client_8hpp.html#a6d7af7167f66da4bd4b6993dbd361a72">More...</a><br /></td></tr>
 <tr class="separator:a6d7af7167f66da4bd4b6993dbd361a72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2b24c85f0dade1cef1bdf4225d14268" id="r_ae2b24c85f0dade1cef1bdf4225d14268"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268">dmn::Dmn_DbusErrorKind</a> { <br />
 &#160;&#160;<a class="el" href="dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268a253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>
@@ -196,15 +196,17 @@ Enumerations</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Selects the D-Bus daemon for one client-owned private connection. </p>
-<p>Session and System select the standard bus by kind. Address selects the exact caller-supplied bus address, which may identify an isolated/private bus daemon. Every option creates a private connection owned by this client; "private" does not mean a separate BusKind. </p>
+<p>Selects the D-Bus bus to which this client connects. </p>
+<p>Session and System select the standard buses by kind. Address selects the exact caller-supplied address of a D-Bus bus daemon; that address can refer to either standard bus or to a separately started private bus instance. Every option creates a dedicated client connection. "Private connection" means a connection owned by this client, not a separate bus daemon. Direct peer-to-peer connections to a service process are not supported. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72a71c7ae294b7abd866b3fb295b3b9e4a4" name="a6d7af7167f66da4bd4b6993dbd361a72a71c7ae294b7abd866b3fb295b3b9e4a4"></a>Session&#160;</td><td class="fielddoc"><p>Connect privately to the current user's session bus. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72a71c7ae294b7abd866b3fb295b3b9e4a4" name="a6d7af7167f66da4bd4b6993dbd361a72a71c7ae294b7abd866b3fb295b3b9e4a4"></a>Session&#160;</td><td class="fielddoc"><p>Open a dedicated client connection to the current user's session bus. </p>
+<p>This uses the shared session bus; it does not start a separate bus. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72aa45da96d0bf6575970f2d27af22be28a" name="a6d7af7167f66da4bd4b6993dbd361a72aa45da96d0bf6575970f2d27af22be28a"></a>System&#160;</td><td class="fielddoc"><p>Connect privately to the machine's system bus. </p>
+<tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72aa45da96d0bf6575970f2d27af22be28a" name="a6d7af7167f66da4bd4b6993dbd361a72aa45da96d0bf6575970f2d27af22be28a"></a>System&#160;</td><td class="fielddoc"><p>Open a dedicated client connection to the machine's system bus. </p>
+<p>This uses the shared system bus; it does not start a separate bus. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" name="a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27"></a>Address&#160;</td><td class="fielddoc"><p>Connect privately to the exact caller-supplied bus address. </p>
-<p>Use this for an isolated/private bus daemon or another explicitly addressed bus. No session/system fallback is attempted. </p>
+<tr><td class="fieldname"><a id="a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27" name="a6d7af7167f66da4bd4b6993dbd361a72add7bf230fde8d4836917806aff6a6b27"></a>Address&#160;</td><td class="fielddoc"><p>Connect to the bus daemon at the exact caller-supplied address. </p>
+<p>Use this for an explicitly addressed system/session bus or a separately started private bus instance. The address must identify a bus daemon, not a service process accepting a direct peer-to-peer connection. No session/system fallback is attempted. </p>
 </td></tr>
 </table>
 
