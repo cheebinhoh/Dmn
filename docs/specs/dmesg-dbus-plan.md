@@ -405,20 +405,20 @@ actual deployment policy.
 
 ## 4. Option comparison and implementation order
 
-| Criterion | Option A: direct I/O injection | Option B: `Dmn_DMesgDbus` wrapper |
-|---|---|---|
-| Transport implementation | Shared D-Bus endpoints | Same Option A endpoint classes |
-| Changes to `Dmn_DMesgNet` | None | None; wrapper owns a private instance |
-| User setup | Caller constructs input/output adapters and injects them | Caller supplies node ID/config; wrapper creates adapters |
-| DMesg API | Full `Dmn_DMesgNet`/inherited API | Explicitly forwarded DMesg subset; no exposed node instance |
-| Transport visibility | Endpoint types/config/status are public | Endpoint integration details are hidden behind the wrapper |
-| Extensibility | Custom `Dmn_Io` implementations and configurations | Convenient supported D-Bus default |
-| Lifecycle ownership | Caller owns endpoint refs; node shares them | Wrapper owns endpoints and internal node in defined destruction order |
-| Error visibility | Query each endpoint status | Wrapper provides both endpoint snapshots |
-| Testability | Codec/endpoints/injected node composition | Additional forwarding, API-boundary, rollback, and lifetime tests |
-| ABI/build surface | Public endpoint types and optional D-Bus target | Additional public wrapper/config/status header on same target |
-| Performance | Shared endpoint path | Same path; wrapper adds only method forwarding |
-| Implementation order | Phase 1; completion gate | Phase 2, strictly after Option A tests pass |
+| Criterion                 | Option A: direct I/O injection                           | Option B: `Dmn_DMesgDbus` wrapper                                     |
+| ------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------- |
+| Transport implementation  | Shared D-Bus endpoints                                   | Same Option A endpoint classes                                        |
+| Changes to `Dmn_DMesgNet` | None                                                     | None; wrapper owns a private instance                                 |
+| User setup                | Caller constructs input/output adapters and injects them | Caller supplies node ID/config; wrapper creates adapters              |
+| DMesg API                 | Full `Dmn_DMesgNet`/inherited API                        | Explicitly forwarded DMesg subset; no exposed node instance           |
+| Transport visibility      | Endpoint types/config/status are public                  | Endpoint integration details are hidden behind the wrapper            |
+| Extensibility             | Custom `Dmn_Io` implementations and configurations       | Convenient supported D-Bus default                                    |
+| Lifecycle ownership       | Caller owns endpoint refs; node shares them              | Wrapper owns endpoints and internal node in defined destruction order |
+| Error visibility          | Query each endpoint status                               | Wrapper provides both endpoint snapshots                              |
+| Testability               | Codec/endpoints/injected node composition                | Additional forwarding, API-boundary, rollback, and lifetime tests     |
+| ABI/build surface         | Public endpoint types and optional D-Bus target          | Additional public wrapper/config/status header on same target         |
+| Performance               | Shared endpoint path                                     | Same path; wrapper adds only method forwarding                        |
+| Implementation order      | Phase 1; completion gate                                 | Phase 2, strictly after Option A tests pass                           |
 
 Both implemented options remain supported as different construction
 boundaries. Option A provides direct endpoint injection; Option B owns those

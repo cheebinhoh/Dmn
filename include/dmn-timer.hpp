@@ -40,7 +40,7 @@
 
 namespace dmn {
 
-template <typename T> class Dmn_Timer {
+template <typename T> class Dmn_Timer final {
   using Clock = std::chrono::steady_clock;
 
   struct Generation {};

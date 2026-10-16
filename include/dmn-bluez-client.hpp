@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-bluez-client.hpp
- * @brief Optional BlueZ adapter, device inventory, and discovery API.
+ * @brief Optional BlueZ adapter, device, and discovery API.
  */
 
 #ifndef DMN_BLUEZ_CLIENT_HPP_
@@ -10,6 +10,7 @@
 
 #include "dmn-dbus-client.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -112,7 +113,7 @@ template <typename T>
 using Dmn_BluezValueResult = std::expected<T, Dmn_DbusError>;
 
 /**
- * @brief Read BlueZ inventory and explicitly own one discovery session.
+ * @brief Manage BlueZ inventory, explicit device actions, and one scan session.
  *
  * Production instances connect only to the system bus. Event callbacks are
  * serialized on a client-owned worker, outside the libdbus dispatch thread.
@@ -135,7 +136,7 @@ public:
   explicit Dmn_BluezClient(const Dmn_BluezClientConfig &config = {});
 
   /** @brief Stop an owned discovery session and release worker resources. */
-  ~Dmn_BluezClient();
+  virtual ~Dmn_BluezClient();
 
   /** @brief Clients cannot be copied because they own a bus connection. */
   Dmn_BluezClient(const Dmn_BluezClient &) = delete;
@@ -165,9 +166,13 @@ public:
    * inventory. A BlueZ owner change, malformed reply, transport error, or
    * bounded-queue overflow is returned as a typed D-Bus error.
    *
+   * @param timeout Finite request timeout; zero selects the configured
+   * default.
    * @return Owned adapter and known-device values in deterministic order.
    */
-  [[nodiscard]] auto snapshot() -> Dmn_BluezValueResult<Dmn_BluezInventory>;
+  [[nodiscard]] auto snapshot(
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezValueResult<Dmn_BluezInventory>;
 
   /**
    * @brief Return the current owned device view after snapshot or live updates.
@@ -175,6 +180,47 @@ public:
    * @return A copy of the current known-device values.
    */
   [[nodiscard]] auto devices() const -> std::vector<Dmn_BluezDevice>;
+
+  /**
+   * @brief Request connection to one explicitly selected known device.
+   *
+   * The selector may be a case-insensitive device address or an exact current
+   * device object path. When multiple adapters contain the address, provide
+   * their address or object path in @p adapterSelector. This operation does not
+   * invoke `Device1.Pair` or install a pairing agent; BlueZ may still initiate
+   * its normal system pairing/authorization flow when the device requires it.
+   * An already-connected device is an idempotent success with no D-Bus call.
+   *
+   * @param deviceSelector Bluetooth address or current object path in
+   * inventory.
+   * @param adapterSelector Optional adapter address or current object path.
+   * @param timeout Finite method timeout; zero selects the configured default.
+   * @return Success or the typed local/remote BlueZ error.
+   */
+  [[nodiscard]] auto connectDevice(
+      const std::string &deviceSelector,
+      const std::optional<std::string> &adapterSelector = std::nullopt,
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezResult;
+
+  /**
+   * @brief Request disconnection of one explicitly selected known device.
+   *
+   * Disconnecting does not remove pairing and may interrupt all active BlueZ
+   * profiles for that device. An already-disconnected device is an idempotent
+   * success with no D-Bus call.
+   *
+   * @param deviceSelector Bluetooth address or current object path in
+   * inventory.
+   * @param adapterSelector Optional adapter address or current object path.
+   * @param timeout Finite method timeout; zero selects the configured default.
+   * @return Success or the typed local/remote BlueZ error.
+   */
+  [[nodiscard]] auto disconnectDevice(
+      const std::string &deviceSelector,
+      const std::optional<std::string> &adapterSelector = std::nullopt,
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezResult;
 
   /**
    * @brief Set the default auto-transport filter and start one adapter scan.

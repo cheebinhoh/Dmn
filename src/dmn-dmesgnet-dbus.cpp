@@ -38,6 +38,8 @@ auto createOutputForFaultInjection(const Dmn_DbusConfig &config)
 #endif
 
 struct Dmn_DMesgDbus::Impl {
+  // The endpoints use separate connections to the caller-selected bus and
+  // carry the DMesgNet data as matched broadcast signals.
   Impl(std::string_view node_id, const Dmn_DbusConfig &config)
       : input{std::make_shared<Dmn_DbusInput>(config)},
 #ifdef FIU_ENABLE

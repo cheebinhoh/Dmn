@@ -519,7 +519,7 @@ private:
 /**
  * @brief Lightweight proxy to the lock-specific DMesg handler.
  */
-class Dmn_DLock_HandlerProxy {
+class Dmn_DLock_HandlerProxy final {
 public:
   auto operator->() const -> std::shared_ptr<Dmn_DLock_Handler> {
     if (!m_handler) {
@@ -550,6 +550,7 @@ public:
 
   explicit Dmn_DLock_Base(std::string_view name, Dmn_DLock_Config config = {})
       : m_name{name}, m_config{std::move(config)} {}
+  virtual ~Dmn_DLock_Base() = default;
 
   auto openHandler(std::string_view session_name = "session",
                    std::string_view topic = "dlock") -> HandlerType {

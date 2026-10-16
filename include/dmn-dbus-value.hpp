@@ -32,7 +32,7 @@ namespace dmn {
  * and events. This class is transport-independent; it does not connect to a
  * bus, encode messages, or assign BlueZ meaning to a value.
  */
-class Dmn_DbusValue {
+class Dmn_DbusValue final {
 public:
   /** @brief Owned storage for a D-Bus byte array (`ay`). */
   using ByteArray = std::vector<std::uint8_t>;

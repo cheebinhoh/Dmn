@@ -202,7 +202,7 @@ using state_change_callback =
  *
  * @note Not thread-safe. External synchronization is required.
  */
-template <class T> class Dmn_IntervalBTree {
+template <class T> class Dmn_IntervalBTree final {
 public:
   /** @brief Payload type associated with each range. */
   using value_type = T;

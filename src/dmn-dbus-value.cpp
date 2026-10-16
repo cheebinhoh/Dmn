@@ -83,6 +83,7 @@ auto Dmn_DbusValue::signature() const -> std::string {
   return std::visit(
       [](const auto &value) -> std::string {
         using T = std::decay_t<decltype(value)>;
+
         if constexpr (std::is_same_v<T, std::monostate>) {
           return {};
         } else if constexpr (std::is_same_v<T, bool>) {
@@ -132,6 +133,7 @@ auto Dmn_DbusValue::signature() const -> std::string {
           }
 
           signature += ')';
+
           return signature;
         } else {
           return "v";

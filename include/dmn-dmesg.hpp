@@ -611,7 +611,7 @@ public:
    * Thread-safety: The proxy itself is not thread-safe; do not share a
    * single Dmn_DMesgHandlerProxy instance across threads.
    */
-  class Dmn_DMesgHandlerProxy {
+  class Dmn_DMesgHandlerProxy final {
     friend class Dmn_DMesg;
 
   public:

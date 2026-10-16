@@ -143,7 +143,8 @@ public:
      * @param inflightguard Pointer to the owning @c Dmn_Inflight_Guard.
      * @throws std::runtime_error if the inflight guard is closed/shutting down.
      */
-    Ticket(Dmn_Inflight_Guard *inflightguard) : m_inflightguard{inflightguard} {
+    explicit Ticket(Dmn_Inflight_Guard *inflightguard)
+        : m_inflightguard{inflightguard} {
       assert(nullptr != m_inflightguard);
 
       if (m_inflightguard->isInflightGuardClosed()) {

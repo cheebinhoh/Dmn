@@ -443,7 +443,7 @@ protected:
    *
    * @param name Human-readable manager name for diagnostics.
    */
-  Dmn_Runtime_State_Manager(std::string_view name = "");
+  explicit Dmn_Runtime_State_Manager(std::string_view name = "");
 
 private:
   friend class Dmn_Runtime_State;

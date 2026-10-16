@@ -50,12 +50,12 @@ it does not attach to the daemon's publisher or call a daemon service.
 
 The alternatives differ in how much state and reliability the gateway adds:
 
-| Option | Design | Benefits | Costs/risks |
-|---|---|---|---|
-| **A. Direct `Dmn_DMesgDbus` in every app** | Each app is a full node on the existing local signal bus; a daemon would need a second network node and a bridge between them. | Reuses the current facade with little new API. | Does not create a daemon client relationship; several DMesgNet identities per host; bridge must map counters, identity, system traffic, echoes, and conflicts across two publishers. Not a simple gateway. |
-| **B. One daemon publisher plus D-Bus client proxies (recommended)** | Each app has only a proxy. The daemon owns one `Dmn_DMesg` publisher and one server handler per client handler. | One shared local counter/cache/conflict domain; few components; directly reuses DMesg handler semantics; later the same publisher can be the base of one `Dmn_DMesgNet`. | Requires a small local D-Bus service/client API and an ordered handler-event seam. |
-| **C. Stateless D-Bus message relay** | Clients send raw messages; daemon forwards payloads without creating server-side DMesg handlers. | Fewer handler objects. | Cannot faithfully represent handler-local counters, conflict state, initial playback, handler ownership, or repair notifications; effectively reimplements DMesg semantics in the gateway. |
-| **D. Poll-only client status** | Client periodically calls `GetStatus`/`isInConflict`; no server-pushed conflict events. | Avoids a transition callback and event stream. | Conflict visibility is delayed by polling; transient enter/resolve transitions may disappear; polling load scales with clients; not equivalent to notification semantics. |
+| Option                                                              | Design                                                                                                                         | Benefits                                                                                                                                                                 | Costs/risks                                                                                                                                                                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Direct `Dmn_DMesgDbus` in every app**                          | Each app is a full node on the existing local signal bus; a daemon would need a second network node and a bridge between them. | Reuses the current facade with little new API.                                                                                                                           | Does not create a daemon client relationship; several DMesgNet identities per host; bridge must map counters, identity, system traffic, echoes, and conflicts across two publishers. Not a simple gateway. |
+| **B. One daemon publisher plus D-Bus client proxies (recommended)** | Each app has only a proxy. The daemon owns one `Dmn_DMesg` publisher and one server handler per client handler.                | One shared local counter/cache/conflict domain; few components; directly reuses DMesg handler semantics; later the same publisher can be the base of one `Dmn_DMesgNet`. | Requires a small local D-Bus service/client API and an ordered handler-event seam.                                                                                                                         |
+| **C. Stateless D-Bus message relay**                                | Clients send raw messages; daemon forwards payloads without creating server-side DMesg handlers.                               | Fewer handler objects.                                                                                                                                                   | Cannot faithfully represent handler-local counters, conflict state, initial playback, handler ownership, or repair notifications; effectively reimplements DMesg semantics in the gateway.                 |
+| **D. Poll-only client status**                                      | Client periodically calls `GetStatus`/`isInConflict`; no server-pushed conflict events.                                        | Avoids a transition callback and event stream.                                                                                                                           | Conflict visibility is delayed by polling; transient enter/resolve transitions may disappear; polling load scales with clients; not equivalent to notification semantics.                                  |
 
 **Choose Option B, but keep v1 deliberately small:**
 
@@ -98,14 +98,14 @@ cannot select the server handler name or write
 
 Minimum operations for the selected v1:
 
-| Operation | Contract |
-|---|---|
-| `OpenHandler(topic, options)` | Create one server handler with a daemon-generated unique name; wait for a handler-context barrier after initial playback callbacks have populated its staged queue before returning its opaque ID. Do not block the shared D-Bus dispatch thread. The handler is owned by the calling D-Bus unique name. |
-| `ActivateHandler(handler)` | Begin delivery after the client knows its ID; flush staged initial playback/events in order. |
+| Operation                                             | Contract                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OpenHandler(topic, options)`                         | Create one server handler with a daemon-generated unique name; wait for a handler-context barrier after initial playback callbacks have populated its staged queue before returning its opaque ID. Do not block the shared D-Bus dispatch thread. The handler is owned by the calling D-Bus unique name.                          |
+| `ActivateHandler(handler)`                            | Begin delivery after the client knows its ID; flush staged initial playback/events in order.                                                                                                                                                                                                                                      |
 | `Publish(handler, operation_id, application_payload)` | Validate an application-only payload, write through the server handler using the synchronous conflict-checking path, and return the local publisher result plus the current conflict generation. `operation_id` correlates this reply with its call only; it is not a deduplication key and does not appear in transition events. |
-| `RequestTopicResync(handler, topic)` | Ask the daemon to publish its current cached value with the existing DMesg force/reset path, if policy allows. This is a local repair request, not a global winner or network commit. |
-| `GetHandlerStatus(handler, topic)` | Return the daemon-side handler's current counter, conflict state, and conflict generation. It repairs proxy uncertainty; it is not a history of missed transitions. |
-| `CloseHandler(handler)` | Stop admission, report/discard queued client events according to the close contract, then close the server handler. |
+| `RequestTopicResync(handler, topic)`                  | Ask the daemon to publish its current cached value with the existing DMesg force/reset path, if policy allows. This is a local repair request, not a global winner or network commit.                                                                                                                                             |
+| `GetHandlerStatus(handler, topic)`                    | Return the daemon-side handler's current counter, conflict state, and conflict generation. It repairs proxy uncertainty; it is not a history of missed transitions.                                                                                                                                                               |
+| `CloseHandler(handler)`                               | Stop admission, report/discard queued client events according to the close contract, then close the server handler.                                                                                                                                                                                                               |
 
 The exact D-Bus service name, signatures, protobuf-vs-explicit-field encoding,
 error names, limits, and installation policy must be frozen before
@@ -266,16 +266,16 @@ The daemon translates each ordered handler message or state transition into a
 directed event for the client connection owning that server handler. Minimum
 event fields:
 
-| Field | Meaning |
-|---|---|
-| `handler_id` | Server-issued routing identity, bound to and validated against the current D-Bus peer. |
-| `event_sequence` | Strictly increasing per handler, assigned by the daemon before queue admission. |
-| `event_type` | `Message`, `ConflictEntered`, `ConflictResolved`, or an explicit gateway control/error event; conflict state is never inferred from message flags alone. |
-| `topic` | Topic for the delivery or handler-local state transition. |
-| `handler_running_counter` | Counter snapshot at delivery/transition; diagnostic/local handler state only. |
-| `conflict_generation` | Current monotonically increasing per-handler state-transition generation; meaningful for state transitions. The method reply and status snapshot report the current generation too. |
-| `message` | Validated application delivery, optional conflict cause or repair value, or absent for a control/error event. |
-| `delivery_status` | Local queue/send/drop state; must not imply application consumption. |
+| Field                     | Meaning                                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handler_id`              | Server-issued routing identity, bound to and validated against the current D-Bus peer.                                                                                              |
+| `event_sequence`          | Strictly increasing per handler, assigned by the daemon before queue admission.                                                                                                     |
+| `event_type`              | `Message`, `ConflictEntered`, `ConflictResolved`, or an explicit gateway control/error event; conflict state is never inferred from message flags alone.                            |
+| `topic`                   | Topic for the delivery or handler-local state transition.                                                                                                                           |
+| `handler_running_counter` | Counter snapshot at delivery/transition; diagnostic/local handler state only.                                                                                                       |
+| `conflict_generation`     | Current monotonically increasing per-handler state-transition generation; meaningful for state transitions. The method reply and status snapshot report the current generation too. |
+| `message`                 | Validated application delivery, optional conflict cause or repair value, or absent for a control/error event.                                                                       |
+| `delivery_status`         | Local queue/send/drop state; must not imply application consumption.                                                                                                                |
 
 Conflict events and ordinary DMesg delivery events for one handler share one
 ordered event stream. DMesg creates events on the publisher-serialized path

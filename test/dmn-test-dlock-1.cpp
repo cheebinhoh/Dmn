@@ -10,6 +10,7 @@
 #include "dmn-dlock.hpp"
 #include "proto/dmn-dmesg.pb.h"
 
+#include <memory>
 #include <string>
 
 namespace {
@@ -94,6 +95,24 @@ TEST(DlockRange, IntervalConversionPreservesEndpointsAndValidity) {
   EXPECT_TRUE(lockRange.overlaps({9, 12}));
   EXPECT_FALSE(lockRange.overlaps({10, 12}));
   EXPECT_FALSE(lockRange.overlaps({-1, 2}));
+}
+
+TEST(DlockBase, DeletesDerivedInstanceThroughBasePointer) {
+  struct DerivedDLock final : dmn::Dmn_DLock_Base {
+    explicit DerivedDLock(bool &destroyed)
+        : Dmn_DLock_Base{"derived"}, m_destroyed{destroyed} {}
+
+    ~DerivedDLock() override { m_destroyed = true; }
+
+    bool &m_destroyed;
+  };
+
+  bool destroyed{};
+  std::unique_ptr<dmn::Dmn_DLock_Base> lock =
+      std::make_unique<DerivedDLock>(destroyed);
+  lock.reset();
+
+  EXPECT_TRUE(destroyed);
 }
 
 } // namespace

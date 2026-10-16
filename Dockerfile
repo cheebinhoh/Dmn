@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
       gdb \
       openjdk-17-jre-headless \
       libatomic1 \
+      libdbus-1-dev \
       libgtest-dev \
       libicu-dev \
       libprotobuf-dev \
@@ -73,11 +74,14 @@ RUN cmake -B build \
       -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_NDEBUG=ON \
       -DBUILD_KAFKA_TEST=ON \
+      -DENABLE_BLUEZ=ON \
+      -DENABLE_DBUS=ON \
       -DENABLE_VALGRIND=ON \
       -DENABLE_FAULT_INJECTION=ON && \
     cmake --build build/ -j2
 
+
 ENV CTEST_LABEL="dmn|kafka|valgrind|fault-injection"
 
-# Entry point
+ # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure && exec /bin/bash"]

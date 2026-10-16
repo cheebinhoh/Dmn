@@ -260,7 +260,7 @@ inline bool stringCompare(const std::string_view str1,
  */
 template <typename F>
   requires std::is_nothrow_invocable_v<F &>
-class ScopeGuard {
+class ScopeGuard final {
 public:
   /**
    * @brief Create an armed guard that owns the cleanup callable.

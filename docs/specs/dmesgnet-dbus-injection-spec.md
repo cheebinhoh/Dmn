@@ -366,23 +366,23 @@ its multiplexing, routing, shutdown, and authentication behavior are specified.
 
 ## 6. Comparison with the `Dmn_DMesgDbus` facade
 
-| Concern | Option A: direct injected I/O | Option B: `Dmn_DMesgDbus` composition wrapper |
-|---|---|---|
-| Transport/wire semantics | Same configured D-Bus signal tuple and endpoint implementation. | Same config and endpoint implementation; defaults match Option A. |
-| Construction | Caller creates input and output endpoints and passes both to `Dmn_DMesgNet`. | Caller passes node ID/config; wrapper creates endpoints and initializes a private node member. |
-| `Dmn_DMesgNet` changes | None. | None; wrapper owns a private instance. |
-| Public API | Public input/output adapters, config, and status; no pair factory. | Adds a first-class wrapper/config/status and forwards a selected DMesg API subset. |
-| Application ergonomics | More explicit and flexible; caller can accidentally pair wrong buses/configs. | Small, safe default constructor; fewer assembly mistakes. |
-| Ownership | Caller owns endpoint refs; node also shares ownership. | Wrapper owns endpoints before the internal node member so node teardown runs first. |
-| Lifecycle risk | Caller can mismatch config or shut down an endpoint early. | Constructor rollback and member declaration/destruction order must be tested. |
-| Failure visibility | Caller can inspect each endpoint snapshot. | Wrapper exposes a read-only combined status snapshot. |
-| Build/link | Optional adapter target; core stays independent if adapters are out-of-line/optional. | Optional adapter target plus public facade header/install/export and standalone-header integration. |
-| ABI/source compatibility | Does not alter existing DMesgNet API; public endpoint API is a support commitment. | New wrapper ABI/API; existing users unaffected, but users link the optional target. |
-| Testing | Strong isolation: codec, each endpoint, injected fake I/O, then composition. | All shared tests plus facade-specific config/rollback/base-destruction tests. |
-| Extension to another transport | Natural: any `Dmn_Io<std::string>` pair can be supplied. | D-Bus-specific API is intentionally narrow; use Option A for another transport. |
-| Multiple DmnNet instances | Caller controls and can share factories/config while retaining separate connections. | Each facade constructs an endpoint pair; sharing needs a separate explicit design. |
-| Operational configuration | Explicit endpoint construction can support custom factories/options. | Central validated defaults are easier; only stable user-facing options should be exposed. |
-| Best fit | Advanced users, tests, custom transports, and explicit lifecycle control. | Application users who want a small DMesg API without endpoint assembly. |
+| Concern                        | Option A: direct injected I/O                                                         | Option B: `Dmn_DMesgDbus` composition wrapper                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Transport/wire semantics       | Same configured D-Bus signal tuple and endpoint implementation.                       | Same config and endpoint implementation; defaults match Option A.                                   |
+| Construction                   | Caller creates input and output endpoints and passes both to `Dmn_DMesgNet`.          | Caller passes node ID/config; wrapper creates endpoints and initializes a private node member.      |
+| `Dmn_DMesgNet` changes         | None.                                                                                 | None; wrapper owns a private instance.                                                              |
+| Public API                     | Public input/output adapters, config, and status; no pair factory.                    | Adds a first-class wrapper/config/status and forwards a selected DMesg API subset.                  |
+| Application ergonomics         | More explicit and flexible; caller can accidentally pair wrong buses/configs.         | Small, safe default constructor; fewer assembly mistakes.                                           |
+| Ownership                      | Caller owns endpoint refs; node also shares ownership.                                | Wrapper owns endpoints before the internal node member so node teardown runs first.                 |
+| Lifecycle risk                 | Caller can mismatch config or shut down an endpoint early.                            | Constructor rollback and member declaration/destruction order must be tested.                       |
+| Failure visibility             | Caller can inspect each endpoint snapshot.                                            | Wrapper exposes a read-only combined status snapshot.                                               |
+| Build/link                     | Optional adapter target; core stays independent if adapters are out-of-line/optional. | Optional adapter target plus public facade header/install/export and standalone-header integration. |
+| ABI/source compatibility       | Does not alter existing DMesgNet API; public endpoint API is a support commitment.    | New wrapper ABI/API; existing users unaffected, but users link the optional target.                 |
+| Testing                        | Strong isolation: codec, each endpoint, injected fake I/O, then composition.          | All shared tests plus facade-specific config/rollback/base-destruction tests.                       |
+| Extension to another transport | Natural: any `Dmn_Io<std::string>` pair can be supplied.                              | D-Bus-specific API is intentionally narrow; use Option A for another transport.                     |
+| Multiple DmnNet instances      | Caller controls and can share factories/config while retaining separate connections.  | Each facade constructs an endpoint pair; sharing needs a separate explicit design.                  |
+| Operational configuration      | Explicit endpoint construction can support custom factories/options.                  | Central validated defaults are easier; only stable user-facing options should be exposed.           |
+| Best fit                       | Advanced users, tests, custom transports, and explicit lifecycle control.             | Application users who want a small DMesg API without endpoint assembly.                             |
 
 ### Implementation sequence
 

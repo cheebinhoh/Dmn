@@ -196,37 +196,32 @@ if (ENABLE_BLUEZ)
   )
 
   target_compile_definitions(dmn-bluez PUBLIC DMN_ENABLE_BLUEZ=1)
-
   target_compile_options(dmn-bluez PRIVATE -Wall -Wextra -Wpedantic)
   target_link_libraries(dmn-bluez PUBLIC dmn-dbus)
 
   add_executable(dmn-bluez-discovery
                    dmn-bluez-discovery.cpp
   )
+
   target_compile_options(dmn-bluez-discovery
                            PRIVATE -Wall -Wextra -Wpedantic
   )
+
   target_link_libraries(dmn-bluez-discovery PRIVATE dmn-bluez)
 
   add_executable(dmn-bluez-discovery-test
                    dmn-bluez-discovery.cpp
   )
+
   target_compile_definitions(dmn-bluez-discovery-test
                                PRIVATE DMN_BLUEZ_TESTING=1
   )
+
   target_compile_options(dmn-bluez-discovery-test
                            PRIVATE -Wall -Wextra -Wpedantic
   )
-  target_link_libraries(dmn-bluez-discovery-test PRIVATE dmn-bluez)
 
-  add_test(NAME dmn-bluez-discovery-help COMMAND dmn-bluez-discovery --help)
-  set_tests_properties(dmn-bluez-discovery-help PROPERTIES LABELS "dmn")
-  add_test(NAME dmn-bluez-discovery-rejects-duplicate-option
-             COMMAND dmn-bluez-discovery --discovery --discovery
-  )
-  set_tests_properties(dmn-bluez-discovery-rejects-duplicate-option
-                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
-  )
+  target_link_libraries(dmn-bluez-discovery-test PRIVATE dmn-bluez)
 
   install(TARGETS dmn-bluez dmn-bluez-discovery
             ARCHIVE DESTINATION lib/dmn

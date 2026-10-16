@@ -318,26 +318,26 @@ dispatch as well as operate on the endpoint queues.
 Expose a thread-safe, read-only `Dmn_DbusIoStatus` endpoint status
 snapshot with these proposed fields:
 
-| Field | Meaning |
-|---|---|
-| `messages_received` | Valid signal payloads admitted to the input queue. |
-| `messages_written` | Items accepted by the output queue. |
-| `messages_queued_to_libdbus` | Items accepted by `dbus_connection_send()` into libdbus's outgoing queue; not bytes written to the bus. |
-| `malformed_received` | Matching signals rejected for malformed body/signature. |
-| `oversized_received` | Matching signals rejected for exceeding the payload limit. |
-| `input_allocation_errors` | Valid matched signals that could not be copied/enqueued due to allocation failure. |
-| `input_queue_drops` | Valid matching signals dropped because the input queue was full. |
-| `pending_input_messages` | Items currently waiting in the bounded input queue. |
-| `pending_input_bytes` | Payload bytes currently waiting in the bounded input queue. |
-| `output_queue_rejections` | Writes rejected because the output queue's message-count or byte cap was full. |
-| `output_worker_errors` | Worker-level libdbus/send/disconnect failures; not a count of messages lost inside libdbus. |
-| `pending_output_messages` | Items waiting in the adapter's bounded output queue, excluding libdbus's internal queue. |
-| `pending_output_bytes` | Payload bytes waiting in the adapter's bounded output queue. |
-| `libdbus_outgoing_bytes` | Bytes reported by libdbus as pending output; not a per-message delivery count. |
-| `shutdown_unsent_messages` | Adapter-queued messages not submitted before the finite shutdown deadline. |
-| `shutdown_unsent_bytes` | Payload bytes discarded from the adapter queue at shutdown deadline. |
-| `libdbus_bytes_discarded_on_shutdown` | Pending libdbus output bytes observed immediately before connection close; not a message count. |
-| `terminal_error` | First terminal I/O error, or an empty `std::error_code` if none, retained until endpoint destruction. |
+| Field                                 | Meaning                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `messages_received`                   | Valid signal payloads admitted to the input queue.                                                      |
+| `messages_written`                    | Items accepted by the output queue.                                                                     |
+| `messages_queued_to_libdbus`          | Items accepted by `dbus_connection_send()` into libdbus's outgoing queue; not bytes written to the bus. |
+| `malformed_received`                  | Matching signals rejected for malformed body/signature.                                                 |
+| `oversized_received`                  | Matching signals rejected for exceeding the payload limit.                                              |
+| `input_allocation_errors`             | Valid matched signals that could not be copied/enqueued due to allocation failure.                      |
+| `input_queue_drops`                   | Valid matching signals dropped because the input queue was full.                                        |
+| `pending_input_messages`              | Items currently waiting in the bounded input queue.                                                     |
+| `pending_input_bytes`                 | Payload bytes currently waiting in the bounded input queue.                                             |
+| `output_queue_rejections`             | Writes rejected because the output queue's message-count or byte cap was full.                          |
+| `output_worker_errors`                | Worker-level libdbus/send/disconnect failures; not a count of messages lost inside libdbus.             |
+| `pending_output_messages`             | Items waiting in the adapter's bounded output queue, excluding libdbus's internal queue.                |
+| `pending_output_bytes`                | Payload bytes waiting in the adapter's bounded output queue.                                            |
+| `libdbus_outgoing_bytes`              | Bytes reported by libdbus as pending output; not a per-message delivery count.                          |
+| `shutdown_unsent_messages`            | Adapter-queued messages not submitted before the finite shutdown deadline.                              |
+| `shutdown_unsent_bytes`               | Payload bytes discarded from the adapter queue at shutdown deadline.                                    |
+| `libdbus_bytes_discarded_on_shutdown` | Pending libdbus output bytes observed immediately before connection close; not a message count.         |
+| `terminal_error`                      | First terminal I/O error, or an empty `std::error_code` if none, retained until endpoint destruction.   |
 
 Counters and shutdown totals reset only at construction; pending input and
 output queue values change as items are admitted or removed. Reads are
@@ -389,16 +389,16 @@ publishers.
 
 V1 endpoint defaults are:
 
-| Limit | Proposed default | Required behavior |
-|---|---:|---|
-| Payload | 1 MiB | Reject before send/copy; configured values must also fit the libdbus `int` array-length API. |
-| Input queue | 1,024 messages or 16 MiB, whichever is reached first | Drop newest on full; increment counter and rate-limit diagnostics. |
-| D-Bus connection count | 2 per Dmn_DMesgNet instance | Separate input and output lifetimes. |
-| Output queue | 1,024 messages or 16 MiB, whichever is reached first | Reject new writes synchronously on full; no silent loss. |
-| libdbus outgoing queue | 16 MiB plus at most one maximum-size message | Stop submitting while the outgoing byte cap is reached. |
-| Worker I/O wait | At most 50 ms per loop iteration (proposed internal bound) | Let shutdown/disconnect state be observed promptly; do not expose as config in v1. |
-| Shutdown drain | 1 second | Stop submitting at deadline and report unsent queue count/bytes and pending libdbus bytes. |
-| Topic/message rate | No global default yet | D-Bus daemon limits remain; add app-level rate limiting only with a defined requirement. |
+| Limit                  | Proposed default                                           | Required behavior                                                                            |
+| ---------------------- | ---------------------------------------------------------: | -------------------------------------------------------------------------------------------- |
+| Payload                | 1 MiB                                                      | Reject before send/copy; configured values must also fit the libdbus `int` array-length API. |
+| Input queue            | 1,024 messages or 16 MiB, whichever is reached first       | Drop newest on full; increment counter and rate-limit diagnostics.                           |
+| D-Bus connection count | 2 per Dmn_DMesgNet instance                                | Separate input and output lifetimes.                                                         |
+| Output queue           | 1,024 messages or 16 MiB, whichever is reached first       | Reject new writes synchronously on full; no silent loss.                                     |
+| libdbus outgoing queue | 16 MiB plus at most one maximum-size message               | Stop submitting while the outgoing byte cap is reached.                                      |
+| Worker I/O wait        | At most 50 ms per loop iteration (proposed internal bound) | Let shutdown/disconnect state be observed promptly; do not expose as config in v1.           |
+| Shutdown drain         | 1 second                                                   | Stop submitting at deadline and report unsent queue count/bytes and pending libdbus bytes.   |
+| Topic/message rate     | No global default yet                                      | D-Bus daemon limits remain; add app-level rate limiting only with a defined requirement.     |
 
 The transport wire limit must include D-Bus framing overhead and the
 `Dmn_DMesgNet` protobuf. If deployed daemon limits are lower than the proposed
