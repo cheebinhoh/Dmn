@@ -85,4 +85,4 @@ RUN cmake -B build \
 ENV CTEST_LABEL="dmn|kafka|valgrind|fault-injection"
 
  # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure && exec /bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "/app/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure; exec /bin/bash"]
