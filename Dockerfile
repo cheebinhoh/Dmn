@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
       gdb \
       openjdk-17-jre-headless \
       libatomic1 \
+      dbus-daemon \
       libdbus-1-dev \
       libgtest-dev \
       libicu-dev \
