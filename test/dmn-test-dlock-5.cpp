@@ -99,6 +99,26 @@ TEST(DlockRealAcquire, AsyncAcquireCompletesAndSnapshotIsAnIndependentCopy) {
   EXPECT_EQ(dlock.currentSnapshot().m_entries.size(), 1U);
 }
 
+TEST(DlockRealAcquire, AsyncWaiterCompletesWithShutdownWhenLockIsDestroyed) {
+  std::future<dmn::Dmn_DLock_Result> waiting;
+  {
+    dmn::Dmn_DLock dlock{"dlock-async-shutdown"};
+    const auto owner = dlock.acquireLock({10, 20}, {.m_request_id = "owner"});
+    ASSERT_EQ(owner.m_code, dmn::Dmn_DLock_ResultCode::kOk);
+
+    waiting =
+        dlock.acquireLockAsync({15, 17}, {.m_request_id = "waiting-request"});
+    ASSERT_EQ(waiting.wait_for(std::chrono::milliseconds(20)),
+              std::future_status::timeout);
+  }
+
+  ASSERT_EQ(waiting.wait_for(std::chrono::seconds(1)),
+            std::future_status::ready);
+  const auto result = waiting.get();
+  EXPECT_EQ(result.m_code, dmn::Dmn_DLock_ResultCode::kShutdown);
+  EXPECT_EQ(result.m_request_id, "waiting-request");
+}
+
 } // namespace
 
 int main(int argc, char *argv[]) {

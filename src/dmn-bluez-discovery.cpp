@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-bluez-discovery.cpp
- * @brief Read-only BlueZ inventory and explicitly requested discovery CLI.
+ * @brief BlueZ inventory, discovery, and explicit selected-device actions.
  */
 
 #include "dmn-bluez-client.hpp"
@@ -27,6 +27,24 @@
 
 namespace {
 
+enum class ExitStatus : int {
+  Success = 0,
+  InvalidCommandLine = 2,
+  NoPoweredAdapter = 3,
+  BluezUnavailable = 4,
+  DiscoveryFailure = 5,
+  AmbiguousAdapter = 6,
+  AdapterNotFound = 7,
+  RuntimeError = 8,
+  DeviceSelectionOrArgumentError = 9,
+  DeviceActionRejected = 10,
+  RequestedStateNotReached = 11
+};
+
+constexpr auto exitCode(ExitStatus status) -> int {
+  return static_cast<int>(status);
+}
+
 volatile std::sig_atomic_t stopRequested{};
 
 void requestStop(int) { stopRequested = 1; }
@@ -37,6 +55,7 @@ struct Options {
   std::optional<std::string> adapter;
   std::optional<std::string> connect;
   std::optional<std::string> disconnect;
+  std::optional<std::string> pair;
 };
 
 void usage(std::ostream &out) {
@@ -45,6 +64,8 @@ void usage(std::ostream &out) {
          "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
          "--connect <device-address-or-path> [--discovery]\n"
          "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
+         "--pair <device-address-or-path>\n"
+         "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
          "--disconnect <device-address-or-path>\n"
          "Prints an RFC 4180 CSV inventory to stdout; diagnostics go to "
          "stderr.\n";
@@ -52,6 +73,7 @@ void usage(std::ostream &out) {
 
 auto parseOptions(int argc, char **argv, Options &options) -> bool {
   bool adapterSpecified{};
+
   for (int index = 1; index < argc; ++index) {
     const std::string argument{argv[index]};
     if (argument == "--help") {
@@ -73,13 +95,15 @@ auto parseOptions(int argc, char **argv, Options &options) -> bool {
 
       adapterSpecified = true;
       options.adapter = argv[++index];
-    } else if (argument == "--connect" || argument == "--disconnect") {
+    } else if (argument == "--connect" || argument == "--disconnect" ||
+               argument == "--pair") {
       if (index + 1 >= argc || argv[index + 1][0] == '-') {
         return false;
       }
 
-      auto &action =
-          argument == "--connect" ? options.connect : options.disconnect;
+      auto &action = argument == "--connect"      ? options.connect
+                     : argument == "--disconnect" ? options.disconnect
+                                                  : options.pair;
       if (action) {
         return false;
       }
@@ -94,8 +118,12 @@ auto parseOptions(int argc, char **argv, Options &options) -> bool {
     return argc == 2;
   }
 
-  return !(options.connect && options.disconnect) &&
-         !(options.disconnect && options.discovery);
+  const auto actionCount = options.connect.has_value() +
+                           options.disconnect.has_value() +
+                           options.pair.has_value();
+
+  return actionCount <= 1 && !(options.disconnect && options.discovery) &&
+         !(options.pair && options.discovery);
 }
 
 auto normalizedAddress(std::string_view address) -> std::string {
@@ -104,6 +132,7 @@ auto normalizedAddress(std::string_view address) -> std::string {
                  [](unsigned char character) {
                    return static_cast<char>(std::toupper(character));
                  });
+
   return normalized;
 }
 
@@ -127,6 +156,7 @@ auto csvField(std::string_view value) -> std::string {
   }
 
   std::string escaped{"\""};
+
   for (const char character : value) {
     if (character == '"') {
       escaped += "\"\"";
@@ -136,6 +166,7 @@ auto csvField(std::string_view value) -> std::string {
   }
 
   escaped += '"';
+
   return escaped;
 }
 
@@ -170,14 +201,17 @@ void sortInventory(std::vector<dmn::Dmn_BluezAdapter> &adapters,
               return std::tuple{adapterIdentity(left), left.object_path} <
                      std::tuple{adapterIdentity(right), right.object_path};
             });
+
   const auto identityFor = [&adapters](const std::string &adapterPath) {
     const auto adapter =
         std::find_if(adapters.begin(), adapters.end(),
                      [&adapterPath](const auto &candidate) {
                        return candidate.object_path == adapterPath;
                      });
+
     return adapter == adapters.end() ? adapterPath : adapterIdentity(*adapter);
   };
+
   std::sort(devices.begin(), devices.end(),
             [&identityFor](const auto &left, const auto &right) {
               return std::tuple{identityFor(left.adapter_path), left.address,
@@ -200,6 +234,7 @@ void printDevice(const dmn::Dmn_BluezDevice &device,
       adapter == adapters.end() ? std::string{} : adapter->address;
   const auto adapterPowered =
       adapter == adapters.end() ? std::optional<bool>{} : adapter->powered;
+
   printCsvRow({std::string{action}, adapterName, adapterAddress,
                device.adapter_path, stateText(adapterPowered), device.address,
                device.name, device.alias.value_or(""),
@@ -211,7 +246,8 @@ void printDevice(const dmn::Dmn_BluezDevice &device,
 }
 
 void printEvent(const dmn::Dmn_BluezEvent &event,
-                std::vector<dmn::Dmn_BluezAdapter> &adapters) {
+                std::vector<dmn::Dmn_BluezAdapter> &adapters,
+                bool includeDeviceEvents = true) {
   switch (event.kind) {
   case dmn::Dmn_BluezEventKind::AdapterAdded:
     if (event.adapter) {
@@ -219,6 +255,7 @@ void printEvent(const dmn::Dmn_BluezEvent &event,
           adapters.begin(), adapters.end(), [&event](const auto &adapter) {
             return adapter.object_path == event.adapter->object_path;
           });
+
       if (existing == adapters.end()) {
         adapters.push_back(*event.adapter);
       } else {
@@ -233,6 +270,7 @@ void printEvent(const dmn::Dmn_BluezEvent &event,
           adapters.begin(), adapters.end(), [&event](const auto &adapter) {
             return adapter.object_path == event.adapter->object_path;
           });
+
       if (existing == adapters.end()) {
         adapters.push_back(*event.adapter);
       } else {
@@ -250,19 +288,19 @@ void printEvent(const dmn::Dmn_BluezEvent &event,
 
     break;
   case dmn::Dmn_BluezEventKind::DeviceAdded:
-    if (event.device) {
+    if (includeDeviceEvents && event.device) {
       printDevice(*event.device, adapters, "added");
     }
 
     break;
   case dmn::Dmn_BluezEventKind::DeviceChanged:
-    if (event.device) {
+    if (includeDeviceEvents && event.device) {
       printDevice(*event.device, adapters, "changed");
     }
 
     break;
   case dmn::Dmn_BluezEventKind::DeviceRemoved:
-    if (event.device) {
+    if (includeDeviceEvents && event.device) {
       printDevice(*event.device, adapters, "removed");
     }
 
@@ -270,9 +308,11 @@ void printEvent(const dmn::Dmn_BluezEvent &event,
   case dmn::Dmn_BluezEventKind::ServiceUnavailable:
   case dmn::Dmn_BluezEventKind::Error:
     std::cerr << "BlueZ error: " << event.message << '\n';
+
     break;
   case dmn::Dmn_BluezEventKind::ServiceAvailable:
     std::cerr << event.message << '\n';
+
     break;
   }
 }
@@ -292,16 +332,17 @@ auto selectAdapter(const std::vector<dmn::Dmn_BluezAdapter> &adapters,
                               normalizedAddress(*selector) ||
                           adapter.object_path == *selector;
                  });
+
     if (matches.size() == 1) {
       return matches.front();
     }
 
     if (matches.size() > 1) {
       std::cerr << "Adapter selection is ambiguous: " << *selector << '\n';
-      errorCode = 6;
+      errorCode = exitCode(ExitStatus::AmbiguousAdapter);
     } else {
       std::cerr << "No powered adapter matches: " << *selector << '\n';
-      errorCode = 7;
+      errorCode = exitCode(ExitStatus::AdapterNotFound);
     }
 
     return std::nullopt;
@@ -313,11 +354,11 @@ auto selectAdapter(const std::vector<dmn::Dmn_BluezAdapter> &adapters,
 
   if (powered.empty()) {
     std::cerr << "No powered Bluetooth adapter is available\n";
-    errorCode = 3;
+    errorCode = exitCode(ExitStatus::NoPoweredAdapter);
   } else {
     std::cerr << "Multiple powered adapters are available; use --adapter "
                  "<address-or-object-path>\n";
-    errorCode = 6;
+    errorCode = exitCode(ExitStatus::AmbiguousAdapter);
   }
 
   return std::nullopt;
@@ -335,6 +376,7 @@ auto selectDevice(const std::vector<dmn::Dmn_BluezDevice> &devices,
     -> DeviceSelection {
   std::vector<dmn::Dmn_BluezDevice> matches;
   const bool isObjectPath = selector.starts_with('/');
+
   for (const auto &device : devices) {
     const bool matchesSelector =
         isObjectPath
@@ -363,26 +405,27 @@ auto selectDevice(const std::vector<dmn::Dmn_BluezDevice> &devices,
   if (matches.size() == 1) {
     return {std::move(matches.front()), false};
   }
+
   return {std::nullopt, matches.size() > 1};
 }
 
 auto errorExitCode(const dmn::Dmn_DbusError &error) -> int {
   if (error.remote_name == "org.freedesktop.DBus.Error.ServiceUnknown") {
-    return 4;
+    return exitCode(ExitStatus::BluezUnavailable);
   }
 
   if (error.kind == dmn::Dmn_DbusErrorKind::NotConnected) {
-    return 4;
+    return exitCode(ExitStatus::BluezUnavailable);
   }
 
   if (error.kind == dmn::Dmn_DbusErrorKind::Timeout) {
-    return 11;
+    return exitCode(ExitStatus::RequestedStateNotReached);
   }
   if (error.kind == dmn::Dmn_DbusErrorKind::InvalidArgument) {
-    return 9;
+    return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
   }
 
-  return 8;
+  return exitCode(ExitStatus::RuntimeError);
 }
 
 } // namespace
@@ -392,12 +435,14 @@ auto main(int argc, char **argv) -> int {
   if (!parseOptions(argc, argv, options)) {
     usage(std::cerr);
     std::cerr << "Invalid or duplicate command-line option\n";
-    return 2;
+
+    return exitCode(ExitStatus::InvalidCommandLine);
   }
 
   if (options.help) {
     usage(std::cout);
-    return 0;
+
+    return exitCode(ExitStatus::Success);
   }
 
   std::mutex eventMutex;
@@ -408,7 +453,8 @@ auto main(int argc, char **argv) -> int {
   const char *testBusAddress = std::getenv("DMN_BLUEZ_TEST_BUS_ADDRESS");
   if (testBusAddress == nullptr || *testBusAddress == '\0') {
     std::cerr << "DMN_BLUEZ_TEST_BUS_ADDRESS is required by this test build\n";
-    return 8;
+
+    return exitCode(ExitStatus::RuntimeError);
   }
 
   clientConfig.test_bus_address = testBusAddress;
@@ -418,22 +464,26 @@ auto main(int argc, char **argv) -> int {
   } catch (const std::exception &error) {
     std::cerr << "Unable to connect to the system D-Bus: " << error.what()
               << '\n';
-    return 8;
+
+    return exitCode(ExitStatus::RuntimeError);
   }
 
   client->setEventHandler([&](const auto &event) {
     std::lock_guard lock{eventMutex};
+
     events.push_back(event);
   });
 
   auto snapshot = client->snapshot();
   if (!snapshot) {
     std::cerr << "Unable to read BlueZ inventory: " << snapshot.error().message;
+
     if (!snapshot.error().remote_name.empty()) {
       std::cerr << " (" << snapshot.error().remote_name << ")";
     }
 
     std::cerr << '\n';
+
     return errorExitCode(snapshot.error());
   }
 
@@ -442,37 +492,44 @@ auto main(int argc, char **argv) -> int {
   auto devices = std::move(inventory.devices);
   sortInventory(adapters, devices);
 
+  const bool deviceAction = options.connect.has_value() ||
+                            options.disconnect.has_value() ||
+                            options.pair.has_value();
   printCsvHeader();
-  for (const auto &device : devices) {
-    printDevice(device, adapters);
+  if (!deviceAction) {
+    for (const auto &device : devices) {
+      printDevice(device, adapters);
+    }
   }
 
   const auto processPendingEvents = [&]() {
     std::deque<dmn::Dmn_BluezEvent> pending;
     {
       std::lock_guard lock{eventMutex};
+
       pending.swap(events);
     }
 
-    int errorCode{};
+    int errorCode{exitCode(ExitStatus::Success)};
     for (const auto &event : pending) {
-      printEvent(event, adapters);
+      printEvent(event, adapters, !deviceAction);
+
       if (event.kind == dmn::Dmn_BluezEventKind::ServiceUnavailable) {
-        errorCode = 4;
+        errorCode = exitCode(ExitStatus::BluezUnavailable);
       } else if (event.kind == dmn::Dmn_BluezEventKind::Error) {
-        errorCode = 8;
+        errorCode = exitCode(ExitStatus::RuntimeError);
       }
     }
 
     return errorCode;
   };
 
-  if (!options.connect && !options.disconnect) {
+  if (!options.connect && !options.disconnect && !options.pair) {
     if (!options.discovery) {
-      return 0;
+      return exitCode(ExitStatus::Success);
     }
 
-    int adapterError{};
+    int adapterError{exitCode(ExitStatus::Success)};
     const auto adapter = selectAdapter(adapters, options.adapter, adapterError);
     if (!adapter) {
       return adapterError;
@@ -481,6 +538,7 @@ auto main(int argc, char **argv) -> int {
     std::signal(SIGINT, requestStop);
     std::signal(SIGTERM, requestStop);
     auto started = client->startDiscovery(adapter->object_path);
+
     if (!started) {
       std::cerr << "Unable to start discovery: " << started.error().message;
       if (!started.error().remote_name.empty()) {
@@ -489,19 +547,24 @@ auto main(int argc, char **argv) -> int {
 
       std::cerr << '\n';
       const auto errorCode = errorExitCode(started.error());
-      return errorCode == 4 ? 4 : 5;
+
+      return errorCode == exitCode(ExitStatus::BluezUnavailable)
+                 ? exitCode(ExitStatus::BluezUnavailable)
+                 : exitCode(ExitStatus::DiscoveryFailure);
     }
 
     std::cerr << "Discovery active on " << adapterLabel(*adapter)
               << "; press Ctrl-C to stop\n";
 
-    int resultCode{};
+    int resultCode{exitCode(ExitStatus::Success)};
     while (stopRequested == 0) {
       resultCode = processPendingEvents();
-      if (resultCode != 0) {
+
+      if (resultCode != exitCode(ExitStatus::Success)) {
         stopRequested = 1;
         break;
       }
+
       std::this_thread::sleep_for(std::chrono::milliseconds{50});
     }
 
@@ -509,26 +572,29 @@ auto main(int argc, char **argv) -> int {
     if (!stopped) {
       std::cerr << "Unable to stop discovery: " << stopped.error().message
                 << '\n';
-      resultCode = 5;
+      resultCode = exitCode(ExitStatus::DiscoveryFailure);
     }
 
     return resultCode;
   }
 
   const bool connect = options.connect.has_value();
-  const std::string &selector =
-      connect ? *options.connect : *options.disconnect;
+  const bool pair = options.pair.has_value();
+  const std::string &selector = connect ? *options.connect
+                                : pair  ? *options.pair
+                                        : *options.disconnect;
   const bool requestedConnected = connect;
   auto selected =
       selectDevice(client->devices(), adapters, selector, options.adapter);
   if (selected.ambiguous) {
     std::cerr << "Device selection is ambiguous; specify --adapter: "
               << selector << '\n';
-    return 9;
+
+    return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
   }
 
   if (!selected.device && connect && options.discovery) {
-    int adapterError{};
+    int adapterError{exitCode(ExitStatus::Success)};
     const auto adapter = selectAdapter(adapters, options.adapter, adapterError);
     if (!adapter) {
       return adapterError;
@@ -542,20 +608,28 @@ auto main(int argc, char **argv) -> int {
       if (!started.error().remote_name.empty()) {
         std::cerr << " (" << started.error().remote_name << ")";
       }
+
       std::cerr << '\n';
       const auto errorCode = errorExitCode(started.error());
-      return errorCode == 4 ? 4 : 5;
+
+      return errorCode == exitCode(ExitStatus::BluezUnavailable)
+                 ? exitCode(ExitStatus::BluezUnavailable)
+                 : exitCode(ExitStatus::DiscoveryFailure);
     }
+
     std::cerr << "Discovery active while waiting for selected device\n";
     const auto discoveryDeadline =
         std::chrono::steady_clock::now() + std::chrono::seconds{60};
-    int discoveryError{};
+    int discoveryError{exitCode(ExitStatus::Success)};
+
     while (!selected.device && stopRequested == 0 &&
            std::chrono::steady_clock::now() < discoveryDeadline) {
       const auto eventError = processPendingEvents();
-      if (eventError != 0) {
+
+      if (eventError != exitCode(ExitStatus::Success)) {
         discoveryError = eventError;
         std::cerr << "Unable to resolve the selected device while scanning\n";
+
         break;
       }
 
@@ -566,28 +640,33 @@ auto main(int argc, char **argv) -> int {
       }
       std::this_thread::sleep_for(std::chrono::milliseconds{50});
     }
+
     auto stopped = client->stopDiscovery();
     if (!stopped) {
       std::cerr << "Unable to stop discovery: " << stopped.error().message
                 << '\n';
-      return 5;
+
+      return exitCode(ExitStatus::DiscoveryFailure);
     }
 
     if (!selected.device) {
-      if (discoveryError != 0) {
+      if (discoveryError != exitCode(ExitStatus::Success)) {
         return discoveryError;
       }
+
       if (stopRequested != 0) {
         std::cerr << "Interrupted before the selected device was discovered\n";
       } else if (selected.ambiguous) {
         std::cerr << "Device selection is ambiguous; specify --adapter: "
                   << selector << '\n';
-        return 9;
+
+        return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
       } else {
         std::cerr << "Selected device was not discovered before the deadline: "
                   << selector << '\n';
       }
-      return 11;
+
+      return exitCode(ExitStatus::RequestedStateNotReached);
     }
   }
 
@@ -595,7 +674,8 @@ auto main(int argc, char **argv) -> int {
     std::cerr << "Selected device is not present in the current BlueZ "
                  "inventory: "
               << selector << '\n';
-    return 9;
+
+    return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
   }
 
   const auto target = *selected.device;
@@ -607,7 +687,18 @@ auto main(int argc, char **argv) -> int {
       targetAdapter == adapters.end() ? target.adapter_path
                                       : adapterIdentity(*targetAdapter));
 
-  constexpr auto operationTimeout = std::chrono::seconds{30};
+#if defined(DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS)
+  // Keep action-deadline tests fast without changing the installed CLI.
+  constexpr auto testOperationTimeout =
+      std::chrono::milliseconds{DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS};
+  constexpr auto pairingOperationTimeout =
+      std::chrono::milliseconds{DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS};
+#else
+  constexpr auto testOperationTimeout = std::chrono::seconds{30};
+  constexpr auto pairingOperationTimeout = std::chrono::seconds{120};
+#endif
+  const auto operationTimeout =
+      pair ? pairingOperationTimeout : testOperationTimeout;
   const auto operationDeadline =
       std::chrono::steady_clock::now() + operationTimeout;
   const auto remaining = [&]() {
@@ -618,31 +709,57 @@ auto main(int argc, char **argv) -> int {
   const auto actionResult =
       connect ? client->connectDevice(target.address, targetAdapterSelector,
                                       remaining())
+      : pair  ? client->pairDevice(target.address, targetAdapterSelector,
+                                   remaining())
               : client->disconnectDevice(target.address, targetAdapterSelector,
                                          remaining());
   if (!actionResult) {
-    std::cerr << "Unable to " << (connect ? "connect" : "disconnect")
+    std::cerr << "Unable to "
+              << (connect ? "connect"
+                  : pair  ? "pair"
+                          : "disconnect")
               << " selected device: " << actionResult.error().message;
     if (!actionResult.error().remote_name.empty()) {
       std::cerr << " (" << actionResult.error().remote_name << ")";
     }
+
     std::cerr << '\n';
     if (actionResult.error().kind == dmn::Dmn_DbusErrorKind::Remote) {
-      return 10;
+      return exitCode(ExitStatus::DeviceActionRejected);
     }
+
     return errorExitCode(actionResult.error());
   }
 
   auto current = selectDevice(client->devices(), adapters, target.address,
                               targetAdapterSelector);
-  if (!current.device || !current.device->connected) {
+  const auto requestedStateObserved = [&] {
+    return pair ? current.device && current.device->paired &&
+                      *current.device->paired
+                : current.device && current.device->connected &&
+                      *current.device->connected == requestedConnected;
+  };
+
+  if (!requestedStateObserved()) {
     auto fresh = client->snapshot(remaining());
     if (!fresh) {
       std::cerr << "Unable to confirm selected device state: "
                 << fresh.error().message << '\n';
+
       return errorExitCode(fresh.error());
     }
+
     adapters = std::move(fresh->adapters);
+    current = selectDevice(client->devices(), adapters, target.address,
+                           targetAdapterSelector);
+    if (!current.device) {
+      // A removed target cannot produce the requested connection-state event.
+      std::cerr << "Selected device disappeared before its requested state "
+                   "was observed: "
+                << target.address << '\n';
+
+      return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
+    }
   }
 
   while (std::chrono::steady_clock::now() < operationDeadline) {
@@ -653,21 +770,51 @@ auto main(int argc, char **argv) -> int {
 
     current = selectDevice(client->devices(), adapters, target.address,
                            targetAdapterSelector);
-    if (current.device && current.device->connected &&
-        *current.device->connected == requestedConnected) {
+    if (!current.device) {
+      // Distinguish a removed device from owner loss racing event delivery.
+      auto fresh = client->snapshot(remaining());
+      if (!fresh) {
+        std::cerr << "Unable to confirm selected device state: "
+                  << fresh.error().message << '\n';
+
+        return errorExitCode(fresh.error());
+      }
+
+      adapters = std::move(fresh->adapters);
+      current = selectDevice(client->devices(), adapters, target.address,
+                             targetAdapterSelector);
+    }
+
+    if (!current.device) {
+      // A removed target cannot produce the requested state transition.
+      std::cerr << "Selected device disappeared before its requested state "
+                   "was observed: "
+                << target.address << '\n';
+
+      return exitCode(ExitStatus::DeviceSelectionOrArgumentError);
+    }
+
+    if (requestedStateObserved()) {
       printDevice(*current.device, adapters,
-                  requestedConnected ? "connected" : "disconnected");
-      return 0;
+                  pair                 ? "paired"
+                  : requestedConnected ? "connected"
+                                       : "disconnected");
+
+      return exitCode(ExitStatus::Success);
     }
 
     if (stopRequested != 0) {
       break;
     }
+
     std::this_thread::sleep_for(std::chrono::milliseconds{50});
   }
 
   std::cerr << "Selected device did not reach the requested "
-            << (requestedConnected ? "connected" : "disconnected")
+            << (pair                 ? "paired"
+                : requestedConnected ? "connected"
+                                     : "disconnected")
             << " state before the deadline\n";
-  return 11;
+
+  return exitCode(ExitStatus::RequestedStateNotReached);
 }

@@ -26,11 +26,13 @@ class HandlerEventCollector {
 public:
   void add(const dmn::Dmn_DMesg::HandlerEvent &event) {
     const std::lock_guard lock{m_mutex};
+
     m_events.push_back(event);
   }
 
   auto snapshot() const -> std::vector<dmn::Dmn_DMesg::HandlerEvent> {
     const std::lock_guard lock{m_mutex};
+
     return m_events;
   }
 

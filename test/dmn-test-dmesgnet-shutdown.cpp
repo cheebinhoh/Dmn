@@ -57,6 +57,7 @@ public:
   void shutdown() override {
     {
       std::lock_guard lock{m_events->m_mutex};
+
       if (!m_events->m_stopped) {
         m_events->m_sequence.emplace_back("input-shutdown");
         m_events->m_stopped = true;
@@ -92,6 +93,7 @@ private:
         message.type() == dmn::DMesgTypePb::sys &&
         message.body().sys().self().state() == dmn::DMesgStatePb::Destroyed) {
       std::lock_guard lock{m_events->m_mutex};
+
       m_events->m_sequence.emplace_back("destroyed-heartbeat");
     }
   }

@@ -68,6 +68,7 @@ public:
 
     {
       std::lock_guard lock{m_state->m_mutex};
+
       m_state->m_derivedStateAlive = false;
     }
 
@@ -78,6 +79,7 @@ protected:
   void publishInternal(const std::string &item) override {
     {
       std::lock_guard lock{m_state->m_mutex};
+
       m_state->m_entered = true;
     }
 
@@ -137,6 +139,7 @@ public:
   void notify(const std::string &item, Publisher *) override {
     {
       std::lock_guard lock{m_mutex};
+
       m_received.push_back(item);
       m_entered = true;
     }
@@ -149,12 +152,14 @@ public:
 
   void waitUntilEntered() {
     std::unique_lock lock{m_mutex};
+
     m_condition.wait(lock, [this] { return m_entered; });
   }
 
   void release() {
     {
       std::lock_guard lock{m_mutex};
+
       m_released = true;
     }
 
@@ -417,6 +422,7 @@ TEST(PubSubCallbackErrors, SlowSubscriberDelaysLaterPublisherWork) {
   std::thread laterPublisher([&] {
     {
       std::lock_guard lock{publishMutex};
+
       publishStarted = true;
     }
 
@@ -426,6 +432,7 @@ TEST(PubSubCallbackErrors, SlowSubscriberDelaysLaterPublisherWork) {
 
     {
       std::lock_guard lock{publishMutex};
+
       publishComplete = true;
     }
 
@@ -471,6 +478,7 @@ TEST(PubSubCallbackErrors,
   std::thread unregisterer([&] {
     {
       std::lock_guard lock{unregisterMutex};
+
       unregisterStarted = true;
     }
 
@@ -480,6 +488,7 @@ TEST(PubSubCallbackErrors,
 
     {
       std::lock_guard lock{unregisterMutex};
+
       unregisterComplete = true;
     }
 
@@ -519,6 +528,7 @@ TEST(PubSubCallbackErrors, PublisherDestructionWaitsForQueuedNotification) {
                          &destructionComplete]() mutable {
     {
       std::lock_guard lock{destructionMutex};
+
       destructionStarted = true;
     }
 
@@ -527,6 +537,7 @@ TEST(PubSubCallbackErrors, PublisherDestructionWaitsForQueuedNotification) {
 
     {
       std::lock_guard lock{destructionMutex};
+
       destructionComplete = true;
     }
 
@@ -571,6 +582,7 @@ TEST(PubSubCallbackErrors, DerivedPublisherDrainsBeforeDestroyingDerivedState) {
                          &destructionComplete]() mutable {
     {
       std::lock_guard lock{destructionMutex};
+
       destructionStarted = true;
     }
 
@@ -579,6 +591,7 @@ TEST(PubSubCallbackErrors, DerivedPublisherDrainsBeforeDestroyingDerivedState) {
 
     {
       std::lock_guard lock{destructionMutex};
+
       destructionComplete = true;
     }
 
@@ -596,6 +609,7 @@ TEST(PubSubCallbackErrors, DerivedPublisherDrainsBeforeDestroyingDerivedState) {
 
   {
     std::lock_guard lock{state->m_mutex};
+
     state->m_released = true;
   }
 

@@ -21,7 +21,9 @@ The source of truth is `include/dmn-dlock.hpp` and the registered tests under
   single instance-wide in-memory table protected by a mutex and condition
   variable; and
 - supports basic blocking acquisition, no-wait rejection, release, and a
-  detached-thread `acquireLockAsync()` wrapper.
+  `Dmn_Proc`-backed `acquireLockAsync()` wrapper. Async workers are owned and
+  joined by the lock; shutdown wakes blocked acquisitions and completes their
+  futures with `kShutdown`.
 
 This is **not** publisher serialization: `Dmn_DLock_Handler::publishSnapshot()`
 only returns the result of snapshot validation (`false` for invalid snapshots,
@@ -34,10 +36,12 @@ not currently use `Dmn_IntervalBTree` for its mirror. Acquisition assigns
 simple local sequence and fence values, and release erases the entry rather
 than retaining a terminal record. The validator does not enforce canonical
 entry order, table version transitions, or consistency between the state enum
-and boolean flags. `acquireLockAsync()` launches a detached thread that captures
-the lock object by pointer; there is no task-drain or lifetime guarantee. There
-is no cross-handler synchronization, retry, timeout enforcement, lease
-maintenance, owner authorization, cleanup, or shutdown protocol.
+and boolean flags. `acquireLockAsync()` launches a `Dmn_Proc` worker that
+captures the lock object by pointer; the worker is owned by the lock and joined
+during destruction. Callers must not destroy the lock concurrently with an API
+call. There is no cross-handler synchronization, retry, timeout enforcement,
+lease maintenance, owner authorization, cleanup, or distributed shutdown
+protocol.
 Consequently, the prototype must not be described or used as a distributed
 lock or relied on for fencing/lease safety.
 

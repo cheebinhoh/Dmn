@@ -184,6 +184,7 @@ endif()
 if (ENABLE_BLUEZ)
   add_library(dmn-bluez
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-bluez-client.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-bluez-gatt-client.cpp
   )
 
   target_include_directories(dmn-bluez
@@ -193,6 +194,8 @@ if (ENABLE_BLUEZ)
   target_sources(dmn-bluez
                    INTERFACE
                    ${PROJECT_SOURCE_DIR}/include/dmn-bluez-client.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-bluez-gatt-client.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-gatt-client.hpp
   )
 
   target_compile_definitions(dmn-bluez PUBLIC DMN_ENABLE_BLUEZ=1)
@@ -215,6 +218,7 @@ if (ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-bluez-discovery-test
                                PRIVATE DMN_BLUEZ_TESTING=1
+                                       DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS=500
   )
 
   target_compile_options(dmn-bluez-discovery-test

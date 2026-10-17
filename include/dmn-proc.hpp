@@ -51,6 +51,7 @@
 #include <pthread.h>
 #include <string>
 #include <string_view>
+#include <thread>
 
 /**
  * @brief Macro wrapper around @c pthread_cleanup_push.
@@ -113,15 +114,16 @@ void cleanupFuncToUnlockPthreadMutex(void *arg);
  *   are cancellation points).
  *
  * Thread-safety:
- * - State, task, and thread-handle access is not internally synchronized.
- *   Callers must ensure lifecycle operations do not overlap and that each
- *   operation happens-before the next one. This may be done by handing control
- *   between caller threads with external synchronization; a single OS thread is
- *   not required. Do not replace the task until the worker has been joined or
- *   destroy the object concurrently with another operation. Destruction stops
- *   and joins a running worker. Derived classes must stop the worker before
- *   destroying members accessed by its task. State accessed by both the task
- *   and callers needs its own synchronization.
+ * - State, task, and native thread-handle access is not internally
+ *   synchronized. Callers must ensure lifecycle operations do not overlap and
+ *   that each operation happens-before the next one. This may be done by
+ *   handing control between caller threads with external synchronization; a
+ *   single OS thread is not required. Do not replace the task until the worker
+ *   has been joined or destroy the object concurrently with another
+ *   operation. Destruction stops and joins a running worker. The worker ID
+ *   accessor is synchronized independently. Derived classes must stop the
+ *   worker before destroying members accessed by its task. State accessed by
+ *   both the task and callers needs its own synchronization.
  */
 class Dmn_Proc {
   /**
@@ -135,6 +137,10 @@ class Dmn_Proc {
   };
 
 public:
+  /** @brief Backend-neutral identifier for a worker thread. */
+  using ThreadId = std::thread::id;
+
+  /** @brief Callable executed by the worker. */
   using Task = std::function<void()>;
 
   /**
@@ -187,6 +193,15 @@ public:
    * @throws The captured task/setup exception when using the capture policy.
    */
   auto wait() -> bool;
+
+  /**
+   * @brief Return the current or most recently started worker's identifier.
+   *
+   * The identifier is empty before the first worker starts and remains
+   * available after it exits, until another worker starts. Its type is
+   * independent of the underlying thread implementation.
+   */
+  [[nodiscard]] auto getThreadId() const -> ThreadId;
 
   /**
    * @brief Voluntarily yield execution to allow other threads to run and to
@@ -276,6 +291,7 @@ protected:
   std::exception_ptr m_failure{}; ///< Worker failure handed to the joiner.
   std::atomic_bool m_cancel_requested{}; ///< Marks cancellation initiated
                                          ///< through stopExec().
+  std::atomic<ThreadId> m_thread_id{};
 }; // class Dmn_Proc
 
 } // namespace dmn

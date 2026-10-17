@@ -432,6 +432,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
   case DBUS_TYPE_UINT16: {
     dbus_uint16_t value{};
     dbus_message_iter_get_basic(&iter, &value);
+
     return Dmn_DbusValue{static_cast<std::uint16_t>(value)};
   }
 
@@ -671,20 +672,27 @@ public:
           "Dmn_DbusClient: unable to install message filter");
     }
 
-    m_dispatch = std::thread{[this] { dispatchLoop(); }};
+    if (!m_dispatch.exec([this] { dispatchLoop(); })) {
+      dbus_connection_remove_filter(m_connection.get(), filter, this);
 
-    try {
-      m_callbacks = std::thread{[this] { callbackLoop(); }};
-    } catch (...) {
+      throw std::runtime_error("unable to start D-Bus dispatch worker");
+    }
+
+    if (!m_callbacks.exec([this] { callbackLoop(); })) {
       m_stopping = true;
+      m_callbackCondition.notify_all();
 
-      if (m_dispatch.joinable()) {
-        m_dispatch.join();
+      try {
+        (void)m_dispatch.wait();
+      } catch (...) {
+        dbus_connection_remove_filter(m_connection.get(), filter, this);
+
+        throw;
       }
 
       dbus_connection_remove_filter(m_connection.get(), filter, this);
 
-      throw;
+      throw std::runtime_error("unable to start D-Bus callback worker");
     }
 
     std::unique_lock lock{m_mutex};
@@ -909,9 +917,9 @@ public:
     }
   }
 
-  auto
-  subscribe(const Dmn_DbusSignalMatch &match,
-            SignalCallbackWithPath callback) -> Dmn_DbusResult<std::uint64_t> {
+  auto subscribe(
+      const Dmn_DbusSignalMatch &match, SignalCallbackWithPath callback,
+      std::chrono::milliseconds timeout) -> Dmn_DbusResult<std::uint64_t> {
     if (match.interface.empty() || match.member.empty() || !callback ||
         (!match.path.empty() && !match.path_namespace.empty()) ||
         containsEmbeddedNul(match.sender) ||
@@ -956,8 +964,7 @@ public:
     }
 
     auto added = submit(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS,
-                        "AddMatch", {Dmn_DbusValue{rule}},
-                        m_config.limits.method_timeout)
+                        "AddMatch", {Dmn_DbusValue{rule}}, timeout)
                      .get();
     if (!added) {
       {
@@ -979,6 +986,7 @@ public:
       }
 
       (void)sendMatchCommand("RemoveMatch", rule);
+
       return std::unexpected(makeError(Dmn_DbusErrorKind::Codec,
                                        "malformed D-Bus AddMatch reply"));
     }
@@ -1004,10 +1012,8 @@ public:
     (void)sendMatchCommand("RemoveMatch", rule);
   }
 
-  auto dispatchThreadId() const -> std::thread::id {
-    std::lock_guard lock{m_mutex};
-
-    return m_dispatch_id;
+  auto dispatchThreadId() const -> Dmn_Proc::ThreadId {
+    return m_dispatch.getThreadId();
   }
 
   auto status() const -> Dmn_DbusClientStatus {
@@ -1040,10 +1046,14 @@ public:
   }
 
   auto drainSignalCallbacks() -> Dmn_DbusResult<void> {
-    if (std::this_thread::get_id() == m_callbacks.get_id()) {
-      return std::unexpected(
-          makeError(Dmn_DbusErrorKind::InvalidArgument,
-                    "cannot drain D-Bus callbacks from the callback worker"));
+    {
+      std::lock_guard lock{m_callbackMutex};
+
+      if (std::this_thread::get_id() == m_callbacks.getThreadId()) {
+        return std::unexpected(
+            makeError(Dmn_DbusErrorKind::InvalidArgument,
+                      "cannot drain D-Bus callbacks from the callback worker"));
+      }
     }
 
     std::lock_guard drainLock{m_callbackDrainMutex};
@@ -1122,13 +1132,9 @@ public:
     m_stopping = true;
     m_callbackCondition.notify_all();
 
-    if (m_dispatch.joinable()) {
-      m_dispatch.join();
-    }
+    (void)m_dispatch.wait();
 
-    if (m_callbacks.joinable()) {
-      m_callbacks.join();
-    }
+    (void)m_callbacks.wait();
 
     if (m_connection != nullptr) {
       dbus_connection_remove_filter(m_connection.get(), filter, this);
@@ -1537,7 +1543,6 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      m_dispatch_id = std::this_thread::get_id();
       m_dispatchReady = true;
     }
 
@@ -1552,6 +1557,7 @@ private:
         if (!dbus_connection_get_is_connected(m_connection.get())) {
           {
             std::lock_guard lock{m_mutex};
+
             m_terminalError = "D-Bus connection disconnected";
           }
 
@@ -1679,15 +1685,14 @@ private:
   std::atomic_bool m_accepting{true};
   std::atomic_bool m_shutdownStarted{};
   std::atomic_size_t m_in_flight{};
-  std::thread m_dispatch;
-  std::thread m_callbacks;
+  Dmn_Proc m_dispatch{"dmn-dbus-dispatch"};
+  Dmn_Proc m_callbacks{"dmn-dbus-callback"};
   mutable std::mutex m_mutex;
   std::condition_variable m_pendingCondition;
   std::condition_variable m_dispatchCondition;
   std::unordered_map<std::uint64_t, Subscription> m_subscriptions;
   std::unordered_map<CallRequest *, Pending> m_pending;
   std::uint64_t m_next_subscription{};
-  std::thread::id m_dispatch_id;
   bool m_dispatchReady{};
   mutable std::mutex m_callbackMutex;
   std::mutex m_callbackDrainMutex;
@@ -1828,22 +1833,38 @@ auto Dmn_DbusClient::setProperty(const std::string &destination,
 auto Dmn_DbusClient::subscribe(const Dmn_DbusSignalMatch &match,
                                SignalCallback callback)
     -> Dmn_DbusResult<Dmn_DbusSubscription> {
+  return subscribe(match, std::move(callback),
+                   std::chrono::milliseconds::zero());
+}
+
+auto Dmn_DbusClient::subscribe(
+    const Dmn_DbusSignalMatch &match, SignalCallback callback,
+    std::chrono::milliseconds timeout) -> Dmn_DbusResult<Dmn_DbusSubscription> {
   if (!callback) {
     return std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                      "invalid D-Bus signal match"));
   }
 
   return subscribeWithPath(
-      match, [callback = std::move(callback)](std::string,
-                                              Arguments arguments) mutable {
+      match,
+      [callback = std::move(callback)](std::string,
+                                       Arguments arguments) mutable {
         callback(std::move(arguments));
-      });
+      },
+      timeout);
 }
 
 auto Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &match,
                                        SignalCallbackWithPath callback)
     -> Dmn_DbusResult<Dmn_DbusSubscription> {
-  auto subscribed = m_impl->subscribe(match, std::move(callback));
+  return subscribeWithPath(match, std::move(callback),
+                           std::chrono::milliseconds::zero());
+}
+
+auto Dmn_DbusClient::subscribeWithPath(
+    const Dmn_DbusSignalMatch &match, SignalCallbackWithPath callback,
+    std::chrono::milliseconds timeout) -> Dmn_DbusResult<Dmn_DbusSubscription> {
+  auto subscribed = m_impl->subscribe(match, std::move(callback), timeout);
 
   if (!subscribed) {
     return std::unexpected(subscribed.error());
@@ -1863,7 +1884,7 @@ auto Dmn_DbusClient::drainSignalCallbacks() -> Dmn_DbusResult<void> {
   return m_impl->drainSignalCallbacks();
 }
 
-auto Dmn_DbusClient::dispatchThreadId() const -> std::thread::id {
+auto Dmn_DbusClient::dispatchThreadId() const -> Dmn_Proc::ThreadId {
   return m_impl->dispatchThreadId();
 }
 

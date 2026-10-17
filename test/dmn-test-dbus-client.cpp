@@ -78,6 +78,7 @@ auto encodedEchoCallSize(const std::string &argument) -> std::size_t {
   }
 
   dbus_free(bytes);
+
   return static_cast<std::size_t>(length);
 }
 
@@ -305,6 +306,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_UINT32) {
@@ -312,6 +314,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_BYTE) {
@@ -319,6 +322,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_BOOLEAN) {
@@ -326,6 +330,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_INT16) {
@@ -333,6 +338,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_UINT16) {
@@ -340,6 +346,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_INT32) {
@@ -347,6 +354,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_INT64) {
@@ -354,6 +362,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_UINT64) {
@@ -361,6 +370,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_DOUBLE) {
@@ -368,6 +378,7 @@ private:
         dbus_message_iter_get_basic(&in, &value);
         if (!dbus_message_iter_append_basic(&out, type, &value)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else if (type == DBUS_TYPE_ARRAY &&
@@ -383,15 +394,18 @@ private:
             (length > 0 &&
              [&] {
                const unsigned char *constBytes = bytes;
+
                return !dbus_message_iter_append_fixed_array(
                    &arrayOut, DBUS_TYPE_BYTE, &constBytes, length);
              }()) ||
             !dbus_message_iter_close_container(&out, &arrayOut)) {
           dbus_message_unref(reply);
+
           return nullptr;
         }
       } else {
         dbus_message_unref(reply);
+
         return nullptr;
       }
 
@@ -417,6 +431,7 @@ private:
     const dbus_bool_t accepted = TRUE;
     if (!dbus_message_iter_append_basic(&out, DBUS_TYPE_BOOLEAN, &accepted)) {
       dbus_message_unref(reply);
+
       return nullptr;
     }
 
@@ -449,6 +464,7 @@ private:
                                         &variantValue) ||
         !dbus_message_iter_close_container(&out, &variant)) {
       dbus_message_unref(reply);
+
       return nullptr;
     }
 
@@ -477,6 +493,7 @@ private:
       const char *wrongType = "not a variant";
       if (!dbus_message_iter_append_basic(&out, DBUS_TYPE_STRING, &wrongType)) {
         dbus_message_unref(reply);
+
         return nullptr;
       }
 
@@ -498,6 +515,7 @@ private:
         !dbus_message_iter_append_basic(&variant, DBUS_TYPE_UINT32, &value) ||
         !dbus_message_iter_close_container(&out, &variant)) {
       dbus_message_unref(reply);
+
       return nullptr;
     }
 
@@ -537,6 +555,7 @@ private:
       if (!dbus_message_iter_append_basic(&out, DBUS_TYPE_BOOLEAN,
                                           &unexpectedValue)) {
         dbus_message_unref(reply);
+
         return nullptr;
       }
 
@@ -556,6 +575,7 @@ private:
     }
 
     dbus_message_iter_get_basic(&variant, &m_level);
+
     return dbus_message_new_method_return(request);
   }
 
@@ -606,10 +626,12 @@ private:
         !dbus_message_iter_close_container(&objects, &object) ||
         !dbus_message_iter_close_container(&out, &objects)) {
       dbus_message_unref(reply);
+
       return nullptr;
     }
 
     (void)level;
+
     return reply;
   }
 
@@ -708,9 +730,11 @@ TEST(DbusClientInitializationTest, ConcurrentClientsAndLegacyEndpoints) {
         dmn::Dmn_DbusOutput output{endpointConfig};
       } catch (const std::exception &error) {
         std::lock_guard lock{failuresMutex};
+
         failures.emplace_back(error.what());
       } catch (...) {
         std::lock_guard lock{failuresMutex};
+
         failures.emplace_back("unknown construction failure");
       }
     });
@@ -886,7 +910,7 @@ TEST_F(DbusClientTest, DeliversOwnedSignalsOffDispatchThreadAndCancels) {
   std::promise<std::vector<dmn::Dmn_DbusValue>> delivered;
   auto deliveredFuture = delivered.get_future();
   const auto dispatchThread = m_client->dispatchThreadId();
-  std::thread::id callbackThread;
+  dmn::Dmn_Proc::ThreadId callbackThread;
   std::atomic_size_t callbackCount{};
   dmn::Dmn_DbusSignalMatch match;
   match.sender = kServiceName;
@@ -951,6 +975,18 @@ TEST_F(DbusClientTest, RejectsIncompleteAndConflictingSignalMatches) {
   ASSERT_FALSE(noPathCallback);
   EXPECT_EQ(noPathCallback.error().kind,
             dmn::Dmn_DbusErrorKind::InvalidArgument);
+}
+
+TEST_F(DbusClientTest, RejectsNegativeSignalSubscriptionTimeout) {
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  match.member = "Changed";
+
+  auto subscription =
+      m_client->subscribe(match, [](std::vector<dmn::Dmn_DbusValue>) {}, -1ms);
+
+  ASSERT_FALSE(subscription);
+  EXPECT_EQ(subscription.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
 }
 
 TEST_F(DbusClientTest, DrainsSignalCallbacksQueuedBeforeTheBarrier) {
@@ -1043,11 +1079,13 @@ TEST_F(DbusClientTest, OverlappingSubscriptionsPreservePerSubscriptionOrder) {
   auto first = m_client->subscribe(
       match, [&mutex, &firstValues](std::vector<dmn::Dmn_DbusValue> args) {
         std::lock_guard lock{mutex};
+
         firstValues.push_back(args.front().asUint32());
       });
   auto second = m_client->subscribe(
       match, [&mutex, &secondValues](std::vector<dmn::Dmn_DbusValue> args) {
         std::lock_guard lock{mutex};
+
         secondValues.push_back(args.front().asUint32());
       });
   ASSERT_TRUE(first) << first.error().message;
@@ -1242,10 +1280,11 @@ TEST_F(DbusClientTest, ShutdownCompletesOutstandingCallsWithShutdownError) {
 
 TEST_F(DbusClientTest, ShutdownIsIdempotentAndRejectsNewOperations) {
   const auto dispatchThread = m_client->dispatchThreadId();
-  EXPECT_NE(dispatchThread, std::thread::id{});
+  EXPECT_NE(dispatchThread, dmn::Dmn_Proc::ThreadId{});
   EXPECT_TRUE(m_client->status().connected);
 
   m_client->shutdown();
+  EXPECT_EQ(m_client->dispatchThreadId(), dispatchThread);
   m_client->shutdown();
   const auto status = m_client->status();
   EXPECT_TRUE(status.shutting_down);
@@ -1394,6 +1433,7 @@ TEST_F(DbusClientTest, SignalQueueEnforcesExactAndExceededByteLimits) {
       }
 
       ADD_FAILURE() << "signal callback did not start";
+
       return {0, 0, 0, 0};
     }
 
@@ -1408,6 +1448,7 @@ TEST_F(DbusClientTest, SignalQueueEnforcesExactAndExceededByteLimits) {
             1s)) {
       ADD_FAILURE() << "second signal was neither queued nor dropped";
       releasePromise.set_value();
+
       return {0, 0, 0, 0};
     }
 
@@ -1424,6 +1465,7 @@ TEST_F(DbusClientTest, SignalQueueEnforcesExactAndExceededByteLimits) {
     const auto droppedMessages = client->status().dropped_signal_messages;
     releasePromise.set_value();
     EXPECT_TRUE(client->drainSignalCallbacks());
+
     return {queuedBytes, queuedMessages, droppedMessages, callbackCount.load()};
   };
 

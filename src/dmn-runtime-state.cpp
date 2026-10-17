@@ -414,6 +414,7 @@ bool Dmn_Runtime_State_Manager::enqueueState(
     Dmn_Runtime_State::OnErrorFnc onError) {
   {
     std::lock_guard lock{m_pendingStatesMutex};
+
     const auto existing = m_pendingStates.find(state.get());
 
     if (m_shutdown && existing == m_pendingStates.end()) {
