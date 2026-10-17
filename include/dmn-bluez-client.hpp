@@ -25,14 +25,19 @@ namespace dmn {
 struct Dmn_BluezAdapter {
   /** @brief Current BlueZ object path; it is not a stable adapter identity. */
   std::string object_path;
+
   /** @brief Adapter Bluetooth address, empty when unavailable. */
   std::string address;
+
   /** @brief Display name selected from alias, reported name, then address. */
   std::string name;
+
   /** @brief BlueZ `Alias`, when available. */
   std::optional<std::string> alias;
+
   /** @brief BlueZ `Name`, when available. */
   std::optional<std::string> reported_name;
+
   /** @brief BlueZ `Powered` state; absent means unknown or unavailable. */
   std::optional<bool> powered;
 };
@@ -41,24 +46,34 @@ struct Dmn_BluezAdapter {
 struct Dmn_BluezDevice {
   /** @brief Current BlueZ object path; it may change after rediscovery. */
   std::string object_path;
+
   /** @brief Object path of the parent adapter. */
   std::string adapter_path;
+
   /** @brief Bluetooth device address used with adapter identity for updates. */
   std::string address;
+
   /** @brief Display name selected from alias, reported name, then address. */
   std::string name;
+
   /** @brief BlueZ `Alias`, when available. */
   std::optional<std::string> alias;
+
   /** @brief BlueZ `Name`, when available. */
   std::optional<std::string> reported_name;
+
   /** @brief BlueZ signal strength in dBm, when available. */
   std::optional<std::int16_t> rssi;
+
   /** @brief BlueZ `Paired` state; absent means unknown or unavailable. */
   std::optional<bool> paired;
+
   /** @brief BlueZ `Connected` state; absent means unknown or unavailable. */
   std::optional<bool> connected;
+
   /** @brief BlueZ `ServicesResolved` state, when available. */
   std::optional<bool> services_resolved;
+
   /** @brief Whether this device was observed during this client's scan. */
   bool seen_during_discovery{};
 };
@@ -67,6 +82,7 @@ struct Dmn_BluezDevice {
 struct Dmn_BluezInventory {
   /** @brief Adapters in the reconciled ObjectManager snapshot. */
   std::vector<Dmn_BluezAdapter> adapters;
+
   /** @brief Known devices, including devices not currently connected. */
   std::vector<Dmn_BluezDevice> devices;
 };
@@ -75,20 +91,28 @@ struct Dmn_BluezInventory {
 enum class Dmn_BluezEventKind {
   /** @brief An adapter appeared in ObjectManager inventory. */
   AdapterAdded,
+
   /** @brief An adapter property changed. */
   AdapterChanged,
+
   /** @brief An adapter disappeared from ObjectManager inventory. */
   AdapterRemoved,
+
   /** @brief A known device appeared in inventory. */
   DeviceAdded,
+
   /** @brief A known device property or path changed. */
   DeviceChanged,
+
   /** @brief A known device disappeared from inventory. */
   DeviceRemoved,
+
   /** @brief The BlueZ service owner disappeared. */
   ServiceUnavailable,
+
   /** @brief A new BlueZ owner was found and inventory is ready. */
   ServiceAvailable,
+
   /** @brief A terminal or resynchronization error occurred. */
   Error
 };
@@ -97,10 +121,13 @@ enum class Dmn_BluezEventKind {
 struct Dmn_BluezEvent {
   /** @brief Kind of inventory or service-state transition. */
   Dmn_BluezEventKind kind{Dmn_BluezEventKind::Error};
+
   /** @brief Adapter associated with an adapter event, when applicable. */
   std::optional<Dmn_BluezAdapter> adapter;
+
   /** @brief Device associated with a device event, when applicable. */
   std::optional<Dmn_BluezDevice> device;
+
   /** @brief Human-readable detail for service and terminal error events. */
   std::string message;
 };
@@ -109,6 +136,7 @@ struct Dmn_BluezEvent {
 struct Dmn_BluezClientConfig {
   /** @brief Generic D-Bus limits used by the underlying client. */
   Dmn_DbusClientLimits limits;
+
   /** @brief Explicit private-bus address for isolated integration tests. */
   std::string test_bus_address;
 };

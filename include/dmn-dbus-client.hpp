@@ -592,6 +592,20 @@ public:
             SignalCallback callback) -> Dmn_DbusResult<Dmn_DbusSubscription>;
 
   /**
+   * @brief Subscribe with a caller-specified setup timeout.
+   *
+   * @param match Constrained sender/interface/member/path match.
+   * @param callback Receives owned decoded arguments.
+   * @param timeout Per-subscription setup timeout, or zero for the configured
+   * default.
+   * @return A move-only cancellation token or a typed setup failure.
+   */
+  [[nodiscard]] auto subscribe(const Dmn_DbusSignalMatch &match,
+                               SignalCallback callback,
+                               std::chrono::milliseconds timeout)
+      -> Dmn_DbusResult<Dmn_DbusSubscription>;
+
+  /**
    * @brief Subscribe while retaining the emitting signal's object path.
    *
    * @param match Constrained sender/interface/member/path match.
@@ -600,6 +614,20 @@ public:
    */
   [[nodiscard]] auto subscribeWithPath(const Dmn_DbusSignalMatch &match,
                                        SignalCallbackWithPath callback)
+      -> Dmn_DbusResult<Dmn_DbusSubscription>;
+
+  /**
+   * @brief Subscribe with a caller-specified setup timeout and retain the path.
+   *
+   * @param match Constrained sender/interface/member/path match.
+   * @param callback Receives the signal path and owned decoded arguments.
+   * @param timeout Per-subscription setup timeout, or zero for the configured
+   * default.
+   * @return A move-only cancellation token or a typed setup failure.
+   */
+  [[nodiscard]] auto subscribeWithPath(const Dmn_DbusSignalMatch &match,
+                                       SignalCallbackWithPath callback,
+                                       std::chrono::milliseconds timeout)
       -> Dmn_DbusResult<Dmn_DbusSubscription>;
 
   /**

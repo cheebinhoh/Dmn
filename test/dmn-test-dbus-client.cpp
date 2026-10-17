@@ -730,9 +730,11 @@ TEST(DbusClientInitializationTest, ConcurrentClientsAndLegacyEndpoints) {
         dmn::Dmn_DbusOutput output{endpointConfig};
       } catch (const std::exception &error) {
         std::lock_guard lock{failuresMutex};
+
         failures.emplace_back(error.what());
       } catch (...) {
         std::lock_guard lock{failuresMutex};
+
         failures.emplace_back("unknown construction failure");
       }
     });
@@ -975,6 +977,18 @@ TEST_F(DbusClientTest, RejectsIncompleteAndConflictingSignalMatches) {
             dmn::Dmn_DbusErrorKind::InvalidArgument);
 }
 
+TEST_F(DbusClientTest, RejectsNegativeSignalSubscriptionTimeout) {
+  dmn::Dmn_DbusSignalMatch match;
+  match.interface = kInterface;
+  match.member = "Changed";
+
+  auto subscription =
+      m_client->subscribe(match, [](std::vector<dmn::Dmn_DbusValue>) {}, -1ms);
+
+  ASSERT_FALSE(subscription);
+  EXPECT_EQ(subscription.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+}
+
 TEST_F(DbusClientTest, DrainsSignalCallbacksQueuedBeforeTheBarrier) {
   std::atomic_bool callbackCompleted{};
   dmn::Dmn_DbusSignalMatch match;
@@ -1065,11 +1079,13 @@ TEST_F(DbusClientTest, OverlappingSubscriptionsPreservePerSubscriptionOrder) {
   auto first = m_client->subscribe(
       match, [&mutex, &firstValues](std::vector<dmn::Dmn_DbusValue> args) {
         std::lock_guard lock{mutex};
+
         firstValues.push_back(args.front().asUint32());
       });
   auto second = m_client->subscribe(
       match, [&mutex, &secondValues](std::vector<dmn::Dmn_DbusValue> args) {
         std::lock_guard lock{mutex};
+
         secondValues.push_back(args.front().asUint32());
       });
   ASSERT_TRUE(first) << first.error().message;

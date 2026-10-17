@@ -62,6 +62,7 @@ TEST(DlockBlockingAcquire, OverlappingGrantBlocksCandidateUntilOwnerReleases) {
                          }
 
                          std::lock_guard<std::mutex> guard(lock);
+
                          auto post_release = snapshot;
                          candidate_allowed_after_release.store(
                              post_release.canAcceptEntry(candidate));
@@ -70,8 +71,10 @@ TEST(DlockBlockingAcquire, OverlappingGrantBlocksCandidateUntilOwnerReleases) {
   dmn::Dmn_Proc owner{"owner", [&]() {
                         std::this_thread::sleep_for(
                             std::chrono::milliseconds(20));
+
                         {
                           std::lock_guard<std::mutex> guard(lock);
+
                           snapshot.m_entries.clear();
                         }
 

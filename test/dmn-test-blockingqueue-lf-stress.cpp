@@ -42,6 +42,7 @@ protected:
 
     {
       std::lock_guard<std::mutex> lock(m_mutex);
+
       ++m_inflight_entries;
     }
 

@@ -55,6 +55,7 @@ TEST(DmnPipeScheduledTest, RunsScheduledItemNoEarlierThanDeadline) {
   Pipe pipe{"scheduled",
             [&mutex, &processed_at](int) {
               std::lock_guard<std::mutex> lock(mutex);
+
               processed_at = Clock::now();
             },
             1, 0, kEnableScheduledWrites};
@@ -63,6 +64,7 @@ TEST(DmnPipeScheduledTest, RunsScheduledItemNoEarlierThanDeadline) {
   EXPECT_EQ(pipe.waitForEmpty(), 1);
 
   std::lock_guard<std::mutex> lock(mutex);
+
   EXPECT_GE(processed_at, deadline);
 }
 
@@ -75,6 +77,7 @@ TEST(DmnPipeScheduledTest, EarlierScheduledWriteWakesWorkerForNewDeadline) {
   Pipe pipe{"scheduled",
             [&mutex, &processed, &earlier_processed_at](int item) {
               std::lock_guard<std::mutex> lock(mutex);
+
               processed.push_back(item);
               if (item == 2) {
                 earlier_processed_at = Clock::now();
@@ -90,6 +93,7 @@ TEST(DmnPipeScheduledTest, EarlierScheduledWriteWakesWorkerForNewDeadline) {
   EXPECT_EQ(pipe.waitForEmpty(), 2);
 
   std::lock_guard<std::mutex> lock(mutex);
+
   ASSERT_EQ(processed.size(), 2);
   EXPECT_EQ(processed[0], 2);
   EXPECT_EQ(processed[1], 1);
@@ -106,6 +110,7 @@ TEST(DmnPipeScheduledTest, ImmediateWritesRunBeforeFutureScheduledWrites) {
   Pipe pipe{"scheduled",
             [&mutex, &processed, &immediate_processed_at](int item) {
               std::lock_guard<std::mutex> lock(mutex);
+
               processed.push_back(item);
               if (item == 1) {
                 immediate_processed_at = Clock::now();
@@ -120,6 +125,7 @@ TEST(DmnPipeScheduledTest, ImmediateWritesRunBeforeFutureScheduledWrites) {
   EXPECT_EQ(pipe.waitForEmpty(), 2);
 
   std::lock_guard<std::mutex> lock(mutex);
+
   ASSERT_EQ(processed.size(), 2);
   EXPECT_EQ(processed[0], 1);
   EXPECT_EQ(processed[1], 2);
@@ -134,6 +140,7 @@ TEST(DmnPipeScheduledTest, EqualDeadlinesRetainSubmissionOrder) {
   Pipe pipe{"scheduled",
             [&mutex, &processed](int item) {
               std::lock_guard<std::mutex> lock(mutex);
+
               processed.push_back(item);
             },
             1, 0, kEnableScheduledWrites};
@@ -143,6 +150,7 @@ TEST(DmnPipeScheduledTest, EqualDeadlinesRetainSubmissionOrder) {
   EXPECT_EQ(pipe.waitForEmpty(), 2);
 
   std::lock_guard<std::mutex> lock(mutex);
+
   ASSERT_EQ(processed.size(), 2);
   EXPECT_EQ(processed[0], 1);
   EXPECT_EQ(processed[1], 2);

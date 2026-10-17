@@ -917,9 +917,9 @@ public:
     }
   }
 
-  auto
-  subscribe(const Dmn_DbusSignalMatch &match,
-            SignalCallbackWithPath callback) -> Dmn_DbusResult<std::uint64_t> {
+  auto subscribe(
+      const Dmn_DbusSignalMatch &match, SignalCallbackWithPath callback,
+      std::chrono::milliseconds timeout) -> Dmn_DbusResult<std::uint64_t> {
     if (match.interface.empty() || match.member.empty() || !callback ||
         (!match.path.empty() && !match.path_namespace.empty()) ||
         containsEmbeddedNul(match.sender) ||
@@ -964,8 +964,7 @@ public:
     }
 
     auto added = submit(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS,
-                        "AddMatch", {Dmn_DbusValue{rule}},
-                        m_config.limits.method_timeout)
+                        "AddMatch", {Dmn_DbusValue{rule}}, timeout)
                      .get();
     if (!added) {
       {
@@ -1558,6 +1557,7 @@ private:
         if (!dbus_connection_get_is_connected(m_connection.get())) {
           {
             std::lock_guard lock{m_mutex};
+
             m_terminalError = "D-Bus connection disconnected";
           }
 
@@ -1833,22 +1833,38 @@ auto Dmn_DbusClient::setProperty(const std::string &destination,
 auto Dmn_DbusClient::subscribe(const Dmn_DbusSignalMatch &match,
                                SignalCallback callback)
     -> Dmn_DbusResult<Dmn_DbusSubscription> {
+  return subscribe(match, std::move(callback),
+                   std::chrono::milliseconds::zero());
+}
+
+auto Dmn_DbusClient::subscribe(
+    const Dmn_DbusSignalMatch &match, SignalCallback callback,
+    std::chrono::milliseconds timeout) -> Dmn_DbusResult<Dmn_DbusSubscription> {
   if (!callback) {
     return std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                      "invalid D-Bus signal match"));
   }
 
   return subscribeWithPath(
-      match, [callback = std::move(callback)](std::string,
-                                              Arguments arguments) mutable {
+      match,
+      [callback = std::move(callback)](std::string,
+                                       Arguments arguments) mutable {
         callback(std::move(arguments));
-      });
+      },
+      timeout);
 }
 
 auto Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &match,
                                        SignalCallbackWithPath callback)
     -> Dmn_DbusResult<Dmn_DbusSubscription> {
-  auto subscribed = m_impl->subscribe(match, std::move(callback));
+  return subscribeWithPath(match, std::move(callback),
+                           std::chrono::milliseconds::zero());
+}
+
+auto Dmn_DbusClient::subscribeWithPath(
+    const Dmn_DbusSignalMatch &match, SignalCallbackWithPath callback,
+    std::chrono::milliseconds timeout) -> Dmn_DbusResult<Dmn_DbusSubscription> {
+  auto subscribed = m_impl->subscribe(match, std::move(callback), timeout);
 
   if (!subscribed) {
     return std::unexpected(subscribed.error());

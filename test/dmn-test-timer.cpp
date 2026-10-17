@@ -145,6 +145,7 @@ TEST(DmnTimer, StopPausesAndResumeStartsANewGeneration) {
   std::mutex times_mutex;
   dmn::Dmn_Timer timer{kInterval, [&]() {
                          std::lock_guard<std::mutex> lock(times_mutex);
+
                          callback_times.push_back(Clock::now());
                          callback_count.fetch_add(1, std::memory_order_release);
                        }};
@@ -158,6 +159,7 @@ TEST(DmnTimer, StopPausesAndResumeStartsANewGeneration) {
   timer.stop();
 
   std::lock_guard<std::mutex> lock(times_mutex);
+
   ASSERT_EQ(callback_times.size(), 2);
   EXPECT_GE(callback_times.front(), resumed_at + kInterval);
   EXPECT_GE(callback_times[1] - callback_times[0], kInterval);
@@ -189,6 +191,7 @@ TEST(DmnTimer, StopReturnsWhileAdmittedCallbackIsRunning) {
 
   {
     std::lock_guard<std::mutex> lock(mutex);
+
     release_callback = true;
   }
 

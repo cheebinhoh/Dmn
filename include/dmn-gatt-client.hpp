@@ -24,14 +24,19 @@ namespace dmn {
 enum class Dmn_GattErrorKind {
   /** @brief The supplied device or GATT identifier is invalid. */
   InvalidArgument,
+
   /** @brief The device is disconnected or its GATT tree is not ready. */
   NotReady,
+
   /** @brief The finite operation deadline expired. */
   Timeout,
+
   /** @brief BlueZ or another backend rejected the operation. */
   Remote,
+
   /** @brief A transport or local backend failure occurred. */
   Backend,
+
   /** @brief A D-Bus value did not match the GATT object contract. */
   Decode
 };
@@ -40,8 +45,10 @@ enum class Dmn_GattErrorKind {
 struct Dmn_GattError {
   /** @brief Local error category. */
   Dmn_GattErrorKind kind{Dmn_GattErrorKind::Backend};
+
   /** @brief Human-readable failure detail. */
   std::string message;
+
   /** @brief Original remote error name, when reported by the backend. */
   std::string remote_name;
 };
@@ -49,6 +56,7 @@ struct Dmn_GattError {
 /** @brief A GATT operation result carrying either a value or typed error. */
 template <typename T>
 using Dmn_GattValueResult = std::expected<T, Dmn_GattError>;
+
 /** @brief A GATT operation result carrying success or a typed error. */
 using Dmn_GattResult = std::expected<void, Dmn_GattError>;
 
@@ -58,8 +66,10 @@ using Dmn_GattResult = std::expected<void, Dmn_GattError>;
 struct Dmn_GattCharacteristic {
   /** @brief Backend-owned opaque characteristic identifier. */
   std::string id;
+
   /** @brief Canonical uppercase UUID reported by the backend. */
   std::string uuid;
+
   /** @brief Backend-neutral capability names, such as `notify` or `write`. */
   std::vector<std::string> flags;
 };
@@ -70,10 +80,13 @@ struct Dmn_GattCharacteristic {
 struct Dmn_GattService {
   /** @brief Backend-owned opaque service identifier. */
   std::string id;
+
   /** @brief Canonical uppercase UUID reported by the backend. */
   std::string uuid;
+
   /** @brief Whether the service is primary. */
   bool primary{};
+
   /** @brief Characteristics belonging to this service. */
   std::vector<Dmn_GattCharacteristic> characteristics;
 };
@@ -86,16 +99,20 @@ struct Dmn_GattEvent {
   enum class Kind {
     /** @brief Characteristic value changed. */
     ValueChanged,
+
     /** @brief The device, service, or backend session became invalid. */
     Invalidated,
+
     /** @brief A typed backend error occurred. */
     Error
   };
 
   /** @brief Event kind. */
   Kind kind{Kind::Invalidated};
+
   /** @brief Owned characteristic bytes for ValueChanged. */
   std::vector<std::uint8_t> value;
+
   /** @brief Human-readable detail for invalidation or error events. */
   std::string message;
 };

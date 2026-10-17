@@ -123,23 +123,28 @@ public:
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_dbus(makeDbusConfig(config)) {
     m_loading = true;
+
     subscribe(
         {"org.bluez", std::string{kObjectManager}, "InterfacesAdded", "/", {}});
+
     subscribe({"org.bluez",
                std::string{kObjectManager},
                "InterfacesRemoved",
                "/",
                {}});
+
     subscribe({"org.bluez",
                std::string{kProperties},
                "PropertiesChanged",
                {},
                "/org/bluez"});
+
     subscribe({"org.freedesktop.DBus",
                "org.freedesktop.DBus",
                "NameOwnerChanged",
                "/org/freedesktop/DBus",
                {}});
+
     if (!m_event_worker.exec([this] { eventLoop(); })) {
       throw std::runtime_error("unable to start BlueZ event worker");
     }
@@ -147,11 +152,13 @@ public:
     if (!m_recovery.exec([this] { recoveryLoop(); })) {
       {
         std::lock_guard lock{m_event_mutex};
+
         m_event_stopping = true;
       }
 
       m_event_condition.notify_all();
       (void)m_event_worker.wait();
+
       throw std::runtime_error("unable to start BlueZ recovery worker");
     }
   }
@@ -159,6 +166,7 @@ public:
   ~Impl() {
     {
       std::lock_guard lock{m_recovery_mutex};
+
       m_recovery_stopping = true;
     }
 
@@ -166,6 +174,7 @@ public:
     (void)m_recovery.wait();
 
     (void)stopDiscovery();
+
     for (auto &subscription : m_subscriptions) {
       subscription.cancel();
     }
@@ -173,6 +182,7 @@ public:
     m_dbus.shutdown();
     {
       std::lock_guard lock{m_event_mutex};
+
       m_event_stopping = true;
     }
 
@@ -184,6 +194,7 @@ public:
   makeDbusConfig(const Dmn_BluezClientConfig &config) -> Dmn_DbusClientConfig {
     Dmn_DbusClientConfig dbusConfig;
     dbusConfig.limits = config.limits;
+
     if (config.test_bus_address.empty()) {
       dbusConfig.bus_kind = Dmn_DbusBusKind::System;
     } else {
@@ -214,6 +225,7 @@ public:
     std::lock_guard snapshotLock{m_snapshot_mutex};
     {
       std::lock_guard lock{m_mutex};
+
       m_loading = true;
       m_stage_overflow = false;
     }
@@ -226,6 +238,7 @@ public:
     if (!callbacksDrained) {
       std::lock_guard eventOrderLock{m_event_order_mutex};
       std::lock_guard lock{m_mutex};
+
       m_loading = false;
       m_stage_overflow = false;
       m_staged_signals.clear();
@@ -241,6 +254,7 @@ public:
       std::lock_guard eventOrderLock{m_event_order_mutex};
       {
         std::lock_guard lock{m_mutex};
+
         m_loading = false;
         m_stage_overflow = false;
         m_staged_signals.clear();
@@ -257,6 +271,7 @@ public:
       std::lock_guard eventOrderLock{m_event_order_mutex};
       {
         std::lock_guard lock{m_mutex};
+
         m_loading = false;
         m_stage_overflow = false;
         m_staged_signals.clear();
@@ -272,13 +287,16 @@ public:
     }
 
     std::lock_guard eventOrderLock{m_event_order_mutex};
+
     const auto droppedAfter = m_dbus.status().dropped_signal_messages;
     std::vector<Dmn_BluezEvent> events;
     std::vector<Dmn_BluezAdapter> adapters;
     std::vector<Dmn_BluezDevice> devices;
     bool ownerLostDuringSnapshot{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (droppedAfter > droppedBefore) {
         m_loading = false;
         m_stage_overflow = false;
@@ -311,10 +329,13 @@ public:
       m_adapters.clear();
       m_devices.clear();
       m_device_paths.clear();
+
       try {
         const auto &objects = result->front().asDictionary().entries;
+
         for (const auto &[pathValue, interfaces] : objects) {
           const auto &path = pathValue.asObjectPath();
+
           if (const auto *adapter = findInterface(interfaces, kAdapter)) {
             m_adapters[path] = parseAdapter(path, *adapter);
           }
@@ -322,6 +343,7 @@ public:
 
         for (const auto &[pathValue, interfaces] : objects) {
           const auto &path = pathValue.asObjectPath();
+
           if (const auto *device = findInterface(interfaces, kDevice)) {
             auto parsedDevice = parseDevice(path, *device);
             const auto prior =
@@ -359,6 +381,7 @@ public:
 
       m_staged_signals.clear();
       m_loading = false;
+
       if (ownerLostDuringSnapshot) {
         m_available = false;
         m_adapters.clear();
@@ -366,6 +389,7 @@ public:
         m_device_paths.clear();
       } else {
         m_available = true;
+
         for (const auto &[path, adapter] : m_adapters) {
           (void)path;
           adapters.push_back(adapter);
@@ -392,6 +416,7 @@ public:
                            ? left.object_path < right.object_path
                            : left.address < right.address;
               });
+
     std::sort(devices.begin(), devices.end(),
               [](const auto &left, const auto &right) {
                 return left.adapter_path == right.adapter_path
@@ -404,8 +429,10 @@ public:
 
   auto devices() const -> std::vector<Dmn_BluezDevice> {
     std::lock_guard lock{m_mutex};
+
     std::vector<Dmn_BluezDevice> result;
     result.reserve(m_devices.size());
+
     for (const auto &[identity, device] : m_devices) {
       (void)identity;
       result.push_back(device);
@@ -428,8 +455,10 @@ public:
     std::lock_guard actionLock{m_device_action_mutex};
     std::string devicePath;
     bool alreadyInRequestedState{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_available) {
         return std::unexpected(makeError(Dmn_DbusErrorKind::NotConnected,
                                          "BlueZ inventory is not available"));
@@ -438,16 +467,19 @@ public:
       const bool isObjectPath = deviceSelector.starts_with('/');
       const auto targetAddress = normalizedAddress(deviceSelector);
       std::vector<const Dmn_BluezDevice *> matches;
+
       for (const auto &[identity, device] : m_devices) {
         (void)identity;
         const bool matchesSelector =
             isObjectPath ? device.object_path == deviceSelector
                          : normalizedAddress(device.address) == targetAddress;
+
         if (!matchesSelector) {
           continue;
         }
 
         const auto adapter = m_adapters.find(device.adapter_path);
+
         if (adapterSelector && (adapter == m_adapters.end() ||
                                 (normalizedAddress(adapter->second.address) !=
                                      normalizedAddress(*adapterSelector) &&
@@ -474,6 +506,7 @@ public:
 
       const auto &device = *matches.front();
       devicePath = device.object_path;
+
       if (action == DeviceAction::Pair) {
         alreadyInRequestedState = device.paired && *device.paired;
       } else {
@@ -505,6 +538,7 @@ public:
     {
       std::lock_guard lock{m_mutex};
       const auto adapter = m_adapters.find(adapterPath);
+
       if (adapter == m_adapters.end()) {
         return std::unexpected(
             makeError(Dmn_DbusErrorKind::InvalidArgument,
@@ -542,10 +576,13 @@ public:
 
     {
       std::lock_guard lock{m_mutex};
+
       m_discovery_starting = true;
       m_discovery_adapter = adapterPath;
+
       for (auto &[identity, device] : m_devices) {
         (void)identity;
+
         if (device.adapter_path == adapterPath) {
           device.seen_during_discovery = false;
         }
@@ -556,10 +593,12 @@ public:
                                    std::string{kAdapter}, "StartDiscovery");
     if (!startResult) {
       std::lock_guard lock{m_mutex};
+
       m_discovery_starting = false;
       m_discovery_adapter.clear();
       for (auto &[identity, device] : m_devices) {
         (void)identity;
+
         if (device.adapter_path == adapterPath) {
           device.seen_during_discovery = false;
         }
@@ -569,6 +608,7 @@ public:
     }
 
     std::lock_guard lock{m_mutex};
+
     m_discovery_active = true;
     m_discovery_starting = false;
 
@@ -577,9 +617,11 @@ public:
 
   auto stopDiscovery() -> Dmn_BluezResult {
     std::lock_guard discoveryLock{m_discovery_mutex};
+
     std::string adapterPath;
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_discovery_active) {
         return {};
       }
@@ -594,6 +636,7 @@ public:
     }
 
     std::lock_guard lock{m_mutex};
+
     m_discovery_active = false;
     m_discovery_starting = false;
     m_discovery_adapter.clear();
@@ -605,11 +648,13 @@ public:
     const bool available = static_cast<bool>(handler);
     {
       std::lock_guard lock{m_mutex};
+
       m_event_handler = std::move(handler);
     }
 
     {
       std::lock_guard lock{m_event_mutex};
+
       m_event_handlerAvailable = available;
     }
 
@@ -762,8 +807,10 @@ private:
     std::lock_guard eventOrderLock{m_event_order_mutex};
     std::vector<Dmn_BluezEvent> events;
     bool requestRecovery{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (droppedSignals != m_last_dropped_signal_messages) {
         m_last_dropped_signal_messages = droppedSignals;
         m_available = false;
@@ -806,6 +853,7 @@ private:
     if (requestRecovery) {
       {
         std::lock_guard recoveryLock{m_recovery_mutex};
+
         m_recovery_requested = true;
       }
 
@@ -845,6 +893,7 @@ private:
         if (!newOwner.empty()) {
           {
             std::lock_guard recoveryLock{m_recovery_mutex};
+
             m_recovery_requested = true;
           }
 
@@ -857,6 +906,7 @@ private:
       if (member == "InterfacesAdded" && arguments.size() == 2) {
         const auto path = arguments[0].asObjectPath();
         const auto &interfaces = arguments[1];
+
         if (const auto *props = findInterface(interfaces, kAdapter)) {
           auto adapter = parseAdapter(path, *props);
           m_adapters[path] = adapter;
@@ -870,6 +920,7 @@ private:
               device.adapter_path == m_discovery_adapter;
           const auto inserted = storeDevice(std::move(device));
           const auto stored = findDeviceByPath(path);
+
           if (stored != m_devices.end()) {
             events.push_back({inserted ? Dmn_BluezEventKind::DeviceAdded
                                        : Dmn_BluezEventKind::DeviceChanged,
@@ -885,6 +936,7 @@ private:
       if (member == "InterfacesRemoved" && arguments.size() == 2) {
         const auto path = arguments[0].asObjectPath();
         const auto &interfaces = arguments[1].asArray().values;
+
         for (const auto &interface : interfaces) {
           if (interface.asString() == kAdapter) {
             const auto found = m_adapters.find(path);
@@ -899,6 +951,7 @@ private:
               const auto found = m_devices.find(pathEntry->second);
               if (found == m_devices.end()) {
                 m_device_paths.erase(pathEntry);
+
                 continue;
               }
 
@@ -917,6 +970,7 @@ private:
         const auto interface = arguments[0].asString();
         const auto &changed = arguments[1];
         const auto &invalidated = arguments[2].asArray().values;
+
         if (interface == kAdapter) {
           const auto found = m_adapters.find(path);
           if (found == m_adapters.end()) {
@@ -934,6 +988,7 @@ private:
 
           const auto previousIdentity = found->first;
           updateDevice(found->second, changed, invalidated);
+
           if (deviceIdentity(found->second) != previousIdentity) {
             auto updatedDevice = std::move(found->second);
             m_devices.erase(found);
@@ -965,8 +1020,10 @@ private:
 
   void emit(const Dmn_BluezEvent &event) {
     bool overflow{};
+
     {
       std::lock_guard lock{m_event_mutex};
+
       if (m_event_stopping) {
         return;
       }
@@ -986,6 +1043,7 @@ private:
 
     if (overflow) {
       std::lock_guard lock{m_mutex};
+
       m_available = false;
       m_adapters.clear();
       m_devices.clear();
@@ -998,6 +1056,7 @@ private:
     if (overflow) {
       {
         std::lock_guard lock{m_recovery_mutex};
+
         m_recovery_requested = true;
       }
 
@@ -1011,12 +1070,15 @@ private:
     while (true) {
       Dmn_BluezEvent event;
       EventHandler handler;
+
       {
         std::unique_lock lock{m_event_mutex};
+
         m_event_condition.wait(lock, [this] {
           return m_event_stopping ||
                  (m_event_handlerAvailable && !m_event_queue.empty());
         });
+
         if (m_event_stopping) {
           return;
         }
@@ -1027,6 +1089,7 @@ private:
 
       {
         std::lock_guard lock{m_mutex};
+
         handler = m_event_handler;
       }
 
@@ -1040,9 +1103,11 @@ private:
     while (true) {
       {
         std::unique_lock lock{m_recovery_mutex};
+
         m_recovery_condition.wait(lock, [this] {
           return m_recovery_stopping || m_recovery_requested;
         });
+
         if (m_recovery_stopping) {
           return;
         }
@@ -1093,6 +1158,7 @@ private:
     const auto identity = deviceIdentity(device);
     const auto existing = m_devices.find(identity);
     const bool inserted = existing == m_devices.end();
+
     if (existing != m_devices.end()) {
       if (existing->second.object_path != device.object_path) {
         m_device_paths.erase(existing->second.object_path);

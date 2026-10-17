@@ -87,6 +87,7 @@ TEST(DmnProc, ClientFlagLetsTaskExitCooperativelyBeforeWait) {
       [&] {
         {
           std::lock_guard lock{startedMutex};
+
           started = true;
         }
 

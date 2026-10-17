@@ -34,9 +34,9 @@
  * ---------------------------------
  * The current acquire/release operations synchronize a single in-memory table
  * with a mutex and condition variable. They do not run in a DMesg handler
- * context or publish state. `acquireLockAsync()` launches a detached thread
- * that refers to the lock object, so the caller must keep the object alive
- * until the returned future is ready. This prototype is not safe to use as a
+ * context or publish state. `acquireLockAsync()` uses workers owned by the
+ * lock; destruction wakes blocked acquisitions, completes them with
+ * `kShutdown`, and joins all workers. This prototype is not safe to use as a
  * distributed lock.
  *
  * See also
@@ -50,12 +50,17 @@
 
 #include "dmn-dmesg.hpp"
 #include "dmn-interval-btree.hpp"
+#include "dmn-proc.hpp"
 
 #include "proto/dmn-dlock.pb.h"
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <cstdint>
+#include <exception>
+#include <future>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -594,6 +599,20 @@ public:
     m_table.m_protocol_version = 1;
   }
 
+  ~Dmn_DLock() override {
+    m_shutting_down.store(true, std::memory_order_release);
+
+    m_cv.notify_all();
+
+    std::lock_guard workersLock{m_async_workers_mutex};
+    for (auto &worker : m_async_workers) {
+      worker.completion.wait();
+      worker.process->wait();
+    }
+
+    m_async_workers.clear();
+  }
+
   auto openHandler(std::string_view session_name = "session",
                    std::string_view topic = "dlock") -> HandlerType {
     return Dmn_DLock_Base::openHandler(session_name, topic);
@@ -619,12 +638,22 @@ public:
     }
 
     while (m_table.isGrantedForRange(range)) {
+      if (m_shutting_down.load(std::memory_order_acquire)) {
+        return {Dmn_DLock_ResultCode::kShutdown, range, request_id,
+                "lock is shutting down"};
+      }
+
       if (!options.m_wait || options.m_no_wait) {
         return {Dmn_DLock_ResultCode::kNoWait, range, request_id,
                 "range is already granted"};
       }
 
       m_cv.wait(lock);
+    }
+
+    if (m_shutting_down.load(std::memory_order_acquire)) {
+      return {Dmn_DLock_ResultCode::kShutdown, range, request_id,
+              "lock is shutting down"};
     }
 
     Dmn_DLock_Entry entry{};
@@ -661,13 +690,40 @@ public:
   auto acquireLockAsync(Dmn_DLock_Range range,
                         const Dmn_DLock_RequestOptions &options = {})
       -> std::future<Dmn_DLock_Result> {
+    std::lock_guard workersLock{m_async_workers_mutex};
+    if (m_shutting_down.load(std::memory_order_acquire)) {
+      std::promise<Dmn_DLock_Result> promise;
+      auto future = promise.get_future();
+      promise.set_value({Dmn_DLock_ResultCode::kShutdown, range,
+                         options.m_request_id, "lock is shutting down"});
+
+      return future;
+    }
+
+    reapCompletedAsyncWorkers();
+
     auto promise = std::make_shared<std::promise<Dmn_DLock_Result>>();
     auto future = promise->get_future();
-    std::thread([this, range, options, promise]() {
-      auto result = acquireLock(range, options);
+    auto completion = std::make_shared<std::promise<void>>();
+    auto completionFuture = completion->get_future().share();
+    auto worker = std::make_unique<Dmn_Proc>(
+        "dlock-acquire", [this, range, options, promise, completion]() {
+          try {
+            promise->set_value(acquireLock(range, options));
+          } catch (...) {
+            promise->set_exception(std::current_exception());
+          }
 
-      promise->set_value(result);
-    }).detach();
+          completion->set_value();
+        });
+
+    auto *workerPtr = worker.get();
+    m_async_workers.push_back({std::move(worker), std::move(completionFuture)});
+    if (!workerPtr->exec()) {
+      m_async_workers.pop_back();
+      promise->set_exception(std::make_exception_ptr(std::runtime_error(
+          "failed to start Dmn_Proc worker for async lock acquisition")));
+    }
 
     return future;
   }
@@ -701,9 +757,30 @@ public:
   }
 
 private:
+  struct AsyncWorker {
+    std::unique_ptr<Dmn_Proc> process;
+    std::shared_future<void> completion;
+  };
+
+  void reapCompletedAsyncWorkers() {
+    auto worker = m_async_workers.begin();
+    while (worker != m_async_workers.end()) {
+      if (worker->completion.wait_for(std::chrono::seconds::zero()) ==
+          std::future_status::ready) {
+        worker->process->wait();
+        worker = m_async_workers.erase(worker);
+      } else {
+        ++worker;
+      }
+    }
+  }
+
   mutable std::mutex m_mutex{};
   std::condition_variable m_cv{};
   Dmn_DLock_TableSnapshot m_table{};
+  std::atomic_bool m_shutting_down{};
+  std::mutex m_async_workers_mutex{};
+  std::vector<AsyncWorker> m_async_workers{};
 };
 
 } // namespace dmn

@@ -332,6 +332,7 @@ auto selectAdapter(const std::vector<dmn::Dmn_BluezAdapter> &adapters,
                               normalizedAddress(*selector) ||
                           adapter.object_path == *selector;
                  });
+
     if (matches.size() == 1) {
       return matches.front();
     }
@@ -469,12 +470,14 @@ auto main(int argc, char **argv) -> int {
 
   client->setEventHandler([&](const auto &event) {
     std::lock_guard lock{eventMutex};
+
     events.push_back(event);
   });
 
   auto snapshot = client->snapshot();
   if (!snapshot) {
     std::cerr << "Unable to read BlueZ inventory: " << snapshot.error().message;
+
     if (!snapshot.error().remote_name.empty()) {
       std::cerr << " (" << snapshot.error().remote_name << ")";
     }
@@ -503,12 +506,14 @@ auto main(int argc, char **argv) -> int {
     std::deque<dmn::Dmn_BluezEvent> pending;
     {
       std::lock_guard lock{eventMutex};
+
       pending.swap(events);
     }
 
     int errorCode{exitCode(ExitStatus::Success)};
     for (const auto &event : pending) {
       printEvent(event, adapters, !deviceAction);
+
       if (event.kind == dmn::Dmn_BluezEventKind::ServiceUnavailable) {
         errorCode = exitCode(ExitStatus::BluezUnavailable);
       } else if (event.kind == dmn::Dmn_BluezEventKind::Error) {

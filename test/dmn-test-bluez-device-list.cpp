@@ -153,9 +153,11 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
     bool connected;
   };
   std::vector<Object> objectsToAppend;
+
   if (topologyMode != 1) {
     objectsToAppend.push_back({kAdapterPath, "org.bluez.Adapter1", true,
                                nullptr, topologyMode != 3, false});
+
     if (devicePresent) {
       objectsToAppend.push_back({kDevicePath, "org.bluez.Device1", false,
                                  nullptr, true, initialConnected});
@@ -174,6 +176,7 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
     DBusMessageIter object;
     DBusMessageIter interfaces;
     const char *objectPath = spec.path;
+
     dbus_message_iter_open_container(&objects, DBUS_TYPE_DICT_ENTRY, nullptr,
                                      &object);
     dbus_message_iter_append_basic(&object, DBUS_TYPE_OBJECT_PATH, &objectPath);
@@ -200,6 +203,7 @@ public:
     DbusErrorGuard error;
     m_connection.reset(
         dbus_connection_open_private(address.c_str(), error.get()));
+
     if (m_connection == nullptr ||
         !dbus_bus_register(m_connection.get(), error.get())) {
       throw std::runtime_error("unable to connect fake BlueZ service");
@@ -219,6 +223,7 @@ public:
 
   ~FakeBluezService() {
     m_stopping = true;
+
     if (m_worker.joinable()) {
       m_worker.join();
     }
@@ -256,16 +261,19 @@ public:
 
   void setInitialPaired(bool paired) {
     std::lock_guard lock{m_mutex};
+
     m_initialPaired = paired;
   }
 
   void setPairFailure(bool failure) {
     std::lock_guard lock{m_mutex};
+
     m_failPair = failure;
   }
 
   void setPairTransition(bool enabled) {
     std::lock_guard lock{m_mutex};
+
     m_transitionPaired = enabled;
   }
 
@@ -283,32 +291,38 @@ public:
 
   void setDeviceActionFailures(bool connectFailure, bool disconnectFailure) {
     std::lock_guard lock{m_mutex};
+
     m_failConnect = connectFailure;
     m_failDisconnect = disconnectFailure;
   }
 
   void setConnectionTransition(bool enabled) {
     std::lock_guard lock{m_mutex};
+
     m_transitionConnection = enabled;
   }
 
   void removeDeviceOnNextAction() {
     std::lock_guard lock{m_mutex};
+
     m_removeDeviceOnNextAction = true;
   }
 
   void releaseNameOnNextAction() {
     std::lock_guard lock{m_mutex};
+
     m_releaseNameOnNextAction = true;
   }
 
   void restartNameOnNextAction() {
     std::lock_guard lock{m_mutex};
+
     m_restartNameOnNextAction = true;
   }
 
   void holdNextDeviceAction() {
     std::lock_guard lock{m_mutex};
+
     m_holdNextDeviceAction = true;
   }
 
@@ -322,6 +336,7 @@ public:
   void releaseHeldDeviceAction() {
     {
       std::lock_guard lock{m_mutex};
+
       m_releaseDeviceAction = true;
     }
 
@@ -354,12 +369,14 @@ public:
 
   void setManagedObjectsFailure(bool fail) {
     std::lock_guard lock{m_mutex};
+
     m_failManagedObjects = fail;
   }
 
   void setDiscoveryFailures(bool filterFailure, bool startFailure,
                             bool stopFailure) {
     std::lock_guard lock{m_mutex};
+
     m_failFilter = filterFailure;
     m_failStart = startFailure;
     m_failStop = stopFailure;
@@ -367,26 +384,31 @@ public:
 
   void releaseNameDuringNextSnapshot() {
     std::lock_guard lock{m_mutex};
+
     m_releaseNameDuringSnapshot = true;
   }
 
   void releaseName() {
     std::lock_guard lock{m_mutex};
+
     m_releaseNameRequested = true;
   }
 
   void acquireName() {
     std::lock_guard lock{m_mutex};
+
     m_acquireNameRequested = true;
   }
 
   void emitDeviceDuringNextSnapshot() {
     std::lock_guard lock{m_mutex};
+
     m_emitDeviceDuringSnapshot = true;
   }
 
   void holdNextSnapshotReply() {
     std::lock_guard lock{m_mutex};
+
     m_holdSnapshotReply = true;
   }
 
@@ -400,6 +422,7 @@ public:
   void releaseHeldSnapshot() {
     {
       std::lock_guard lock{m_mutex};
+
       m_releaseSnapshotReply = true;
     }
 
@@ -446,6 +469,7 @@ public:
   void emitDeviceObject(bool added, const std::string &path = kDevicePath) {
     if (path == kDevicePath) {
       std::lock_guard lock{m_mutex};
+
       m_devicePresent = added;
     }
 
@@ -463,6 +487,7 @@ private:
     if (path == kDevicePath &&
         std::string_view{interface} == "org.bluez.Device1") {
       std::lock_guard lock{m_mutex};
+
       if (std::string_view{property} == "Connected") {
         m_initialConnected = value;
       } else if (std::string_view{property} == "Paired") {
@@ -544,8 +569,10 @@ private:
       bool holdSnapshotReply{};
       bool devicePresent{};
       bool initialPaired{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         failManagedObjects = self->m_failManagedObjects;
         topologyMode = self->m_topologyMode;
         devicePresent = self->m_devicePresent;
@@ -593,8 +620,10 @@ private:
     } else if (dbus_message_is_method_call(message, "org.bluez.Adapter1",
                                            "SetDiscoveryFilter")) {
       bool failFilter{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         self->m_filterSignature = dbus_message_get_signature(message);
         self->m_filterIsUnrestrictedAuto = filterIsUnrestrictedAuto(message);
         failFilter = self->m_failFilter;
@@ -607,8 +636,10 @@ private:
     } else if (dbus_message_is_method_call(message, "org.bluez.Adapter1",
                                            "StartDiscovery")) {
       bool failStart{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_startCount;
         self->m_startPath = dbus_message_get_path(message);
         failStart = self->m_failStart;
@@ -621,8 +652,10 @@ private:
     } else if (dbus_message_is_method_call(message, "org.bluez.Adapter1",
                                            "StopDiscovery")) {
       bool failStop{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_stopCount;
         self->m_stopSequence = ++self->m_operationSequence;
         self->m_stopPath = dbus_message_get_path(message);
@@ -642,8 +675,10 @@ private:
       bool restartName{};
       bool holdAction{};
       const std::string devicePath{dbus_message_get_path(message)};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_connectCount;
         self->m_connectPath = devicePath;
         self->m_connectSequence = ++self->m_operationSequence;
@@ -668,6 +703,7 @@ private:
       if (removeDevice) {
         {
           std::lock_guard lock{self->m_mutex};
+
           self->m_devicePresent = false;
         }
         self->emitDeviceObject(false, devicePath);
@@ -675,10 +711,12 @@ private:
 
       if (releaseName) {
         DbusErrorGuard error;
+
         if (dbus_bus_release_name(connection, kService, error.get()) !=
                 DBUS_RELEASE_NAME_REPLY_RELEASED ||
             dbus_error_is_set(error.get())) {
           std::lock_guard lock{self->m_mutex};
+
           self->m_nameOperationFailed = true;
         }
       }
@@ -693,6 +731,7 @@ private:
             acquired != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
             dbus_error_is_set(error.get())) {
           std::lock_guard lock{self->m_mutex};
+
           self->m_nameOperationFailed = true;
         }
       }
@@ -714,6 +753,7 @@ private:
       const std::string devicePath{dbus_message_get_path(message)};
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_disconnectCount;
         self->m_disconnectPath = devicePath;
         failDisconnect = self->m_failDisconnect;
@@ -733,10 +773,13 @@ private:
       }
 
       if (removeDevice) {
+
         {
           std::lock_guard lock{self->m_mutex};
+
           self->m_devicePresent = false;
         }
+
         self->emitDeviceObject(false, devicePath);
       }
 
@@ -756,6 +799,7 @@ private:
       const std::string devicePath{dbus_message_get_path(message)};
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_pairCount;
         self->m_pairPath = devicePath;
         failPair = self->m_failPair;
@@ -775,6 +819,7 @@ private:
 
       if (!failPair && transition) {
         std::lock_guard lock{self->m_mutex};
+
         self->m_initialPaired = true;
       }
 
@@ -789,6 +834,7 @@ private:
     } else {
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_forbiddenCount;
       }
 
@@ -845,8 +891,10 @@ private:
     while (!m_stopping) {
       bool releaseNameRequested{};
       bool acquireNameRequested{};
+
       {
         std::lock_guard lock{m_mutex};
+
         releaseNameRequested = std::exchange(m_releaseNameRequested, false);
         acquireNameRequested = std::exchange(m_acquireNameRequested, false);
       }
@@ -864,6 +912,7 @@ private:
                                   : DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER;
         if (result != expected || dbus_error_is_set(error.get())) {
           std::lock_guard lock{m_mutex};
+
           m_nameOperationFailed = true;
         }
       }
@@ -1555,6 +1604,7 @@ TEST(DmnBluezCli, RejectsInvalidConnectionOptionCombinations) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
+
   for (const auto &arguments :
        {std::vector<std::string>{"--connect"},
         std::vector<std::string>{"--pair"},
@@ -1600,6 +1650,7 @@ TEST(DmnBluezCli, ExplicitAdapterSelectsOnlyMatchingPoweredAdapter) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 2};
+
   for (const auto &selector :
        {std::string{"B8:F7:75:BF:F3:C4"}, std::string{"/org/bluez/hci1"}}) {
     auto process =
@@ -1738,6 +1789,7 @@ TEST(DmnBluezCli, ReportsDiscoveryStopFailureOnTermination) {
 TEST(DmnBluezCli, RejectsInvalidArgumentsWithUsage) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
+
   for (const auto &arguments :
        {std::vector<std::string>{"--unknown"},
         std::vector<std::string>{"--adapter"},
@@ -1888,8 +1940,10 @@ TEST(DmnBluezDeviceList, ReloadsInventoryAfterBluezOwnerRestart) {
   std::condition_variable condition;
   bool ownerLost{};
   bool inventoryReadyAfterRestart{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     ownerLost |= event.kind == dmn::Dmn_BluezEventKind::ServiceUnavailable;
     inventoryReadyAfterRestart |=
         ownerLost && event.kind == dmn::Dmn_BluezEventKind::ServiceAvailable;
@@ -1897,15 +1951,20 @@ TEST(DmnBluezDeviceList, ReloadsInventoryAfterBluezOwnerRestart) {
   });
 
   service.releaseName();
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 5s, [&] { return ownerLost; }));
   }
+
   EXPECT_TRUE(client.devices().empty());
 
   service.acquireName();
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 5s,
                                    [&] { return inventoryReadyAfterRestart; }));
   }
@@ -1926,20 +1985,25 @@ TEST(DmnBluezDeviceList, SnapshotReplayIsNotDeliveredAsLiveDuplicate) {
   std::condition_variable condition;
   int addedEvents{};
   int changedEvents{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     addedEvents += event.kind == dmn::Dmn_BluezEventKind::DeviceAdded;
     changedEvents += event.kind == dmn::Dmn_BluezEventKind::DeviceChanged;
     condition.notify_all();
   });
+
   service.emitDeviceDuringNextSnapshot();
 
   const auto inventory = client.snapshot();
   ASSERT_TRUE(inventory) << inventory.error().message;
   ASSERT_EQ(inventory->devices.size(), 1U);
   service.emitConnected(true);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(
         condition.wait_for(lock, 2s, [&] { return changedEvents >= 1; }));
     EXPECT_EQ(addedEvents, 0);
@@ -1958,17 +2022,22 @@ TEST(DmnBluezDiscovery, SnapshotRefreshPreservesSeenDeviceMarkers) {
   std::mutex mutex;
   std::condition_variable condition;
   bool seenEvent{};
+
   client.setEventHandler([&](const auto &event) {
     if (event.kind == dmn::Dmn_BluezEventKind::DeviceChanged && event.device &&
         event.device->seen_during_discovery) {
       std::lock_guard lock{mutex};
+
       seenEvent = true;
       condition.notify_all();
     }
   });
+
   service.emitDeviceObject(true);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return seenEvent; }));
   }
 
@@ -1989,14 +2058,17 @@ TEST(DmnBluezDeviceList, TracksPropertyUpdatesWithSourcePath) {
   std::mutex mutex;
   std::condition_variable condition;
   bool connectedEvent{};
+
   client.setEventHandler([&](const auto &event) {
     if (event.kind == dmn::Dmn_BluezEventKind::DeviceChanged && event.device &&
         event.device->connected.value_or(false)) {
       std::lock_guard lock{mutex};
+
       connectedEvent = true;
       condition.notify_all();
     }
   });
+
   service.emitConnected(true);
   std::unique_lock lock{mutex};
   EXPECT_TRUE(condition.wait_for(lock, 2s, [&] { return connectedEvent; }));
@@ -2019,8 +2091,10 @@ TEST(DmnBluezDeviceList, SignalQueueOverflowInvalidatesAndResynchronizes) {
   std::condition_variable condition;
   bool overflowReported{};
   bool inventoryRestoredAfterOverflow{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     overflowReported |=
         event.kind == dmn::Dmn_BluezEventKind::Error &&
         event.message.find("signal queue dropped") != std::string::npos;
@@ -2031,8 +2105,10 @@ TEST(DmnBluezDeviceList, SignalQueueOverflowInvalidatesAndResynchronizes) {
   });
 
   service.emitPropertyBurst(128);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 5s, [&] { return overflowReported; }));
     ASSERT_TRUE(condition.wait_for(
         lock, 5s, [&] { return inventoryRestoredAfterOverflow; }));
@@ -2058,10 +2134,12 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   std::mutex mutex;
   std::condition_variable condition;
   bool overflowEvent{};
+
   client.setEventHandler([&](const auto &event) {
     if (event.kind == dmn::Dmn_BluezEventKind::Error &&
         event.message.find("staging queue overflow") != std::string::npos) {
       std::lock_guard lock{mutex};
+
       overflowEvent = true;
       condition.notify_all();
     }
@@ -2070,6 +2148,7 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   service.holdNextSnapshotReply();
   auto pendingSnapshot =
       std::async(std::launch::async, [&client] { return client.snapshot(); });
+
   if (!service.waitForHeldSnapshot(5s)) {
     service.releaseHeldSnapshot();
     FAIL() << "fake BlueZ did not hold the ObjectManager snapshot reply";
@@ -2086,8 +2165,10 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   EXPECT_NE(failedSnapshot.error().message.find("staging queue overflow"),
             std::string::npos);
   EXPECT_TRUE(client.devices().empty());
+
   {
     std::unique_lock lock{mutex};
+
     EXPECT_TRUE(condition.wait_for(lock, 5s, [&] { return overflowEvent; }));
   }
 
@@ -2108,8 +2189,10 @@ TEST(DmnBluezDeviceList, TracksAdapterPowerChangesAndRemoval) {
   std::condition_variable condition;
   bool poweredOffEvent{};
   bool removedEvent{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     poweredOffEvent |= event.kind == dmn::Dmn_BluezEventKind::AdapterChanged &&
                        event.adapter && !event.adapter->powered.value_or(false);
     removedEvent |= event.kind == dmn::Dmn_BluezEventKind::AdapterRemoved;
@@ -2117,14 +2200,18 @@ TEST(DmnBluezDeviceList, TracksAdapterPowerChangesAndRemoval) {
   });
 
   service.emitAdapterPowered(false);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return poweredOffEvent; }));
   }
 
   service.emitAdapterObject(false);
+
   {
     std::unique_lock lock{mutex};
+
     EXPECT_TRUE(condition.wait_for(lock, 2s, [&] { return removedEvent; }));
   }
 }
@@ -2139,18 +2226,22 @@ TEST(DmnBluezDeviceList, InvalidatedConnectionPropertyBecomesUnknown) {
   std::mutex mutex;
   std::condition_variable condition;
   bool invalidatedEvent{};
+
   client.setEventHandler([&](const auto &event) {
     if (event.kind == dmn::Dmn_BluezEventKind::DeviceChanged && event.device &&
         !event.device->connected) {
       std::lock_guard lock{mutex};
+
       invalidatedEvent = true;
       condition.notify_all();
     }
   });
 
   service.emitConnectedInvalidated();
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return invalidatedEvent; }));
   }
 
@@ -2170,23 +2261,30 @@ TEST(DmnBluezDeviceList, TracksObjectManagerRemovalAndAddition) {
   std::condition_variable condition;
   int added{};
   int removed{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     added += event.kind == dmn::Dmn_BluezEventKind::DeviceAdded;
     removed += event.kind == dmn::Dmn_BluezEventKind::DeviceRemoved;
     condition.notify_all();
   });
+
   service.emitDeviceObject(false);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return removed == 1; }));
   }
 
   EXPECT_TRUE(client.devices().empty());
 
   service.emitDeviceObject(true);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return added == 1; }));
   }
 
@@ -2207,8 +2305,10 @@ TEST(DmnBluezDeviceList, UpdatesByStableDeviceIdentityAcrossPathChanges) {
   bool alternatePathEvent{};
   bool connectedEvent{};
   int removedEvents{};
+
   client.setEventHandler([&](const auto &event) {
     std::lock_guard lock{mutex};
+
     if (event.kind == dmn::Dmn_BluezEventKind::DeviceChanged && event.device) {
       alternatePathEvent |= event.device->object_path == alternatePath;
       connectedEvent |= event.device->object_path == alternatePath &&
@@ -2220,8 +2320,10 @@ TEST(DmnBluezDeviceList, UpdatesByStableDeviceIdentityAcrossPathChanges) {
   });
 
   service.emitDeviceObject(true, alternatePath);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(
         condition.wait_for(lock, 2s, [&] { return alternatePathEvent; }));
   }
@@ -2232,8 +2334,10 @@ TEST(DmnBluezDeviceList, UpdatesByStableDeviceIdentityAcrossPathChanges) {
 
   service.emitDeviceObject(false);
   service.emitConnected(true, alternatePath);
+
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return connectedEvent; }));
   }
 
@@ -2255,11 +2359,13 @@ TEST(DmnBluezClient, DeviceActionResolvesCurrentObjectPath) {
       "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF_current";
   service.emitDeviceObject(true, alternatePath);
   const auto deadline = std::chrono::steady_clock::now() + 2s;
+
   while (std::chrono::steady_clock::now() < deadline) {
     const auto devices = client.devices();
     if (devices.size() == 1 && devices.front().object_path == alternatePath) {
       break;
     }
+
     std::this_thread::sleep_for(10ms);
   }
 

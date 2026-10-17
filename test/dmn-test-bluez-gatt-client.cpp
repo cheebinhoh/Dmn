@@ -266,32 +266,38 @@ public:
 
   void setStartFailure(bool value) {
     std::lock_guard lock{m_mutex};
+
     m_failStart = value;
   }
 
   void setStopFailure(bool value) {
     std::lock_guard lock{m_mutex};
+
     m_failStop = value;
   }
 
   void setCharacteristicFlags(std::vector<std::string> flags) {
     std::lock_guard lock{m_mutex};
+
     m_characteristicFlags = std::move(flags);
   }
 
   void emitValueOnStart() {
     std::lock_guard lock{m_mutex};
+
     m_emitValueOnStart = true;
   }
 
   void setWriteError(std::string name) {
     std::lock_guard lock{m_mutex};
+
     m_writeError = std::move(name);
   }
 
   void setResolved(bool value) {
     {
       std::lock_guard lock{m_mutex};
+
       m_resolved = value;
     }
 
@@ -301,6 +307,7 @@ public:
   void emitDeviceState(bool connected, bool resolved) {
     {
       std::lock_guard lock{m_mutex};
+
       m_connected = connected;
       m_resolved = resolved;
     }
@@ -372,6 +379,7 @@ private:
 
   void sendSignal(DBusMessage *signal) {
     std::lock_guard lock{m_sendMutex};
+
     dbus_connection_send(m_connection.get(), signal, nullptr);
     dbus_connection_flush(m_connection.get());
   }
@@ -385,8 +393,10 @@ private:
                                      &objects);
     bool connected{};
     bool resolved{};
+
     {
       std::lock_guard lock{m_mutex};
+
       connected = m_connected;
       resolved = m_resolved;
     }
@@ -395,8 +405,10 @@ private:
     appendService(objects, kServicePath, kDevicePath,
                   "7905f431-b5ce-4e99-a40f-4b1e122d00d0");
     std::vector<std::string> characteristicFlags;
+
     {
       std::lock_guard lock{m_mutex};
+
       characteristicFlags = m_characteristicFlags;
     }
 
@@ -442,8 +454,10 @@ private:
                                        "unknown device property");
       } else {
         bool value{};
+
         {
           std::lock_guard lock{self->m_mutex};
+
           ++self->m_propertyGetCount;
           value = std::string{propertyName} == "Connected" ? self->m_connected
                                                            : self->m_resolved;
@@ -463,8 +477,10 @@ private:
                    message, "org.bluez.GattCharacteristic1", "StartNotify")) {
       bool fail{};
       bool emitValue{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_startCount;
         fail = self->m_failStart;
         emitValue = std::exchange(self->m_emitValueOnStart, false);
@@ -481,8 +497,10 @@ private:
     } else if (dbus_message_is_method_call(
                    message, "org.bluez.GattCharacteristic1", "StopNotify")) {
       bool fail{};
+
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_stopCount;
         fail = self->m_failStop;
       }
@@ -527,6 +545,7 @@ private:
 
       {
         std::lock_guard lock{self->m_mutex};
+
         self->m_writtenBytes = std::move(value);
         self->m_writeType = std::move(type);
         writeError = self->m_writeError;
@@ -687,6 +706,7 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
+
         events.push_back(event);
         condition.notify_all();
       },
@@ -696,6 +716,7 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
 
   {
     std::unique_lock lock{mutex};
+
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return !events.empty(); }));
   }
 
@@ -721,6 +742,7 @@ TEST(DmnBluezGattClient, ReportsDisconnectAndStopsWithoutCallingBluezAgain) {
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
+
         events.push_back(event);
         condition.notify_all();
       },
@@ -751,6 +773,7 @@ TEST(DmnBluezGattClient, ReportsCharacteristicRemovalAsInvalidation) {
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
+
         events.push_back(event);
         condition.notify_all();
       },
@@ -781,6 +804,7 @@ TEST(DmnBluezGattClient, ReportsBluezOwnerLossAsInvalidation) {
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
+
         events.push_back(event);
         condition.notify_all();
       },

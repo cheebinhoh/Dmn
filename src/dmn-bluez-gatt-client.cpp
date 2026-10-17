@@ -267,6 +267,12 @@ public:
       bool observedConnectionChange{};
     };
     auto state = std::make_shared<WaitState>();
+    const auto propertiesTimeout = remaining();
+    if (propertiesTimeout <= std::chrono::milliseconds::zero()) {
+      return std::unexpected(timeoutError(
+          "service-resolution wait deadline expired before subscribing"));
+    }
+
     auto properties = m_dbus.subscribeWithPath(
         {"org.bluez", std::string{kProperties}, "PropertiesChanged", {}, {}},
         [state, deviceId](std::string path,
@@ -279,6 +285,7 @@ public:
           }
 
           std::lock_guard lock{state->mutex};
+
           if (const auto value = boolProperty(arguments[1], "Connected")) {
             state->connected = value;
             state->observedConnectionChange = true;
@@ -290,12 +297,14 @@ public:
           }
 
           state->condition.notify_all();
-        });
+        },
+        propertiesTimeout);
     if (!properties) {
       return std::unexpected(mapError(properties.error()));
     }
 
-    if (remaining() <= std::chrono::milliseconds::zero()) {
+    const auto ownerTimeout = remaining();
+    if (ownerTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "service-resolution wait deadline expired while subscribing"));
     }
@@ -318,16 +327,19 @@ public:
           }
 
           std::lock_guard lock{state->mutex};
+
           state->failure =
               error(Dmn_GattErrorKind::Backend,
                     "BlueZ service owner changed during service wait");
           state->condition.notify_all();
-        });
+        },
+        ownerTimeout);
     if (!owner) {
       return std::unexpected(mapError(owner.error()));
     }
 
-    if (remaining() <= std::chrono::milliseconds::zero()) {
+    const auto objectsTimeout = remaining();
+    if (objectsTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "service-resolution wait deadline expired while subscribing"));
     }
@@ -355,11 +367,13 @@ public:
           }
 
           std::lock_guard lock{state->mutex};
+
           state->failure =
               error(Dmn_GattErrorKind::NotReady,
                     "selected BlueZ device was removed during service wait");
           state->condition.notify_all();
-        });
+        },
+        objectsTimeout);
     if (!objects) {
       return std::unexpected(mapError(objects.error()));
     }
@@ -387,6 +401,7 @@ public:
     if (!state->resolved) {
       state->resolved = initial->second;
     }
+
     while (true) {
       if (state->failure) {
         return std::unexpected(*state->failure);
@@ -639,6 +654,12 @@ public:
     std::weak_ptr<NotificationState> weakState = state;
 
     // Install every observer before StartNotify can produce an immediate value.
+    const auto propertyTimeout = remaining();
+    if (propertyTimeout <= std::chrono::milliseconds::zero()) {
+      return std::unexpected(timeoutError(
+          "StartNotify deadline expired before installing signal observers"));
+    }
+
     auto propertySubscription = m_dbus.subscribeWithPath(
         {"org.bluez", std::string{kProperties}, "PropertiesChanged", {}, {}},
         [weakState, deviceId, characteristicId](
@@ -655,8 +676,10 @@ public:
 
           Dmn_GattEvent event;
           bool deliver{};
+
           {
             std::lock_guard lock{state->mutex};
+
             if (state->invalidated) {
               return;
             }
@@ -686,12 +709,21 @@ public:
           if (deliver) {
             state->handler(event);
           }
-        });
+        },
+        propertyTimeout);
     if (!propertySubscription) {
       return std::unexpected(mapError(propertySubscription.error()));
     }
 
     state->property_subscription = std::move(*propertySubscription);
+
+    const auto ownerTimeout = remaining();
+    if (ownerTimeout <= std::chrono::milliseconds::zero()) {
+      state->property_subscription.cancel();
+
+      return std::unexpected(timeoutError(
+          "StartNotify deadline expired before installing signal observers"));
+    }
 
     auto ownerSubscription = m_dbus.subscribe(
         {"org.freedesktop.DBus",
@@ -713,8 +745,10 @@ public:
               (!arguments[1].asString().empty() ||
                !arguments[2].asString().empty())) {
             bool deliver{};
+
             {
               std::lock_guard lock{state->mutex};
+
               deliver = !std::exchange(state->invalidated, true);
             }
 
@@ -724,7 +758,8 @@ public:
                               "BlueZ service owner changed"});
             }
           }
-        });
+        },
+        ownerTimeout);
     if (!ownerSubscription) {
       state->property_subscription.cancel();
 
@@ -732,6 +767,15 @@ public:
     }
 
     state->owner_subscription = std::move(*ownerSubscription);
+
+    const auto objectTimeout = remaining();
+    if (objectTimeout <= std::chrono::milliseconds::zero()) {
+      state->property_subscription.cancel();
+      state->owner_subscription.cancel();
+
+      return std::unexpected(timeoutError(
+          "StartNotify deadline expired before installing signal observers"));
+    }
 
     auto objectSubscription = m_dbus.subscribe(
         {"org.bluez",
@@ -758,8 +802,10 @@ public:
           }
 
           bool deliver{};
+
           {
             std::lock_guard lock{state->mutex};
+
             deliver = !std::exchange(state->invalidated, true);
           }
 
@@ -768,7 +814,8 @@ public:
                             {},
                             "BlueZ removed the selected GATT object"});
           }
-        });
+        },
+        objectTimeout);
     if (!objectSubscription) {
       state->property_subscription.cancel();
       state->owner_subscription.cancel();
@@ -810,6 +857,7 @@ public:
 
     {
       std::lock_guard lock{state->mutex};
+
       state->started = !state->invalidated;
     }
 
@@ -823,8 +871,10 @@ public:
       -> Dmn_GattResult {
     bool started{};
     bool invalidated{};
+
     {
       std::lock_guard lock{state->mutex};
+
       started = state->started;
       invalidated = state->invalidated;
     }
@@ -840,6 +890,7 @@ public:
 
     {
       std::lock_guard lock{state->mutex};
+
       state->started = false;
     }
 
@@ -867,6 +918,7 @@ public:
 
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     const auto remaining = [&] { return remainingTimeout(deadline); };
+
     const auto discoveryTimeout = remaining();
     if (discoveryTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
@@ -902,6 +954,7 @@ public:
     std::vector<std::pair<Dmn_DbusValue, Dmn_DbusValue>> options;
     options.emplace_back(Dmn_DbusValue{"type"},
                          Dmn_DbusValue::variant(Dmn_DbusValue{"request"}));
+
     const auto writeTimeout = remaining();
     if (writeTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
