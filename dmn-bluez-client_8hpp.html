@@ -114,14 +114,19 @@ $(document).ready(function(){initNavTree('dmn-bluez-client_8hpp.html',''); initR
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__BluezAdapter.html">dmn::Dmn_BluezAdapter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owned adapter state from the current BlueZ inventory.  <a href="structdmn_1_1Dmn__BluezAdapter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__BluezDevice.html">dmn::Dmn_BluezDevice</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owned device state from the current BlueZ inventory.  <a href="structdmn_1_1Dmn__BluezDevice.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__BluezInventory.html">dmn::Dmn_BluezInventory</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconciled adapter and known-device snapshot.  <a href="structdmn_1_1Dmn__BluezInventory.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__BluezEvent.html">dmn::Dmn_BluezEvent</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owned inventory or service-state update delivered to a handler.  <a href="structdmn_1_1Dmn__BluezEvent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">dmn::Dmn_BluezClientConfig</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connection and resource-limit configuration for a BlueZ client.  <a href="structdmn_1_1Dmn__BluezClientConfig.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html">dmn::Dmn_BluezClient</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manage BlueZ inventory, explicit device actions, and one scan session.  <a href="classdmn_1_1Dmn__BluezClient.html#details">More...</a><br /></td></tr>
@@ -131,10 +136,12 @@ Classes</h2></td></tr>
 Typedefs</h2></td></tr>
 <tr class="memitem:a3b52fecf210f336aa8c540cbb2a17ee9" id="r_a3b52fecf210f336aa8c540cbb2a17ee9"><td class="memItemLeft" align="right" valign="top"><a id="a3b52fecf210f336aa8c540cbb2a17ee9" name="a3b52fecf210f336aa8c540cbb2a17ee9"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::Dmn_BluezResult</b> = std::expected&lt; void, <a class="el" href="structdmn_1_1Dmn__DbusError.html">Dmn_DbusError</a> &gt;</td></tr>
+<tr class="memdesc:a3b52fecf210f336aa8c540cbb2a17ee9"><td class="mdescLeft">&#160;</td><td class="mdescRight">BlueZ operation result carrying success or a typed D-Bus error. <br /></td></tr>
 <tr class="separator:a3b52fecf210f336aa8c540cbb2a17ee9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33f6aae6a7aaa592b78dd773cd5120b4" id="r_a33f6aae6a7aaa592b78dd773cd5120b4"><td class="memTemplParams" colspan="2"><a id="a33f6aae6a7aaa592b78dd773cd5120b4" name="a33f6aae6a7aaa592b78dd773cd5120b4"></a>
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a33f6aae6a7aaa592b78dd773cd5120b4"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>dmn::Dmn_BluezValueResult</b> = std::expected&lt; T, <a class="el" href="structdmn_1_1Dmn__DbusError.html">Dmn_DbusError</a> &gt;</td></tr>
+<tr class="memdesc:a33f6aae6a7aaa592b78dd773cd5120b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">BlueZ operation result carrying a value or typed D-Bus error. <br /></td></tr>
 <tr class="separator:a33f6aae6a7aaa592b78dd773cd5120b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>

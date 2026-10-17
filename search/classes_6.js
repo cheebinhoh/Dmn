@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['objectpath_0',['ObjectPath',['../structdmn_1_1Dmn__DbusValue_1_1ObjectPath.html',1,'dmn::Dmn_DbusValue']]]
+  ['notificationstate_0',['NotificationState',['../structdmn_1_1Dmn__BluezGattClient_1_1Impl_1_1NotificationState.html',1,'dmn::Dmn_BluezGattClient::Impl']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['role_0',['Role',['../classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423',1,'dmn::Dmn_Kafka']]]
+  ['kind_0',['Kind',['../structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db',1,'dmn::Dmn_GattEvent']]]
 ];

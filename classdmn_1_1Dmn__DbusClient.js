@@ -10,7 +10,7 @@ var classdmn_1_1Dmn__DbusClient =
     [ "Dmn_DbusClient", "classdmn_1_1Dmn__DbusClient.html#ab9d64d84951962c8fed50378abaa422d", null ],
     [ "call", "classdmn_1_1Dmn__DbusClient.html#a643b6a0b3ec100d03a6ae53e8689e06f", null ],
     [ "callAsync", "classdmn_1_1Dmn__DbusClient.html#a75f011e16959f8a87a7f6047196d0a19", null ],
-    [ "dispatchThreadId", "classdmn_1_1Dmn__DbusClient.html#a6ecb8aab70ce21fe44e6aad282a45a5f", null ],
+    [ "dispatchThreadId", "classdmn_1_1Dmn__DbusClient.html#a7dbea8b59136353045223b342abd5f4b", null ],
     [ "drainSignalCallbacks", "classdmn_1_1Dmn__DbusClient.html#a78b38aa5489b8282b38f1e2e5f372b80", null ],
     [ "getProperty", "classdmn_1_1Dmn__DbusClient.html#aec86a170bf89c12550a87fd827d85b50", null ],
     [ "operator=", "classdmn_1_1Dmn__DbusClient.html#a60082abb36852a370adede4d7cda47a7", null ],
@@ -19,5 +19,7 @@ var classdmn_1_1Dmn__DbusClient =
     [ "shutdown", "classdmn_1_1Dmn__DbusClient.html#a2fc7464bfe33c29f60a860bbdf8b63d6", null ],
     [ "status", "classdmn_1_1Dmn__DbusClient.html#a02eb942d1db62e415927789000439c9a", null ],
     [ "subscribe", "classdmn_1_1Dmn__DbusClient.html#a79897f0bcad8228b0e7f9d4d1e154b4d", null ],
-    [ "subscribeWithPath", "classdmn_1_1Dmn__DbusClient.html#a9a4e872ac044b905a005f7721dd16b7b", null ]
+    [ "subscribe", "classdmn_1_1Dmn__DbusClient.html#a2151a4d80c047ee7152de3e5b51f9c02", null ],
+    [ "subscribeWithPath", "classdmn_1_1Dmn__DbusClient.html#a9a4e872ac044b905a005f7721dd16b7b", null ],
+    [ "subscribeWithPath", "classdmn_1_1Dmn__DbusClient.html#ae54fc13144cb98b607eb6d87da5a7ba9", null ]
 ];

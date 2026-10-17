@@ -66,6 +66,14 @@ var hierarchy =
     [ "dmn::Dmn_DMesgDbusStatus", "structdmn_1_1Dmn__DMesgDbusStatus.html", null ],
     [ "dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy", "classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html", null ],
     [ "dmn::Dmn_DMesgNet_Kafka", "classdmn_1_1Dmn__DMesgNet__Kafka.html", null ],
+    [ "dmn::Dmn_GattCharacteristic", "structdmn_1_1Dmn__GattCharacteristic.html", null ],
+    [ "dmn::Dmn_GattClient", "classdmn_1_1Dmn__GattClient.html", [
+      [ "dmn::Dmn_BluezGattClient", "classdmn_1_1Dmn__BluezGattClient.html", null ]
+    ] ],
+    [ "dmn::Dmn_GattError", "structdmn_1_1Dmn__GattError.html", null ],
+    [ "dmn::Dmn_GattEvent", "structdmn_1_1Dmn__GattEvent.html", null ],
+    [ "dmn::Dmn_GattNotification", "classdmn_1_1Dmn__GattNotification.html", null ],
+    [ "dmn::Dmn_GattService", "structdmn_1_1Dmn__GattService.html", null ],
     [ "dmn::Dmn_Inflight_Guard< T >", "classdmn_1_1Dmn__Inflight__Guard.html", [
       [ "dmn::Dmn_BlockingQueue_Mt< T >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
       [ "dmn::Dmn_BlockingQueue_Mt< dmn::Dmn_Runtime_Job >", "classdmn_1_1Dmn__BlockingQueue__Mt.html", null ],
@@ -113,6 +121,7 @@ var hierarchy =
     [ "dmn::Dmn_Timer< T >", "classdmn_1_1Dmn__Timer.html", null ],
     [ "dmn::Dmn_TopologyResult< T >", "structdmn_1_1Dmn__TopologyResult.html", null ],
     [ "std::enable_shared_from_this", null, [
+      [ "dmn::Dmn_BluezGattClient::Impl", "classdmn_1_1Dmn__BluezGattClient_1_1Impl.html", null ],
       [ "dmn::Dmn_DbusClient::Impl", "classdmn_1_1Dmn__DbusClient_1_1Impl.html", null ],
       [ "dmn::Dmn_Runtime_State", "classdmn_1_1Dmn__Runtime__State.html", null ]
     ] ],
@@ -123,6 +132,7 @@ var hierarchy =
     [ "dmn::Dmn_DbusInput::Impl", "classdmn_1_1Dmn__DbusInput_1_1Impl.html", null ],
     [ "dmn::Dmn_DbusOutput::Impl", "classdmn_1_1Dmn__DbusOutput_1_1Impl.html", null ],
     [ "dmn::Dmn_DMesgDbus::Impl", "structdmn_1_1Dmn__DMesgDbus_1_1Impl.html", null ],
+    [ "dmn::Dmn_BluezGattClient::Impl::NotificationState", "structdmn_1_1Dmn__BluezGattClient_1_1Impl_1_1NotificationState.html", null ],
     [ "dmn::Dmn_DbusValue::ObjectPath", "structdmn_1_1Dmn__DbusValue_1_1ObjectPath.html", null ],
     [ "dmn::Dmn_Runtime_Task::promise_type", "structdmn_1_1Dmn__Runtime__Task_1_1promise__type.html", null ],
     [ "dmn::ScopeGuard< F >", "classdmn_1_1ScopeGuard.html", null ],

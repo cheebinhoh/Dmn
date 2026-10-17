@@ -91,6 +91,7 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BluezClient_1_1Impl.h
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classdmn_1_1Dmn__BluezClient_1_1Impl-members.html">List of all members</a>  </div>
@@ -98,6 +99,14 @@ $(document).ready(function(){initNavTree('classdmn_1_1Dmn__BluezClient_1_1Impl.h
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ac61bc4e3ff2477aba4f35f68e89a6af0" id="r_ac61bc4e3ff2477aba4f35f68e89a6af0"><td class="memItemLeft" align="right" valign="top"><a id="ac61bc4e3ff2477aba4f35f68e89a6af0" name="ac61bc4e3ff2477aba4f35f68e89a6af0"></a>enum class &#160;</td><td class="memItemRight" valign="bottom"><b>DeviceAction</b> { <b>Connect</b>
+, <b>Disconnect</b>
+, <b>Pair</b>
+ }</td></tr>
+<tr class="separator:ac61bc4e3ff2477aba4f35f68e89a6af0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a438571b606bdcb549f3d2c59f8eab48f" id="r_a438571b606bdcb549f3d2c59f8eab48f"><td class="memItemLeft" align="right" valign="top"><a id="a438571b606bdcb549f3d2c59f8eab48f" name="a438571b606bdcb549f3d2c59f8eab48f"></a>
@@ -107,22 +116,22 @@ Public Member Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>subscribe</b> (const <a class="el" href="structdmn_1_1Dmn__DbusSignalMatch.html">Dmn_DbusSignalMatch</a> &amp;match)</td></tr>
 <tr class="separator:ad076a1591704b6d1f84c8ad67e86b050"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e3133679df955cf263e6bb20e73c5f4" id="r_a9e3133679df955cf263e6bb20e73c5f4"><td class="memItemLeft" align="right" valign="top"><a id="a9e3133679df955cf263e6bb20e73c5f4" name="a9e3133679df955cf263e6bb20e73c5f4"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>snapshot</b> (std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; Dmn_BluezValueResult&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>snapshot</b> (std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a33f6aae6a7aaa592b78dd773cd5120b4">Dmn_BluezValueResult</a>&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
 <tr class="separator:a9e3133679df955cf263e6bb20e73c5f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93697eb1b5590b4df22b4c4dcdf0ae2b" id="r_a93697eb1b5590b4df22b4c4dcdf0ae2b"><td class="memItemLeft" align="right" valign="top"><a id="a93697eb1b5590b4df22b4c4dcdf0ae2b" name="a93697eb1b5590b4df22b4c4dcdf0ae2b"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>devices</b> () const -&gt; std::vector&lt; <a class="el" href="structdmn_1_1Dmn__BluezDevice.html">Dmn_BluezDevice</a> &gt;</td></tr>
 <tr class="separator:a93697eb1b5590b4df22b4c4dcdf0ae2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d50138e21bf109562063ae2ac0320c8" id="r_a7d50138e21bf109562063ae2ac0320c8"><td class="memItemLeft" align="right" valign="top"><a id="a7d50138e21bf109562063ae2ac0320c8" name="a7d50138e21bf109562063ae2ac0320c8"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>deviceAction</b> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector, std::chrono::milliseconds timeout, bool requestedConnected) -&gt; Dmn_BluezResult</td></tr>
-<tr class="separator:a7d50138e21bf109562063ae2ac0320c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affa77b2c9799fbe9d44a5cd031524a4e" id="r_affa77b2c9799fbe9d44a5cd031524a4e"><td class="memItemLeft" align="right" valign="top"><a id="affa77b2c9799fbe9d44a5cd031524a4e" name="affa77b2c9799fbe9d44a5cd031524a4e"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>deviceAction</b> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector, std::chrono::milliseconds timeout, DeviceAction action) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="separator:affa77b2c9799fbe9d44a5cd031524a4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af154938349bf04682e1876fc1a207447" id="r_af154938349bf04682e1876fc1a207447"><td class="memItemLeft" align="right" valign="top"><a id="af154938349bf04682e1876fc1a207447" name="af154938349bf04682e1876fc1a207447"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>startDiscovery</b> (const std::string &amp;adapterPath) -&gt; Dmn_BluezResult</td></tr>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>startDiscovery</b> (const std::string &amp;adapterPath) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="separator:af154938349bf04682e1876fc1a207447"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55562598247999065982e542c4c4ff1e" id="r_a55562598247999065982e542c4c4ff1e"><td class="memItemLeft" align="right" valign="top"><a id="a55562598247999065982e542c4c4ff1e" name="a55562598247999065982e542c4c4ff1e"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>stopDiscovery</b> () -&gt; Dmn_BluezResult</td></tr>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>stopDiscovery</b> () -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="separator:a55562598247999065982e542c4c4ff1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e5818f4ca61dc2119324ceb4631db41" id="r_a4e5818f4ca61dc2119324ceb4631db41"><td class="memItemLeft" align="right" valign="top"><a id="a4e5818f4ca61dc2119324ceb4631db41" name="a4e5818f4ca61dc2119324ceb4631db41"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setEventHandler</b> (EventHandler handler)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setEventHandler</b> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32">EventHandler</a> handler)</td></tr>
 <tr class="separator:a4e5818f4ca61dc2119324ceb4631db41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>

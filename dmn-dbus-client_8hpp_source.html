@@ -102,15 +102,15 @@ $(document).ready(function(){initNavTree('dmn-dbus-client_8hpp_source.html','');
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#define DMN_DBUS_CLIENT_HPP_</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-dbus-value_8hpp.html">dmn-dbus-value.hpp</a>&quot;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;expected&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;future&gt;</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;thread&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="code" href="dmn-proc_8hpp.html">dmn-proc.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;expected&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;future&gt;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">namespace </span>dmn {</div>
@@ -340,25 +340,35 @@ $(document).ready(function(){initNavTree('dmn-dbus-client_8hpp_source.html','');
 <div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>  subscribe(<span class="keyword">const</span> Dmn_DbusSignalMatch &amp;match,</div>
 <div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>            SignalCallback callback) -&gt; Dmn_DbusResult&lt;Dmn_DbusSubscription&gt;;</div>
 <div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span> </div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>  [[nodiscard]] <span class="keyword">auto</span> subscribeWithPath(<span class="keyword">const</span> Dmn_DbusSignalMatch &amp;match,</div>
-<div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>                                       SignalCallbackWithPath callback)</div>
-<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>      -&gt; Dmn_DbusResult&lt;Dmn_DbusSubscription&gt;;</div>
-<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span> </div>
-<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>  [[nodiscard]] <span class="keyword">auto</span> drainSignalCallbacks() -&gt; Dmn_DbusResult&lt;void&gt;;</div>
-<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span> </div>
-<div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>  [[nodiscard]] <span class="keyword">auto</span> dispatchThreadId() const -&gt; std::thread::<span class="keywordtype">id</span>;</div>
-<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span> </div>
-<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>  [[nodiscard]] auto status() const -&gt; Dmn_DbusClientStatus;</div>
-<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span> </div>
-<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>private:</div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>  class Impl;</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>  std::shared_ptr&lt;Impl&gt; m_impl;</div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>};</div>
-</div>
+<div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>  [[nodiscard]] <span class="keyword">auto</span> subscribe(<span class="keyword">const</span> Dmn_DbusSignalMatch &amp;match,</div>
+<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>                               SignalCallback callback,</div>
+<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>                               std::chrono::milliseconds timeout)</div>
+<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>      -&gt; Dmn_DbusResult&lt;Dmn_DbusSubscription&gt;;</div>
+<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span> </div>
+<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span>  [[nodiscard]] <span class="keyword">auto</span> subscribeWithPath(<span class="keyword">const</span> Dmn_DbusSignalMatch &amp;match,</div>
+<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>                                       SignalCallbackWithPath callback)</div>
+<div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>      -&gt; Dmn_DbusResult&lt;Dmn_DbusSubscription&gt;;</div>
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span> </div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>  [[nodiscard]] <span class="keyword">auto</span> subscribeWithPath(<span class="keyword">const</span> Dmn_DbusSignalMatch &amp;match,</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span>                                       SignalCallbackWithPath callback,</div>
+<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span>                                       std::chrono::milliseconds timeout)</div>
+<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span>      -&gt; Dmn_DbusResult&lt;Dmn_DbusSubscription&gt;;</div>
 <div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span> </div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span> </div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DBUS_CLIENT_HPP_</span></div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>  [[nodiscard]] <span class="keyword">auto</span> drainSignalCallbacks() -&gt; Dmn_DbusResult&lt;void&gt;;</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span> </div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>  [[nodiscard]] <span class="keyword">auto</span> dispatchThreadId() const -&gt; Dmn_Proc::ThreadId;</div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span> </div>
+<div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>  [[nodiscard]] auto status() const -&gt; Dmn_DbusClientStatus;</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span> </div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span>private:</div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>  class Impl;</div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>  std::shared_ptr&lt;Impl&gt; m_impl;</div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>};</div>
+</div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span> </div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span> </div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span><span class="preprocessor">#endif </span><span class="comment">// DMN_DBUS_CLIENT_HPP_</span></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusCall_html"><div class="ttname"><a href="classdmn_1_1Dmn__DbusCall.html">dmn::Dmn_DbusCall</a></div><div class="ttdoc">Move-only handle for one asynchronous method-call result.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:334</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusCall_html_a3270811a5f4155b51655df4102cd33ab"><div class="ttname"><a href="classdmn_1_1Dmn__DbusCall.html#a3270811a5f4155b51655df4102cd33ab">dmn::Dmn_DbusCall::Dmn_DbusCall</a></div><div class="ttdeci">Dmn_DbusCall(Dmn_DbusCall &amp;&amp;) noexcept=default</div><div class="ttdoc">Transfer ownership of an asynchronous call.</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusCall_html_a9fa2ff2bde7b3c0f884009332eacf610"><div class="ttname"><a href="classdmn_1_1Dmn__DbusCall.html#a9fa2ff2bde7b3c0f884009332eacf610">dmn::Dmn_DbusCall::Result</a></div><div class="ttdeci">Dmn_DbusResult&lt; Arguments &gt; Result</div><div class="ttdoc">Method reply arguments or the corresponding typed failure.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:340</div></div>
@@ -368,8 +378,8 @@ $(document).ready(function(){initNavTree('dmn-dbus-client_8hpp_source.html','');
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html_a6b79dcb3c14cf8c21f553cbb57287e68"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html#a6b79dcb3c14cf8c21f553cbb57287e68">dmn::Dmn_DbusClient::SignalCallback</a></div><div class="ttdeci">std::function&lt; void(Arguments)&gt; SignalCallback</div><div class="ttdoc">Signal callback receiving owned decoded arguments.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:457</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusClient_html_ac82e2edffa15cc6573f0f3acc3f686f0"><div class="ttname"><a href="classdmn_1_1Dmn__DbusClient.html#ac82e2edffa15cc6573f0f3acc3f686f0">dmn::Dmn_DbusClient::Arguments</a></div><div class="ttdeci">std::vector&lt; Dmn_DbusValue &gt; Arguments</div><div class="ttdoc">Owned argument list used for method replies and signal bodies.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:454</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html">dmn::Dmn_DbusSubscription</a></div><div class="ttdoc">Move-only RAII token that owns one signal subscription.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:290</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a1b64b2b45f9de9980aa8158ef69a1bbe"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a1b64b2b45f9de9980aa8158ef69a1bbe">dmn::Dmn_DbusSubscription::~Dmn_DbusSubscription</a></div><div class="ttdeci">~Dmn_DbusSubscription()</div><div class="ttdoc">Cancel the subscription when this token is destroyed.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1707</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a293883df7433c06d7a97d5362881c1d1"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a293883df7433c06d7a97d5362881c1d1">dmn::Dmn_DbusSubscription::cancel</a></div><div class="ttdeci">void cancel() noexcept</div><div class="ttdoc">Cancel this subscription; cancellation is idempotent.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1726</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a1b64b2b45f9de9980aa8158ef69a1bbe"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a1b64b2b45f9de9980aa8158ef69a1bbe">dmn::Dmn_DbusSubscription::~Dmn_DbusSubscription</a></div><div class="ttdeci">~Dmn_DbusSubscription()</div><div class="ttdoc">Cancel the subscription when this token is destroyed.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1712</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a293883df7433c06d7a97d5362881c1d1"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a293883df7433c06d7a97d5362881c1d1">dmn::Dmn_DbusSubscription::cancel</a></div><div class="ttdeci">void cancel() noexcept</div><div class="ttdoc">Cancel this subscription; cancellation is idempotent.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.cpp:1731</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a4871b85bd8225844743b81aa12349f63"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a4871b85bd8225844743b81aa12349f63">dmn::Dmn_DbusSubscription::operator=</a></div><div class="ttdeci">auto operator=(const Dmn_DbusSubscription &amp;) -&gt; Dmn_DbusSubscription &amp;=delete</div><div class="ttdoc">Subscriptions cannot be copy-assigned.</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_a93a57d3dff22b6fd4ff747e3ec6d3009"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#a93a57d3dff22b6fd4ff747e3ec6d3009">dmn::Dmn_DbusSubscription::Dmn_DbusSubscription</a></div><div class="ttdeci">Dmn_DbusSubscription()=default</div><div class="ttdoc">Construct an empty subscription token.</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__DbusSubscription_html_ac3fd8c34ab043c734e0ee101db2ada23"><div class="ttname"><a href="classdmn_1_1Dmn__DbusSubscription.html#ac3fd8c34ab043c734e0ee101db2ada23">dmn::Dmn_DbusSubscription::Dmn_DbusSubscription</a></div><div class="ttdeci">Dmn_DbusSubscription(const Dmn_DbusSubscription &amp;)=delete</div><div class="ttdoc">Subscriptions cannot be copied.</div></div>
@@ -389,6 +399,7 @@ $(document).ready(function(){initNavTree('dmn-dbus-client_8hpp_source.html','');
 <div class="ttc" id="admn-dbus-client_8hpp_html_ae2b24c85f0dade1cef1bdf4225d14268af5f0c488ed56cf789d19a13ffba8abe3"><div class="ttname"><a href="dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268af5f0c488ed56cf789d19a13ffba8abe3">dmn::Dmn_DbusErrorKind::Transport</a></div><div class="ttdeci">@ Transport</div><div class="ttdoc">A local transport or connection failure occurred.</div></div>
 <div class="ttc" id="admn-dbus-client_8hpp_html_ae2b24c85f0dade1cef1bdf4225d14268af8508f576cd3f742dfc268258dcdf0dd"><div class="ttname"><a href="dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268af8508f576cd3f742dfc268258dcdf0dd">dmn::Dmn_DbusErrorKind::Remote</a></div><div class="ttdeci">@ Remote</div><div class="ttdoc">The remote service returned a named D-Bus error.</div></div>
 <div class="ttc" id="admn-dbus-value_8hpp_html"><div class="ttname"><a href="dmn-dbus-value_8hpp.html">dmn-dbus-value.hpp</a></div><div class="ttdoc">Owned, type-preserving values for the optional D-Bus client.</div></div>
+<div class="ttc" id="admn-proc_8hpp_html"><div class="ttname"><a href="dmn-proc_8hpp.html">dmn-proc.hpp</a></div><div class="ttdoc">Lightweight RAII wrapper around native pthread functionality.</div></div>
 <div class="ttc" id="astructdmn_1_1Dmn__DbusClientConfig_html"><div class="ttname"><a href="structdmn_1_1Dmn__DbusClientConfig.html">dmn::Dmn_DbusClientConfig</a></div><div class="ttdoc">Bus selection and resource limits for a Dmn_DbusClient.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:168</div></div>
 <div class="ttc" id="astructdmn_1_1Dmn__DbusClientConfig_html_a063dbf0092f186ce7550ee912d1ec8ad"><div class="ttname"><a href="structdmn_1_1Dmn__DbusClientConfig.html#a063dbf0092f186ce7550ee912d1ec8ad">dmn::Dmn_DbusClientConfig::bus_kind</a></div><div class="ttdeci">Dmn_DbusBusKind bus_kind</div><div class="ttdoc">Selects the session bus, system bus, or explicit address.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:177</div></div>
 <div class="ttc" id="astructdmn_1_1Dmn__DbusClientConfig_html_a5babaeae7823ca03a6a1f0978ceb3904"><div class="ttname"><a href="structdmn_1_1Dmn__DbusClientConfig.html#a5babaeae7823ca03a6a1f0978ceb3904">dmn::Dmn_DbusClientConfig::bus_address</a></div><div class="ttdeci">std::string bus_address</div><div class="ttdoc">Exact bus-daemon address, required only for Dmn_DbusBusKind::Address.</div><div class="ttdef"><b>Definition</b> dmn-dbus-client.hpp:187</div></div>

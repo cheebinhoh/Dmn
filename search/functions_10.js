@@ -1,7 +1,7 @@
 var searchData=
 [
   ['scheduleinhandlercontext_0',['scheduleInHandlerContext',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a311d2db40e29dbb9639b2aa91269651b',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
-  ['scopeguard_1',['scopeguard',['../classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415',1,'dmn::ScopeGuard::ScopeGuard(F callable) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)'],['../classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e',1,'dmn::ScopeGuard::ScopeGuard(ScopeGuard &amp;&amp;other) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)'],['../classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc',1,'dmn::ScopeGuard::ScopeGuard(const ScopeGuard &amp;)=delete']]],
+  ['scopeguard_1',['scopeguard',['../classdmn_1_1ScopeGuard.html#a1eeebb066010a9bb31e5ff549fb8c415',1,'dmn::ScopeGuard::ScopeGuard(F callable) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)'],['../classdmn_1_1ScopeGuard.html#a4380d4e727d03a21b61f347d3023e2bc',1,'dmn::ScopeGuard::ScopeGuard(const ScopeGuard &amp;)=delete'],['../classdmn_1_1ScopeGuard.html#a430eb95b89942c18abe4792d59afcb8e',1,'dmn::ScopeGuard::ScopeGuard(ScopeGuard &amp;&amp;other) noexcept(std::is_nothrow_move_constructible_v&lt; F &gt;)']]],
   ['set_5fconfig_2',['set_config',['../dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51',1,'dmn']]],
   ['setconflictcallbacktask_3',['setConflictCallbackTask',['../classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#a565fdb6ac2cb66b3bece968f16c457ee',1,'dmn::Dmn_DMesg::Dmn_DMesgHandler']]],
   ['setend_4',['setEnd',['../classdmn_1_1Dmn__State.html#a97876f995fb05376c2a5dd89c3a8409b',1,'dmn::Dmn_State']]],
@@ -21,13 +21,14 @@ var searchData=
   ['snapshot_18',['snapshot',['../classdmn_1_1Dmn__BluezClient.html#a8fed5d36ea37b7b749e0c770efb53e0d',1,'dmn::Dmn_BluezClient']]],
   ['start_19',['start',['../classdmn_1_1Dmn__Timer.html#a08682897148ecb772b5c2f872e903b5e',1,'dmn::Dmn_Timer']]],
   ['startdiscovery_20',['startDiscovery',['../classdmn_1_1Dmn__BluezClient.html#a7415b3e81f7bb1b7072f287b94572154',1,'dmn::Dmn_BluezClient']]],
-  ['status_21',['status',['../classdmn_1_1Dmn__DbusInput.html#a66b5f5d8d2632b28567f6bdd28d47ab3',1,'dmn::Dmn_DbusInput::status()'],['../classdmn_1_1Dmn__DMesgDbus.html#a2b62fe1666e822026fa2891747325c28',1,'dmn::Dmn_DMesgDbus::status()'],['../classdmn_1_1Dmn__DbusOutput.html#a63efd039a83fa14feb07102e324a859a',1,'dmn::Dmn_DbusOutput::status()'],['../classdmn_1_1Dmn__DbusClient.html#a02eb942d1db62e415927789000439c9a',1,'dmn::Dmn_DbusClient::status()']]],
-  ['stop_22',['stop',['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer']]],
-  ['stopdiscovery_23',['stopDiscovery',['../classdmn_1_1Dmn__BluezClient.html#a4cdf03fa3fdcec25949997d2b17afd50',1,'dmn::Dmn_BluezClient']]],
-  ['stopexec_24',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
-  ['stringcompare_25',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
-  ['stringtounicode_26',['stringToUnicode',['../dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64',1,'dmn::detail']]],
-  ['structure_27',['structure',['../classdmn_1_1Dmn__DbusValue.html#a8fa236153f4772be65cee6350270404b',1,'dmn::Dmn_DbusValue']]],
-  ['subscribe_28',['subscribe',['../classdmn_1_1Dmn__DbusClient.html#a79897f0bcad8228b0e7f9d4d1e154b4d',1,'dmn::Dmn_DbusClient']]],
-  ['subscribewithpath_29',['subscribeWithPath',['../classdmn_1_1Dmn__DbusClient.html#a9a4e872ac044b905a005f7721dd16b7b',1,'dmn::Dmn_DbusClient']]]
+  ['startnotify_21',['startnotify',['../classdmn_1_1Dmn__BluezGattClient.html#a5994b23bc1c9a8636dcc657f53c7d1c8',1,'dmn::Dmn_BluezGattClient::startNotify()'],['../classdmn_1_1Dmn__GattClient.html#a91e9c5ccc5b255e88d2c51c7abf77bea',1,'dmn::Dmn_GattClient::startNotify()']]],
+  ['status_22',['status',['../classdmn_1_1Dmn__DbusInput.html#a66b5f5d8d2632b28567f6bdd28d47ab3',1,'dmn::Dmn_DbusInput::status()'],['../classdmn_1_1Dmn__DMesgDbus.html#a2b62fe1666e822026fa2891747325c28',1,'dmn::Dmn_DMesgDbus::status()'],['../classdmn_1_1Dmn__DbusOutput.html#a63efd039a83fa14feb07102e324a859a',1,'dmn::Dmn_DbusOutput::status()'],['../classdmn_1_1Dmn__DbusClient.html#a02eb942d1db62e415927789000439c9a',1,'dmn::Dmn_DbusClient::status()']]],
+  ['stop_23',['stop',['../classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6',1,'dmn::Dmn_GattNotification::stop()'],['../classdmn_1_1Dmn__Timer.html#a4e74e70f8205d8fd2a23a30aaf2d5f4a',1,'dmn::Dmn_Timer::stop()']]],
+  ['stopdiscovery_24',['stopDiscovery',['../classdmn_1_1Dmn__BluezClient.html#a4cdf03fa3fdcec25949997d2b17afd50',1,'dmn::Dmn_BluezClient']]],
+  ['stopexec_25',['stopExec',['../classdmn_1_1Dmn__Proc.html#a07ccda9cd84f912b6af92b94fa875fba',1,'dmn::Dmn_Proc']]],
+  ['stringcompare_26',['stringCompare',['../dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f',1,'dmn']]],
+  ['stringtounicode_27',['stringToUnicode',['../dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64',1,'dmn::detail']]],
+  ['structure_28',['structure',['../classdmn_1_1Dmn__DbusValue.html#a8fa236153f4772be65cee6350270404b',1,'dmn::Dmn_DbusValue']]],
+  ['subscribe_29',['subscribe',['../classdmn_1_1Dmn__DbusClient.html#a79897f0bcad8228b0e7f9d4d1e154b4d',1,'dmn::Dmn_DbusClient::subscribe(const Dmn_DbusSignalMatch &amp;match, SignalCallback callback) -&gt; Dmn_DbusResult&lt; Dmn_DbusSubscription &gt;'],['../classdmn_1_1Dmn__DbusClient.html#a2151a4d80c047ee7152de3e5b51f9c02',1,'dmn::Dmn_DbusClient::subscribe(const Dmn_DbusSignalMatch &amp;match, SignalCallback callback, std::chrono::milliseconds timeout) -&gt; Dmn_DbusResult&lt; Dmn_DbusSubscription &gt;']]],
+  ['subscribewithpath_30',['subscribewithpath',['../classdmn_1_1Dmn__DbusClient.html#a9a4e872ac044b905a005f7721dd16b7b',1,'dmn::Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &amp;match, SignalCallbackWithPath callback) -&gt; Dmn_DbusResult&lt; Dmn_DbusSubscription &gt;'],['../classdmn_1_1Dmn__DbusClient.html#ae54fc13144cb98b607eb6d87da5a7ba9',1,'dmn::Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &amp;match, SignalCallbackWithPath callback, std::chrono::milliseconds timeout) -&gt; Dmn_DbusResult&lt; Dmn_DbusSubscription &gt;']]]
 ];

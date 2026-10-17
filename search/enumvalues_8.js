@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['overlaidboth_0',['OverlaidBoth',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046aad1593696e59b3abb44cfb37aa2a540c',1,'dmn']]],
-  ['overlaidleft_1',['OverlaidLeft',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046afa8c6eaefbca59567b0b04c249adc8f7',1,'dmn']]],
-  ['overlaidright_2',['OverlaidRight',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046a61c5c6de72491ac76c2d8346edad03f7',1,'dmn']]]
+  ['notconnected_0',['NotConnected',['../dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268a4075072d219e061ca0f3124f8fbef463',1,'dmn']]],
+  ['notready_1',['NotReady',['../dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645add353567e8118a2b8df4e822e59084ab',1,'dmn']]]
 ];

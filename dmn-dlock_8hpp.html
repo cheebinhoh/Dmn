@@ -100,10 +100,15 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp.html',''); initResizabl
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="dmn-dmesg_8hpp_source.html">dmn-dmesg.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="dmn-interval-btree_8hpp_source.html">dmn-interval-btree.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="dmn-proc_8hpp_source.html">dmn-proc.hpp</a>&quot;</code><br />
 <code>#include &quot;proto/dmn-dlock.pb.h&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;atomic&gt;</code><br />
 <code>#include &lt;condition_variable&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;exception&gt;</code><br />
+<code>#include &lt;future&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
@@ -215,7 +220,7 @@ Key responsibilities</h2>
 </ul>
 <h2><a class="anchor" id="autotoc_md18"></a>
 Thread safety and execution model</h2>
-<p>The current acquire/release operations synchronize a single in-memory table with a mutex and condition variable. They do not run in a DMesg handler context or publish state. <code>acquireLockAsync()</code> launches a detached thread that refers to the lock object, so the caller must keep the object alive until the returned future is ready. This prototype is not safe to use as a distributed lock.</p>
+<p>The current acquire/release operations synchronize a single in-memory table with a mutex and condition variable. They do not run in a DMesg handler context or publish state. <code>acquireLockAsync()</code> uses workers owned by the lock; destruction wakes blocked acquisitions, completes them with <code>kShutdown</code>, and joins all workers. This prototype is not safe to use as a distributed lock.</p>
 <p>See also</p><ul>
 <li><code><a class="el" href="dmn-dmesg_8hpp.html" title="DMESG publisher/subscriber wrapper using Protobuf messages.">dmn-dmesg.hpp</a></code> : DMesg handler type used by the prototype wrapper.</li>
 <li><code>proto/dmn-dlock.proto</code> : canonical protobuf payload for the lock table.</li>

@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['remote_0',['Remote',['../dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268af8508f576cd3f742dfc268258dcdf0dd',1,'dmn']]],
-  ['resourcelimit_1',['ResourceLimit',['../dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268a5b9e324ce43a64f4976de212c9d3b75d',1,'dmn']]]
+  ['overlaidboth_0',['OverlaidBoth',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046aad1593696e59b3abb44cfb37aa2a540c',1,'dmn']]],
+  ['overlaidleft_1',['OverlaidLeft',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046afa8c6eaefbca59567b0b04c249adc8f7',1,'dmn']]],
+  ['overlaidright_2',['OverlaidRight',['../dmn-interval-btree_8hpp.html#ac55da84473ea1aeaf0e2451613504046a61c5c6de72491ac76c2d8346edad03f7',1,'dmn']]]
 ];

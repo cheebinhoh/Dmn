@@ -122,13 +122,18 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:aba0dd1b62e444a8e60bfa9b8d4ae60bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Policy for reporting exceptions thrown by the worker task.  <a href="classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc">More...</a><br /></td></tr>
 <tr class="separator:aba0dd1b62e444a8e60bfa9b8d4ae60bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef72c9dc7a5bc8bc96643c5ba655bdb2" id="r_aef72c9dc7a5bc8bc96643c5ba655bdb2"><td class="memItemLeft" align="right" valign="top"><a id="aef72c9dc7a5bc8bc96643c5ba655bdb2" name="aef72c9dc7a5bc8bc96643c5ba655bdb2"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>ThreadId</b> = std::thread::id</td></tr>
+<tr class="memdesc:aef72c9dc7a5bc8bc96643c5ba655bdb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend-neutral identifier for a worker thread. <br /></td></tr>
+<tr class="separator:aef72c9dc7a5bc8bc96643c5ba655bdb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d1f8f0f3d1258fdd21422315bb11c73" id="r_a5d1f8f0f3d1258fdd21422315bb11c73"><td class="memItemLeft" align="right" valign="top"><a id="a5d1f8f0f3d1258fdd21422315bb11c73" name="a5d1f8f0f3d1258fdd21422315bb11c73"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>Task</b> = std::function&lt; void()&gt;</td></tr>
+<tr class="memdesc:a5d1f8f0f3d1258fdd21422315bb11c73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callable executed by the worker. <br /></td></tr>
 <tr class="separator:a5d1f8f0f3d1258fdd21422315bb11c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1cf8c172854fc269f833c76c0f979263" id="r_a1cf8c172854fc269f833c76c0f979263"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1cf8c172854fc269f833c76c0f979263">Dmn_Proc</a> (std::string_view name, const Dmn_Proc::Task &amp;fnc={}, <a class="el" href="classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc">ExceptionPolicy</a> exceptionPolicy=<a class="el" href="classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bca0de86bbcdd9cc86fd540e678777219f0">ExceptionPolicy::kTerminate</a>)</td></tr>
+<tr class="memitem:a1cf8c172854fc269f833c76c0f979263" id="r_a1cf8c172854fc269f833c76c0f979263"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1cf8c172854fc269f833c76c0f979263">Dmn_Proc</a> (std::string_view name, const <a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a> &amp;fnc={}, <a class="el" href="classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc">ExceptionPolicy</a> exceptionPolicy=<a class="el" href="classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bca0de86bbcdd9cc86fd540e678777219f0">ExceptionPolicy::kTerminate</a>)</td></tr>
 <tr class="memdesc:a1cf8c172854fc269f833c76c0f979263"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classdmn_1_1Dmn__Proc.html" title="A small RAII-style wrapper around pthreads that runs a user-provided task (std::function&lt;void()&gt;) in ...">Dmn_Proc</a>.  <br /></td></tr>
 <tr class="separator:a1cf8c172854fc269f833c76c0f979263"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bb6b7a36df1279036ad00b6f64d769b" id="r_a2bb6b7a36df1279036ad00b6f64d769b"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b">~Dmn_Proc</a> () noexcept</td></tr>
@@ -146,12 +151,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2081d66a01a9514ffbc68f7a4b58f8e6" id="r_a2081d66a01a9514ffbc68f7a4b58f8e6"><td class="memItemLeft" align="right" valign="top"><a id="a2081d66a01a9514ffbc68f7a4b58f8e6" name="a2081d66a01a9514ffbc68f7a4b58f8e6"></a>
 <a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__Proc.html">Dmn_Proc</a> &amp;&amp;obj)=delete</td></tr>
 <tr class="separator:a2081d66a01a9514ffbc68f7a4b58f8e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa68e0b42ef052f6a66bf4d9be1af0542" id="r_aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">exec</a> (const Dmn_Proc::Task &amp;fnc={}) -&gt; bool</td></tr>
+<tr class="memitem:aa68e0b42ef052f6a66bf4d9be1af0542" id="r_aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542">exec</a> (const <a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a> &amp;fnc={}) -&gt; bool</td></tr>
 <tr class="memdesc:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute the provided task in a new asynchronous thread.  <br /></td></tr>
 <tr class="separator:aa68e0b42ef052f6a66bf4d9be1af0542"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1372ff6e753f214b128883327d44a30b" id="r_a1372ff6e753f214b128883327d44a30b"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a1372ff6e753f214b128883327d44a30b">wait</a> () -&gt; bool</td></tr>
 <tr class="memdesc:a1372ff6e753f214b128883327d44a30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait (join) for the asynchronous thread to finish.  <br /></td></tr>
 <tr class="separator:a1372ff6e753f214b128883327d44a30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab15571667457353d4250e3642670ddb2" id="r_ab15571667457353d4250e3642670ddb2"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ab15571667457353d4250e3642670ddb2">getThreadId</a> () const -&gt; <a class="el" href="classdmn_1_1Dmn__Proc.html#aef72c9dc7a5bc8bc96643c5ba655bdb2">ThreadId</a></td></tr>
+<tr class="memdesc:ab15571667457353d4250e3642670ddb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current or most recently started worker's identifier.  <br /></td></tr>
+<tr class="separator:ab15571667457353d4250e3642670ddb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -170,7 +178,7 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:ae0b709f1b9dc82d20b3a1f1b43d2f974" id="r_ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974">setState</a> (Dmn_Proc::State state) -&gt; Dmn_Proc::State</td></tr>
 <tr class="memdesc:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a lifecycle state and return the previous state.  <br /></td></tr>
 <tr class="separator:ae0b709f1b9dc82d20b3a1f1b43d2f974"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a935d3058daf7f46ff4ee23d142afec9d" id="r_a935d3058daf7f46ff4ee23d142afec9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d">setTask</a> (Dmn_Proc::Task fnc)</td></tr>
+<tr class="memitem:a935d3058daf7f46ff4ee23d142afec9d" id="r_a935d3058daf7f46ff4ee23d142afec9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d">setTask</a> (<a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a> fnc)</td></tr>
 <tr class="memdesc:a935d3058daf7f46ff4ee23d142afec9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign the task that will be executed when <a class="el" href="classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542" title="Execute the provided task in a new asynchronous thread.">exec()</a> is called.  <br /></td></tr>
 <tr class="separator:a935d3058daf7f46ff4ee23d142afec9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7593c5dbccaf13f394c0f2892b14498" id="r_ad7593c5dbccaf13f394c0f2892b14498"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498">runExec</a> () -&gt; bool</td></tr>
@@ -193,7 +201,7 @@ const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>m_name</
 <tr class="memdesc:a8361ff9a03829a52ac8b02dbaba3475b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable name for diagnostics/logging. <br /></td></tr>
 <tr class="separator:a8361ff9a03829a52ac8b02dbaba3475b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb1c5429ab8b2082744cb04f887764b9" id="r_acb1c5429ab8b2082744cb04f887764b9"><td class="memItemLeft" align="right" valign="top"><a id="acb1c5429ab8b2082744cb04f887764b9" name="acb1c5429ab8b2082744cb04f887764b9"></a>
-Dmn_Proc::Task&#160;</td><td class="memItemRight" valign="bottom"><b>m_fnc</b> {}</td></tr>
+<a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a>&#160;</td><td class="memItemRight" valign="bottom"><b>m_fnc</b> {}</td></tr>
 <tr class="memdesc:acb1c5429ab8b2082744cb04f887764b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Task to execute in the thread. <br /></td></tr>
 <tr class="separator:acb1c5429ab8b2082744cb04f887764b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ef7c534aabe1febb1892cd1b510caa9" id="r_a8ef7c534aabe1febb1892cd1b510caa9"><td class="memItemLeft" align="right" valign="top"><a id="a8ef7c534aabe1febb1892cd1b510caa9" name="a8ef7c534aabe1febb1892cd1b510caa9"></a>
@@ -214,6 +222,9 @@ std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_failu
 <tr class="separator:a75f10044364557b819ebeec459f58ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95ea55282c9bb3d0d3175acc2f480907" id="r_a95ea55282c9bb3d0d3175acc2f480907"><td class="memItemLeft" align="right" valign="top">std::atomic_bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__Proc.html#a95ea55282c9bb3d0d3175acc2f480907">m_cancel_requested</a> {}</td></tr>
 <tr class="separator:a95ea55282c9bb3d0d3175acc2f480907"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a322fde42242f4d6ee27f356cbd4e725d" id="r_a322fde42242f4d6ee27f356cbd4e725d"><td class="memItemLeft" align="right" valign="top"><a id="a322fde42242f4d6ee27f356cbd4e725d" name="a322fde42242f4d6ee27f356cbd4e725d"></a>
+std::atomic&lt; <a class="el" href="classdmn_1_1Dmn__Proc.html#aef72c9dc7a5bc8bc96643c5ba655bdb2">ThreadId</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>m_thread_id</b> {}</td></tr>
+<tr class="separator:a322fde42242f4d6ee27f356cbd4e725d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A small RAII-style wrapper around pthreads that runs a user-provided task (<code>std::function&lt;void()&gt;</code>) in a new thread. </p>
@@ -228,7 +239,7 @@ std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_failu
 <li>pthread cancellation is cooperative. If the task never reaches a cancellation point (or explicitly enables deferred cancellation without checking), cancellation will be delayed indefinitely. For loops that may run for a long time, call <a class="el" href="classdmn_1_1Dmn__Proc.html#a45fd201e765bae2c57ad30417ba1eb8c" title="Voluntarily yield execution to allow other threads to run and to create a cooperative cancellation po...">Dmn_Proc::yield()</a> periodically to create cancellation points (or otherwise ensure the task calls functions that are cancellation points).</li>
 </ul>
 <p>Thread-safety:</p><ul>
-<li>State, task, and thread-handle access is not internally synchronized. Callers must ensure lifecycle operations do not overlap and that each operation happens-before the next one. This may be done by handing control between caller threads with external synchronization; a single OS thread is not required. Do not replace the task until the worker has been joined or destroy the object concurrently with another operation. Destruction stops and joins a running worker. Derived classes must stop the worker before destroying members accessed by its task. State accessed by both the task and callers needs its own synchronization. </li>
+<li>State, task, and native thread-handle access is not internally synchronized. Callers must ensure lifecycle operations do not overlap and that each operation happens-before the next one. This may be done by handing control between caller threads with external synchronization; a single OS thread is not required. Do not replace the task until the worker has been joined or destroy the object concurrently with another operation. Destruction stops and joins a running worker. The worker ID accessor is synchronized independently. Derived classes must stop the worker before destroying members accessed by its task. State accessed by both the task and callers needs its own synchronization. </li>
 </ul>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="aba0dd1b62e444a8e60bfa9b8d4ae60bc" name="aba0dd1b62e444a8e60bfa9b8d4ae60bc"></a>
@@ -280,7 +291,7 @@ std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_failu
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Dmn_Proc::Task &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a> &amp;&#160;</td>
           <td class="paramname"><em>fnc</em> = <code>{}</code>, </td>
         </tr>
         <tr>
@@ -361,7 +372,7 @@ std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_failu
         <tr>
           <td class="memname">auto dmn::Dmn_Proc::exec </td>
           <td>(</td>
-          <td class="paramtype">const Dmn_Proc::Task &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a> &amp;&#160;</td>
           <td class="paramname"><em>fnc</em> = <code>{}</code></td><td>)</td>
           <td> -&gt; bool</td>
         </tr>
@@ -417,6 +428,26 @@ std::exception_ptr&#160;</td><td class="memItemRight" valign="bottom"><b>m_failu
 <dl class="section return"><dt>Returns</dt><dd>The current <code>State</code> enum value.</dd>
 <dd>
 Current State enum value (kNew, kReady, kRunning, kUnknown) </dd></dl>
+
+</div>
+</div>
+<a id="ab15571667457353d4250e3642670ddb2" name="ab15571667457353d4250e3642670ddb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab15571667457353d4250e3642670ddb2">&#9670;&#160;</a></span>getThreadId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto dmn::Dmn_Proc::getThreadId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt; <a class="el" href="classdmn_1_1Dmn__Proc.html#aef72c9dc7a5bc8bc96643c5ba655bdb2">ThreadId</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the current or most recently started worker's identifier. </p>
+<p>The identifier is empty before the first worker starts and remains available after it exits, until another worker starts. Its type is independent of the underlying thread implementation. </p>
 
 </div>
 </div>
@@ -565,7 +596,7 @@ Current State enum value (kNew, kReady, kRunning, kUnknown) </dd></dl>
         <tr>
           <td class="memname">void dmn::Dmn_Proc::setTask </td>
           <td>(</td>
-          <td class="paramtype">Dmn_Proc::Task&#160;</td>
+          <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73">Dmn_Proc::Task</a>&#160;</td>
           <td class="paramname"><em>fnc</em></td><td>)</td>
           <td></td>
         </tr>

@@ -122,15 +122,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>cancelCall</b> (const
 <tr class="memitem:a6f4d7a867ce3d6a0c425cdedf2050ea6" id="r_a6f4d7a867ce3d6a0c425cdedf2050ea6"><td class="memItemLeft" align="right" valign="top"><a id="a6f4d7a867ce3d6a0c425cdedf2050ea6" name="a6f4d7a867ce3d6a0c425cdedf2050ea6"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>cancelPending</b> (const std::shared_ptr&lt; <a class="el" href="structdmn_1_1Dmn__DbusClient_1_1Impl_1_1CallRequest.html">CallRequest</a> &gt; &amp;request) noexcept</td></tr>
 <tr class="separator:a6f4d7a867ce3d6a0c425cdedf2050ea6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf2b0460740365006e6ea5bc0aabf308" id="r_aaf2b0460740365006e6ea5bc0aabf308"><td class="memItemLeft" align="right" valign="top"><a id="aaf2b0460740365006e6ea5bc0aabf308" name="aaf2b0460740365006e6ea5bc0aabf308"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>subscribe</b> (const <a class="el" href="structdmn_1_1Dmn__DbusSignalMatch.html">Dmn_DbusSignalMatch</a> &amp;match, <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a3c492d78a207c388306e94fc298fe3b1">SignalCallbackWithPath</a> callback) -&gt; <a class="el" href="dmn-dbus-client_8hpp.html#ac7a756f0106c10f87304cc63142ef4ae">Dmn_DbusResult</a>&lt; std::uint64_t &gt;</td></tr>
-<tr class="separator:aaf2b0460740365006e6ea5bc0aabf308"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42c586b8019b78358ef6e2c778fb0e21" id="r_a42c586b8019b78358ef6e2c778fb0e21"><td class="memItemLeft" align="right" valign="top"><a id="a42c586b8019b78358ef6e2c778fb0e21" name="a42c586b8019b78358ef6e2c778fb0e21"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>subscribe</b> (const <a class="el" href="structdmn_1_1Dmn__DbusSignalMatch.html">Dmn_DbusSignalMatch</a> &amp;match, <a class="el" href="classdmn_1_1Dmn__DbusClient.html#a3c492d78a207c388306e94fc298fe3b1">SignalCallbackWithPath</a> callback, std::chrono::milliseconds timeout) -&gt; <a class="el" href="dmn-dbus-client_8hpp.html#ac7a756f0106c10f87304cc63142ef4ae">Dmn_DbusResult</a>&lt; std::uint64_t &gt;</td></tr>
+<tr class="separator:a42c586b8019b78358ef6e2c778fb0e21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa411ecb34e4dd232731f154d27f7b074" id="r_aa411ecb34e4dd232731f154d27f7b074"><td class="memItemLeft" align="right" valign="top"><a id="aa411ecb34e4dd232731f154d27f7b074" name="aa411ecb34e4dd232731f154d27f7b074"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>cancel</b> (std::uint64_t id) noexcept</td></tr>
 <tr class="separator:aa411ecb34e4dd232731f154d27f7b074"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a46847166c0f3c7db05bfcb296bb5ff" id="r_a0a46847166c0f3c7db05bfcb296bb5ff"><td class="memItemLeft" align="right" valign="top"><a id="a0a46847166c0f3c7db05bfcb296bb5ff" name="a0a46847166c0f3c7db05bfcb296bb5ff"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>dispatchThreadId</b> () const -&gt; std::thread::id</td></tr>
-<tr class="separator:a0a46847166c0f3c7db05bfcb296bb5ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb5369d9ab310be9ba46a1c3630e2c79" id="r_abb5369d9ab310be9ba46a1c3630e2c79"><td class="memItemLeft" align="right" valign="top"><a id="abb5369d9ab310be9ba46a1c3630e2c79" name="abb5369d9ab310be9ba46a1c3630e2c79"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>dispatchThreadId</b> () const -&gt; <a class="el" href="classdmn_1_1Dmn__Proc.html#aef72c9dc7a5bc8bc96643c5ba655bdb2">Dmn_Proc::ThreadId</a></td></tr>
+<tr class="separator:abb5369d9ab310be9ba46a1c3630e2c79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a447a918e822aa64fa0853eb6d085a6a8" id="r_a447a918e822aa64fa0853eb6d085a6a8"><td class="memItemLeft" align="right" valign="top"><a id="a447a918e822aa64fa0853eb6d085a6a8" name="a447a918e822aa64fa0853eb6d085a6a8"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>status</b> () const -&gt; <a class="el" href="structdmn_1_1Dmn__DbusClientStatus.html">Dmn_DbusClientStatus</a></td></tr>
 <tr class="separator:a447a918e822aa64fa0853eb6d085a6a8"><td class="memSeparator" colspan="2">&#160;</td></tr>

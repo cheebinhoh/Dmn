@@ -1,5 +1,7 @@
 var classdmn_1_1Dmn__Proc =
 [
+    [ "Task", "classdmn_1_1Dmn__Proc.html#a5d1f8f0f3d1258fdd21422315bb11c73", null ],
+    [ "ThreadId", "classdmn_1_1Dmn__Proc.html#aef72c9dc7a5bc8bc96643c5ba655bdb2", null ],
     [ "ExceptionPolicy", "classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bc", [
       [ "kTerminate", "classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bca0de86bbcdd9cc86fd540e678777219f0", null ],
       [ "kCaptureAndRethrowFromWait", "classdmn_1_1Dmn__Proc.html#aba0dd1b62e444a8e60bfa9b8d4ae60bca21fd5719dc490acab6309268020e8099", null ]
@@ -8,6 +10,7 @@ var classdmn_1_1Dmn__Proc =
     [ "~Dmn_Proc", "classdmn_1_1Dmn__Proc.html#a2bb6b7a36df1279036ad00b6f64d769b", null ],
     [ "exec", "classdmn_1_1Dmn__Proc.html#aa68e0b42ef052f6a66bf4d9be1af0542", null ],
     [ "getState", "classdmn_1_1Dmn__Proc.html#a33feebb676ecff239fd5ddba024f5e32", null ],
+    [ "getThreadId", "classdmn_1_1Dmn__Proc.html#ab15571667457353d4250e3642670ddb2", null ],
     [ "runExec", "classdmn_1_1Dmn__Proc.html#ad7593c5dbccaf13f394c0f2892b14498", null ],
     [ "setState", "classdmn_1_1Dmn__Proc.html#ae0b709f1b9dc82d20b3a1f1b43d2f974", null ],
     [ "setTask", "classdmn_1_1Dmn__Proc.html#a935d3058daf7f46ff4ee23d142afec9d", null ],
