@@ -39,6 +39,37 @@ target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_dependencies(dmn rdkafka)
+
+# The GATT API is a backend-neutral contract shared by ANCS and BlueZ.
+add_library(dmn-gatt INTERFACE)
+target_include_directories(dmn-gatt
+                             INTERFACE ${PROJECT_SOURCE_DIR}/include
+)
+target_sources(dmn-gatt
+                 INTERFACE ${PROJECT_SOURCE_DIR}/include/dmn-gatt-client.hpp
+)
+
+if (ENABLE_ANCS)
+  add_library(dmn-ancs
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-ancs-client.cpp
+  )
+
+  target_include_directories(dmn-ancs
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+  target_sources(dmn-ancs
+                   INTERFACE ${PROJECT_SOURCE_DIR}/include/dmn-ancs-client.hpp
+  )
+  target_compile_options(dmn-ancs PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_definitions(dmn-ancs PUBLIC DMN_ENABLE_ANCS=1)
+  target_link_libraries(dmn-ancs PUBLIC dmn dmn-gatt)
+
+  install(TARGETS dmn-ancs
+            ARCHIVE DESTINATION lib/dmn
+            LIBRARY DESTINATION lib/dmn
+            RUNTIME DESTINATION bin
+  )
+endif()
 # Public core headers: consumers see these through the dmn target interface.
 target_sources(dmn
                  INTERFACE
@@ -200,7 +231,7 @@ if (ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-bluez PUBLIC DMN_ENABLE_BLUEZ=1)
   target_compile_options(dmn-bluez PRIVATE -Wall -Wextra -Wpedantic)
-  target_link_libraries(dmn-bluez PUBLIC dmn-dbus)
+  target_link_libraries(dmn-bluez PUBLIC dmn-dbus dmn-gatt)
 
   add_executable(dmn-bluez-discovery
                    dmn-bluez-discovery.cpp
@@ -238,6 +269,57 @@ if (ENABLE_BLUEZ)
   )
 endif()
 
+if (ENABLE_ANCS AND ENABLE_BLUEZ)
+  add_library(dmn-ancs-bluez-monitor
+                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-ancs-bluez-monitor.cpp
+  )
+
+  target_include_directories(dmn-ancs-bluez-monitor
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+  target_sources(dmn-ancs-bluez-monitor
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/dmn-ancs-bluez-monitor.hpp
+  )
+  target_compile_options(dmn-ancs-bluez-monitor
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+  target_link_libraries(dmn-ancs-bluez-monitor
+                          PUBLIC dmn-ancs dmn-bluez
+  )
+
+  install(TARGETS dmn-ancs-bluez-monitor
+            ARCHIVE DESTINATION lib/dmn
+            LIBRARY DESTINATION lib/dmn
+            RUNTIME DESTINATION bin
+  )
+endif()
+
+if (ENABLE_ANCS AND ENABLE_BLUEZ)
+  add_executable(dmn-bluetooth
+                   dmn-bluetooth.cpp
+  )
+  add_executable(dmn-bluetooth-test
+                   dmn-bluetooth.cpp
+  )
+
+  foreach(target IN ITEMS dmn-bluetooth dmn-bluetooth-test)
+    target_compile_options(${target}
+                           PRIVATE -Wall -Wextra -Wpedantic
+    )
+    target_link_libraries(${target}
+                          PRIVATE dmn-ancs-bluez-monitor
+    )
+  endforeach()
+  target_compile_definitions(dmn-bluetooth-test
+                               PRIVATE DMN_BLUETOOTH_TESTING=1
+  )
+
+  install(TARGETS dmn-bluetooth
+            RUNTIME DESTINATION bin
+  )
+endif()
+
 # Install the library binary
 install(TARGETS dmn
           #   EXPORT mylibTargets
@@ -254,6 +336,18 @@ list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
        PATTERN "dmn-dbus-runtime.hpp" EXCLUDE
 )
 
+if (NOT ENABLE_ANCS)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-ancs-client.hpp" EXCLUDE
+  )
+endif()
+
+if (NOT ENABLE_ANCS OR NOT ENABLE_BLUEZ)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-ancs-bluez-monitor.hpp" EXCLUDE
+  )
+endif()
+
 if (NOT ENABLE_DBUS)
   list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
          PATTERN "dmn-dbus-*.hpp" EXCLUDE
@@ -264,6 +358,12 @@ endif()
 if (NOT ENABLE_BLUEZ)
   list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
          PATTERN "dmn-bluez-*.hpp" EXCLUDE
+  )
+endif()
+
+if (NOT ENABLE_BLUEZ AND NOT ENABLE_ANCS)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-gatt-client.hpp" EXCLUDE
   )
 endif()
 

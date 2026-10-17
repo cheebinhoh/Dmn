@@ -241,6 +241,30 @@ public:
       -> Dmn_BluezResult;
 
   /**
+   * @brief Ask BlueZ to connect any remaining auto-connectable profiles.
+   *
+   * Unlike connectDevice(), this always calls `Device1.Connect`, even when
+   * `Connected` is already true. BlueZ may use this to connect a remaining
+   * profile or the disconnected bearer on a dual-mode device. It does not
+   * select a specific bearer or guarantee that GATT services will resolve.
+   * BlueZ's `AlreadyConnected` and `InProgress` responses, and its
+   * `Failed` / "Operation already in progress" response, are treated as an
+   * already-issued request; callers must separately verify the state they
+   * need.
+   *
+   * @param deviceSelector Bluetooth address or current object path in
+   * inventory.
+   * @param adapterSelector Optional adapter address or current object path.
+   * @param timeout Finite method timeout; zero selects the configured default.
+   * @return Success or the typed local/remote BlueZ error.
+   */
+  [[nodiscard]] auto connectAvailableProfiles(
+      const std::string &deviceSelector,
+      const std::optional<std::string> &adapterSelector = std::nullopt,
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezResult;
+
+  /**
    * @brief Explicitly pair one selected device using BlueZ's default agent.
    *
    * This operation calls `Device1.Pair` unless the current inventory already

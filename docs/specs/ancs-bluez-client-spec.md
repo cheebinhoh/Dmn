@@ -1,26 +1,80 @@
 # iPhone Notifications on Linux with ANCS and BlueZ
 
-**Status:** Phase 0 inventory/discovery and Phase 1A pairing plus Phase 1B
-backend-neutral/BlueZ GATT are implemented and have passed their
-hardware-independent private-bus gates. Phase 1C real-device qualification
-remains open; no iPhone ANCS compatibility is claimed. The ANCS library and
-monitor contracts below are specified, but ANCS implementation has not
-started. This is a follow-on to the separately
-specified first milestone: the BlueZ inventory and `--discovery` CLI in
-[`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). The optional
-`dmn-bluez` inventory/discovery API and CLI, including explicit selected-device
-connect/disconnect, are implemented and Phase 0 qualified. An explicit
-`Device1.Pair` API and `--pair` CLI action are implemented and have focused
-private-bus coverage. The backend-neutral GATT contract and an initial BlueZ
-GATT backend are implemented and the hardware-independent BlueZ/D-Bus test
-gate passes; real-device qualification remains. The ANCS protocol/session
-client and notification-monitor CLI are the next implementation increments;
-neither exists yet. GATT and ANCS are not prerequisites for shipping the
-existing inventory CLI. The first ANCS frontend is a directly linked
-terminal application, with a reusable C++ client for a future GTK frontend;
-this is not a system daemon. Hardware compatibility with the target iPhone
-and Linux/BlueZ combination is a release gate for ANCS, not for inventory or
-basic device connection control.
+**Status:** Phase 0 inventory/discovery, Phase 1A pairing, and Phase 1B
+backend-neutral/BlueZ GATT are implemented and pass their hardware-independent
+gates. The ANCS parser, fake-GATT session client, and initial
+`dmn-bluetooth monitor` implementation are also in place; parser/session unit
+tests and CLI help/argument tests pass. Private-bus monitor tests cover
+adapter/name selection, Pair/Connect ordering,
+selected-device-only actions, ambiguous-name rejection, connection failure
+reporting, and missing-ANCS service handling. A fake-BlueZ workflow test also
+verifies both subscriptions, an attribute request/response, printed
+notification fields, and SIGINT subscription cleanup. Output privacy/stderr
+separation, notification terminal-control escaping, and broken-stdout cleanup
+are covered by private-bus subprocess tests, as are output-queue backpressure
+and SIGINT during blocked GATT startup. An opt-in hardware CTest exercises the
+production CLI and is disabled by default. Physical ANCS delivery is
+confirmed on “iPhone Genghis” (iPhone 15 Plus, iOS 26.7.1). After the monitor
+subscribed, iOS prompted the user to allow Pop!_OS to receive notifications
+for Dmn running on another OS. No notification arrived before approval; after
+the user allowed access, the CLI printed multiple added-notification events
+and their available `app_identifier`, `title`, `message`, and `date`
+attributes. Captured notification content was redacted. Earlier silent runs
+preceded this iOS permission grant.
+
+The ANCS event intake now runs independently from acknowledged Control Point
+writes, so a slow attribute request cannot block GATT event draining. The
+library defaults to retaining up to 255 queued attribute requests, dropping
+the oldest pending request when that backlog limit is exceeded and emitting a
+nonfatal resource-limit event. Set
+`Dmn_AncsConfig::maximum_pending_notifications` to `0` for an unlimited
+pending backlog. The CLI exposes this mode as `--unlimited`; no lifetime
+notification count is imposed. Unlimited mode uses memory proportional to
+the current backlog.
+
+The CLI also accepts `--ignore-existing` to suppress notifications dated
+before the CLI process starts. BlueZ does not expose notification creation or
+arrival times; this option uses the ANCS Date attribute (`YYYYMMDDTHHMMSS`)
+and compares it with the captured local startup time. Because the ANCS date
+has no timezone, the iPhone and host clocks/timezones must agree. Notifications
+with a missing or unrecognized date are suppressed while this option is on.
+This is a best-effort timestamp filter, not a BlueZ-side history boundary.
+
+Earlier tests on “iPhone Old” remain unresolved: after services resolved, its
+BlueZ GATT tree contained Generic Attribute and vendor-specific services but
+no ANCS UUID. That device did not reach ANCS subscription or authorization;
+the successful Genghis result does not claim compatibility with Old.
+
+The monitor now explicitly retries `Device1.Connect` once through a separate
+remaining-profiles API when a selected device is already connected but its
+services are unresolved. Ordinary `connectDevice` remains idempotent. BlueZ's
+`AlreadyConnected`/`InProgress` responses and the specific
+`Failed: Operation already in progress` response are handled as an already
+active request; they do not imply GATT readiness. Private-bus tests cover the
+request and its in-progress behavior. This recovery does not address why the
+earlier “iPhone Old” connection did not publish ANCS.
+
+The bearer fix explicitly requests BlueZ's remaining GATT-capable profile, and
+both ANCS characteristics must report `Notifying=true` before the session is
+reported ready. The iPhone's notification-access prompt remains a separate
+authorization gate; approving it enabled the confirmed Genghis delivery.
+
+The phone is bonded, so a new pairing prompt is not expected; seeing Pop!_OS
+on the phone alone does not prove ANCS readiness. Apple's ANCS specification
+requires a BLE link and authorization for characteristic access. The
+notification-access approval was required on Genghis. The earlier “iPhone
+Old” attempt remains a separate unresolved case: its resolved GATT tree
+contained no ANCS service, so it never reached subscription or authorization.
+
+This is a follow-on to the separately specified BlueZ inventory and
+`--discovery` CLI in [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md).
+The optional `dmn-bluez` inventory/discovery API and CLI, explicit
+selected-device connect/disconnect, and `Device1.Pair` API/`--pair` action are
+implemented. GATT and ANCS are not prerequisites for shipping the existing
+inventory CLI. The terminal application is one frontend over a reusable C++
+client intended for a future GTK frontend; this is not a system daemon.
+Hardware compatibility with the target iPhone and Linux/BlueZ combination is
+a release gate for ANCS, not for inventory or basic device connection control.
 
 ## 1. Goal and scope
 
@@ -31,8 +85,10 @@ while the program runs. The first independently useful increment is BlueZ
 inventory, explicit discovery, selected-device connection control, and the
 `dmn-bluez-discovery` CLI; its contract and build/test gates are specified in
 [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). The GATT
-transport is implemented; the ANCS protocol client and terminal monitor are
-specified below and remain to be implemented. The implementation calls BlueZ's documented
+transport, reusable `Dmn_AncsBluezMonitor` orchestration facade, and terminal
+monitor are implemented; device-specific compatibility remains to be
+qualified. The
+implementation calls BlueZ's documented
 system-D-Bus API through the generic Dmn client and does not depend on a
 third-party Bluetooth/GATT wrapper. No custom iPhone app is part of this
 design; visibility of any particular notification remains subject to iOS and
@@ -61,8 +117,9 @@ controls:
   attributes.
 - Request a bounded set of attributes: app identifier, title, subtitle,
   message, and date where available. App display-name lookup is deferred.
-- Deliver normalized events through a C++ callback. The monitor CLI formats
-  them; future desktop notification presentation is a separate adapter.
+- Deliver normalized events through a C++ callback from the reusable
+  `Dmn_AncsBluezMonitor` facade. The monitor CLI formats them; future desktop
+  notification presentation is a separate adapter.
 - Provide `dmn-bluetooth monitor DEVICE` as the first notification client. The
   explicit monitor command may discover an unknown target, pair it if needed,
   connect it if needed, and then start ANCS. It displays received notification
@@ -110,11 +167,11 @@ connection.
 
 ```text
 Linux application
-  ├── Dmn_BluezClient (adapter/device inventory and discovery)
-  └── Dmn_AncsClient (optional selected-device session)
-        ├── ANCS event, command, response, and cache logic
-        └── Dmn_GattClient (small backend-neutral bounded-operation interface)
-              └── Dmn_BluezGattClient
+  └── Dmn_AncsBluezMonitor (selected-device setup and session facade)
+        ├── Dmn_BluezClient (adapter/device inventory and discovery)
+        ├── Dmn_AncsClient (ANCS event, command, response, and session logic)
+        └── Dmn_BluezGattClient
+              └── Dmn_GattClient (backend-neutral bounded operations)
                     └── libdbus public C API
                           └── system D-Bus -> BlueZ `org.bluez`
                                 └── Bluetooth adapters / devices
@@ -128,10 +185,11 @@ The layers have these responsibilities:
 
 | Layer | Responsibility | Must not own |
 |---|---|---|
+| `Dmn_AncsBluezMonitor` | Reusable selected-device workflow: exact name/address selection, adapter selection, discovery when absent, pairing/connection as needed, service readiness, ANCS startup/cleanup, setup-phase progress, and forwarding owned ANCS events. | Frontend output formatting, GUI widgets, or durable notification history |
 | `Dmn_BluezClient` | Implemented Dmn-owned C++ API for adapter/device snapshots, discovery sessions, live BlueZ state changes, and explicit selected-device pair/connect/disconnect. Uses the generic Dmn D-Bus client API. | ANCS parsing, silent auto-pair/auto-connect, or claiming visibility of devices not known/reported by BlueZ |
 | `Dmn_GattClient` | Implemented backend-neutral contract for waiting for service resolution, discovering a selected device's services/characteristics, subscribing/unsubscribing, and acknowledged writes. Blocking operations are synchronous and bounded; notification events are asynchronous. | BlueZ object paths, ANCS UUIDs, notification meaning, or desktop UI |
 | `Dmn_BluezGattClient` | Initial implementation through BlueZ D-Bus objects and methods. Resolves BlueZ object paths, tracks `ServicesResolved`, subscribes to characteristic values, reports disconnect/object/owner invalidation, and maps BlueZ errors into typed errors. | ANCS parsing, notification policy, or persistence |
-| `Dmn_AncsClient` | Discovers ANCS characteristics, subscribes, parses source events and fragmented data responses, schedules serialized control-point requests, maintains bounded in-memory notification state, and emits typed domain events. | BlueZ-specific D-Bus calls, libnotify, application policy, or durable storage |
+| `Dmn_AncsClient` | Discovers ANCS characteristics, subscribes, parses source events and fragmented data responses, schedules serialized control-point requests, maintains session-scoped notification state, and emits typed domain events. | BlueZ-specific D-Bus calls, libnotify, application policy, or durable storage |
 | Application adapter | Chooses what to display, filter, or retain. | Protocol parsing and GATT session ownership |
 
 Keep ANCS protocol code testable without Bluetooth hardware. Keep BlueZ support
@@ -153,6 +211,15 @@ callbacks run serially on Dmn's D-Bus callback worker; a GTK adapter must
 marshal callback data onto its main context before touching widgets. The
 backend-neutral API owns copied values and opaque identifiers, not BlueZ or
 D-Bus types.
+
+Keep application runtimes above the reusable Bluetooth/ANCS libraries. The
+ANCS worker uses `Dmn_Proc` and its dynamically sized internal event queue; it
+does not create, depend on, or drive `Dmn_Runtime_Manager`. The CLI may use
+`Dmn_Runtime_Manager` for process signal handling and application-job
+orchestration, and `Dmn_Pipe` to serialize terminal output. A GTK application
+uses its own runtime/main context and marshals the same owned ANCS callback
+events onto that context. Neither frontend runtime is the BlueZ or ANCS
+protocol engine.
 
 This backend must use the BlueZ system bus and its documented `org.bluez`
 D-Bus interfaces; it must not use raw HCI/L2CAP in place of BlueZ and must not
@@ -200,9 +267,8 @@ selects a device before any connection attempt.
 
 The optional Linux API is Dmn-owned and typed. Phase 1 has frozen and
 implemented the BlueZ inventory, selected-device, and backend-neutral GATT
-contracts. The ANCS library signatures must follow this specification before
-their implementation begins. Application code must not need to construct
-D-Bus messages:
+contracts. The implemented ANCS library API follows this specification.
+Application code must not need to construct D-Bus messages:
 
 - Enumerate adapters and read their available state.
 - Read an initial snapshot of BlueZ-known devices and receive add/remove and
@@ -211,7 +277,9 @@ D-Bus messages:
 - Start discovery on a chosen adapter with explicit transport/filter
   configuration; stop only the discovery session this client started.
 - Request connect/disconnect for an explicitly selected device, with
-  connection state reported separately from GATT service resolution.
+  connection state reported separately from GATT service resolution. An
+  explicit remaining-profiles request may call `Device1.Connect` even when
+  already connected; it does not guarantee LE or service resolution.
 - Create/use the selected device's GATT session for service and characteristic
   discovery, notification subscriptions, and acknowledged writes required by
   ANCS. ANCS attribute responses arrive through Data Source notifications,
@@ -273,10 +341,15 @@ prove the BLE and ANCS layers.
   their own documented connection operation. Its success and the `Connected`
   property alone are not GATT readiness. BlueZ may report
   `Connected=true` while `ServicesResolved=false`; this is a valid
-  intermediate state. The client must await the property through BlueZ's
-  property-change/snapshot mechanism with a finite deadline, and must not
-  attempt to write the read-only property or assume a successful Connect call
-  means service discovery has completed.
+  intermediate state. Ordinary `connectDevice` remains idempotent for an
+  already-connected device. The separate `connectAvailableProfiles` operation
+  explicitly calls `Device1.Connect` in that state so BlueZ can connect
+  remaining auto-connectable profiles or a disconnected bearer. BlueZ's
+  `AlreadyConnected` and `InProgress` responses, plus the specific `Failed` /
+  “Operation already in progress” response, mean the request is already
+  satisfied or active, not that GATT is ready. The client must await service
+  resolution with a finite deadline and must not write the read-only property
+  or assume a successful Connect call means service discovery has completed.
 - Treat service resolution, service-tree inspection, and ANCS session readiness
   as distinct states:
 
@@ -320,8 +393,9 @@ prove the BLE and ANCS layers.
 - The service may be missing or partially published. Notification Source is
   the required baseline characteristic; Control Point and Data Source are
   optional in the Apple specification but both are required for this
-  receive-details client. Report an unsupported/incomplete service instead of
-  dereferencing missing characteristics.
+  receive-details client. Report an absent ANCS service separately from an
+  incomplete characteristic set, and report either as unsupported rather than
+  dereferencing missing objects.
 
 ### 3.2 Characteristics and operations
 
@@ -361,8 +435,8 @@ unknown event IDs are reported as unsupported input and ignored. The UID is
 valid only as an ANCS request handle, not as a durable identifier.
 
 - **Added:** create/update an in-memory pending record and enqueue a
-  Get Notification Attributes request unless that UID has already returned a
-  request-scoped ANCS command error in this session.
+  Get Notification Attributes request unless that UID has already been marked
+  unavailable by a completed response.
 - **Modified:** enqueue an attribute refresh for the UID unless it is marked
   unavailable for the rest of the session.
 - **Removed:** remove the active record and emit a removal event. Do not issue
@@ -415,30 +489,34 @@ one complete response.
 
 Allow at most one outstanding Control Point attribute request in V1. Queue
 subsequent requests and send the next only after the active Data Source
-response is complete or a request-scoped ANCS error confirms there will be no
-response. This serialization is a conservative
+response is complete. This serialization is a conservative
 client policy because ANCS does not define an application-level request ID
 for correlating overlapping responses. It is not an Apple requirement.
 Perform Notification Action is excluded; if later added, it must not wait for
 a Data Source response because ANCS defines none for that command.
 
-ANCS Control Point errors include Unknown Command (`0xA0`), Invalid Command
-(`0xA1`), Invalid Parameter (`0xA2`), and Action Failed (`0xA3`). A failed
-Control Point command does not produce a corresponding Data Source response.
-Map a request-scoped ANCS command error to `AttributesUnavailable`, mark that
-UID unavailable for the rest of this session, and advance the queue. A
-BlueZ/GATT authorization, transport, or invalidation error is a fatal typed
-session error; do not keep issuing commands against a failed transport.
+Apple specifies that a failed Control Point command does not produce a
+corresponding Data Source response. The current backend reports failed
+`WriteValue` operations as typed GATT errors, but does not reliably distinguish
+an ANCS command rejection from authorization or transport failures. Therefore
+the current implementation treats every Control Point write error as a fatal
+typed session error and does not advance the queue. A future request-scoped
+recovery policy requires a backend error classification proven to identify a
+rejected command without masking authorization, transport, or invalidation
+failures.
 If no Data Source response arrives before the bounded deadline, fail the
 session with a fatal `Timeout` error. Even if no response fragment was
 observed, a late response could not be safely distinguished from the next
 request because ANCS provides no request identifier beyond the notification
 UID. Do not send another request after this timeout.
 
-All input lengths, decoded strings, queued requests, cached active records,
-and reassembly buffers must have explicit finite limits. Malformed, oversized,
-or uncorrelatable responses produce a typed protocol error and fail the
-session without corrupting later sessions.
+All individual input lengths, decoded strings, attribute responses, and
+reassembly buffers have explicit finite limits. The GATT event queue and active
+notification records have no fixed count cap, so incoming events are not
+rejected solely because a count threshold was reached. Pending attribute
+requests have the configurable backlog policy documented in section 3.6.
+Malformed, oversized, or uncorrelatable responses produce a typed protocol
+error and fail the session without corrupting later sessions.
 
 ### 3.5 Public behavior and callback contract
 
@@ -532,13 +610,12 @@ or nonpositive values are invalid. `Dmn_AncsState` and `Dmn_AncsErrorKind`
 enumerate all state/error values shown above. A `Dmn_AncsEvent` contains
 `state` for StateChanged, `notification` for notification events, and `error`
 for Error. An AttributesUnavailable event carries both notification metadata
-and the request-scoped error when available. An Error event may also carry
-the current state. Unknown Notification Source event IDs emit a nonfatal
+and an error when available. Unknown Notification Source event IDs emit a nonfatal
 Unsupported Error event and are ignored. Invalid UTF-8 emits
-AttributesUnavailable with a nonfatal Protocol error. Request-scoped ANCS
-command failures emit AttributesUnavailable with a Remote error. A fatal
-response timeout emits AttributesUnavailable with a fatal Timeout, then Error
-and StateChanged(Failed). Error messages and remote names must not include
+AttributesUnavailable with a nonfatal Protocol error. A Control Point write
+failure emits a fatal typed Error and StateChanged(Failed). A fatal response
+timeout emits AttributesUnavailable with a fatal Timeout, then Error and
+StateChanged(Failed); no later request is sent. Error messages and remote names must not include
 notification content or raw GATT bytes.
 `Dmn_AncsNotification` contains kind, UID, raw category and flags, category
 count, and optional app identifier/title/subtitle/message/date strings.
@@ -570,12 +647,13 @@ thread.
 Callbacks must return promptly, must not throw, and must not call `start`,
 `stop`, or destroy the client. Applications that need blocking work marshal
 owned event values to their own executor (GTK callers marshal to the GTK main
-context). The GATT callback only copies bounded bytes into the ANCS event
-queue; protocol parsing, scheduling, and Control Point writes happen on the
-ANCS worker. The worker exists before the first subscription so immediate
-notifications are not lost. Values received during startup are copied into
-the bounded queue and are not processed until both subscriptions have
-succeeded; StateChanged(Ready) is dispatched before any notification event.
+context). The GATT callback copies bounded characteristic values into the
+ANCS event queue. The ANCS worker parses and schedules events; a separate
+Control Point worker performs acknowledged writes so a slow write cannot
+block notification intake. Both workers exist before the first subscription
+so immediate notifications are not lost. Values received during startup are
+queued and are not processed until both subscriptions have succeeded;
+StateChanged(Ready) is dispatched before any notification event.
 Unsolicited Data Source values received when no request is active are ignored.
 If the second subscription fails, startup rolls back the first subscription
 and returns the startup error.
@@ -587,14 +665,17 @@ StateChanged(Failed). Explicit stop emits StateChanged(Stopping) followed by
 StateChanged(Stopped) after successful cleanup. A cleanup failure leaves the
 client Failed and returns a Cleanup error.
 
-The finite protocol limits are fixed for this increment: Notification Source
-is exactly 8 bytes; one GATT callback value/Data Source response is at most
-8192 bytes; app identifier 255 bytes; title 256 bytes; subtitle 256 bytes;
-message 4096 bytes; date 64 bytes; 256 active notification records; 128
-pending attribute requests; and 256 queued GATT events. No response or
-reassembly buffer may exceed 8192 bytes. If an event/request/cache limit is
-exceeded, fail the session with `ResourceLimit` rather than silently dropping
-data or allocating without bound. A timed-out request emits
+The fixed per-value protocol limits are: Notification Source is exactly
+8 bytes; one GATT callback value/Data Source response is at most 8192 bytes;
+app identifier 255 bytes; title 256 bytes; subtitle 256 bytes; message 4096
+bytes; and date 64 bytes. No response or reassembly buffer may exceed 8192
+bytes. `Dmn_AncsConfig::maximum_pending_notifications` defaults to 255 queued
+attribute requests. When this limit is reached, the oldest pending request
+and its record are discarded so newer notifications can proceed, and a
+nonfatal `ResourceLimit` event is emitted once per saturated backlog. Set the
+value to zero for an unlimited pending backlog; this has no cumulative
+notification-count limit and memory use follows current backlog. Removed
+events clear records and pending work. A timed-out request emits
 `AttributesUnavailable`, then a fatal `Timeout` error and fails the session;
 no following request is written because a late Data Source response cannot be
 unambiguously correlated. A valid Removed event clears queued work for its
@@ -602,6 +683,26 @@ UID; an already active response is consumed through its bounded completion
 but discarded. Repeated Modified/Added events for one UID coalesce into one
 pending request without reordering other UIDs; retain Added until the first
 complete record is emitted, then use Updated for subsequent changes.
+
+When `Dmn_AncsConfig::notification_date_cutoff` is set, completed notification
+attribute responses with a valid ANCS Date older than that cutoff are not
+delivered as Added or Updated events; their records remain tracked so a later
+Removed event can be suppressed too. Missing or malformed dates are also
+suppressed because their age cannot be established. The default is unset. A
+frontend should capture the cutoff at application startup and pass it when
+starting the ANCS session if it wants to exclude notifications received while
+Bluetooth is connecting.
+
+`Dmn_AncsBluezMonitor` is the application-facing orchestration API for the
+current BlueZ path. It owns the BlueZ inventory and GATT backend instances plus
+the ANCS client, and composes device selection, discovery, pairing, connection,
+readiness, and ANCS startup. Its synchronous `start()` performs blocking
+Bluetooth operations and reports setup phases through an optional callback on
+the calling thread. A GTK frontend must call it from a worker and marshal both
+progress and owned ANCS events back to the GTK main context. `stop()` waits for
+an in-progress `start()` to finish; it does not cancel device setup. It leaves
+pairing and link state intact.
+
 Malformed framing, mismatched UID/attribute order, or an uncorrelatable
 response fails the session with `Protocol`.
 Invalid UTF-8 makes that notification's attributes unavailable, emits a
@@ -740,6 +841,8 @@ dmn-bluetooth monitor DEVICE
     [--pair-timeout SECONDS]
     [--connect-timeout SECONDS]
     [--services-timeout SECONDS]
+    [--unlimited]
+    [--ignore-existing]
 ```
 
 `DEVICE` is a Bluetooth address or device display name. Names match exactly
@@ -752,6 +855,17 @@ before attempting name matching. A BlueZ object path is not accepted as a CLI
 selector because it is transient.
 `ADAPTER` is an adapter address or current adapter object path, consistent
 with the `Dmn_BluezClient` selector contract.
+Without `--unlimited`, the CLI retains at most 255 queued attribute requests
+and discards the oldest pending notifications when that backlog limit is
+reached. `--unlimited` disables this backlog cap; it does not change
+per-notification protocol field limits.
+`--ignore-existing` filters completed notification details by their ANCS Date,
+suppressing dates older than the CLI process startup time (and notifications
+with missing or unrecognized dates). The CLI captures its cutoff before
+Bluetooth setup, so connection time does not shift the boundary. ANCS does not
+provide a source-event timestamp and BlueZ cannot determine when the iPhone
+notification was created. ANCS Date contains no timezone, so the host and
+phone clocks/timezones should be aligned for this best-effort filter.
 
 `dmn-bluetooth --help` and `dmn-bluetooth monitor --help` print usage to
 stdout and exit 0 without contacting D-Bus. Unknown subcommands/options,
@@ -839,9 +953,10 @@ plus two lowercase hexadecimal digits. Use category labels `other`,
 Print available fields in this order: app identifier, title, subtitle,
 message, date. Values are the UTF-8 strings supplied by ANCS; date is not
 localized or reformatted. Omit unavailable attribute lines. A Removed event
-prints immediately without attributes. A request-scoped ANCS error or invalid
-text attribute prints an `attributes unavailable` record and advances the
-queue. If the attribute response times out, print the same record and end the
+prints immediately without attributes. An invalid text attribute prints an
+`attributes unavailable` record and allows the queue to continue after the
+complete response has been consumed. If the attribute response times out,
+print the same record and end the
 session with status 8 because a late response cannot be safely correlated
 with a later request. A fatal GATT/backend/protocol error also ends the
 monitor with status 8. Do not print partial fields as a completed record.
@@ -934,8 +1049,10 @@ SIGINT and verify process status and cleanup.
 | `DmnAncsClientFailsOnAttributeResponseTimeout` | No complete response arrives before 10 seconds (injectable clock); emit AttributesUnavailable and fatal Timeout, then send no later Control Point request. |
 | `DmnAncsClientDropsRemovedUidResponse` | Removed events are emitted; late results never recreate a live record. |
 | `DmnAncsClientRejectsMalformedAndOversizedValues` | Invalid UTF-8 yields a nonfatal AttributesUnavailable event; bad tuple order/length, oversized fragments/responses, and wrong Notification Source length fail with typed fatal errors before unbounded allocation. |
-| `DmnAncsClientHandlesRequestScopedAncsError` | Explicit ANCS command error marks only that UID unavailable and allows other queued UIDs to proceed. |
-| `DmnAncsClientEnforcesQueueAndCacheLimits` | Pending-event/request and active-record caps fail explicitly, without silent loss or unbounded growth. |
+| `DmnAncsClientFailsSessionOnControlPointWriteError` | A write error without a verified ANCS-specific classification emits a fatal typed error and stops the session without advancing the queue. |
+| `DmnAncsClientDefaultBacklogKeepsNewestNotificationsAndReportsDiscard` | The default 255 pending-request limit discards the oldest queued request, retains newer work, and reports the nonfatal resource-limit event. |
+| `DmnAncsClientProcessesMoreThanFiveHundredQueuedNotifications` | Unlimited mode processes a burst of 600 queued notifications without a count-based failure. |
+| `DmnAncsClientCanSuppressNotificationsPredatingSessionStart` | With date filtering enabled, older and unparseable notification dates are suppressed while a newer date is delivered. |
 | `DmnAncsClientSerializesCallbacksAndStopsCleanly` | Callbacks serialize off the GATT callback path; stop prevents later delivery and attempts both StopNotify operations. |
 | `DmnAncsClientReportsSubscriptionCleanupFailure` | Explicit stop returns cleanup error; destruction is best-effort and non-throwing. |
 | `DmnBluetoothMonitorSelectsExactDeviceName` | Exact ASCII-case-insensitive selection works; partial/fuzzy matches fail; duplicate names report candidates. |
@@ -945,16 +1062,25 @@ SIGINT and verify process status and cleanup.
 | `DmnBluetoothMonitorEscapesNotificationTerminalControls` | Newlines/control bytes cannot inject terminal controls or additional records. |
 | `DmnBluetoothMonitorEscapesDiagnostics` | Malicious adapter/device names and remote error text cannot inject terminal controls on stderr. |
 | `DmnBluetoothMonitorStopsOnSignalAndCleansUp` | SIGINT cleans both subscriptions and exits 0; runtime invalidation/attribute timeout exits 8 without reconnect. |
+| `DmnBluetoothMonitorInterruptsDuringStartupAndCleansUp` | SIGINT during a blocked GATT subscription startup is retained until startup unblocks, then both subscriptions are stopped. |
 | `DmnBluetoothMonitorDoesNotLogContentToStderr` | Attributes are stdout-only; stderr contains neither values nor raw payload. |
-| `DmnBluetoothMonitorBoundsOutputQueue` | Slow/full output consumer causes explicit failure and cleanup, never silent event loss. |
+| `DmnBluetoothMonitorCli.BoundsOutputQueueWhenStdoutIsBackpressured` | A full stdout pipe and sustained event stream set the explicit 256-event backpressure failure, clean both subscriptions, and never silently report success. |
 | `DmnBluetoothMonitorRejectsInvalidTimeouts` | Zero, negative, malformed, overflowing, or above-600 timeout values exit 2 before D-Bus access. |
 | `DmnBluetoothMonitorHelpDoesNotAccessBlueZ` | Both help forms print usage and exit 0 without opening a bus connection. |
 | `DmnBluetoothMonitorExitsWhenStdoutCloses` | A broken pipe triggers cleanup and nonzero status instead of silently dropping content. |
 | `DmnBluetoothMonitorPreservesDiscoveryCliCompatibility` | Existing `dmn-bluez-discovery` behavior and tests remain unchanged. |
+| `DmnBluetoothMonitorHardware.StartsAncsThroughProductionCli` | Opt-in only: the production CLI reaches ANCS ready on the configured physical device and exits cleanly after SIGINT. |
 
 These tests establish library/CLI behavior only. A separately recorded
 physical-device qualification is required before claiming ANCS support for a
 specific iPhone/iOS/BlueZ/adapter combination.
+
+The physical CLI test is registered only with
+`ENABLE_ANCS_HARDWARE_TESTS=ON` (default `OFF`), and requires
+`ENABLE_ANCS=ON`, `ENABLE_BLUEZ=ON`, and `ENABLE_DBUS=ON`. The exact target is
+configured with `DMN_ANCS_HARDWARE_DEVICE` (default `iPhone Old`). Run only on
+a Linux host with the target phone and adapter available; it is not part of
+Docker or normal CTest runs.
 
 ## 4. Session lifecycle
 
@@ -966,9 +1092,10 @@ Any startup/runtime failure -> Failed -> best-effort cleanup
 Failed -> explicit stop/retry cleanup -> Stopped
 ```
 
-The ANCS library does not own BlueZ waiting, pairing, or connection; those are
-completed by the application before `start`. Each ANCS transition is
-observable through status/callbacks. V1 has no reconnect state or retry loop:
+`Dmn_AncsClient` does not own BlueZ waiting, pairing, or connection; those are
+composed by `Dmn_AncsBluezMonitor` before it starts the ANCS session. Each ANCS
+transition is observable through the event callback. V1 has no reconnect
+state or retry loop:
 a disconnect, BlueZ owner loss, or service invalidation fails the active
 session, triggers best-effort subscription cleanup, clears session-scoped
 state, and requires the application to stop/finish cleanup before starting a
@@ -996,8 +1123,8 @@ reuse it in a later session. App display-name requests/caching are deferred.
   duplicate events, modification, removal while a request is queued, removal
   during a response, and request timeout.
 - Prove that only one attribute request is in flight and that the next request
-  starts only after completion or a confirmed request-scoped ANCS error. A
-  missing-response timeout is fatal and sends no following request.
+  starts only after response completion. An unclassified Control Point write
+  error and a missing-response timeout are fatal and send no following request.
 - Verify all resource limits, callback execution context/order, stop behavior,
   and typed failure/cleanup using a fake `Dmn_GattClient`.
 
@@ -1025,11 +1152,20 @@ reuse it in a later session. App display-name requests/caching are deferred.
   These tests use the public `dmn-bluez` API over the generic Dmn
   direct-libdbus client and a private test bus; they must not connect to the
   host system bus or rely on a third-party Bluetooth wrapper.
-- On each claimed Linux/BlueZ and physical iPhone/iOS combination, verify
-  pairing/setup, ANCS service visibility, both subscriptions, added/modified/
-  removed events, one complete attribute read, and session cleanup on
-  disconnect. Record which of app identifier/title/subtitle/message/date are
-  actually provided; app display-name lookup is not part of this increment.
+- The opt-in `dmn-ancs-iphone-hardware` CTest exercises the production CLI
+  through device selection, Pair/Connect if needed, ANCS readiness, and SIGINT
+  cleanup. It requires no notification payload and never tears down pairing
+  or the Bluetooth link.
+- For a physical notification check, use a newly delivered iOS notification
+  from any app; SMS/iMessage is convenient but not required. Ensure the app is
+  allowed to show alerts in Notification Center and avoid Focus or Scheduled
+  Summary delaying delivery during the test. ANCS reports notifications that
+  the iPhone publishes through Notification Center, not arbitrary app events.
+- Before claiming a Linux/BlueZ and physical iPhone/iOS combination, also
+  verify ANCS service visibility, both subscriptions, added/modified/removed
+  events, one complete attribute read, and cleanup on disconnect. Record which
+  of app identifier/title/subtitle/message/date are actually provided; app
+  display-name lookup is not part of this increment.
 - Record the tested OS, BlueZ, adapter, iPhone model, and iOS version. Until
   this matrix is populated, compatibility claims remain provisional.
 
@@ -1064,7 +1200,12 @@ Primary sources consulted:
 
 - Apple, [Apple Notification Center Service Specification](https://developer.apple.com/library/archive/documentation/CoreBluetooth/Reference/AppleNotificationCenterServiceSpecification/Specification/Specification.html):
   service characteristics, Notification Source, Control Point, Data Source,
-  attribute commands, service availability, and notification actions.
+  attribute commands, service availability, and notification actions. It
+  defines Notification Source events as arrival, modification, and removal
+  of iOS notifications; no SMS-specific event is required.
+- Apple, [Change notification settings on iPhone](https://support.apple.com/guide/iphone/change-notification-settings-iph7c3d96bab/ios):
+  per-app notification permission and alert locations, notification previews,
+  Scheduled Summary, and Focus delivery behavior.
 - Apple, [ANCS introduction and encoding rules](https://developer.apple.com/library/archive/documentation/CoreBluetooth/Reference/AppleNotificationCenterServiceSpecification/Introduction/Introduction.html)
   and [ANCS appendix](https://developer.apple.com/library/archive/documentation/CoreBluetooth/Reference/AppleNotificationCenterServiceSpecification/Appendix/Appendix.html):
   endianness, event/command/attribute identifiers.
@@ -1082,6 +1223,10 @@ Primary sources consulted:
 - BlueZ, [Device D-Bus API](https://bluez.readthedocs.io/en/latest/device-api/)
   and [Adapter D-Bus API](https://bluez.readthedocs.io/en/latest/adapter-api/):
   connection, pairing, service resolution, discovery sessions, and errors.
+- BlueZ 5.72,
+  [`src/gatt-client.c`](https://github.com/bluez/bluez/blob/5.72/src/gatt-client.c):
+  StartNotify requests can be retained when no GATT client exists yet, and
+  `Notifying` reflects active registered notification clients.
 - BlueZ, [Agent D-Bus API](https://bluez.readthedocs.io/en/latest/agent-api/):
   default-agent behavior, optional per-application agents, capability and
   authentication callbacks, and agent error outcomes.
