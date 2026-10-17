@@ -270,6 +270,12 @@ public:
     m_failStart = value;
   }
 
+  void setStartNotifyInactive(bool value) {
+    std::lock_guard lock{m_mutex};
+
+    m_startNotifyInactive = value;
+  }
+
   void setStopFailure(bool value) {
     std::lock_guard lock{m_mutex};
 
@@ -446,36 +452,55 @@ private:
       dbus_message_iter_get_basic(&args, &interfaceName);
       dbus_message_iter_next(&args);
       dbus_message_iter_get_basic(&args, &propertyName);
+      const auto path = dbus_message_get_path(message);
+      bool value{};
+      bool found{};
       if (interfaceName == nullptr || propertyName == nullptr ||
-          std::string{interfaceName} != "org.bluez.Device1" ||
-          dbus_message_get_path(message) == nullptr ||
-          std::string{dbus_message_get_path(message)} != kDevicePath) {
+          path == nullptr) {
         reply = dbus_message_new_error(message, DBUS_ERROR_UNKNOWN_OBJECT,
-                                       "unknown device property");
+                                       "unknown property");
       } else {
-        bool value{};
-
         {
           std::lock_guard lock{self->m_mutex};
 
-          ++self->m_propertyGetCount;
-          value = std::string{propertyName} == "Connected" ? self->m_connected
-                                                           : self->m_resolved;
+          if (std::string{interfaceName} == "org.bluez.Device1" &&
+              std::string{path} == kDevicePath) {
+            ++self->m_propertyGetCount;
+            if (std::string{propertyName} == "Connected") {
+              value = self->m_connected;
+              found = true;
+            } else if (std::string{propertyName} == "ServicesResolved") {
+              value = self->m_resolved;
+              found = true;
+            }
+          } else if (std::string{interfaceName} ==
+                         "org.bluez.GattCharacteristic1" &&
+                     std::string{path} == kCharacteristicPath &&
+                     std::string{propertyName} == "Notifying") {
+            value = self->m_notifying;
+            found = true;
+          }
         }
 
-        reply = dbus_message_new_method_return(message);
-        DBusMessageIter out;
-        DBusMessageIter variant;
-        const dbus_bool_t encoded = value ? TRUE : FALSE;
-        dbus_message_iter_init_append(reply, &out);
-        dbus_message_iter_open_container(&out, DBUS_TYPE_VARIANT,
-                                         DBUS_TYPE_BOOLEAN_AS_STRING, &variant);
-        dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &encoded);
-        dbus_message_iter_close_container(&out, &variant);
+        if (!found && reply == nullptr) {
+          reply = dbus_message_new_error(message, DBUS_ERROR_UNKNOWN_PROPERTY,
+                                         "unknown property");
+        } else if (found) {
+          reply = dbus_message_new_method_return(message);
+          DBusMessageIter out;
+          DBusMessageIter variant;
+          const dbus_bool_t encoded = value ? TRUE : FALSE;
+          dbus_message_iter_init_append(reply, &out);
+          dbus_message_iter_open_container(
+              &out, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &variant);
+          dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &encoded);
+          dbus_message_iter_close_container(&out, &variant);
+        }
       }
     } else if (dbus_message_is_method_call(
                    message, "org.bluez.GattCharacteristic1", "StartNotify")) {
       bool fail{};
+      bool inactive{};
       bool emitValue{};
 
       {
@@ -483,6 +508,8 @@ private:
 
         ++self->m_startCount;
         fail = self->m_failStart;
+        inactive = self->m_startNotifyInactive;
+        self->m_notifying = !fail && !inactive;
         emitValue = std::exchange(self->m_emitValueOnStart, false);
       }
 
@@ -503,6 +530,9 @@ private:
 
         ++self->m_stopCount;
         fail = self->m_failStop;
+        if (!fail) {
+          self->m_notifying = false;
+        }
       }
 
       reply = fail ? dbus_message_new_error(message, "org.bluez.Error.Failed",
@@ -584,7 +614,9 @@ private:
   bool m_connected{true};
   bool m_resolved{true};
   bool m_failStart{};
+  bool m_startNotifyInactive{};
   bool m_failStop{};
+  bool m_notifying{};
   bool m_emitValueOnStart{};
   std::vector<std::string> m_characteristicFlags{"notify", "read", "write"};
   int m_startCount{};
@@ -726,6 +758,23 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
 
   const auto stopped = notification->stop();
   ASSERT_TRUE(stopped) << stopped.error().message;
+  EXPECT_EQ(service.counts(), (std::pair{1, 1}));
+}
+
+TEST(DmnBluezGattClient, RejectsStartNotifyWhenBluezDoesNotEnableDelivery) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluez service{bus.address()};
+  service.setStartNotifyInactive(true);
+  dmn::Dmn_BluezGattClient client{configFor(bus.address())};
+
+  const auto notification = client.startNotify(
+      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+  ASSERT_FALSE(notification);
+  EXPECT_EQ(notification.error().kind, dmn::Dmn_GattErrorKind::NotReady);
+  EXPECT_NE(
+      notification.error().message.find("notification delivery is not active"),
+      std::string::npos);
   EXPECT_EQ(service.counts(), (std::pair{1, 1}));
 }
 

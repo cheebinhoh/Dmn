@@ -5,12 +5,16 @@
  * @brief Private-bus integration tests for the BlueZ client.
  */
 
+#if defined(DMN_ENABLE_ANCS)
+#include "dmn-ancs-bluez-monitor.hpp"
+#endif
 #include "dmn-bluez-client.hpp"
 #include "dmn-test-dbus-support.hpp"
 
 #include <dbus/dbus.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <chrono>
@@ -22,11 +26,13 @@
 #include <fcntl.h>
 #include <future>
 #include <mutex>
+#include <optional>
 #include <poll.h>
 #include <spawn.h>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <system_error>
 #include <thread>
@@ -54,6 +60,14 @@ using dmn_test_dbus::PrivateBus;
 constexpr char kService[] = "org.bluez";
 constexpr char kAdapterPath[] = "/org/bluez/hci0";
 constexpr char kDevicePath[] = "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF";
+constexpr char kAncsServicePath[] =
+    "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF/service0";
+constexpr char kNotificationSourcePath[] =
+    "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF/service0/char0";
+constexpr char kControlPointPath[] =
+    "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF/service0/char1";
+constexpr char kDataSourcePath[] =
+    "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF/service0/char2";
 
 void appendStringVariant(DBusMessageIter &properties, const char *name,
                          const char *value) {
@@ -98,10 +112,144 @@ void appendInt16Variant(DBusMessageIter &properties, const char *name,
   dbus_message_iter_close_container(&properties, &entry);
 }
 
+void appendByteArrayVariant(DBusMessageIter &properties, const char *name,
+                            const std::vector<std::uint8_t> &value) {
+  DBusMessageIter entry;
+  DBusMessageIter variant;
+  DBusMessageIter bytes;
+  dbus_message_iter_open_container(&properties, DBUS_TYPE_DICT_ENTRY, nullptr,
+                                   &entry);
+  dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &name);
+  dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &variant);
+  dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
+                                   DBUS_TYPE_BYTE_AS_STRING, &bytes);
+  if (!value.empty()) {
+    const auto *data = value.data();
+    dbus_message_iter_append_fixed_array(&bytes, DBUS_TYPE_BYTE, &data,
+                                         static_cast<int>(value.size()));
+  }
+
+  dbus_message_iter_close_container(&variant, &bytes);
+  dbus_message_iter_close_container(&entry, &variant);
+  dbus_message_iter_close_container(&properties, &entry);
+}
+
+void appendObjectPathVariant(DBusMessageIter &properties, const char *name,
+                             const char *value) {
+  DBusMessageIter entry;
+  DBusMessageIter variant;
+  dbus_message_iter_open_container(&properties, DBUS_TYPE_DICT_ENTRY, nullptr,
+                                   &entry);
+  dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &name);
+  dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT,
+                                   DBUS_TYPE_OBJECT_PATH_AS_STRING, &variant);
+  dbus_message_iter_append_basic(&variant, DBUS_TYPE_OBJECT_PATH, &value);
+  dbus_message_iter_close_container(&entry, &variant);
+  dbus_message_iter_close_container(&properties, &entry);
+}
+
+void appendStringArrayVariant(DBusMessageIter &properties, const char *name,
+                              const std::vector<std::string> &values) {
+  DBusMessageIter entry;
+  DBusMessageIter variant;
+  DBusMessageIter array;
+  dbus_message_iter_open_container(&properties, DBUS_TYPE_DICT_ENTRY, nullptr,
+                                   &entry);
+  dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &name);
+  dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "as", &variant);
+  dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
+                                   DBUS_TYPE_STRING_AS_STRING, &array);
+  for (const auto &value : values) {
+    const char *text = value.c_str();
+    dbus_message_iter_append_basic(&array, DBUS_TYPE_STRING, &text);
+  }
+
+  dbus_message_iter_close_container(&variant, &array);
+  dbus_message_iter_close_container(&entry, &variant);
+  dbus_message_iter_close_container(&properties, &entry);
+}
+
+void appendGattObject(DBusMessageIter &objects, const char *path,
+                      const char *interface, const char *servicePath,
+                      const char *uuid, const std::vector<std::string> &flags) {
+  DBusMessageIter object;
+  DBusMessageIter interfaces;
+  DBusMessageIter entry;
+  DBusMessageIter properties;
+  const char *objectPath = path;
+  dbus_message_iter_open_container(&objects, DBUS_TYPE_DICT_ENTRY, nullptr,
+                                   &object);
+  dbus_message_iter_append_basic(&object, DBUS_TYPE_OBJECT_PATH, &objectPath);
+  dbus_message_iter_open_container(&object, DBUS_TYPE_ARRAY, "{sa{sv}}",
+                                   &interfaces);
+  dbus_message_iter_open_container(&interfaces, DBUS_TYPE_DICT_ENTRY, nullptr,
+                                   &entry);
+  dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &interface);
+  dbus_message_iter_open_container(&entry, DBUS_TYPE_ARRAY, "{sv}",
+                                   &properties);
+  if (std::string_view{interface} == "org.bluez.GattService1") {
+    appendObjectPathVariant(properties, "Device", kDevicePath);
+    appendStringVariant(properties, "UUID",
+                        "7905F431-B5CE-4E99-A40F-4B1E122D00D0");
+    appendBoolVariant(properties, "Primary", true);
+  } else {
+    appendObjectPathVariant(properties, "Service", servicePath);
+    appendStringVariant(properties, "UUID", uuid);
+    appendStringArrayVariant(properties, "Flags", flags);
+    appendByteArrayVariant(properties, "Value", {});
+  }
+
+  dbus_message_iter_close_container(&entry, &properties);
+  dbus_message_iter_close_container(&interfaces, &entry);
+  dbus_message_iter_close_container(&object, &interfaces);
+  dbus_message_iter_close_container(&objects, &object);
+}
+
+void appendAncsUint16(std::vector<std::uint8_t> &bytes, std::uint16_t value) {
+  bytes.push_back(static_cast<std::uint8_t>(value & 0xffU));
+  bytes.push_back(static_cast<std::uint8_t>((value >> 8U) & 0xffU));
+}
+
+void appendAncsUint32(std::vector<std::uint8_t> &bytes, std::uint32_t value) {
+  for (unsigned int shift = 0; shift < 32; shift += 8) {
+    bytes.push_back(static_cast<std::uint8_t>((value >> shift) & 0xffU));
+  }
+}
+
+void appendAncsAttribute(std::vector<std::uint8_t> &bytes, std::uint8_t id,
+                         std::string_view value) {
+  bytes.push_back(id);
+  appendAncsUint16(bytes, static_cast<std::uint16_t>(value.size()));
+  bytes.insert(bytes.end(), value.begin(), value.end());
+}
+
+auto makeAncsNotificationSourceValue(
+    std::uint32_t uid, std::uint8_t eventId = 0) -> std::vector<std::uint8_t> {
+  std::vector<std::uint8_t> value{eventId, 0, 6, 1};
+  appendAncsUint32(value, uid);
+
+  return value;
+}
+
+auto makeAncsDataSourceResponse(
+    std::uint32_t uid, std::string_view title = "Private title",
+    std::string_view message = "Private body") -> std::vector<std::uint8_t> {
+  std::vector<std::uint8_t> value{0};
+  appendAncsUint32(value, uid);
+  appendAncsAttribute(value, 0, "org.example.mail");
+  appendAncsAttribute(value, 1, title);
+  appendAncsAttribute(value, 2, "");
+  appendAncsAttribute(value, 3, message);
+  appendAncsAttribute(value, 5, "29991231T235959");
+
+  return value;
+}
+
 void appendInterface(DBusMessageIter &interfaces, const char *name,
                      bool adapter, int deviceNameMode = 0,
                      const char *address = nullptr, bool powered = true,
-                     bool connected = false, bool paired = true) {
+                     bool connected = false, bool paired = true,
+                     bool servicesResolved = true) {
   DBusMessageIter interfaceEntry;
   DBusMessageIter properties;
   dbus_message_iter_open_container(&interfaces, DBUS_TYPE_DICT_ENTRY, nullptr,
@@ -127,6 +275,7 @@ void appendInterface(DBusMessageIter &interfaces, const char *name,
 
     appendBoolVariant(properties, "Paired", paired);
     appendBoolVariant(properties, "Connected", connected);
+    appendBoolVariant(properties, "ServicesResolved", servicesResolved);
     appendInt16Variant(properties, "RSSI", -47);
   }
 
@@ -137,7 +286,9 @@ void appendInterface(DBusMessageIter &interfaces, const char *name,
 auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
                              int topologyMode, bool initialConnected = false,
                              bool devicePresent = true,
-                             bool initialPaired = true) -> DBusMessage * {
+                             bool initialPaired = true,
+                             bool includeAncs = false,
+                             bool servicesResolved = true) -> DBusMessage * {
   DBusMessage *reply = dbus_message_new_method_return(request);
   DBusMessageIter out;
   DBusMessageIter objects;
@@ -151,25 +302,27 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
     const char *address;
     bool powered;
     bool connected;
+    bool servicesResolved;
   };
   std::vector<Object> objectsToAppend;
 
   if (topologyMode != 1) {
     objectsToAppend.push_back({kAdapterPath, "org.bluez.Adapter1", true,
-                               nullptr, topologyMode != 3, false});
+                               nullptr, topologyMode != 3, false, true});
 
     if (devicePresent) {
       objectsToAppend.push_back({kDevicePath, "org.bluez.Device1", false,
-                                 nullptr, true, initialConnected});
+                                 nullptr, true, initialConnected,
+                                 servicesResolved});
     }
   }
 
   if (topologyMode == 2 || topologyMode == 5) {
     objectsToAppend.push_back({"/org/bluez/hci1", "org.bluez.Adapter1", true,
-                               "B8:F7:75:BF:F3:C4", true, false});
+                               "B8:F7:75:BF:F3:C4", true, false, true});
     objectsToAppend.push_back(
         {"/org/bluez/hci1/dev_11_22_33_44_55_66", "org.bluez.Device1", false,
-         topologyMode == 5 ? nullptr : "11:22:33:44:55:66", true, true});
+         topologyMode == 5 ? nullptr : "11:22:33:44:55:66", true, true, true});
   }
 
   for (const auto &spec : objectsToAppend) {
@@ -183,9 +336,24 @@ auto makeManagedObjectsReply(DBusMessage *request, int deviceNameMode,
     dbus_message_iter_open_container(&object, DBUS_TYPE_ARRAY, "{sa{sv}}",
                                      &interfaces);
     appendInterface(interfaces, spec.interface, spec.adapter, deviceNameMode,
-                    spec.address, spec.powered, spec.connected, initialPaired);
+                    spec.address, spec.powered, spec.connected, initialPaired,
+                    spec.servicesResolved);
     dbus_message_iter_close_container(&object, &interfaces);
     dbus_message_iter_close_container(&objects, &object);
+  }
+
+  if (includeAncs) {
+    appendGattObject(objects, kAncsServicePath, "org.bluez.GattService1",
+                     kAncsServicePath, "", {});
+    appendGattObject(objects, kNotificationSourcePath,
+                     "org.bluez.GattCharacteristic1", kAncsServicePath,
+                     "9FBF120D-6301-42D9-8C58-25E699A21DBD", {"notify"});
+    appendGattObject(objects, kControlPointPath,
+                     "org.bluez.GattCharacteristic1", kAncsServicePath,
+                     "69D1D8F3-45E1-49A8-9821-9BBDFDAAD9D9", {"write"});
+    appendGattObject(objects, kDataSourcePath, "org.bluez.GattCharacteristic1",
+                     kAncsServicePath, "22EAC6E9-24D6-4BB5-BE44-B36ACE7C7BFB",
+                     {"notify"});
   }
 
   dbus_message_iter_close_container(&out, &objects);
@@ -223,6 +391,7 @@ public:
 
   ~FakeBluezService() {
     m_stopping = true;
+    m_snapshotCondition.notify_all();
 
     if (m_worker.joinable()) {
       m_worker.join();
@@ -259,10 +428,80 @@ public:
     return m_pairPath;
   }
 
+  auto gattNotifyCounts() const -> std::pair<int, int> {
+    std::lock_guard lock{m_mutex};
+
+    return {m_gattStartNotifyCount, m_gattStopNotifyCount};
+  }
+
+  auto gattWriteCount() const -> int {
+    std::lock_guard lock{m_mutex};
+
+    return m_gattWriteCount;
+  }
+
+  void enableAncsGatt() {
+    std::lock_guard lock{m_mutex};
+
+    m_includeAncs = true;
+  }
+
+  void setAncsNotificationText(std::string title, std::string message) {
+    std::lock_guard lock{m_mutex};
+
+    m_ancsTitle = std::move(title);
+    m_ancsMessage = std::move(message);
+  }
+
+  void setInitialAncsNotification(bool enabled) {
+    std::lock_guard lock{m_mutex};
+
+    m_emitInitialAncsNotification = enabled;
+  }
+
+  void emitGattValue(const std::string &path,
+                     const std::vector<std::uint8_t> &value) {
+    std::lock_guard lock{m_mutex};
+
+    m_pendingGattValues.emplace_back(path, value);
+  }
+
+  void sendGattValue(const std::string &path,
+                     const std::vector<std::uint8_t> &value) {
+    DbusMessagePtr signal{dbus_message_new_signal(
+        path.c_str(), "org.freedesktop.DBus.Properties", "PropertiesChanged")};
+    DBusMessageIter out;
+    DBusMessageIter changed;
+    DBusMessageIter invalidated;
+    const char *interface = "org.bluez.GattCharacteristic1";
+    dbus_message_iter_init_append(signal.get(), &out);
+    dbus_message_iter_append_basic(&out, DBUS_TYPE_STRING, &interface);
+    dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY, "{sv}", &changed);
+    appendByteArrayVariant(changed, "Value", value);
+    dbus_message_iter_close_container(&out, &changed);
+    dbus_message_iter_open_container(&out, DBUS_TYPE_ARRAY,
+                                     DBUS_TYPE_STRING_AS_STRING, &invalidated);
+    dbus_message_iter_close_container(&out, &invalidated);
+    dbus_connection_send(m_connection.get(), signal.get(), nullptr);
+    dbus_connection_flush(m_connection.get());
+  }
+
   void setInitialPaired(bool paired) {
     std::lock_guard lock{m_mutex};
 
     m_initialPaired = paired;
+  }
+
+  void setServicesResolved(bool resolved) {
+    std::lock_guard lock{m_mutex};
+
+    m_servicesResolved = resolved;
+  }
+
+  void resolveServicesOnConnect() {
+    std::lock_guard lock{m_mutex};
+
+    m_resolveServicesOnConnect = true;
   }
 
   void setPairFailure(bool failure) {
@@ -294,6 +533,24 @@ public:
 
     m_failConnect = connectFailure;
     m_failDisconnect = disconnectFailure;
+  }
+
+  void setConnectAlreadyConnected() {
+    std::lock_guard lock{m_mutex};
+
+    m_connectAlreadyConnected = true;
+  }
+
+  void setConnectOperationInProgress() {
+    std::lock_guard lock{m_mutex};
+
+    m_connectOperationInProgress = true;
+  }
+
+  void setConnectInProgressError() {
+    std::lock_guard lock{m_mutex};
+
+    m_connectInProgressError = true;
   }
 
   void setConnectionTransition(bool enabled) {
@@ -331,6 +588,29 @@ public:
 
     return m_snapshotCondition.wait_for(lock, timeout,
                                         [this] { return m_deviceActionHeld; });
+  }
+
+  void holdNextGattStartNotify() {
+    std::lock_guard lock{m_mutex};
+
+    m_holdNextGattStartNotify = true;
+  }
+
+  auto waitForHeldGattStartNotify(std::chrono::milliseconds timeout) -> bool {
+    std::unique_lock lock{m_mutex};
+
+    return m_snapshotCondition.wait_for(
+        lock, timeout, [this] { return m_gattStartNotifyHeld; });
+  }
+
+  void releaseHeldGattStartNotify() {
+    {
+      std::lock_guard lock{m_mutex};
+
+      m_releaseGattStartNotify = true;
+    }
+
+    m_snapshotCondition.notify_all();
   }
 
   void releaseHeldDeviceAction() {
@@ -492,6 +772,8 @@ private:
         m_initialConnected = value;
       } else if (std::string_view{property} == "Paired") {
         m_initialPaired = value;
+      } else if (std::string_view{property} == "ServicesResolved") {
+        m_servicesResolved = value;
       }
     }
 
@@ -559,6 +841,8 @@ private:
     }
 
     DBusMessage *reply{};
+    std::optional<std::pair<std::string, std::vector<std::uint8_t>>>
+        gattValueToEmit;
     if (dbus_message_is_method_call(message,
                                     "org.freedesktop.DBus.ObjectManager",
                                     "GetManagedObjects")) {
@@ -569,6 +853,8 @@ private:
       bool holdSnapshotReply{};
       bool devicePresent{};
       bool initialPaired{};
+      bool includeAncs{};
+      bool servicesResolved{};
 
       {
         std::lock_guard lock{self->m_mutex};
@@ -577,6 +863,8 @@ private:
         topologyMode = self->m_topologyMode;
         devicePresent = self->m_devicePresent;
         initialPaired = self->m_initialPaired;
+        includeAncs = self->m_includeAncs;
+        servicesResolved = self->m_servicesResolved;
         releaseNameDuringSnapshot =
             std::exchange(self->m_releaseNameDuringSnapshot, false);
         emitDeviceDuringSnapshot =
@@ -612,10 +900,141 @@ private:
         reply = failManagedObjects
                     ? dbus_message_new_error(message, DBUS_ERROR_FAILED,
                                              "injected snapshot failure")
-                    : makeManagedObjectsReply(message, self->m_deviceNameMode,
-                                              topologyMode,
-                                              self->m_initialConnected,
-                                              devicePresent, initialPaired);
+                    : makeManagedObjectsReply(
+                          message, self->m_deviceNameMode, topologyMode,
+                          self->m_initialConnected, devicePresent,
+                          initialPaired, includeAncs, servicesResolved);
+      }
+    } else if (dbus_message_is_method_call(
+                   message, "org.freedesktop.DBus.Properties", "Get")) {
+      DBusMessageIter arguments;
+      const char *interface{};
+      const char *property{};
+      if (dbus_message_iter_init(message, &arguments) &&
+          dbus_message_iter_get_arg_type(&arguments) == DBUS_TYPE_STRING) {
+        dbus_message_iter_get_basic(&arguments, &interface);
+        if (dbus_message_iter_next(&arguments) &&
+            dbus_message_iter_get_arg_type(&arguments) == DBUS_TYPE_STRING) {
+          dbus_message_iter_get_basic(&arguments, &property);
+        }
+      }
+
+      if (interface == nullptr || property == nullptr) {
+        reply = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                       "unsupported fake property");
+      } else {
+        bool value{};
+        bool supported{};
+        {
+          std::lock_guard lock{self->m_mutex};
+          if (std::string_view{interface} == "org.bluez.Device1" &&
+              (std::string_view{property} == "Connected" ||
+               std::string_view{property} == "ServicesResolved")) {
+            value = std::string_view{property} == "Connected"
+                        ? self->m_initialConnected
+                        : self->m_servicesResolved;
+            supported = true;
+          } else if (std::string_view{interface} ==
+                         "org.bluez.GattCharacteristic1" &&
+                     std::string_view{property} == "Notifying" &&
+                     (std::string_view{dbus_message_get_path(message)} ==
+                          kNotificationSourcePath ||
+                      std::string_view{dbus_message_get_path(message)} ==
+                          kDataSourcePath)) {
+            value = self->m_gattNotifying;
+            supported = true;
+          }
+        }
+
+        if (!supported) {
+          reply = dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                         "unsupported fake property");
+        } else {
+          reply = dbus_message_new_method_return(message);
+          DBusMessageIter out;
+          DBusMessageIter variant;
+          const dbus_bool_t encoded = value ? TRUE : FALSE;
+          dbus_message_iter_init_append(reply, &out);
+          dbus_message_iter_open_container(
+              &out, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &variant);
+          dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &encoded);
+          dbus_message_iter_close_container(&out, &variant);
+        }
+      }
+    } else if (dbus_message_is_method_call(
+                   message, "org.bluez.GattCharacteristic1", "StartNotify")) {
+      const std::string path{dbus_message_get_path(message)};
+      bool emitInitialAncsNotification{};
+      {
+        std::unique_lock lock{self->m_mutex};
+        ++self->m_gattStartNotifyCount;
+        emitInitialAncsNotification = self->m_emitInitialAncsNotification;
+        self->m_gattNotifying = true;
+        if (std::exchange(self->m_holdNextGattStartNotify, false)) {
+          self->m_gattStartNotifyHeld = true;
+          self->m_snapshotCondition.notify_all();
+          self->m_snapshotCondition.wait(lock, [self] {
+            return self->m_releaseGattStartNotify || self->m_stopping;
+          });
+          self->m_gattStartNotifyHeld = false;
+          self->m_releaseGattStartNotify = false;
+        }
+      }
+
+      reply = dbus_message_new_method_return(message);
+      if (path == kNotificationSourcePath && emitInitialAncsNotification) {
+        gattValueToEmit = {path, makeAncsNotificationSourceValue(0x12345678)};
+      }
+    } else if (dbus_message_is_method_call(
+                   message, "org.bluez.GattCharacteristic1", "StopNotify")) {
+      {
+        std::lock_guard lock{self->m_mutex};
+        ++self->m_gattStopNotifyCount;
+        self->m_gattNotifying =
+            self->m_gattStopNotifyCount < self->m_gattStartNotifyCount;
+      }
+
+      reply = dbus_message_new_method_return(message);
+    } else if (dbus_message_is_method_call(
+                   message, "org.bluez.GattCharacteristic1", "WriteValue")) {
+      DBusMessageIter arguments;
+      DBusMessageIter bytes;
+      std::vector<std::uint8_t> request;
+      if (dbus_message_iter_init(message, &arguments) &&
+          dbus_message_iter_get_arg_type(&arguments) == DBUS_TYPE_ARRAY) {
+        dbus_message_iter_recurse(&arguments, &bytes);
+        if (dbus_message_iter_get_arg_type(&bytes) == DBUS_TYPE_BYTE) {
+          std::uint8_t *data{};
+          int length{};
+          dbus_message_iter_get_fixed_array(&bytes, &data, &length);
+          if (data != nullptr && length > 0) {
+            request.assign(data, data + length);
+          }
+        }
+      }
+
+      {
+        std::lock_guard lock{self->m_mutex};
+        ++self->m_gattWriteCount;
+      }
+
+      reply = dbus_message_new_method_return(message);
+      if (request.size() >= 5 && request[0] == 0) {
+        const auto uid = static_cast<std::uint32_t>(request[1]) |
+                         (static_cast<std::uint32_t>(request[2]) << 8U) |
+                         (static_cast<std::uint32_t>(request[3]) << 16U) |
+                         (static_cast<std::uint32_t>(request[4]) << 24U);
+        std::string title;
+        std::string notificationMessage;
+        {
+          std::lock_guard lock{self->m_mutex};
+          title = self->m_ancsTitle;
+          notificationMessage = self->m_ancsMessage;
+        }
+
+        gattValueToEmit = {
+            kDataSourcePath,
+            makeAncsDataSourceResponse(uid, title, notificationMessage)};
       }
     } else if (dbus_message_is_method_call(message, "org.bluez.Adapter1",
                                            "SetDiscoveryFilter")) {
@@ -669,11 +1088,15 @@ private:
     } else if (dbus_message_is_method_call(message, "org.bluez.Device1",
                                            "Connect")) {
       bool failConnect{};
+      bool connectAlreadyConnected{};
+      bool connectOperationInProgress{};
+      bool connectInProgressError{};
       bool transition{};
       bool removeDevice{};
       bool releaseName{};
       bool restartName{};
       bool holdAction{};
+      bool resolveServices{};
       const std::string devicePath{dbus_message_get_path(message)};
 
       {
@@ -683,11 +1106,15 @@ private:
         self->m_connectPath = devicePath;
         self->m_connectSequence = ++self->m_operationSequence;
         failConnect = self->m_failConnect;
+        connectAlreadyConnected = self->m_connectAlreadyConnected;
+        connectOperationInProgress = self->m_connectOperationInProgress;
+        connectInProgressError = self->m_connectInProgressError;
         transition = self->m_transitionConnection;
         removeDevice = std::exchange(self->m_removeDeviceOnNextAction, false);
         releaseName = std::exchange(self->m_releaseNameOnNextAction, false);
         restartName = std::exchange(self->m_restartNameOnNextAction, false);
         holdAction = std::exchange(self->m_holdNextDeviceAction, false);
+        resolveServices = self->m_resolveServicesOnConnect;
       }
 
       if (holdAction) {
@@ -706,6 +1133,7 @@ private:
 
           self->m_devicePresent = false;
         }
+
         self->emitDeviceObject(false, devicePath);
       }
 
@@ -736,13 +1164,33 @@ private:
         }
       }
 
-      reply = failConnect
-                  ? dbus_message_new_error(message, DBUS_ERROR_ACCESS_DENIED,
-                                           "injected connect policy failure")
-                  : dbus_message_new_method_return(message);
-      if (!failConnect && transition && !removeDevice && !releaseName) {
+      reply =
+          failConnect
+              ? dbus_message_new_error(message, DBUS_ERROR_ACCESS_DENIED,
+                                       "injected connect policy failure")
+          : connectAlreadyConnected
+              ? dbus_message_new_error(message,
+                                       "org.bluez.Error.AlreadyConnected",
+                                       "device is already connected")
+          : connectOperationInProgress
+              ? dbus_message_new_error(message, "org.bluez.Error.Failed",
+                                       "Operation already in progress")
+          : connectInProgressError
+              ? dbus_message_new_error(message, "org.bluez.Error.InProgress",
+                                       "Operation already in progress")
+              : dbus_message_new_method_return(message);
+      if (connectOperationInProgress && resolveServices) {
+        self->emitBooleanProperty(devicePath, "org.bluez.Device1",
+                                  "ServicesResolved", true);
+      } else if (!failConnect && !connectAlreadyConnected &&
+                 !connectOperationInProgress && transition && !removeDevice &&
+                 !releaseName) {
         self->emitBooleanProperty(devicePath, "org.bluez.Device1", "Connected",
                                   true);
+        if (resolveServices) {
+          self->emitBooleanProperty(devicePath, "org.bluez.Device1",
+                                    "ServicesResolved", true);
+        }
       }
     } else if (dbus_message_is_method_call(message, "org.bluez.Device1",
                                            "Disconnect")) {
@@ -848,6 +1296,10 @@ private:
       dbus_connection_flush(connection);
     }
 
+    if (gattValueToEmit) {
+      self->emitGattValue(gattValueToEmit->first, gattValueToEmit->second);
+    }
+
     return DBUS_HANDLER_RESULT_HANDLED;
   }
 
@@ -891,12 +1343,19 @@ private:
     while (!m_stopping) {
       bool releaseNameRequested{};
       bool acquireNameRequested{};
+      std::vector<std::pair<std::string, std::vector<std::uint8_t>>>
+          pendingGattValues;
 
       {
         std::lock_guard lock{m_mutex};
 
         releaseNameRequested = std::exchange(m_releaseNameRequested, false);
         acquireNameRequested = std::exchange(m_acquireNameRequested, false);
+        pendingGattValues.swap(m_pendingGattValues);
+      }
+
+      for (const auto &[path, value] : pendingGattValues) {
+        sendGattValue(path, value);
       }
 
       if (releaseNameRequested || acquireNameRequested) {
@@ -932,17 +1391,35 @@ private:
   int m_connectCount{};
   int m_disconnectCount{};
   int m_pairCount{};
+  int m_gattStartNotifyCount{};
+  int m_gattStopNotifyCount{};
+  bool m_gattNotifying{};
+  int m_gattWriteCount{};
   int m_operationSequence{};
   int m_stopSequence{};
   int m_connectSequence{};
   std::string m_filterSignature;
+  std::string m_ancsTitle{"Private title"};
+  std::string m_ancsMessage{"Private body"};
+  std::vector<std::pair<std::string, std::vector<std::uint8_t>>>
+      m_pendingGattValues;
   bool m_filterIsUnrestrictedAuto{};
   int m_deviceNameMode{};
   int m_topologyMode{};
   bool m_initialConnected{};
+  bool m_servicesResolved{true};
+  bool m_resolveServicesOnConnect{};
+  bool m_includeAncs{};
+  bool m_emitInitialAncsNotification{true};
+  bool m_holdNextGattStartNotify{};
+  bool m_gattStartNotifyHeld{};
+  bool m_releaseGattStartNotify{};
   bool m_initialPaired{true};
   bool m_devicePresent{true};
   bool m_failConnect{};
+  bool m_connectAlreadyConnected{};
+  bool m_connectOperationInProgress{};
+  bool m_connectInProgressError{};
   bool m_failDisconnect{};
   bool m_failPair{};
   bool m_transitionConnection{true};
@@ -983,17 +1460,23 @@ auto makeClientConfig(const std::string &address)
 struct CliProcess {
   pid_t pid{-1};
   int outputFd{-1};
+  int errorFd{-1};
   int status{};
   bool exited{};
   std::string output;
+  std::string stdoutOutput;
+  std::string stderrOutput;
 
   CliProcess() = default;
   CliProcess(const CliProcess &) = delete;
   auto operator=(const CliProcess &) -> CliProcess & = delete;
   CliProcess(CliProcess &&other) noexcept
       : pid{std::exchange(other.pid, -1)},
-        outputFd{std::exchange(other.outputFd, -1)}, status{other.status},
-        exited{other.exited}, output{std::move(other.output)} {}
+        outputFd{std::exchange(other.outputFd, -1)},
+        errorFd{std::exchange(other.errorFd, -1)}, status{other.status},
+        exited{other.exited}, output{std::move(other.output)},
+        stdoutOutput{std::move(other.stdoutOutput)},
+        stderrOutput{std::move(other.stderrOutput)} {}
   ~CliProcess() {
     if (pid > 0 && !exited) {
       (void)kill(pid, SIGKILL);
@@ -1003,29 +1486,86 @@ struct CliProcess {
     if (outputFd >= 0) {
       close(outputFd);
     }
+
+    if (errorFd >= 0) {
+      close(errorFd);
+    }
   }
 };
 
-auto startCli(const std::string &busAddress,
-              const std::vector<std::string> &arguments) -> CliProcess {
+auto startCli(
+    const std::string &busAddress, const std::vector<std::string> &arguments,
+    const std::string &executable = DMN_BLUEZ_CLI_EXECUTABLE,
+    const std::string &busAddressEnvironment = "DMN_BLUEZ_TEST_BUS_ADDRESS",
+    bool separateOutput = false, int outputPipeCapacity = 0) -> CliProcess {
   int descriptors[2]{};
   if (pipe(descriptors) != 0) {
     throw std::runtime_error("unable to create CLI output pipe");
+  }
+
+  int errorDescriptors[2]{-1, -1};
+  if (separateOutput && pipe(errorDescriptors) != 0) {
+    close(descriptors[0]);
+    close(descriptors[1]);
+
+    throw std::runtime_error("unable to create CLI error pipe");
+  }
+
+  if (outputPipeCapacity > 0) {
+    const auto capacity =
+        fcntl(descriptors[0], F_SETPIPE_SZ, outputPipeCapacity);
+    if (capacity < 0) {
+      close(descriptors[0]);
+      close(descriptors[1]);
+      if (separateOutput) {
+        close(errorDescriptors[0]);
+        close(errorDescriptors[1]);
+      }
+
+      throw std::system_error(errno, std::generic_category(),
+                              "unable to set CLI output pipe capacity");
+    }
+
+    std::string prefill(static_cast<std::size_t>(capacity), 'x');
+    const auto written = write(descriptors[1], prefill.data(), prefill.size());
+    if (written != static_cast<ssize_t>(prefill.size())) {
+      const auto error = written < 0 ? errno : EIO;
+      close(descriptors[0]);
+      close(descriptors[1]);
+      if (separateOutput) {
+        close(errorDescriptors[0]);
+        close(errorDescriptors[1]);
+      }
+
+      throw std::system_error(error, std::generic_category(),
+                              "unable to prefill CLI output pipe");
+    }
   }
 
   posix_spawn_file_actions_t actions;
   if (posix_spawn_file_actions_init(&actions) != 0) {
     close(descriptors[0]);
     close(descriptors[1]);
+    if (separateOutput) {
+      close(errorDescriptors[0]);
+      close(errorDescriptors[1]);
+    }
+
     throw std::runtime_error("unable to initialize CLI spawn actions");
   }
 
   posix_spawn_file_actions_adddup2(&actions, descriptors[1], STDOUT_FILENO);
-  posix_spawn_file_actions_adddup2(&actions, descriptors[1], STDERR_FILENO);
+  posix_spawn_file_actions_adddup2(
+      &actions, separateOutput ? errorDescriptors[1] : descriptors[1],
+      STDERR_FILENO);
   posix_spawn_file_actions_addclose(&actions, descriptors[0]);
   posix_spawn_file_actions_addclose(&actions, descriptors[1]);
+  if (separateOutput) {
+    posix_spawn_file_actions_addclose(&actions, errorDescriptors[0]);
+    posix_spawn_file_actions_addclose(&actions, errorDescriptors[1]);
+  }
 
-  std::vector<std::string> argumentStorage{DMN_BLUEZ_CLI_EXECUTABLE};
+  std::vector<std::string> argumentStorage{executable};
   argumentStorage.insert(argumentStorage.end(), arguments.begin(),
                          arguments.end());
   std::vector<char *> argumentVector;
@@ -1036,16 +1576,22 @@ auto startCli(const std::string &busAddress,
   argumentVector.push_back(nullptr);
 
   std::vector<std::string> environmentStorage;
-  constexpr std::string_view testBusPrefix{"DMN_BLUEZ_TEST_BUS_ADDRESS="};
+  const auto testBusPrefix = busAddressEnvironment.empty()
+                                 ? std::string{}
+                                 : busAddressEnvironment + '=';
   for (char **entry = environ; entry != nullptr && *entry != nullptr; ++entry) {
-    if (std::string_view{*entry}.starts_with(testBusPrefix)) {
+    if (!testBusPrefix.empty() &&
+        std::string_view{*entry}.starts_with(testBusPrefix)) {
       continue;
     }
 
     environmentStorage.emplace_back(*entry);
   }
 
-  environmentStorage.push_back(std::string{testBusPrefix} + busAddress);
+  if (!testBusPrefix.empty()) {
+    environmentStorage.push_back(std::string{testBusPrefix} + busAddress);
+  }
+
   std::vector<char *> environmentVector;
   for (auto &entry : environmentStorage) {
     environmentVector.push_back(entry.data());
@@ -1055,24 +1601,42 @@ auto startCli(const std::string &busAddress,
 
   CliProcess process;
   const int spawnResult =
-      posix_spawn(&process.pid, DMN_BLUEZ_CLI_EXECUTABLE, &actions, nullptr,
+      posix_spawn(&process.pid, executable.c_str(), &actions, nullptr,
                   argumentVector.data(), environmentVector.data());
   posix_spawn_file_actions_destroy(&actions);
   close(descriptors[1]);
+  if (separateOutput) {
+    close(errorDescriptors[1]);
+  }
+
   if (spawnResult != 0) {
     close(descriptors[0]);
+    if (separateOutput) {
+      close(errorDescriptors[0]);
+    }
+
     throw std::system_error(spawnResult, std::generic_category(),
                             "unable to start discovery CLI test process");
   }
 
   process.outputFd = descriptors[0];
-  if (fcntl(process.outputFd, F_SETFL,
-            fcntl(process.outputFd, F_GETFL) | O_NONBLOCK) < 0) {
+  process.errorFd = separateOutput ? errorDescriptors[0] : -1;
+  const auto setNonBlocking = [](int fd) {
+    return fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) >= 0;
+  };
+  if (!setNonBlocking(process.outputFd) ||
+      (process.errorFd >= 0 && !setNonBlocking(process.errorFd))) {
     (void)kill(process.pid, SIGKILL);
     (void)waitpid(process.pid, nullptr, 0);
     close(process.outputFd);
+    if (process.errorFd >= 0) {
+      close(process.errorFd);
+    }
+
     process.pid = -1;
     process.outputFd = -1;
+    process.errorFd = -1;
+
     throw std::runtime_error("unable to configure CLI output pipe");
   }
 
@@ -1081,10 +1645,44 @@ auto startCli(const std::string &busAddress,
 
 void collectCliOutput(CliProcess &process) {
   char buffer[4096];
+  const auto collect = [&](int fd, std::string &stream) {
+    if (fd < 0) {
+      return;
+    }
+    while (true) {
+      const auto count = read(fd, buffer, sizeof(buffer));
+      if (count > 0) {
+        const auto size = static_cast<std::size_t>(count);
+        stream.append(buffer, size);
+        process.output.append(buffer, size);
+        continue;
+      }
+
+      if (count < 0 && errno == EINTR) {
+        continue;
+      }
+
+      return;
+    }
+  };
+  collect(process.outputFd, process.stdoutOutput);
+  if (process.errorFd >= 0) {
+    collect(process.errorFd, process.stderrOutput);
+  }
+}
+
+void collectCliStderr(CliProcess &process) {
+  if (process.errorFd < 0) {
+    return;
+  }
+
+  char buffer[4096];
   while (true) {
-    const auto count = read(process.outputFd, buffer, sizeof(buffer));
+    const auto count = read(process.errorFd, buffer, sizeof(buffer));
     if (count > 0) {
-      process.output.append(buffer, static_cast<std::size_t>(count));
+      const auto size = static_cast<std::size_t>(count);
+      process.stderrOutput.append(buffer, size);
+      process.output.append(buffer, size);
       continue;
     }
 
@@ -1093,6 +1691,24 @@ void collectCliOutput(CliProcess &process) {
     }
 
     return;
+  }
+}
+
+void waitForCliOutput(CliProcess &process, std::chrono::milliseconds timeout) {
+  pollfd descriptors[2]{};
+  nfds_t count{};
+  if (process.outputFd >= 0) {
+    descriptors[count++] = {process.outputFd, POLLIN | POLLHUP, 0};
+  }
+
+  if (process.errorFd >= 0) {
+    descriptors[count++] = {process.errorFd, POLLIN | POLLHUP, 0};
+  }
+
+  if (count > 0) {
+    (void)poll(descriptors, count, static_cast<int>(timeout.count()));
+  } else {
+    std::this_thread::sleep_for(timeout);
   }
 }
 
@@ -1105,8 +1721,7 @@ auto waitForCliText(CliProcess &process, std::string_view expected,
       return true;
     }
 
-    pollfd descriptor{process.outputFd, POLLIN | POLLHUP, 0};
-    (void)poll(&descriptor, 1, 20);
+    waitForCliOutput(process, 20ms);
     const auto waited = waitpid(process.pid, &process.status, WNOHANG);
     if (waited == process.pid) {
       process.exited = true;
@@ -1119,6 +1734,38 @@ auto waitForCliText(CliProcess &process, std::string_view expected,
   collectCliOutput(process);
 
   return process.output.find(expected) != std::string::npos;
+}
+
+auto waitForCliStderrText(CliProcess &process, std::string_view expected,
+                          std::chrono::milliseconds timeout) -> bool {
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  while (std::chrono::steady_clock::now() < deadline) {
+    collectCliStderr(process);
+    if (process.stderrOutput.find(expected) != std::string::npos) {
+      return true;
+    }
+
+    if (!process.exited) {
+      const auto waited = waitpid(process.pid, &process.status, WNOHANG);
+      if (waited == process.pid) {
+        process.exited = true;
+        collectCliStderr(process);
+
+        return process.stderrOutput.find(expected) != std::string::npos;
+      }
+    }
+
+    if (process.errorFd >= 0) {
+      pollfd descriptor{process.errorFd, POLLIN | POLLHUP, 0};
+      (void)poll(&descriptor, 1, 20);
+    } else {
+      std::this_thread::sleep_for(20ms);
+    }
+  }
+
+  collectCliStderr(process);
+
+  return process.stderrOutput.find(expected) != std::string::npos;
 }
 
 auto waitForCliExit(CliProcess &process,
@@ -1139,8 +1786,7 @@ auto waitForCliExit(CliProcess &process,
       return true;
     }
 
-    pollfd descriptor{process.outputFd, POLLIN | POLLHUP, 0};
-    (void)poll(&descriptor, 1, 20);
+    waitForCliOutput(process, 20ms);
   }
 
   return false;
@@ -1235,7 +1881,7 @@ TEST(DmnBluezCli, SnapshotPrintsPortableCsvAndDoesNotStartDiscovery) {
   EXPECT_NE(process.output.find(
                 "inventory,Test adapter,B8:F7:75:BF:F3:C3,/org/bluez/hci0,"
                 "true,AA:BB:CC:DD:EE:FF,\"Headset, \"\"One\"\"\","
-                "\"Headset, \"\"One\"\"\",,true,false,,-47,"
+                "\"Headset, \"\"One\"\"\",,true,false,true,-47,"
                 "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF,false"),
             std::string::npos);
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
@@ -1387,6 +2033,431 @@ TEST(DmnBluezCli, PairTimesOutWithoutObservedPairedState) {
   EXPECT_EQ(process.output.find("paired,Test adapter"), std::string::npos);
   EXPECT_EQ(service.pairCount(), 1);
 }
+
+#if defined(DMN_ENABLE_ANCS)
+TEST(DmnAncsBluezMonitorTest, OwnsDeviceSetupAndDeliversAncsEvents) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  std::mutex eventMutex;
+  std::condition_variable eventCondition;
+  std::vector<dmn::Dmn_AncsEvent> events;
+  ASSERT_TRUE(monitor.setEventHandler([&](const auto &event) {
+    {
+      std::lock_guard lock{eventMutex};
+      events.push_back(event);
+    }
+
+    eventCondition.notify_all();
+  }));
+
+  dmn::Dmn_AncsMonitorConfig config;
+  config.ancs.service_resolution_timeout = 1s;
+  std::vector<dmn::Dmn_AncsMonitorProgress> progress;
+  config.progress_handler = [&](const auto phase) {
+    progress.push_back(phase);
+  };
+  const auto started = monitor.start("Known headset", config);
+  ASSERT_TRUE(started) << started.error().message;
+  EXPECT_EQ(started->device.object_path, kDevicePath);
+  EXPECT_TRUE(started->requested_remaining_profiles);
+  EXPECT_EQ(progress, (std::vector<dmn::Dmn_AncsMonitorProgress>{
+                          dmn::Dmn_AncsMonitorProgress::Inventory,
+                          dmn::Dmn_AncsMonitorProgress::Connection,
+                          dmn::Dmn_AncsMonitorProgress::AncsStartup}));
+
+  {
+    std::unique_lock lock{eventMutex};
+    ASSERT_TRUE(eventCondition.wait_for(lock, 2s, [&] {
+      return std::any_of(events.begin(), events.end(), [](const auto &event) {
+        return event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded &&
+               event.notification &&
+               event.notification->message ==
+                   std::optional<std::string>{"Private body"};
+      });
+    }));
+  }
+
+  ASSERT_TRUE(monitor.stop());
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+}
+
+TEST(DmnAncsBluezMonitorTest, RejectsKnownDeviceOnUnpoweredAdapter) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 3, true};
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  const auto started = monitor.start("Known headset");
+
+  ASSERT_FALSE(started);
+  EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Inventory);
+  EXPECT_EQ(started.error().message,
+            "selected Bluetooth adapter is not powered");
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+}
+
+#endif
+
+#if defined(DMN_BLUETOOTH_CLI_EXECUTABLE)
+TEST(DmnBluetoothMonitorCli, PairsOnlySelectedDeviceBeforeConnectFailure) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 2};
+  service.setInitialPaired(false);
+  service.setDeviceActionFailures(true, false);
+  auto process =
+      startCli(bus.address(),
+               {"monitor", "known headset", "--adapter", "B8:F7:75:BF:F3:C3",
+                "--pair-timeout", "1", "--connect-timeout", "1"},
+               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 5);
+  EXPECT_NE(process.output.find("device connection failed"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 1);
+  EXPECT_EQ(service.pairPath(), kDevicePath);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, RejectsConnectedDeviceWithoutAncsService) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 6);
+  EXPECT_NE(process.output.find(
+                "ANCS service was not found in the resolved GATT services"),
+            std::string::npos);
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, RejectsAmbiguousDeviceNameWithoutActions) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 2};
+  auto process =
+      startCli(bus.address(), {"monitor", "Known headset"},
+               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 4);
+  EXPECT_NE(process.output.find("device selector is ambiguous"),
+            std::string::npos);
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli,
+     ConnectsRemainingProfilesWhenConnectedButServicesUnresolved) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.setServicesResolved(false);
+  service.resolveServicesOnConnect();
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+}
+
+TEST(DmnBluetoothMonitorCli,
+     RequestsGattBearerWhenConnectedWithServicesAlreadyResolved) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  auto process =
+      startCli(bus.address(),
+               {"monitor", "Known headset", "--services-timeout", "1",
+                "--unlimited", "--ignore-existing"},
+               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_NE(process.output.find("requesting BlueZ to connect the GATT-capable "
+                                "bearer"),
+            std::string::npos);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+}
+
+TEST(DmnBluetoothMonitorCli,
+     WaitsForServicesWhenConnectReportsOperationAlreadyInProgress) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.setServicesResolved(false);
+  service.resolveServicesOnConnect();
+  service.setConnectOperationInProgress();
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+  EXPECT_EQ(service.gattWriteCount(), 1);
+}
+
+TEST(DmnBluetoothMonitorCli, StopsOnSignalAndCleansUp) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_NE(process.output.find("notification added uid=0x12345678"),
+            std::string::npos);
+  EXPECT_NE(process.output.find("app_identifier: org.example.mail"),
+            std::string::npos);
+  EXPECT_NE(process.output.find("title: Private title"), std::string::npos);
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+  EXPECT_EQ(service.gattWriteCount(), 1);
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, DoesNotLogContentToStderr) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  EXPECT_NE(process.stdoutOutput.find("title: Private title"),
+            std::string::npos);
+  EXPECT_NE(process.stdoutOutput.find("message: Private body"),
+            std::string::npos);
+  EXPECT_EQ(process.stderrOutput.find("Private title"), std::string::npos);
+  EXPECT_EQ(process.stderrOutput.find("Private body"), std::string::npos);
+  EXPECT_NE(process.stderrOutput.find("monitor ready"), std::string::npos);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+}
+
+TEST(DmnBluetoothMonitorCli, EscapesNotificationTerminalControls) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  std::string title{"Title\nInjected: false"};
+  title.push_back('\x1b');
+  title += "[31m";
+  title += "\xE2\x80\xAE";
+  service.setAncsNotificationText(std::move(title), "Private body");
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+
+  ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  EXPECT_NE(process.stdoutOutput.find(
+                "title: Title\\nInjected: false\\x1b[31m\\u{202E}"),
+            std::string::npos);
+  EXPECT_EQ(process.stdoutOutput.find('\x1b'), std::string::npos);
+  EXPECT_EQ(process.stdoutOutput.find("Injected: false\n"), std::string::npos);
+}
+
+TEST(DmnBluetoothMonitorCli, ExitsWhenStdoutCloses) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.setInitialAncsNotification(false);
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+
+  ASSERT_TRUE(waitForCliText(process, "monitor ready", 10s)) << process.output;
+  close(process.outputFd);
+  process.outputFd = -1;
+  service.emitGattValue(kNotificationSourcePath,
+                        makeAncsNotificationSourceValue(0x12345678));
+  ASSERT_TRUE(waitForCliText(
+      process, "monitor failed: failed to write notification output", 10s))
+      << process.output;
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_NE(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, PrintsRemovedEventsWithoutAttributeRequests) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.setInitialAncsNotification(false);
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+
+  ASSERT_TRUE(waitForCliStderrText(process, "monitor ready", 10s))
+      << process.output;
+  service.emitGattValue(kNotificationSourcePath,
+                        makeAncsNotificationSourceValue(1, 2));
+  ASSERT_TRUE(
+      waitForCliText(process, "notification removed uid=0x00000001", 5s))
+      << process.output;
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+  EXPECT_EQ(service.gattWriteCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, BoundsOutputQueueWhenStdoutIsBackpressured) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.setInitialAncsNotification(false);
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true,
+      4096);
+
+  ASSERT_TRUE(waitForCliStderrText(process, "monitor ready", 10s))
+      << process.output;
+  int queuedBytes{};
+  ASSERT_EQ(ioctl(process.outputFd, FIONREAD, &queuedBytes), 0);
+  EXPECT_EQ(queuedBytes, 4096);
+  for (std::uint32_t uid = 1; uid <= 280; ++uid) {
+    service.emitGattValue(kNotificationSourcePath,
+                          makeAncsNotificationSourceValue(uid, 2));
+    std::this_thread::sleep_for(25ms);
+  }
+
+  std::this_thread::sleep_for(1s);
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_NE(WEXITSTATUS(process.status), 0);
+  EXPECT_NE(process.stderrOutput.find(
+                "monitor output queue exceeded its 256-event limit"),
+            std::string::npos);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluetoothMonitorCli, InterruptsDuringStartupAndCleansUp) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+  service.holdNextGattStartNotify();
+  auto process = startCli(
+      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+
+  ASSERT_TRUE(waitForCliText(process, "starting ANCS session", 10s))
+      << process.output;
+  ASSERT_TRUE(service.waitForHeldGattStartNotify(5s));
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  service.releaseHeldGattStartNotify();
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+}
+
+#endif
+
+#if defined(DMN_ANCS_HARDWARE_TESTS)
+TEST(DmnBluetoothMonitorHardware, StartsAncsThroughProductionCli) {
+  auto process =
+      startCli({},
+               {"monitor", DMN_ANCS_HARDWARE_DEVICE, "--discovery-timeout",
+                "10", "--pair-timeout", "20", "--connect-timeout", "20",
+                "--services-timeout", "60"},
+               DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE, "", true);
+
+  if (!waitForCliStderrText(process, "monitor ready", 90s)) {
+    if (!process.exited) {
+      (void)kill(process.pid, SIGINT);
+      (void)waitForCliExit(process, 10s);
+    }
+
+    FAIL() << "production CLI did not establish ANCS readiness for "
+           << DMN_ANCS_HARDWARE_DEVICE << ": " << process.stderrOutput;
+  }
+
+  ASSERT_EQ(kill(process.pid, SIGINT), 0);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
+  ASSERT_TRUE(WIFEXITED(process.status));
+  EXPECT_EQ(WEXITSTATUS(process.status), 0) << process.stderrOutput;
+}
+
+#endif
 
 TEST(DmnBluezCli, ConnectCanDiscoverOnlyTheSelectedDevice) {
   PrivateBus bus;
@@ -2378,6 +3449,38 @@ TEST(DmnBluezClient, DeviceActionResolvesCurrentObjectPath) {
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.deviceActionPaths(),
             (std::pair{std::string{alternatePath}, std::string{}}));
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezClient, ConnectAvailableProfilesHandlesAlreadyConnected) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.setConnectAlreadyConnected();
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto connected =
+      client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+  ASSERT_TRUE(connected) << connected.error().message;
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
+  EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezClient, ConnectAvailableProfilesAcceptsInProgressResponse) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.setConnectInProgressError();
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto connected =
+      client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+  ASSERT_TRUE(connected) << connected.error().message;
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
   EXPECT_EQ(service.forbiddenCount(), 0);
 }
 

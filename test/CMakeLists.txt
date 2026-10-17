@@ -5,7 +5,6 @@
 ADD_TEST_EXECUTABLE(dmn
                       # FIXME: the following test needs to be refactored to avoid none-stop running
                       # dmn-test
-                      dmn-test-ancs-parser
                       dmn-test-async
                       dmn-test-async-2
                       dmn-test-async-2-queue-lf
@@ -94,6 +93,15 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-util
 )
 
+if (ENABLE_ANCS)
+  ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-ancs-client
+                        dmn-test-ancs-parser
+  )
+  target_link_libraries(dmn-test-ancs-client PRIVATE dmn-ancs)
+  target_link_libraries(dmn-test-ancs-parser PRIVATE dmn-ancs)
+endif()
+
 if (ENABLE_BLUEZ)
   target_link_libraries(dmn-test-umbrella PRIVATE dmn-bluez)
 endif()
@@ -169,6 +177,61 @@ if (ENABLE_BLUEZ)
   )
 
   add_dependencies(dmn-test-bluez-device-list dmn-bluez-discovery-test)
+endif()
+
+if (ENABLE_ANCS AND ENABLE_BLUEZ)
+  target_link_libraries(dmn-test-bluez-device-list
+                        PRIVATE dmn-ancs-bluez-monitor
+  )
+  target_compile_definitions(dmn-test-bluez-device-list
+                               PRIVATE
+                               DMN_BLUETOOTH_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-test>"
+  )
+  add_dependencies(dmn-test-bluez-device-list dmn-bluetooth-test)
+  add_test(NAME dmn-bluetooth-monitor-private-bus
+             COMMAND dmn-test-bluez-device-list
+                     --gtest_filter=DmnBluetoothMonitorCli.*:DmnAncsBluezMonitorTest.*
+  )
+  set_tests_properties(dmn-bluetooth-monitor-private-bus
+                         PROPERTIES LABELS "dmn"
+  )
+
+  add_test(NAME dmn-bluetooth-help
+             COMMAND dmn-bluetooth --help
+  )
+  add_test(NAME dmn-bluetooth-monitor-help
+             COMMAND dmn-bluetooth monitor --help
+  )
+  add_test(NAME dmn-bluetooth-monitor-rejects-missing-device
+             COMMAND dmn-bluetooth monitor
+  )
+  add_test(NAME dmn-bluetooth-monitor-rejects-invalid-timeout
+             COMMAND dmn-bluetooth monitor "iPhone Old"
+                     --discovery-timeout 0
+  )
+  set_tests_properties(dmn-bluetooth-help
+                       dmn-bluetooth-monitor-help PROPERTIES LABELS "dmn")
+  set_tests_properties(dmn-bluetooth-monitor-rejects-missing-device
+                       dmn-bluetooth-monitor-rejects-invalid-timeout
+                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+
+  if (ENABLE_ANCS_HARDWARE_TESTS)
+    target_compile_definitions(dmn-test-bluez-device-list
+                                PRIVATE
+                                DMN_ANCS_HARDWARE_TESTS=1
+                                DMN_ANCS_HARDWARE_DEVICE="${DMN_ANCS_HARDWARE_DEVICE}"
+                                DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth>"
+    )
+    add_test(NAME dmn-ancs-iphone-hardware
+               COMMAND dmn-test-bluez-device-list
+                       --gtest_filter=DmnBluetoothMonitorHardware.*
+    )
+    set_tests_properties(dmn-ancs-iphone-hardware
+                          PROPERTIES LABELS "dmn;hardware"
+                                     TIMEOUT 120
+    )
+  endif()
 endif()
 
 # Keep fault-injection targets out of builds that do not enable libfiu.

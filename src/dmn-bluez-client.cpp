@@ -118,7 +118,7 @@ auto normalizedAddress(std::string_view address) -> std::string {
 
 class Dmn_BluezClient::Impl {
 public:
-  enum class DeviceAction { Connect, Disconnect, Pair };
+  enum class DeviceAction { Connect, ConnectProfiles, Disconnect, Pair };
 
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_dbus(makeDbusConfig(config)) {
@@ -509,7 +509,7 @@ public:
 
       if (action == DeviceAction::Pair) {
         alreadyInRequestedState = device.paired && *device.paired;
-      } else {
+      } else if (action != DeviceAction::ConnectProfiles) {
         const bool requestedConnected = action == DeviceAction::Connect;
         alreadyInRequestedState =
             device.connected && *device.connected == requestedConnected;
@@ -522,11 +522,24 @@ public:
 
     const auto result =
         m_dbus.call(std::string{kBluez}, devicePath, std::string{kDevice},
-                    action == DeviceAction::Connect      ? "Connect"
+                    action == DeviceAction::Connect ||
+                            action == DeviceAction::ConnectProfiles
+                        ? "Connect"
                     : action == DeviceAction::Disconnect ? "Disconnect"
                                                          : "Pair",
                     {}, timeout);
     if (!result) {
+      const auto &error = result.error();
+      const bool connectRequestAlreadyActive =
+          error.remote_name == "org.bluez.Error.InProgress" ||
+          (error.remote_name == "org.bluez.Error.Failed" &&
+           error.message == "Operation already in progress");
+      if (action == DeviceAction::ConnectProfiles &&
+          (error.remote_name == "org.bluez.Error.AlreadyConnected" ||
+           connectRequestAlreadyActive)) {
+        return {};
+      }
+
       return std::unexpected(result.error());
     }
 
@@ -1237,6 +1250,14 @@ auto Dmn_BluezClient::connectDevice(
     std::chrono::milliseconds timeout) -> Dmn_BluezResult {
   return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
                               Impl::DeviceAction::Connect);
+}
+
+auto Dmn_BluezClient::connectAvailableProfiles(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::ConnectProfiles);
 }
 
 auto Dmn_BluezClient::pairDevice(

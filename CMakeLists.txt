@@ -24,10 +24,22 @@ enable_testing()
 # set build options
 option(BUILD_KAFKA_TEST "build with kafka test" OFF)
 option(BUILD_NDEBUG "build without debug" OFF)
-option(ENABLE_BLUEZ "Build optional Linux BlueZ inventory and discovery CLI" OFF)
+option(ENABLE_BLUEZ
+       "Build optional Linux BlueZ inventory, discovery, and ANCS monitor" OFF)
 option(ENABLE_DBUS "Build optional D-Bus signal transport and generic client" OFF)
+option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
+option(ENABLE_ANCS_HARDWARE_TESTS
+       "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
 option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
+set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
+    "Exact BlueZ display name or address used by opt-in ANCS hardware tests")
+
+if (ENABLE_ANCS_HARDWARE_TESTS AND
+    (NOT ENABLE_ANCS OR NOT ENABLE_BLUEZ OR NOT ENABLE_DBUS))
+  message(FATAL_ERROR
+          "ENABLE_ANCS_HARDWARE_TESTS=ON requires ENABLE_ANCS=ON, ENABLE_BLUEZ=ON, and ENABLE_DBUS=ON")
+endif()
 
 if (ENABLE_BLUEZ)
   if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
