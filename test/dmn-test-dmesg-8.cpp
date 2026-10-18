@@ -8,9 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <iostream>
-#include <thread>
 
 #include "dmn-dmesg.hpp"
 #include "dmn-proc.hpp"
@@ -50,16 +48,10 @@ int main(int argc, char *argv[]) {
 
     dmn::Dmn_Proc::yield();
 
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    std::cout << "after sleep 3 seconds\n";
-
     dmesg_write_handle->write(dmesgpb1);
     dmesg_write_handle->write(dmesgpb2);
 
     dmesg.waitForEmpty();
-
-    std::cout << "after sleep 5 seconds\n";
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     dmesg.closeHandler(dmesg_write_handle);
   }

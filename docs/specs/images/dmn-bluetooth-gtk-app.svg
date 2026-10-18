@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth GTK app wireframe</title>
-  <desc id="desc">A desktop window with a phone selection sidebar, notification table, and a privacy-safe desktop alert preference panel.</desc>
+  <desc id="desc">Illustrative wide-window layout with phone navigation and a notification feed. Colors are placeholders, not GNOME theme values. At narrow widths the app switches to one navigable view; alert controls are in Preferences, not the feed.</desc>
   <rect width="1280" height="760" fill="#edf1f5"/>
   <text x="40" y="42" font-family="sans-serif" font-size="24" font-weight="700" fill="#17212b">Dmn Bluetooth — standalone GTK app</text>
   <text x="40" y="68" font-family="sans-serif" font-size="14" fill="#536272">Concept wireframe · desktop alerts are optional; the in-app feed is authoritative</text>
@@ -47,9 +47,7 @@
     <text x="418" y="483" font-size="14">Genghis</text><text x="588" y="483" font-size="14">10:30:02</text><text x="748" y="483" font-size="14">Removed</text><text x="858" y="483" font-size="14">Notification removed</text>
   </g>
   <rect x="398" y="548" width="816" height="82" rx="9" fill="#f8fafc" stroke="#d5dde5"/>
-  <text x="420" y="578" font-family="sans-serif" font-size="15" font-weight="700" fill="#263543">Privacy-safe desktop alerts</text>
-  <text x="420" y="604" font-family="sans-serif" font-size="14" fill="#536272">Off by default · optional generic alerts while this process is running</text>
-  <rect x="1155" y="572" width="38" height="22" rx="11" fill="#c9d2db"/>
-  <circle cx="1166" cy="583" r="8" fill="#fff"/>
+  <text x="420" y="578" font-family="sans-serif" font-size="15" font-weight="700" fill="#263543">Selected notification</text>
+  <text x="420" y="604" font-family="sans-serif" font-size="14" fill="#536272">Messages · Added · show only attributes provided by the iPhone</text>
   <text x="400" y="675" font-family="sans-serif" font-size="13" fill="#687787">No phone notification content is stored after quit. Hide the window to keep this process monitoring.</text>
 </svg>

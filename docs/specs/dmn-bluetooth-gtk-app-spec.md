@@ -36,40 +36,71 @@ alerts are a secondary output and not an embedded notification-center view.
 
 ### Build integration
 
-Add a separate `ENABLE_APP_BLUETOOTH_GTK` option, default `OFF`. When enabled,
-it should enable the required ANCS, BlueZ, and D-Bus library layers using the
-project's existing app-option dependency pattern, then require GTK 4/gtkmm 4
-and GIO development/runtime dependencies. If a required system dependency is
-missing, CMake must fail at configure time with the dependency name and
-installation guidance. Do not let GTK discovery affect a default/headless
-build. Name the executable `dmn-bluetooth-gtk`; do not rename or replace the
-CLI target.
+Add a separate `ENABLE_APP_BLUETOOTH_GTK` option, default `OFF`. This is a
+proposed new option: the existing `ENABLE_APP_BLUETOOTH` currently builds
+`dmn-bluetooth-cli` and must remain unchanged. Enabling the GTK option must
+enable the required ANCS, BlueZ, and D-Bus library layers using the project's
+existing dependency pattern, but must not implicitly enable the CLI app
+option or build the CLI unless the user separately requests it. When enabled,
+require GTK 4, libadwaita, and GIO development/runtime dependencies. This
+specification deliberately targets the GNOME HIG baseline: the current GNOME
+HIG describes GTK 4 together with libadwaita as the GNOME platform for
+application design. Keep the dependency optional and isolated to this target.
+If a required system dependency is missing, CMake must fail at configure time
+with its name and installation guidance. Do not let GTK discovery affect a
+default/headless build. Name the executable `dmn-bluetooth-gtk`; do not rename
+or replace the CLI target. Confirm Linux platform gating and document whether
+the GTK frontend requires the same supported-platform policy as the BlueZ
+backend.
 
-### C++ GTK binding
+### GTK and GNOME toolkit requirements
 
-Use GTK 4 with its maintained C++ binding, gtkmm 4 (`gtkmm-4.0` pkg-config
-module), as the initial recommendation: the application is C++23 and the
-binding provides C++ ownership/types for widgets and GIO. Keep the actual
-`core/` layer independent of both gtkmm and GTK C headers. Before committing
-to it, make a small package/build spike on the minimum supported Pop!_OS
-release and confirm the distribution package, compiler, GTK minor version,
-GIO notifications, and CI environment. If gtkmm availability becomes a
-release blocker, use GTK's C API behind a narrow adapter rather than mixing C
-and C++ widget ownership throughout the app. Do not combine GTK 3 and GTK 4
-widgets or add libadwaita as a requirement without a separate design decision.
+Use GTK 4 and libadwaita through their upstream C APIs from the C++
+application. This avoids mixing gtkmm wrapper ownership with libadwaita's
+GObject types, while retaining a C++ core and C++ RAII ownership at the view
+boundary. Keep all GTK/libadwaita types out of `core/`. Use `AdwApplication`
+and standard GTK/libadwaita widgets and patterns where appropriate; use
+`GtkColumnView` or other GTK list models for the event feed, not a
+custom-drawn table. Do not combine GTK 3 and GTK 4 widgets or replace platform
+widgets with hand-drawn controls.
 
-CMake must `find_package(PkgConfig)` and require the gtkmm-4.0 imported
-pkg-config target only inside the app option. Add `src/app/gui` only when this
-option is enabled. Keep the existing GoogleTest suite for C++ unit tests; do
-not introduce a second assertion/test framework just to test the core.
+Use GNOME HIG as the normative design baseline on GNOME: follow its
+navigation, keyboard, adaptive-layout, concise-writing, notification, and
+accessibility guidance. Use Adwaita light/dark and high-contrast styling,
+system text scaling, standard spacing/style classes, and accessible names.
+Do not hard-code colors or rely on color/icon alone for lifecycle state.
+Build for the narrowest supported window before optimizing the wide layout;
+the device list and event content must remain usable without a permanently
+visible sidebar. Keep preferences in the standard application preferences
+surface and use standard GNOME keyboard shortcuts/actions.
+
+CMake must discover `gtk4` and `libadwaita-1` with imported pkg-config
+targets only inside the GTK app option. Add `src/app/gui` only when this
+option is enabled. Keep the existing GoogleTest suite for C++ core/controller
+tests; do not introduce a second assertion framework just to test the core.
+Before committing to minimum versions, make a package/build spike on the
+minimum supported Pop!_OS and GNOME releases and confirm GTK, libadwaita,
+GIO notifications, compiler, and CI availability.
 
 ## 2. Main-window structure and user interactions
 
-Use `GtkApplication`/`GtkApplicationWindow`, GTK 4 list models and
-`GtkColumnView`, standard actions, accessible labels, and theme-aware
-components. The main layout is a resizable device sidebar and event table.
+Use `AdwApplication`/`AdwApplicationWindow`, GTK 4 list models and
+`GtkColumnView`, standard application actions, accessible names, and
+theme-aware components. At wide widths, show device navigation beside the
+event feed. At narrow widths, show one view at a time: the device list is the
+navigation root, selecting a device/feed opens its event view, and a standard
+Back action returns to the list. Opening event details must not create a
+stack of unrelated windows. Use a breakpoint/layout component supported by
+the declared minimum libadwaita version; do not invent a custom resizing
+framework.
 
-![Wireframe of the standalone GTK app and optional alert setting](images/dmn-bluetooth-gtk-app.svg)
+Desktop-alert and hidden-window preferences belong in the standard
+Preferences surface, not in a permanently visible card embedded in the event
+feed. Preferences must clearly describe that hiding the window keeps this
+process alive, while quitting stops monitoring. The GTK wireframe's alert
+control is illustrative only and must not override this requirement.
+
+![Illustrative wide-window layout of the standalone GTK app](images/dmn-bluetooth-gtk-app.svg)
 
 ### First run
 
@@ -247,10 +278,13 @@ implementation, and how to verify it. Target names are proposed additions to
 the existing CMake/CTest structure; preserve repository build conventions.
 
 1. **Toolkit and build gate.**
-   - Test first: configure/build with the new option `OFF`; confirm no gtkmm
-     package lookup occurs. Configure with it `ON` and GTK missing; require a
-     direct actionable diagnostic. On the minimum supported Pop!_OS image,
-     verify `pkg-config --modversion gtkmm-4.0`.
+   - Test first: configure/build with the new option `OFF`; confirm no GTK or
+     libadwaita
+     package lookup occurs and no GTK target is added. Configure with it `ON`
+     while `ENABLE_APP_BLUETOOTH=OFF`; assert the CLI target remains absent
+     and the GTK target is present. Configure with it `ON` and GTK missing;
+     require a direct actionable diagnostic. On the minimum supported
+     Pop!_OS image, verify `pkg-config --modversion gtk4 libadwaita-1`.
    - Implement: option default `OFF`, conditional subdirectory/target, GTK
      application skeleton, stable application ID, desktop entry and icon.
    - Verify: clean configure/build in option-OFF state; enabled build creates
@@ -260,7 +294,8 @@ the existing CMake/CTest structure; preserve repository build conventions.
      one primary `GApplication` instance/window activation, then quit.
    - Once implemented, the expected focused commands are:
      `cmake -S . -B build-no-gui -DENABLE_APP_BLUETOOTH_GTK=OFF`,
-     `cmake -S . -B build-gui -DENABLE_APP_BLUETOOTH_GTK=ON`,
+     `cmake -S . -B build-gui -DENABLE_APP_BLUETOOTH_GTK=ON
+     -DENABLE_APP_BLUETOOTH=OFF`,
      `cmake --build build-gui --target dmn-bluetooth-gtk`, and
      `ctest --test-dir build-gui -L dmn-gui --output-on-failure`.
 2. **Pure presentation model.**
@@ -289,13 +324,16 @@ the existing CMake/CTest structure; preserve repository build conventions.
 4. **GTK shell and navigation.**
    - Test first: application activation opens/presents one window; actions
      have stable names; keyboard shortcuts activate the same actions; quit
-     requests monitor shutdown first.
+     requests monitor shutdown first. Resize across the declared adaptive
+     breakpoint and assert phone navigation, feed, details, and Back remain
+     reachable with no clipped actions or horizontal overflow.
    - Implement: `gtk/` application/window and empty-state placeholders using
      standard GTK widgets. Keep all GTK objects on the main context.
    - Verify: run `dmn-test-bluetooth-gtk-smoke` under a display; assert window
      exists, expected accessible names/roles exist, and repeated activation
-     does not create duplicate controllers. Manual review checks theme
-     behavior and window resizing only after automated assertions pass.
+     does not create duplicate controllers. Test at both sides of the
+     breakpoint. Manual review checks theme behavior and window resizing
+     only after automated assertions pass.
 5. **Inventory, selection, and preferences.**
    - Test first: paired/unpaired/disconnected/unavailable rows, two adapters
      with matching device names, stable adapter+device key persistence,
@@ -324,8 +362,8 @@ the existing CMake/CTest structure; preserve repository build conventions.
      Details content, Removed behavior, no-results, no-events state, clear,
      overflow notice, and all payload retention boundaries.
    - Implement: `GListModel`/`GListStore`, `GtkFilterListModel`,
-     `GtkSortListModel`, `GtkColumnView`, row activation/detail view. Consider
-     using gtkmm wrappers for these objects; do not put view positions in the
+     `GtkSortListModel`, `GtkColumnView`, row activation/detail view. Use
+     GTK/libadwaita C APIs through the GTK adapter; do not put view positions in the
      domain model as stable event identity.
    - Verify: no-display core tests plus GTK widget tests with synthetic
      events. Under Xvfb, wait for drawing before checking realized/layout
@@ -355,18 +393,21 @@ the existing CMake/CTest structure; preserve repository build conventions.
 
 ## 7. Acceptance criteria
 
-- Default project build remains free of GTK dependencies; opt-in build,
-  package, and app tests pass.
-- UI reflects typed monitor state and stays responsive through slow setup and
-  stop.
-- A window hidden behind other windows still receives events and, if opted
-  in, submits alerts while the process is alive.
-- Closing/quit behavior matches the selected preference; process exit stops
-  monitoring and does not disconnect/unpair.
-- Alerts are optional, generic by default, withdrawable best-effort, and
-  never the authoritative event record.
-- Unit, fake-bus, private-bus, packaging, accessibility, and opt-in hardware
-  gates pass before release claims are made.
+- **GTK-AC-01:** Default project build remains free of GTK dependencies;
+  opt-in build, package, and app tests pass.
+- **GTK-AC-02:** UI reflects typed monitor state and stays responsive through
+  slow setup and stop.
+- **GTK-AC-03:** A window hidden behind other windows still receives events
+  and, if opted in, submits alerts while the process is alive.
+- **GTK-AC-04:** Closing/quit behavior matches the selected preference;
+  process exit stops monitoring and does not disconnect/unpair.
+- **GTK-AC-05:** Alerts are optional, generic by default, withdrawable
+  best-effort, and never the authoritative event record.
+- **GTK-AC-06:** Unit, fake-bus, private-bus, packaging, accessibility, and
+  opt-in hardware gates pass before release claims are made.
+- **GTK-AC-07:** The wide and narrow layouts follow GNOME HIG navigation and
+  adaptive behavior, and desktop-alert controls are in Preferences rather
+  than a persistent event-feed panel.
 
 ## 8. GTK automation notes
 
@@ -387,28 +428,42 @@ tests; most behavior belongs in display-free core/controller tests. Human
 testing is still needed for visual hierarchy, screen-reader quality, and
 actual shell notification behavior.
 
+Keep one requirement-to-test mapping in the implementation change (or test
+documentation) with a row for every GTK acceptance criterion. Each row names
+the test target and whether it is display-free, display-backed, private-bus,
+AT-SPI, or manual/hardware qualification. For asynchronous UI behavior, tests
+must use barriers, completion signals, or main-context iteration with a
+deadline; fixed sleeps are not valid evidence. A failed or unavailable
+display/shell test must fail or be explicitly marked skipped in CI, never
+silently count as passed.
+
 ## 9. Research references
 
 - GTK [`GtkApplication`](https://docs.gtk.org/gtk4/class.Application.html),
   [`GtkApplicationWindow`](https://docs.gtk.org/gtk4/class.ApplicationWindow.html),
   [`GtkColumnView`](https://docs.gtk.org/gtk4/class.ColumnView.html), and
   [list widgets](https://docs.gtk.org/gtk4/section-list-widget.html).
+- libadwaita [`AdwApplication`](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/class.Application.html):
+  application initialization and GNOME-specific GTK application building
+  blocks.
 - GTK [test initialization](https://docs.gtk.org/gtk4/func.test_init.html),
   [wait for widget drawing](https://docs.gtk.org/gtk4/func.test_widget_wait_for_draw.html),
   and [accessibility](https://docs.gtk.org/gtk4/section-accessibility.html).
 - GLib [unit testing framework](https://docs.gtk.org/glib/testing.html) and
   [GListModel](https://docs.gtk.org/gio/iface.ListModel.html).
-- gtkmm 4 [documentation](https://gnome.pages.gitlab.gnome.org/gtkmm-documentation/):
-  C++ bindings for GTK; verify package/version availability on the target
-  distribution.
 - GIO [`GNotification`](https://docs.gtk.org/gio/class.Notification.html),
   [`send_notification`](https://docs.gtk.org/gio/method.Application.send_notification.html),
   and [`withdraw_notification`](https://docs.gtk.org/gio/method.Application.withdraw_notification.html).
 - Freedesktop [Desktop Notifications basic design](https://specifications.freedesktop.org/notification/latest/basic-design.html)
   and [D-Bus protocol](https://specifications.freedesktop.org/notification/latest/protocol.html).
 - Freedesktop [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/).
-- GTK [Human Interface Guidelines](https://developer.gnome.org/hig/) as
-  cross-desktop interaction guidance, not a GNOME Shell API dependency.
+- [GNOME Human Interface Guidelines](https://developer.gnome.org/hig/):
+  the design baseline for the GTK 4/libadwaita frontend.
+- GNOME HIG [sidebars](https://developer.gnome.org/hig/patterns/nav/sidebars.html)
+  and [button patterns](https://developer.gnome.org/hig/patterns/controls/buttons.html):
+  guidance for the wide layout and action hierarchy.
 - GNOME [accessibility guidelines](https://developer.gnome.org/documentation/guidelines/accessibility.html):
   AT-SPI and assistive-technology interaction guidance for final integration
   checks.
+- GNOME HIG [overview](https://developer.gnome.org/hig/): the design baseline
+  for the GTK 4/libadwaita frontend.

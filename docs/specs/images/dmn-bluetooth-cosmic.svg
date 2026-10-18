@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1420" height="820" viewBox="0 0 1420 820" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth native COSMIC app and applet wireframe</title>
-  <desc id="desc">A native COSMIC desktop app with phone and notification panes alongside a compact optional COSMIC panel applet popup.</desc>
+  <desc id="desc">Illustrative wide COSMIC app layout with phone and notification panes alongside an optional panel applet popup. Colors and widget shapes are placeholders for COSMIC theme widgets. The app adapts to a single-view navigation flow at narrow widths.</desc>
   <rect width="1420" height="820" fill="#e9eaf1"/>
   <text x="36" y="42" font-family="sans-serif" font-size="23" font-weight="700" fill="#252737">COSMIC native app + optional applet</text>
   <text x="36" y="68" font-family="sans-serif" font-size="14" fill="#606378">Rust/libcosmic frontend · Dmn C++ accessed through tested FFI or the optional session service</text>
@@ -46,10 +46,10 @@
   <rect x="988" y="96" width="396" height="46" rx="18" fill="#d9d9e2"/>
   <text x="1012" y="126" font-family="sans-serif" font-size="14" fill="#34364a">COSMIC panel</text>
   <rect x="1276" y="103" width="82" height="32" rx="9" fill="#fff" stroke="#c4c6d2"/>
-  <text x="1290" y="125" font-family="sans-serif" font-size="14" fill="#35384b">◉ Dmn</text>
+  <path d="M1315 108v20l11-10-11-10 0 20 11-10-11-10" fill="none" stroke="#35384b" stroke-width="2.2" stroke-linejoin="round"/>
   <rect x="1042" y="154" width="320" height="370" rx="16" fill="#fff" stroke="#c3c6d4" stroke-width="2"/>
   <text x="1066" y="190" font-family="sans-serif" font-size="18" font-weight="700" fill="#252737">Dmn Bluetooth</text>
-  <text x="1066" y="217" font-family="sans-serif" font-size="13" fill="#606378">Monitoring 1 of 2 · 3 new events</text>
+  <text x="1066" y="217" font-family="sans-serif" font-size="13" fill="#606378">Monitoring 1 of 2</text>
   <path d="M1062 235H1342" stroke="#e1e2e9"/>
   <circle cx="1080" cy="266" r="6" fill="#3b8e68"/>
   <text x="1098" y="271" font-family="sans-serif" font-size="14" font-weight="700" fill="#252737">Genghis · Ready</text>

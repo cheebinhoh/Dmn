@@ -124,6 +124,11 @@ BlueZ object paths in saved frontend settings.
 - `InventoryChanged(...)`, `MonitorChanged(...)`, `EventReceived(a{sv})`,
   `EventEvicted(t sequence)`, and `ServiceStateChanged(...)` provide live
   updates. Signals carry an increasing sequence number to detect gaps.
+  `EventReceived` is payload-bearing and intended for full clients such as
+  the desktop application; shell indicators must not subscribe to it. If a
+  shell client needs a count, define a separate `EventCountChanged` signal
+  whose schema contains only a bounded aggregate count and sequence, with no
+  event attributes, device address, or title/message fields.
 
 ### Mutating methods
 
@@ -197,6 +202,10 @@ preference is active. Make this policy visible in UX and test it.
   disable state-changing controls, and keep app launch/help available.
 - Frontends do not parse ANCS protocol details, own duplicate monitors, or
   infer `Ready` from BlueZ `Connected`.
+- GNOME Shell extensions and COSMIC applets must consume only status and
+  payload-free aggregate signals. They must not call `GetRecentEvents` or
+  subscribe to `EventReceived`; automated contract tests assert this
+  data-minimization boundary.
 - The service API is not a mechanism for inserting content into GNOME/COSMIC
   notification centers. Optional desktop alerts remain frontend/service
   policy and are best-effort.
@@ -273,16 +282,18 @@ preference is active. Make this policy visible in UX and test it.
 
 ## 8. Acceptance criteria
 
-- No service is started or monitoring performed without an explicit user
-  start; autostart is off by default.
-- Applets and frontends read a consistent snapshot and recover from signals
-  missed during connection.
-- No persistent notification payload storage or payload logging exists.
-- Service failure/unavailability is visible and does not produce false Ready
-  state.
-- Start/stop operations are asynchronous to D-Bus callers, bounded, serialized
-  per device, and safely cleaned up.
-- Service remains optional to the core Dmn library and default CMake build.
+- **SERVICE-AC-01:** No service is started or monitoring performed without
+  an explicit user start; autostart is off by default.
+- **SERVICE-AC-02:** Applets and frontends read a consistent snapshot and
+  recover from signals missed during connection.
+- **SERVICE-AC-03:** No persistent notification payload storage or payload logging exists.
+- **SERVICE-AC-04:** Service failure/unavailability is visible and does not
+  produce false Ready state.
+- **SERVICE-AC-05:** Start/stop operations are asynchronous to D-Bus callers,
+  bounded, serialized per device, and safely cleaned up.
+- **SERVICE-AC-06:** Service remains optional to the core Dmn library and default CMake build.
+- **SERVICE-AC-07:** Shell clients receive only payload-free status/count
+  signals and never request event history.
 
 ## 9. Research references
 
