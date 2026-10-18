@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <signal.h>
+#include <string_view>
 #include <utility>
 
 #include "dmn-kafka-example-config.hpp"
@@ -29,7 +30,13 @@ static volatile sig_atomic_t run = 1;
  */
 static void stop([[maybe_unused]] int signal) { run = 0; }
 
-int main() {
+int main(int argc, char **argv) {
+  if (argc == 2 && std::string_view{argv[1]} == "--version") {
+    std::cout << "dmn-kafka-receiver " << DMN_VERSION << '\n';
+
+    return EXIT_SUCCESS;
+  }
+
   auto config = dmn::app::kafkaExampleConfig();
   if (!config) {
     std::cerr << "Kafka example configuration error: " << config.error()

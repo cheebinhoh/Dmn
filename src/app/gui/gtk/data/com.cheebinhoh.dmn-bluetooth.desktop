@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Dmn Bluetooth
+GenericName=Bluetooth Device Monitor
+Comment=Select a Bluetooth device for monitoring
+Exec=dmn-bluetooth-gtk
+Icon=com.cheebinhoh.dmn-bluetooth
+Terminal=false
+Type=Application
+Categories=Utility;
+StartupNotify=true

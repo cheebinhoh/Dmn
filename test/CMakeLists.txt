@@ -94,6 +94,22 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-util
 )
 
+function(add_dmn_cli_version_test target)
+  add_test(NAME "${target}-version"
+             COMMAND "${target}" --version
+  )
+
+  set_tests_properties("${target}-version"
+                         PROPERTIES
+                         LABELS "dmn-cli"
+                         PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}"
+  )
+endfunction()
+
+add_dmn_cli_version_test(dmn-dmesg-daemon)
+add_dmn_cli_version_test(dmn-kafka-receiver)
+add_dmn_cli_version_test(dmn-kafka-sender)
+
 if (ENABLE_ANCS)
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-ancs-client
@@ -150,6 +166,7 @@ if (ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-bluez-cli-test
                                PRIVATE DMN_BLUEZ_TESTING=1
+                                       DMN_VERSION="${PROJECT_VERSION}"
                                        DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS=500
   )
 
@@ -199,7 +216,9 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   )
 
   target_compile_definitions(dmn-bluetooth-cli-test
-                               PRIVATE DMN_BLUETOOTH_TESTING=1
+                               PRIVATE
+                               DMN_BLUETOOTH_TESTING=1
+                               DMN_VERSION="${PROJECT_VERSION}"
   )
 
   target_link_libraries(dmn-test-bluez-device-list
@@ -226,6 +245,8 @@ endif()
 # Production application smoke/CLI tests are gated by their app options,
 # separately from the supporting library and integration-test blocks above.
 if (ENABLE_APP_BLUEZ_DISCOVERY)
+  add_dmn_cli_version_test(dmn-bluez-cli)
+
   add_test(NAME dmn-bluez-cli-help
              COMMAND dmn-bluez-cli --help
   )
@@ -242,6 +263,8 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
 endif()
 
 if (ENABLE_APP_BLUETOOTH)
+  add_dmn_cli_version_test(dmn-bluetooth-cli)
+
   add_test(NAME dmn-bluetooth-cli-help
              COMMAND dmn-bluetooth-cli --help
   )
@@ -264,6 +287,32 @@ if (ENABLE_APP_BLUETOOTH)
   set_tests_properties(dmn-bluetooth-cli-monitor-rejects-missing-device
                        dmn-bluetooth-cli-monitor-rejects-invalid-timeout
                          PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+endif()
+
+if (ENABLE_APP_BLUETOOTH_GTK)
+  ADD_TEST_EXECUTABLE(dmn-gui dmn-test-bluetooth-gui-selection)
+
+  target_link_libraries(dmn-test-bluetooth-gui-selection
+                          PRIVATE dmn-bluetooth-gui-core
+  )
+
+  add_test(NAME dmn-bluetooth-gtk-help
+             COMMAND dmn-bluetooth-gtk --help
+  )
+
+  add_test(NAME dmn-bluetooth-gtk-version
+             COMMAND dmn-bluetooth-gtk --version
+  )
+
+  set_tests_properties(dmn-bluetooth-gtk-help
+                         PROPERTIES LABELS "dmn-gui"
+  )
+
+  set_tests_properties(dmn-bluetooth-gtk-version
+                         PROPERTIES
+                         LABELS "dmn-gui"
+                         PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}"
   )
 endif()
 

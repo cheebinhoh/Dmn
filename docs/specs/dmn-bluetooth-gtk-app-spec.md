@@ -1,12 +1,47 @@
 # Dmn Bluetooth GTK Application and Desktop Alerts Specification
 
-**Status:** Proposed. The GTK frontend and alert integration are not
-implemented.
+**Status:** Partially implemented. The optional GTK application supports BlueZ
+inventory, explicit discovery, multiple saved devices, sorting, a draft-based
+Selected only filter, explicit per-device connect/disconnect and monitor
+actions, and a process-local event feed. Monitoring is enabled only by an
+explicit per-device user action; that intent is saved and restored at the next
+launch. Restored monitors start only after BlueZ confirms that the saved,
+paired device is connected. Active monitors stop when their device
+disconnects and resume after it reconnects while the saved monitoring intent
+remains enabled. The preferences window, event search/filter/details, and
+desktop alerts remain unimplemented. Concurrent multi-device operation is
+implemented but still requires qualification with multiple physical devices.
 
-This is the recommended first full GUI for Pop!_OS and other Linux desktops.
-It specifies the standalone GTK application, with optional GIO
-`GNotification` alerts. The application owns its live event feed; desktop
-alerts are a secondary output and not an embedded notification-center view.
+This document separates code-derived current behavior from proposed product
+requirements below. The optional GIO `GNotification` design is a proposal
+only; the application currently owns a live in-process event feed and does
+not send desktop alerts.
+
+## 0. Implementation status
+
+This table records the current implementation. The remaining sections
+separately describe proposed product behavior.
+
+| Capability | Current implementation |
+| --- | --- |
+| Optional GTK build and desktop application | Implemented under `ENABLE_APP_BLUETOOTH_GTK`; GTK 4 and libadwaita are optional dependencies. |
+| BlueZ inventory and explicit discovery | Implemented with worker-thread BlueZ requests, powered-adapter selection, a finite scan, and explicit scan stop. |
+| Saved device selection | Implemented with stable adapter/device addresses, multiple draft/save/discard entries, and unavailable saved devices. |
+| Device inventory view | Implemented with Name/Status sorting, a Selected only filter over the current draft selection, separate paired/connected/monitor states, and per-row Connect/Disconnect and Start/Stop monitoring actions. |
+| Adjustable device pane | Implemented with a draggable GTK divider; pane width is saved in GSettings. |
+| Connect/disconnect actions | Implemented per saved device. Unpaired devices must be paired in Bluetooth Settings; disconnect stops that device's monitor first when needed. |
+| ANCS monitor lifecycle | Implemented per saved, paired, already-connected device with progress and explicit start/stop. Monitor start requires an existing connection and never pairs or establishes the initial link; like the CLI, it asks BlueZ to connect any remaining auto-connectable profiles before ANCS startup. |
+| Remembered monitoring intent | Implemented in GSettings using stable adapter/device addresses. An explicit Start monitoring choice is restored on launch; startup waits for a saved, paired device to be connected. Stop monitoring clears the intent. Disconnect or app exit stops the live monitor but preserves the intent. |
+| Adaptive layout | Implemented as a two-pane window at wide sizes and a device-list/device-detail navigation flow below the libadwaita breakpoint. The narrow layout stacks scan and selection controls. |
+| In-session event feed | Implemented in bounded process memory, newest-first, and filtered by the device opened from the inventory. Rows show host receipt time, event kind, and available event text; the feed scrolls to the top after an actual feed/device change. Notification text is selectable and can be copied from its Copy-only context menu or with Ctrl+C. Routine inventory refreshes do not rebuild the feed or clear text selection. It contains only events received during this app process; Removed events show no stale attributes. |
+| Desktop metadata and icon | Implemented with an AppStream `.metainfo.xml`, a lowercase desktop/application ID, a scalable 128×128 full-color SVG icon, and a matching symbolic icon installed in hicolor. The previous GSettings schema ID is retained to preserve saved preferences. |
+| Preferences window, event search/filter/details, desktop alerts | Not implemented. Monitoring intent is controlled by the per-device Start/Stop actions, not a separate preference screen. |
+
+The current GTK window has an inventory/sidebar, per-device actions, and a
+selected-device event pane. Checking a device changes its draft selection but
+does not navigate away from the inventory; activating its name opens the
+detail/feed pane. The current mockups illustrate only implemented controls and
+states. Simultaneous monitors have not yet been hardware-qualified.
 
 ## 1. Goals, non-goals, and build boundary
 
@@ -29,16 +64,17 @@ alerts are a secondary output and not an embedded notification-center view.
 
 - Reading, importing, or mirroring the GNOME/COSMIC notification-center
   history.
-- Pairing or monitoring on launch, automatic repair/reconnect, or automatic
-  disconnection/unpairing on stop.
+- Pairing, connecting, or monitoring every BlueZ-connected device on launch;
+  automatic repair/reconnect; or automatic disconnection/unpairing on monitor
+  stop.
 - Continuing monitoring after the process exits, logout, or reboot.
 - Sending notification bodies to desktop alerts by default.
 - Claiming that ANCS provides complete iPhone notification history.
 
 ### Build integration
 
-Add a separate `ENABLE_APP_BLUETOOTH_GTK` option, default `OFF`. This is a
-proposed new option: the existing `ENABLE_APP_BLUETOOTH` currently builds
+The separate `ENABLE_APP_BLUETOOTH_GTK` option defaults to `OFF`; the existing
+`ENABLE_APP_BLUETOOTH` builds
 `dmn-bluetooth-cli` and must remain unchanged. Enabling the GTK option must
 enable the required ANCS, BlueZ, and D-Bus library layers using the project's
 existing dependency pattern, but must not implicitly enable the CLI app
@@ -54,7 +90,7 @@ or replace the CLI target. Confirm Linux platform gating and document whether
 the GTK frontend requires the same supported-platform policy as the BlueZ
 backend.
 
-### GTK and GNOME toolkit requirements
+### Proposed GTK and GNOME toolkit requirements
 
 Use GTK 4 and libadwaita through their upstream C APIs from the C++
 application. This avoids mixing gtkmm wrapper ownership with libadwaita's
@@ -83,7 +119,14 @@ Before committing to minimum versions, make a package/build spike on the
 minimum supported Pop!_OS and GNOME releases and confirm GTK, libadwaita,
 GIO notifications, compiler, and CI availability.
 
-## 2. Main-window structure and user interactions
+## 2. Proposed full product behavior
+
+The following sections describe desired behavior and future scope, not a claim
+that every listed screen or control exists in the current application. For
+current behavior, use the implementation-status table above and the
+implementation-accurate storyboard.
+
+### Proposed main-window structure and user interactions
 
 Use `AdwApplication`/`AdwApplicationWindow`, GTK 4 list models and
 `GtkColumnView`, standard application actions, accessible names, and
@@ -91,9 +134,10 @@ theme-aware components. At wide widths, show device navigation beside the
 event feed. At narrow widths, show one view at a time: the device list is the
 navigation root, selecting a device/feed opens its event view, and a standard
 Back action returns to the list. Opening event details must not create a
-stack of unrelated windows. Use a breakpoint/layout component supported by
-the declared minimum libadwaita version; do not invent a custom resizing
-framework.
+stack of unrelated windows. At wide widths, let users drag the pane divider
+to choose how much room the device rows receive, and persist that pane
+position. Use a breakpoint/layout component supported by the declared minimum
+libadwaita version; do not invent a custom resizing framework.
 
 Desktop-alert and hidden-window preferences belong in the standard
 Preferences surface, not in a permanently visible card embedded in the event
@@ -101,11 +145,11 @@ feed. Preferences must clearly describe that hiding the window keeps this
 process alive, while quitting stops monitoring. The GTK wireframe's alert
 control is illustrative only and must not override this requirement.
 
-![Illustrative wide-window layout of the standalone GTK app](images/dmn-bluetooth-gtk-app.svg)
+![Current wide-window layout of the standalone GTK app](images/dmn-bluetooth-gtk-app.svg)
 
-[The GTK UI storyboard](dmn-bluetooth-gtk-ui-storyboard.md) defines the
-numbered screen sequence, device-selection flow, Preferences, recovery states,
-and additional screens not represented by the layout sketch.
+[The GTK UI storyboard](dmn-bluetooth-gtk-ui-storyboard.md) depicts current
+inventory, connection, monitoring, and feed states. It does not depict
+unimplemented Preferences, desktop alerts, event filters, or event details.
 
 ### First run
 
@@ -124,35 +168,82 @@ and additional screens not represented by the layout sketch.
    BlueZ/system prompt and that iOS may require approval after a new
    notification arrives. Do not request pairing merely to populate the list.
 4. Let the user select devices and press **Save selection**. Checkbox edits
-   are draft state; **Monitor selected** is disabled while the draft differs
-   from saved settings. Offer **Discard changes**. Enforce the qualified
-   concurrent-monitor limit in the selector; until multi-device monitoring
-   passes its release gate, configure the initial release for one active phone
-   and explain that limit before selection rather than silently ignoring extra
-   choices.
-5. Monitoring begins only after explicit **Monitor selected** or per-device
-   **Start**. If the selected device is unpaired, this explicit action may
-   initiate the normal BlueZ pairing flow; make the unpaired status and
-   resulting system pairing/authorization prompts clear. Never pair merely
-   because the user selected or saved a device.
+   are draft state; connect and monitor-start actions are disabled while the
+   draft differs from saved settings. Offer **Discard changes**. Persist stable
+   adapter/device identities only. Display name and paired/connected facts
+   are live data, not saved selection metadata. Persist the user's explicit
+   monitoring intent separately from selection; never persist notification
+   text. Multiple devices
+   may be saved and monitored independently; qualify simultaneous operation on
+   supported BlueZ/phone combinations before claiming it is production-ready.
+5. Keep **Paired**, **Connected**, and **ANCS monitoring** as separate states.
+   Pairing is performed through the desktop Bluetooth settings. **Connect**
+   and **Disconnect** are explicit, accessible per-device actions; a row's
+   context menu may provide shortcuts but must not be the only way to reach
+   them. If a device is unpaired, explain how to pair it in system settings
+   rather than silently pairing it.
+6. A BlueZ `Connected=true` value does not mean ANCS is already **Ready**.
+   Connecting a device does not start its monitor. Start a
+   `Dmn_AncsBluezMonitor` only after the user explicitly activates **Start
+   monitoring** for a saved, paired, connected device. Restore that explicit
+   intent on later launches, but defer startup until the device is paired and
+   BlueZ-confirmed connected. Do not infer intent from connection state or
+   monitor other connected devices. The GTK monitor mode requires an existing
+   connection and never discovers, pairs, or establishes an initial link.
+   Only confirmed ANCS subscriptions mean **Ready**. Associate each event
+   with its stable device identity and show only the viewed device's events
+   from the process-session feed. No events from before monitor startup are
+   available as history. A connected device outside the saved selection is
+   never monitored.
+7. Observe live connection state while saved devices exist. When a saved
+   device disconnects or disappears, stop its monitor but retain its saved
+   identity and any explicit monitoring intent so it resumes only after
+   reconnection. **Stop monitoring** clears that intent. Disconnecting
+   through the app stops the monitor first, then requests BlueZ disconnection;
+   stopping a monitor alone must not disconnect the device. An explicit
+   **Stop monitoring** action ends the monitor and clears the saved intent
+   until the user explicitly starts it again.
 
-### Device pane
+### Implemented device pane
 
-Each row shows display name (address fallback), paired/connected facts,
-monitor state, and a textual last error. A saved device absent from BlueZ
-remains visible as **Unavailable**. Distinguish `Paired`, `Connected`, and
-`ServicesResolved` from ANCS **Ready**. State transitions are:
-`Not monitored → Waiting → Pairing → Connecting → Starting ANCS → Ready`,
-with `Failed`, `Unavailable`, and `Stopped` terminal/recovery states.
+Each row shows the display name (address fallback), paired/connected facts,
+monitor status when a session exists, a draft-selection checkbox, and
+per-device connection and monitor actions. A saved device absent from BlueZ
+remains visible as **Unavailable**. The selected-device pane displays live
+status and the last monitor error. `Paired`, `Connected`, and
+`ServicesResolved` are not treated as ANCS **Ready**.
 
-Controls: **Refresh devices**, **Scan for devices**, **Stop scan**,
-**Save selection**, **Discard changes**,
-**Monitor selected**, **Stop selected**, **Stop all**, and a per-device
-**Retry** when failed. Stop ends ANCS subscriptions but does not disconnect
-or unpair. Do not place pairing, disconnect, or unpair in ambiguous one-click
-controls.
+Current controls include **Refresh devices**, **Scan for devices**, **Stop
+scan**, **Save selection**, **Discard changes**, **Selected only**,
+per-device **Connect** or **Disconnect**, and **Start monitoring** or **Stop
+monitoring**. The selection controls share a row at wide sizes and adapt to
+stacked rows at narrow sizes. **Selected only** filters by the current draft;
+it does not change or save that selection. Connecting only establishes the
+Bluetooth connection and does not start monitoring. Disconnecting a monitored
+device stops its ANCS subscriptions first and then requests BlueZ
+disconnection. Stopping monitoring alone ends ANCS subscriptions but does not
+disconnect or unpair. A saved, connected device remains unmonitored until the
+user chooses **Start monitoring**. That choice is remembered across launches;
+the app resumes only for devices with this explicit intent, after connection
+is confirmed. **Stop monitoring** remains available while an intent is saved,
+even when the device is disconnected or no monitor session is active; it
+clears the intent. To retry a failed session, clear the intent and choose
+**Start monitoring** again.
 
-### Event pane
+### Implemented event pane
+
+The feed is scoped to the device opened from the inventory. It shows each
+event's host receipt time and kind, followed by the available event text.
+Events are displayed newest-first and are held in a bounded, process-local
+store; the oldest event is evicted when the 1,000-entry limit is exceeded.
+The feed scrolls to its top when the viewed device changes or a new event is
+received. A routine BlueZ inventory refresh leaves the rendered feed intact,
+so a user selecting text is not interrupted by polling. Notification text is
+selectable; right-click offers **Copy** only, and Ctrl+C copies the current
+selection. No search, event filters, detail view, or clear-feed control is
+implemented.
+
+### Proposed event-pane enhancements
 
 Default table columns: **Device**, **Received**, **Type/category**, and
 **Notification** (app identifier and concise title/message preview).
@@ -160,12 +251,11 @@ Activating a row opens details with available ANCS attributes, event kind,
 device identity, phone-provided date, and host receipt time. Missing data is
 not invented. Removed events contain no stale notification attributes.
 
-Capture host wall-clock receipt time and a monotonic arrival sequence in the
-monitor callback before enqueueing to the UI. Sort newest-first by arrival
-sequence (not the phone-provided ANCS date or a wall clock that may change);
-display the host receipt time to the user. Keep at most 1,000 rows in memory,
-evict the oldest on overflow, and announce the eviction nonintrusively. This
-cap is independent of the monitor's ANCS pending-request limit.
+Use an explicit monotonic arrival sequence if the feed later needs ordering
+across independently queued monitor callbacks; the current store preserves
+append order and displays host receipt time. Consider a nonintrusive eviction
+notice if users need feedback about the bounded in-memory history. These
+enhancements are independent of the monitor's ANCS pending-request limit.
 
 Filters compose without mutating source events: device, Added/Updated/Removed,
 available category, and case-insensitive search over app identifier, title,
@@ -259,11 +349,24 @@ not cancel pairing or connection. Hold worker/controller ownership until
 callbacks are quiescent, then destroy monitors. Never detach workers whose
 callback captures UI state.
 
-The monitor facade represents one device. Multi-device use means one monitor
-per selected device and is a release gate, not an assumed property. Until
-qualified, make the supported concurrency limit explicit (prefer one active
-phone for initial hardware release rather than silently claiming multi-phone
-support).
+The GTK frontend uses
+`Dmn_AncsMonitorConfig::require_existing_connection` together with the
+GTK-specific `request_remaining_profiles_when_connected` opt-in. It requires
+the device to be present, paired, and connected, and never discovers, pairs,
+or establishes the initial link. Like the CLI, it asks BlueZ to connect
+remaining auto-connectable profiles before starting ANCS. This lets BlueZ
+complete GATT-capable bearer/profile setup for a device that reports Connected
+without forcing a disconnect/reconnect cycle. The default existing-connection
+mode does not issue this additional request; private-bus tests cover both
+behaviors and disconnected-device rejection.
+
+The monitor facade represents one device. The GTK frontend creates one facade and worker task per saved, connected
+device and associates events with the stable adapter/device identity. It polls
+BlueZ while saved devices exist to observe external connection changes. The UI
+has no arbitrary active-monitor cap. Before claiming multi-device reliability,
+qualify simultaneous monitoring on the supported BlueZ/phone combinations
+and add deterministic controller tests for independent start/stop and event
+streams. Do not silently start only a subset.
 
 Reuse recovery wording in
 [`gtk-bluetooth-ancs-app-spec.md`](gtk-bluetooth-ancs-app-spec.md): missing
@@ -273,9 +376,10 @@ payloads.
 
 ## 5. Data, settings, and privacy
 
-Persist only selected `(adapter address, device address)`, window geometry,
-pane size, non-content filter preferences, alert preference, and the explicit
-hidden-window preference. Never persist transient BlueZ object paths.
+Persist selected `(adapter address, device address)` pairs, explicit
+monitoring intent, window geometry, pane size, non-content filter
+preferences, alert preference, and the explicit hidden-window preference.
+Never persist transient BlueZ object paths.
 Write GSettings values only after explicit user action or genuine user
 preference changes, not while restoring widgets.
 
@@ -356,38 +460,72 @@ the existing CMake/CTest structure; preserve repository build conventions.
    - Test first: paired/unpaired/disconnected/unavailable rows, two adapters
      with matching device names, stable adapter+device key persistence,
      checkbox draft, save, discard, and app restore. Assert startup and
-     checkbox toggles cause zero Pair/Connect calls.
+     checkbox toggles cause zero Pair/Connect calls. Verify that status fields
+     are refreshed from BlueZ and not persisted as authoritative facts.
    - Implement: device list view, refresh, save/discard, GSettings schema and
      preferences. Persist no BlueZ object path.
    - Verify: model and widget tests against a fake inventory; install schema
      in a temporary schema directory and run
      `glib-compile-schemas --strict`; round-trip non-content settings and
      inspect storage for absence of titles/messages.
-6. **Start/stop lifecycle.**
-   - Test first: explicit start, each progress state, pairing/connection
-     failure, ANCS-not-found, Retry, stop while Ready, stop while start is
-     blocked, stop all, close confirmation, hidden-window opt-in, quit,
-     callback quiescence, and non-disconnection on stop.
-   - Implement: status binding and managed worker execution. Stop while
-     startup is running is a queued stop, not cancellation; the UI wording
-     must match.
-   - Verify: controller fake tests prove operation ordering; widget tests
-     assert status strings and sensitivity. A timed fake start must not block
-     main-loop heartbeat or window interaction.
-7. **Event feed and filtering.**
+   - Current status: inventory, explicit scan, selection, sorting, and
+     selection persistence are implemented. Preferences and isolated fake
+     inventory/widget tests remain outstanding.
+6. **Pairing and connection controls.**
+   - Test first: paired/unpaired and connected/disconnected states drive the
+     correct explicit action; action requests are serialized off the GTK
+     thread, scoped by stable adapter/device identity, and failures preserve
+     the observed state. Verify that disconnect does not unpair and that no
+     pairing or connection is triggered by inventory, selection, save, or
+     refresh.
+   - Implement: per-device **Connect** and **Disconnect** using
+     `Dmn_BluezClient::connectDevice()` and `disconnectDevice()`. Pair through
+     desktop Bluetooth settings; do not invoke `pairDevice()` from this GTK
+     flow. A context menu is a shortcut to equivalent visible, keyboard-
+     reachable device actions, not their sole entry point.
+   - Verify: deterministic fake-BlueZ/private-bus tests cover successful and
+     failed requests, idempotent/current-state handling, busy-state ordering,
+     and unchanged bond state after disconnect.
+   - Current status: visible per-device actions, saved-device gating, and
+     stop-before-disconnect are implemented. Unpaired devices are directed to
+     system Bluetooth settings; frontend fake-BlueZ/widget tests remain
+     outstanding.
+7. **Monitor controller, lifecycle, and restart policy.**
+   - Test first: a connected-but-unmonitored device is not labeled Ready; a
+     monitor starts only after an explicit user action or restoration of that
+     previously saved intent; stop
+     does not disconnect; switching devices filters a shared session feed;
+     monitor events are associated with the correct device. Verify saved
+     devices without monitoring intent remain unmonitored at launch and after
+     connection; devices with intent resume only after connection; Stop clears
+     intent; disconnected devices stop without losing saved intent, unrelated
+     devices never start, shutdown waits for all monitor cleanup, and
+     notification events are device-scoped.
+   - Implement: own one `Dmn_AncsBluezMonitor` per saved device with explicit
+     monitoring intent, serialize each instance's transitions on managed
+     workers, marshal progress/events onto GTK, poll selected-device link
+     state, and retain events only in bounded process memory. Monitor startup
+     uses the existing-connection mode and does not pair or establish the
+     initial connection.
+   - Current status: per-device start/stop, persisted monitoring intent and
+     restoration after connection, per-device event routing, and monitor
+     cleanup on disconnect/quit are implemented.
+     Action-availability and bounded event-store unit tests cover core UI
+     state; full fake-controller/widget tests and simultaneous hardware
+     qualification remain outstanding.
+8. **Event feed and filtering.**
    - Test first: arrival ordering with wall-clock rollback, stable sequence,
      each filter independently and composed, case-folding, missing fields,
      Details content, Removed behavior, no-results, no-events state, clear,
      overflow notice, and all payload retention boundaries.
-   - Implement: `GListModel`/`GListStore`, `GtkFilterListModel`,
-     `GtkSortListModel`, `GtkColumnView`, row activation/detail view. Use
-     GTK/libadwaita C APIs through the GTK adapter; do not put view positions in the
-     domain model as stable event identity.
-   - Verify: no-display core tests plus GTK widget tests with synthetic
-     events. Under Xvfb, wait for drawing before checking realized/layout
-     state; test keyboard row activation and filters. Run AT-SPI checks for
-     accessible table/list names and row content.
-8. **Optional desktop alert sink.**
+   - Implement: a bounded process-local event store and a per-device GtkListBox
+     feed with newest-first rendering. Search, filters, rich details, and a
+     clear action remain future work.
+   - Current status: per-device filtering, arrival timestamps, Removed-event
+     handling, and bounded eviction are implemented. Core tests exercise
+     identity filtering and eviction; GTK display/widget automation remains
+     outstanding.
+9. **Optional desktop alert sink.**
    - Test first: injected fake sink proves default Off, no payload in
      summaries/body, per-device aggregate/replacement IDs, Clear/stop
      withdrawal, action activation, send failure isolation, and no alert
@@ -399,7 +537,7 @@ the existing CMake/CTest structure; preserve repository build conventions.
      opt-in smoke tests on supported COSMIC and GNOME releases verify actual
      shell presentation/disabled policy; popup appearance is not an automated
      delivery guarantee.
-9. **Packaging, accessibility, and hardware gate.**
+10. **Packaging, accessibility, and hardware gate.**
    - Test first: install/uninstall manifest, no stray GTK runtime in default
      install, schema and desktop file resolution, all controls keyboard-
      reachable, dynamic statuses announced, high-contrast labels, and no
@@ -431,9 +569,13 @@ the existing CMake/CTest structure; preserve repository build conventions.
   stop scanning. Scans have a finite deadline and every started, app-owned
   scan is stopped on timeout, cancellation, failure, or shutdown.
 - **GTK-AC-09:** Device selection and save/discard behavior use stable
-  adapter/device identities, enforce the qualified active-monitor limit, and
-  issue no pairing or connection operation until the user explicitly starts
-  monitoring.
+  adapter/device identities and do not silently impose an arbitrary
+  concurrency cap. The app never pairs devices. A BlueZ connection is
+  requested only by the explicit **Connect** action; inventory, selection,
+  saving, and monitor startup must not connect a device. Monitoring requires
+  a saved, paired, already-connected device and starts only after the user
+  explicitly chooses **Start monitoring**. Qualify concurrent
+  multi-device operation before making reliability claims.
 
 ## 8. GTK automation notes
 
@@ -493,3 +635,6 @@ silently count as passed.
   checks.
 - GNOME HIG [overview](https://developer.gnome.org/hig/): the design baseline
   for the GTK 4/libadwaita frontend.
+- GNOME HIG [app icons](https://developer.gnome.org/hig/guidelines/app-icons.html):
+  use a distinctive, simple 128×128 metaphor and provide a matching symbolic
+  icon for small-size contexts.

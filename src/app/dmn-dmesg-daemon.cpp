@@ -20,9 +20,16 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <string_view>
 #include <thread>
 
 int main(int argc, char *argv[]) {
+  if (argc == 2 && std::string_view{argv[1]} == "--version") {
+    std::cout << "dmn-dmesg-daemon " << DMN_VERSION << '\n';
+
+    return 0;
+  }
+
   auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
 
   // for TESTING

@@ -29,9 +29,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install ICU
+        run: brew install icu4c
+
       - name: Configure CMake
-        # Use -B build to create a build directory
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        # This job tests the portable build; BlueZ and D-Bus are Linux-only
+        # optional targets. ICU is keg-only in Homebrew, so provide its prefix.
+        run: |
+          cmake -B ${{github.workspace}}/build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DENABLE_BLUEZ=OFF \
+            -DENABLE_DBUS=OFF \
+            -DICU_ROOT="$(brew --prefix icu4c)"
 
       - name: Build
         # Build the project

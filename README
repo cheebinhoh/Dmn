@@ -172,6 +172,54 @@ See `man dmn-bluetooth-cli` for its options, output, failure handling, and
 recovery guidance. This CLI requires a working BlueZ system service and does
 not provide a graphical interface.
 
+### GTK Bluetooth application
+
+On Linux desktops, the optional `dmn-bluetooth-gtk` app provides a graphical
+interface for browsing BlueZ devices, saving a device selection, connecting
+and disconnecting, and explicitly starting or stopping ANCS monitoring. The
+GTK application and CLI are separate frontends to the same BlueZ/ANCS
+functionality; enabling the GTK build does not build or replace the CLI.
+
+The app never connects automatically. **Start monitoring** is an explicit
+choice saved per device, so the app can restore that intent on later launches.
+It starts the monitor only after the device is saved, paired, and BlueZ
+confirms it is connected; if disconnected, it waits for you to connect it.
+**Stop monitoring** clears the saved intent. Disconnecting or exiting stops
+the live monitor but preserves the intent, so monitoring can resume after
+reconnection or relaunch. The newest-first event feed contains only
+notifications received while the app process is running; it is not a
+persistent notification archive or a desktop notification-history reader.
+The GTK app requires a running BlueZ system service and a graphical desktop
+session.
+
+Install the additional development dependencies on Ubuntu:
+
+```bash
+sudo apt-get install libgtk-4-dev libadwaita-1-dev
+```
+
+GTK 4 4.14 or newer and libadwaita 1.5 or newer are required. Configure and
+build the app without enabling the CLI:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DENABLE_APP_BLUETOOTH_GTK=ON
+cmake --build build --target dmn-bluetooth-gtk -j2
+./build/src/app/dmn-bluetooth-gtk
+```
+
+The GTK option enables the required ANCS, BlueZ, and D-Bus libraries but
+remains off in default/headless builds. To install the application, desktop
+launcher, AppStream metadata, icons, and settings schema into a user prefix:
+
+```bash
+cmake --install build --prefix "$HOME/.local"
+```
+
+For the implemented UI, remaining features, and current design details, see
+the [GTK application specification](docs/specs/dmn-bluetooth-gtk-app-spec.md)
+and its [UI storyboard](docs/specs/dmn-bluetooth-gtk-ui-storyboard.md).
+
 ## Fault-injection tests
 
 Fault-injection support is optional and disabled by default. Enabling it links
@@ -215,7 +263,8 @@ Start it interactively with its normal entrypoint:
 docker run -it --rm dmn
 ```
 
-The image enables all non-hardware CMake options. On startup, the entrypoint
+The image enables its non-hardware CMake options (the GTK desktop app is not
+included). On startup, the entrypoint
 bootstraps the Kafka topic and runs the `dmn`, `kafka`, `valgrind`, and
 `fault-injection` CTest groups. If they pass, it opens a Bash prompt in the
 container; if they fail, the entrypoint exits without opening the prompt. The
@@ -253,6 +302,7 @@ docker rmi dmn
 | `ENABLE_ANCS` | `OFF` | Build the backend-neutral ANCS protocol library. |
 | `ENABLE_APP_BLUEZ_DISCOVERY` | `OFF` | Build and install `dmn-bluez-cli`; automatically enables `ENABLE_BLUEZ` and `ENABLE_DBUS`. |
 | `ENABLE_APP_BLUETOOTH` | `OFF` | Build and install `dmn-bluetooth-cli`; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. |
+| `ENABLE_APP_BLUETOOTH_GTK` | `OFF` | Build and install the Linux GTK 4/libadwaita `dmn-bluetooth-gtk` desktop app; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. Requires GTK 4 4.14+, libadwaita 1.5+, and GLib schema tools. |
 | `ENABLE_ANCS_HARDWARE_TESTS` | `OFF` | Register the opt-in physical-iPhone test; requires `ENABLE_APP_BLUETOOTH=ON`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
@@ -262,10 +312,12 @@ with the desired options before building. The `dmn` CTest label selects the
 regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
 respective optional test groups.
 
-On Linux, to enable all non-hardware CMake options, including Kafka, D-Bus,
-BlueZ, ANCS, both Bluetooth applications, Valgrind, and fault injection,
-configure and build with the commands below. BlueZ tests use a private bus and
-do not require a physical adapter; the physical-iPhone test remains opt-in:
+On Linux, to enable the non-hardware CMake options used in the example below,
+including Kafka, D-Bus, BlueZ, ANCS, both Bluetooth CLI programs, Valgrind,
+and fault injection, configure and build as shown. The optional GTK app has
+separate GTK/libadwaita dependencies described above. BlueZ tests use a private
+bus and do not require a physical adapter; the physical-iPhone test remains
+opt-in:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \

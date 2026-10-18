@@ -17,11 +17,18 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "dmn-kafka-example-config.hpp"
 
-int main() {
+int main(int argc, char **argv) {
+  if (argc == 2 && std::string_view{argv[1]} == "--version") {
+    std::cout << "dmn-kafka-sender " << DMN_VERSION << '\n';
+
+    return EXIT_SUCCESS;
+  }
+
   auto config = dmn::app::kafkaExampleConfig();
   if (!config) {
     std::cerr << "Kafka example configuration error: " << config.error()
