@@ -2092,6 +2092,76 @@ TEST(DmnAncsBluezMonitorTest, OwnsDeviceSetupAndDeliversAncsEvents) {
   EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
 }
 
+TEST(DmnAncsBluezMonitorTest,
+     RequiresConnectionAndRequestsRemainingProfilesLikeCli) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  ASSERT_TRUE(monitor.setEventHandler([](const auto &) {}));
+
+  dmn::Dmn_AncsMonitorConfig config;
+  config.require_existing_connection = true;
+  config.request_remaining_profiles_when_connected = true;
+  config.ancs.service_resolution_timeout = 1s;
+  const auto started = monitor.start("Known headset", config);
+
+  ASSERT_TRUE(started) << started.error().message;
+  EXPECT_TRUE(started->requested_remaining_profiles);
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+  ASSERT_TRUE(monitor.stop());
+}
+
+TEST(DmnAncsBluezMonitorTest,
+     ExistingConnectionDoesNotRequestProfilesByDefault) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  ASSERT_TRUE(monitor.setEventHandler([](const auto &) {}));
+
+  dmn::Dmn_AncsMonitorConfig config;
+  config.require_existing_connection = true;
+  config.ancs.service_resolution_timeout = 1s;
+  const auto started = monitor.start("Known headset", config);
+
+  ASSERT_TRUE(started) << started.error().message;
+  EXPECT_FALSE(started->requested_remaining_profiles);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  ASSERT_TRUE(monitor.stop());
+}
+
+TEST(DmnAncsBluezMonitorTest, RequiresAlreadyConnectedDevice) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  dmn::Dmn_AncsMonitorConfig config;
+  config.require_existing_connection = true;
+
+  const auto started = monitor.start("Known headset", config);
+
+  ASSERT_FALSE(started);
+  EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Connection);
+  EXPECT_EQ(started.error().message, "selected device is not connected");
+  EXPECT_EQ(service.pairCount(), 0);
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+}
+
 TEST(DmnAncsBluezMonitorTest, RejectsKnownDeviceOnUnpoweredAdapter) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());

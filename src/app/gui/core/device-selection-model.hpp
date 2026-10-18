@@ -13,6 +13,7 @@
 #define DMN_BLUETOOTH_GUI_DEVICE_SELECTION_MODEL_HPP_
 
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <string>
 #include <vector>
@@ -57,12 +58,55 @@ struct Dmn_DeviceEntry {
 
   /** @brief Whether the device is present in the latest BlueZ snapshot. */
   bool m_present{};
+
   /** @brief Whether BlueZ observed this device during discovery. */
   bool m_seen_during_discovery{};
 };
 
+/** @brief Inputs used to decide which actions a device row may expose. */
+struct Dmn_DeviceActionContext {
+  /** @brief Whether this identity is in the saved selection. */
+  bool m_saved{};
+
+  /** @brief Whether the editable draft differs from saved settings. */
+  bool m_selection_dirty{};
+
+  /** @brief Whether a monitor object is active for this device. */
+  bool m_monitor_active{};
+
+  /** @brief Whether this device has saved monitoring intent. */
+  bool m_monitor_requested{};
+
+  /** @brief Whether this device's monitor is starting or stopping. */
+  bool m_monitor_busy{};
+
+  /** @brief Whether a shared Bluetooth operation is in progress. */
+  bool m_operation_busy{};
+
+  /** @brief Whether application shutdown has been requested. */
+  bool m_close_requested{};
+};
+
+/** @brief Availability of the four per-device row actions. */
+struct Dmn_DeviceActionAvailability {
+  /** @brief Whether the device may be connected. */
+  bool m_can_connect{};
+
+  /** @brief Whether the device may be disconnected. */
+  bool m_can_disconnect{};
+
+  /** @brief Whether ANCS monitoring may be started. */
+  bool m_can_start_monitoring{};
+
+  /** @brief Whether its active ANCS monitor may be stopped. */
+  bool m_can_stop_monitoring{};
+};
+
 /** @brief Device property used to order the inventory for display. */
-enum class Dmn_DeviceSortColumn { kName, kStatus };
+enum class Dmn_DeviceSortColumn {
+  kName,   /**< Sort by the displayed device name. */
+  kStatus, /**< Sort by the displayed connection/pairing status. */
+};
 
 /**
  * @brief Return the visible device name, falling back to its address.
@@ -83,6 +127,20 @@ deviceDisplayName(const Dmn_DeviceEntry &device) -> std::string;
 deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string;
 
 /**
+ * @brief Derive row actions from saved selection and live device state.
+ *
+ * Stop remains available for an active monitor while the selection is dirty;
+ * the user must not be trapped in a running session by editing its selection.
+ *
+ * @param device Current device facts.
+ * @param context Saved/draft and asynchronous operation state.
+ * @return Action sensitivity for the device row.
+ */
+[[nodiscard]] auto deviceActionAvailability(
+    const Dmn_DeviceEntry &device,
+    const Dmn_DeviceActionContext &context) -> Dmn_DeviceActionAvailability;
+
+/**
  * @brief GTK-independent inventory and saved/draft device selection.
  *
  * Saved devices remain represented when absent from the latest inventory, but
@@ -91,12 +149,14 @@ deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string;
 class Dmn_DeviceSelectionModel {
 public:
   /**
-   * @brief Construct a model with a fixed maximum number of selected devices.
+   * @brief Construct a model with a maximum number of selected devices.
    *
    * @param selectionLimit Maximum number of devices the user may select.
+   * Defaults to no selection-count limit.
    * @throws std::invalid_argument If @p selectionLimit is zero.
    */
-  explicit Dmn_DeviceSelectionModel(std::size_t selectionLimit = 1);
+  explicit Dmn_DeviceSelectionModel(
+      std::size_t selectionLimit = std::numeric_limits<std::size_t>::max());
 
   /**
    * @brief Replace the current owned inventory snapshot.

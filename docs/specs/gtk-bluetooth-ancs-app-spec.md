@@ -1,10 +1,11 @@
 # GTK Bluetooth and ANCS Application Specification
 
-**Status:** Proposed GUI frontend. The reusable BlueZ/GATT/ANCS libraries and
-the `dmn-bluetooth-cli` command-line application are implemented; this document
-specifies GTK behavior, including user-visible handling of observed
-real-device failures. It does not claim that a GTK application has been
-implemented.
+**Status:** Historical proposal for GTK failure handling. The optional GTK
+application is now partially implemented; its current behavior and build
+contract are maintained in the
+[GTK application specification](dmn-bluetooth-gtk-app-spec.md). Treat this
+document's proposed workflows and acceptance criteria as design history or
+future work, not as a description of the shipped UI.
 
 ## 1. Purpose and boundaries
 

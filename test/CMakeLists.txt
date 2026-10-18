@@ -291,27 +291,10 @@ if (ENABLE_APP_BLUETOOTH)
 endif()
 
 if (ENABLE_APP_BLUETOOTH_GTK)
-  add_executable(dmn-test-bluetooth-gui-selection
-                   gui/dmn-test-bluetooth-gui-selection.cpp
-  )
-
-  target_compile_options(dmn-test-bluetooth-gui-selection
-                           PRIVATE -Wall -Wextra -Wpedantic
-  )
+  ADD_TEST_EXECUTABLE(dmn-gui dmn-test-bluetooth-gui-selection)
 
   target_link_libraries(dmn-test-bluetooth-gui-selection
-                          PRIVATE
-                          dmn-bluetooth-gui-core
-                          gtest_main
-                          gtest
-  )
-
-  add_test(NAME dmn-test-bluetooth-gui-selection
-             COMMAND dmn-test-bluetooth-gui-selection
-  )
-
-  set_tests_properties(dmn-test-bluetooth-gui-selection
-                         PROPERTIES LABELS "dmn-gui"
+                          PRIVATE dmn-bluetooth-gui-core
   )
 
   add_test(NAME dmn-bluetooth-gtk-help

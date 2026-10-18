@@ -41,6 +41,7 @@ target_link_libraries(dmn-bluetooth-gtk
                         PRIVATE
                         dmn-bluetooth-gui-core
                         dmn-bluez
+                        dmn-ancs-bluez-monitor
                         PkgConfig::GTK4
                         PkgConfig::ADWAITA
 )
@@ -50,8 +51,25 @@ install(TARGETS dmn-bluetooth-gtk
 )
 
 install(FILES
-          "${CMAKE_CURRENT_SOURCE_DIR}/data/com.cheebinhoh.DmnBluetooth.desktop"
+          "${CMAKE_CURRENT_SOURCE_DIR}/data/com.cheebinhoh.dmn-bluetooth.desktop"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+)
+
+install(FILES
+          "${CMAKE_CURRENT_SOURCE_DIR}/data/com.cheebinhoh.dmn-bluetooth.metainfo.xml"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo"
+)
+
+install(FILES
+          "${CMAKE_CURRENT_SOURCE_DIR}/data/icons/hicolor/scalable/apps/com.cheebinhoh.dmn-bluetooth.svg"
+        DESTINATION
+          "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+)
+
+install(FILES
+          "${CMAKE_CURRENT_SOURCE_DIR}/data/icons/hicolor/symbolic/apps/com.cheebinhoh.dmn-bluetooth-symbolic.svg"
+        DESTINATION
+          "${CMAKE_INSTALL_DATADIR}/icons/hicolor/symbolic/apps"
 )
 
 install(FILES

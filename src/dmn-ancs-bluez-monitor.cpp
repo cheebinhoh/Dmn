@@ -257,6 +257,12 @@ public:
           "device selector is ambiguous; specify an adapter",
           {},
           std::nullopt});
+    } else if (config.require_existing_connection) {
+      return std::unexpected(Dmn_AncsMonitorError{
+          Dmn_AncsMonitorStage::DeviceNotFound,
+          "device is not present in the current BlueZ inventory",
+          {},
+          std::nullopt});
     }
 
     if (matches.empty()) {
@@ -327,9 +333,26 @@ public:
                                std::nullopt});
     }
 
+    if (config.require_existing_connection && !target.paired.value_or(false)) {
+      return std::unexpected(
+          Dmn_AncsMonitorError{Dmn_AncsMonitorStage::Pairing,
+                               "selected device is not paired",
+                               {},
+                               std::nullopt});
+    }
+
+    if (config.require_existing_connection &&
+        !target.connected.value_or(false)) {
+      return std::unexpected(
+          Dmn_AncsMonitorError{Dmn_AncsMonitorStage::Connection,
+                               "selected device is not connected",
+                               {},
+                               std::nullopt});
+    }
+
     const auto actionSelector =
         target.address.empty() ? target.object_path : target.address;
-    if (!target.paired.value_or(false)) {
+    if (!config.require_existing_connection && !target.paired.value_or(false)) {
       reportProgress(config, Dmn_AncsMonitorProgress::Pairing);
       const auto pairingDeadline =
           std::chrono::steady_clock::now() + config.pairing_timeout;
@@ -360,9 +383,15 @@ public:
     }
 
     const bool alreadyConnected = target.connected.value_or(false);
-    reportProgress(config, Dmn_AncsMonitorProgress::Connection);
+    bool requestedRemainingProfiles = false;
+    const bool requestRemainingProfiles =
+        !config.require_existing_connection ||
+        config.request_remaining_profiles_when_connected;
+    if (requestRemainingProfiles) {
+      reportProgress(config, Dmn_AncsMonitorProgress::Connection);
+    }
 
-    if (!alreadyConnected) {
+    if (!config.require_existing_connection && !alreadyConnected) {
       const auto connectionDeadline =
           std::chrono::steady_clock::now() + config.connection_timeout;
       const auto connectionCallTimeout = remainingTimeout(connectionDeadline);
@@ -389,13 +418,14 @@ public:
       }
 
       target = std::move(confirmed->device);
-    } else {
+    } else if (requestRemainingProfiles) {
       auto connected = m_bluez.connectAvailableProfiles(
           actionSelector, adapter->object_path, config.connection_timeout);
       if (!connected) {
         return std::unexpected(
             makeError(Dmn_AncsMonitorStage::Connection, connected.error()));
       }
+      requestedRemainingProfiles = true;
     }
 
     reportProgress(config, Dmn_AncsMonitorProgress::AncsStartup);
@@ -414,7 +444,7 @@ public:
     }
 
     return Dmn_AncsMonitorSession{std::move(*adapter), std::move(target),
-                                  alreadyConnected};
+                                  requestedRemainingProfiles};
   }
 
   auto stop() -> Dmn_AncsResult {

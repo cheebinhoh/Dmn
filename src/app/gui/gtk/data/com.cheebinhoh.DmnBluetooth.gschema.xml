@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="com.cheebinhoh.DmnBluetooth" path="/com/cheebinhoh/dmn-bluetooth/">
+    <key name="selected-devices" type="a(ss)">
+      <default>[]</default>
+      <summary>Selected Bluetooth adapter and device addresses</summary>
+      <description>Stable addresses identifying saved monitoring targets.</description>
+    </key>
+    <key name="monitoring-devices" type="a(ss)">
+      <default>[]</default>
+      <summary>Devices to monitor when connected</summary>
+      <description>
+        Saved Bluetooth devices for which monitoring was explicitly enabled.
+        The application resumes monitoring only while it is running and after
+        BlueZ confirms that a saved, paired device is connected.
+      </description>
+    </key>
     <key name="selected-device" type="(ss)">
       <default>(&apos;&apos;, &apos;&apos;)</default>
-      <summary>Selected Bluetooth adapter and device addresses</summary>
-      <description>Stable addresses identifying the saved monitoring target.</description>
+      <summary>Previous single selected Bluetooth device</summary>
+      <description>Legacy setting retained for migrating older selections.</description>
+    </key>
+    <key name="pane-position" type="i">
+      <default>460</default>
+      <summary>Device pane width</summary>
+      <description>Width of the device list pane in the main window.</description>
     </key>
   </schema>
 </schemalist>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.cheebinhoh.dmn-bluetooth</id>
+  <name>Dmn Bluetooth</name>
+  <summary>Monitor iPhone notifications over Bluetooth</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <developer id="com.cheebinhoh">
+    <name>Chee Bin Hoh</name>
+  </developer>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <description>
+    <p>
+      Discover Bluetooth devices, choose which paired iPhones to connect, and
+      explicitly start monitoring notifications shared through Apple's
+      Notification Center Service (ANCS).
+    </p>
+    <p>
+      Notification events are shown in a temporary in-app feed and are kept
+      only in memory for the current session. The app does not retrieve older
+      notifications or continue monitoring after it quits.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.cheebinhoh.dmn-bluetooth.desktop</launchable>
+  <provides>
+    <binary>dmn-bluetooth-gtk</binary>
+  </provides>
+  <url type="homepage">https://github.com/cheebinhoh/Dmn</url>
+  <url type="bugtracker">https://github.com/cheebinhoh/Dmn/issues</url>
+  <icon type="stock">com.cheebinhoh.dmn-bluetooth</icon>
+</component>

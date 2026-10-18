@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Dmn Bluetooth</title>
+  <desc id="desc">A Bluetooth symbol with nearby signal waves on a blue rounded-square background.</desc>
+  <defs>
+    <clipPath id="icon-mask">
+      <rect x="8" y="8" width="112" height="112" rx="26"/>
+    </clipPath>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="#3584e4"/>
+  <path d="M8 109c34 10 78 10 112 0v11H8z" fill="#1c71d8"
+        clip-path="url(#icon-mask)"/>
+  <path d="M64 18v92m0-92 30 27-30 19 30 27-30 19"
+        fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="9"/>
+  <path d="M39 48c-5 5-8 10-8 16s3 11 8 16m8-24c-2 2-4 5-4 8s2 6 4 8"
+        fill="none" stroke="#c6e7ff" stroke-linecap="round" stroke-width="6"/>
+</svg>

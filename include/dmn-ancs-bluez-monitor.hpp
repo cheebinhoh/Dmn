@@ -98,6 +98,24 @@ struct Dmn_AncsMonitorConfig {
   /** @brief Optional adapter address or current BlueZ object path. */
   std::optional<std::string> adapter_selector{};
 
+  /**
+   * @brief Require the device to already be present, paired, and connected.
+   *
+   * When true, startup does not discover, pair, or establish a device
+   * connection. Remaining profiles are requested only when
+   * `request_remaining_profiles_when_connected` is enabled.
+   */
+  bool require_existing_connection{};
+
+  /**
+   * @brief Request remaining BlueZ profiles for an already-connected target.
+   *
+   * This is intended for frontends that require a pre-existing link but need
+   * the CLI-equivalent profile completion before ANCS startup. It has no
+   * effect unless the selected device is already connected.
+   */
+  bool request_remaining_profiles_when_connected{};
+
   /** @brief Maximum time to discover a target not already in inventory. */
   std::chrono::milliseconds discovery_timeout{30000};
 
@@ -173,13 +191,19 @@ public:
   setEventHandler(Dmn_AncsClient::EventHandler handler) -> Dmn_AncsResult;
 
   /**
-   * @brief Select, connect, and start monitoring one exact device.
+   * @brief Select and start monitoring one exact device.
    *
-   * This operation is synchronous and bounded by @p config. If the target is
-   * already connected, BlueZ is also asked to connect remaining
-   * auto-connectable profiles before ANCS startup. Pairing and link state are
-   * retained after the monitor stops. stop() serializes with this operation
-   * and does not cancel an in-progress setup.
+   * This operation is synchronous and bounded by @p config. By default it
+   * discovers, pairs, and connects as needed; if already connected, BlueZ is
+   * asked to connect remaining auto-connectable profiles. When
+   * `config.require_existing_connection` is true, it instead requires an
+   * already-present, paired, connected device and performs no discovery,
+   * pairing, or initial link connection. A connected target gets a BlueZ
+   * Connect request to complete remaining profiles in the normal
+   * setup-capable mode, or when
+   * `config.request_remaining_profiles_when_connected` is enabled. Pairing
+   * and link state are retained after the monitor stops. stop() serializes
+   * with this operation and does not cancel an in-progress setup.
    *
    * @param device_selector Exact display name or Bluetooth address.
    * @param config Adapter, setup deadlines, and ANCS behavior.

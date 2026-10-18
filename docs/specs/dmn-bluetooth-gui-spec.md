@@ -1,7 +1,14 @@
 # Dmn Bluetooth GUI Design and Specification Index
 
-**Status:** Proposed; no graphical frontend or user-session monitor service is
-implemented.
+**Status:** The optional GTK 4/libadwaita application is partially implemented.
+Its implemented behavior and remaining features are documented in the
+[GTK application specification](dmn-bluetooth-gtk-app-spec.md), which is the
+source of truth for current GTK behavior. GNOME Shell, COSMIC, and
+user-session-service concepts below remain proposals.
+
+This document captures the broader frontend design and historical
+implementation guidance; some pre-implementation recommendations below have
+been superseded by the current GTK application.
 
 This document is the entry point for evaluating graphical frontends for Dmn's
 existing BlueZ/ANCS monitor. It replaces the former GTK-only proposal:
@@ -60,7 +67,7 @@ history or embed an application feed into the notification center.
 
 | Option | Role | Decision |
 | --- | --- | --- |
-| Standalone GTK 4 app with optional GIO desktop alerts | Full device manager and live event reader; can send passive alerts while still running with its window hidden | **Recommended first implementation**; see [GTK application spec](dmn-bluetooth-gtk-app-spec.md). |
+| Standalone GTK 4 app with optional GIO desktop alerts | Full device manager and live event reader; can send passive alerts while still running with its window hidden | Initial GTK application is implemented; desktop alerts and hidden-window monitoring remain future work. See [GTK application spec](dmn-bluetooth-gtk-app-spec.md). |
 | GNOME Shell extension | GNOME-only panel menu/quick actions that may activate the app or, later, call a service | Optional companion only; it cannot run on COSMIC and is not a plug-in for the GNOME notification center. See [GNOME extension spec](dmn-bluetooth-gnome-extension-spec.md). |
 | Native COSMIC app and COSMIC applet | Rust/`libcosmic` native window and optional panel surface | Alternative if COSMIC integration is the priority; requires a maintained C++ boundary. See [COSMIC spec](dmn-bluetooth-cosmic-spec.md). |
 | User-session D-Bus monitor service | Owns monitor lifetime/state for multiple frontends or after a window/process exits | Optional independent topic, not a default dependency; see [service spec](dmn-bluetooth-session-service-spec.md). |
@@ -87,17 +94,16 @@ bus tests can exercise the real monitor adapter without a physical phone.
 GNOME and COSMIC remain viable but add independently versioned runtimes and
 shell-specific release gates.
 
-### Gaps to close before implementation
+### Remaining design and qualification work
 
-1. Declare and test the minimum supported GTK/libadwaita, GNOME Shell/GJS, and
-   COSMIC/libcosmic versions. Check package availability and CI image support
-   before choosing a release matrix; upstream web documentation is not a
-   compatibility guarantee for a distribution release.
-2. Keep the proposed GTK build option separate from the existing
-   `ENABLE_APP_BLUETOOTH`, which currently builds `dmn-bluetooth-cli`.
-   `ENABLE_APP_BLUETOOTH_GTK` is a new, proposed opt-in target and must not
-   silently rename, replace, or build the CLI. Its dependency behavior is
-   specified in the GTK application spec.
+1. Continue qualifying GTK/libadwaita behavior on the supported Linux desktop
+   versions. The GTK build currently requires GTK 4.14+ and libadwaita 1.5+;
+   upstream web documentation is not a compatibility guarantee for a
+   distribution release.
+2. Keep the implemented `ENABLE_APP_BLUETOOTH_GTK` option separate from
+   `ENABLE_APP_BLUETOOTH`, which builds `dmn-bluetooth-cli`. Enabling one must
+   not silently rename, replace, or build the other. See the GTK application
+   specification for the current build contract.
 3. For each milestone, link requirement IDs to focused tests and distinguish
    automated evidence from human/hardware qualification. A test name or
    screenshot alone is not evidence that the required behavior is covered.
