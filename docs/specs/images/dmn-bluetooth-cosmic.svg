@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="820" viewBox="0 0 1420 820" role="img" aria-labelledby="title desc">
+  <title id="title">Dmn Bluetooth native COSMIC app and applet wireframe</title>
+  <desc id="desc">A native COSMIC desktop app with phone and notification panes alongside a compact optional COSMIC panel applet popup.</desc>
+  <rect width="1420" height="820" fill="#e9eaf1"/>
+  <text x="36" y="42" font-family="sans-serif" font-size="23" font-weight="700" fill="#252737">COSMIC native app + optional applet</text>
+  <text x="36" y="68" font-family="sans-serif" font-size="14" fill="#606378">Rust/libcosmic frontend · Dmn C++ accessed through tested FFI or the optional session service</text>
+  <rect x="36" y="96" width="920" height="666" rx="18" fill="#fff" stroke="#c3c6d4" stroke-width="2"/>
+  <rect x="36" y="96" width="920" height="58" rx="18" fill="#f8f8fb"/>
+  <path d="M36 145H956" stroke="#d9dbe3"/>
+  <text x="66" y="132" font-family="sans-serif" font-size="21" font-weight="700" fill="#252737">Dmn Bluetooth</text>
+  <rect x="530" y="108" width="250" height="34" rx="10" fill="#fff" stroke="#c7c9d5"/>
+  <text x="548" y="131" font-family="sans-serif" font-size="14" fill="#73778b">Search notifications…</text>
+  <text x="817" y="132" font-family="sans-serif" font-size="14" fill="#55596d">Preferences</text>
+  <rect x="36" y="154" width="280" height="552" fill="#f7f7fa"/>
+  <path d="M316 154V706" stroke="#d9dbe3"/>
+  <text x="62" y="190" font-family="sans-serif" font-size="14" font-weight="700" fill="#55596d">PHONES</text>
+  <rect x="54" y="207" width="245" height="78" rx="12" fill="#eeeff8"/>
+  <rect x="69" y="228" width="18" height="18" rx="4" fill="#5755b9"/>
+  <path d="m73 237 4 4 7-9" fill="none" stroke="#fff" stroke-width="2"/>
+  <text x="100" y="236" font-family="sans-serif" font-size="15" font-weight="700" fill="#252737">iPhone Genghis</text>
+  <text x="100" y="260" font-family="sans-serif" font-size="13" fill="#606378">Connected · Ready</text>
+  <rect x="54" y="294" width="245" height="78" rx="12" fill="#fff" stroke="#d9dbe3"/>
+  <rect x="69" y="315" width="18" height="18" rx="4" fill="#fff" stroke="#9397a8"/>
+  <text x="100" y="323" font-family="sans-serif" font-size="15" font-weight="700" fill="#252737">iPhone Old</text>
+  <text x="100" y="347" font-family="sans-serif" font-size="13" fill="#606378">Paired · Unavailable</text>
+  <rect x="54" y="396" width="112" height="36" rx="10" fill="#fff" stroke="#bfc2d0"/>
+  <text x="72" y="420" font-family="sans-serif" font-size="13" fill="#35384b">Save selection</text>
+  <rect x="176" y="396" width="123" height="36" rx="10" fill="#5452b5"/>
+  <text x="192" y="420" font-family="sans-serif" font-size="13" font-weight="700" fill="#fff">Monitor selected</text>
+  <text x="62" y="674" font-family="sans-serif" font-size="13" fill="#606378">Ready: 1 of 1 monitored</text>
+  <text x="342" y="190" font-family="sans-serif" font-size="14" font-weight="700" fill="#55596d">NOTIFICATIONS · THIS SESSION</text>
+  <rect x="340" y="207" width="590" height="44" rx="10" fill="#f2f2f7"/>
+  <text x="358" y="235" font-family="sans-serif" font-size="13" font-weight="700" fill="#606378">DEVICE</text>
+  <text x="478" y="235" font-family="sans-serif" font-size="13" font-weight="700" fill="#606378">TIME</text>
+  <text x="566" y="235" font-family="sans-serif" font-size="13" font-weight="700" fill="#606378">TYPE</text>
+  <text x="670" y="235" font-family="sans-serif" font-size="13" font-weight="700" fill="#606378">NOTIFICATION</text>
+  <rect x="340" y="251" width="590" height="57" fill="#eeeff8"/>
+  <g font-family="sans-serif" font-size="13" fill="#35384b">
+    <text x="358" y="285">Genghis</text><text x="478" y="285">10:42</text><text x="566" y="285">Added</text><text x="670" y="285">Messages · New notification</text>
+    <path d="M340 308H930M340 365H930M340 422H930" stroke="#e2e3e9"/>
+    <text x="358" y="342">Genghis</text><text x="478" y="342">10:39</text><text x="566" y="342">Updated</text><text x="670" y="342">Calendar · Event updated</text>
+    <text x="358" y="399">Genghis</text><text x="478" y="399">10:37</text><text x="566" y="399">Added</text><text x="670" y="399">Mail · New notification</text>
+  </g>
+  <text x="36" y="792" font-family="sans-serif" font-size="13" fill="#62667b">Native-app alternative: keep the full feed in the app; only use an applet for status, counts, and navigation.</text>
+  <rect x="988" y="96" width="396" height="666" rx="18" fill="#f7f7fa" stroke="#c3c6d4" stroke-width="2"/>
+  <rect x="988" y="96" width="396" height="46" rx="18" fill="#d9d9e2"/>
+  <text x="1012" y="126" font-family="sans-serif" font-size="14" fill="#34364a">COSMIC panel</text>
+  <rect x="1276" y="103" width="82" height="32" rx="9" fill="#fff" stroke="#c4c6d2"/>
+  <text x="1290" y="125" font-family="sans-serif" font-size="14" fill="#35384b">◉ Dmn</text>
+  <rect x="1042" y="154" width="320" height="370" rx="16" fill="#fff" stroke="#c3c6d4" stroke-width="2"/>
+  <text x="1066" y="190" font-family="sans-serif" font-size="18" font-weight="700" fill="#252737">Dmn Bluetooth</text>
+  <text x="1066" y="217" font-family="sans-serif" font-size="13" fill="#606378">Monitoring 1 of 2 · 3 new events</text>
+  <path d="M1062 235H1342" stroke="#e1e2e9"/>
+  <circle cx="1080" cy="266" r="6" fill="#3b8e68"/>
+  <text x="1098" y="271" font-family="sans-serif" font-size="14" font-weight="700" fill="#252737">Genghis · Ready</text>
+  <circle cx="1080" cy="304" r="6" fill="#b5852c"/>
+  <text x="1098" y="309" font-family="sans-serif" font-size="14" fill="#252737">Old · Unavailable</text>
+  <path d="M1062 329H1342" stroke="#e1e2e9"/>
+  <rect x="1062" y="349" width="280" height="40" rx="10" fill="#5553b6"/>
+  <text x="1128" y="375" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">Open application</text>
+  <rect x="1062" y="401" width="135" height="38" rx="10" fill="#fff" stroke="#c4c6d2"/>
+  <text x="1097" y="425" font-family="sans-serif" font-size="13" fill="#35384b">Stop all</text>
+  <text x="1213" y="425" font-family="sans-serif" font-size="13" fill="#5553b6">Preferences</text>
+  <text x="1012" y="581" font-family="sans-serif" font-size="14" font-weight="700" fill="#35384b">Applet boundary</text>
+  <text x="1012" y="608" font-family="sans-serif" font-size="13" fill="#606378">No message bodies or event table.</text>
+  <text x="1012" y="632" font-family="sans-serif" font-size="13" fill="#606378">Without service: launcher-only or</text>
+  <text x="1012" y="654" font-family="sans-serif" font-size="13" fill="#606378">explicitly “Status unavailable”.</text>
+  <text x="1012" y="707" font-family="sans-serif" font-size="12" fill="#777b8e">Separate app and applet packages</text>
+  <text x="1012" y="727" font-family="sans-serif" font-size="12" fill="#777b8e">using the COSMIC templates.</text>
+</svg>

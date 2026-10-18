@@ -83,7 +83,7 @@ The optional `dmn-bluez` inventory/discovery API and CLI, explicit
 selected-device connect/disconnect, and `Device1.Pair` API/`--pair` action are
 implemented. GATT and ANCS are not prerequisites for shipping the existing
 inventory CLI. The terminal application is one frontend over a reusable C++
-client intended for a future GTK frontend; this is not a system daemon.
+client intended for future graphical frontends; this is not a system daemon.
 Hardware compatibility with the target iPhone and Linux/BlueZ combination is
 a release gate for ANCS, not for inventory or basic device connection control.
 
@@ -709,10 +709,10 @@ current BlueZ path. It owns the BlueZ inventory and GATT backend instances plus
 the ANCS client, and composes device selection, discovery, pairing, connection,
 readiness, and ANCS startup. Its synchronous `start()` performs blocking
 Bluetooth operations and reports setup phases through an optional callback on
-the calling thread. A GTK frontend must call it from a worker and marshal both
-progress and owned ANCS events back to the GTK main context. `stop()` waits for
-an in-progress `start()` to finish; it does not cancel device setup. It leaves
-pairing and link state intact.
+the calling thread. A graphical frontend must call it from a worker and
+marshal progress and owned ANCS events back to its UI context. `stop()` waits
+for an in-progress `start()` to finish; it does not cancel device setup. It
+leaves pairing and link state intact.
 
 Malformed framing, mismatched UID/attribute order, or an uncorrelatable
 response fails the session with `Protocol`.

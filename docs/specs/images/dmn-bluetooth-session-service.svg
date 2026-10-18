@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620" role="img" aria-labelledby="title desc">
+  <title id="title">Optional Dmn Bluetooth user-session service architecture</title>
+  <desc id="desc">GTK, GNOME extension, and COSMIC applet frontends optionally connect over the user's session D-Bus to one C++ service that owns Dmn monitors and communicates with BlueZ on the system bus.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0 0L9 3L0 6Z" fill="#52677c"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="620" fill="#f1f4f7"/>
+  <text x="38" y="44" font-family="sans-serif" font-size="24" font-weight="700" fill="#182431">Optional user-session monitor service</text>
+  <text x="38" y="72" font-family="sans-serif" font-size="14" fill="#566779">Use only for service-owned monitoring across hidden/exited windows or multiple frontends</text>
+  <rect x="58" y="116" width="278" height="346" rx="16" fill="#fff" stroke="#aebdcb" stroke-width="2"/>
+  <text x="82" y="150" font-family="sans-serif" font-size="17" font-weight="700" fill="#182431">Frontends (optional)</text>
+  <rect x="82" y="174" width="230" height="62" rx="10" fill="#eaf3fb" stroke="#b6d0e6"/>
+  <text x="101" y="200" font-family="sans-serif" font-size="15" font-weight="600" fill="#213e57">GTK app</text>
+  <text x="101" y="221" font-family="sans-serif" font-size="12" fill="#566779">Full device and event UI</text>
+  <rect x="82" y="248" width="230" height="62" rx="10" fill="#f3eef9" stroke="#d0c2e0"/>
+  <text x="101" y="274" font-family="sans-serif" font-size="15" font-weight="600" fill="#3e3152">GNOME extension</text>
+  <text x="101" y="295" font-family="sans-serif" font-size="12" fill="#665b76">Compact status/actions</text>
+  <rect x="82" y="322" width="230" height="62" rx="10" fill="#eef1fa" stroke="#c4cbe2"/>
+  <text x="101" y="348" font-family="sans-serif" font-size="15" font-weight="600" fill="#333959">COSMIC applet</text>
+  <text x="101" y="369" font-family="sans-serif" font-size="12" fill="#606780">Compact status/actions</text>
+  <text x="82" y="424" font-family="sans-serif" font-size="12" fill="#566779">Some frontends can instead</text>
+  <text x="82" y="442" font-family="sans-serif" font-size="12" fill="#566779">own Dmn directly / use FFI.</text>
+  <rect x="410" y="145" width="350" height="282" rx="18" fill="#fff" stroke="#4b79a0" stroke-width="3"/>
+  <text x="438" y="182" font-family="sans-serif" font-size="20" font-weight="700" fill="#182431">Dmn user-session service</text>
+  <text x="438" y="210" font-family="sans-serif" font-size="13" fill="#566779">Same UID · session bus · no root</text>
+  <rect x="438" y="232" width="294" height="70" rx="10" fill="#eef5fb"/>
+  <text x="458" y="259" font-family="sans-serif" font-size="15" font-weight="600" fill="#263e55">Versioned D-Bus API</text>
+  <text x="458" y="282" font-family="sans-serif" font-size="12" fill="#566779">Snapshot · operations · events</text>
+  <rect x="438" y="318" width="294" height="78" rx="10" fill="#edf6f0"/>
+  <text x="458" y="347" font-family="sans-serif" font-size="15" font-weight="600" fill="#28513b">C++ monitor owner</text>
+  <text x="458" y="370" font-family="sans-serif" font-size="12" fill="#566779">One Dmn monitor per selected phone</text>
+  <rect x="846" y="190" width="206" height="150" rx="16" fill="#fff" stroke="#aebdcb" stroke-width="2"/>
+  <text x="870" y="227" font-family="sans-serif" font-size="18" font-weight="700" fill="#182431">BlueZ</text>
+  <text x="870" y="255" font-family="sans-serif" font-size="14" fill="#566779">System bus</text>
+  <text x="870" y="282" font-family="sans-serif" font-size="13" fill="#566779">Device / GATT</text>
+  <text x="870" y="305" font-family="sans-serif" font-size="13" fill="#566779">ANCS transport</text>
+  <path d="M336 240H400" fill="none" stroke="#52677c" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M760 260H836" fill="none" stroke="#52677c" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="345" y="222" font-family="sans-serif" font-size="12" fill="#566779">session D-Bus</text>
+  <text x="771" y="241" font-family="sans-serif" font-size="12" fill="#566779">Dmn client</text>
+  <rect x="58" y="496" width="994" height="72" rx="12" fill="#fff8e9" stroke="#ead49c"/>
+  <text x="82" y="526" font-family="sans-serif" font-size="15" font-weight="700" fill="#5b481d">Lifecycle rule</text>
+  <text x="82" y="549" font-family="sans-serif" font-size="13" fill="#5b481d">No autostart by default · explicit background consent · logout stops sessions · payloads memory-only · one canonical monitor owner</text>
+</svg>

@@ -102,7 +102,7 @@ After the discovery milestone, build the selected-device workflow as:
 ```text
 dmn-bluetooth-cli command ─┐
                    ├─> Dmn_AncsBluezMonitor
-future GTK GUI ────┘       ├─> Dmn_BluezClient
+future GUI frontend ─┘     ├─> Dmn_BluezClient
                            ├─> Dmn_AncsClient
                            └─> Dmn_BluezGattClient
                                   └─> Dmn_GattClient contract
@@ -110,14 +110,14 @@ future GTK GUI ────┘       ├─> Dmn_BluezClient
 ```
 
 `Dmn_AncsBluezMonitor` owns the current selected-device orchestration and event
-delivery boundary; the CLI and future GTK frontend are adapters for argument
-parsing, presentation, and UI-thread marshalling only. The monitor reuses the
+delivery boundary; the CLI and future GUI frontends are adapters for argument
+parsing, presentation, and UI-context marshalling only. The monitor reuses the
 existing `dmn-bluez` and backend-neutral ANCS surfaces and never pairs or
 connects unrelated scan results. Its optional progress callback reports setup
 phases on the thread calling synchronous `start()`; `stop()` waits for startup
-and does not cancel discovery, pairing, or connection. GTK must invoke startup
-outside the UI thread and marshal progress and ANCS callbacks onto the GTK
-context. It must not spawn the CLI, parse terminal output, or depend on CLI
+and does not cancel discovery, pairing, or connection. A GUI must invoke
+startup outside its UI thread and marshal progress and ANCS callbacks onto its
+UI context. It must not spawn the CLI, parse terminal output, or depend on CLI
 output as an internal protocol. Neither frontend promises every nearby radio
 device. Do not start by building a system daemon, notification database,
 libnotify dependency, or IPC protocol.
@@ -430,21 +430,39 @@ cmake --build build --target dmn-bluetooth-cli dmn-test-bluez-device-list
 ctest --test-dir build -L hardware --output-on-failure
 ```
 
-### Step 2 — Future GTK+ frontend
+### Step 2 — Future graphical frontends
+
+- Start with the architecture choices and shared requirements in
+  [`dmn-bluetooth-gui-spec.md`](dmn-bluetooth-gui-spec.md). The recommended
+  first full frontend is the optional GTK application; GNOME Shell and COSMIC
+  integrations are separate alternatives/companions, not one generic GTK
+  app.
+- Use the [GTK application specification](dmn-bluetooth-gtk-app-spec.md) for
+  the standalone app, optional GIO desktop alerts, lifecycle, privacy, and
+  test-driven implementation sequence.
+- Use the separate [GNOME extension](dmn-bluetooth-gnome-extension-spec.md)
+  and [COSMIC app/applet](dmn-bluetooth-cosmic-spec.md) specifications only
+  when those desktop-specific experiences are in scope.
+- A [user-session D-Bus service](dmn-bluetooth-session-service-spec.md) is
+  optional; add it only for process-independent monitoring or shared live
+  state across frontends.
 
 - Follow [`gtk-bluetooth-ancs-app-spec.md`](gtk-bluetooth-ancs-app-spec.md)
-  for the GUI lifecycle, observed missing-ANCS/stale-GATT recovery,
-  `StartNotify`/`Notifying` handling, post-ready D-Bus timeouts, and iOS
-  notification-access prompt behavior.
-- Build the GUI directly on the same public BlueZ/GATT/ANCS APIs. Do not invoke
-  `dmn-bluetooth-cli` as a subprocess or parse CSV.
-- Provide an explicit device-selection/connection/session view that displays
-  stage state and normalized ANCS notification events. Pairing/connection and
-  notification-content display remain explicit user actions; GTK must not
-  auto-connect or silently expose notification content on launch.
-- Marshal worker callbacks to the GTK main context before touching widgets.
-  Run synchronous system-D-Bus calls on a worker so the UI remains responsive
-  while pairing prompts, service resolution, or timeouts are in progress.
+  for GTK-specific user-facing language for observed missing-ANCS/stale-GATT
+  recovery, `StartNotify`/`Notifying` handling, post-ready D-Bus timeouts, and
+  iOS notification-access prompt behavior.
+- Integrate the selected frontend with the reusable BlueZ/GATT/ANCS APIs
+  directly, through a tested language boundary, or through the optional
+  session service. Do not invoke `dmn-bluetooth-cli` as a subprocess or parse
+  its output.
+- Provide explicit device-selection/connection/session interactions that
+  distinguish monitor stages and display normalized ANCS events. Pairing,
+  connection, and notification-content exposure must not happen silently on
+  launch.
+- Marshal worker callbacks to the frontend's UI context before touching UI
+  objects. Run synchronous system-D-Bus calls off the UI thread so the
+  interface remains responsive during pairing prompts, service resolution,
+  or timeouts.
 - Keep notification display opt-in and ephemeral by default. Do not add a
   persistent notification database or log message bodies unless a separate
   user-visible privacy requirement is approved.
@@ -489,14 +507,15 @@ grouped under the named tests.
 
 ### Later extensions — Desktop notification and service integration
 
-Only after the CLI and its reusable library pass their software gates; GTK+
-itself is the separate Step 2 above:
+Only after the CLI and its reusable library pass their software gates; the
+graphical frontends are the separate Step 2 above:
 
-- Add an optional notification sink (for example libnotify) outside the ANCS
-  protocol library.
-- Decide whether the process should become a user service; prefer a user
-  systemd unit over a privileged system daemon unless a concrete system-wide
-  requirement demands otherwise.
+- Add optional desktop alerts only through the selected frontend's documented
+  alert integration; keep them outside the ANCS protocol library and generic
+  by default.
+- Add the optional user-session D-Bus service only if process-independent
+  monitoring or shared state across frontends is required; do not introduce a
+  privileged system daemon.
 - If multiple applications need the same Bluetooth session, design a
   separate local IPC protocol and service ownership model. Do not let multiple
   clients independently race to own the same ANCS connection.
