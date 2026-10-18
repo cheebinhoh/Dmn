@@ -120,9 +120,8 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
       if (!res.has_value()) {
         rd_kafka_conf_destroy(kafka_config);
 
-        throw std::runtime_error(
-            "Error in setting kafka configuration: " + c.first +
-            ", error: " + res.error());
+        throw std::runtime_error("Error in setting kafka configuration: " +
+                                 c.first + ", error: " + res.error());
       }
 
       assert(res.value() == RD_KAFKA_CONF_OK);

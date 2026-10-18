@@ -24,7 +24,6 @@ target_include_directories(dmn-kafka-receiver
                              PRIVATE
                              ${PROJECT_SOURCE_DIR}/include
                              dmn
-                             ${rdkafka_LIB}
 )
 
 target_link_libraries(dmn-kafka-receiver
@@ -39,7 +38,6 @@ target_include_directories(dmn-kafka-sender
                              PRIVATE
                              ${PROJECT_SOURCE_DIR}/include
                              dmn
-                             ${rdkafka_LIB}
 )
 
 target_link_libraries(dmn-kafka-sender

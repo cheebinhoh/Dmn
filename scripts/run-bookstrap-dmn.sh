@@ -20,6 +20,7 @@ COMMAND="${1:-start}"
 
 fail() {
   printf 'Kafka bootstrap error: %s\n' "$*" >&2
+
   exit 1
 }
 
@@ -33,11 +34,13 @@ find_java() {
 
 find_kafka_home() {
   local candidate
+
   if [[ -n "${DMN_KAFKA_HOME:-}" ]]; then
     candidate="${DMN_KAFKA_HOME}"
     [[ -x "${candidate}/bin/kafka-server-start.sh" ]] ||
       fail "DMN_KAFKA_HOME does not contain bin/kafka-server-start.sh: ${candidate}"
     printf '%s\n' "$candidate"
+
     return
   fi
 
@@ -48,6 +51,7 @@ find_kafka_home() {
     "/opt/kafka"; do
     if [[ -x "${candidate}/bin/kafka-server-start.sh" ]]; then
       printf '%s\n' "$candidate"
+
       return
     fi
   done
@@ -99,22 +103,28 @@ download_kafka() {
 resolve_kafka_home() {
   local home
   home="$(find_kafka_home)"
+
   if [[ -z "$home" ]]; then
     home="$(download_kafka)"
   fi
+
   [[ -x "${home}/bin/kafka-topics.sh" ]] ||
     fail "Kafka distribution is missing kafka-topics.sh: ${home}"
+
   printf '%s\n' "$home"
 }
 
 prepare_runtime() {
   local runtime_root
+
   if [[ -w "${PREFIX_DIR}" ]]; then
     runtime_root="${PREFIX_DIR}/kafka-runtime"
   else
     runtime_root="${XDG_STATE_HOME:-${HOME}/.local/state}/dmn-kafka"
   fi
+
   mkdir -p -- "${runtime_root}/logs" "${runtime_root}/data"
+
   printf '%s\n' "$runtime_root"
 }
 
@@ -128,19 +138,25 @@ stop_recorded_process() {
   local pid_file="$1" config="$2" label="$3" pid
   [[ -f "$pid_file" ]] || return 0
   read -r pid < "$pid_file"
+
   if [[ "$pid" =~ ^[0-9]+$ ]] && process_matches_config "$pid" "$config"; then
     kill -TERM "$pid"
+
     for _ in {1..20}; do
       kill -0 "$pid" 2>/dev/null || break
       sleep 1
     done
+
     if kill -0 "$pid" 2>/dev/null; then
       printf 'Kafka bootstrap warning: %s process %s did not stop within 20 seconds\n' \
         "$label" "$pid" >&2
+
       return 1
     fi
+
     printf 'Stopped %s (pid %s)\n' "$label" "$pid"
   fi
+
   rm -f -- "$pid_file"
 }
 
@@ -159,6 +175,7 @@ KAFKA_ADVERTISED_LISTENERS="${DMN_KAFKA_ADVERTISED_LISTENERS:-${KAFKA_LISTENERS}
 if [[ "$COMMAND" == "stop" ]]; then
   stop_recorded_process "$BROKER_PID_FILE" "$BROKER_CONFIG" "Kafka broker"
   stop_recorded_process "$ZOOKEEPER_PID_FILE" "$ZOOKEEPER_CONFIG" "ZooKeeper"
+
   exit 0
 fi
 
@@ -192,6 +209,7 @@ EOF
      process_matches_config "$(cat "$ZOOKEEPER_PID_FILE")" "$ZOOKEEPER_CONFIG"; then
     fail "ZooKeeper is already running but the Kafka broker is unavailable; inspect ${RUNTIME_DIR}/logs"
   fi
+
   if [[ -f "$BROKER_PID_FILE" ]] &&
      process_matches_config "$(cat "$BROKER_PID_FILE")" "$BROKER_CONFIG"; then
     fail "Kafka broker is already starting but not yet ready; inspect ${RUNTIME_DIR}/logs"
@@ -213,7 +231,9 @@ for _ in {1..90}; do
     printf '\n'
     break
   fi
+
   printf '.'
+
   sleep 1
 done
 
@@ -223,6 +243,7 @@ if ! broker_ready; then
     "$RUNTIME_DIR" >&2
   tail -n 40 "${RUNTIME_DIR}/logs/zookeeper.log" \
     "${RUNTIME_DIR}/logs/kafka.log" >&2 || true
+
   exit 1
 fi
 

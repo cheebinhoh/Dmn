@@ -34,6 +34,7 @@ int main() {
   if (!config) {
     std::cerr << "Kafka example configuration error: " << config.error()
               << '\n';
+
     return EXIT_FAILURE;
   }
 
