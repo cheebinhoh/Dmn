@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['remote_0',['remote',['../dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268af8508f576cd3f742dfc268258dcdf0dd',1,'Remotedmn'],['../dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645af8508f576cd3f742dfc268258dcdf0dd',1,'Remotedmn']]],
-  ['resourcelimit_1',['ResourceLimit',['../dmn-dbus-client_8hpp.html#ae2b24c85f0dade1cef1bdf4225d14268a5b9e324ce43a64f4976de212c9d3b75d',1,'dmn']]]
+  ['pairing_0',['pairing',['../dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea4039036d3d20091fb6400cb1368a97fc',1,'Pairingdmn'],['../dmn-ancs-bluez-monitor_8hpp.html#a23cff2663877d2f0f949c733b4b779f3a4039036d3d20091fb6400cb1368a97fc',1,'Pairingdmn']]]
 ];

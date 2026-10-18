@@ -111,57 +111,60 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:aa98399aec51f7442791818178abf8b32" id="r_aa98399aec51f7442791818178abf8b32"><td class="memItemLeft" align="right" valign="top"><a id="aa98399aec51f7442791818178abf8b32" name="aa98399aec51f7442791818178abf8b32"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>EventHandler</b> = std::function&lt; void(const <a class="el" href="structdmn_1_1Dmn__BluezEvent.html">Dmn_BluezEvent</a> &amp;)&gt;</td></tr>
+<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EventHandler</b> = std::function&lt; <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>(<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="structdmn_1_1Dmn__BluezEvent.html">Dmn_BluezEvent</a> &amp;)&gt;</td></tr>
 <tr class="memdesc:aa98399aec51f7442791818178abf8b32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback receiving serialized, owned BlueZ inventory events. <br /></td></tr>
 <tr class="separator:aa98399aec51f7442791818178abf8b32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1ca5a24f56631743e1376443f69f6951" id="r_a1ca5a24f56631743e1376443f69f6951"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a1ca5a24f56631743e1376443f69f6951">Dmn_BluezClient</a> (const <a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">Dmn_BluezClientConfig</a> &amp;config={})</td></tr>
+<tr class="memitem:a1ca5a24f56631743e1376443f69f6951" id="r_a1ca5a24f56631743e1376443f69f6951"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a1ca5a24f56631743e1376443f69f6951">Dmn_BluezClient</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">Dmn_BluezClientConfig</a> &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">config</a>={})</td></tr>
 <tr class="memdesc:a1ca5a24f56631743e1376443f69f6951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to BlueZ and subscribe to inventory signals.  <br /></td></tr>
 <tr class="separator:a1ca5a24f56631743e1376443f69f6951"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a307f4e0374dbb59c3ec28796e1936f4d" id="r_a307f4e0374dbb59c3ec28796e1936f4d"><td class="memItemLeft" align="right" valign="top"><a id="a307f4e0374dbb59c3ec28796e1936f4d" name="a307f4e0374dbb59c3ec28796e1936f4d"></a>
-virtual&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_BluezClient</b> ()</td></tr>
+<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_BluezClient</b> ()</td></tr>
 <tr class="memdesc:a307f4e0374dbb59c3ec28796e1936f4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop an owned discovery session and release worker resources. <br /></td></tr>
 <tr class="separator:a307f4e0374dbb59c3ec28796e1936f4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e47b32738c676782aa9b2aa74210db3" id="r_a1e47b32738c676782aa9b2aa74210db3"><td class="memItemLeft" align="right" valign="top"><a id="a1e47b32738c676782aa9b2aa74210db3" name="a1e47b32738c676782aa9b2aa74210db3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BluezClient</b> (const <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;)=delete</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BluezClient</b> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;)=<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">delete</a></td></tr>
 <tr class="memdesc:a1e47b32738c676782aa9b2aa74210db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clients cannot be copied because they own a bus connection. <br /></td></tr>
 <tr class="separator:a1e47b32738c676782aa9b2aa74210db3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3a89225612c72598e1ee8395da252b7" id="r_ad3a89225612c72598e1ee8395da252b7"><td class="memItemLeft" align="right" valign="top"><a id="ad3a89225612c72598e1ee8395da252b7" name="ad3a89225612c72598e1ee8395da252b7"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;) -&gt; <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;=delete</td></tr>
+<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;) -&gt; <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;=<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">delete</a></td></tr>
 <tr class="memdesc:ad3a89225612c72598e1ee8395da252b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clients cannot be copy-assigned. <br /></td></tr>
 <tr class="separator:ad3a89225612c72598e1ee8395da252b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e1a3168cc259c50839af316ef5de9ec" id="r_a8e1a3168cc259c50839af316ef5de9ec"><td class="memItemLeft" align="right" valign="top"><a id="a8e1a3168cc259c50839af316ef5de9ec" name="a8e1a3168cc259c50839af316ef5de9ec"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BluezClient</b> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;&amp;)=delete</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BluezClient</b> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;&amp;)=<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">delete</a></td></tr>
 <tr class="memdesc:a8e1a3168cc259c50839af316ef5de9ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clients cannot be moved because workers retain client state. <br /></td></tr>
 <tr class="separator:a8e1a3168cc259c50839af316ef5de9ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ed1a7b49aa735af034d0e34538bbc38" id="r_a5ed1a7b49aa735af034d0e34538bbc38"><td class="memItemLeft" align="right" valign="top"><a id="a5ed1a7b49aa735af034d0e34538bbc38" name="a5ed1a7b49aa735af034d0e34538bbc38"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;&amp;) -&gt; <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;=delete</td></tr>
+<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;&amp;) -&gt; <a class="el" href="classdmn_1_1Dmn__BluezClient.html">Dmn_BluezClient</a> &amp;=<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">delete</a></td></tr>
 <tr class="memdesc:a5ed1a7b49aa735af034d0e34538bbc38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clients cannot be move-assigned. <br /></td></tr>
 <tr class="separator:a5ed1a7b49aa735af034d0e34538bbc38"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af43674d1d8ca1abbff9bb1ef8d4b33de" id="r_af43674d1d8ca1abbff9bb1ef8d4b33de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#af43674d1d8ca1abbff9bb1ef8d4b33de">setEventHandler</a> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32">EventHandler</a> handler)</td></tr>
+<tr class="memitem:af43674d1d8ca1abbff9bb1ef8d4b33de" id="r_af43674d1d8ca1abbff9bb1ef8d4b33de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#af43674d1d8ca1abbff9bb1ef8d4b33de">setEventHandler</a> (<a class="el" href="classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32">EventHandler</a> handler)</td></tr>
 <tr class="memdesc:af43674d1d8ca1abbff9bb1ef8d4b33de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Install the serialized inventory and service-event handler.  <br /></td></tr>
 <tr class="separator:af43674d1d8ca1abbff9bb1ef8d4b33de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8fed5d36ea37b7b749e0c770efb53e0d" id="r_a8fed5d36ea37b7b749e0c770efb53e0d"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a8fed5d36ea37b7b749e0c770efb53e0d">snapshot</a> (std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a33f6aae6a7aaa592b78dd773cd5120b4">Dmn_BluezValueResult</a>&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
+<tr class="memitem:a8fed5d36ea37b7b749e0c770efb53e0d" id="r_a8fed5d36ea37b7b749e0c770efb53e0d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a8fed5d36ea37b7b749e0c770efb53e0d">snapshot</a> (std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a33f6aae6a7aaa592b78dd773cd5120b4">Dmn_BluezValueResult</a>&lt; <a class="el" href="structdmn_1_1Dmn__BluezInventory.html">Dmn_BluezInventory</a> &gt;</td></tr>
 <tr class="memdesc:a8fed5d36ea37b7b749e0c770efb53e0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fetch and reconcile a fresh ObjectManager inventory snapshot.  <br /></td></tr>
 <tr class="separator:a8fed5d36ea37b7b749e0c770efb53e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a084ebc051d33018020072e881eec9ef5" id="r_a084ebc051d33018020072e881eec9ef5"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a084ebc051d33018020072e881eec9ef5">devices</a> () const -&gt; std::vector&lt; <a class="el" href="structdmn_1_1Dmn__BluezDevice.html">Dmn_BluezDevice</a> &gt;</td></tr>
+<tr class="memitem:a084ebc051d33018020072e881eec9ef5" id="r_a084ebc051d33018020072e881eec9ef5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a084ebc051d33018020072e881eec9ef5">devices</a> () <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> -&gt; std::vector&lt; <a class="el" href="structdmn_1_1Dmn__BluezDevice.html">Dmn_BluezDevice</a> &gt;</td></tr>
 <tr class="memdesc:a084ebc051d33018020072e881eec9ef5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current owned device view after snapshot or live updates.  <br /></td></tr>
 <tr class="separator:a084ebc051d33018020072e881eec9ef5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af69ebbf941d942638cde9bb23901b3c3" id="r_af69ebbf941d942638cde9bb23901b3c3"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#af69ebbf941d942638cde9bb23901b3c3">connectDevice</a> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memitem:af69ebbf941d942638cde9bb23901b3c3" id="r_af69ebbf941d942638cde9bb23901b3c3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#af69ebbf941d942638cde9bb23901b3c3">connectDevice</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">deviceSelector</a>, <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">adapterSelector</a>=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="memdesc:af69ebbf941d942638cde9bb23901b3c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request connection to one explicitly selected known device.  <br /></td></tr>
 <tr class="separator:af69ebbf941d942638cde9bb23901b3c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2eeba932704cc3bde159d3f482327994" id="r_a2eeba932704cc3bde159d3f482327994"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a2eeba932704cc3bde159d3f482327994">pairDevice</a> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memitem:a60e8f4371328deeea6927ff3a4d963ca" id="r_a60e8f4371328deeea6927ff3a4d963ca"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a60e8f4371328deeea6927ff3a4d963ca">connectAvailableProfiles</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">deviceSelector</a>, <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">adapterSelector</a>=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memdesc:a60e8f4371328deeea6927ff3a4d963ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ask BlueZ to connect any remaining auto-connectable profiles.  <br /></td></tr>
+<tr class="separator:a60e8f4371328deeea6927ff3a4d963ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2eeba932704cc3bde159d3f482327994" id="r_a2eeba932704cc3bde159d3f482327994"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a2eeba932704cc3bde159d3f482327994">pairDevice</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">deviceSelector</a>, <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">adapterSelector</a>=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="memdesc:a2eeba932704cc3bde159d3f482327994"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explicitly pair one selected device using BlueZ's default agent.  <br /></td></tr>
 <tr class="separator:a2eeba932704cc3bde159d3f482327994"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0d171ecb3e07480aedb5c5d770fe620" id="r_ad0d171ecb3e07480aedb5c5d770fe620"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#ad0d171ecb3e07480aedb5c5d770fe620">disconnectDevice</a> (const std::string &amp;deviceSelector, const std::optional&lt; std::string &gt; &amp;adapterSelector=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memitem:ad0d171ecb3e07480aedb5c5d770fe620" id="r_ad0d171ecb3e07480aedb5c5d770fe620"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#ad0d171ecb3e07480aedb5c5d770fe620">disconnectDevice</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">deviceSelector</a>, <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">adapterSelector</a>=std::nullopt, std::chrono::milliseconds timeout=std::chrono::milliseconds::zero()) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="memdesc:ad0d171ecb3e07480aedb5c5d770fe620"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request disconnection of one explicitly selected known device.  <br /></td></tr>
 <tr class="separator:ad0d171ecb3e07480aedb5c5d770fe620"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7415b3e81f7bb1b7072f287b94572154" id="r_a7415b3e81f7bb1b7072f287b94572154"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a7415b3e81f7bb1b7072f287b94572154">startDiscovery</a> (const std::string &amp;adapterPath) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memitem:a7415b3e81f7bb1b7072f287b94572154" id="r_a7415b3e81f7bb1b7072f287b94572154"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a7415b3e81f7bb1b7072f287b94572154">startDiscovery</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">adapterPath</a>) -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="memdesc:a7415b3e81f7bb1b7072f287b94572154"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the default auto-transport filter and start one adapter scan.  <br /></td></tr>
 <tr class="separator:a7415b3e81f7bb1b7072f287b94572154"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4cdf03fa3fdcec25949997d2b17afd50" id="r_a4cdf03fa3fdcec25949997d2b17afd50"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a4cdf03fa3fdcec25949997d2b17afd50">stopDiscovery</a> () -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
+<tr class="memitem:a4cdf03fa3fdcec25949997d2b17afd50" id="r_a4cdf03fa3fdcec25949997d2b17afd50"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#a4cdf03fa3fdcec25949997d2b17afd50">stopDiscovery</a> () -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td></tr>
 <tr class="memdesc:a4cdf03fa3fdcec25949997d2b17afd50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop only a discovery session successfully started by this client.  <br /></td></tr>
 <tr class="separator:a4cdf03fa3fdcec25949997d2b17afd50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -181,7 +184,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
         <tr>
           <td class="memname">dmn::Dmn_BluezClient::Dmn_BluezClient </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">Dmn_BluezClientConfig</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">Dmn_BluezClientConfig</a> &amp;&#160;</td>
           <td class="paramname"><em>config</em> = <code>{}</code></td><td>)</td>
           <td></td>
         </tr>
@@ -211,6 +214,52 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a60e8f4371328deeea6927ff3a4d963ca" name="a60e8f4371328deeea6927ff3a4d963ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60e8f4371328deeea6927ff3a4d963ca">&#9670;&#160;</a></span>connectAvailableProfiles()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::connectAvailableProfiles </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
+          <td class="paramname"><em>deviceSelector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>adapterSelector</em> = <code>std::nullopt</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::chrono::milliseconds&#160;</td>
+          <td class="paramname"><em>timeout</em> = <code>std::chrono::milliseconds::zero()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Ask BlueZ to connect any remaining auto-connectable profiles. </p>
+<p>Unlike <a class="el" href="classdmn_1_1Dmn__BluezClient.html#af69ebbf941d942638cde9bb23901b3c3" title="Request connection to one explicitly selected known device.">connectDevice()</a>, this always calls <code>Device1.Connect</code>, even when <code>Connected</code> is already true. BlueZ may use this to connect a remaining profile or the disconnected bearer on a dual-mode device. It does not select a specific bearer or guarantee that GATT services will resolve. BlueZ's <code>AlreadyConnected</code> and <code>InProgress</code> responses, and its <code>Failed</code> / "Operation already in progress" response, are treated as an already-issued request; callers must separately verify the state they need.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">deviceSelector</td><td>Bluetooth address or current object path in inventory. </td></tr>
+    <tr><td class="paramname">adapterSelector</td><td>Optional adapter address or current object path. </td></tr>
+    <tr><td class="paramname">timeout</td><td>Finite method timeout; zero selects the configured default. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Success or the typed local/remote BlueZ error. </dd></dl>
+
+</div>
+</div>
 <a id="af69ebbf941d942638cde9bb23901b3c3" name="af69ebbf941d942638cde9bb23901b3c3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af69ebbf941d942638cde9bb23901b3c3">&#9670;&#160;</a></span>connectDevice()</h2>
 
@@ -218,15 +267,15 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::connectDevice </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::connectDevice </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
           <td class="paramname"><em>deviceSelector</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::optional&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;&#160;</td>
           <td class="paramname"><em>adapterSelector</em> = <code>std::nullopt</code>, </td>
         </tr>
         <tr>
@@ -264,7 +313,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::devices </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::devices </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const -&gt; std::vector&lt;<a class="el" href="structdmn_1_1Dmn__BluezDevice.html">Dmn_BluezDevice</a>&gt;</td>
@@ -284,15 +333,15 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::disconnectDevice </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::disconnectDevice </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
           <td class="paramname"><em>deviceSelector</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::optional&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;&#160;</td>
           <td class="paramname"><em>adapterSelector</em> = <code>std::nullopt</code>, </td>
         </tr>
         <tr>
@@ -330,15 +379,15 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::pairDevice </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::pairDevice </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
           <td class="paramname"><em>deviceSelector</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::optional&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::optional&lt; std::string &gt; &amp;&#160;</td>
           <td class="paramname"><em>adapterSelector</em> = <code>std::nullopt</code>, </td>
         </tr>
         <tr>
@@ -376,7 +425,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void dmn::Dmn_BluezClient::setEventHandler </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a> dmn::Dmn_BluezClient::setEventHandler </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32">EventHandler</a>&#160;</td>
           <td class="paramname"><em>handler</em></td><td>)</td>
@@ -402,7 +451,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::snapshot </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::snapshot </td>
           <td>(</td>
           <td class="paramtype">std::chrono::milliseconds&#160;</td>
           <td class="paramname"><em>timeout</em> = <code>std::chrono::milliseconds::zero()</code></td><td>)</td>
@@ -430,9 +479,9 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::startDiscovery </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::startDiscovery </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
           <td class="paramname"><em>adapterPath</em></td><td>)</td>
           <td> -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td>
         </tr>
@@ -458,7 +507,7 @@ auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a cla
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">auto dmn::Dmn_BluezClient::stopDiscovery </td>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a> dmn::Dmn_BluezClient::stopDiscovery </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> -&gt; <a class="el" href="dmn-bluez-client_8hpp.html#a3b52fecf210f336aa8c540cbb2a17ee9">Dmn_BluezResult</a></td>

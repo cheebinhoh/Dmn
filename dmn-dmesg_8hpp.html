@@ -128,7 +128,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normalized constructor inputs for a standard or derived handler.  <a href="structdmn_1_1Dmn__DMesg_1_1HandlerSpec.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html">dmn::Dmn_DMesg::Dmn_DMesgHandler</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume dmn::DMesgPb messages. It implements Dmn_Io&lt;DMesgPb&gt;.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> is an IO-style interface for clients to publish and consume <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46" title="Value result or typed ANCS failure.">dmn::DMesgPb</a> messages. It implements Dmn_Io&lt;DMesgPb&gt;.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html">dmn::Dmn_DMesg::Dmn_DMesgHandlerProxy</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight proxy to a <a class="el" href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandler.html" title="Dmn_DMesgHandler is an IO-style interface for clients to publish and consume dmn::DMesgPb messages....">Dmn_DMesgHandler</a> instance.  <a href="classdmn_1_1Dmn__DMesg_1_1Dmn__DMesgHandlerProxy.html#details">More...</a><br /></td></tr>
@@ -137,21 +137,21 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:a93d661bde0addac1e33991ddc7be574f" id="r_a93d661bde0addac1e33991ddc7be574f"><td class="memItemLeft" align="right" valign="top"><a id="a93d661bde0addac1e33991ddc7be574f" name="a93d661bde0addac1e33991ddc7be574f"></a>
-const char *const&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kDMesgSysIdentifier</b> = &quot;sys.dmn-dmesg&quot;</td></tr>
+<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">char</a> *<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a>&#160;</td><td class="memItemRight" valign="bottom"><b>dmn::kDMesgSysIdentifier</b> = &quot;sys.dmn-<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">dmesg&quot;</a></td></tr>
 <tr class="memdesc:a93d661bde0addac1e33991ddc7be574f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifier string for the sys topic (used by DMesgNet). <br /></td></tr>
 <tr class="separator:a93d661bde0addac1e33991ddc7be574f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DMESG publisher/subscriber wrapper using Protobuf messages. </p>
 <p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Overview</h2>
-<p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code>dmn::DMesgPb</code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<p>This header declares Dmn_DMesg, a publisher built on top of Dmn_Pub that exchanges messages using the generated Protobuf type <code><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46" title="Value result or typed ANCS failure.">dmn::DMesgPb</a></code> (proto/dmn-dmesg.proto). It also declares Dmn_DMesg::Dmn_DMesgHandler, a light-weight, IO-style handler that client code holds (via std::shared_ptr) to publish and consume DMesgPb messages.</p>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Design pattern</h2>
 <p>Proxy - Dmn_DMesgHandlerProxy provides a lightweight proxy to Dmn_DMesgHandler instances, offering pointer-like access while allowing the publisher to control and own handler lifetime. Composite - Dmn_DMesgNet builds network I/O on top of Dmn_DMesg, which uses the Dmn_Pub/Dmn_Sub publish-subscribe hierarchy.</p>
 <p>Key responsibilities</p><ul>
-<li>Represent messages with the Protobuf type <code>dmn::DMesgPb</code>. Clients extend the proto when extra fields are needed (no C++ subclassing required).</li>
+<li>Represent messages with the Protobuf type <code><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46" title="Value result or typed ANCS failure.">dmn::DMesgPb</a></code>. Clients extend the proto when extra fields are needed (no C++ subclassing required).</li>
 <li>Provide an ergonomic handler API (Dmn_Io-like) for reading and writing DMesgPb messages without requiring clients to subclass publisher-specific subscriber interfaces.</li>
 <li>Maintain per-topic running counters and last-known messages so new handlers can receive the most recent state for every topic (playback).</li>
 <li>Detect simple publish conflicts based on per-topic running counters, marking the writer and eligible subscribed handlers as conflicted.</li>
@@ -188,7 +188,7 @@ Design pattern</h2>
 <li>Publisher state is serialized by its async context. Public handler state access and callbacks are serialized by that handler's async context; state crosses the boundary only as ordered snapshots.</li>
 </ul>
 <p>See also</p><ul>
-<li>proto/dmn-dmesg.proto : Protobuf definition for dmn::DMesgPb.</li>
+<li>proto/dmn-dmesg.proto : Protobuf definition for <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46" title="Value result or typed ANCS failure.">dmn::DMesgPb</a>.</li>
 <li><a class="el" href="dmn-pub-sub_8hpp.html" title="Lightweight publish/subscribe adaptor classes as wrapper.">dmn-pub-sub.hpp</a> : Base publisher/subscriber primitives used here. </li>
 </ul>
 </div></div><!-- contents -->

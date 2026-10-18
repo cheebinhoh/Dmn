@@ -6,6 +6,7 @@ var classdmn_1_1Dmn__BluezClient =
     [ "~Dmn_BluezClient", "classdmn_1_1Dmn__BluezClient.html#a307f4e0374dbb59c3ec28796e1936f4d", null ],
     [ "Dmn_BluezClient", "classdmn_1_1Dmn__BluezClient.html#a1e47b32738c676782aa9b2aa74210db3", null ],
     [ "Dmn_BluezClient", "classdmn_1_1Dmn__BluezClient.html#a8e1a3168cc259c50839af316ef5de9ec", null ],
+    [ "connectAvailableProfiles", "classdmn_1_1Dmn__BluezClient.html#a60e8f4371328deeea6927ff3a4d963ca", null ],
     [ "connectDevice", "classdmn_1_1Dmn__BluezClient.html#af69ebbf941d942638cde9bb23901b3c3", null ],
     [ "devices", "classdmn_1_1Dmn__BluezClient.html#a084ebc051d33018020072e881eec9ef5", null ],
     [ "disconnectDevice", "classdmn_1_1Dmn__BluezClient.html#ad0d171ecb3e07480aedb5c5d770fe620", null ],

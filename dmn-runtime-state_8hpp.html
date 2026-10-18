@@ -126,7 +126,7 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a210907b43b7fdae14054e27bdcc0d56b" id="r_a210907b43b7fdae14054e27bdcc0d56b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a> = std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &gt;</td></tr>
+<tr class="memitem:a210907b43b7fdae14054e27bdcc0d56b" id="r_a210907b43b7fdae14054e27bdcc0d56b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-runtime-state_8hpp.html#a210907b43b7fdae14054e27bdcc0d56b">dmn::DmnRuntimeStatePtr</a> = std::shared_ptr&lt; <a class="el" href="classdmn_1_1Dmn__Runtime__State.html">Dmn_Runtime_State</a> &gt;</td></tr>
 <tr class="memdesc:a210907b43b7fdae14054e27bdcc0d56b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared ownership handle for a runtime-managed state.  <br /></td></tr>
 <tr class="separator:a210907b43b7fdae14054e27bdcc0d56b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -135,13 +135,13 @@ Typedefs</h2></td></tr>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
 <dl class="section author"><dt>Author</dt><dd>Chee Bin HOH </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>2026-08-31</dd></dl>
-<h2><a class="anchor" id="autotoc_md47"></a>
+<h2><a class="anchor" id="autotoc_md50"></a>
 Overview</h2>
 <p>This header runs Dmn_State callbacks on the process-wide Dmn_Runtime_Manager thread. Internal initialization and finalization occur in the same runtime dispatch as the surrounding user-state work and are not scheduled separately. Clients create a Dmn_Runtime_State through Dmn_Runtime_State_Manager, configure it with the inherited Dmn_State API or setRuntimeStateFnc(), and submit it with Dmn_Runtime_State::run().</p>
-<h2><a class="anchor" id="autotoc_md48"></a>
+<h2><a class="anchor" id="autotoc_md51"></a>
 Ownership and Lifetime</h2>
 <p>State handles are shared pointers. After a successful submission, the manager retains an owning handle until the state completes, fails, or is cancelled. A client may therefore release its handle without invalidating queued or running work.</p>
-<h2><a class="anchor" id="autotoc_md49"></a>
+<h2><a class="anchor" id="autotoc_md52"></a>
 Thread Safety</h2>
 <p>Runtime lifecycle operations and runtime-specific status queries are synchronized. Configure inherited Dmn_State callbacks and transitions from one client thread before submission. During execution, inherited base lifecycle queries should only be read from a callback or after the completion future is ready.</p>
 <p>User-state callbacks, onStarted(), onCompleted(), and onFailed() execute on the runtime thread. onCancelled() executes in whichever thread publishes cancellation: normally the runtime thread for queued work, but the caller's thread when cancellation completes before successful submission. Blocking wait and shutdown operations are prohibited from the runtime thread to avoid deadlock. </p>

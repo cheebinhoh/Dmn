@@ -125,7 +125,7 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Dmn_Pipe: a FIFO pipe with non-blocking writers and optional background processing. </p>
 <p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md31"></a>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Overview</h2>
 <ul>
 <li>Dmn_Pipe&lt;T, QueueType&gt; implements a FIFO buffer that:<ul>
@@ -135,7 +135,7 @@ Overview</h2>
 </li>
 <li>The class combines QueueType (storage), Dmn_Io&lt;T&gt; (I/O interface) and Dmn_Proc (optional processing thread support).</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md35"></a>
 Threading and cancellation</h2>
 <ul>
 <li>In ordinary mode, push/pop synchronization is handled by QueueType. Scheduled-mode queue selection and processed-item accounting are protected by the pipe mutex.</li>
@@ -148,7 +148,7 @@ Threading and cancellation</h2>
 <li>readAndProcess() involves the caller-provided task and updates <code>m_count</code> under the mutex.</li>
 <li>An optional scheduled-write mode uses the same background worker and waits for the next deadline or a new write; it does not add a thread.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md36"></a>
 Read / Write semantics</h2>
 <ul>
 <li>write(const T&amp;) copies <code>item</code> into the pipe.</li>

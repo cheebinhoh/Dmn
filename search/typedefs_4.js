@@ -1,5 +1,5 @@
 var searchData=
 [
   ['entry_5fmatcher_0',['entry_matcher',['../classdmn_1_1Dmn__IntervalBTree.html#ac2b6819bc937643d771a0add5e5012f8',1,'dmn::Dmn_IntervalBTree::entry_matcher'],['../dmn-interval-btree_8hpp.html#ae3b100730a6ee757bd8bf77b535dc665',1,'dmn::entry_matcher']]],
-  ['eventhandler_1',['EventHandler',['../classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32',1,'dmn::Dmn_BluezClient']]]
+  ['eventhandler_1',['eventhandler',['../classdmn_1_1Dmn__AncsClient.html#ac17c529d853c7d499b9ae74579cee562',1,'dmn::Dmn_AncsClient::EventHandler'],['../classdmn_1_1Dmn__BluezClient.html#aa98399aec51f7442791818178abf8b32',1,'dmn::Dmn_BluezClient::EventHandler']]]
 ];
