@@ -111,7 +111,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     if (Dmn_Kafka::Topic == c.first) {
       m_topic = c.second;
     } else if (Dmn_Kafka::Key == c.first) {
-      m_topic = c.second;
+      m_key = c.second;
     } else if (Dmn_Kafka::PollTimeoutMs == c.first) {
       m_poll_timeout_ms = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
@@ -122,7 +122,7 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
 
         throw std::runtime_error(
             "Error in setting kafka configuration: " + c.first +
-            " to value: " + c.second + ", error: " + res.error());
+            ", error: " + res.error());
       }
 
       assert(res.value() == RD_KAFKA_CONF_OK);
@@ -175,12 +175,13 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     // Subscribe to the list of topics.
     rd_kafka_resp_err_t err = rd_kafka_subscribe(m_kafka, subscription);
     if (err) {
+      const auto topic_count = subscription->cnt;
       rd_kafka_topic_partition_list_destroy(subscription);
       rd_kafka_destroy(m_kafka);
 
       throw std::runtime_error(
-          "Failed to subscribe to " + std::to_string(subscription->cnt) +
-          +" topics, error: " + std::string{rd_kafka_err2str(err)});
+          "Failed to subscribe to " + std::to_string(topic_count) +
+          " topics, error: " + std::string{rd_kafka_err2str(err)});
     }
 
     rd_kafka_topic_partition_list_destroy(subscription);
