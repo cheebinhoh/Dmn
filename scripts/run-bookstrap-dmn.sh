@@ -229,6 +229,7 @@ printf 'Waiting for Kafka broker'
 for _ in {1..90}; do
   if broker_ready; then
     printf '\n'
+
     break
   fi
 

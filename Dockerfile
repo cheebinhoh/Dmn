@@ -42,7 +42,7 @@ WORKDIR /app
 EXPOSE 9092 2181
 
 
-# Configure and build every optional test group.
+# Configure and build all optional non-hardware test groups.
 RUN cmake -B build \
       -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_NDEBUG=ON \
@@ -56,5 +56,5 @@ RUN cmake -B build \
 
 ENV CTEST_LABEL="dmn|kafka|valgrind|fault-injection"
 
- # Entry point
-ENTRYPOINT ["/bin/bash", "-c", "export DMN_KAFKA_LISTENERS=\"${DMN_KAFKA_LISTENERS:-PLAINTEXT://0.0.0.0:9092}\"; export DMN_KAFKA_ADVERTISED_LISTENERS=\"${DMN_KAFKA_ADVERTISED_LISTENERS:-PLAINTEXT://${HOSTNAME}:9092}\"; /app/build/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure; exec /bin/bash"]
+# Entry point
+ENTRYPOINT ["/bin/bash", "-c", "set -e; export DMN_KAFKA_LISTENERS=\"${DMN_KAFKA_LISTENERS:-PLAINTEXT://0.0.0.0:9092}\"; export DMN_KAFKA_ADVERTISED_LISTENERS=\"${DMN_KAFKA_ADVERTISED_LISTENERS:-PLAINTEXT://${HOSTNAME}:9092}\"; /app/build/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure; exec /bin/bash"]

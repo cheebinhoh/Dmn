@@ -13,7 +13,7 @@ target_include_directories(dmn-dmesg-daemon
 )
 
 target_link_libraries(dmn-dmesg-daemon
-                        PRIVATE dmn ${rdkafka_LIB}
+                        PRIVATE dmn
 )
 
 add_executable(dmn-kafka-receiver
@@ -27,7 +27,7 @@ target_include_directories(dmn-kafka-receiver
 )
 
 target_link_libraries(dmn-kafka-receiver
-                        PRIVATE dmn ${rdkafka_LIB}
+                        PRIVATE dmn
 )
 
 add_executable(dmn-kafka-sender
@@ -41,7 +41,7 @@ target_include_directories(dmn-kafka-sender
 )
 
 target_link_libraries(dmn-kafka-sender
-                        PRIVATE dmn ${rdkafka_LIB}
+                        PRIVATE dmn
 )
 
 if (ENABLE_APP_BLUEZ_DISCOVERY)

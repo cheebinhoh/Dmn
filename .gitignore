@@ -1,6 +1,6 @@
 a.out
 *.out
-*.o 
+*.o
 .*.swp
 *.pb.cc
 *.pb.h

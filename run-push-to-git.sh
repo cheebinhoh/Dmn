@@ -12,33 +12,44 @@
 # - git commit changes
 # - git push changes
 
+set -eu
+
 buildTest=""
 commitMessage=""
 
-while [ "$1" != "" ]; do
+while [ "$#" -gt 0 ]; do
   case "$1" in
     -t)
       buildTest="yes"
       shift
       ;;
 
-   -m)
-     shift
-     commitMessage="$1"
-     shift
+    -m)
+      if [ "$#" -lt 2 ]; then
+        echo "Usage: $0 [-t] [-m commit-message]" >&2
+
+        exit 2
+      fi
+
+      commitMessage="$2"
+      shift 2
+      ;;
+
+    *)
+      echo "Usage: $0 [-t] [-m commit-message]" >&2
+
+      exit 2
+      ;;
   esac
 done
 
-oldpwd=$PWD
-rootdir=`dirname $0`
-if [ $rootdir != "" ]; then
-  cd $rootdir
-fi
+rootdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$rootdir"
 
-. ${rootdir}/scripts/run-tab-check-and-clang-format.sh
+. "$rootdir/scripts/run-tab-check-and-clang-format.sh"
 
 # test build, we do not want to check in things that break
-if [ "${buildTest}" == "yes" ]; then
+if [ "${buildTest}" = "yes" ]; then
   echo "******** run build..."
   if [ ! -d ./Build ]; then
     mkdir ./Build
@@ -65,9 +76,12 @@ echo
 
 git add .
 git commit -m "${commitMessage:-"no comment"}"
-git push origin `git branch  | grep '^*'  | sed -e 's/\*//g'` --force
 
+branch=$(git branch --show-current)
+if [ -z "$branch" ]; then
+  echo "Error: cannot push from a detached HEAD." >&2
 
-if [ $rootdir != "" ]; then
-  cd $oldpwd;
+  exit 1
 fi
+
+git push --force-with-lease origin "$branch"

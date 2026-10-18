@@ -71,6 +71,13 @@ subscription or notification-access prompt has occurred yet. Do not tell the
 user to approve notification access as though the prompt has already been
 requested.
 
+This is a documented failure mode, not the current result for every device
+that previously exhibited it: on 2026-10-18, `dmn-bluetooth-cli`
+successfully received notifications from “iPhone Old” after earlier
+no-service observations. Keep the failure handling for future/intermittent
+stale-GATT states, but do not describe “iPhone Old” as currently unable to use
+ANCS.
+
 For one observed stale-GATT incident, disconnecting/reconnecting from Pop!_OS
 alone did not restore ANCS. Forgetting Pop!_OS from the iPhone, then
 reconnecting and pairing again, restored ANCS discovery. The GUI must explain

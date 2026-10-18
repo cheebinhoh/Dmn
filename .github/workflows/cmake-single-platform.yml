@@ -2,7 +2,7 @@ name: build and run on linux platform
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs every hour
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
   push:
     branches: [ "main" ]
   pull_request:
@@ -33,5 +33,4 @@ jobs:
 
       - name: Run container tests
         run: docker run --rm dmn
-
 
