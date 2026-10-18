@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="760" viewBox="0 0 1480 760" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth current GTK app layout</title>
-  <desc id="desc">A wide application window with Bluetooth adapter and scan controls, sortable device rows with selection and per-device connection and monitoring actions, and a selected-device status and live notification feed. A Copy-only context menu is open on selectable notification text.</desc>
+  <desc id="desc">A maximized wide application window with an even split, Bluetooth adapter and scan controls, sortable device rows with a Selected only filter, and an All devices notification view. The Bluetooth status page shows All devices without device-specific status. Search and event filters compose; hovering a notification shows its full text wrapped to the feed pane.</desc>
   <defs>
     <style>
       .window { fill: #ffffff; stroke: #b9b9b9; stroke-width: 1.5; }
@@ -15,33 +15,33 @@
       .selected { fill: #f2f2f2; }
     </style>
   </defs>
-  <rect width="1280" height="760" fill="#f6f5f4"/>
+  <rect width="1480" height="760" fill="#f6f5f4"/>
   <text class="text" x="32" y="38" font-size="24" font-weight="700">Dmn Bluetooth · current GTK interface</text>
   <text class="muted" x="32" y="63" font-size="14">Illustrative wide-window state · controls and behavior match the implementation</text>
-  <rect class="window" x="32" y="84" width="1216" height="640" rx="12"/>
+  <rect class="window" x="32" y="84" width="1416" height="640" rx="12"/>
 
   <!-- Device pane header -->
-  <rect class="bar" x="33" y="85" width="474" height="52" rx="11"/>
+  <rect class="bar" x="33" y="85" width="707" height="52" rx="11"/>
   <text class="text" x="54" y="118" font-size="19" font-weight="700">Devices</text>
-  <rect class="button" x="454" y="99" width="36" height="30" rx="6"/>
-  <text class="muted" x="467" y="120" font-size="19">⋮</text>
-  <path class="line" d="M32 137H507"/>
+  <rect class="button" x="682" y="99" width="36" height="30" rx="6"/>
+  <text class="muted" x="695" y="120" font-size="19">⋮</text>
+  <path class="line" d="M32 137H740"/>
 
   <!-- Device detail header -->
-  <rect class="bar" x="508" y="85" width="739" height="52" rx="11"/>
-  <path d="M32 137H1248" class="line"/>
-  <rect class="button" x="527" y="97" width="38" height="32" rx="6"/>
-  <text class="text" x="539" y="119" font-size="22">‹</text>
-  <text class="text" x="580" y="118" font-size="19" font-weight="700">Device</text>
-  <rect class="button" x="1199" y="97" width="34" height="32" rx="6"/>
-  <text class="muted" x="1210" y="119" font-size="18">⋮</text>
-  <path class="line" d="M507 85V724"/>
+  <rect class="bar" x="740" y="85" width="707" height="52" rx="11"/>
+  <path d="M32 137H1448" class="line"/>
+  <rect class="button" x="759" y="97" width="38" height="32" rx="6"/>
+  <text class="text" x="771" y="119" font-size="22">‹</text>
+  <text class="text" x="812" y="118" font-size="19" font-weight="700">Notifications</text>
+  <rect class="button" x="1399" y="97" width="34" height="32" rx="6"/>
+  <text class="muted" x="1410" y="119" font-size="18">⋮</text>
+  <path class="line" d="M740 85V724"/>
 
   <!-- Inventory controls -->
   <text class="muted small" x="54" y="162">Choose a phone to monitor. Selection is saved separately from pairing or connecting.</text>
-  <rect class="button" x="54" y="177" width="430" height="34" rx="6"/>
+  <rect class="button" x="54" y="177" width="626" height="34" rx="6"/>
   <text class="text small" x="69" y="199">Built-in Bluetooth · AA:BB:CC:DD:EE:FF</text>
-  <text class="muted" x="461" y="199" font-size="15">▾</text>
+  <text class="muted" x="658" y="199" font-size="15">▾</text>
   <rect class="button" x="54" y="220" width="126" height="34" rx="6"/>
   <text class="text small" x="66" y="242">Refresh devices</text>
   <rect class="button" x="187" y="220" width="142" height="34" rx="6"/>
@@ -50,61 +50,82 @@
   <text class="muted small" x="348" y="242">Stop scan</text>
 
   <text class="text small" x="65" y="282" font-weight="700">Name ↑</text>
-  <text class="text small" x="348" y="282" font-weight="700">Status</text>
-  <path class="line" d="M54 292H484"/>
+  <text class="text small" x="560" y="282" font-weight="700">Status</text>
+  <path class="line" d="M54 292H680"/>
 
   <!-- Device row one -->
-  <rect x="54" y="293" width="430" height="112" fill="#ffffff"/>
+  <rect x="54" y="293" width="626" height="112" fill="#ffffff"/>
   <rect x="68" y="308" width="18" height="18" rx="3" fill="#3584e4"/>
   <path d="m72 317 4 4 7-9" fill="none" stroke="#ffffff" stroke-width="2"/>
   <text class="text" x="98" y="323" font-size="15" font-weight="700">iPhone Genghis</text>
   <text class="muted small" x="98" y="345">Paired · Connected · Ready · waiting for new notifications</text>
-  <rect class="button" x="188" y="359" width="116" height="32" rx="6"/>
-  <text class="text small" x="207" y="380">Disconnect</text>
-  <rect class="button" x="310" y="359" width="160" height="32" rx="6"/>
-  <text class="text small" x="326" y="380">Stop monitoring</text>
-  <path class="line" d="M54 405H484"/>
+  <rect class="button" x="348" y="359" width="116" height="32" rx="6"/>
+  <text class="text small" x="367" y="380">Disconnect</text>
+  <rect class="button" x="470" y="359" width="160" height="32" rx="6"/>
+  <text class="text small" x="486" y="380">Stop monitoring</text>
+  <path class="line" d="M54 405H680"/>
 
   <!-- Device row two -->
   <rect x="68" y="420" width="18" height="18" rx="3" fill="#ffffff" stroke="#8e8d8b"/>
   <text class="text" x="98" y="435" font-size="15" font-weight="700">iPhone Old</text>
   <text class="muted small" x="98" y="457">Not paired · Disconnected</text>
-  <rect class="disabled" x="188" y="470" width="116" height="32" rx="6"/>
-  <text class="muted small" x="225" y="491">Connect</text>
-  <rect class="disabled" x="310" y="470" width="160" height="32" rx="6"/>
-  <text class="muted small" x="325" y="491">Start monitoring</text>
-  <path class="line" d="M54 515H484"/>
+  <rect class="disabled" x="348" y="470" width="116" height="32" rx="6"/>
+  <text class="muted small" x="385" y="491">Connect</text>
+  <rect class="disabled" x="470" y="470" width="160" height="32" rx="6"/>
+  <text class="muted small" x="485" y="491">Start monitoring</text>
+  <path class="line" d="M54 515H680"/>
 
   <!-- Saved selection and filter -->
   <rect class="disabled" x="54" y="535" width="122" height="34" rx="6"/>
   <text class="muted small" x="67" y="557">Save selection</text>
   <rect class="disabled" x="182" y="535" width="132" height="34" rx="6"/>
   <text class="muted small" x="195" y="557">Discard changes</text>
-  <rect x="337" y="542" width="16" height="16" rx="3" fill="#ffffff" stroke="#8e8d8b"/>
-  <text class="text small" x="361" y="556">Selected only</text>
+  <rect x="518" y="542" width="16" height="16" rx="3" fill="#ffffff" stroke="#8e8d8b"/>
+  <text class="text small" x="542" y="556">Selected only</text>
   <text class="muted small" x="54" y="601">Bluetooth devices updated.</text>
 
   <!-- Selected device status -->
-  <text class="text" x="552" y="179" font-size="23" font-weight="700">iPhone Genghis</text>
-  <text class="muted" x="552" y="204" font-size="14">Paired · Connected · Saved · Ready · waiting for new notifications</text>
-  <text class="text" x="552" y="247" font-size="18" font-weight="700">Notifications · iPhone Genghis</text>
+  <g transform="translate(208 0)">
+  <path d="M884 150v54m0-54 19 15-19 12m0-27-19 15 19 12m0 0 19 15-19 12m0-27-19 15 19 12" fill="none" stroke="#3584e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="text" x="886" y="235" text-anchor="middle" font-size="23" font-weight="700">All devices</text>
+  <text class="text" x="552" y="272" font-size="18" font-weight="700">Notifications · All devices</text>
 
-  <!-- Live event feed -->
-  <rect x="540" y="263" width="681" height="106" rx="7" fill="#ffffff"/>
-  <text class="muted small" x="558" y="286">16:50:38 · Added</text>
-  <text class="text" x="558" y="311" font-size="15">Messages · New message received</text>
-  <text class="text" x="558" y="334" font-size="14">A message preview from the current monitor session.</text>
-  <path class="line" d="M540 369H1221"/>
-  <text class="muted small" x="558" y="393">16:48:04 · Updated</text>
-  <text class="text" x="558" y="418" font-size="15">Calendar · Event updated</text>
-  <text class="text" x="558" y="441" font-size="14">Only attributes received from ANCS are displayed.</text>
-  <path class="line" d="M540 476H1221"/>
+  <!-- Search and composed event filters -->
+  <rect class="button" x="552" y="258" width="360" height="30" rx="6"/>
+  <text class="muted small" x="565" y="278">Search notifications</text>
+  <rect x="930" y="265" width="16" height="16" rx="3" fill="#3584e4" stroke="#3584e4"/>
+  <path d="m933 273 4 4 7-9" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <text class="text small" x="954" y="278">All devices</text>
+  <rect class="button" x="552" y="296" width="142" height="30" rx="6"/>
+  <text class="text small" x="564" y="316">Any event ▾</text>
+  <rect class="button" x="701" y="296" width="159" height="30" rx="6"/>
+  <text class="text small" x="713" y="316">Any category ▾</text>
+  <rect class="button" x="867" y="296" width="108" height="30" rx="6"/>
+  <text class="text small" x="878" y="316">Clear filters</text>
+  <rect class="button" x="982" y="296" width="214" height="30" rx="6"/>
+  <text class="text small" x="997" y="316">Clear notifications</text>
 
-  <!-- Copy-only context menu -->
-  <rect x="769" y="438" width="202" height="66" rx="8" fill="#ffffff" stroke="#c0bfbc" stroke-width="1.2"/>
-  <rect x="777" y="446" width="186" height="49" rx="5" fill="#f6f5f4"/>
-  <text class="text" x="792" y="476" font-size="14">Copy</text>
-  <text class="muted" x="906" y="476" font-size="13">Ctrl+C</text>
-  <text class="muted small" x="552" y="532">Right-click selected message text for Copy. No Cut, Paste, or Delete actions.</text>
-  <text class="muted small" x="552" y="560">Only events received during this app session appear in the feed.</text>
+  <!-- Filtered, arrival-ordered event table -->
+  <rect x="540" y="335" width="681" height="142" rx="7" fill="#ffffff"/>
+  <text class="muted small" x="552" y="355" font-weight="700">Device</text>
+  <text class="muted small" x="674" y="355" font-weight="700">Received</text>
+  <text class="muted small" x="772" y="355" font-weight="700">Type / category</text>
+  <text class="muted small" x="910" y="355" font-weight="700">Notification</text>
+  <path class="line" d="M540 362H1221"/>
+  <text class="text small" x="552" y="385">iPhone Genghis</text>
+  <text class="muted small" x="674" y="385">16:50:38</text>
+  <text class="muted small" x="772" y="385">Added · Social</text>
+  <text class="text small" x="910" y="385">Messages · New message received</text>
+  <path class="line" d="M540 415H1221"/>
+  <text class="text small" x="552" y="439">iPhone Old</text>
+  <text class="muted small" x="674" y="439">16:48:04</text>
+  <text class="muted small" x="772" y="439">Updated · Schedule</text>
+  <text class="text small" x="910" y="439">Calendar · Event updated</text>
+  <rect x="900" y="391" width="282" height="74" rx="7" fill="#fffefc" stroke="#8e8d8b" stroke-width="1"/>
+  <text class="text small" x="913" y="410">Messages · New message received</text>
+  <text class="text small" x="913" y="429">A long notification preview wraps here</text>
+  <text class="text small" x="913" y="448">within the available feed-pane width.</text>
+  <text class="muted small" x="552" y="503">Newest first by arrival sequence; activate a row for available event details.</text>
+  <text class="muted small" x="552" y="528">Hover for wrapped full text · right-click selectable text for Copy · 1,000-event cap.</text>
+  </g>
 </svg>

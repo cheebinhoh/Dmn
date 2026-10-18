@@ -21,9 +21,27 @@
       <description>Legacy setting retained for migrating older selections.</description>
     </key>
     <key name="pane-position" type="i">
-      <default>460</default>
+      <default>480</default>
       <summary>Device pane width</summary>
-      <description>Width of the device list pane in the main window.</description>
+      <description>
+        Legacy absolute device pane width, retained for compatibility.
+      </description>
+    </key>
+    <key name="pane-fraction" type="d">
+      <default>0.5</default>
+      <summary>Device pane width as a proportion</summary>
+      <description>
+        Proportion of the main window width occupied by the device pane.
+        The default splits the window evenly.
+      </description>
+    </key>
+    <key name="selected-only" type="b">
+      <default>false</default>
+      <summary>Show only selected Bluetooth devices</summary>
+      <description>
+        Whether the device inventory hides devices outside the current draft
+        selection.
+      </description>
     </key>
   </schema>
 </schemalist>

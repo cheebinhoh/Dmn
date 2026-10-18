@@ -98,6 +98,7 @@ if (ENABLE_DBUS)
 endif()
 
 if (ENABLE_APP_BLUETOOTH_GTK)
+  pkg_check_modules(GLIB2 REQUIRED IMPORTED_TARGET glib-2.0)
   pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.14)
   pkg_check_modules(ADWAITA REQUIRED IMPORTED_TARGET libadwaita-1>=1.5)
 

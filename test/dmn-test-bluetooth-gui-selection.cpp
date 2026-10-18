@@ -148,7 +148,7 @@ TEST(DmnBluetoothGuiMonitorEventStore,
     notification.uid = uid;
     event.notification = std::move(notification);
 
-    return Dmn_DeviceMonitorEvent{identity, received, std::move(event)};
+    return Dmn_DeviceMonitorEvent{identity, 0, received, std::move(event)};
   };
   store.append(makeEvent(first, 1));
   store.append(makeEvent(second, 2));
@@ -165,6 +165,112 @@ TEST(DmnBluetoothGuiMonitorEventStore,
   ASSERT_EQ(firstEvents.size(), 1U);
   EXPECT_EQ(firstEvents.front()->m_event.notification->uid, 3U);
   EXPECT_EQ(store.eventsFor(second).size(), 2U);
+  EXPECT_EQ(store.evictedCount(), 1U);
+  EXPECT_EQ(store.clear(), 3U);
+  EXPECT_TRUE(store.events().empty());
+  EXPECT_EQ(store.evictedCount(), 0U);
+}
+
+TEST(DmnBluetoothGuiMonitorEventStore,
+     PreservesArrivalSequenceWhenWallClockMovesBackwards) {
+  const Dmn_DeviceIdentity identity{"AA:00", "BB:01"};
+  Dmn_DeviceMonitorEventStore store{3};
+  const auto later =
+      std::chrono::system_clock::time_point{std::chrono::seconds{200}};
+  const auto earlier =
+      std::chrono::system_clock::time_point{std::chrono::seconds{100}};
+  dmn::Dmn_AncsEvent first;
+  first.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+  dmn::Dmn_AncsEvent second;
+  second.kind = dmn::Dmn_AncsEvent::Kind::NotificationUpdated;
+
+  store.append({identity, 0, later, std::move(first)});
+  store.append({identity, 0, earlier, std::move(second)});
+
+  const auto events = store.eventsFor(identity);
+  ASSERT_EQ(events.size(), 2U);
+  EXPECT_LT(events[0]->m_sequence, events[1]->m_sequence);
+  EXPECT_GT(events[0]->m_received, events[1]->m_received);
+  EXPECT_EQ(store.eventForSequence(events[0]->m_sequence), events[0]);
+}
+
+TEST(DmnBluetoothGuiMonitorEventStore,
+     RestoresCallbackArrivalOrderWhenMainContextDispatchIsReordered) {
+  const Dmn_DeviceIdentity identity{"AA:00", "BB:01"};
+  Dmn_DeviceMonitorEventStore store{3};
+  dmn::Dmn_AncsEvent earlierCallback;
+  earlierCallback.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+  dmn::Dmn_AncsEvent laterCallback;
+  laterCallback.kind = dmn::Dmn_AncsEvent::Kind::NotificationUpdated;
+
+  store.append({identity, 2, {}, std::move(laterCallback)});
+  store.append({identity, 1, {}, std::move(earlierCallback)});
+
+  const auto events = store.events();
+  ASSERT_EQ(events.size(), 2U);
+  EXPECT_EQ(events[0]->m_sequence, 1U);
+  EXPECT_EQ(events[1]->m_sequence, 2U);
+  EXPECT_EQ(events[0]->m_event.kind,
+            dmn::Dmn_AncsEvent::Kind::NotificationAdded);
+}
+
+TEST(DmnBluetoothGuiEventFilter,
+     ComposesDeviceKindCategoryAndUnicodeCaseInsensitiveSearch) {
+  const Dmn_DeviceIdentity target{"AA:00", "BB:01"};
+  const Dmn_DeviceIdentity other{"AA:00", "BB:02"};
+  Dmn_DeviceMonitorEvent event;
+  event.m_identity = target;
+  event.m_event.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+  dmn::Dmn_AncsNotification notification;
+  notification.kind = dmn::Dmn_AncsNotificationKind::Added;
+  notification.category = 4;
+  notification.title = "CAFÉ";
+  notification.message = "A new invitation";
+  event.m_event.notification = std::move(notification);
+
+  dmn::gui::Dmn_DeviceMonitorEventFilter filter;
+  filter.m_identity = target;
+  filter.m_kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+  filter.m_category = 4;
+  filter.m_search = "café";
+  EXPECT_TRUE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+
+  filter.m_identity = other;
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+  filter.m_identity = target;
+  filter.m_kind = dmn::Dmn_AncsEvent::Kind::NotificationUpdated;
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+  filter.m_kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+  filter.m_category = 2;
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+  filter.m_category = 4;
+  filter.m_search = "phone one";
+  EXPECT_TRUE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+  filter.m_search = "not found";
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter, "Phone One"));
+}
+
+TEST(DmnBluetoothGuiEventFilter,
+     HandlesMissingAttributesAndRemovedEventsWithoutStaleText) {
+  Dmn_DeviceMonitorEvent event;
+  event.m_identity = {"AA:00", "BB:01"};
+  event.m_event.kind = dmn::Dmn_AncsEvent::Kind::NotificationRemoved;
+  dmn::Dmn_AncsNotification removed;
+  removed.kind = dmn::Dmn_AncsNotificationKind::Removed;
+  removed.uid = 42;
+  removed.category = 1;
+  event.m_event.notification = removed;
+
+  dmn::gui::Dmn_DeviceMonitorEventFilter filter;
+  filter.m_search = "42";
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter));
+  filter.m_search.clear();
+  filter.m_category = 1;
+  EXPECT_TRUE(dmn::gui::matchesEventFilter(event, filter));
+
+  event.m_event.kind = dmn::Dmn_AncsEvent::Kind::AttributesUnavailable;
+  event.m_event.notification.reset();
+  EXPECT_FALSE(dmn::gui::matchesEventFilter(event, filter));
 }
 
 TEST(DmnBluetoothGuiDeviceSelection, SavesAndDiscardsDraftSelection) {

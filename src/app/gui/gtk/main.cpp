@@ -22,8 +22,10 @@
 #include <adwaita.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <ctime>
 #include <exception>
@@ -47,6 +49,8 @@ constexpr auto kDiscoveryDuration = std::chrono::seconds{30};
 constexpr auto kDeviceStateTimeout = std::chrono::seconds{30};
 constexpr auto kDeviceStatePollInterval = std::chrono::milliseconds{50};
 constexpr auto kDeviceSnapshotTimeout = std::chrono::seconds{2};
+constexpr auto kDefaultWindowWidth = 960;
+std::atomic_uint64_t g_eventSequence{1};
 
 enum class Dmn_Operation {
   kInventory,
@@ -272,6 +276,9 @@ struct AppState {
     if (m_device_poll_source != 0) {
       g_source_remove(m_device_poll_source);
     }
+    if (m_pane_restore_source != 0) {
+      g_source_remove(m_pane_restore_source);
+    }
 
     if (m_settings != nullptr) {
       g_object_unref(m_settings);
@@ -280,6 +287,13 @@ struct AppState {
     if (m_adapter_names != nullptr) {
       g_object_unref(m_adapter_names);
     }
+
+    g_clear_object(&m_event_rows);
+    g_clear_object(&m_event_filter);
+    g_clear_object(&m_event_filtered_rows);
+    g_clear_object(&m_event_sorter);
+    g_clear_object(&m_event_sorted_rows);
+    g_clear_object(&m_event_selection);
   }
 
   GtkApplication *m_app{};
@@ -303,9 +317,24 @@ struct AppState {
   GtkWidget *m_discard_button{};
   GtkWidget *m_details_page{};
   GtkWidget *m_feed_heading{};
+  GtkWidget *m_feed_controls{};
+  GtkWidget *m_feed_search{};
+  GtkWidget *m_feed_kind_filter{};
+  GtkWidget *m_feed_category_filter{};
+  GtkWidget *m_feed_all_devices_filter{};
+  GtkWidget *m_feed_notice{};
+  GtkWidget *m_feed_clear_filters{};
+  GtkWidget *m_feed_clear_notifications{};
+  GtkWidget *m_feed_empty{};
   GtkWidget *m_feed_scroll{};
-  GtkWidget *m_feed_list{};
+  GtkWidget *m_feed_view{};
   GtkStringList *m_adapter_names{};
+  GListStore *m_event_rows{};
+  GtkCustomFilter *m_event_filter{};
+  GtkFilterListModel *m_event_filtered_rows{};
+  GtkCustomSorter *m_event_sorter{};
+  GtkSortListModel *m_event_sorted_rows{};
+  GtkSingleSelection *m_event_selection{};
   GSettings *m_settings{};
   std::shared_ptr<BluezInventoryBackend> m_backend;
   dmn::gui::Dmn_DeviceSelectionModel m_selection;
@@ -317,25 +346,28 @@ struct AppState {
   bool m_collapsed{};
   bool m_showing_device_page{};
   bool m_pane_position_ready{};
+  double m_pane_fraction{0.5};
   bool m_inventory_loaded{};
   std::string m_inventory_error;
   std::optional<dmn::gui::Dmn_DeviceIdentity> m_viewed_device;
   std::vector<dmn::gui::Dmn_DeviceIdentity> m_monitoring_intents;
   std::unordered_map<std::string, MonitorSession> m_monitor_sessions;
   dmn::gui::Dmn_DeviceMonitorEventStore m_event_store;
+  dmn::gui::Dmn_DeviceMonitorEventFilter m_event_filters;
   // Keep the feed revision separate from routine inventory refreshes so
   // rebuilding device status does not destroy selectable notification text.
   std::uint64_t m_event_feed_revision{};
   std::uint64_t m_rendered_event_feed_revision{};
   std::optional<dmn::gui::Dmn_DeviceIdentity> m_rendered_feed_device;
-  bool m_rendered_feed_ready_empty{};
   bool m_event_feed_rendered{};
+  bool m_updating_event_filters{};
   std::chrono::system_clock::time_point m_session_started{
       std::chrono::system_clock::now()};
   bool m_close_requested{};
   std::size_t m_monitor_operations{};
   guint m_scan_poll_source{};
   guint m_device_poll_source{};
+  guint m_pane_restore_source{};
   std::chrono::steady_clock::time_point m_scan_deadline{};
 };
 
@@ -378,6 +410,7 @@ auto stateFor(GObject *object) -> AppState * {
 }
 
 void refreshView(AppState *state, bool rebuildDevices = true);
+void rebuildEventFeed(AppState *state);
 void setStatus(AppState *state, const std::string &message,
                bool announce = true);
 
@@ -439,6 +472,7 @@ auto monitorStateName(const dmn::Dmn_AncsState state) -> const char * {
 struct MonitorEventDispatch {
   GtkApplication *m_app{};
   dmn::gui::Dmn_DeviceIdentity m_identity;
+  std::uint64_t m_sequence{};
   std::chrono::system_clock::time_point m_received;
   dmn::Dmn_AncsEvent m_event;
 };
@@ -446,9 +480,10 @@ struct MonitorEventDispatch {
 void dispatchMonitorEvent(GtkApplication *app,
                           const dmn::gui::Dmn_DeviceIdentity &identity,
                           const dmn::Dmn_AncsEvent &event) {
-  auto *dispatch =
-      new MonitorEventDispatch{GTK_APPLICATION(g_object_ref(app)), identity,
-                               std::chrono::system_clock::now(), event};
+  auto *dispatch = new MonitorEventDispatch{
+      GTK_APPLICATION(g_object_ref(app)), identity,
+      g_eventSequence.fetch_add(1, std::memory_order_relaxed),
+      std::chrono::system_clock::now(), event};
   g_idle_add_full(
       G_PRIORITY_DEFAULT,
       [](gpointer userData) -> gboolean {
@@ -473,12 +508,10 @@ void dispatchMonitorEvent(GtkApplication *app,
             }
           }
 
-          state->m_event_store.append({dispatch->m_identity,
-                                       dispatch->m_received,
-                                       std::move(dispatch->m_event)});
-          if (state->m_viewed_device == dispatch->m_identity) {
-            ++state->m_event_feed_revision;
-          }
+          state->m_event_store.append(
+              {dispatch->m_identity, dispatch->m_sequence, dispatch->m_received,
+               std::move(dispatch->m_event)});
+          ++state->m_event_feed_revision;
           refreshView(state);
         }
 
@@ -661,10 +694,31 @@ void panePositionChanged(GObject *object, GParamSpec *, gpointer userData) {
   }
 
   const auto position = gtk_paned_get_position(GTK_PANED(object));
-  if (position > 0 &&
-      !g_settings_set_int(state->m_settings, "pane-position", position)) {
-    g_warning("Could not persist the device pane width");
+  const auto width = gtk_widget_get_width(GTK_WIDGET(object));
+  if (position > 0 && width > 0) {
+    state->m_pane_fraction =
+        std::clamp(static_cast<double>(position) / width, 0.1, 0.9);
+    if (!g_settings_set_double(state->m_settings, "pane-fraction",
+                               state->m_pane_fraction)) {
+      g_warning("Could not persist the device pane proportion");
+    }
   }
+}
+
+gboolean restorePanePosition(gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  const auto width = gtk_widget_get_width(state->m_paned);
+  if (width <= 0 || !gtk_window_is_maximized(GTK_WINDOW(state->m_window))) {
+    return G_SOURCE_CONTINUE;
+  }
+
+  gtk_paned_set_position(
+      GTK_PANED(state->m_paned),
+      static_cast<int>(std::lround(width * state->m_pane_fraction)));
+  state->m_pane_position_ready = true;
+  state->m_pane_restore_source = 0;
+
+  return G_SOURCE_REMOVE;
 }
 
 void windowBreakpointChanged(GObject *object, GParamSpec *, gpointer userData) {
@@ -728,8 +782,16 @@ void rowToggled(GtkCheckButton *button, gpointer userData) {
                          GTK_CHECK_BUTTON(state->m_selected_only_filter)));
 }
 
-void selectedOnlyFilterToggled(GtkCheckButton *, gpointer userData) {
-  refreshView(static_cast<AppState *>(userData), true);
+void selectedOnlyFilterToggled(GtkCheckButton *button, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  const bool selectedOnly = gtk_check_button_get_active(button);
+  if (state->m_settings != nullptr &&
+      !g_settings_set_boolean(state->m_settings, "selected-only",
+                              selectedOnly)) {
+    g_warning("Could not persist the Selected only filter preference");
+  }
+
+  refreshView(state, true);
 }
 
 void sortDevices(AppState *state, const dmn::gui::Dmn_DeviceSortColumn column) {
@@ -758,6 +820,8 @@ void viewDeviceClicked(GtkButton *, gpointer userData) {
   auto *context = static_cast<RowContext *>(userData);
   auto *state = context->m_state;
   state->m_viewed_device = context->m_identity;
+  gtk_check_button_set_active(
+      GTK_CHECK_BUTTON(state->m_feed_all_devices_filter), FALSE);
   state->m_showing_device_page = true;
   updateSplitLayout(state);
   refreshView(state);
@@ -1052,6 +1116,273 @@ auto eventReceivedTime(const std::chrono::system_clock::time_point received)
   return output.str();
 }
 
+auto eventReceivedDateTime(const std::chrono::system_clock::time_point received)
+    -> std::string {
+  const auto receivedTime = std::chrono::system_clock::to_time_t(received);
+  std::tm localTime{};
+  localtime_r(&receivedTime, &localTime);
+  std::ostringstream output;
+  output << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S %Z");
+
+  return output.str();
+}
+
+auto deviceNameForIdentity(const AppState *state,
+                           const dmn::gui::Dmn_DeviceIdentity &identity)
+    -> std::string {
+  const auto device = std::find_if(
+      state->m_selection.devices().begin(), state->m_selection.devices().end(),
+      [&identity](const auto &entry) { return entry.m_identity == identity; });
+
+  return device == state->m_selection.devices().end()
+             ? identity.m_device_address
+             : dmn::gui::deviceDisplayName(*device);
+}
+
+void updateEventFeedHeading(AppState *state) {
+  if (!state->m_viewed_device) {
+    return;
+  }
+
+  const bool allDevices = state->m_feed_all_devices_filter != nullptr &&
+                          gtk_check_button_get_active(GTK_CHECK_BUTTON(
+                              state->m_feed_all_devices_filter));
+  const auto title =
+      allDevices ? "Notifications · All devices"
+                 : "Notifications · " +
+                       deviceNameForIdentity(state, *state->m_viewed_device);
+  gtk_label_set_text(GTK_LABEL(state->m_feed_heading), title.c_str());
+}
+
+auto eventCategoryName(const std::uint8_t category) -> const char * {
+  switch (category) {
+  case 0:
+    return "Other";
+  case 1:
+    return "Incoming call";
+  case 2:
+    return "Missed call";
+  case 3:
+    return "Voicemail";
+  case 4:
+    return "Social";
+  case 5:
+    return "Schedule";
+  case 6:
+    return "Email";
+  case 7:
+    return "News";
+  case 8:
+    return "Health and fitness";
+  case 9:
+    return "Business and finance";
+  case 10:
+    return "Location";
+  case 11:
+    return "Entertainment";
+  default:
+    return "Unknown category";
+  }
+}
+
+auto eventKindForFilter(const guint selected)
+    -> std::optional<dmn::Dmn_AncsEvent::Kind> {
+  using Kind = dmn::Dmn_AncsEvent::Kind;
+  switch (selected) {
+  case 1:
+    return Kind::NotificationAdded;
+  case 2:
+    return Kind::NotificationUpdated;
+  case 3:
+    return Kind::NotificationRemoved;
+  case 4:
+    return Kind::AttributesUnavailable;
+  case 5:
+    return Kind::StateChanged;
+  case 6:
+    return Kind::Error;
+  default:
+    return std::nullopt;
+  }
+}
+
+auto eventCategoryForFilter(const guint selected)
+    -> std::optional<std::uint8_t> {
+  if (selected == 0 || selected > 12) {
+    return std::nullopt;
+  }
+
+  return static_cast<std::uint8_t>(selected - 1);
+}
+
+auto eventSequenceFromItem(gpointer item) -> std::uint64_t {
+  if (!GTK_IS_STRING_OBJECT(item)) {
+    return 0;
+  }
+
+  const auto *text = gtk_string_object_get_string(GTK_STRING_OBJECT(item));
+  return text == nullptr ? 0 : g_ascii_strtoull(text, nullptr, 10);
+}
+
+auto eventMatchesGtkFilter(gpointer item, gpointer userData) -> gboolean {
+  const auto sequence = eventSequenceFromItem(item);
+  const auto *state = static_cast<const AppState *>(userData);
+  const auto *event = state->m_event_store.eventForSequence(sequence);
+  return event != nullptr &&
+         dmn::gui::matchesEventFilter(
+             *event, state->m_event_filters,
+             deviceNameForIdentity(state, event->m_identity));
+}
+
+auto compareEventSequence(gconstpointer first, gconstpointer second,
+                          gpointer) -> gint {
+  const auto firstSequence = eventSequenceFromItem(const_cast<gpointer>(first));
+  const auto secondSequence =
+      eventSequenceFromItem(const_cast<gpointer>(second));
+  if (firstSequence > secondSequence) {
+    return -1;
+  }
+  if (firstSequence < secondSequence) {
+    return 1;
+  }
+
+  return 0;
+}
+
+auto eventSummary(const dmn::Dmn_AncsEvent &event) -> std::string {
+  if (event.notification) {
+    const auto &notification = *event.notification;
+    if (notification.kind == dmn::Dmn_AncsNotificationKind::Removed) {
+      return "Notification removed · UID " + std::to_string(notification.uid);
+    }
+
+    std::string summary;
+    const auto append = [&summary](const std::optional<std::string> &value) {
+      if (value && !value->empty()) {
+        if (!summary.empty()) {
+          summary += " · ";
+        }
+        summary += *value;
+      }
+    };
+    append(notification.app_identifier);
+    append(notification.title);
+    append(notification.subtitle);
+    append(notification.message);
+    if (summary.empty()) {
+      summary = "Notification attributes unavailable";
+    }
+
+    return summary;
+  }
+
+  return eventDescription(event);
+}
+
+auto eventColumnText(const AppState *state,
+                     const dmn::gui::Dmn_DeviceMonitorEvent &event,
+                     const guint column) -> std::string {
+  switch (column) {
+  case 0:
+    return deviceNameForIdentity(state, event.m_identity);
+  case 1:
+    return eventReceivedTime(event.m_received);
+  case 2: {
+    std::string kind{eventKindName(event.m_event)};
+    if (event.m_event.notification) {
+      kind += " · ";
+      kind += eventCategoryName(event.m_event.notification->category);
+    }
+    return kind;
+  }
+  default:
+    return eventSummary(event.m_event);
+  }
+}
+
+void setDetailLine(std::ostringstream &details, const char *name,
+                   const std::optional<std::string> &value) {
+  details << name << ": " << (value && !value->empty() ? *value : "Unavailable")
+          << '\n';
+}
+
+void showEventDetails(GtkColumnView *, const guint position,
+                      gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  auto *item =
+      g_list_model_get_item(G_LIST_MODEL(state->m_event_sorted_rows), position);
+  if (item == nullptr) {
+    return;
+  }
+  const auto sequence = eventSequenceFromItem(item);
+  g_object_unref(item);
+  const auto *event = state->m_event_store.eventForSequence(sequence);
+  if (event == nullptr) {
+    return;
+  }
+
+  std::ostringstream details;
+  details << "Device: " << deviceNameForIdentity(state, event->m_identity)
+          << "\nAdapter: " << event->m_identity.m_adapter_address
+          << "\nDevice address: " << event->m_identity.m_device_address
+          << "\nReceived: " << eventReceivedDateTime(event->m_received)
+          << "\nEvent: " << eventKindName(event->m_event) << '\n';
+  if (event->m_event.notification) {
+    const auto &notification = *event->m_event.notification;
+    details << "Notification UID: " << notification.uid << '\n'
+            << "Category: " << eventCategoryName(notification.category) << " ("
+            << static_cast<unsigned int>(notification.category) << ")\n";
+    if (notification.kind == dmn::Dmn_AncsNotificationKind::Removed) {
+      details << "Notification was removed; ANCS provides no current "
+                 "attributes for this event.\n";
+    } else {
+      setDetailLine(details, "App identifier", notification.app_identifier);
+      setDetailLine(details, "Title", notification.title);
+      setDetailLine(details, "Subtitle", notification.subtitle);
+      setDetailLine(details, "Message", notification.message);
+      setDetailLine(details, "Phone-provided date", notification.date);
+      details << "Category count: "
+              << static_cast<unsigned int>(notification.category_count)
+              << "\nFlags: " << static_cast<unsigned int>(notification.flags)
+              << '\n';
+    }
+  }
+  if (event->m_event.state) {
+    details << "Monitor state: " << monitorStateName(*event->m_event.state)
+            << '\n';
+  }
+  if (event->m_event.error) {
+    details << "Error: " << event->m_event.error->message << '\n';
+  }
+
+  auto *dialog = gtk_window_new();
+  gtk_window_set_title(GTK_WINDOW(dialog), "Notification details");
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(state->m_window));
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 520, 420);
+  auto *content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+  gtk_widget_set_margin_top(content, 18);
+  gtk_widget_set_margin_bottom(content, 18);
+  gtk_widget_set_margin_start(content, 18);
+  gtk_widget_set_margin_end(content, 18);
+  auto *text = gtk_label_new(details.str().c_str());
+  gtk_label_set_xalign(GTK_LABEL(text), 0.0F);
+  gtk_label_set_yalign(GTK_LABEL(text), 0.0F);
+  gtk_label_set_wrap(GTK_LABEL(text), TRUE);
+  gtk_label_set_selectable(GTK_LABEL(text), TRUE);
+  auto *scroll = gtk_scrolled_window_new();
+  gtk_widget_set_vexpand(scroll, TRUE);
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), text);
+  auto *close = gtk_button_new_with_label("Close");
+  gtk_widget_set_halign(close, GTK_ALIGN_END);
+  g_signal_connect_swapped(close, "clicked", G_CALLBACK(gtk_window_destroy),
+                           dialog);
+  gtk_box_append(GTK_BOX(content), scroll);
+  gtk_box_append(GTK_BOX(content), close);
+  gtk_window_set_child(GTK_WINDOW(dialog), content);
+  gtk_window_present(GTK_WINDOW(dialog));
+}
+
 auto copySelectedMessage(GtkLabel *messageLabel) -> bool {
   gint start{};
   gint end{};
@@ -1095,19 +1426,172 @@ void showCopyMenu(GtkGestureClick *gesture, gint, const gdouble x,
   gtk_widget_set_sensitive(
       copyButton, gtk_label_get_selection_bounds(messageLabel, &start, &end));
 
-  auto *row = gtk_widget_get_parent(GTK_WIDGET(messageLabel));
+  auto *cell = gtk_widget_get_parent(GTK_WIDGET(messageLabel));
   const graphene_point_t labelPoint{static_cast<float>(x),
                                     static_cast<float>(y)};
-  graphene_point_t rowPoint{};
-  if (gtk_widget_compute_point(GTK_WIDGET(messageLabel), row, &labelPoint,
-                               &rowPoint)) {
-    const GdkRectangle position{static_cast<int>(rowPoint.x),
-                                static_cast<int>(rowPoint.y), 1, 1};
+  graphene_point_t cellPoint{};
+  if (gtk_widget_compute_point(GTK_WIDGET(messageLabel), cell, &labelPoint,
+                               &cellPoint)) {
+    const GdkRectangle position{static_cast<int>(cellPoint.x),
+                                static_cast<int>(cellPoint.y), 1, 1};
     gtk_popover_set_pointing_to(popover, &position);
   }
 
   gtk_popover_popup(popover);
   gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+}
+
+struct EventColumnContext {
+  AppState *m_state{};
+  guint m_column{};
+};
+
+gboolean showEventCellTooltip(GtkWidget *widget, gint, gint,
+                              gboolean keyboardTooltip, GtkTooltip *tooltip,
+                              gpointer) {
+  if (keyboardTooltip) {
+    return FALSE;
+  }
+
+  const auto *text = gtk_label_get_text(GTK_LABEL(widget));
+  if (text == nullptr || *text == '\0') {
+    return FALSE;
+  }
+
+  auto *tooltipLabel = gtk_label_new(text);
+  gtk_label_set_xalign(GTK_LABEL(tooltipLabel), 0.0F);
+  gtk_label_set_yalign(GTK_LABEL(tooltipLabel), 0.0F);
+  gtk_label_set_wrap(GTK_LABEL(tooltipLabel), TRUE);
+  gtk_label_set_wrap_mode(GTK_LABEL(tooltipLabel), PANGO_WRAP_WORD_CHAR);
+  gtk_widget_set_size_request(
+      tooltipLabel, std::max(1, gtk_widget_get_width(widget) - 32), -1);
+  gtk_tooltip_set_custom(tooltip, tooltipLabel);
+
+  return TRUE;
+}
+
+void eventCellSetup(GtkSignalListItemFactory *, GtkListItem *item,
+                    gpointer userData) {
+  const auto *context = static_cast<const EventColumnContext *>(userData);
+  auto *cell = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  auto *label = gtk_label_new(nullptr);
+  gtk_label_set_xalign(GTK_LABEL(label), 0.0F);
+  gtk_label_set_yalign(GTK_LABEL(label), 0.0F);
+  gtk_label_set_wrap(GTK_LABEL(label), context->m_column == 3);
+  gtk_label_set_selectable(GTK_LABEL(label), context->m_column == 3);
+  if (context->m_column == 3) {
+    gtk_widget_set_has_tooltip(label, TRUE);
+    g_signal_connect(label, "query-tooltip", G_CALLBACK(showEventCellTooltip),
+                     nullptr);
+  }
+  gtk_widget_set_margin_top(label, 6);
+  gtk_widget_set_margin_bottom(label, 6);
+  gtk_widget_set_margin_start(label, 8);
+  gtk_widget_set_margin_end(label, 8);
+
+  GtkWidget *popover{};
+  if (context->m_column == 3) {
+    popover = gtk_popover_new();
+    auto *menu = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 24);
+    auto *copy = gtk_button_new_with_label("Copy");
+    auto *accelerator = gtk_label_new("Ctrl+C");
+    gtk_widget_add_css_class(copy, "flat");
+    gtk_widget_add_css_class(accelerator, "dim-label");
+    gtk_box_append(GTK_BOX(menu), copy);
+    gtk_box_append(GTK_BOX(menu), accelerator);
+    gtk_popover_set_child(GTK_POPOVER(popover), menu);
+    g_object_set_data(G_OBJECT(label), "message-copy-popover", popover);
+    g_signal_connect(copy, "clicked", G_CALLBACK(copyMessageClicked), label);
+
+    auto *contextClick = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(contextClick),
+                                  GDK_BUTTON_SECONDARY);
+    gtk_event_controller_set_propagation_phase(
+        GTK_EVENT_CONTROLLER(contextClick), GTK_PHASE_CAPTURE);
+    g_signal_connect(contextClick, "pressed", G_CALLBACK(showCopyMenu), label);
+    gtk_widget_add_controller(label, GTK_EVENT_CONTROLLER(contextClick));
+  }
+
+  gtk_box_append(GTK_BOX(cell), label);
+  if (popover != nullptr) {
+    gtk_widget_set_parent(popover, cell);
+  }
+  gtk_list_item_set_child(item, cell);
+}
+
+void eventCellBind(GtkSignalListItemFactory *, GtkListItem *item,
+                   gpointer userData) {
+  const auto *context = static_cast<const EventColumnContext *>(userData);
+  auto *row = gtk_list_item_get_item(item);
+  const auto sequence = eventSequenceFromItem(row);
+  const auto *event =
+      context->m_state->m_event_store.eventForSequence(sequence);
+  if (event == nullptr) {
+    return;
+  }
+
+  const auto text =
+      eventColumnText(context->m_state, *event, context->m_column);
+  auto *cell = gtk_list_item_get_child(item);
+  gtk_label_set_text(GTK_LABEL(gtk_widget_get_first_child(cell)), text.c_str());
+}
+
+void eventFilterChanged(GObject *, GParamSpec *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  if (state->m_updating_event_filters) {
+    return;
+  }
+
+  state->m_event_filters.m_search =
+      gtk_editable_get_text(GTK_EDITABLE(state->m_feed_search));
+  state->m_event_filters.m_kind = eventKindForFilter(
+      gtk_drop_down_get_selected(GTK_DROP_DOWN(state->m_feed_kind_filter)));
+  state->m_event_filters.m_category = eventCategoryForFilter(
+      gtk_drop_down_get_selected(GTK_DROP_DOWN(state->m_feed_category_filter)));
+  state->m_event_filters.m_identity =
+      gtk_check_button_get_active(
+          GTK_CHECK_BUTTON(state->m_feed_all_devices_filter))
+          ? std::nullopt
+          : state->m_viewed_device;
+  updateEventFeedHeading(state);
+
+  gtk_filter_changed(GTK_FILTER(state->m_event_filter),
+                     GTK_FILTER_CHANGE_DIFFERENT);
+  rebuildEventFeed(state);
+}
+
+void eventSearchChanged(GtkSearchEntry *, gpointer userData) {
+  eventFilterChanged(nullptr, nullptr, userData);
+}
+
+void eventFilterToggled(GtkCheckButton *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  eventFilterChanged(nullptr, nullptr, state);
+  refreshView(state, false);
+}
+
+void clearEventFiltersClicked(GtkButton *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  state->m_updating_event_filters = true;
+  gtk_editable_set_text(GTK_EDITABLE(state->m_feed_search), "");
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(state->m_feed_kind_filter), 0);
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(state->m_feed_category_filter), 0);
+  gtk_check_button_set_active(
+      GTK_CHECK_BUTTON(state->m_feed_all_devices_filter), FALSE);
+  state->m_updating_event_filters = false;
+  eventFilterChanged(nullptr, nullptr, state);
+}
+
+void clearNotificationsClicked(GtkButton *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  if (state->m_event_store.clear() == 0) {
+    return;
+  }
+
+  ++state->m_event_feed_revision;
+  state->m_event_feed_rendered = false;
+  rebuildEventFeed(state);
+  setStatus(state, "Session notifications cleared.");
 }
 
 gboolean scrollEventFeedToTop(gpointer userData) {
@@ -1117,109 +1601,162 @@ gboolean scrollEventFeedToTop(gpointer userData) {
   return G_SOURCE_REMOVE;
 }
 
-void rebuildEventFeed(AppState *state) {
-  if (!state->m_viewed_device) {
-    state->m_event_feed_rendered = true;
-    state->m_rendered_feed_device.reset();
-    state->m_rendered_event_feed_revision = state->m_event_feed_revision;
-    state->m_rendered_feed_ready_empty = false;
-    gtk_list_box_remove_all(GTK_LIST_BOX(state->m_feed_list));
-    gtk_widget_set_visible(state->m_feed_heading, FALSE);
-    gtk_widget_set_visible(state->m_feed_scroll, FALSE);
+void updateEventFeedStatus(AppState *state) {
+  const auto retainedCount = state->m_event_store.size();
+  const auto visibleCount =
+      g_list_model_get_n_items(G_LIST_MODEL(state->m_event_sorted_rows));
+  const auto evictedCount = state->m_event_store.evictedCount();
+  const auto evictionNotice =
+      evictedCount == 0
+          ? std::string{}
+          : std::to_string(evictedCount) +
+                " older event(s) were removed to keep the session feed within "
+                "its 1,000-event limit.";
+  gtk_label_set_text(GTK_LABEL(state->m_feed_notice), evictionNotice.c_str());
+  gtk_widget_set_visible(state->m_feed_notice, evictedCount != 0);
+  gtk_widget_set_sensitive(state->m_feed_clear_notifications,
+                           retainedCount != 0);
 
+  if (visibleCount != 0) {
+    gtk_widget_set_visible(state->m_feed_empty, FALSE);
+    gtk_widget_set_visible(state->m_feed_view, TRUE);
     return;
   }
 
-  auto *session = findMonitorSession(state, *state->m_viewed_device);
-  const auto events = state->m_event_store.eventsFor(*state->m_viewed_device);
-  const bool readyEmpty =
-      events.empty() && session != nullptr &&
-      session->m_status == "Ready · waiting for new notifications";
-  // Refreshing BlueZ status every few seconds must not replace the labels the
-  // user may currently be selecting in the notification feed.
-  if (state->m_event_feed_rendered &&
-      state->m_rendered_feed_device == state->m_viewed_device &&
-      state->m_rendered_event_feed_revision == state->m_event_feed_revision &&
-      state->m_rendered_feed_ready_empty == readyEmpty) {
-    return;
-  }
-
-  // The feed is newest-first; scrolling after this actual change keeps the
-  // newly received event visible without disturbing selection on stale rows.
-  state->m_event_feed_rendered = true;
-  state->m_rendered_feed_device = state->m_viewed_device;
-  state->m_rendered_event_feed_revision = state->m_event_feed_revision;
-  state->m_rendered_feed_ready_empty = readyEmpty;
-  gtk_list_box_remove_all(GTK_LIST_BOX(state->m_feed_list));
-
-  for (auto iterator = events.rbegin(); iterator != events.rend(); ++iterator) {
-    const auto &event = **iterator;
-    auto *row = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
-    gtk_widget_set_margin_top(row, 8);
-    gtk_widget_set_margin_bottom(row, 8);
-    gtk_widget_set_margin_start(row, 12);
-    gtk_widget_set_margin_end(row, 12);
-    const auto heading = eventReceivedTime(event.m_received) + " · " +
-                         eventKindName(event.m_event);
-    auto *timeLabel = gtk_label_new(heading.c_str());
-    gtk_label_set_xalign(GTK_LABEL(timeLabel), 0.0F);
-    gtk_widget_add_css_class(timeLabel, "heading");
-    auto *messageLabel = gtk_label_new(nullptr);
-    const auto description = eventDescription(event.m_event);
-    gtk_label_set_text(GTK_LABEL(messageLabel), description.c_str());
-    gtk_label_set_wrap(GTK_LABEL(messageLabel), TRUE);
-    gtk_label_set_selectable(GTK_LABEL(messageLabel), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(messageLabel), 0.0F);
-    gtk_widget_set_hexpand(messageLabel, TRUE);
-
-    auto *copyPopover = gtk_popover_new();
-    auto *copyMenu = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 24);
-    auto *copyButton = gtk_button_new_with_label("Copy");
-    auto *copyAccelerator = gtk_label_new("Ctrl+C");
-    gtk_widget_add_css_class(copyButton, "flat");
-    gtk_widget_add_css_class(copyAccelerator, "dim-label");
-    gtk_box_append(GTK_BOX(copyMenu), copyButton);
-    gtk_box_append(GTK_BOX(copyMenu), copyAccelerator);
-    gtk_popover_set_child(GTK_POPOVER(copyPopover), copyMenu);
-    gtk_widget_set_parent(copyPopover, row);
-    g_object_set_data(G_OBJECT(messageLabel), "message-copy-popover",
-                      copyPopover);
-    g_signal_connect(copyButton, "clicked", G_CALLBACK(copyMessageClicked),
-                     messageLabel);
-
-    auto *contextClick = gtk_gesture_click_new();
-    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(contextClick),
-                                  GDK_BUTTON_SECONDARY);
-    gtk_event_controller_set_propagation_phase(
-        GTK_EVENT_CONTROLLER(contextClick), GTK_PHASE_CAPTURE);
-    g_signal_connect(contextClick, "pressed", G_CALLBACK(showCopyMenu),
-                     messageLabel);
-    gtk_widget_add_controller(messageLabel, GTK_EVENT_CONTROLLER(contextClick));
-
-    gtk_box_append(GTK_BOX(row), timeLabel);
-    gtk_box_append(GTK_BOX(row), messageLabel);
-    gtk_list_box_append(GTK_LIST_BOX(state->m_feed_list), row);
-  }
-
-  if (events.empty()) {
-    auto *empty = gtk_label_new(
+  std::string emptyText;
+  if (retainedCount != 0) {
+    emptyText = state->m_event_filters.m_search.empty() &&
+                        !state->m_event_filters.m_kind &&
+                        !state->m_event_filters.m_category &&
+                        state->m_event_filters.m_identity
+                    ? "No notifications have been received for this device "
+                      "during this app session."
+                    : "No notifications match these filters.";
+  } else {
+    const auto *session =
+        state->m_viewed_device == std::nullopt
+            ? nullptr
+            : findMonitorSession(state, *state->m_viewed_device);
+    emptyText =
         session != nullptr &&
                 session->m_status == "Ready · waiting for new notifications"
             ? "ANCS is ready. Only new notifications received while this "
               "monitor is running appear here. iOS may ask for access after a "
               "new notification arrives."
-            : "No notifications have been received in this app session.");
-    gtk_label_set_wrap(GTK_LABEL(empty), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(empty), 0.0F);
-    gtk_widget_set_margin_top(empty, 16);
-    gtk_widget_set_margin_bottom(empty, 16);
-    gtk_widget_set_margin_start(empty, 12);
-    gtk_widget_set_margin_end(empty, 12);
-    gtk_list_box_append(GTK_LIST_BOX(state->m_feed_list), empty);
+            : "No notifications have been received in this app session.";
   }
 
+  gtk_label_set_text(GTK_LABEL(state->m_feed_empty), emptyText.c_str());
+  gtk_widget_set_visible(state->m_feed_view, FALSE);
+  gtk_widget_set_visible(state->m_feed_empty, TRUE);
+}
+
+void createEventFeedModel(AppState *state) {
+  state->m_event_rows = g_list_store_new(GTK_TYPE_STRING_OBJECT);
+  state->m_event_filter =
+      gtk_custom_filter_new(eventMatchesGtkFilter, state, nullptr);
+  state->m_event_filtered_rows = gtk_filter_list_model_new(
+      G_LIST_MODEL(g_object_ref(state->m_event_rows)),
+      GTK_FILTER(g_object_ref(state->m_event_filter)));
+  state->m_event_sorter =
+      gtk_custom_sorter_new(compareEventSequence, state, nullptr);
+  state->m_event_sorted_rows = gtk_sort_list_model_new(
+      G_LIST_MODEL(g_object_ref(state->m_event_filtered_rows)),
+      GTK_SORTER(g_object_ref(state->m_event_sorter)));
+  state->m_event_selection = gtk_single_selection_new(
+      G_LIST_MODEL(g_object_ref(state->m_event_sorted_rows)));
+  gtk_single_selection_set_autoselect(state->m_event_selection, FALSE);
+  gtk_single_selection_set_can_unselect(state->m_event_selection, TRUE);
+  state->m_feed_view = gtk_column_view_new(
+      GTK_SELECTION_MODEL(g_object_ref(state->m_event_selection)));
+  gtk_column_view_set_show_column_separators(
+      GTK_COLUMN_VIEW(state->m_feed_view), TRUE);
+  gtk_column_view_set_show_row_separators(GTK_COLUMN_VIEW(state->m_feed_view),
+                                          TRUE);
+  gtk_widget_set_hexpand(state->m_feed_view, TRUE);
+  gtk_widget_set_vexpand(state->m_feed_view, TRUE);
+  gtk_accessible_update_property(GTK_ACCESSIBLE(state->m_feed_view),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                 "Live notification events", -1);
+
+  static constexpr const char *kTitles[]{"Device", "Received",
+                                         "Type / category", "Notification"};
+  for (guint columnIndex = 0; columnIndex < G_N_ELEMENTS(kTitles);
+       ++columnIndex) {
+    auto *factory = GTK_LIST_ITEM_FACTORY(gtk_signal_list_item_factory_new());
+    auto *setupContext = new EventColumnContext{state, columnIndex};
+    auto *bindContext = new EventColumnContext{state, columnIndex};
+    g_signal_connect_data(
+        factory, "setup", G_CALLBACK(eventCellSetup), setupContext,
+        [](gpointer data, GClosure *) {
+          delete static_cast<EventColumnContext *>(data);
+        },
+        G_CONNECT_DEFAULT);
+    g_signal_connect_data(
+        factory, "bind", G_CALLBACK(eventCellBind), bindContext,
+        [](gpointer data, GClosure *) {
+          delete static_cast<EventColumnContext *>(data);
+        },
+        G_CONNECT_DEFAULT);
+    auto *column = gtk_column_view_column_new(kTitles[columnIndex], factory);
+    gtk_column_view_column_set_resizable(column, TRUE);
+    gtk_column_view_column_set_expand(column, columnIndex == 3);
+    gtk_column_view_append_column(GTK_COLUMN_VIEW(state->m_feed_view), column);
+    g_object_unref(column);
+  }
+  g_signal_connect(state->m_feed_view, "activate", G_CALLBACK(showEventDetails),
+                   state);
+}
+
+void rebuildEventFeed(AppState *state) {
+  if (!state->m_viewed_device) {
+    state->m_event_feed_rendered = true;
+    state->m_rendered_feed_device.reset();
+    state->m_rendered_event_feed_revision = state->m_event_feed_revision;
+    gtk_widget_set_visible(state->m_feed_heading, FALSE);
+    gtk_widget_set_visible(state->m_feed_controls, FALSE);
+    gtk_widget_set_visible(state->m_feed_scroll, FALSE);
+
+    return;
+  }
+
+  const auto nextIdentity = gtk_check_button_get_active(GTK_CHECK_BUTTON(
+                                state->m_feed_all_devices_filter))
+                                ? std::optional<dmn::gui::Dmn_DeviceIdentity>{}
+                                : state->m_viewed_device;
+  updateEventFeedHeading(state);
+  const bool sourceChanged =
+      !state->m_event_feed_rendered ||
+      state->m_rendered_feed_device != state->m_viewed_device ||
+      state->m_rendered_event_feed_revision != state->m_event_feed_revision;
+  const bool identityChanged =
+      state->m_event_filters.m_identity != nextIdentity;
+  state->m_event_filters.m_identity = nextIdentity;
+  if (sourceChanged) {
+    g_list_store_remove_all(state->m_event_rows);
+    for (const auto *event : state->m_event_store.events()) {
+      const auto sequence = std::to_string(event->m_sequence);
+      auto *row = gtk_string_object_new(sequence.c_str());
+      g_list_store_append(state->m_event_rows, row);
+      g_object_unref(row);
+    }
+    state->m_event_feed_rendered = true;
+    state->m_rendered_feed_device = state->m_viewed_device;
+    state->m_rendered_event_feed_revision = state->m_event_feed_revision;
+  }
+  if (sourceChanged || identityChanged) {
+    gtk_filter_changed(GTK_FILTER(state->m_event_filter),
+                       GTK_FILTER_CHANGE_DIFFERENT);
+  }
   gtk_widget_set_visible(state->m_feed_heading, TRUE);
+  gtk_widget_set_visible(state->m_feed_controls, TRUE);
   gtk_widget_set_visible(state->m_feed_scroll, TRUE);
+  updateEventFeedStatus(state);
+
+  if (!sourceChanged) {
+    return;
+  }
+
   auto *adjustment = gtk_scrolled_window_get_vadjustment(
       GTK_SCROLLED_WINDOW(state->m_feed_scroll));
   g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, scrollEventFeedToTop,
@@ -1568,6 +2105,17 @@ void refreshView(AppState *state, const bool rebuildDevices) {
     return;
   }
 
+  if (state->m_feed_all_devices_filter != nullptr &&
+      gtk_check_button_get_active(
+          GTK_CHECK_BUTTON(state->m_feed_all_devices_filter))) {
+    adw_status_page_set_title(ADW_STATUS_PAGE(state->m_details_page),
+                              "All devices");
+    adw_status_page_set_description(ADW_STATUS_PAGE(state->m_details_page), "");
+    rebuildEventFeed(state);
+
+    return;
+  }
+
   const auto device = std::find_if(
       state->m_selection.devices().begin(), state->m_selection.devices().end(),
       [state](const auto &entry) {
@@ -1604,8 +2152,6 @@ void refreshView(AppState *state, const bool rebuildDevices) {
   }
   adw_status_page_set_description(ADW_STATUS_PAGE(state->m_details_page),
                                   description.c_str());
-  gtk_label_set_text(GTK_LABEL(state->m_feed_heading),
-                     ("Notifications · " + deviceName).c_str());
   rebuildEventFeed(state);
 }
 
@@ -2601,6 +3147,11 @@ auto makeSidebar(AppState *state) -> GtkWidget * {
                    G_CALLBACK(discardClicked), state);
   state->m_selected_only_filter =
       gtk_check_button_new_with_label("Selected only");
+  if (state->m_settings != nullptr) {
+    gtk_check_button_set_active(
+        GTK_CHECK_BUTTON(state->m_selected_only_filter),
+        g_settings_get_boolean(state->m_settings, "selected-only"));
+  }
   gtk_widget_set_tooltip_text(
       state->m_selected_only_filter,
       "Show devices selected in the current selection draft");
@@ -2650,23 +3201,137 @@ auto makeDetails(AppState *state) -> GtkWidget * {
   gtk_widget_set_visible(state->m_feed_heading, FALSE);
   gtk_box_append(GTK_BOX(content), state->m_feed_heading);
 
+  createEventFeedModel(state);
+  state->m_feed_controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  auto *searchRow = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  state->m_feed_search = gtk_search_entry_new();
+  gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(state->m_feed_search),
+                                        "Search notifications");
+  gtk_widget_set_hexpand(state->m_feed_search, TRUE);
+  state->m_feed_all_devices_filter =
+      gtk_check_button_new_with_label("All devices");
+  gtk_widget_set_tooltip_text(
+      state->m_feed_all_devices_filter,
+      "Include events received from every device during this app session");
+  gtk_box_append(GTK_BOX(searchRow), state->m_feed_search);
+  gtk_box_append(GTK_BOX(searchRow), state->m_feed_all_devices_filter);
+  gtk_box_append(GTK_BOX(state->m_feed_controls), searchRow);
+
+  auto *filterRow = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  static constexpr const char *kEventKinds[]{"Any event",
+                                             "Added",
+                                             "Updated",
+                                             "Removed",
+                                             "Attributes unavailable",
+                                             "Monitor state",
+                                             "Monitor error",
+                                             nullptr};
+  static constexpr const char *kEventCategories[]{"Any category",
+                                                  "Other",
+                                                  "Incoming call",
+                                                  "Missed call",
+                                                  "Voicemail",
+                                                  "Social",
+                                                  "Schedule",
+                                                  "Email",
+                                                  "News",
+                                                  "Health and fitness",
+                                                  "Business and finance",
+                                                  "Location",
+                                                  "Entertainment",
+                                                  nullptr};
+  state->m_feed_kind_filter = gtk_drop_down_new(
+      G_LIST_MODEL(gtk_string_list_new(kEventKinds)), nullptr);
+  state->m_feed_category_filter = gtk_drop_down_new(
+      G_LIST_MODEL(gtk_string_list_new(kEventCategories)), nullptr);
+  gtk_widget_set_hexpand(state->m_feed_kind_filter, TRUE);
+  gtk_widget_set_hexpand(state->m_feed_category_filter, TRUE);
+  gtk_widget_set_tooltip_text(state->m_feed_kind_filter,
+                              "Filter by event kind");
+  gtk_widget_set_tooltip_text(state->m_feed_category_filter,
+                              "Filter by notification category");
+  state->m_feed_clear_filters = gtk_button_new_with_label("Clear filters");
+  state->m_feed_clear_notifications =
+      gtk_button_new_with_label("Clear notifications");
+  gtk_widget_set_tooltip_text(state->m_feed_clear_notifications,
+                              "Clear in-memory events for this app session");
+  gtk_box_append(GTK_BOX(filterRow), state->m_feed_kind_filter);
+  gtk_box_append(GTK_BOX(filterRow), state->m_feed_category_filter);
+  gtk_box_append(GTK_BOX(filterRow), state->m_feed_clear_filters);
+  gtk_box_append(GTK_BOX(filterRow), state->m_feed_clear_notifications);
+  gtk_box_append(GTK_BOX(state->m_feed_controls), filterRow);
+  gtk_widget_set_visible(state->m_feed_controls, FALSE);
+  gtk_box_append(GTK_BOX(content), state->m_feed_controls);
+
+  g_signal_connect(state->m_feed_search, "search-changed",
+                   G_CALLBACK(eventSearchChanged), state);
+  g_signal_connect(state->m_feed_kind_filter, "notify::selected",
+                   G_CALLBACK(eventFilterChanged), state);
+  g_signal_connect(state->m_feed_category_filter, "notify::selected",
+                   G_CALLBACK(eventFilterChanged), state);
+  g_signal_connect(state->m_feed_all_devices_filter, "toggled",
+                   G_CALLBACK(eventFilterToggled), state);
+  g_signal_connect(state->m_feed_clear_filters, "clicked",
+                   G_CALLBACK(clearEventFiltersClicked), state);
+  g_signal_connect(state->m_feed_clear_notifications, "clicked",
+                   G_CALLBACK(clearNotificationsClicked), state);
+
+  state->m_feed_notice = gtk_label_new(nullptr);
+  gtk_label_set_xalign(GTK_LABEL(state->m_feed_notice), 0.0F);
+  gtk_label_set_wrap(GTK_LABEL(state->m_feed_notice), TRUE);
+  gtk_widget_add_css_class(state->m_feed_notice, "dim-label");
+  gtk_widget_set_visible(state->m_feed_notice, FALSE);
+  gtk_box_append(GTK_BOX(content), state->m_feed_notice);
+
+  state->m_feed_empty = gtk_label_new(nullptr);
+  gtk_label_set_wrap(GTK_LABEL(state->m_feed_empty), TRUE);
+  gtk_label_set_xalign(GTK_LABEL(state->m_feed_empty), 0.0F);
+  gtk_widget_set_margin_top(state->m_feed_empty, 12);
+  gtk_widget_set_margin_bottom(state->m_feed_empty, 12);
+  gtk_widget_set_visible(state->m_feed_empty, FALSE);
+  gtk_box_append(GTK_BOX(content), state->m_feed_empty);
+
   state->m_feed_scroll = gtk_scrolled_window_new();
   gtk_widget_set_vexpand(state->m_feed_scroll, TRUE);
-  state->m_feed_list = gtk_list_box_new();
-  gtk_list_box_set_selection_mode(GTK_LIST_BOX(state->m_feed_list),
-                                  GTK_SELECTION_NONE);
-  gtk_list_box_set_show_separators(GTK_LIST_BOX(state->m_feed_list), TRUE);
   gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(state->m_feed_scroll),
-                                state->m_feed_list);
+                                state->m_feed_view);
   gtk_widget_set_visible(state->m_feed_scroll, FALSE);
   gtk_box_append(GTK_BOX(content), state->m_feed_scroll);
 
-  auto *page = makeToolbarPage(content, "Device", state, true);
+  auto *page = makeToolbarPage(content, "Notifications", state, true);
 
   return page;
 }
 
 auto createSettings() -> GSettings * { return settingsForApp(); }
+
+auto loadPaneFraction(GSettings *settings) -> double {
+  auto *storedFraction = g_settings_get_user_value(settings, "pane-fraction");
+  if (storedFraction != nullptr) {
+    const auto fraction =
+        std::clamp(g_variant_get_double(storedFraction), 0.1, 0.9);
+    g_variant_unref(storedFraction);
+
+    return fraction;
+  }
+
+  auto *storedPosition = g_settings_get_user_value(settings, "pane-position");
+  if (storedPosition == nullptr) {
+    return std::clamp(g_settings_get_double(settings, "pane-fraction"), 0.1,
+                      0.9);
+  }
+
+  const auto fraction =
+      std::clamp(static_cast<double>(g_variant_get_int32(storedPosition)) /
+                     kDefaultWindowWidth,
+                 0.1, 0.9);
+  g_variant_unref(storedPosition);
+  if (!g_settings_set_double(settings, "pane-fraction", fraction)) {
+    g_warning("Could not migrate the saved device pane width");
+  }
+
+  return fraction;
+}
 
 void activate(GtkApplication *app, gpointer) {
   auto *state = stateFor(G_OBJECT(app));
@@ -2677,12 +3342,16 @@ void activate(GtkApplication *app, gpointer) {
         G_OBJECT(app), "dmn-bluetooth-state", state,
         [](gpointer data) { delete static_cast<AppState *>(data); });
     state->m_settings = createSettings();
+    if (state->m_settings != nullptr) {
+      state->m_pane_fraction = loadPaneFraction(state->m_settings);
+    }
     loadSavedSelection(state);
     loadMonitoringIntents(state);
 
     state->m_window = adw_application_window_new(GTK_APPLICATION(app));
     gtk_window_set_title(GTK_WINDOW(state->m_window), "Dmn Bluetooth");
-    gtk_window_set_default_size(GTK_WINDOW(state->m_window), 960, 680);
+    gtk_window_set_default_size(GTK_WINDOW(state->m_window),
+                                kDefaultWindowWidth, 680);
     gtk_widget_set_size_request(state->m_window, 360, 420);
     g_signal_connect(state->m_window, "close-request",
                      G_CALLBACK(windowCloseRequested), state);
@@ -2702,12 +3371,7 @@ void activate(GtkApplication *app, gpointer) {
     gtk_paned_set_shrink_end_child(GTK_PANED(paned), TRUE);
     gtk_paned_set_start_child(GTK_PANED(paned), state->m_sidebar_page);
     gtk_paned_set_end_child(GTK_PANED(paned), state->m_device_page);
-    const int panePosition =
-        state->m_settings != nullptr
-            ? g_settings_get_int(state->m_settings, "pane-position")
-            : 460;
-    gtk_paned_set_position(GTK_PANED(paned), panePosition);
-    state->m_pane_position_ready = true;
+    gtk_paned_set_position(GTK_PANED(paned), 480);
     g_signal_connect(paned, "notify::position", G_CALLBACK(panePositionChanged),
                      state);
     adw_application_window_set_content(ADW_APPLICATION_WINDOW(state->m_window),
@@ -2733,6 +3397,9 @@ void activate(GtkApplication *app, gpointer) {
 
     requestOperation(state, Dmn_Operation::kInventory);
     updateMonitorPolling(state);
+    gtk_window_maximize(GTK_WINDOW(state->m_window));
+    state->m_pane_restore_source =
+        g_timeout_add(10, restorePanePosition, state);
   }
 
   gtk_window_present(GTK_WINDOW(state->m_window));
