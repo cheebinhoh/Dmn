@@ -67,6 +67,7 @@ public:
       -> dmn::Dmn_GattValueResult<dmn::Dmn_GattNotification> override {
     {
       std::lock_guard lock{mutex};
+
       subscriptionOrder.push_back(characteristicId);
       if (characteristicId == failSubscriptionFor) {
         condition.notify_all();
@@ -88,6 +89,7 @@ public:
     return dmn::Dmn_GattNotification{[this, characteristicId] {
       {
         std::lock_guard lock{mutex};
+
         ++cleanupAttempts[characteristicId];
         stoppedSubscriptions.push_back(characteristicId);
         auto &failures = cleanupFailuresRemaining[characteristicId];
@@ -145,6 +147,7 @@ public:
     NotificationHandler handler;
     {
       std::lock_guard lock{mutex};
+
       const auto found = handlers.find(characteristicId);
       if (found != handlers.end()) {
         handler = found->second;
@@ -171,6 +174,7 @@ public:
   void releaseBlockedWrite() {
     {
       std::lock_guard lock{mutex};
+
       releaseControlPointWrite = true;
     }
 
@@ -223,6 +227,7 @@ public:
   void recordEvent(const dmn::Dmn_AncsEvent &event) {
     {
       std::lock_guard lock{mutex};
+
       events.push_back(event);
     }
 
@@ -301,6 +306,7 @@ TEST(DmnAncsClientTest, SubscribesDataSourceBeforeNotificationSource) {
   ASSERT_TRUE(started) << started.error().message;
   {
     std::lock_guard lock{gatt.mutex};
+
     ASSERT_EQ(gatt.subscriptionOrder.size(), 2);
     EXPECT_EQ(gatt.subscriptionOrder[0], kDataSourceId);
     EXPECT_EQ(gatt.subscriptionOrder[1], kNotificationSourceId);
@@ -309,6 +315,7 @@ TEST(DmnAncsClientTest, SubscribesDataSourceBeforeNotificationSource) {
   ASSERT_TRUE(gatt.waitForWriteCount(1));
   {
     std::lock_guard lock{gatt.mutex};
+
     const Bytes expected{0, 0x12, 0x34, 0x56, 0x78, 0, 1,  0,
                          1, 2,    0,    1,    3,    0, 16, 5};
     EXPECT_EQ(gatt.writes.front(), expected);
@@ -403,6 +410,7 @@ TEST(DmnAncsClientTest, RollsBackDataSubscriptionWhenSecondSubscriptionFails) {
   ASSERT_TRUE(gatt.waitForCleanupAttempts(kDataSourceId, 1));
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_EQ(gatt.cleanupAttempts[kNotificationSourceId], 0);
     EXPECT_FALSE(gatt.handlers.contains(kDataSourceId));
   }
@@ -427,6 +435,7 @@ TEST(DmnAncsClientTest, RetriesFailedSubscriptionCleanupOnNextStop) {
   EXPECT_EQ(client.state(), dmn::Dmn_AncsState::Failed);
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_EQ(gatt.cleanupAttempts[kNotificationSourceId], 1);
     EXPECT_EQ(gatt.cleanupAttempts[kDataSourceId], 1);
     EXPECT_TRUE(gatt.handlers.contains(kNotificationSourceId));
@@ -437,6 +446,7 @@ TEST(DmnAncsClientTest, RetriesFailedSubscriptionCleanupOnNextStop) {
   EXPECT_EQ(client.state(), dmn::Dmn_AncsState::Stopped);
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_EQ(gatt.cleanupAttempts[kNotificationSourceId], 2);
     EXPECT_EQ(gatt.cleanupAttempts[kDataSourceId], 2);
     EXPECT_FALSE(gatt.handlers.contains(kNotificationSourceId));
@@ -461,6 +471,7 @@ TEST(DmnAncsClientTest, InvalidatedGattSessionStopsBothSubscriptions) {
   EXPECT_EQ(client.state(), dmn::Dmn_AncsState::Failed);
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_FALSE(gatt.handlers.contains(kNotificationSourceId));
     EXPECT_FALSE(gatt.handlers.contains(kDataSourceId));
   }
@@ -645,6 +656,7 @@ TEST(DmnAncsClientTest, SerializesCallbacksOffGattThreadAndStopsCleanly) {
   ASSERT_TRUE(client.setEventHandler([&](const auto &event) {
     {
       std::lock_guard lock{callbackMutex};
+
       callbackThreads.push_back(std::this_thread::get_id());
       readySeen =
           readySeen || (event.kind == dmn::Dmn_AncsEvent::Kind::StateChanged &&
@@ -670,6 +682,7 @@ TEST(DmnAncsClientTest, SerializesCallbacksOffGattThreadAndStopsCleanly) {
   std::size_t callbackCountAfterStop{};
   {
     std::lock_guard lock{callbackMutex};
+
     ASSERT_FALSE(callbackThreads.empty());
     EXPECT_NE(callbackThreads.front(), callerThread);
     EXPECT_TRUE(std::all_of(callbackThreads.begin(), callbackThreads.end(),
@@ -682,6 +695,7 @@ TEST(DmnAncsClientTest, SerializesCallbacksOffGattThreadAndStopsCleanly) {
   gatt.emit(kNotificationSourceId, notificationSourceValue(0, 43));
   {
     std::lock_guard lock{callbackMutex};
+
     EXPECT_EQ(callbackThreads.size(), callbackCountAfterStop);
   }
 }
@@ -699,6 +713,7 @@ TEST(DmnAncsClientTest, RemovesNotificationWithoutRequestingAttributes) {
   ASSERT_TRUE(gatt.waitForEvent(dmn::Dmn_AncsEvent::Kind::NotificationRemoved));
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_TRUE(gatt.writes.empty());
   }
 
@@ -720,6 +735,7 @@ TEST(DmnAncsClientTest, SerializesQueuedAttributeRequests) {
 
   {
     std::lock_guard lock{gatt.mutex};
+
     ASSERT_EQ(gatt.writes.size(), 1);
     EXPECT_EQ(gatt.writes.front()[1], 0x11);
   }
@@ -728,6 +744,7 @@ TEST(DmnAncsClientTest, SerializesQueuedAttributeRequests) {
   ASSERT_TRUE(gatt.waitForWriteCount(2));
   {
     std::lock_guard lock{gatt.mutex};
+
     ASSERT_EQ(gatt.writes.size(), 2);
     EXPECT_EQ(gatt.writes.back()[1], 0x22);
   }
@@ -778,6 +795,7 @@ TEST(DmnAncsClientTest, FailsSessionWhenAttributeResponseTimesOut) {
   EXPECT_EQ(client.state(), dmn::Dmn_AncsState::Failed);
   {
     std::lock_guard lock{gatt.mutex};
+
     EXPECT_EQ(gatt.writes.size(), 1);
   }
 

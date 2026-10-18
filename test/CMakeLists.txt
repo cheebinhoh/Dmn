@@ -98,6 +98,7 @@ if (ENABLE_ANCS)
                         dmn-test-ancs-client
                         dmn-test-ancs-parser
   )
+
   target_link_libraries(dmn-test-ancs-client PRIVATE dmn-ancs)
   target_link_libraries(dmn-test-ancs-parser PRIVATE dmn-ancs)
 endif()
@@ -111,8 +112,9 @@ if (ENABLE_DBUS)
 endif()
 
 if (ENABLE_DBUS)
+  # Keep the D-Bus library suite enabled for every configuration that enables
+  # this layer, including app configurations that imply ENABLE_DBUS.
   # [TEST TYPE: GTEST - DBUS]
-  # Optional D-Bus unit and facade tests (CTest label: dmn).
   find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
 
   ADD_TEST_EXECUTABLE(dmn
@@ -141,17 +143,20 @@ endif()
 if (ENABLE_BLUEZ)
   find_program(DBUS_DAEMON_EXECUTABLE dbus-daemon REQUIRED)
 
-  add_test(NAME dmn-bluez-discovery-help
-             COMMAND dmn-bluez-discovery --help
+  add_executable(dmn-bluez-cli-test
+                   ${PROJECT_SOURCE_DIR}/src/app/dmn-bluez-cli.cpp
   )
-  set_tests_properties(dmn-bluez-discovery-help PROPERTIES LABELS "dmn")
 
-  add_test(NAME dmn-bluez-discovery-rejects-duplicate-option
-             COMMAND dmn-bluez-discovery --discovery --discovery
+  target_compile_definitions(dmn-bluez-cli-test
+                               PRIVATE DMN_BLUEZ_TESTING=1
+                                       DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS=500
   )
-  set_tests_properties(dmn-bluez-discovery-rejects-duplicate-option
-                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+
+  target_compile_options(dmn-bluez-cli-test
+                           PRIVATE -Wall -Wextra -Wpedantic
   )
+
+  target_link_libraries(dmn-bluez-cli-test PRIVATE dmn-bluez)
 
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-bluez-device-list
@@ -173,65 +178,111 @@ if (ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
-                               DMN_BLUEZ_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluez-discovery-test>"
+                               DMN_BLUEZ_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluez-cli-test>"
   )
 
-  add_dependencies(dmn-test-bluez-device-list dmn-bluez-discovery-test)
+  add_dependencies(dmn-test-bluez-device-list dmn-bluez-cli-test)
 endif()
 
 if (ENABLE_ANCS AND ENABLE_BLUEZ)
+  add_executable(dmn-bluetooth-cli-test
+                   ${PROJECT_SOURCE_DIR}/src/app/dmn-bluetooth-cli.cpp
+  )
+
+  target_compile_options(dmn-bluetooth-cli-test
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+
+  target_link_libraries(dmn-bluetooth-cli-test
+                        PRIVATE dmn-ancs-bluez-monitor
+  )
+
+  target_compile_definitions(dmn-bluetooth-cli-test
+                               PRIVATE DMN_BLUETOOTH_TESTING=1
+  )
+
   target_link_libraries(dmn-test-bluez-device-list
                         PRIVATE dmn-ancs-bluez-monitor
   )
+
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
-                               DMN_BLUETOOTH_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-test>"
+                               DMN_BLUETOOTH_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-cli-test>"
   )
-  add_dependencies(dmn-test-bluez-device-list dmn-bluetooth-test)
-  add_test(NAME dmn-bluetooth-monitor-private-bus
+
+  add_dependencies(dmn-test-bluez-device-list dmn-bluetooth-cli-test)
+  add_test(NAME dmn-bluetooth-cli-monitor-private-bus
              COMMAND dmn-test-bluez-device-list
                      --gtest_filter=DmnBluetoothMonitorCli.*:DmnAncsBluezMonitorTest.*
   )
-  set_tests_properties(dmn-bluetooth-monitor-private-bus
+
+  set_tests_properties(dmn-bluetooth-cli-monitor-private-bus
                          PROPERTIES LABELS "dmn"
   )
 
-  add_test(NAME dmn-bluetooth-help
-             COMMAND dmn-bluetooth --help
-  )
-  add_test(NAME dmn-bluetooth-monitor-help
-             COMMAND dmn-bluetooth monitor --help
-  )
-  add_test(NAME dmn-bluetooth-monitor-rejects-missing-device
-             COMMAND dmn-bluetooth monitor
-  )
-  add_test(NAME dmn-bluetooth-monitor-rejects-invalid-timeout
-             COMMAND dmn-bluetooth monitor "iPhone Old"
-                     --discovery-timeout 0
-  )
-  set_tests_properties(dmn-bluetooth-help
-                       dmn-bluetooth-monitor-help PROPERTIES LABELS "dmn")
-  set_tests_properties(dmn-bluetooth-monitor-rejects-missing-device
-                       dmn-bluetooth-monitor-rejects-invalid-timeout
-                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+endif()
+
+# Production application smoke/CLI tests are gated by their app options,
+# separately from the supporting library and integration-test blocks above.
+if (ENABLE_APP_BLUEZ_DISCOVERY)
+  add_test(NAME dmn-bluez-cli-help
+             COMMAND dmn-bluez-cli --help
   )
 
-  if (ENABLE_ANCS_HARDWARE_TESTS)
-    target_compile_definitions(dmn-test-bluez-device-list
-                                PRIVATE
-                                DMN_ANCS_HARDWARE_TESTS=1
-                                DMN_ANCS_HARDWARE_DEVICE="${DMN_ANCS_HARDWARE_DEVICE}"
-                                DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth>"
-    )
-    add_test(NAME dmn-ancs-iphone-hardware
-               COMMAND dmn-test-bluez-device-list
-                       --gtest_filter=DmnBluetoothMonitorHardware.*
-    )
-    set_tests_properties(dmn-ancs-iphone-hardware
-                          PROPERTIES LABELS "dmn;hardware"
-                                     TIMEOUT 120
-    )
-  endif()
+  set_tests_properties(dmn-bluez-cli-help PROPERTIES LABELS "dmn")
+
+  add_test(NAME dmn-bluez-cli-rejects-duplicate-option
+             COMMAND dmn-bluez-cli --discovery --discovery
+  )
+
+  set_tests_properties(dmn-bluez-cli-rejects-duplicate-option
+                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+endif()
+
+if (ENABLE_APP_BLUETOOTH)
+  add_test(NAME dmn-bluetooth-cli-help
+             COMMAND dmn-bluetooth-cli --help
+  )
+
+  add_test(NAME dmn-bluetooth-cli-monitor-help
+             COMMAND dmn-bluetooth-cli monitor --help
+  )
+
+  add_test(NAME dmn-bluetooth-cli-monitor-rejects-missing-device
+             COMMAND dmn-bluetooth-cli monitor
+  )
+
+  add_test(NAME dmn-bluetooth-cli-monitor-rejects-invalid-timeout
+             COMMAND dmn-bluetooth-cli monitor "iPhone Old"
+                     --discovery-timeout 0
+  )
+
+  set_tests_properties(dmn-bluetooth-cli-help
+                       dmn-bluetooth-cli-monitor-help PROPERTIES LABELS "dmn")
+  set_tests_properties(dmn-bluetooth-cli-monitor-rejects-missing-device
+                       dmn-bluetooth-cli-monitor-rejects-invalid-timeout
+                         PROPERTIES LABELS "dmn" WILL_FAIL TRUE
+  )
+endif()
+
+if (ENABLE_ANCS_HARDWARE_TESTS)
+  target_compile_definitions(dmn-test-bluez-device-list
+                              PRIVATE
+                              DMN_ANCS_HARDWARE_TESTS=1
+                              DMN_ANCS_HARDWARE_DEVICE="${DMN_ANCS_HARDWARE_DEVICE}"
+                              DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-cli>"
+  )
+
+  add_test(NAME dmn-ancs-iphone-hardware
+             COMMAND dmn-test-bluez-device-list
+                     --gtest_filter=DmnBluetoothMonitorHardware.*
+  )
+
+  set_tests_properties(dmn-ancs-iphone-hardware
+                        PROPERTIES LABELS "hardware"
+                                   TIMEOUT 120
+  )
 endif()
 
 # Keep fault-injection targets out of builds that do not enable libfiu.

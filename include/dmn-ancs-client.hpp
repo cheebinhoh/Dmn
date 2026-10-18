@@ -121,6 +121,7 @@ struct Dmn_AncsConfig {
   std::chrono::milliseconds service_resolution_timeout{30000};
   std::chrono::milliseconds gatt_operation_timeout{10000};
   std::chrono::milliseconds attribute_response_timeout{10000};
+
   /**
    * @brief Optional cutoff for suppressing older ANCS notifications.
    *

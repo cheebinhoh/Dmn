@@ -75,8 +75,8 @@ RUN cmake -B build \
       -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_NDEBUG=ON \
       -DBUILD_KAFKA_TEST=ON \
-      -DENABLE_BLUEZ=ON \
-      -DENABLE_DBUS=ON \
+      -DENABLE_APP_BLUEZ_DISCOVERY=ON \
+      -DENABLE_APP_BLUETOOTH=ON \
       -DENABLE_VALGRIND=ON \
       -DENABLE_FAULT_INJECTION=ON && \
     cmake --build build/ -j2

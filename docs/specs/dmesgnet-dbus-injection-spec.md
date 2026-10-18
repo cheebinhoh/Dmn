@@ -183,9 +183,11 @@ struct Dmn_DbusConfig {
 Implemented public headers are `dmn-dbus-config.hpp` and
 `dmn-dbus-io.hpp`; the out-of-line implementation is in
 `src/dmn-dbus-io.cpp`, built as the separate `dmn-dbus` library target.
-`ENABLE_DBUS` defaults to `OFF`, so the core `dmn` target remains independent
-of libdbus. Each configured maximum payload must be positive and no greater
-than `INT_MAX`, because libdbus's fixed-array API accepts an `int` length.
+`ENABLE_DBUS` has a declared default of `OFF`, so the core `dmn` target remains
+independent of libdbus when no dependent application or library enables that
+layer. The default-on Bluetooth applications enable it transitively on Linux.
+Each configured maximum payload must be positive and no greater than
+`INT_MAX`, because libdbus's fixed-array API accepts an `int` length.
 
 `Dmn_DbusIoStatus` is defined in that shared config header with the status
 fields specified in `dmesg-dbus-spec.md`. The signal tuple is validated as

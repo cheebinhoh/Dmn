@@ -41,8 +41,16 @@ the successful physical test, the iPhone prompted the user to allow Pop!_OS
 to receive notifications for Dmn running on another OS. No event arrived
 before approval; after approval, the live CLI printed multiple notification
 events and their available attributes. This confirms end-to-end ANCS delivery
-on Genghis once notification access is authorized. A later run failed explicitly
-when the ANCS GATT event queue exceeded its 256-event limit. This was fixed by
+on Genghis once notification access is authorized. In a later stale-GATT
+incident, BlueZ again reported Genghis connected with services resolved, but
+the GATT tree lacked ANCS. Disconnecting and reconnecting from Pop!_OS alone
+did not restore ANCS. Forgetting Pop!_OS from the iPhone and reconnecting and
+pairing again restored ANCS discovery; delivery of a new notification then
+prompted iOS to allow Pop!_OS notification access. For this observed recovery,
+removing the bond on the phone was necessary; host-side disconnect alone was
+insufficient. This remains a device-side recovery procedure, not an automatic
+client recovery behavior. A later run failed explicitly when the ANCS GATT
+event queue exceeded its 256-event limit. This was fixed by
 separating acknowledged Control Point writes from GATT event intake and giving
 each worker its own condition variable; the normal monitor command now passed
 focused unit/private-bus tests and a physical Genghis run. The library has no
@@ -61,7 +69,7 @@ delivered notification from any app
 whose iOS notifications are allowed in Notification Center is valid; SMS/
 iMessage is convenient but not required. Ensure Focus or Scheduled Summary
 is not delaying delivery. The protocol parser, fake-GATT ANCS session client,
-and initial `dmn-bluetooth monitor` implementation are in place.
+and initial `dmn-bluetooth-cli monitor` implementation are in place.
 Parser and session unit tests plus CLI help/argument tests pass. Private-bus CLI
 tests now exercise explicit adapter/name selection, ambiguous-name rejection,
 target-only Pair/Connect ordering, connection failure reporting, and rejection
@@ -92,7 +100,7 @@ adapter over reusable Dmn APIs, not the owner of Bluetooth or ANCS behavior.
 After the discovery milestone, build the selected-device workflow as:
 
 ```text
-dmn-bluetooth CLI ─┐
+dmn-bluetooth-cli command ─┐
                    ├─> Dmn_AncsBluezMonitor
 future GTK GUI ────┘       ├─> Dmn_BluezClient
                            ├─> Dmn_AncsClient
@@ -137,9 +145,9 @@ first independently useful Bluetooth feature and does not require a phone,
 GATT, ANCS, or a physical adapter for normal CI.
 
 **Implementation status:** The `dmn-bluez` inventory/discovery API and
-`dmn-bluez-discovery` CLI are implemented and Phase 0 qualified. The private
-bus tests, standalone-header check, build matrix, and physical adapter smoke
-record are documented in the linked specification.
+`dmn-bluez-cli` command-line application are implemented and Phase 0
+qualified. The private bus tests, standalone-header check, build matrix, and
+physical adapter smoke record are documented in the linked specification.
 
 - Implement adapter/device inventory and live changes over the generic
   `Dmn_DbusClient`; enumerate BlueZ `GetManagedObjects` and subscribe to
@@ -147,7 +155,7 @@ record are documented in the linked specification.
 - Implement explicit one-adapter discovery with the default `auto` transport,
   owned start/stop lifecycle, bounded update staging, and no pairing or
   connection side effects during inventory or scanning.
-- Add `dmn-bluez-discovery` with read-only snapshot mode and continuous
+- Add `dmn-bluez-cli` with read-only snapshot mode and continuous
   `--discovery` mode. Select the sole powered adapter by default; require an
   explicit adapter selector if multiple powered adapters exist.
 - Add executable private-bus tests for the actual public BlueZ API, CLI
@@ -177,7 +185,7 @@ private-bus tests.
 - Confirm `Paired=true` before reporting a successful paired action. Surface
   BlueZ authentication cancellation/rejection and missing-agent failures as
   typed remote errors. Use a finite 120-second CLI action deadline.
-- Keep `dmn-bluez-discovery` compatible. The eventual `dmn-bluetooth` command
+- Keep `dmn-bluez-cli` compatible. The eventual `dmn-bluetooth-cli` command
   can unify inventory, discovery, pair/connect, GATT inspection, and ANCS
   without changing the library API.
 
@@ -331,10 +339,10 @@ or D-Bus. The library does not use `Dmn_Runtime_Manager`.
 **Gate:** fake-backend end-to-end tests pass, including cleanup and fatal
 response-timeout behavior.
 
-#### Step 1C — `dmn-bluetooth monitor` application
+#### Step 1C — `dmn-bluetooth-cli monitor` application
 
 **Implementation status:** The reusable `Dmn_AncsBluezMonitor` library
-composes BlueZ, GATT, and ANCS; `dmn-bluetooth` is now a terminal adapter that
+composes BlueZ, GATT, and ANCS; `dmn-bluetooth-cli` is now a terminal adapter that
 uses the facade and `Dmn_Runtime_Manager`/`Dmn_Pipe` for signal/job and output
 handling. The ANCS worker remains independent of that runtime. The private-bus
 suite now exercises both CLI behavior and direct facade startup/event/cleanup.
@@ -357,9 +365,11 @@ cleanup remain frontend-specific CLI tests.
   exact stdout/stderr split, terminal-safe escaping, finite timeout defaults,
   exit statuses, signal cleanup, and content-privacy rules in the client spec.
   Leave the phone paired/connected on exit and do not reconnect automatically.
-- Keep `dmn-bluez-discovery` unchanged. Build `dmn-ancs` behind `ENABLE_ANCS`
-  without BlueZ/D-Bus linkage; build `dmn-ancs-bluez-monitor` and
-  `dmn-bluetooth` only when both `ENABLE_ANCS` and `ENABLE_BLUEZ` are enabled.
+- Keep `dmn-bluez-cli` behavior unchanged. Build `dmn-ancs` behind
+  `ENABLE_ANCS` without BlueZ/D-Bus linkage; build
+  `dmn-ancs-bluez-monitor` when both `ENABLE_ANCS` and `ENABLE_BLUEZ` are
+  enabled, and the production `dmn-bluetooth-cli` executable only when
+  `ENABLE_APP_BLUETOOTH` is enabled.
 - Test exact/ambiguous selectors, unrelated-device noninterference, discovery
   and Pair/Connect ordering, authorization/startup failures, ongoing events,
   output/privacy/escaping, SIGINT/SIGTERM cleanup, queue saturation, and
@@ -406,24 +416,28 @@ gate, report it as unqualified rather than hiding the limitation with retries,
 fallback profiles, or success-shaped output.
 
 The physical CLI smoke test is registered only when
-`ENABLE_ANCS_HARDWARE_TESTS=ON`, which itself requires `ENABLE_ANCS=ON`,
-`ENABLE_BLUEZ=ON`, and `ENABLE_DBUS=ON`. It runs the production
-`dmn-bluetooth` binary against the exact `DMN_ANCS_HARDWARE_DEVICE` selector
+`ENABLE_ANCS_HARDWARE_TESTS=ON`, which requires
+`ENABLE_APP_BLUETOOTH=ON`. That app option enables `ENABLE_ANCS` and
+`ENABLE_BLUEZ`; BlueZ enables `ENABLE_DBUS`. It runs the production
+`dmn-bluetooth-cli` binary against the exact `DMN_ANCS_HARDWARE_DEVICE` selector
 (default `iPhone Old`), waits for ANCS readiness, and sends SIGINT to verify
 orderly shutdown. It is not part of Docker/default test runs. Enable it with:
 
 ```bash
-cmake -B build -DENABLE_DBUS=ON -DENABLE_BLUEZ=ON -DENABLE_ANCS=ON \
-  -DENABLE_ANCS_HARDWARE_TESTS=ON \
+cmake -B build -DENABLE_APP_BLUETOOTH=ON -DENABLE_ANCS_HARDWARE_TESTS=ON \
   -DDMN_ANCS_HARDWARE_DEVICE="iPhone Old"
-cmake --build build --target dmn-bluetooth dmn-test-bluez-device-list
-ctest --test-dir build -R dmn-ancs-iphone-hardware --output-on-failure
+cmake --build build --target dmn-bluetooth-cli dmn-test-bluez-device-list
+ctest --test-dir build -L hardware --output-on-failure
 ```
 
 ### Step 2 — Future GTK+ frontend
 
+- Follow [`gtk-bluetooth-ancs-app-spec.md`](gtk-bluetooth-ancs-app-spec.md)
+  for the GUI lifecycle, observed missing-ANCS/stale-GATT recovery,
+  `StartNotify`/`Notifying` handling, post-ready D-Bus timeouts, and iOS
+  notification-access prompt behavior.
 - Build the GUI directly on the same public BlueZ/GATT/ANCS APIs. Do not invoke
-  `dmn-bluetooth` as a subprocess or parse CSV.
+  `dmn-bluetooth-cli` as a subprocess or parse CSV.
 - Provide an explicit device-selection/connection/session view that displays
   stage state and normalized ANCS notification events. Pairing/connection and
   notification-content display remain explicit user actions; GTK must not
@@ -466,7 +480,7 @@ surface; avoid tests that merely exercise private helpers.
 | `DmnBluetoothMonitorCli.BoundsOutputQueueWhenStdoutIsBackpressured` | Fill stdout and deliver sustained notification events | Explicit 256-event failure and subscription cleanup; no silent success |
 | `DmnBluetoothMonitorRejectsInvalidTimeouts` | Supply invalid timeout values | Exit status 2 before any D-Bus access |
 | `DmnBluetoothMonitorEscapesDiagnostics` | Inject control characters in adapter/device names and remote errors | Terminal-safe stderr with no notification contents |
-| `DmnBluetoothMonitorPreservesDiscoveryCliCompatibility` | Run old CLI tests with monitor target enabled | Existing `dmn-bluez-discovery` behavior is unchanged |
+| `DmnBluetoothMonitorPreservesDiscoveryCliCompatibility` | Run old CLI tests with monitor target enabled | Existing `dmn-bluez-cli` behavior is unchanged |
 
 Also cover absent ANCS characteristics, empty requested values, unexpected
 tuple order/UID, malformed UTF-8, Control Point errors, stop during startup,
@@ -499,26 +513,31 @@ Names are proposals to keep implementation discussion concrete:
 | Backend-neutral GATT contract: `include/dmn-gatt-client.hpp` | Implemented in Phase 1B; expose it through a small platform-neutral `dmn-gatt` interface target so ANCS can be built without BlueZ or D-Bus |
 | Implemented `dmn-ancs` target: `include/dmn-ancs-client.hpp`, `src/dmn-ancs-client.cpp` | ANCS states, notification values, request scheduling, parser, and callback API; links `dmn` for `Dmn_Proc` plus backend-neutral `dmn-gatt`, never BlueZ or D-Bus |
 | Implemented optional Dmn `dmn-bluez` target: `include/dmn-bluez-client.hpp`, `include/dmn-bluez-gatt-client.hpp`, `include/dmn-gatt-client.hpp`; private implementation under `src/` | Linux adapter/device/discovery and remote-GATT APIs on `Dmn_DbusClient` from `dmn-dbus`; public headers do not expose libdbus types |
-| `dmn-bluez-discovery` executable | First user-facing milestone: read-only inventory and explicit live `--discovery` scan, no GATT/ANCS dependency |
+| `dmn-bluez-cli` executable | First user-facing milestone: read-only inventory and explicit live `--discovery` scan, no GATT/ANCS dependency |
 | `test/dmn-test-dbus-client.cpp` | Private-bus tests for generic D-Bus method, property, signal, value-codec, timeout, and lifecycle behavior |
 | `test/dmn-test-ancs-parser.cpp` | Pure parser/reassembly tests |
 | `test/dmn-test-ancs-client.cpp` | Fake-GATT ANCS lifecycle, request/queue limits, callback context, cleanup, and timeout tests |
 | `test/dmn-test-bluez-gatt-client.cpp` | Private-bus fake-BlueZ integration tests |
 | `test/dmn-test-bluez-device-list.cpp` | Private-bus Linux integration tests for known/connected-device enumeration, discovery, and live updates |
-| `src/dmn-bluetooth.cpp` | Implemented `dmn-bluetooth monitor DEVICE` application adapter |
-| `test/CMakeLists.txt` | CLI help/argument tests and filtered `dmn-bluetooth-monitor-private-bus` CTest backed by the existing fake-BlueZ fixture |
+| `src/app/dmn-bluetooth-cli.cpp` | Implemented `dmn-bluetooth-cli monitor DEVICE` application entry point |
+| `test/CMakeLists.txt` | CLI help/argument tests and filtered `dmn-bluetooth-cli-monitor-private-bus` CTest backed by the existing fake-BlueZ fixture |
 
-Build the protocol library behind `ENABLE_ANCS` (off by default); it has no
-Bluetooth or D-Bus dependency and can be tested on any supported core platform.
-`ENABLE_DBUS` (off by default) builds `dmn-dbus`, containing both the existing
-byte-signal API and the new generic D-Bus client/value capability, and owns the
-optional `dbus-1` dependency. Build the Dmn-owned adapter/device/GATT client
-behind `ENABLE_BLUEZ` (off by default, Linux-only); it requires
-`ENABLE_DBUS=ON` and builds `dmn-bluez` on top of `dmn-dbus`. `ENABLE_BLUEZ`
-must not require `ENABLE_ANCS`, so `dmn-bluez-discovery` and device inventory
-can be built and used independently. `dmn-bluez-discovery` is built whenever `ENABLE_BLUEZ` is enabled. Build the
-ANCS client when `ENABLE_ANCS` is enabled; build `dmn-bluetooth` only when both
-`ENABLE_ANCS` and `ENABLE_BLUEZ` are enabled.
+The declared default for `ENABLE_ANCS` is `OFF`; the library has no Bluetooth
+or D-Bus dependency and can be tested on any supported core platform.
+`ENABLE_DBUS` also has a declared default of `OFF` and builds `dmn-dbus`,
+containing both the existing byte-signal API and the generic D-Bus client/value
+capability, and owns the optional `dbus-1` dependency. Build the Dmn-owned
+adapter/device/GATT client behind `ENABLE_BLUEZ` (declared default `OFF`,
+Linux-only); enabling BlueZ also enables `ENABLE_DBUS`, its required lower
+layer. `ENABLE_BLUEZ` does not enable ANCS or either production application, so
+the BlueZ library and tests can be built without those features.
+`ENABLE_APP_BLUEZ_DISCOVERY` enables `ENABLE_BLUEZ` (and transitively
+`ENABLE_DBUS`) and builds `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH` enables
+`ENABLE_ANCS` and `ENABLE_BLUEZ` (and transitively `ENABLE_DBUS`) and builds
+`dmn-bluetooth-cli`. Both application options default to `ON`, so the default
+configuration enables all three library layers and both apps on Linux. Disable
+both application options for standalone library configurations or to configure
+on non-Linux platforms; the ANCS-only configuration remains portable.
 Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 `dmn` when these optional features are disabled.
 
@@ -551,11 +570,13 @@ Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 
 | Configuration | Required result |
 |---|---|
-| Default options (`ENABLE_ANCS=OFF`, `ENABLE_BLUEZ=OFF`) | Core library/tests build unchanged; no Bluetooth/ANCS dependencies or monitor executable |
-| `ENABLE_ANCS=ON`, `ENABLE_BLUEZ=OFF` | Build `dmn-ancs`, parser/session tests, and public headers without D-Bus or BlueZ |
-| `ENABLE_BLUEZ=ON`, `ENABLE_DBUS=ON`, `ENABLE_ANCS=OFF` | Build existing `dmn-bluez` and `dmn-bluez-discovery`; no ANCS dependency |
-| `ENABLE_ANCS=ON`, `ENABLE_BLUEZ=ON`, `ENABLE_DBUS=ON` on Linux | Build `dmn-ancs`, `dmn-bluez`, `dmn-bluetooth`, all hardware-independent ANCS tests, and private-bus monitor tests |
-| Above plus `ENABLE_ANCS_HARDWARE_TESTS=ON` | Additionally register the physical-device production-CLI test with the `hardware` label; never enabled by default |
+| Default options on Linux | Build both production applications and all required libraries/tests; hardware tests remain off |
+| `ENABLE_APP_BLUEZ_DISCOVERY=OFF`, `ENABLE_APP_BLUETOOTH=OFF`, `ENABLE_ANCS=ON` | Build `dmn-ancs`, parser/session tests, and public headers without D-Bus or BlueZ |
+| Both application options `OFF`, `ENABLE_BLUEZ=ON` on Linux | Also enables `ENABLE_DBUS`; build `dmn-bluez` and BlueZ tests without either production application or ANCS |
+| `ENABLE_APP_BLUEZ_DISCOVERY=ON`, `ENABLE_APP_BLUETOOTH=OFF` on Linux | Also enables `ENABLE_BLUEZ` and `ENABLE_DBUS`; build the BlueZ library/tests and `dmn-bluez-cli`, without ANCS |
+| `ENABLE_APP_BLUEZ_DISCOVERY=OFF`, `ENABLE_APP_BLUETOOTH=ON` on Linux | Also enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and transitively `ENABLE_DBUS`; build the ANCS, BlueZ, and D-Bus libraries/tests plus `dmn-bluetooth-cli` |
+| Both application options `ON` on Linux | Build both production applications and all library/test layers required by each |
+| `ENABLE_APP_BLUETOOTH=ON` plus `ENABLE_ANCS_HARDWARE_TESTS=ON` | Additionally register the physical-device production-CLI test with the `hardware` label; never enabled by default |
 
 No matrix entry may require an adapter or paired phone. The ANCS-only
 configuration must remain portable to supported non-Linux builds; the

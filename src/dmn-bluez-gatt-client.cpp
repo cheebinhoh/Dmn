@@ -875,6 +875,7 @@ public:
     bool invalidated{};
     {
       std::lock_guard lock{state->mutex};
+
       invalidated = state->invalidated;
     }
 
@@ -915,6 +916,7 @@ public:
 
     {
       std::lock_guard lock{state->mutex};
+
       invalidated = state->invalidated;
     }
 

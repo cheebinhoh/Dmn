@@ -65,6 +65,7 @@ auto isValidUtf8(std::span<const std::uint8_t> bytes) -> bool {
     const auto first = bytes[index];
     if (first <= 0x7fU) {
       ++index;
+
       continue;
     }
 
@@ -322,6 +323,7 @@ auto localDateString(std::chrono::system_clock::time_point timestamp)
     -> std::optional<std::string> {
   const auto time = std::chrono::system_clock::to_time_t(timestamp);
   std::tm localTime{};
+
   if (localtime_r(&time, &localTime) == nullptr) {
     return std::nullopt;
   }
@@ -348,12 +350,14 @@ auto isValidAncsDate(std::string_view date) -> bool {
 
   const auto numberAt = [date](std::size_t offset, std::size_t length) {
     unsigned int number{};
+
     for (std::size_t index = offset; index < offset + length; ++index) {
       number = number * 10U + static_cast<unsigned int>(date[index] - '0');
     }
 
     return number;
   };
+
   const std::chrono::year_month_day calendarDate{
       std::chrono::year{static_cast<int>(numberAt(0, 4))},
       std::chrono::month{numberAt(4, 2)}, std::chrono::day{numberAt(6, 2)}};
@@ -375,6 +379,7 @@ auto makeAncsError(Dmn_AncsErrorKind kind, std::string message,
 
 auto mapGattError(const Dmn_GattError &gattError) -> Dmn_AncsError {
   auto kind = Dmn_AncsErrorKind::Backend;
+
   switch (gattError.kind) {
   case Dmn_GattErrorKind::InvalidArgument:
     kind = Dmn_AncsErrorKind::InvalidArgument;
@@ -404,6 +409,7 @@ auto mapGattError(const Dmn_GattError &gattError) -> Dmn_AncsError {
 
 auto makeAttributeRequest(std::uint32_t uid) -> std::vector<std::uint8_t> {
   std::vector<std::uint8_t> request{0};
+
   for (unsigned int shift = 0; shift < 32; shift += 8) {
     request.push_back(static_cast<std::uint8_t>((uid >> shift) & 0xffU));
   }
@@ -411,6 +417,7 @@ auto makeAttributeRequest(std::uint32_t uid) -> std::vector<std::uint8_t> {
   for (std::size_t index = 0; index < detail::kRequestedAttributeIds.size();
        ++index) {
     request.push_back(detail::kRequestedAttributeIds[index]);
+
     if (index >= 1 && index <= 3) {
       const auto maximum =
           static_cast<std::uint16_t>(detail::kMaximumAttributeSizes[index]);
@@ -436,8 +443,10 @@ public:
 
   ~Impl() noexcept {
     (void)stop();
+
     {
       std::lock_guard lock{m_mutex};
+
       m_shutdown = true;
       m_control_point_shutdown = true;
       m_control_point_jobs.clear();
@@ -464,6 +473,7 @@ public:
   auto setEventHandler(EventHandler handler) -> Dmn_AncsResult {
     std::lock_guard apiLock{m_api_mutex};
     std::lock_guard lock{m_mutex};
+
     if (m_state != Dmn_AncsState::Stopped) {
       return std::unexpected(
           makeAncsError(Dmn_AncsErrorKind::NotReady,
@@ -478,6 +488,7 @@ public:
   auto start(const std::string &deviceId,
              const Dmn_AncsConfig &config) -> Dmn_AncsResult {
     std::lock_guard apiLock{m_api_mutex};
+
     if (!validConfig(config) || deviceId.empty()) {
       return std::unexpected(makeAncsError(
           Dmn_AncsErrorKind::InvalidArgument,
@@ -497,6 +508,7 @@ public:
 
     {
       std::lock_guard lock{m_mutex};
+
       if (m_state != Dmn_AncsState::Stopped) {
         return std::unexpected(
             makeAncsError(Dmn_AncsErrorKind::NotReady,
@@ -563,6 +575,7 @@ public:
     std::optional<Dmn_GattCharacteristic> controlPoint;
     std::optional<Dmn_GattCharacteristic> dataSource;
     bool ancsServiceFound{};
+
     for (const auto &service : *services) {
       if (service.uuid != detail::kAncsServiceUuid) {
         continue;
@@ -603,6 +616,7 @@ public:
 
     {
       std::lock_guard lock{m_mutex};
+
       m_control_point_id = controlPoint->id;
     }
 
@@ -617,6 +631,7 @@ public:
 
     {
       std::lock_guard lock{m_subscription_mutex};
+
       m_data_source_subscription.emplace(std::move(*dataSubscription));
     }
 
@@ -636,6 +651,7 @@ public:
 
     {
       std::lock_guard lock{m_subscription_mutex};
+
       m_notification_source_subscription.emplace(
           std::move(*notificationSubscription));
     }
@@ -647,6 +663,7 @@ public:
 
     {
       std::lock_guard lock{m_mutex};
+
       m_ready = true;
       m_state = Dmn_AncsState::Ready;
       Dmn_AncsEvent event;
@@ -667,6 +684,7 @@ public:
     bool isStopped{};
     {
       std::lock_guard lock{m_mutex};
+
       isStopped = m_state == Dmn_AncsState::Stopped;
     }
 
@@ -676,20 +694,25 @@ public:
 
     {
       std::lock_guard lock{m_mutex};
+
       m_ready = false;
       m_accept_gatt_events = false;
       clearSessionData();
     }
 
     std::unique_lock workerLock{m_worker_work_mutex};
+
     {
       std::lock_guard lock{m_mutex};
+
       clearSessionData();
     }
 
     setState(Dmn_AncsState::Stopping);
+
     {
       std::lock_guard operationLock{m_operation_mutex};
+
       auto cleanup = stopSubscriptions();
       if (!cleanup) {
         auto error = cleanup.error();
@@ -707,6 +730,7 @@ public:
     setState(Dmn_AncsState::Stopped);
     {
       std::lock_guard lock{m_mutex};
+
       m_shutdown = true;
       m_control_point_shutdown = true;
       m_control_point_jobs.clear();
@@ -790,6 +814,7 @@ private:
   void setState(Dmn_AncsState state) {
     {
       std::lock_guard lock{m_mutex};
+
       m_state = state;
       Dmn_AncsEvent event;
       event.kind = Dmn_AncsEvent::Kind::StateChanged;
@@ -803,6 +828,7 @@ private:
   auto failStartup(Dmn_AncsError error) -> Dmn_AncsResult {
     {
       std::lock_guard lock{m_mutex};
+
       m_ready = false;
       m_accept_gatt_events = false;
       clearSessionData();
@@ -832,6 +858,7 @@ private:
 
   auto stopSubscriptions() -> Dmn_AncsResult {
     std::lock_guard lock{m_subscription_mutex};
+
     std::optional<Dmn_AncsError> firstError;
     if (m_notification_source_subscription) {
       auto result = m_notification_source_subscription->stop();
@@ -873,6 +900,7 @@ private:
   void enqueueGattEvent(bool dataSource, const Dmn_GattEvent &event) {
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_accept_gatt_events) {
         return;
       }
@@ -885,6 +913,7 @@ private:
 
   void enqueueApplicationEvent(Dmn_AncsEvent event) {
     std::lock_guard lock{m_mutex};
+
     m_event_queue.push_back(std::move(event));
     m_condition.notify_one();
   }
@@ -897,8 +926,10 @@ private:
       bool hasGattPacket{};
       bool hasControlPointResult{};
       ControlPointResult controlPointResult;
+
       {
         std::unique_lock lock{m_mutex};
+
         const auto deadline =
             m_active_request ? m_active_request->deadline
                              : std::chrono::steady_clock::time_point::max();
@@ -929,6 +960,7 @@ private:
 
       {
         std::lock_guard workerLock{m_worker_work_mutex};
+
         if (hasAppEvent) {
           dispatch(std::move(appEvent));
         } else if (hasGattPacket) {
@@ -950,8 +982,10 @@ private:
 
   void dispatch(Dmn_AncsEvent event) {
     EventHandler handler;
+
     {
       std::lock_guard lock{m_mutex};
+
       handler = m_handler;
     }
 
@@ -968,6 +1002,7 @@ private:
   void processGattPacket(GattPacket packet) {
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_ready) {
         return;
       }
@@ -1017,8 +1052,10 @@ private:
     const auto notification = *parsed;
     if (notification.kind == Dmn_AncsNotificationKind::Removed) {
       bool ignoredBeforeStart{};
+
       {
         std::lock_guard lock{m_mutex};
+
         const auto found = m_records.find(notification.uid);
         ignoredBeforeStart =
             m_config.notification_date_cutoff.has_value() &&
@@ -1027,6 +1064,7 @@ private:
         m_records.erase(notification.uid);
         std::erase(m_pending_requests, notification.uid);
         m_queued_uids.erase(notification.uid);
+
         if (m_active_request &&
             m_active_request->notification.uid == notification.uid) {
           m_active_request->removed = true;
@@ -1044,8 +1082,10 @@ private:
     }
 
     bool reportBacklogLimit{};
+
     {
       std::lock_guard lock{m_mutex};
+
       auto &record = m_records[notification.uid];
       record.notification.kind = notification.kind;
       record.notification.uid = notification.uid;
@@ -1061,6 +1101,7 @@ private:
           m_pending_requests.pop_front();
           m_queued_uids.erase(droppedUid);
           m_records.erase(droppedUid);
+
           if (!m_backlog_limit_reported) {
             m_backlog_limit_reported = true;
             reportBacklogLimit = true;
@@ -1093,8 +1134,10 @@ private:
         parsed;
     std::uint32_t uid{};
     bool removed{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_active_request) {
         return;
       }
@@ -1132,8 +1175,10 @@ private:
     Dmn_AncsEvent event;
     bool missingRecord{};
     bool ignoreNotification{};
+
     {
       std::lock_guard lock{m_mutex};
+
       const auto found = m_records.find(uid);
       if (found == m_records.end()) {
         missingRecord = true;
@@ -1186,8 +1231,10 @@ private:
     std::string controlPointId;
     std::string deviceId;
     std::chrono::milliseconds timeout;
+
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_ready || m_active_request || m_pending_requests.empty()) {
         return;
       }
@@ -1210,6 +1257,7 @@ private:
     const auto request = makeAttributeRequest(notification.uid);
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_ready || m_control_point_shutdown) {
         return;
       }
@@ -1225,11 +1273,14 @@ private:
   void runControlPointWrites() {
     while (true) {
       ControlPointJob job;
+
       {
         std::unique_lock lock{m_mutex};
+
         m_control_point_condition.wait(lock, [this] {
           return m_control_point_shutdown || !m_control_point_jobs.empty();
         });
+
         if (m_control_point_shutdown) {
           return;
         }
@@ -1241,12 +1292,14 @@ private:
       Dmn_GattResult result;
       {
         std::lock_guard operationLock{m_operation_mutex};
+
         result = m_gatt.writeWithResponse(job.device_id, job.characteristic_id,
                                           job.value, job.timeout);
       }
 
       {
         std::lock_guard lock{m_mutex};
+
         if (m_control_point_shutdown) {
           return;
         }
@@ -1262,6 +1315,7 @@ private:
   void acknowledgeControlPointWrite(std::uint32_t uid) {
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_active_request || m_active_request->notification.uid != uid) {
         return;
       }
@@ -1283,8 +1337,10 @@ private:
 
   void failTimedOutRequest() {
     std::uint32_t uid{};
+
     {
       std::lock_guard lock{m_mutex};
+
       if (!m_active_request ||
           std::chrono::steady_clock::now() < m_active_request->deadline) {
         return;
@@ -1310,8 +1366,10 @@ private:
     Dmn_AncsEvent event;
     event.kind = Dmn_AncsEvent::Kind::AttributesUnavailable;
     event.error = error;
+
     {
       std::lock_guard lock{m_mutex};
+
       if (const auto found = m_records.find(uid); found != m_records.end()) {
         found->second.unavailable = true;
         event.notification = found->second.notification;
@@ -1327,6 +1385,7 @@ private:
   void completeActiveRequest() {
     {
       std::lock_guard lock{m_mutex};
+
       m_active_request.reset();
     }
 
@@ -1336,6 +1395,7 @@ private:
   void failRuntime(Dmn_AncsError error) {
     {
       std::lock_guard lock{m_mutex};
+
       if (m_state == Dmn_AncsState::Failed ||
           m_state == Dmn_AncsState::Stopped) {
         return;
@@ -1348,11 +1408,13 @@ private:
     }
 
     std::lock_guard operationLock{m_operation_mutex};
+
     const auto cleanup = stopSubscriptions();
     if (!cleanup) {
       error.kind = Dmn_AncsErrorKind::Cleanup;
       error.message +=
           "; subscription cleanup failed: " + cleanup.error().message;
+
       if (error.remote_name.empty()) {
         error.remote_name = cleanup.error().remote_name;
       }
@@ -1360,6 +1422,7 @@ private:
 
     {
       std::lock_guard lock{m_mutex};
+
       Dmn_AncsEvent appEvent;
       appEvent.kind = Dmn_AncsEvent::Kind::Error;
       appEvent.error = error;

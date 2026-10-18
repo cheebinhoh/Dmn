@@ -2,7 +2,7 @@
  * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-kafka-receiver.cpp
- * @brief Minimal stand-alone Kafka consumer example using Dmn_Kafka.
+ * @brief Application entry point for the Kafka consumer example.
  *
  * This program creates a Dmn_Kafka consumer with hard-coded Confluent
  * Cloud credentials and polls the "timer_counter" topic until a

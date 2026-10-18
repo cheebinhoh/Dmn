@@ -1,8 +1,8 @@
-.TH DMN-BLUEZ-DISCOVERY 1 "2025" "Dmn" "User Commands"
+.TH DMN-BLUEZ-CLI 1 "2025" "Dmn" "User Commands"
 .SH NAME
-dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth adapter
+dmn-bluez-cli \- list BlueZ devices or explicitly scan with a Bluetooth adapter
 .SH SYNOPSIS
-.B dmn-bluez-discovery
+.B dmn-bluez-cli
 [
 .B --discovery
 ]
@@ -14,7 +14,7 @@ dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth ad
 .B --help
 ]
 .br
-.B dmn-bluez-discovery
+.B dmn-bluez-cli
 [
 .B --adapter
 .I address-or-object-path
@@ -25,7 +25,7 @@ dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth ad
 .B --discovery
 ]
 .br
-.B dmn-bluez-discovery
+.B dmn-bluez-cli
 [
 .B --adapter
 .I address-or-object-path
@@ -33,7 +33,7 @@ dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth ad
 .B --pair
 .I device-address-or-object-path
 .br
-.B dmn-bluez-discovery
+.B dmn-bluez-cli
 [
 .B --adapter
 .I address-or-object-path
@@ -41,7 +41,7 @@ dmn-bluez-discovery \- list BlueZ devices or explicitly scan with a Bluetooth ad
 .B --disconnect
 .I device-address-or-object-path
 .SH DESCRIPTION
-.B dmn-bluez-discovery
+.B dmn-bluez-cli
 prints BlueZ's known adapter and device inventory as CSV. Without
 .BR --discovery ,
 it performs a read-only inventory query and exits; it does not start a scan.
@@ -164,25 +164,25 @@ Diagnostics and errors are written to standard error.
 Print known adapters and devices without starting discovery:
 .PP
 .nf
-dmn-bluez-discovery
+dmn-bluez-cli
 .fi
 .PP
 Scan on one adapter by address:
 .PP
 .nf
-dmn-bluez-discovery --discovery --adapter 'B8:F7:75:BF:F3:C3'
+dmn-bluez-cli --discovery --adapter 'B8:F7:75:BF:F3:C3'
 .fi
 .PP
 Scan by BlueZ object path:
 .PP
 .nf
-dmn-bluez-discovery --discovery --adapter /org/bluez/hci0
+dmn-bluez-cli --discovery --adapter /org/bluez/hci0
 .fi
 .PP
 Explicitly pair a known device using BlueZ's configured default agent:
 .PP
 .nf
-dmn-bluez-discovery --pair 'AA:BB:CC:DD:EE:FF'
+dmn-bluez-cli --pair 'AA:BB:CC:DD:EE:FF'
 .fi
 .SH SAFETY
 Inventory and scan-only modes are read-only with respect to devices. Explicit
@@ -238,9 +238,14 @@ was not discovered before the scan deadline.
 Linux, a running BlueZ system service, and an available system D-Bus. Discovery
 also requires an already-powered Bluetooth adapter and system-bus policy that
 allows the requested operations. Build the program with
-.B ENABLE_DBUS=ON
-and
-.BR ENABLE_BLUEZ=ON .
+.B ENABLE_APP_BLUEZ_DISCOVERY=ON
+on Linux. This enables the required
+.B ENABLE_BLUEZ
+library layer, which in turn enables
+.BR ENABLE_DBUS .
+Enabling
+.B ENABLE_BLUEZ
+alone builds the library and its tests, not this application.
 .SH SEE ALSO
 .BR bluetoothctl (1),
 .BR bluetoothd (8),

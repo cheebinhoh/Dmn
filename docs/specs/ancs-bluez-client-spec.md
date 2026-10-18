@@ -3,8 +3,8 @@
 **Status:** Phase 0 inventory/discovery, Phase 1A pairing, and Phase 1B
 backend-neutral/BlueZ GATT are implemented and pass their hardware-independent
 gates. The ANCS parser, fake-GATT session client, and initial
-`dmn-bluetooth monitor` implementation are also in place; parser/session unit
-tests and CLI help/argument tests pass. Private-bus monitor tests cover
+`dmn-bluetooth-cli monitor` implementation are also in place; parser/session unit
+tests and command-line help/argument tests pass. Private-bus monitor tests cover
 adapter/name selection, Pair/Connect ordering,
 selected-device-only actions, ambiguous-name rejection, connection failure
 reporting, and missing-ANCS service handling. A fake-BlueZ workflow test also
@@ -21,6 +21,17 @@ the user allowed access, the CLI printed multiple added-notification events
 and their available `app_identifier`, `title`, `message`, and `date`
 attributes. Captured notification content was redacted. Earlier silent runs
 preceded this iOS permission grant.
+
+On a later “iPhone Genghis” attempt, BlueZ reported the phone as connected
+with services resolved, but the resolved GATT tree did not contain ANCS and
+the monitor exited before subscribing. Disconnecting/reconnecting from Pop!_OS
+alone did not clear this condition. Forgetting Pop!_OS from the iPhone, then
+reconnecting and pairing again, restored ANCS discovery. After the monitor
+subscribed, delivery of a new notification prompted iOS to ask whether Pop!_OS
+could receive notifications; allowing access enabled notification delivery.
+For this observed stale-GATT case, recovery required removing the bond from the
+iPhone side rather than only disconnecting from the Linux host. Do not infer
+ANCS readiness from BlueZ's `Connected` or `ServicesResolved` flags.
 
 The ANCS event intake now runs independently from acknowledged Control Point
 writes, so a slow attribute request cannot block GATT event draining. The
@@ -83,7 +94,7 @@ iPhone by its BlueZ device name, establish the required pairing/connection
 when needed, start an ANCS session, and display notification details observed
 while the program runs. The first independently useful increment is BlueZ
 inventory, explicit discovery, selected-device connection control, and the
-`dmn-bluez-discovery` CLI; its contract and build/test gates are specified in
+`dmn-bluez-cli` CLI; its contract and build/test gates are specified in
 [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md). The GATT
 transport, reusable `Dmn_AncsBluezMonitor` orchestration facade, and terminal
 monitor are implemented; device-specific compatibility remains to be
@@ -120,7 +131,7 @@ controls:
 - Deliver normalized events through a C++ callback from the reusable
   `Dmn_AncsBluezMonitor` facade. The monitor CLI formats them; future desktop
   notification presentation is a separate adapter.
-- Provide `dmn-bluetooth monitor DEVICE` as the first notification client. The
+- Provide `dmn-bluetooth-cli monitor DEVICE` as the first notification client. The
   explicit monitor command may discover an unknown target, pair it if needed,
   connect it if needed, and then start ANCS. It displays received notification
   attributes on stdout until Ctrl+C and leaves the BlueZ pairing and connection
@@ -835,7 +846,7 @@ BlueZ, adapter, iPhone, and iOS combination.
 The primary terminal command is:
 
 ```text
-dmn-bluetooth monitor DEVICE
+dmn-bluetooth-cli monitor DEVICE
     [--adapter ADAPTER]
     [--discovery-timeout SECONDS]
     [--pair-timeout SECONDS]
@@ -867,7 +878,7 @@ provide a source-event timestamp and BlueZ cannot determine when the iPhone
 notification was created. ANCS Date contains no timezone, so the host and
 phone clocks/timezones should be aligned for this best-effort filter.
 
-`dmn-bluetooth --help` and `dmn-bluetooth monitor --help` print usage to
+`dmn-bluetooth-cli --help` and `dmn-bluetooth-cli monitor --help` print usage to
 stdout and exit 0 without contacting D-Bus. Unknown subcommands/options,
 missing arguments, and invalid timeout syntax print usage and a concise
 diagnostic to stderr and exit 2. The production CLI has no private-bus or
@@ -1068,7 +1079,7 @@ SIGINT and verify process status and cleanup.
 | `DmnBluetoothMonitorRejectsInvalidTimeouts` | Zero, negative, malformed, overflowing, or above-600 timeout values exit 2 before D-Bus access. |
 | `DmnBluetoothMonitorHelpDoesNotAccessBlueZ` | Both help forms print usage and exit 0 without opening a bus connection. |
 | `DmnBluetoothMonitorExitsWhenStdoutCloses` | A broken pipe triggers cleanup and nonzero status instead of silently dropping content. |
-| `DmnBluetoothMonitorPreservesDiscoveryCliCompatibility` | Existing `dmn-bluez-discovery` behavior and tests remain unchanged. |
+| `DmnBluetoothMonitorPreservesDiscoveryCliCompatibility` | Existing `dmn-bluez-cli` behavior and tests remain unchanged. |
 | `DmnBluetoothMonitorHardware.StartsAncsThroughProductionCli` | Opt-in only: the production CLI reaches ANCS ready on the configured physical device and exits cleanly after SIGINT. |
 
 These tests establish library/CLI behavior only. A separately recorded
@@ -1076,8 +1087,9 @@ physical-device qualification is required before claiming ANCS support for a
 specific iPhone/iOS/BlueZ/adapter combination.
 
 The physical CLI test is registered only with
-`ENABLE_ANCS_HARDWARE_TESTS=ON` (default `OFF`), and requires
-`ENABLE_ANCS=ON`, `ENABLE_BLUEZ=ON`, and `ENABLE_DBUS=ON`. The exact target is
+`ENABLE_ANCS_HARDWARE_TESTS=ON` (default `OFF`), which requires
+`ENABLE_APP_BLUETOOTH=ON`. That application option enables `ENABLE_ANCS` and
+`ENABLE_BLUEZ`; BlueZ transitively enables `ENABLE_DBUS`. The exact target is
 configured with `DMN_ANCS_HARDWARE_DEVICE` (default `iPhone Old`). Run only on
 a Linux host with the target phone and adapter available; it is not part of
 Docker or normal CTest runs.

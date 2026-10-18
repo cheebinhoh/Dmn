@@ -42,9 +42,11 @@ add_dependencies(dmn rdkafka)
 
 # The GATT API is a backend-neutral contract shared by ANCS and BlueZ.
 add_library(dmn-gatt INTERFACE)
+
 target_include_directories(dmn-gatt
                              INTERFACE ${PROJECT_SOURCE_DIR}/include
 )
+
 target_sources(dmn-gatt
                  INTERFACE ${PROJECT_SOURCE_DIR}/include/dmn-gatt-client.hpp
 )
@@ -57,9 +59,11 @@ if (ENABLE_ANCS)
   target_include_directories(dmn-ancs
                                PUBLIC ${PROJECT_SOURCE_DIR}/include
   )
+
   target_sources(dmn-ancs
                    INTERFACE ${PROJECT_SOURCE_DIR}/include/dmn-ancs-client.hpp
   )
+
   target_compile_options(dmn-ancs PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_definitions(dmn-ancs PUBLIC DMN_ENABLE_ANCS=1)
   target_link_libraries(dmn-ancs PUBLIC dmn dmn-gatt)
@@ -70,6 +74,7 @@ if (ENABLE_ANCS)
             RUNTIME DESTINATION bin
   )
 endif()
+
 # Public core headers: consumers see these through the dmn target interface.
 target_sources(dmn
                  INTERFACE
@@ -233,39 +238,10 @@ if (ENABLE_BLUEZ)
   target_compile_options(dmn-bluez PRIVATE -Wall -Wextra -Wpedantic)
   target_link_libraries(dmn-bluez PUBLIC dmn-dbus dmn-gatt)
 
-  add_executable(dmn-bluez-discovery
-                   dmn-bluez-discovery.cpp
-  )
-
-  target_compile_options(dmn-bluez-discovery
-                           PRIVATE -Wall -Wextra -Wpedantic
-  )
-
-  target_link_libraries(dmn-bluez-discovery PRIVATE dmn-bluez)
-
-  add_executable(dmn-bluez-discovery-test
-                   dmn-bluez-discovery.cpp
-  )
-
-  target_compile_definitions(dmn-bluez-discovery-test
-                               PRIVATE DMN_BLUEZ_TESTING=1
-                                       DMN_BLUEZ_TEST_OPERATION_TIMEOUT_MS=500
-  )
-
-  target_compile_options(dmn-bluez-discovery-test
-                           PRIVATE -Wall -Wextra -Wpedantic
-  )
-
-  target_link_libraries(dmn-bluez-discovery-test PRIVATE dmn-bluez)
-
-  install(TARGETS dmn-bluez dmn-bluez-discovery
+  install(TARGETS dmn-bluez
             ARCHIVE DESTINATION lib/dmn
             LIBRARY DESTINATION lib/dmn
             RUNTIME DESTINATION bin
-  )
-
-  install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluez-discovery.1
-            DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
   )
 endif()
 
@@ -277,13 +253,16 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   target_include_directories(dmn-ancs-bluez-monitor
                                PUBLIC ${PROJECT_SOURCE_DIR}/include
   )
+
   target_sources(dmn-ancs-bluez-monitor
                    INTERFACE
                    ${PROJECT_SOURCE_DIR}/include/dmn-ancs-bluez-monitor.hpp
   )
+
   target_compile_options(dmn-ancs-bluez-monitor
                            PRIVATE -Wall -Wextra -Wpedantic
   )
+
   target_link_libraries(dmn-ancs-bluez-monitor
                           PUBLIC dmn-ancs dmn-bluez
   )
@@ -291,31 +270,6 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   install(TARGETS dmn-ancs-bluez-monitor
             ARCHIVE DESTINATION lib/dmn
             LIBRARY DESTINATION lib/dmn
-            RUNTIME DESTINATION bin
-  )
-endif()
-
-if (ENABLE_ANCS AND ENABLE_BLUEZ)
-  add_executable(dmn-bluetooth
-                   dmn-bluetooth.cpp
-  )
-  add_executable(dmn-bluetooth-test
-                   dmn-bluetooth.cpp
-  )
-
-  foreach(target IN ITEMS dmn-bluetooth dmn-bluetooth-test)
-    target_compile_options(${target}
-                           PRIVATE -Wall -Wextra -Wpedantic
-    )
-    target_link_libraries(${target}
-                          PRIVATE dmn-ancs-bluez-monitor
-    )
-  endforeach()
-  target_compile_definitions(dmn-bluetooth-test
-                               PRIVATE DMN_BLUETOOTH_TESTING=1
-  )
-
-  install(TARGETS dmn-bluetooth
             RUNTIME DESTINATION bin
   )
 endif()
@@ -386,64 +340,5 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
 #    DESTINATION lib/cmake/mylib
 #)
 
-
-# build executable that uses dmn
-message(STATUS "build dmn applications...")
-add_executable(dmn-dmesg-daemon
-                 dmn-dmesg-daemon.cpp
-)
-
-target_include_directories(dmn-dmesg-daemon
-                             PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_libraries(dmn-dmesg-daemon
-                        PRIVATE
-                        dmn
-                        ${rdkafka_LIB}
-)
-
-
-# build executable that uses dmn kafka
-add_executable(dmn-kafka-receiver
-                 dmn-kafka-receiver.cpp
-)
-
-target_include_directories(dmn-kafka-receiver
-                             PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include
-)
-
-target_include_directories(dmn-kafka-receiver
-                             PRIVATE
-                             dmn
-                             ${rdkafka_LIB}
-)
-
-target_link_libraries(dmn-kafka-receiver
-                        PRIVATE
-                        dmn
-                        ${rdkafka_LIB}
-)
-
-add_executable(dmn-kafka-sender
-                 dmn-kafka-sender.cpp
-)
-
-target_include_directories(dmn-kafka-sender
-                             PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include
-)
-
-target_include_directories(dmn-kafka-sender
-                             PRIVATE
-                             dmn
-                             ${rdkafka_LIB}
-)
-
-target_link_libraries(dmn-kafka-sender
-                        PRIVATE
-                        dmn
-                        ${rdkafka_LIB}
-)
+# Application entry points are maintained separately from reusable libraries.
+add_subdirectory(app)

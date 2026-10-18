@@ -1057,6 +1057,7 @@ public:
     }
 
     std::lock_guard drainLock{m_callbackDrainMutex};
+
     auto completion = std::make_shared<std::promise<void>>();
     auto completed = completion->get_future();
 
@@ -1215,6 +1216,7 @@ private:
 
     {
       std::lock_guard lock{impl->m_mutex};
+
       impl->m_pending.erase(request.get());
       impl->m_pendingCondition.notify_all();
 
@@ -1500,6 +1502,7 @@ private:
 
     const auto bytes = messageSize(message);
     std::lock_guard lock{self->m_callbackMutex};
+
     const auto queuedSignalCount = self->queuedSignalCountLocked();
 
     if (callbacks.size() >

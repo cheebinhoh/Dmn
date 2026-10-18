@@ -69,6 +69,7 @@ auto asciiCaseEqual(std::string_view left, std::string_view right) -> bool {
     const auto foldedRight = rightByte >= 'A' && rightByte <= 'Z'
                                  ? rightByte + ('a' - 'A')
                                  : rightByte;
+
     if (foldedLeft != foldedRight) {
       return false;
     }
@@ -88,6 +89,7 @@ auto selectDevice(const std::vector<Dmn_BluezDevice> &devices,
     -> std::vector<Dmn_BluezDevice> {
   const bool addressSelector = isBluetoothAddress(selector);
   std::vector<Dmn_BluezDevice> matches;
+
   for (const auto &device : devices) {
     if (!adapterPath.empty() && device.adapter_path != adapterPath) {
       continue;
@@ -120,6 +122,7 @@ auto findSelectedAdapter(const Dmn_BluezInventory &inventory,
                  [&selector](const auto &adapter) {
                    return matchesAdapter(adapter, *selector);
                  });
+
     if (matches.size() == 1) {
       return matches.front();
     }
@@ -192,6 +195,7 @@ public:
   auto start(const std::string &deviceSelector,
              const Dmn_AncsMonitorConfig &config) -> Dmn_AncsMonitorResult {
     std::lock_guard apiLock{m_api_mutex};
+
     if (deviceSelector.empty() || !validConfig(config)) {
       return std::unexpected(
           Dmn_AncsMonitorError{Dmn_AncsMonitorStage::InvalidArgument,
@@ -217,6 +221,7 @@ public:
     }
 
     std::optional<Dmn_BluezAdapter> requestedAdapter;
+
     if (config.adapter_selector) {
       std::vector<Dmn_BluezAdapter> adapterMatches;
       std::copy_if(inventory->adapters.begin(), inventory->adapters.end(),
@@ -224,6 +229,7 @@ public:
                    [&config](const auto &candidate) {
                      return matchesAdapter(candidate, *config.adapter_selector);
                    });
+
       if (adapterMatches.size() != 1) {
         return std::unexpected(Dmn_AncsMonitorError{
             Dmn_AncsMonitorStage::Inventory,
@@ -240,6 +246,7 @@ public:
     auto matches =
         selectDevice(inventory->devices, deviceSelector, selectedAdapterPath);
     std::optional<Dmn_BluezAdapter> adapter = requestedAdapter;
+
     if (matches.size() == 1) {
       if (!adapter) {
         adapter = findDeviceAdapter(*inventory, matches.front());
@@ -299,6 +306,7 @@ public:
     }
 
     auto target = matches.front();
+
     if (!adapter) {
       adapter = findDeviceAdapter(inventory.value(), target);
     }
@@ -353,6 +361,7 @@ public:
 
     const bool alreadyConnected = target.connected.value_or(false);
     reportProgress(config, Dmn_AncsMonitorProgress::Connection);
+
     if (!alreadyConnected) {
       const auto connectionDeadline =
           std::chrono::steady_clock::now() + config.connection_timeout;
@@ -488,6 +497,7 @@ private:
           selected.address.empty() ? selected.object_path : selected.address;
       auto matches =
           selectDevice(inventory->devices, selector, adapter.object_path);
+
       if (matches.size() == 1 &&
           matches.front().paired.value_or(false) == paired &&
           (!connected ||

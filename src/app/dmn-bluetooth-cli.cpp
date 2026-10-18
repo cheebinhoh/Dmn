@@ -1,8 +1,8 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-bluetooth.cpp
- * @brief Terminal monitor for one selected iPhone ANCS session.
+ * @file dmn-bluetooth-cli.cpp
+ * @brief Command-line application for the selected-iPhone ANCS monitor.
  */
 
 #include "dmn-ancs-bluez-monitor.hpp"
@@ -68,9 +68,10 @@ struct Options {
 };
 
 void usage(std::ostream &out) {
-  out << "Usage: dmn-bluetooth monitor DEVICE [OPTIONS]\n"
-         "       dmn-bluetooth --help\n"
-         "       dmn-bluetooth monitor --help\n"
+  out << "Command-line ANCS notification monitor for a selected iPhone.\n"
+         "Usage: dmn-bluetooth-cli monitor DEVICE [OPTIONS]\n"
+         "       dmn-bluetooth-cli --help\n"
+         "       dmn-bluetooth-cli monitor --help\n"
          "\n"
          "Monitor notification details from one selected iPhone over ANCS.\n"
          "DEVICE is a Bluetooth address or exact BlueZ display name.\n"

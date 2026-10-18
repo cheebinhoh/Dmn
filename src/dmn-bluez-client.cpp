@@ -223,6 +223,7 @@ public:
       std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
       -> Dmn_BluezValueResult<Dmn_BluezInventory> {
     std::lock_guard snapshotLock{m_snapshot_mutex};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -252,6 +253,7 @@ public:
 
     if (!result) {
       std::lock_guard eventOrderLock{m_event_order_mutex};
+
       {
         std::lock_guard lock{m_mutex};
 
@@ -269,6 +271,7 @@ public:
 
     if (result->empty() || result->front().signature() != "a{oa{sa{sv}}}") {
       std::lock_guard eventOrderLock{m_event_order_mutex};
+
       {
         std::lock_guard lock{m_mutex};
 
@@ -453,6 +456,7 @@ public:
                     std::chrono::milliseconds timeout,
                     DeviceAction action) -> Dmn_BluezResult {
     std::lock_guard actionLock{m_device_action_mutex};
+
     std::string devicePath;
     bool alreadyInRequestedState{};
 
@@ -548,8 +552,10 @@ public:
 
   auto startDiscovery(const std::string &adapterPath) -> Dmn_BluezResult {
     std::lock_guard discoveryLock{m_discovery_mutex};
+
     {
       std::lock_guard lock{m_mutex};
+
       const auto adapter = m_adapters.find(adapterPath);
 
       if (adapter == m_adapters.end()) {
@@ -818,6 +824,7 @@ private:
                 Dmn_DbusClient::Arguments arguments) {
     const auto droppedSignals = m_dbus.status().dropped_signal_messages;
     std::lock_guard eventOrderLock{m_event_order_mutex};
+
     std::vector<Dmn_BluezEvent> events;
     bool requestRecovery{};
 

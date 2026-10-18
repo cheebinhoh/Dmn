@@ -105,7 +105,7 @@ ctest --test-dir build -R '^dmn-test-dbus-facade$' --output-on-failure
 
 ### BlueZ discovery CLI
 
-On Linux, the optional `dmn-bluez-discovery` program prints BlueZ's known
+On Linux, the optional `dmn-bluez-cli` program prints BlueZ's known
 adapter/device inventory and can explicitly start a scan on one powered
 adapter. It depends on the Dmn D-Bus extension, but not on GATT or ANCS.
 Install the D-Bus development package and daemon as above, then configure and
@@ -114,22 +114,23 @@ build the CLI:
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DENABLE_DBUS=ON -DENABLE_BLUEZ=ON
-cmake --build build --target dmn-bluez-discovery -j2
+cmake --build build --target dmn-bluez-cli -j2
 ```
 
-Install the built library, CLI, headers, and its manual page (use `sudo` if
+Install the built libraries, CLIs, headers, and their manual pages (use `sudo` if
 installing to a system prefix):
 
 ```bash
 cmake --install build --prefix "$HOME/.local"
 export PATH="$HOME/.local/bin:$PATH"
-man -M "$HOME/.local/share/man" dmn-bluez-discovery
+man -M "$HOME/.local/share/man" dmn-bluez-cli
+man -M "$HOME/.local/share/man" dmn-bluetooth-cli
 ```
 
 Print the current known-device inventory as CSV without starting discovery:
 
 ```bash
-./build/src/dmn-bluez-discovery
+./build/src/app/dmn-bluez-cli
 ```
 
 The CSV includes the adapter address and path needed to select a scan target.
@@ -137,7 +138,7 @@ Start an explicit scan with either selector; if exactly one powered adapter
 exists, `--adapter` may be omitted:
 
 ```bash
-./build/src/dmn-bluez-discovery --discovery \
+./build/src/app/dmn-bluez-cli --discovery \
   --adapter 'B8:F7:75:BF:F3:C3'
 ```
 
@@ -146,13 +147,26 @@ Ctrl-C or SIGTERM. It stops only the discovery session it started. It does
 not pair, connect, change trust, or power an adapter. Scanning requires a
 working BlueZ system service and local system-bus policy that permits the
 discovery calls; the CLI does not fall back to the session bus. For argument
-syntax, run `./build/src/dmn-bluez-discovery --help`. The private-bus
+syntax, run `./build/src/app/dmn-bluez-cli --help`. The private-bus
 integration coverage can be run with:
 
 ```bash
 ctest --test-dir build -R '^dmn-test-bluez-device-list$' \
   --output-on-failure
 ```
+
+### Bluetooth ANCS monitor CLI
+
+The optional `dmn-bluetooth-cli` command pairs/connects one selected device as
+needed and monitors its ANCS notifications:
+
+```bash
+./build/src/app/dmn-bluetooth-cli monitor "iPhone Genghis"
+```
+
+See `man dmn-bluetooth-cli` for its options, output, failure handling, and
+recovery guidance. This CLI requires a working BlueZ system service; it does
+not provide a GTK+ interface.
 
 ## Fault-injection tests
 

@@ -927,6 +927,7 @@ private:
         bool supported{};
         {
           std::lock_guard lock{self->m_mutex};
+
           if (std::string_view{interface} == "org.bluez.Device1" &&
               (std::string_view{property} == "Connected" ||
                std::string_view{property} == "ServicesResolved")) {
@@ -989,6 +990,7 @@ private:
                    message, "org.bluez.GattCharacteristic1", "StopNotify")) {
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_gattStopNotifyCount;
         self->m_gattNotifying =
             self->m_gattStopNotifyCount < self->m_gattStartNotifyCount;
@@ -1015,6 +1017,7 @@ private:
 
       {
         std::lock_guard lock{self->m_mutex};
+
         ++self->m_gattWriteCount;
       }
 
@@ -1028,6 +1031,7 @@ private:
         std::string notificationMessage;
         {
           std::lock_guard lock{self->m_mutex};
+
           title = self->m_ancsTitle;
           notificationMessage = self->m_ancsMessage;
         }
@@ -2050,6 +2054,7 @@ TEST(DmnAncsBluezMonitorTest, OwnsDeviceSetupAndDeliversAncsEvents) {
   ASSERT_TRUE(monitor.setEventHandler([&](const auto &event) {
     {
       std::lock_guard lock{eventMutex};
+
       events.push_back(event);
     }
 
@@ -2693,8 +2698,7 @@ TEST(DmnBluezCli, RejectsInvalidConnectionOptionCombinations) {
     ASSERT_TRUE(waitForCliExit(process, 15s));
     ASSERT_TRUE(WIFEXITED(process.status));
     EXPECT_EQ(WEXITSTATUS(process.status), 2);
-    EXPECT_NE(process.output.find("Usage: dmn-bluez-discovery"),
-              std::string::npos);
+    EXPECT_NE(process.output.find("Usage: dmn-bluez-cli"), std::string::npos);
   }
 
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
@@ -2872,8 +2876,7 @@ TEST(DmnBluezCli, RejectsInvalidArgumentsWithUsage) {
 
     ASSERT_TRUE(WIFEXITED(process.status));
     EXPECT_EQ(WEXITSTATUS(process.status), 2);
-    EXPECT_NE(process.output.find("Usage: dmn-bluez-discovery"),
-              std::string::npos);
+    EXPECT_NE(process.output.find("Usage: dmn-bluez-cli"), std::string::npos);
   }
 }
 
@@ -2886,8 +2889,7 @@ TEST(DmnBluezCli, HelpPrintsUsageWithoutOpeningBluezConnection) {
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_EQ(WEXITSTATUS(process.status), 0);
-  EXPECT_NE(process.output.find("Usage: dmn-bluez-discovery"),
-            std::string::npos);
+  EXPECT_NE(process.output.find("Usage: dmn-bluez-cli"), std::string::npos);
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
   EXPECT_EQ(service.forbiddenCount(), 0);
 }
