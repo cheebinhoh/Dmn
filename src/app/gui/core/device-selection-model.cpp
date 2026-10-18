@@ -95,27 +95,6 @@ auto deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string {
   return result;
 }
 
-auto deviceActionAvailability(const Dmn_DeviceEntry &device,
-                              const Dmn_DeviceActionContext &context)
-    -> Dmn_DeviceActionAvailability {
-  const bool operationsAllowed = !context.m_monitor_busy &&
-                                 !context.m_operation_busy &&
-                                 !context.m_close_requested;
-  const bool paired = device.m_paired.value_or(false);
-  const bool connected = device.m_connected == std::optional<bool>{true};
-  const bool targetReady = context.m_saved && device.m_present && paired;
-
-  return {targetReady && !context.m_selection_dirty && !connected &&
-              !context.m_monitor_active && operationsAllowed,
-          targetReady && !context.m_selection_dirty && connected &&
-              operationsAllowed,
-          targetReady && !context.m_selection_dirty && connected &&
-              !context.m_monitor_active && !context.m_monitor_requested &&
-              operationsAllowed,
-          (context.m_monitor_active || context.m_monitor_requested) &&
-              operationsAllowed};
-}
-
 Dmn_DeviceSelectionModel::Dmn_DeviceSelectionModel(
     const std::size_t selectionLimit)
     : m_selection_limit{selectionLimit} {

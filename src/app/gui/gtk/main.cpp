@@ -4,57 +4,40 @@
  * @file main.cpp
  * @brief GTK application shell and asynchronous BlueZ device inventory.
  *
- * The GTK main context owns widgets, selection, monitor sessions, and a bounded
- * process-local event feed. BlueZ inventory/link operations run through a
- * serialized worker backend; each ANCS monitor has its own worker task. Owned
- * results and callback events are queued back to the GTK context before any
- * widget is accessed.
+ * The GTK main context owns all widgets and selection state. BlueZ calls run
+ * on a GTask worker through a serialized backend; completed owned snapshots
+ * return to the main context before the view is updated. The first UI slice
+ * deliberately stops at inventory, explicit discovery, and saved selection:
+ * selecting a device does not pair, connect, or start monitoring it.
  */
 
 #define G_LOG_DOMAIN "dmn-bluetooth-gtk"
 
-#include "device-monitor-event-store.hpp"
 #include "device-selection-model.hpp"
 
-#include "dmn-ancs-bluez-monitor.hpp"
 #include "dmn-bluez-client.hpp"
 
 #include <adwaita.h>
 
 #include <algorithm>
-#include <cctype>
 #include <chrono>
-#include <cstdint>
-#include <ctime>
 #include <exception>
-#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <sstream>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace {
 
-constexpr auto kApplicationId = "com.cheebinhoh.dmn-bluetooth";
+constexpr auto kApplicationId = "com.cheebinhoh.DmnBluetooth";
 constexpr auto kSettingsSchemaId = "com.cheebinhoh.DmnBluetooth";
 constexpr auto kDiscoveryDuration = std::chrono::seconds{30};
-constexpr auto kDeviceStateTimeout = std::chrono::seconds{30};
-constexpr auto kDeviceStatePollInterval = std::chrono::milliseconds{50};
-constexpr auto kDeviceSnapshotTimeout = std::chrono::seconds{2};
 
-enum class Dmn_Operation {
-  kInventory,
-  kStartDiscovery,
-  kStopDiscovery,
-  kConnect,
-  kDisconnect
-};
+enum class Dmn_Operation { kInventory, kStartDiscovery, kStopDiscovery };
 
 auto operationName(const Dmn_Operation operation) -> const char * {
   switch (operation) {
@@ -64,10 +47,6 @@ auto operationName(const Dmn_Operation operation) -> const char * {
     return "discovery start";
   case Dmn_Operation::kStopDiscovery:
     return "discovery stop";
-  case Dmn_Operation::kConnect:
-    return "device connection";
-  case Dmn_Operation::kDisconnect:
-    return "device disconnection";
   }
 
   return "unknown operation";
@@ -95,9 +74,8 @@ public:
    * @param adapterPath BlueZ object path for discovery, if needed.
    * @return Owned inventory, operation status, and any failure message.
    */
-  auto perform(Dmn_Operation operation, const std::string &adapterPath,
-               const std::optional<dmn::gui::Dmn_DeviceIdentity> &identity)
-      -> BackendReply {
+  auto perform(Dmn_Operation operation,
+               const std::string &adapterPath) -> BackendReply {
     std::lock_guard lock{m_mutex};
     try {
       if (!m_client) {
@@ -121,102 +99,6 @@ public:
       }
 
       auto inventory = m_client->snapshot();
-      if (!inventory) {
-        return {operation, std::nullopt, inventory.error().message};
-      }
-
-      if (operation == Dmn_Operation::kConnect ||
-          operation == Dmn_Operation::kDisconnect) {
-        if (!identity) {
-          return {operation, std::nullopt,
-                  "device identity is missing for the requested operation"};
-        }
-
-        const auto device = std::find_if(
-            inventory->devices.begin(), inventory->devices.end(),
-            [&identity, &inventory](const auto &candidate) {
-              const auto adapter = std::find_if(
-                  inventory->adapters.begin(), inventory->adapters.end(),
-                  [&candidate, &identity](const auto &candidateAdapter) {
-                    return candidateAdapter.object_path ==
-                               candidate.adapter_path &&
-                           candidateAdapter.address ==
-                               identity->m_adapter_address;
-                  });
-              return candidate.address == identity->m_device_address &&
-                     adapter != inventory->adapters.end();
-            });
-        if (device == inventory->devices.end()) {
-          return {operation, std::nullopt,
-                  "selected device is no longer in the BlueZ inventory"};
-        }
-
-        const auto requestedConnected = operation == Dmn_Operation::kConnect;
-        const auto stateDeadline =
-            std::chrono::steady_clock::now() + kDeviceStateTimeout;
-        const auto result =
-            operation == Dmn_Operation::kConnect
-                ? m_client->connectDevice(identity->m_device_address,
-                                          identity->m_adapter_address,
-                                          kDeviceStateTimeout)
-                : m_client->disconnectDevice(identity->m_device_address,
-                                             identity->m_adapter_address,
-                                             kDeviceStateTimeout);
-        if (!result) {
-          return {operation, std::nullopt, result.error().message};
-        }
-
-        for (;;) {
-          const auto remaining =
-              std::chrono::duration_cast<std::chrono::milliseconds>(
-                  stateDeadline - std::chrono::steady_clock::now());
-          if (remaining <= std::chrono::milliseconds::zero()) {
-            return {operation, std::nullopt,
-                    std::string{"device did not reach the requested "} +
-                        (requestedConnected ? "connected" : "disconnected") +
-                        " state before the deadline"};
-          }
-
-          auto current = m_client->snapshot(std::min(
-              remaining, std::chrono::duration_cast<std::chrono::milliseconds>(
-                             kDeviceSnapshotTimeout)));
-          if (!current) {
-            return {operation, std::nullopt, current.error().message};
-          }
-
-          const auto currentDevice = std::find_if(
-              current->devices.begin(), current->devices.end(),
-              [&identity, &current](const auto &candidate) {
-                const auto adapter = std::find_if(
-                    current->adapters.begin(), current->adapters.end(),
-                    [&candidate, &identity](const auto &candidateAdapter) {
-                      return candidateAdapter.object_path ==
-                                 candidate.adapter_path &&
-                             candidateAdapter.address ==
-                                 identity->m_adapter_address;
-                    });
-                return candidate.address == identity->m_device_address &&
-                       adapter != current->adapters.end();
-              });
-          if (currentDevice == current->devices.end()) {
-            return {operation, std::nullopt,
-                    "selected device disappeared before its requested "
-                    "connection state was observed"};
-          }
-
-          if (currentDevice->connected.value_or(false) == requestedConnected) {
-            inventory = std::move(current);
-
-            break;
-          }
-
-          std::this_thread::sleep_for(
-              std::min(kDeviceStatePollInterval,
-                       std::chrono::duration_cast<std::chrono::milliseconds>(
-                           stateDeadline - std::chrono::steady_clock::now())));
-        }
-      }
-
       if (!inventory) {
         return {
             operation, std::nullopt, inventory.error().message,
@@ -246,31 +128,15 @@ struct AdapterOption {
   std::string m_address;
 };
 
-/** @brief Per-device monitor state and bounded in-memory event feed. */
-struct MonitorSession {
-  dmn::gui::Dmn_DeviceIdentity m_identity;
-  std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
-  std::string m_status{"Not monitoring"};
-  std::string m_error;
-  bool m_busy{};
-  bool m_stopping{};
-  bool m_disconnect_after_stop{};
-  // Prevent repeated failed restore attempts until the next disconnect.
-  bool m_auto_start_attempted{};
-};
-
 /** @brief GTK-main-context-owned widgets, settings, and selection state. */
 struct AppState {
   explicit AppState(GtkApplication *application)
       : m_app{application},
-        m_backend{std::make_shared<BluezInventoryBackend>()}, m_selection{} {}
+        m_backend{std::make_shared<BluezInventoryBackend>()}, m_selection{1} {}
 
   ~AppState() {
     if (m_scan_poll_source != 0) {
       g_source_remove(m_scan_poll_source);
-    }
-    if (m_device_poll_source != 0) {
-      g_source_remove(m_device_poll_source);
     }
 
     if (m_settings != nullptr) {
@@ -284,27 +150,18 @@ struct AppState {
 
   GtkApplication *m_app{};
   GtkWidget *m_window{};
-  GtkWidget *m_paned{};
-  GtkWidget *m_sidebar_page{};
-  GtkWidget *m_device_page{};
-  GtkWidget *m_back_button{};
+  GtkWidget *m_split_view{};
   GtkWidget *m_device_list{};
   GtkWidget *m_adapter_dropdown{};
-  GtkWidget *m_scan_actions{};
-  GtkWidget *m_selection_actions{};
   GtkWidget *m_status_label{};
   GtkWidget *m_name_sort_button{};
   GtkWidget *m_status_sort_button{};
-  GtkWidget *m_selected_only_filter{};
   GtkWidget *m_refresh_button{};
   GtkWidget *m_scan_button{};
   GtkWidget *m_stop_scan_button{};
   GtkWidget *m_save_button{};
   GtkWidget *m_discard_button{};
   GtkWidget *m_details_page{};
-  GtkWidget *m_feed_heading{};
-  GtkWidget *m_feed_scroll{};
-  GtkWidget *m_feed_list{};
   GtkStringList *m_adapter_names{};
   GSettings *m_settings{};
   std::shared_ptr<BluezInventoryBackend> m_backend;
@@ -314,28 +171,10 @@ struct AppState {
   bool m_busy{};
   bool m_scanning{};
   bool m_rendering{};
-  bool m_collapsed{};
-  bool m_showing_device_page{};
-  bool m_pane_position_ready{};
+  bool m_close_requested{};
   bool m_inventory_loaded{};
   std::string m_inventory_error;
-  std::optional<dmn::gui::Dmn_DeviceIdentity> m_viewed_device;
-  std::vector<dmn::gui::Dmn_DeviceIdentity> m_monitoring_intents;
-  std::unordered_map<std::string, MonitorSession> m_monitor_sessions;
-  dmn::gui::Dmn_DeviceMonitorEventStore m_event_store;
-  // Keep the feed revision separate from routine inventory refreshes so
-  // rebuilding device status does not destroy selectable notification text.
-  std::uint64_t m_event_feed_revision{};
-  std::uint64_t m_rendered_event_feed_revision{};
-  std::optional<dmn::gui::Dmn_DeviceIdentity> m_rendered_feed_device;
-  bool m_rendered_feed_ready_empty{};
-  bool m_event_feed_rendered{};
-  std::chrono::system_clock::time_point m_session_started{
-      std::chrono::system_clock::now()};
-  bool m_close_requested{};
-  std::size_t m_monitor_operations{};
   guint m_scan_poll_source{};
-  guint m_device_poll_source{};
   std::chrono::steady_clock::time_point m_scan_deadline{};
 };
 
@@ -344,7 +183,6 @@ struct TaskData {
   std::shared_ptr<BluezInventoryBackend> m_backend;
   Dmn_Operation m_operation{Dmn_Operation::kInventory};
   std::string m_adapter_path;
-  std::optional<dmn::gui::Dmn_DeviceIdentity> m_identity;
 };
 
 /** @brief Callback context identifying one selection row and its owner. */
@@ -353,207 +191,15 @@ struct RowContext {
   dmn::gui::Dmn_DeviceIdentity m_identity;
 };
 
-enum class Dmn_MonitorOperation { kStart, kStop };
-
-/** @brief Worker arguments for one per-device monitor transition. */
-struct MonitorTaskData {
-  GtkApplication *m_app{};
-  dmn::gui::Dmn_DeviceIdentity m_identity;
-  Dmn_MonitorOperation m_operation{Dmn_MonitorOperation::kStart};
-  std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
-  std::chrono::system_clock::time_point m_notification_cutoff;
-};
-
-/** @brief Owned per-device monitor result returned to the GTK context. */
-struct MonitorReply {
-  dmn::gui::Dmn_DeviceIdentity m_identity;
-  Dmn_MonitorOperation m_operation{Dmn_MonitorOperation::kStart};
-  std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
-  std::string m_error;
-};
-
 auto stateFor(GObject *object) -> AppState * {
   return static_cast<AppState *>(
       g_object_get_data(object, "dmn-bluetooth-state"));
 }
 
 void refreshView(AppState *state, bool rebuildDevices = true);
-void setStatus(AppState *state, const std::string &message,
-               bool announce = true);
-
-auto identityKey(const dmn::gui::Dmn_DeviceIdentity &identity) -> std::string {
-  return identity.m_adapter_address + "|" + identity.m_device_address;
-}
-
-auto findMonitorSession(AppState *state,
-                        const dmn::gui::Dmn_DeviceIdentity &identity)
-    -> MonitorSession * {
-  const auto found = state->m_monitor_sessions.find(identityKey(identity));
-  return found == state->m_monitor_sessions.end() ? nullptr : &found->second;
-}
-
-auto eventKindName(const dmn::Dmn_AncsEvent &event) -> const char * {
-  switch (event.kind) {
-  case dmn::Dmn_AncsEvent::Kind::StateChanged:
-    return "Monitor state";
-  case dmn::Dmn_AncsEvent::Kind::NotificationAdded:
-    return "Added";
-  case dmn::Dmn_AncsEvent::Kind::NotificationUpdated:
-    return "Updated";
-  case dmn::Dmn_AncsEvent::Kind::NotificationRemoved:
-    return "Removed";
-  case dmn::Dmn_AncsEvent::Kind::AttributesUnavailable:
-    return "Attributes unavailable";
-  case dmn::Dmn_AncsEvent::Kind::Error:
-    return "Monitor error";
-  }
-
-  return "Unknown event";
-}
-
-auto monitorStateName(const dmn::Dmn_AncsState state) -> const char * {
-  switch (state) {
-  case dmn::Dmn_AncsState::Stopped:
-    return "Stopped";
-  case dmn::Dmn_AncsState::Starting:
-    return "Starting ANCS";
-  case dmn::Dmn_AncsState::ResolvingServices:
-    return "Waiting for services";
-  case dmn::Dmn_AncsState::DiscoveringANCS:
-    return "Checking ANCS";
-  case dmn::Dmn_AncsState::SubscribingDataSource:
-    return "Subscribing to notification data";
-  case dmn::Dmn_AncsState::SubscribingNotificationSource:
-    return "Subscribing to notification events";
-  case dmn::Dmn_AncsState::Ready:
-    return "Ready · waiting for new notifications";
-  case dmn::Dmn_AncsState::Stopping:
-    return "Stopping monitor";
-  case dmn::Dmn_AncsState::Failed:
-    return "Monitor failed";
-  }
-
-  return "Unknown monitor state";
-}
-
-struct MonitorEventDispatch {
-  GtkApplication *m_app{};
-  dmn::gui::Dmn_DeviceIdentity m_identity;
-  std::chrono::system_clock::time_point m_received;
-  dmn::Dmn_AncsEvent m_event;
-};
-
-void dispatchMonitorEvent(GtkApplication *app,
-                          const dmn::gui::Dmn_DeviceIdentity &identity,
-                          const dmn::Dmn_AncsEvent &event) {
-  auto *dispatch =
-      new MonitorEventDispatch{GTK_APPLICATION(g_object_ref(app)), identity,
-                               std::chrono::system_clock::now(), event};
-  g_idle_add_full(
-      G_PRIORITY_DEFAULT,
-      [](gpointer userData) -> gboolean {
-        std::unique_ptr<MonitorEventDispatch> dispatch{
-            static_cast<MonitorEventDispatch *>(userData)};
-        auto *state = stateFor(G_OBJECT(dispatch->m_app));
-        if (state != nullptr) {
-          auto *session = findMonitorSession(state, dispatch->m_identity);
-          if (session != nullptr) {
-            if (dispatch->m_event.kind ==
-                    dmn::Dmn_AncsEvent::Kind::StateChanged &&
-                dispatch->m_event.state) {
-              session->m_status = monitorStateName(*dispatch->m_event.state);
-              if (*dispatch->m_event.state == dmn::Dmn_AncsState::Failed) {
-                session->m_error = "The ANCS monitor entered a failed state.";
-              }
-            } else if (dispatch->m_event.kind ==
-                           dmn::Dmn_AncsEvent::Kind::Error &&
-                       dispatch->m_event.error) {
-              session->m_error = dispatch->m_event.error->message;
-              session->m_status = "Monitor failed";
-            }
-          }
-
-          state->m_event_store.append({dispatch->m_identity,
-                                       dispatch->m_received,
-                                       std::move(dispatch->m_event)});
-          if (state->m_viewed_device == dispatch->m_identity) {
-            ++state->m_event_feed_revision;
-          }
-          refreshView(state);
-        }
-
-        g_object_unref(dispatch->m_app);
-
-        return G_SOURCE_REMOVE;
-      },
-      dispatch, nullptr);
-}
-
-void postMonitorProgress(GtkApplication *app,
-                         const dmn::gui::Dmn_DeviceIdentity &identity,
-                         const dmn::Dmn_AncsMonitorProgress progress) {
-  const auto message = [progress]() -> const char * {
-    switch (progress) {
-    case dmn::Dmn_AncsMonitorProgress::Inventory:
-      return "Checking Bluetooth device";
-    case dmn::Dmn_AncsMonitorProgress::Discovery:
-      return "Discovering Bluetooth device";
-    case dmn::Dmn_AncsMonitorProgress::Pairing:
-      return "Pairing Bluetooth device";
-    case dmn::Dmn_AncsMonitorProgress::Connection:
-      return "Connecting Bluetooth device";
-    case dmn::Dmn_AncsMonitorProgress::AncsStartup:
-      return "Starting ANCS monitor";
-    }
-
-    return "Preparing monitor";
-  }();
-
-  struct ProgressDispatch {
-    GtkApplication *m_app{};
-    dmn::gui::Dmn_DeviceIdentity m_identity;
-    std::string m_status;
-  };
-  auto *dispatch = new ProgressDispatch{GTK_APPLICATION(g_object_ref(app)),
-                                        identity, message};
-  g_idle_add_full(
-      G_PRIORITY_DEFAULT,
-      [](gpointer userData) -> gboolean {
-        std::unique_ptr<ProgressDispatch> dispatch{
-            static_cast<ProgressDispatch *>(userData)};
-        auto *state = stateFor(G_OBJECT(dispatch->m_app));
-        if (state != nullptr) {
-          if (auto *session = findMonitorSession(state, dispatch->m_identity);
-              session != nullptr) {
-            session->m_status = dispatch->m_status;
-          }
-          setStatus(state, dispatch->m_status);
-          refreshView(state);
-        }
-        g_object_unref(dispatch->m_app);
-
-        return G_SOURCE_REMOVE;
-      },
-      dispatch, nullptr);
-}
-
-void requestOperation(
-    AppState *state, Dmn_Operation operation, std::string adapterPath = {},
-    std::optional<dmn::gui::Dmn_DeviceIdentity> identity = std::nullopt,
-    bool announceStatus = true);
-void requestMonitorOperation(AppState *state,
-                             const dmn::gui::Dmn_DeviceIdentity &identity,
-                             Dmn_MonitorOperation operation,
-                             bool disconnectAfterStop = false);
-void maybeFinishClose(AppState *state);
-void stopInvalidMonitors(AppState *state);
-void startDesiredMonitors(AppState *state);
-void updateMonitorPolling(AppState *state);
+void requestOperation(AppState *state, Dmn_Operation operation,
+                      std::string adapterPath = {});
 void requestClose(AppState *state);
-auto setMonitoringIntent(AppState *state,
-                         const dmn::gui::Dmn_DeviceIdentity &identity,
-                         bool enabled) -> bool;
-auto persistMonitoringIntents(AppState *state) -> bool;
 
 auto toGuiInventory(const dmn::Dmn_BluezInventory &inventory)
     -> std::vector<dmn::gui::Dmn_DeviceEntry> {
@@ -620,91 +266,36 @@ void updateAdapters(AppState *state, const dmn::Dmn_BluezInventory &inventory) {
   }
 
   gtk_widget_set_sensitive(state->m_adapter_dropdown,
-                           !state->m_adapters.empty() && !state->m_busy &&
-                               !state->m_close_requested);
-  gtk_widget_set_sensitive(state->m_scan_button,
-                           !state->m_adapters.empty() && !state->m_busy &&
-                               !state->m_close_requested && !state->m_scanning);
+                           !state->m_adapters.empty() && !state->m_busy);
+  gtk_widget_set_sensitive(state->m_scan_button, !state->m_adapters.empty() &&
+                                                     !state->m_busy &&
+                                                     !state->m_scanning);
 }
 
-void setStatus(AppState *state, const std::string &message,
-               const bool announce) {
-  const bool changed =
-      message != gtk_label_get_text(GTK_LABEL(state->m_status_label));
+void setStatus(AppState *state, const std::string &message) {
   gtk_label_set_text(GTK_LABEL(state->m_status_label), message.c_str());
-  if (announce && changed && gtk_widget_get_mapped(state->m_status_label)) {
+  if (gtk_widget_get_mapped(state->m_status_label)) {
     gtk_accessible_announce(GTK_ACCESSIBLE(state->m_status_label),
                             message.c_str(),
                             GTK_ACCESSIBLE_ANNOUNCEMENT_PRIORITY_MEDIUM);
   }
 }
 
-void updateSplitLayout(AppState *state) {
-  gtk_widget_set_visible(state->m_sidebar_page,
-                         !state->m_collapsed || !state->m_showing_device_page);
-  gtk_widget_set_visible(state->m_device_page,
-                         !state->m_collapsed || state->m_showing_device_page);
-  gtk_widget_set_visible(state->m_back_button, state->m_collapsed);
-}
-
-void backToDevicesClicked(GtkButton *, gpointer userData) {
-  auto *state = static_cast<AppState *>(userData);
-  state->m_showing_device_page = false;
-  updateSplitLayout(state);
-}
-
-void panePositionChanged(GObject *object, GParamSpec *, gpointer userData) {
-  auto *state = static_cast<AppState *>(userData);
-  if (state->m_settings == nullptr || !state->m_pane_position_ready ||
-      state->m_collapsed) {
-    return;
-  }
-
-  const auto position = gtk_paned_get_position(GTK_PANED(object));
-  if (position > 0 &&
-      !g_settings_set_int(state->m_settings, "pane-position", position)) {
-    g_warning("Could not persist the device pane width");
-  }
-}
-
-void windowBreakpointChanged(GObject *object, GParamSpec *, gpointer userData) {
-  auto *state = static_cast<AppState *>(userData);
-  state->m_collapsed = adw_application_window_get_current_breakpoint(
-                           ADW_APPLICATION_WINDOW(object)) != nullptr;
-  const auto orientation = state->m_collapsed ? GTK_ORIENTATION_VERTICAL
-                                              : GTK_ORIENTATION_HORIZONTAL;
-  gtk_orientable_set_orientation(GTK_ORIENTABLE(state->m_scan_actions),
-                                 orientation);
-  gtk_orientable_set_orientation(GTK_ORIENTABLE(state->m_selection_actions),
-                                 orientation);
-  for (auto *button : {state->m_refresh_button, state->m_scan_button,
-                       state->m_stop_scan_button}) {
-    gtk_widget_set_hexpand(button, state->m_collapsed);
-  }
-  gtk_widget_set_hexpand(state->m_save_button, state->m_collapsed);
-  gtk_widget_set_hexpand(state->m_discard_button, state->m_collapsed);
-  updateSplitLayout(state);
-}
-
 void updateButtonState(AppState *state) {
-  gtk_widget_set_sensitive(state->m_refresh_button,
-                           !state->m_busy && !state->m_close_requested);
+  gtk_widget_set_sensitive(state->m_refresh_button, !state->m_busy);
   gtk_widget_set_sensitive(state->m_save_button,
-                           !state->m_busy && !state->m_close_requested &&
+                           !state->m_busy &&
                                state->m_selection.hasUnsavedChanges());
   gtk_widget_set_sensitive(state->m_discard_button,
-                           !state->m_busy && !state->m_close_requested &&
+                           !state->m_busy &&
                                state->m_selection.hasUnsavedChanges());
   gtk_widget_set_sensitive(state->m_scan_button,
-                           !state->m_busy && !state->m_close_requested &&
-                               !state->m_scanning &&
+                           !state->m_busy && !state->m_scanning &&
                                !state->m_adapters.empty());
   gtk_widget_set_sensitive(state->m_stop_scan_button,
-                           !state->m_busy && !state->m_close_requested &&
-                               state->m_scanning);
+                           !state->m_busy && state->m_scanning);
   gtk_widget_set_sensitive(state->m_adapter_dropdown,
-                           !state->m_busy && !state->m_close_requested &&
-                               !state->m_adapters.empty());
+                           !state->m_busy && !state->m_adapters.empty());
 }
 
 void rowToggled(GtkCheckButton *button, gpointer userData) {
@@ -719,17 +310,18 @@ void rowToggled(GtkCheckButton *button, gpointer userData) {
     state->m_rendering = true;
     gtk_check_button_set_active(button, false);
     state->m_rendering = false;
-    setStatus(state, "This device cannot be added to the saved selection.");
+    setStatus(state,
+              "Only one monitoring device is supported in this release.");
 
     return;
   }
 
-  refreshView(state, gtk_check_button_get_active(
-                         GTK_CHECK_BUTTON(state->m_selected_only_filter)));
-}
+  if (selected) {
+    adw_navigation_split_view_set_show_content(
+        ADW_NAVIGATION_SPLIT_VIEW(state->m_split_view), TRUE);
+  }
 
-void selectedOnlyFilterToggled(GtkCheckButton *, gpointer userData) {
-  refreshView(static_cast<AppState *>(userData), true);
+  refreshView(state, false);
 }
 
 void sortDevices(AppState *state, const dmn::gui::Dmn_DeviceSortColumn column) {
@@ -754,493 +346,10 @@ void rowContextDestroy(gpointer data, GClosure *) {
   delete static_cast<RowContext *>(data);
 }
 
-void viewDeviceClicked(GtkButton *, gpointer userData) {
-  auto *context = static_cast<RowContext *>(userData);
-  auto *state = context->m_state;
-  state->m_viewed_device = context->m_identity;
-  state->m_showing_device_page = true;
-  updateSplitLayout(state);
-  refreshView(state);
-}
-
-auto isSelected(const std::vector<dmn::gui::Dmn_DeviceIdentity> &selection,
-                const dmn::gui::Dmn_DeviceIdentity &identity) -> bool;
-
-void connectionClicked(GtkButton *, gpointer userData) {
-  auto *context = static_cast<RowContext *>(userData);
-  auto *state = context->m_state;
-  auto *session = findMonitorSession(state, context->m_identity);
-  const auto device = std::find_if(
-      state->m_selection.devices().begin(), state->m_selection.devices().end(),
-      [context](const auto &entry) {
-        return entry.m_identity == context->m_identity;
-      });
-  if (device == state->m_selection.devices().end() || !device->m_present) {
-    setStatus(state, "Refresh the device inventory before connecting.");
-
-    return;
-  }
-
-  if (!isSelected(state->m_selection.savedSelection(), context->m_identity)) {
-    setStatus(state, "Save this device before connecting or monitoring it.");
-
-    return;
-  }
-
-  if (state->m_selection.hasUnsavedChanges()) {
-    setStatus(state, "Save or discard selection changes before connecting.");
-
-    return;
-  }
-
-  if (session != nullptr && session->m_busy) {
-    setStatus(state, "Wait for this device's monitor operation to finish.");
-
-    return;
-  }
-
-  if (!device->m_paired.value_or(false)) {
-    setStatus(state,
-              "Pair this device in Bluetooth Settings before connecting.");
-
-    return;
-  }
-
-  if (device->m_connected.value_or(false)) {
-    if (session != nullptr && session->m_monitor != nullptr) {
-      requestMonitorOperation(state, context->m_identity,
-                              Dmn_MonitorOperation::kStop, true);
-
-      return;
-    }
-
-    requestOperation(state, Dmn_Operation::kDisconnect, {},
-                     context->m_identity);
-
-    return;
-  }
-
-  requestOperation(state, Dmn_Operation::kConnect, {}, context->m_identity);
-}
-
-void monitoringClicked(GtkButton *, gpointer userData) {
-  auto *context = static_cast<RowContext *>(userData);
-  auto *state = context->m_state;
-  if (state->m_busy || state->m_close_requested) {
-    setStatus(state, state->m_close_requested
-                         ? "The application is closing."
-                         : "Wait for the current Bluetooth operation to "
-                           "finish.");
-
-    return;
-  }
-
-  auto *session = findMonitorSession(state, context->m_identity);
-  if (session != nullptr && session->m_busy) {
-    setStatus(state, "Wait for this device's monitor operation to finish.");
-
-    return;
-  }
-
-  if (session != nullptr && session->m_monitor != nullptr) {
-    if (!setMonitoringIntent(state, context->m_identity, false)) {
-      setStatus(state, "Could not save the monitoring preference; monitoring "
-                       "was not stopped.");
-
-      return;
-    }
-    requestMonitorOperation(state, context->m_identity,
-                            Dmn_MonitorOperation::kStop);
-
-    return;
-  }
-
-  if (isSelected(state->m_monitoring_intents, context->m_identity)) {
-    if (!setMonitoringIntent(state, context->m_identity, false)) {
-      setStatus(state, "Could not clear the saved monitoring preference.");
-
-      return;
-    }
-
-    if (session != nullptr) {
-      session->m_auto_start_attempted = false;
-      session->m_error.clear();
-      session->m_status = "Not monitoring";
-    }
-    setStatus(state, "Monitoring preference cleared.");
-    refreshView(state, false);
-
-    return;
-  }
-
-  if (state->m_selection.hasUnsavedChanges()) {
-    setStatus(state, "Save or discard selection changes before monitoring.");
-
-    return;
-  }
-
-  const auto device = std::find_if(
-      state->m_selection.devices().begin(), state->m_selection.devices().end(),
-      [context](const auto &entry) {
-        return entry.m_identity == context->m_identity;
-      });
-  if (device == state->m_selection.devices().end() || !device->m_present) {
-    setStatus(state, "Refresh the device inventory before monitoring.");
-
-    return;
-  }
-
-  if (!device->m_paired.value_or(false)) {
-    setStatus(state,
-              "Pair this device in Bluetooth Settings before monitoring.");
-
-    return;
-  }
-
-  if (!device->m_connected.value_or(false)) {
-    setStatus(state, "Connect this device before starting its monitor.");
-
-    return;
-  }
-
-  if (!isSelected(state->m_selection.savedSelection(), context->m_identity)) {
-    setStatus(state, "Save this device before starting its monitor.");
-
-    return;
-  }
-
-  if (!setMonitoringIntent(state, context->m_identity, true)) {
-    setStatus(state, "Could not save the monitoring preference; monitoring "
-                     "was not started.");
-
-    return;
-  }
-  requestMonitorOperation(state, context->m_identity,
-                          Dmn_MonitorOperation::kStart);
-}
-
 auto isSelected(const std::vector<dmn::gui::Dmn_DeviceIdentity> &selection,
                 const dmn::gui::Dmn_DeviceIdentity &identity) -> bool {
   return std::find(selection.begin(), selection.end(), identity) !=
          selection.end();
-}
-
-auto setMonitoringIntent(AppState *state,
-                         const dmn::gui::Dmn_DeviceIdentity &identity,
-                         const bool enabled) -> bool {
-  if (state->m_settings == nullptr) {
-    g_warning(
-        "Cannot persist monitoring intent because GSettings is unavailable");
-
-    return false;
-  }
-
-  const auto previous = state->m_monitoring_intents;
-  const auto found = std::find(state->m_monitoring_intents.begin(),
-                               state->m_monitoring_intents.end(), identity);
-  if (enabled && found == state->m_monitoring_intents.end()) {
-    state->m_monitoring_intents.push_back(identity);
-  } else if (!enabled && found != state->m_monitoring_intents.end()) {
-    state->m_monitoring_intents.erase(found);
-  } else {
-    return true;
-  }
-
-  if (!persistMonitoringIntents(state)) {
-    state->m_monitoring_intents = previous;
-
-    return false;
-  }
-
-  return true;
-}
-
-auto persistMonitoringIntents(AppState *state) -> bool {
-  if (state->m_settings == nullptr) {
-    g_warning(
-        "Cannot persist monitoring intent because GSettings is unavailable");
-
-    return false;
-  }
-
-  GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ss)"));
-  for (const auto &intent : state->m_monitoring_intents) {
-    g_variant_builder_add(&builder, "(ss)", intent.m_adapter_address.c_str(),
-                          intent.m_device_address.c_str());
-  }
-  if (!g_settings_set_value(state->m_settings, "monitoring-devices",
-                            g_variant_builder_end(&builder))) {
-    g_warning("Could not persist the Bluetooth monitoring preference");
-
-    return false;
-  }
-
-  return true;
-}
-
-auto rowActions(const AppState *state, const dmn::gui::Dmn_DeviceEntry &device,
-                const MonitorSession *session)
-    -> dmn::gui::Dmn_DeviceActionAvailability {
-  return dmn::gui::deviceActionAvailability(
-      device,
-      {.m_saved =
-           isSelected(state->m_selection.savedSelection(), device.m_identity),
-       .m_selection_dirty = state->m_selection.hasUnsavedChanges(),
-       .m_monitor_active = session != nullptr && session->m_monitor != nullptr,
-       .m_monitor_requested =
-           isSelected(state->m_monitoring_intents, device.m_identity),
-       .m_monitor_busy = session != nullptr && session->m_busy,
-       .m_operation_busy = state->m_busy,
-       .m_close_requested = state->m_close_requested});
-}
-
-auto eventDescription(const dmn::Dmn_AncsEvent &event) -> std::string {
-  std::string description{eventKindName(event)};
-  if (event.state) {
-    description += " · ";
-    description += monitorStateName(*event.state);
-  }
-
-  if (event.notification) {
-    const auto &notification = *event.notification;
-    if (notification.kind == dmn::Dmn_AncsNotificationKind::Removed) {
-      description += " · UID ";
-      description += std::to_string(notification.uid);
-
-      return description;
-    }
-
-    if (notification.app_identifier) {
-      description += " · ";
-      description += *notification.app_identifier;
-    }
-    if (notification.title) {
-      description += " · ";
-      description += *notification.title;
-    }
-    if (notification.subtitle) {
-      description += " · ";
-      description += *notification.subtitle;
-    }
-    if (notification.message) {
-      description += " · ";
-      description += *notification.message;
-    }
-    if (notification.kind ==
-        dmn::Dmn_AncsNotificationKind::AttributesUnavailable) {
-      description += " · Notification attributes are unavailable";
-    }
-  }
-
-  if (event.error) {
-    description += " · ";
-    description += event.error->message;
-  }
-
-  return description;
-}
-
-auto eventReceivedTime(const std::chrono::system_clock::time_point received)
-    -> std::string {
-  const auto receivedTime = std::chrono::system_clock::to_time_t(received);
-  std::tm localTime{};
-  localtime_r(&receivedTime, &localTime);
-  std::ostringstream output;
-  output << std::put_time(&localTime, "%H:%M:%S");
-
-  return output.str();
-}
-
-auto copySelectedMessage(GtkLabel *messageLabel) -> bool {
-  gint start{};
-  gint end{};
-  if (!gtk_label_get_selection_bounds(messageLabel, &start, &end)) {
-    return false;
-  }
-
-  const auto *text = gtk_label_get_text(messageLabel);
-  const auto *selectionStart = g_utf8_offset_to_pointer(text, start);
-  const auto *selectionEnd = g_utf8_offset_to_pointer(text, end);
-  auto *selectedText = g_strndup(selectionStart, selectionEnd - selectionStart);
-  if (selectedText == nullptr || *selectedText == '\0') {
-    g_free(selectedText);
-
-    return false;
-  }
-
-  gdk_clipboard_set_text(gtk_widget_get_clipboard(GTK_WIDGET(messageLabel)),
-                         selectedText);
-  g_free(selectedText);
-
-  return true;
-}
-
-void copyMessageClicked(GtkButton *, gpointer userData) {
-  auto *messageLabel = GTK_LABEL(userData);
-  copySelectedMessage(messageLabel);
-  auto *popover = GTK_POPOVER(
-      g_object_get_data(G_OBJECT(messageLabel), "message-copy-popover"));
-  gtk_popover_popdown(popover);
-}
-
-void showCopyMenu(GtkGestureClick *gesture, gint, const gdouble x,
-                  const gdouble y, gpointer userData) {
-  auto *messageLabel = GTK_LABEL(userData);
-  auto *popover = GTK_POPOVER(
-      g_object_get_data(G_OBJECT(messageLabel), "message-copy-popover"));
-  auto *copyButton = gtk_widget_get_first_child(gtk_popover_get_child(popover));
-  gint start{};
-  gint end{};
-  gtk_widget_set_sensitive(
-      copyButton, gtk_label_get_selection_bounds(messageLabel, &start, &end));
-
-  auto *row = gtk_widget_get_parent(GTK_WIDGET(messageLabel));
-  const graphene_point_t labelPoint{static_cast<float>(x),
-                                    static_cast<float>(y)};
-  graphene_point_t rowPoint{};
-  if (gtk_widget_compute_point(GTK_WIDGET(messageLabel), row, &labelPoint,
-                               &rowPoint)) {
-    const GdkRectangle position{static_cast<int>(rowPoint.x),
-                                static_cast<int>(rowPoint.y), 1, 1};
-    gtk_popover_set_pointing_to(popover, &position);
-  }
-
-  gtk_popover_popup(popover);
-  gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
-}
-
-gboolean scrollEventFeedToTop(gpointer userData) {
-  auto *adjustment = GTK_ADJUSTMENT(userData);
-  gtk_adjustment_set_value(adjustment, gtk_adjustment_get_lower(adjustment));
-
-  return G_SOURCE_REMOVE;
-}
-
-void rebuildEventFeed(AppState *state) {
-  if (!state->m_viewed_device) {
-    state->m_event_feed_rendered = true;
-    state->m_rendered_feed_device.reset();
-    state->m_rendered_event_feed_revision = state->m_event_feed_revision;
-    state->m_rendered_feed_ready_empty = false;
-    gtk_list_box_remove_all(GTK_LIST_BOX(state->m_feed_list));
-    gtk_widget_set_visible(state->m_feed_heading, FALSE);
-    gtk_widget_set_visible(state->m_feed_scroll, FALSE);
-
-    return;
-  }
-
-  auto *session = findMonitorSession(state, *state->m_viewed_device);
-  const auto events = state->m_event_store.eventsFor(*state->m_viewed_device);
-  const bool readyEmpty =
-      events.empty() && session != nullptr &&
-      session->m_status == "Ready · waiting for new notifications";
-  // Refreshing BlueZ status every few seconds must not replace the labels the
-  // user may currently be selecting in the notification feed.
-  if (state->m_event_feed_rendered &&
-      state->m_rendered_feed_device == state->m_viewed_device &&
-      state->m_rendered_event_feed_revision == state->m_event_feed_revision &&
-      state->m_rendered_feed_ready_empty == readyEmpty) {
-    return;
-  }
-
-  // The feed is newest-first; scrolling after this actual change keeps the
-  // newly received event visible without disturbing selection on stale rows.
-  state->m_event_feed_rendered = true;
-  state->m_rendered_feed_device = state->m_viewed_device;
-  state->m_rendered_event_feed_revision = state->m_event_feed_revision;
-  state->m_rendered_feed_ready_empty = readyEmpty;
-  gtk_list_box_remove_all(GTK_LIST_BOX(state->m_feed_list));
-
-  for (auto iterator = events.rbegin(); iterator != events.rend(); ++iterator) {
-    const auto &event = **iterator;
-    auto *row = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
-    gtk_widget_set_margin_top(row, 8);
-    gtk_widget_set_margin_bottom(row, 8);
-    gtk_widget_set_margin_start(row, 12);
-    gtk_widget_set_margin_end(row, 12);
-    const auto heading = eventReceivedTime(event.m_received) + " · " +
-                         eventKindName(event.m_event);
-    auto *timeLabel = gtk_label_new(heading.c_str());
-    gtk_label_set_xalign(GTK_LABEL(timeLabel), 0.0F);
-    gtk_widget_add_css_class(timeLabel, "heading");
-    auto *messageLabel = gtk_label_new(nullptr);
-    const auto description = eventDescription(event.m_event);
-    gtk_label_set_text(GTK_LABEL(messageLabel), description.c_str());
-    gtk_label_set_wrap(GTK_LABEL(messageLabel), TRUE);
-    gtk_label_set_selectable(GTK_LABEL(messageLabel), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(messageLabel), 0.0F);
-    gtk_widget_set_hexpand(messageLabel, TRUE);
-
-    auto *copyPopover = gtk_popover_new();
-    auto *copyMenu = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 24);
-    auto *copyButton = gtk_button_new_with_label("Copy");
-    auto *copyAccelerator = gtk_label_new("Ctrl+C");
-    gtk_widget_add_css_class(copyButton, "flat");
-    gtk_widget_add_css_class(copyAccelerator, "dim-label");
-    gtk_box_append(GTK_BOX(copyMenu), copyButton);
-    gtk_box_append(GTK_BOX(copyMenu), copyAccelerator);
-    gtk_popover_set_child(GTK_POPOVER(copyPopover), copyMenu);
-    gtk_widget_set_parent(copyPopover, row);
-    g_object_set_data(G_OBJECT(messageLabel), "message-copy-popover",
-                      copyPopover);
-    g_signal_connect(copyButton, "clicked", G_CALLBACK(copyMessageClicked),
-                     messageLabel);
-
-    auto *contextClick = gtk_gesture_click_new();
-    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(contextClick),
-                                  GDK_BUTTON_SECONDARY);
-    gtk_event_controller_set_propagation_phase(
-        GTK_EVENT_CONTROLLER(contextClick), GTK_PHASE_CAPTURE);
-    g_signal_connect(contextClick, "pressed", G_CALLBACK(showCopyMenu),
-                     messageLabel);
-    gtk_widget_add_controller(messageLabel, GTK_EVENT_CONTROLLER(contextClick));
-
-    gtk_box_append(GTK_BOX(row), timeLabel);
-    gtk_box_append(GTK_BOX(row), messageLabel);
-    gtk_list_box_append(GTK_LIST_BOX(state->m_feed_list), row);
-  }
-
-  if (events.empty()) {
-    auto *empty = gtk_label_new(
-        session != nullptr &&
-                session->m_status == "Ready · waiting for new notifications"
-            ? "ANCS is ready. Only new notifications received while this "
-              "monitor is running appear here. iOS may ask for access after a "
-              "new notification arrives."
-            : "No notifications have been received in this app session.");
-    gtk_label_set_wrap(GTK_LABEL(empty), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(empty), 0.0F);
-    gtk_widget_set_margin_top(empty, 16);
-    gtk_widget_set_margin_bottom(empty, 16);
-    gtk_widget_set_margin_start(empty, 12);
-    gtk_widget_set_margin_end(empty, 12);
-    gtk_list_box_append(GTK_LIST_BOX(state->m_feed_list), empty);
-  }
-
-  gtk_widget_set_visible(state->m_feed_heading, TRUE);
-  gtk_widget_set_visible(state->m_feed_scroll, TRUE);
-  auto *adjustment = gtk_scrolled_window_get_vadjustment(
-      GTK_SCROLLED_WINDOW(state->m_feed_scroll));
-  g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, scrollEventFeedToTop,
-                  g_object_ref(adjustment),
-                  [](gpointer data) { g_object_unref(data); });
-}
-
-auto visibleDevices(AppState *state)
-    -> std::vector<const dmn::gui::Dmn_DeviceEntry *> {
-  std::vector<const dmn::gui::Dmn_DeviceEntry *> visible;
-  for (const auto &device : state->m_selection.devices()) {
-    if (gtk_check_button_get_active(
-            GTK_CHECK_BUTTON(state->m_selected_only_filter)) &&
-        !isSelected(state->m_selection.draftSelection(), device.m_identity)) {
-      continue;
-    }
-
-    visible.push_back(&device);
-  }
-
-  return visible;
 }
 
 void rebuildDeviceList(AppState *state) {
@@ -1268,141 +377,37 @@ void rebuildDeviceList(AppState *state) {
     return;
   }
 
-  const auto devices = visibleDevices(state);
-  if (devices.empty()) {
-    auto *empty = gtk_label_new(
-        "No selected devices. Select devices to include them in this view.");
-    gtk_label_set_wrap(GTK_LABEL(empty), TRUE);
-    gtk_widget_set_margin_top(empty, 24);
-    gtk_widget_set_margin_bottom(empty, 24);
-    gtk_widget_set_margin_start(empty, 16);
-    gtk_widget_set_margin_end(empty, 16);
-    gtk_list_box_append(GTK_LIST_BOX(state->m_device_list), empty);
-    state->m_rendering = false;
-
-    return;
-  }
-
-  for (const auto *deviceEntry : devices) {
-    const auto &device = *deviceEntry;
-    auto *row = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+  for (const auto &device : state->m_selection.devices()) {
+    auto *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
     gtk_widget_set_margin_top(row, 10);
     gtk_widget_set_margin_bottom(row, 10);
     gtk_widget_set_margin_start(row, 12);
     gtk_widget_set_margin_end(row, 12);
 
     const auto title = dmn::gui::deviceDisplayName(device);
-    auto *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-    const bool monitorRequested =
-        isSelected(state->m_monitoring_intents, device.m_identity);
-    auto *check = gtk_check_button_new();
-    const auto checkLabel = "Select " + title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(check),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   checkLabel.c_str(), -1);
+    auto *check = gtk_check_button_new_with_label(title.c_str());
     const bool selected =
         isSelected(state->m_selection.draftSelection(), device.m_identity);
     const bool saved =
         isSelected(state->m_selection.savedSelection(), device.m_identity);
     gtk_check_button_set_active(GTK_CHECK_BUTTON(check), selected);
     gtk_widget_set_sensitive(check, device.m_present || selected || saved);
-    gtk_widget_set_tooltip_text(
-        check, "Select this device in the current selection draft");
+    gtk_widget_set_hexpand(check, TRUE);
 
-    auto *viewButton = gtk_button_new_with_label(title.c_str());
-    gtk_widget_add_css_class(viewButton, "flat");
-    gtk_widget_set_hexpand(viewButton, TRUE);
-    gtk_widget_set_halign(viewButton, GTK_ALIGN_START);
-
-    gtk_box_append(GTK_BOX(header), check);
-    gtk_box_append(GTK_BOX(header), viewButton);
-
-    auto facts = dmn::gui::deviceDisplayStatus(device);
-    auto *session = findMonitorSession(state, device.m_identity);
-    if (session != nullptr) {
-      facts += " · " + session->m_status;
-    }
+    const auto facts = dmn::gui::deviceDisplayStatus(device);
     auto *detail = gtk_label_new(facts.c_str());
-    gtk_widget_set_halign(detail, GTK_ALIGN_START);
-    gtk_label_set_wrap(GTK_LABEL(detail), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(detail), 0.0F);
+    gtk_widget_set_halign(detail, GTK_ALIGN_END);
+    gtk_label_set_ellipsize(GTK_LABEL(detail), PANGO_ELLIPSIZE_END);
+    gtk_label_set_single_line_mode(GTK_LABEL(detail), TRUE);
+    gtk_widget_set_size_request(detail, 120, -1);
     gtk_widget_add_css_class(detail, "dim-label");
 
-    auto *rowActionsBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    gtk_widget_set_halign(rowActionsBox, GTK_ALIGN_END);
-    auto *connectionButton = gtk_button_new_with_label(
-        device.m_connected.value_or(false) ? "Disconnect" : "Connect");
-    const auto connectionLabel =
-        std::string{device.m_connected.value_or(false) ? "Disconnect "
-                                                       : "Connect "} +
-        title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(connectionButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   connectionLabel.c_str(), -1);
-    const auto actions = rowActions(state, device, session);
-    gtk_widget_set_sensitive(connectionButton,
-                             device.m_connected.value_or(false)
-                                 ? actions.m_can_disconnect
-                                 : actions.m_can_connect);
-
-    if (!device.m_paired.value_or(false)) {
-      gtk_widget_set_tooltip_text(
-          connectionButton, "Pair this device in Bluetooth Settings first");
-    }
-
-    auto *monitorButton = gtk_button_new_with_label(
-        session != nullptr && session->m_busy
-            ? session->m_stopping ? "Stopping…" : "Starting…"
-        : (session != nullptr && session->m_monitor != nullptr) ||
-                monitorRequested
-            ? "Stop monitoring"
-            : "Start monitoring");
-    const auto monitorLabel =
-        std::string{session != nullptr && session->m_busy
-                        ? session->m_stopping ? "Stopping monitoring for "
-                                              : "Starting monitoring for "
-                    : (session != nullptr && session->m_monitor != nullptr) ||
-                            monitorRequested
-                        ? "Stop monitoring "
-                        : "Start monitoring "} +
-        title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(monitorButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   monitorLabel.c_str(), -1);
-    if (monitorRequested) {
-      gtk_widget_set_tooltip_text(
-          monitorButton, "Stop monitoring and clear the saved monitoring "
-                         "preference");
-    } else if (!device.m_connected.value_or(false)) {
-      gtk_widget_set_tooltip_text(
-          monitorButton,
-          "Connect this device and wait for Bluetooth to report Connected "
-          "before starting monitoring");
-    }
-    gtk_widget_set_sensitive(monitorButton, actions.m_can_stop_monitoring ||
-                                                actions.m_can_start_monitoring);
-
-    gtk_box_append(GTK_BOX(rowActionsBox), connectionButton);
-    gtk_box_append(GTK_BOX(rowActionsBox), monitorButton);
-    gtk_box_append(GTK_BOX(row), header);
+    gtk_box_append(GTK_BOX(row), check);
     gtk_box_append(GTK_BOX(row), detail);
-    gtk_box_append(GTK_BOX(row), rowActionsBox);
     gtk_list_box_append(GTK_LIST_BOX(state->m_device_list), row);
 
-    auto *selectionContext = new RowContext{state, device.m_identity};
-    g_signal_connect_data(check, "toggled", G_CALLBACK(rowToggled),
-                          selectionContext, rowContextDestroy,
-                          G_CONNECT_DEFAULT);
-    auto *viewContext = new RowContext{state, device.m_identity};
-    g_signal_connect_data(viewButton, "clicked", G_CALLBACK(viewDeviceClicked),
-                          viewContext, rowContextDestroy, G_CONNECT_DEFAULT);
-    auto *connectionContext = new RowContext{state, device.m_identity};
-    g_signal_connect_data(connectionButton, "clicked",
-                          G_CALLBACK(connectionClicked), connectionContext,
-                          rowContextDestroy, G_CONNECT_DEFAULT);
-    auto *monitorContext = new RowContext{state, device.m_identity};
-    g_signal_connect_data(monitorButton, "clicked",
-                          G_CALLBACK(monitoringClicked), monitorContext,
+    auto *context = new RowContext{state, device.m_identity};
+    g_signal_connect_data(check, "toggled", G_CALLBACK(rowToggled), context,
                           rowContextDestroy, G_CONNECT_DEFAULT);
   }
 
@@ -1410,7 +415,7 @@ void rebuildDeviceList(AppState *state) {
 }
 
 void synchronizeDeviceListSelection(AppState *state) {
-  const auto devices = visibleDevices(state);
+  const auto &devices = state->m_selection.devices();
   auto *list = GTK_LIST_BOX(state->m_device_list);
   guint rowCount = 0;
   for (auto *child = gtk_widget_get_first_child(GTK_WIDGET(list));
@@ -1428,16 +433,8 @@ void synchronizeDeviceListSelection(AppState *state) {
   for (guint index = 0; index < rowCount; ++index) {
     auto *row = gtk_list_box_get_row_at_index(list, static_cast<int>(index));
     auto *content = gtk_list_box_row_get_child(row);
-    auto *header = gtk_widget_get_first_child(content);
-    auto *check = gtk_widget_get_first_child(header);
-    auto *viewButton = gtk_widget_get_next_sibling(check);
-    auto *detail = gtk_widget_get_next_sibling(header);
-    auto *rowActionsBox = gtk_widget_get_next_sibling(detail);
-    auto *connectionButton = gtk_widget_get_first_child(rowActionsBox);
-    auto *monitorButton = gtk_widget_get_next_sibling(connectionButton);
-    const auto &device = *devices[index];
-    const auto title = dmn::gui::deviceDisplayName(device);
-    auto *session = findMonitorSession(state, device.m_identity);
+    auto *check = gtk_widget_get_first_child(content);
+    const auto &device = devices[index];
     const bool selected =
         isSelected(state->m_selection.draftSelection(), device.m_identity);
     const bool saved =
@@ -1445,66 +442,6 @@ void synchronizeDeviceListSelection(AppState *state) {
     gtk_check_button_set_active(GTK_CHECK_BUTTON(check), selected);
     gtk_widget_set_sensitive(GTK_WIDGET(check),
                              device.m_present || selected || saved);
-    const auto checkLabel = "Select " + title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(check),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   checkLabel.c_str(), -1);
-    gtk_button_set_label(GTK_BUTTON(viewButton), title.c_str());
-    auto facts = dmn::gui::deviceDisplayStatus(device);
-    if (session != nullptr) {
-      facts += " · " + session->m_status;
-    }
-    gtk_label_set_text(GTK_LABEL(detail), facts.c_str());
-    gtk_button_set_label(GTK_BUTTON(connectionButton),
-                         device.m_connected.value_or(false) ? "Disconnect"
-                                                            : "Connect");
-    const auto connectionLabel =
-        std::string{device.m_connected.value_or(false) ? "Disconnect "
-                                                       : "Connect "} +
-        title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(connectionButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   connectionLabel.c_str(), -1);
-    const auto actions = rowActions(state, device, session);
-    gtk_widget_set_sensitive(connectionButton,
-                             device.m_connected.value_or(false)
-                                 ? actions.m_can_disconnect
-                                 : actions.m_can_connect);
-    gtk_button_set_label(
-        GTK_BUTTON(monitorButton),
-        session != nullptr && session->m_busy
-            ? session->m_stopping ? "Stopping…" : "Starting…"
-        : (session != nullptr && session->m_monitor != nullptr) ||
-                isSelected(state->m_monitoring_intents, device.m_identity)
-            ? "Stop monitoring"
-            : "Start monitoring");
-    const auto monitorLabel =
-        std::string{
-            session != nullptr && session->m_busy
-                ? session->m_stopping ? "Stopping monitoring for "
-                                      : "Starting monitoring for "
-            : (session != nullptr && session->m_monitor != nullptr) ||
-                    isSelected(state->m_monitoring_intents, device.m_identity)
-                ? "Stop monitoring "
-                : "Start monitoring "} +
-        title;
-    gtk_accessible_update_property(GTK_ACCESSIBLE(monitorButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   monitorLabel.c_str(), -1);
-    if (isSelected(state->m_monitoring_intents, device.m_identity)) {
-      gtk_widget_set_tooltip_text(
-          monitorButton,
-          "Stop monitoring and clear the saved monitoring preference");
-    } else {
-      gtk_widget_set_tooltip_text(
-          monitorButton,
-          device.m_connected.value_or(false)
-              ? nullptr
-              : "Connect this device and wait for Bluetooth to report "
-                "Connected before starting monitoring");
-    }
-    gtk_widget_set_sensitive(monitorButton, actions.m_can_stop_monitoring ||
-                                                actions.m_can_start_monitoring);
   }
 
   state->m_rendering = false;
@@ -1548,65 +485,27 @@ void refreshView(AppState *state, const bool rebuildDevices) {
                               "Bluetooth inventory unavailable");
     adw_status_page_set_description(ADW_STATUS_PAGE(state->m_details_page),
                                     state->m_inventory_error.c_str());
-    rebuildEventFeed(state);
 
     return;
   }
 
-  if (!state->m_viewed_device) {
+  if (selected.empty()) {
     adw_status_page_set_title(ADW_STATUS_PAGE(state->m_details_page),
                               "Choose a Bluetooth device");
     adw_status_page_set_description(
         ADW_STATUS_PAGE(state->m_details_page),
-        selected.empty()
-            ? "Choose a device on the left to view its live status and "
-              "notifications. Save devices before starting their monitors."
-            : "Choose a device on the left to view its live status and "
-              "notifications. Saved devices are not connected automatically.");
-    rebuildEventFeed(state);
+        "Save a device selection to prepare it for monitoring. Selecting or "
+        "saving a device never pairs or connects it.");
 
     return;
   }
 
-  const auto device = std::find_if(
-      state->m_selection.devices().begin(), state->m_selection.devices().end(),
-      [state](const auto &entry) {
-        return entry.m_identity == *state->m_viewed_device;
-      });
-  const auto deviceName = device == state->m_selection.devices().end()
-                              ? state->m_viewed_device->m_device_address
-                              : dmn::gui::deviceDisplayName(*device);
   adw_status_page_set_title(ADW_STATUS_PAGE(state->m_details_page),
-                            deviceName.c_str());
-  auto description =
-      device == state->m_selection.devices().end()
-          ? "Device is not present in the latest Bluetooth inventory."
-          : dmn::gui::deviceDisplayStatus(*device);
-  if (isSelected(selected, *state->m_viewed_device)) {
-    description += " · Saved";
-  } else {
-    description += " · Not saved";
-  }
-  const auto *session = findMonitorSession(state, *state->m_viewed_device);
-  if (session != nullptr && !session->m_error.empty()) {
-    description += " · ";
-    description += session->m_error;
-  } else if (isSelected(state->m_monitoring_intents, *state->m_viewed_device) &&
-             (session == nullptr || session->m_monitor == nullptr)) {
-    description += " · Monitoring will start when this saved device is "
-                   "connected.";
-  } else if (device != state->m_selection.devices().end() &&
-             device->m_paired.value_or(false) &&
-             device->m_connected.value_or(false) &&
-             (session == nullptr || session->m_monitor == nullptr)) {
-    description +=
-        " · Start monitoring to receive new notifications in this session.";
-  }
-  adw_status_page_set_description(ADW_STATUS_PAGE(state->m_details_page),
-                                  description.c_str());
-  gtk_label_set_text(GTK_LABEL(state->m_feed_heading),
-                     ("Notifications · " + deviceName).c_str());
-  rebuildEventFeed(state);
+                            "Device selection saved");
+  adw_status_page_set_description(
+      ADW_STATUS_PAGE(state->m_details_page),
+      "This inventory-and-selection build does not start pairing, connection, "
+      "or monitoring.");
 }
 
 void loadSavedSelection(AppState *state) {
@@ -1614,90 +513,22 @@ void loadSavedSelection(AppState *state) {
     return;
   }
 
-  auto *savedDevices =
-      g_settings_get_value(state->m_settings, "selected-devices");
-  if (savedDevices == nullptr) {
+  auto *savedValue = g_settings_get_value(state->m_settings, "selected-device");
+  if (savedValue == nullptr) {
     g_warning("Could not read the saved Bluetooth device selection");
 
     return;
   }
 
-  std::vector<dmn::gui::Dmn_DeviceIdentity> selection;
-  GVariantIter iterator;
   const char *adapterAddress = nullptr;
   const char *deviceAddress = nullptr;
-  g_variant_iter_init(&iterator, savedDevices);
-  while (g_variant_iter_next(&iterator, "(&s&s)", &adapterAddress,
-                             &deviceAddress)) {
-    selection.push_back({adapterAddress, deviceAddress});
+  g_variant_get(savedValue, "(&s&s)", &adapterAddress, &deviceAddress);
+  const std::string adapter{adapterAddress};
+  const std::string device{deviceAddress};
+  g_variant_unref(savedValue);
+  if (!adapter.empty() && !device.empty()) {
+    state->m_selection.loadSavedSelection({{adapter, device}});
   }
-  g_variant_unref(savedDevices);
-
-  if (selection.empty()) {
-    auto *legacy = g_settings_get_value(state->m_settings, "selected-device");
-    if (legacy == nullptr) {
-      g_warning("Could not read the legacy saved Bluetooth selection");
-
-      return;
-    }
-
-    const char *legacyAdapter = nullptr;
-    const char *legacyDevice = nullptr;
-    g_variant_get(legacy, "(&s&s)", &legacyAdapter, &legacyDevice);
-    if (*legacyAdapter != '\0' && *legacyDevice != '\0') {
-      selection.push_back({legacyAdapter, legacyDevice});
-    }
-    g_variant_unref(legacy);
-  }
-
-  if (!selection.empty()) {
-    state->m_selection.loadSavedSelection(std::move(selection));
-  }
-}
-
-void loadMonitoringIntents(AppState *state) {
-  if (state->m_settings == nullptr) {
-    return;
-  }
-
-  auto *monitoringDevices =
-      g_settings_get_value(state->m_settings, "monitoring-devices");
-  if (monitoringDevices == nullptr) {
-    g_warning("Could not read saved Bluetooth monitoring preferences");
-
-    return;
-  }
-
-  GVariantIter iterator;
-  const char *adapterAddress = nullptr;
-  const char *deviceAddress = nullptr;
-  g_variant_iter_init(&iterator, monitoringDevices);
-  while (g_variant_iter_next(&iterator, "(&s&s)", &adapterAddress,
-                             &deviceAddress)) {
-    dmn::gui::Dmn_DeviceIdentity identity{adapterAddress, deviceAddress};
-    std::transform(
-        identity.m_adapter_address.begin(), identity.m_adapter_address.end(),
-        identity.m_adapter_address.begin(), [](const unsigned char character) {
-          return static_cast<char>(std::toupper(character));
-        });
-    std::transform(
-        identity.m_device_address.begin(), identity.m_device_address.end(),
-        identity.m_device_address.begin(), [](const unsigned char character) {
-          return static_cast<char>(std::toupper(character));
-        });
-    if (identity.m_adapter_address.empty() ||
-        identity.m_device_address.empty() ||
-        !isSelected(state->m_selection.savedSelection(), identity) ||
-        isSelected(state->m_monitoring_intents, identity)) {
-      continue;
-    }
-
-    state->m_monitoring_intents.push_back(identity);
-    auto &session = state->m_monitor_sessions[identityKey(identity)];
-    session.m_identity = std::move(identity);
-    session.m_status = "Monitoring when connected";
-  }
-  g_variant_unref(monitoringDevices);
 }
 
 void saveSelection(AppState *state) {
@@ -1708,55 +539,23 @@ void saveSelection(AppState *state) {
     return;
   }
 
-  const auto selection = state->m_selection.draftSelection();
-  GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ss)"));
-  for (const auto &identity : selection) {
-    g_variant_builder_add(&builder, "(ss)", identity.m_adapter_address.c_str(),
-                          identity.m_device_address.c_str());
-  }
-  auto *value = g_variant_builder_end(&builder);
-  if (!g_settings_set_value(state->m_settings, "selected-devices", value)) {
+  const auto &selection = state->m_selection.draftSelection();
+  const char *adapter =
+      selection.empty() ? "" : selection.front().m_adapter_address.c_str();
+  const char *device =
+      selection.empty() ? "" : selection.front().m_device_address.c_str();
+  auto *value = g_variant_new("(ss)", adapter, device);
+  if (!g_settings_set_value(state->m_settings, "selected-device", value)) {
     g_warning("Could not persist the Bluetooth device selection");
     setStatus(state, "The device selection could not be saved to settings.");
 
     return;
   }
 
-  const char *legacyAdapter =
-      selection.empty() ? "" : selection.front().m_adapter_address.c_str();
-  const char *legacyDevice =
-      selection.empty() ? "" : selection.front().m_device_address.c_str();
-  if (!g_settings_set_value(
-          state->m_settings, "selected-device",
-          g_variant_new("(ss)", legacyAdapter, legacyDevice))) {
-    g_warning("Could not clear the legacy Bluetooth device selection");
-    setStatus(state,
-              "The selection was saved, but the legacy setting could not be "
-              "updated.");
-
-    return;
-  }
-
   state->m_selection.saveSelection();
-  const auto previousIntents = state->m_monitoring_intents;
-  std::erase_if(state->m_monitoring_intents,
-                [&selection](const auto &identity) {
-                  return !isSelected(selection, identity);
-                });
-  const bool intentsSaved = state->m_monitoring_intents == previousIntents ||
-                            persistMonitoringIntents(state);
-  setStatus(state, selection.empty()       ? "Device selection cleared."
-                   : selection.size() == 1 ? "One device selection saved."
-                                           : std::to_string(selection.size()) +
-                                                 " device selections saved.");
-  if (!intentsSaved) {
-    setStatus(state, "The device selection was saved, but monitoring "
-                     "preferences could not be updated.");
-  }
+  setStatus(state, selection.empty() ? "Device selection cleared."
+                                     : "Device selection saved.");
   refreshView(state, false);
-  stopInvalidMonitors(state);
-  updateMonitorPolling(state);
 }
 
 auto settingsForApp() -> GSettings * {
@@ -1811,337 +610,11 @@ void taskWorker(GTask *task, gpointer, gpointer taskData, GCancellable *) {
   auto *data = static_cast<TaskData *>(taskData);
   // Return only owned values from the worker; GTK objects stay on the main
   // context and are updated by the GTask completion callback.
-  auto reply = data->m_backend->perform(data->m_operation, data->m_adapter_path,
-                                        data->m_identity);
+  auto reply =
+      data->m_backend->perform(data->m_operation, data->m_adapter_path);
   g_task_return_pointer(
       task, new BackendReply{std::move(reply)},
       [](gpointer result) { delete static_cast<BackendReply *>(result); });
-}
-
-auto monitorStageName(const dmn::Dmn_AncsMonitorStage stage) -> const char * {
-  switch (stage) {
-  case dmn::Dmn_AncsMonitorStage::InvalidArgument:
-    return "invalid configuration";
-  case dmn::Dmn_AncsMonitorStage::NotReady:
-    return "monitor not ready";
-  case dmn::Dmn_AncsMonitorStage::Inventory:
-    return "Bluetooth inventory";
-  case dmn::Dmn_AncsMonitorStage::Discovery:
-    return "Bluetooth discovery";
-  case dmn::Dmn_AncsMonitorStage::DeviceNotFound:
-    return "device lookup";
-  case dmn::Dmn_AncsMonitorStage::Pairing:
-    return "pairing";
-  case dmn::Dmn_AncsMonitorStage::Connection:
-    return "connection";
-  case dmn::Dmn_AncsMonitorStage::AncsStartup:
-    return "ANCS startup";
-  case dmn::Dmn_AncsMonitorStage::Cleanup:
-    return "monitor cleanup";
-  }
-
-  return "unknown monitor failure";
-}
-
-void monitorTaskWorker(GTask *task, gpointer, gpointer taskData,
-                       GCancellable *) {
-  auto *data = static_cast<MonitorTaskData *>(taskData);
-  MonitorReply reply{data->m_identity, data->m_operation, nullptr, {}};
-  try {
-    if (data->m_operation == Dmn_MonitorOperation::kStart) {
-      auto app = std::shared_ptr<GtkApplication>(
-          GTK_APPLICATION(g_object_ref(data->m_app)),
-          [](GtkApplication *application) { g_object_unref(application); });
-      auto monitor = std::make_shared<dmn::Dmn_AncsBluezMonitor>();
-      const auto handlerResult = monitor->setEventHandler(
-          [app, identity = data->m_identity](const dmn::Dmn_AncsEvent &event) {
-            dispatchMonitorEvent(app.get(), identity, event);
-          });
-      if (!handlerResult) {
-        reply.m_error = handlerResult.error().message;
-      } else {
-        dmn::Dmn_AncsMonitorConfig config;
-        config.adapter_selector = data->m_identity.m_adapter_address;
-        config.require_existing_connection = true;
-        config.request_remaining_profiles_when_connected = true;
-        config.ancs.notification_date_cutoff = data->m_notification_cutoff;
-        config.progress_handler =
-            [app, identity = data->m_identity](
-                const dmn::Dmn_AncsMonitorProgress progress) {
-              postMonitorProgress(app.get(), identity, progress);
-            };
-        auto started =
-            monitor->start(data->m_identity.m_device_address, config);
-        if (!started) {
-          reply.m_error = std::string{monitorStageName(started.error().stage)} +
-                          ": " + started.error().message;
-        } else {
-          reply.m_monitor = std::move(monitor);
-        }
-      }
-    } else if (data->m_monitor == nullptr) {
-      reply.m_error = "monitor session is unavailable";
-    } else {
-      const auto stopped = data->m_monitor->stop();
-      if (!stopped) {
-        reply.m_error = stopped.error().message;
-        reply.m_monitor = data->m_monitor;
-      }
-    }
-  } catch (const std::exception &exception) {
-    reply.m_error = exception.what();
-    if (data->m_operation == Dmn_MonitorOperation::kStop) {
-      reply.m_monitor = data->m_monitor;
-    }
-  }
-
-  g_task_return_pointer(
-      task, new MonitorReply{std::move(reply)},
-      [](gpointer result) { delete static_cast<MonitorReply *>(result); });
-}
-
-void monitorOperationFinished(GObject *sourceObject, GAsyncResult *result,
-                              gpointer) {
-  auto *state = stateFor(sourceObject);
-  GError *error = nullptr;
-  auto *reply = static_cast<MonitorReply *>(
-      g_task_propagate_pointer(G_TASK(result), &error));
-  if (state->m_monitor_operations > 0) {
-    --state->m_monitor_operations;
-  }
-
-  const auto identity =
-      reply != nullptr ? reply->m_identity : dmn::gui::Dmn_DeviceIdentity{};
-  auto *session = findMonitorSession(state, identity);
-  bool shouldDisconnect = false;
-  if (session != nullptr) {
-    session->m_busy = false;
-    session->m_stopping = false;
-    if (error != nullptr) {
-      session->m_error = error->message;
-      session->m_status = "Monitor operation failed";
-    } else if (reply != nullptr && !reply->m_error.empty()) {
-      session->m_error = reply->m_error;
-      session->m_status = reply->m_operation == Dmn_MonitorOperation::kStart
-                              ? "Monitor failed"
-                              : "Monitor cleanup failed";
-    } else if (reply != nullptr &&
-               reply->m_operation == Dmn_MonitorOperation::kStart) {
-      session->m_monitor = std::move(reply->m_monitor);
-      session->m_error.clear();
-      session->m_status = session->m_monitor != nullptr
-                              ? monitorStateName(session->m_monitor->state())
-                              : "Monitor failed";
-    } else if (reply != nullptr) {
-      shouldDisconnect = session->m_disconnect_after_stop;
-      session->m_disconnect_after_stop = false;
-      session->m_monitor.reset();
-      session->m_error.clear();
-      session->m_status =
-          isSelected(state->m_monitoring_intents, session->m_identity)
-              ? "Monitoring when connected"
-              : "Not monitoring";
-    }
-  }
-
-  if (error != nullptr) {
-    g_warning("ANCS monitor task failed: %s", error->message);
-    setStatus(state, error->message);
-    g_error_free(error);
-  } else if (reply != nullptr && !reply->m_error.empty()) {
-    g_warning(
-        "ANCS monitor %s failed for %s: %s",
-        reply->m_operation == Dmn_MonitorOperation::kStart ? "start" : "stop",
-        reply->m_identity.m_device_address.c_str(), reply->m_error.c_str());
-    setStatus(state, reply->m_error);
-  } else if (reply != nullptr) {
-    g_message("ANCS monitor %s completed for %s",
-              reply->m_operation == Dmn_MonitorOperation::kStart ? "start"
-                                                                 : "stop",
-              reply->m_identity.m_device_address.c_str());
-    if (reply->m_operation == Dmn_MonitorOperation::kStart) {
-      setStatus(state, "ANCS monitoring started for the selected device.");
-    } else {
-      setStatus(state, "ANCS monitoring stopped.");
-    }
-  }
-
-  delete reply;
-  refreshView(state, false);
-  updateMonitorPolling(state);
-
-  if (state->m_close_requested && session != nullptr &&
-      session->m_status == "Monitor cleanup failed") {
-    state->m_close_requested = false;
-    updateButtonState(state);
-  } else if (shouldDisconnect) {
-    requestOperation(state, Dmn_Operation::kDisconnect, {}, identity);
-  } else {
-    if (!state->m_close_requested) {
-      stopInvalidMonitors(state);
-    }
-    maybeFinishClose(state);
-  }
-}
-
-void requestMonitorOperation(AppState *state,
-                             const dmn::gui::Dmn_DeviceIdentity &identity,
-                             const Dmn_MonitorOperation operation,
-                             const bool disconnectAfterStop) {
-  if (state->m_busy ||
-      (state->m_close_requested && operation == Dmn_MonitorOperation::kStart)) {
-    setStatus(state, "Wait for the current Bluetooth operation to finish.");
-
-    return;
-  }
-
-  auto &session = state->m_monitor_sessions[identityKey(identity)];
-  session.m_identity = identity;
-  if (session.m_busy) {
-    return;
-  }
-  if (operation == Dmn_MonitorOperation::kStart &&
-      session.m_monitor != nullptr) {
-    return;
-  }
-  if (operation == Dmn_MonitorOperation::kStop &&
-      session.m_monitor == nullptr) {
-    setStatus(state, "This device does not have an active monitor.");
-
-    return;
-  }
-
-  session.m_busy = true;
-  if (operation == Dmn_MonitorOperation::kStart) {
-    session.m_status = "Starting ANCS monitor";
-    session.m_error.clear();
-    session.m_stopping = false;
-    session.m_auto_start_attempted = true;
-  } else {
-    session.m_status = "Stopping ANCS monitor";
-    session.m_disconnect_after_stop = disconnectAfterStop;
-    session.m_stopping = true;
-  }
-  ++state->m_monitor_operations;
-  setStatus(state, operation == Dmn_MonitorOperation::kStart
-                       ? "Starting ANCS monitoring…"
-                       : "Stopping ANCS monitoring…");
-  refreshView(state, false);
-
-  auto *task = g_task_new(G_OBJECT(state->m_app), nullptr,
-                          monitorOperationFinished, nullptr);
-  auto *data = new MonitorTaskData{GTK_APPLICATION(g_object_ref(state->m_app)),
-                                   identity, operation, session.m_monitor,
-                                   state->m_session_started};
-  g_task_set_task_data(task, data, [](gpointer taskData) {
-    auto *monitorData = static_cast<MonitorTaskData *>(taskData);
-    g_object_unref(monitorData->m_app);
-    delete monitorData;
-  });
-  g_task_run_in_thread(task, monitorTaskWorker);
-  g_object_unref(task);
-  updateMonitorPolling(state);
-}
-
-gboolean monitorPoll(gpointer userData) {
-  auto *state = static_cast<AppState *>(userData);
-  if (state->m_close_requested) {
-    state->m_device_poll_source = 0;
-
-    return G_SOURCE_REMOVE;
-  }
-
-  if (!state->m_busy && !state->m_scanning) {
-    requestOperation(state, Dmn_Operation::kInventory, {}, std::nullopt, false);
-  }
-
-  return G_SOURCE_CONTINUE;
-}
-
-void updateMonitorPolling(AppState *state) {
-  const bool monitorActive = std::any_of(
-      state->m_monitor_sessions.begin(), state->m_monitor_sessions.end(),
-      [](const auto &entry) {
-        return entry.second.m_monitor != nullptr || entry.second.m_busy;
-      });
-  const bool shouldPoll =
-      !state->m_close_requested &&
-      (!state->m_selection.savedSelection().empty() || monitorActive);
-
-  if (shouldPoll && state->m_device_poll_source == 0) {
-    state->m_device_poll_source = g_timeout_add_seconds(4, monitorPoll, state);
-  } else if (!shouldPoll && state->m_device_poll_source != 0) {
-    g_source_remove(state->m_device_poll_source);
-    state->m_device_poll_source = 0;
-  }
-}
-
-void stopInvalidMonitors(AppState *state) {
-  const auto &savedSelection = state->m_selection.savedSelection();
-  for (auto &[key, session] : state->m_monitor_sessions) {
-    (void)key;
-    const auto device = std::find_if(
-        state->m_selection.devices().begin(),
-        state->m_selection.devices().end(), [&session](const auto &entry) {
-          return entry.m_identity == session.m_identity;
-        });
-    const bool saved = isSelected(savedSelection, session.m_identity);
-    const bool connected =
-        device != state->m_selection.devices().end() && device->m_present &&
-        device->m_paired.value_or(false) && device->m_connected.value_or(false);
-    if (!connected &&
-        isSelected(state->m_monitoring_intents, session.m_identity)) {
-      session.m_auto_start_attempted = false;
-      if (session.m_monitor == nullptr && !session.m_busy) {
-        session.m_status = "Monitoring when connected";
-      }
-    }
-    if ((!saved || !connected) && session.m_monitor != nullptr &&
-        !session.m_busy) {
-      requestMonitorOperation(state, session.m_identity,
-                              Dmn_MonitorOperation::kStop);
-    }
-  }
-
-  updateMonitorPolling(state);
-  startDesiredMonitors(state);
-}
-
-void startDesiredMonitors(AppState *state) {
-  if (state->m_close_requested || state->m_busy ||
-      state->m_selection.hasUnsavedChanges()) {
-    return;
-  }
-
-  const auto intents = state->m_monitoring_intents;
-  for (const auto &identity : intents) {
-    if (!isSelected(state->m_selection.savedSelection(), identity)) {
-      continue;
-    }
-
-    const auto device = std::find_if(state->m_selection.devices().begin(),
-                                     state->m_selection.devices().end(),
-                                     [&identity](const auto &entry) {
-                                       return entry.m_identity == identity;
-                                     });
-    if (device == state->m_selection.devices().end()) {
-      continue;
-    }
-
-    auto &session = state->m_monitor_sessions[identityKey(identity)];
-    session.m_identity = identity;
-    if (session.m_auto_start_attempted || session.m_busy ||
-        session.m_monitor != nullptr ||
-        !isSelected(state->m_selection.savedSelection(), identity) ||
-        state->m_selection.hasUnsavedChanges() || !device->m_present ||
-        !device->m_paired.value_or(false) ||
-        !device->m_connected.value_or(false)) {
-      continue;
-    }
-
-    session.m_auto_start_attempted = true;
-    requestMonitorOperation(state, identity, Dmn_MonitorOperation::kStart);
-  }
 }
 
 void applyInventory(AppState *state, const dmn::Dmn_BluezInventory &inventory) {
@@ -2152,10 +625,8 @@ void applyInventory(AppState *state, const dmn::Dmn_BluezInventory &inventory) {
   state->m_inventory_loaded = true;
   state->m_inventory_error.clear();
   refreshView(state);
-  setStatus(state,
-            state->m_scanning ? "Nearby Bluetooth devices updated."
-                              : "Bluetooth devices updated.",
-            false);
+  setStatus(state, state->m_scanning ? "Nearby Bluetooth devices updated."
+                                     : "Bluetooth devices updated.");
 }
 
 gboolean scanPoll(gpointer userData) {
@@ -2178,7 +649,7 @@ gboolean scanPoll(gpointer userData) {
   }
 
   if (!state->m_busy) {
-    requestOperation(state, Dmn_Operation::kInventory, {}, std::nullopt, false);
+    requestOperation(state, Dmn_Operation::kInventory);
   }
 
   return G_SOURCE_CONTINUE;
@@ -2263,23 +734,27 @@ void operationFinished(GObject *sourceObject, GAsyncResult *result, gpointer) {
   if (state->m_close_requested && stopFailed) {
     state->m_close_requested = false;
     updateButtonState(state);
-    refreshView(state, false);
+
+    return;
+  }
+
+  if (state->m_close_requested) {
+    if (state->m_scanning) {
+      requestOperation(state, Dmn_Operation::kStopDiscovery);
+
+      return;
+    }
+
+    g_application_quit(G_APPLICATION(state->m_app));
 
     return;
   }
 
   updateButtonState(state);
-  if (!state->m_close_requested) {
-    stopInvalidMonitors(state);
-  }
-  refreshView(state, false);
-  maybeFinishClose(state);
 }
 
 void requestOperation(AppState *state, const Dmn_Operation operation,
-                      std::string adapterPath,
-                      std::optional<dmn::gui::Dmn_DeviceIdentity> identity,
-                      const bool announceStatus) {
+                      std::string adapterPath) {
   if (state->m_busy) {
     return;
   }
@@ -2293,28 +768,21 @@ void requestOperation(AppState *state, const Dmn_Operation operation,
   state->m_busy = true;
   g_debug("Starting Bluetooth %s", operationName(operation));
   if (operation == Dmn_Operation::kInventory && state->m_scanning) {
-    setStatus(state, "Updating nearby Bluetooth devices…", announceStatus);
+    setStatus(state, "Updating nearby Bluetooth devices…");
   } else if (operation == Dmn_Operation::kInventory) {
-    setStatus(state, "Refreshing Bluetooth devices…", announceStatus);
+    setStatus(state, "Refreshing Bluetooth devices…");
   } else if (operation == Dmn_Operation::kStartDiscovery) {
-    setStatus(state, "Starting Bluetooth scan…", announceStatus);
-  } else if (operation == Dmn_Operation::kStopDiscovery) {
-    setStatus(state, "Stopping Bluetooth scan…", announceStatus);
-  } else if (operation == Dmn_Operation::kConnect) {
-    setStatus(state, "Connecting to the selected device…", announceStatus);
-  } else if (operation == Dmn_Operation::kDisconnect) {
-    setStatus(state, "Disconnecting the selected device…", announceStatus);
+    setStatus(state, "Starting Bluetooth scan…");
   } else {
-    setStatus(state, "Stopping Bluetooth scan…", announceStatus);
+    setStatus(state, "Stopping Bluetooth scan…");
   }
 
   updateButtonState(state);
-  refreshView(state, false);
 
   auto *task =
       g_task_new(G_OBJECT(state->m_app), nullptr, operationFinished, nullptr);
-  auto *data = new TaskData{state->m_backend, operation, std::move(adapterPath),
-                            std::move(identity)};
+  auto *data =
+      new TaskData{state->m_backend, operation, std::move(adapterPath)};
   g_task_set_task_data(task, data, [](gpointer taskData) {
     delete static_cast<TaskData *>(taskData);
   });
@@ -2323,8 +791,8 @@ void requestOperation(AppState *state, const Dmn_Operation operation,
 }
 
 void refreshClicked(GtkButton *, gpointer userData) {
-  requestOperation(static_cast<AppState *>(userData), Dmn_Operation::kInventory,
-                   {}, std::nullopt);
+  requestOperation(static_cast<AppState *>(userData),
+                   Dmn_Operation::kInventory);
 }
 
 void scanClicked(GtkButton *, gpointer userData) {
@@ -2339,12 +807,12 @@ void scanClicked(GtkButton *, gpointer userData) {
 
   state->m_selected_adapter_address = state->m_adapters[selected].m_address;
   requestOperation(state, Dmn_Operation::kStartDiscovery,
-                   state->m_adapters[selected].m_path, std::nullopt);
+                   state->m_adapters[selected].m_path);
 }
 
 void stopScanClicked(GtkButton *, gpointer userData) {
   requestOperation(static_cast<AppState *>(userData),
-                   Dmn_Operation::kStopDiscovery, {}, std::nullopt);
+                   Dmn_Operation::kStopDiscovery);
 }
 
 void selectionClicked(GtkButton *, gpointer userData) {
@@ -2357,7 +825,6 @@ void discardClicked(GtkButton *, gpointer userData) {
   state->m_selection.discardChanges();
   setStatus(state, "Unsaved device selection discarded.");
   refreshView(state, false);
-  stopInvalidMonitors(state);
 }
 
 void adapterChanged(GObject *object, GParamSpec *, gpointer userData) {
@@ -2381,18 +848,10 @@ void requestClose(AppState *state) {
 
   state->m_close_requested = true;
   g_message("Application shutdown requested");
-  if (state->m_device_poll_source != 0) {
-    g_source_remove(state->m_device_poll_source);
-    state->m_device_poll_source = 0;
-  }
-  setStatus(state, "Stopping Bluetooth monitors before quitting…");
-  refreshView(state, false);
-  maybeFinishClose(state);
-}
+  if (state->m_busy) {
+    setStatus(state, "Waiting for the current Bluetooth operation to finish "
+                     "before quitting.");
 
-void maybeFinishClose(AppState *state) {
-  if (!state->m_close_requested || state->m_busy ||
-      state->m_monitor_operations > 0) {
     return;
   }
 
@@ -2402,17 +861,6 @@ void maybeFinishClose(AppState *state) {
     return;
   }
 
-  for (auto &[key, session] : state->m_monitor_sessions) {
-    (void)key;
-    if (session.m_monitor != nullptr && !session.m_busy) {
-      requestMonitorOperation(state, session.m_identity,
-                              Dmn_MonitorOperation::kStop);
-
-      return;
-    }
-  }
-
-  g_message("Bluetooth monitors stopped; quitting application");
   g_application_quit(G_APPLICATION(state->m_app));
 }
 
@@ -2442,7 +890,7 @@ void aboutAction(GSimpleAction *, GVariant *, gpointer userData) {
   auto *parent = gtk_application_get_active_window(app);
   auto *about = ADW_ABOUT_WINDOW(adw_about_window_new());
   adw_about_window_set_application_name(about, "Dmn Bluetooth");
-  adw_about_window_set_application_icon(about, kApplicationId);
+  adw_about_window_set_application_icon(about, "bluetooth-symbolic");
   adw_about_window_set_developer_name(about, "Chee Bin Hoh");
   adw_about_window_set_version(about, DMN_VERSION);
   adw_about_window_set_comments(
@@ -2476,26 +924,9 @@ void addAction(GtkApplication *app, const char *name, GCallback callback,
   g_object_unref(action);
 }
 
-auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
-                     const bool isDevicePage) -> GtkWidget * {
+auto makeToolbarPage(GtkWidget *content, const char *title) -> GtkWidget * {
   auto *toolbar = adw_toolbar_view_new();
   auto *header = adw_header_bar_new();
-  auto *titleLabel = gtk_label_new(title);
-  gtk_widget_add_css_class(titleLabel, "title");
-  adw_header_bar_set_title_widget(ADW_HEADER_BAR(header), titleLabel);
-
-  if (isDevicePage) {
-    auto *backButton = gtk_button_new_from_icon_name("go-previous-symbolic");
-    state->m_back_button = backButton;
-    gtk_widget_set_tooltip_text(backButton, "Back to devices");
-    gtk_accessible_update_property(GTK_ACCESSIBLE(backButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   "Back to devices", -1);
-    g_signal_connect(backButton, "clicked", G_CALLBACK(backToDevicesClicked),
-                     state);
-    adw_header_bar_pack_start(ADW_HEADER_BAR(header), backButton);
-  }
-
   auto *menu = g_menu_new();
   auto *quitSection = g_menu_new();
   g_menu_append(menu, "_About Dmn Bluetooth", "app.about");
@@ -2509,16 +940,13 @@ auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
   gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(menuButton),
                                  G_MENU_MODEL(menu));
   gtk_widget_set_tooltip_text(menuButton, "Main Menu");
-  gtk_accessible_update_property(GTK_ACCESSIBLE(menuButton),
-                                 GTK_ACCESSIBLE_PROPERTY_LABEL, "Main menu",
-                                 -1);
   adw_header_bar_pack_end(ADW_HEADER_BAR(header), menuButton);
 
   g_object_unref(menu);
   adw_toolbar_view_add_top_bar(ADW_TOOLBAR_VIEW(toolbar), header);
   adw_toolbar_view_set_content(ADW_TOOLBAR_VIEW(toolbar), content);
 
-  return toolbar;
+  return GTK_WIDGET(adw_navigation_page_new(toolbar, title));
 }
 
 auto makeSidebar(AppState *state) -> GtkWidget * {
@@ -2541,14 +969,11 @@ auto makeSidebar(AppState *state) -> GtkWidget * {
   gtk_widget_set_tooltip_text(
       state->m_adapter_dropdown,
       "Bluetooth adapter used for an explicit device scan");
-  gtk_accessible_update_property(
-      GTK_ACCESSIBLE(state->m_adapter_dropdown), GTK_ACCESSIBLE_PROPERTY_LABEL,
-      "Bluetooth adapter used for an explicit device scan", -1);
   g_signal_connect(state->m_adapter_dropdown, "notify::selected",
                    G_CALLBACK(adapterChanged), state);
   gtk_box_append(GTK_BOX(root), state->m_adapter_dropdown);
 
-  state->m_scan_actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  auto *scan_actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   state->m_refresh_button = gtk_button_new_with_label("Refresh devices");
   state->m_scan_button = gtk_button_new_with_label("Scan for devices");
   state->m_stop_scan_button = gtk_button_new_with_label("Stop scan");
@@ -2558,10 +983,10 @@ auto makeSidebar(AppState *state) -> GtkWidget * {
                    state);
   g_signal_connect(state->m_stop_scan_button, "clicked",
                    G_CALLBACK(stopScanClicked), state);
-  gtk_box_append(GTK_BOX(state->m_scan_actions), state->m_refresh_button);
-  gtk_box_append(GTK_BOX(state->m_scan_actions), state->m_scan_button);
-  gtk_box_append(GTK_BOX(state->m_scan_actions), state->m_stop_scan_button);
-  gtk_box_append(GTK_BOX(root), state->m_scan_actions);
+  gtk_box_append(GTK_BOX(scan_actions), state->m_refresh_button);
+  gtk_box_append(GTK_BOX(scan_actions), state->m_scan_button);
+  gtk_box_append(GTK_BOX(scan_actions), state->m_stop_scan_button);
+  gtk_box_append(GTK_BOX(root), scan_actions);
 
   auto *sortHeaders = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   state->m_name_sort_button = gtk_button_new_with_label("Name ↑");
@@ -2591,31 +1016,16 @@ auto makeSidebar(AppState *state) -> GtkWidget * {
                                 state->m_device_list);
   gtk_box_append(GTK_BOX(root), scroll);
 
-  state->m_selection_actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-  auto *selectionButtons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  auto *actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
   state->m_save_button = gtk_button_new_with_label("Save selection");
   state->m_discard_button = gtk_button_new_with_label("Discard changes");
   g_signal_connect(state->m_save_button, "clicked",
                    G_CALLBACK(selectionClicked), state);
   g_signal_connect(state->m_discard_button, "clicked",
                    G_CALLBACK(discardClicked), state);
-  state->m_selected_only_filter =
-      gtk_check_button_new_with_label("Selected only");
-  gtk_widget_set_tooltip_text(
-      state->m_selected_only_filter,
-      "Show devices selected in the current selection draft");
-  g_signal_connect(state->m_selected_only_filter, "toggled",
-                   G_CALLBACK(selectedOnlyFilterToggled), state);
-  auto *actionsSpacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_hexpand(actionsSpacer, TRUE);
-  gtk_box_append(GTK_BOX(selectionButtons), state->m_save_button);
-  gtk_box_append(GTK_BOX(selectionButtons), state->m_discard_button);
-  gtk_box_append(GTK_BOX(state->m_selection_actions), selectionButtons);
-  gtk_box_append(GTK_BOX(state->m_selection_actions), actionsSpacer);
-  gtk_box_append(GTK_BOX(state->m_selection_actions),
-                 state->m_selected_only_filter);
-  gtk_widget_set_halign(state->m_selected_only_filter, GTK_ALIGN_END);
-  gtk_box_append(GTK_BOX(root), state->m_selection_actions);
+  gtk_box_append(GTK_BOX(actions), state->m_save_button);
+  gtk_box_append(GTK_BOX(actions), state->m_discard_button);
+  gtk_box_append(GTK_BOX(root), actions);
 
   state->m_status_label = gtk_label_new("Loading Bluetooth devices…");
   gtk_label_set_wrap(GTK_LABEL(state->m_status_label), TRUE);
@@ -2641,27 +1051,10 @@ auto makeDetails(AppState *state) -> GtkWidget * {
       ADW_STATUS_PAGE(state->m_details_page),
       "Save a device selection to prepare it for monitoring. Selecting or "
       "saving a device never pairs or connects it.");
-  gtk_widget_set_vexpand(state->m_details_page, FALSE);
+  gtk_widget_set_vexpand(state->m_details_page, TRUE);
   gtk_box_append(GTK_BOX(content), state->m_details_page);
 
-  state->m_feed_heading = gtk_label_new("Notifications");
-  gtk_label_set_xalign(GTK_LABEL(state->m_feed_heading), 0.0F);
-  gtk_widget_add_css_class(state->m_feed_heading, "title-3");
-  gtk_widget_set_visible(state->m_feed_heading, FALSE);
-  gtk_box_append(GTK_BOX(content), state->m_feed_heading);
-
-  state->m_feed_scroll = gtk_scrolled_window_new();
-  gtk_widget_set_vexpand(state->m_feed_scroll, TRUE);
-  state->m_feed_list = gtk_list_box_new();
-  gtk_list_box_set_selection_mode(GTK_LIST_BOX(state->m_feed_list),
-                                  GTK_SELECTION_NONE);
-  gtk_list_box_set_show_separators(GTK_LIST_BOX(state->m_feed_list), TRUE);
-  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(state->m_feed_scroll),
-                                state->m_feed_list);
-  gtk_widget_set_visible(state->m_feed_scroll, FALSE);
-  gtk_box_append(GTK_BOX(content), state->m_feed_scroll);
-
-  auto *page = makeToolbarPage(content, "Device", state, true);
+  auto *page = makeToolbarPage(content, "Device");
 
   return page;
 }
@@ -2678,7 +1071,6 @@ void activate(GtkApplication *app, gpointer) {
         [](gpointer data) { delete static_cast<AppState *>(data); });
     state->m_settings = createSettings();
     loadSavedSelection(state);
-    loadMonitoringIntents(state);
 
     state->m_window = adw_application_window_new(GTK_APPLICATION(app));
     gtk_window_set_title(GTK_WINDOW(state->m_window), "Dmn Bluetooth");
@@ -2690,36 +1082,27 @@ void activate(GtkApplication *app, gpointer) {
     addAction(app, "about", G_CALLBACK(aboutAction), app);
     addAction(app, "quit", G_CALLBACK(quitAction), state);
 
-    state->m_sidebar_page =
-        makeToolbarPage(makeSidebar(state), "Devices", state, false);
-    state->m_device_page = makeDetails(state);
-    auto *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-    state->m_paned = paned;
-    gtk_paned_set_wide_handle(GTK_PANED(paned), TRUE);
-    gtk_paned_set_resize_start_child(GTK_PANED(paned), TRUE);
-    gtk_paned_set_resize_end_child(GTK_PANED(paned), TRUE);
-    gtk_paned_set_shrink_start_child(GTK_PANED(paned), TRUE);
-    gtk_paned_set_shrink_end_child(GTK_PANED(paned), TRUE);
-    gtk_paned_set_start_child(GTK_PANED(paned), state->m_sidebar_page);
-    gtk_paned_set_end_child(GTK_PANED(paned), state->m_device_page);
-    const int panePosition =
-        state->m_settings != nullptr
-            ? g_settings_get_int(state->m_settings, "pane-position")
-            : 460;
-    gtk_paned_set_position(GTK_PANED(paned), panePosition);
-    state->m_pane_position_ready = true;
-    g_signal_connect(paned, "notify::position", G_CALLBACK(panePositionChanged),
-                     state);
+    auto *sidebar = makeToolbarPage(makeSidebar(state), "Devices");
+    auto *details = makeDetails(state);
+    auto *split = adw_navigation_split_view_new();
+    state->m_split_view = split;
+    adw_navigation_split_view_set_sidebar(ADW_NAVIGATION_SPLIT_VIEW(split),
+                                          ADW_NAVIGATION_PAGE(sidebar));
+    adw_navigation_split_view_set_content(ADW_NAVIGATION_SPLIT_VIEW(split),
+                                          ADW_NAVIGATION_PAGE(details));
+    adw_navigation_split_view_set_sidebar_width_fraction(
+        ADW_NAVIGATION_SPLIT_VIEW(split), 0.35);
+    adw_navigation_split_view_set_show_content(ADW_NAVIGATION_SPLIT_VIEW(split),
+                                               FALSE);
     adw_application_window_set_content(ADW_APPLICATION_WINDOW(state->m_window),
-                                       paned);
+                                       split);
 
     auto *condition = adw_breakpoint_condition_parse("max-width: 600sp");
     auto *breakpoint = adw_breakpoint_new(condition);
+    adw_breakpoint_add_setters(breakpoint, G_OBJECT(split), "collapsed", TRUE,
+                               nullptr);
     adw_application_window_add_breakpoint(
         ADW_APPLICATION_WINDOW(state->m_window), breakpoint);
-    g_signal_connect(state->m_window, "notify::current-breakpoint",
-                     G_CALLBACK(windowBreakpointChanged), state);
-    windowBreakpointChanged(G_OBJECT(state->m_window), nullptr, state);
 
     static const char *quitAccelerators[] = {"<Primary>q", nullptr};
     static const char *aboutAccelerators[] = {"<Primary>a", nullptr};
@@ -2732,7 +1115,6 @@ void activate(GtkApplication *app, gpointer) {
     }
 
     requestOperation(state, Dmn_Operation::kInventory);
-    updateMonitorPolling(state);
   }
 
   gtk_window_present(GTK_WINDOW(state->m_window));
