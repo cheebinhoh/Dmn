@@ -3207,6 +3207,9 @@ auto makeDetails(AppState *state) -> GtkWidget * {
   state->m_feed_search = gtk_search_entry_new();
   gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(state->m_feed_search),
                                         "Search notifications");
+  gtk_accessible_update_property(GTK_ACCESSIBLE(state->m_feed_search),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                 "Search notifications", -1);
   gtk_widget_set_hexpand(state->m_feed_search, TRUE);
   state->m_feed_all_devices_filter =
       gtk_check_button_new_with_label("All devices");
@@ -3244,6 +3247,12 @@ auto makeDetails(AppState *state) -> GtkWidget * {
       G_LIST_MODEL(gtk_string_list_new(kEventKinds)), nullptr);
   state->m_feed_category_filter = gtk_drop_down_new(
       G_LIST_MODEL(gtk_string_list_new(kEventCategories)), nullptr);
+  gtk_accessible_update_property(GTK_ACCESSIBLE(state->m_feed_kind_filter),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                 "Filter by event kind", -1);
+  gtk_accessible_update_property(GTK_ACCESSIBLE(state->m_feed_category_filter),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                 "Filter by notification category", -1);
   gtk_widget_set_hexpand(state->m_feed_kind_filter, TRUE);
   gtk_widget_set_hexpand(state->m_feed_category_filter, TRUE);
   gtk_widget_set_tooltip_text(state->m_feed_kind_filter,

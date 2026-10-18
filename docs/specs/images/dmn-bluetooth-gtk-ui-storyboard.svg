@@ -46,7 +46,7 @@
     <text class="text small" x="354" y="232" font-weight="700">Status</text>
     <path class="line" d="M34 242H764"/>
     <text class="muted small" x="55" y="275">No known devices. Scan to find a nearby phone.</text>
-    <text class="muted small" x="34" y="312">The detail pane prompts “Choose a Bluetooth device.” No scan starts automatically; remembered monitoring resumes only for a saved, connected device.</text>
+    <text class="muted small" x="34" y="312">The detail pane prompts for a device. Scanning starts only when requested.</text>
   </g>
 
   <!-- Frame 02: selection -->
