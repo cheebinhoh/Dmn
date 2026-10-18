@@ -4,31 +4,32 @@
  * @file dmn-kafka-sender.cpp
  * @brief Application entry point for the Kafka producer example.
  *
- * This program creates a Dmn_Kafka producer with hard-coded Confluent
- * Cloud credentials and publishes ten numbered "heartbeat" messages to
- * the "timer_counter" topic.  It is intended as a quick integration
- * smoke-test / study example and should not be used in production
- * (credentials must not be hard-coded in real deployments).
+ * This program creates a Dmn_Kafka producer using broker credentials from
+ * the DMN_KAFKA_BOOTSTRAP_SERVERS, DMN_KAFKA_SASL_USERNAME, and
+ * DMN_KAFKA_SASL_PASSWORD environment variables, then publishes ten
+ * numbered messages to the "timer_counter" topic.
  *
  * Original reference:
  *   https://developer.confluent.io/get-started/c/
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
-#include "kafka/dmn-kafka.hpp"
+#include "dmn-kafka-example-config.hpp"
 
-int main(int argc, char **argv) {
-  dmn::Dmn_Kafka::ConfigType write_configs{};
-  write_configs["bootstrap.servers"] =
-      "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  write_configs["sasl.username"] = "C3T2TGVAQYYF7H6T";
-  write_configs["sasl.password"] =
-      "4JNbCdwNsK6HSgj65AHdZT5d9VsyWPX+lQysSPca70ehKN7uHsCuIyPlHw32gmNr";
-  write_configs["security.protocol"] = "SASL_SSL";
-  write_configs["sasl.mechanisms"] = "PLAIN";
+int main() {
+  auto config = dmn::app::kafkaExampleConfig();
+  if (!config) {
+    std::cerr << "Kafka example configuration error: " << config.error()
+              << '\n';
+    return EXIT_FAILURE;
+  }
+
+  auto write_configs = std::move(*config);
   write_configs["acks"] = "all";
   write_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   write_configs[dmn::Dmn_Kafka::Key] = "tick";
@@ -38,7 +39,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 10; i++) {
     std::stringstream os{};
 
-    os << "heartbaet: " << i;
+    os << "heartbeat: " << i;
 
     producer.write(os.str());
   }

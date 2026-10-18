@@ -564,15 +564,15 @@ dmn-bluez-cli --list-services <device-address-or-path>
 
 ## 5. Build contract
 
-- The declared defaults for `ENABLE_DBUS`, `ENABLE_BLUEZ`, and `ENABLE_ANCS`
-  are off, but the default-on application options imply those layers. Thus the
-  default configuration enables both apps and their required libraries on
-  Linux. Set either app option to `OFF` to omit that executable; set both to
-  `OFF` for a library-only or non-Linux configuration.
+- The declared defaults for `ENABLE_DBUS`, `ENABLE_BLUEZ`, `ENABLE_ANCS`,
+  `ENABLE_APP_BLUEZ_DISCOVERY`, and `ENABLE_APP_BLUETOOTH` are all off. The
+  default configuration therefore builds neither Bluetooth application nor
+  its optional D-Bus/BlueZ/ANCS libraries. Enabling an application option
+  enables its required library layers.
   `ENABLE_ANCS_HARDWARE_TESTS` remains off by default.
 - `ENABLE_BLUEZ` is Linux-only and enables `ENABLE_DBUS` because `dmn-bluez`
-  links to `dmn-dbus`. To build only the BlueZ library and tests, disable both
-  default-on app options and set `ENABLE_BLUEZ=ON`.
+  links to `dmn-dbus`. To build only the BlueZ library and tests, set
+  `ENABLE_BLUEZ=ON` while leaving both app options off.
 - `ENABLE_APP_BLUEZ_DISCOVERY=ON` enables `ENABLE_BLUEZ` (and transitively
   `ENABLE_DBUS`) and builds the production discovery CLI. The BlueZ library
   option does not itself select the discovery app; set

@@ -185,7 +185,8 @@ Implemented public headers are `dmn-dbus-config.hpp` and
 `src/dmn-dbus-io.cpp`, built as the separate `dmn-dbus` library target.
 `ENABLE_DBUS` has a declared default of `OFF`, so the core `dmn` target remains
 independent of libdbus when no dependent application or library enables that
-layer. The default-on Bluetooth applications enable it transitively on Linux.
+layer. The Bluetooth applications are opt-in and enable it transitively on
+Linux when selected.
 Each configured maximum payload must be positive and no greater than
 `INT_MAX`, because libdbus's fixed-array API accepts an `int` length.
 

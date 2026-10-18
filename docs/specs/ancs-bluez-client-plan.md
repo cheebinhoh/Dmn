@@ -553,10 +553,10 @@ the BlueZ library and tests can be built without those features.
 `ENABLE_APP_BLUEZ_DISCOVERY` enables `ENABLE_BLUEZ` (and transitively
 `ENABLE_DBUS`) and builds `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH` enables
 `ENABLE_ANCS` and `ENABLE_BLUEZ` (and transitively `ENABLE_DBUS`) and builds
-`dmn-bluetooth-cli`. Both application options default to `ON`, so the default
-configuration enables all three library layers and both apps on Linux. Disable
-both application options for standalone library configurations or to configure
-on non-Linux platforms; the ANCS-only configuration remains portable.
+`dmn-bluetooth-cli`. Both application options default to `OFF`; the default
+configuration therefore omits both production apps and the optional D-Bus,
+BlueZ, and ANCS layers. Enable only the application or library layers needed
+for a given build; the ANCS-only configuration remains portable.
 Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 `dmn` when these optional features are disabled.
 
@@ -589,7 +589,7 @@ Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 
 | Configuration | Required result |
 |---|---|
-| Default options on Linux | Build both production applications and all required libraries/tests; hardware tests remain off |
+| All optional Bluetooth options at defaults | Build neither production application nor optional D-Bus/BlueZ/ANCS libraries; core tests remain enabled and hardware tests remain off |
 | `ENABLE_APP_BLUEZ_DISCOVERY=OFF`, `ENABLE_APP_BLUETOOTH=OFF`, `ENABLE_ANCS=ON` | Build `dmn-ancs`, parser/session tests, and public headers without D-Bus or BlueZ |
 | Both application options `OFF`, `ENABLE_BLUEZ=ON` on Linux | Also enables `ENABLE_DBUS`; build `dmn-bluez` and BlueZ tests without either production application or ANCS |
 | `ENABLE_APP_BLUEZ_DISCOVERY=ON`, `ENABLE_APP_BLUETOOTH=OFF` on Linux | Also enables `ENABLE_BLUEZ` and `ENABLE_DBUS`; build the BlueZ library/tests and `dmn-bluez-cli`, without ANCS |

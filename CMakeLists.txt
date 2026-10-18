@@ -28,8 +28,8 @@ option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
 option(ENABLE_DBUS
        "Build the optional D-Bus transport/client library and tests" OFF)
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
-option(ENABLE_APP_BLUEZ_DISCOVERY "Build the BlueZ discovery application" ON)
-option(ENABLE_APP_BLUETOOTH "Build the Bluetooth ANCS monitor application" ON)
+option(ENABLE_APP_BLUEZ_DISCOVERY "Build the BlueZ discovery application" OFF)
+option(ENABLE_APP_BLUETOOTH "Build the Bluetooth ANCS monitor application" OFF)
 option(ENABLE_ANCS_HARDWARE_TESTS
        "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
@@ -37,9 +37,9 @@ option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
     "Exact BlueZ display name or address used by opt-in ANCS hardware tests")
 
-# Application options enable their direct library layers; BlueZ in turn uses
-# the D-Bus layer. Both apps default on, so the default configuration is
-# Linux-only. Disable both app options to configure library-only builds.
+# Application options enable their required library layers; BlueZ in turn
+# enables the D-Bus layer. All optional Bluetooth applications and libraries
+# default off, so the default configuration does not require Linux or libdbus.
 if (ENABLE_APP_BLUEZ_DISCOVERY)
   set(ENABLE_BLUEZ ON CACHE BOOL
       "Build the optional Linux BlueZ library and tests" FORCE)

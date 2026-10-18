@@ -1,11 +1,12 @@
 # Generic D-Bus Client Capability and BlueZ Extension
 
-**Status:** The generic D-Bus client implementation and its focused
-private-bus API tests are implemented. Broader robustness and BlueZ
-qualification gates remain; see Section 6. The existing `dmn-dbus`
-byte-signal endpoints remain implemented. The initial BlueZ inventory/
-discovery API and CLI and the backend-neutral/BlueZ GATT API are implemented.
-The ANCS protocol client and monitor CLI are not implemented.
+**Status:** The generic D-Bus client implementation and its focused private-bus API tests
+are implemented. Broader robustness and BlueZ qualification gates remain; see
+Section 6. The existing `dmn-dbus` byte-signal endpoints remain implemented.
+The BlueZ inventory/discovery API and CLI, backend-neutral/BlueZ GATT APIs,
+ANCS protocol client, BlueZ monitor, and `dmn-bluetooth-cli` are implemented.
+Physical-device compatibility and the remaining acceptance gates described
+below are separate from implementation status.
 
 The current client slice provides typed scalar/container values, bounded
 method calls with timeout/cancellation, properties, constrained signal
@@ -392,26 +393,24 @@ separately from nearby discovery results.
 
 ## 5. Build and installation contract
 
-- `ENABLE_DBUS` has a declared default of `OFF`, but either default-on
-  application implies the required D-Bus layer in the default Linux
-  configuration. When enabled, it builds/installs
+- `ENABLE_DBUS` has a declared default of `OFF`. It is enabled transitively
+  only when a dependent optional library or application is enabled. When
+  enabled, it builds/installs
   `dmn-dbus`, containing the existing signal endpoints plus the generic
   client/value capability. It discovers and links `dbus-1`; core `dmn`
   remains independent of libdbus. Its option description identifies both
   generic D-Bus client and byte-signal support.
-- `ENABLE_BLUEZ` has a declared default of `OFF` and is Linux-only. The
-  default-on applications imply it in the default Linux configuration.
-  Enabling it also enables
+- `ENABLE_BLUEZ` has a declared default of `OFF` and is Linux-only. Enabling
+  it also enables
   `ENABLE_DBUS`, its required lower library layer. `ENABLE_BLUEZ=ON` builds/
   installs `dmn-bluez` and its public headers and enables its library tests;
-  it does not itself select a production application. To build only the
-  library, disable both default-on app options.
+  it does not itself select a production application.
 - `ENABLE_APP_BLUEZ_DISCOVERY=ON` enables `ENABLE_BLUEZ` and builds/
   installs `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH=ON` enables
   `ENABLE_ANCS` and `ENABLE_BLUEZ`; D-Bus is enabled transitively by BlueZ.
-  Both app options default on. Set either app option to `OFF` to omit that
-  executable; set both to `OFF` for a library-only configuration. Non-Linux
-  configurations must disable both apps because they require BlueZ.
+  Both app options default off. The default build therefore omits both
+  executables and all optional D-Bus/BlueZ/ANCS libraries. Non-Linux
+  configurations must leave both apps off because they require BlueZ.
 - When `ENABLE_BLUEZ=ON`, build/install `dmn-bluez` and its public headers.
   `dmn-bluez` links to `dmn-dbus`, which owns libdbus runtime initialization
   and connection mechanics. BlueZ must not discover or link a second D-Bus
@@ -419,9 +418,9 @@ separately from nearby discovery results.
 - `ENABLE_ANCS` remains optional and does not require BlueZ for parser,
   scheduler, and protocol-only tests. The Bluetooth application requires
   both `ENABLE_ANCS` and `ENABLE_BLUEZ`; its app option enables those layers.
-- With both app options `OFF` and `ENABLE_DBUS=OFF`, core `dmn` has no libdbus
-  dependency and the generic D-Bus/BlueZ headers are not installed. With both
-  app options `OFF`, `ENABLE_DBUS=ON`, and `ENABLE_BLUEZ=OFF`, the generic
+- With all optional Bluetooth options `OFF`, core `dmn` has no libdbus
+  dependency and the generic D-Bus/BlueZ/ANCS headers are not installed. With
+  both app options `OFF`, `ENABLE_DBUS=ON`, and `ENABLE_BLUEZ=OFF`, the generic
   D-Bus client and existing signal transport build without BlueZ. With
   `ENABLE_BLUEZ=ON`, D-Bus is enabled automatically and the typed BlueZ
   library builds on the same Dmn client capability.
@@ -524,17 +523,20 @@ this first milestone on GATT or ANCS.
 The backend-neutral `Dmn_GattClient` and BlueZ GATT lifecycle/operations are
 implemented and covered by private-bus fake-object tests for methods,
 properties, characteristic notifications, BlueZ error mapping, service
-resolution, and invalidation. Remaining work is the ANCS parser, fragment
-reassembly, serialized requests, timeout, and session state against a fake
-GATT interface without a D-Bus dependency.
+resolution, and invalidation. The ANCS parser, fragment reassembly, serialized
+requests, timeout handling, and session state are implemented and tested
+against fake GATT interfaces. The `Dmn_AncsBluezMonitor` and
+`dmn-bluetooth-cli` compose the implemented APIs; remaining work is broader
+acceptance coverage and real-device qualification described in
+[`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md).
 
 ### Step 5 — Example and real-device gate
 
-Add the selected-device monitor only after fake-bus behavior is executable.
-Qualify actual LE GATT, ANCS service/characteristics, authorization,
-subscriptions, and attribute response on the target iPhone/BlueZ/adapter
-matrix. A generic Connected property, successful method reply, or passing
-fake-bus tests is not evidence that iPhone ANCS is available.
+The selected-device monitor and CLI are implemented. Qualify actual LE GATT,
+ANCS service/characteristics, authorization, subscriptions, and attribute
+response on the target iPhone/BlueZ/adapter matrix. A generic Connected
+property, successful method reply, or passing fake-bus tests is not evidence
+that iPhone ANCS is available.
 
 ## 7. Acceptance tests
 

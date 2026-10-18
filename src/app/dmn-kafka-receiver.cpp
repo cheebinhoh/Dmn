@@ -4,12 +4,10 @@
  * @file dmn-kafka-receiver.cpp
  * @brief Application entry point for the Kafka consumer example.
  *
- * This program creates a Dmn_Kafka consumer with hard-coded Confluent
- * Cloud credentials and polls the "timer_counter" topic until a
- * SIGINT is received, printing each consumed message to stdout. It is
- * intended as a quick integration smoke-test / study example and
- * should not be used in production (credentials must not be
- * hard-coded in real deployments).
+ * This program creates a Dmn_Kafka consumer using broker credentials from
+ * the DMN_KAFKA_BOOTSTRAP_SERVERS, DMN_KAFKA_SASL_USERNAME, and
+ * DMN_KAFKA_SASL_PASSWORD environment variables and polls the
+ * "timer_counter" topic until SIGINT.
  *
  * Original reference:
  *   https://developer.confluent.io/get-started/c/
@@ -17,28 +15,29 @@
 
 #include "kafka/dmn-kafka.hpp"
 
-#include <atomic>
-#include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <signal.h>
-#include <stdlib.h>
+#include <utility>
+
+#include "dmn-kafka-example-config.hpp"
 
 static volatile sig_atomic_t run = 1;
 
 /**
  * @brief Signal termination of program
  */
-static void stop(int sig) { run = 0; }
+static void stop([[maybe_unused]] int signal) { run = 0; }
 
-int main(int argc, char **argv) {
-  dmn::Dmn_Kafka::ConfigType read_configs{};
-  read_configs["bootstrap.servers"] =
-      "pkc-619z3.us-east1.gcp.confluent.cloud:9092";
-  read_configs["sasl.username"] = "C3T2TGVAQYYF7H6T";
-  read_configs["sasl.password"] =
-      "4JNbCdwNsK6HSgj65AHdZT5d9VsyWPX+lQysSPca70ehKN7uHsCuIyPlHw32gmNr";
-  read_configs["security.protocol"] = "SASL_SSL";
-  read_configs["sasl.mechanisms"] = "PLAIN";
+int main() {
+  auto config = dmn::app::kafkaExampleConfig();
+  if (!config) {
+    std::cerr << "Kafka example configuration error: " << config.error()
+              << '\n';
+    return EXIT_FAILURE;
+  }
+
+  auto read_configs = std::move(*config);
   read_configs["group.id"] = "dmn-kafka-receiver";
   read_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   read_configs["auto.offset.reset"] = "earliest";

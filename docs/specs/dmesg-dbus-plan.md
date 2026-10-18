@@ -374,12 +374,13 @@ forwarders; no D-Bus protocol or DMesg state logic is duplicated.
 
 ### Step 8 — Build, packaging, and security gate
 
-`ENABLE_DBUS` (declared default `OFF`; enabled transitively by BlueZ in the
-default Linux app configuration), pkg-config discovery for `dbus-1`, and the
-separate `dmn-dbus` target are implemented. The optional endpoint headers are
-installed only when the feature is enabled. The private-bus test requires
-`dbus-daemon`; system-bus deployment still requires a separately reviewed
-least-privilege policy example, which this specification does not provide.
+`ENABLE_DBUS` (declared default `OFF`; enabled transitively by BlueZ when an
+optional Bluetooth application or library requires it), pkg-config discovery
+for `dbus-1`, and the separate `dmn-dbus` target are implemented. The
+optional endpoint headers are installed only when the feature is enabled. The
+private-bus test requires `dbus-daemon`; system-bus deployment still requires
+a separately reviewed least-privilege policy example, which this
+specification does not provide.
 
 **Tests/review**
 
