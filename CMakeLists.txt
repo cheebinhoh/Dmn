@@ -24,16 +24,16 @@ enable_testing()
 # set build options
 option(BUILD_KAFKA_TEST "Build optional Kafka integration tests" OFF)
 option(BUILD_NDEBUG "Define NDEBUG to disable assertions" OFF)
-option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
-option(ENABLE_DBUS
-       "Build the optional D-Bus transport/client library and tests" OFF)
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
+option(ENABLE_ANCS_HARDWARE_TESTS
+       "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
 option(ENABLE_APP_BLUEZ_DISCOVERY "Build the BlueZ discovery application" OFF)
 option(ENABLE_APP_BLUETOOTH "Build the Bluetooth ANCS monitor application" OFF)
 option(ENABLE_APP_BLUETOOTH_GTK
        "Build the optional GTK Bluetooth monitor application" OFF)
-option(ENABLE_ANCS_HARDWARE_TESTS
-       "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
+option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
+option(ENABLE_DBUS
+       "Build the optional D-Bus transport/client library and tests" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
 option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
@@ -72,6 +72,8 @@ endif()
 if (ENABLE_APP_BLUETOOTH_GTK)
   set(ENABLE_BLUEZ ON CACHE BOOL
       "Build the optional Linux BlueZ library and tests" FORCE)
+  set(ENABLE_ANCS ON CACHE BOOL
+      "Build the optional ANCS protocol library" FORCE)
 endif()
 
 if (ENABLE_BLUEZ)
