@@ -108,6 +108,12 @@ Public Attributes</h2></td></tr>
 std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>adapter_selector</b> {}</td></tr>
 <tr class="memdesc:ad09c4d27235a52d97e207ded38ddbb93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional adapter address or current BlueZ object path. <br /></td></tr>
 <tr class="separator:ad09c4d27235a52d97e207ded38ddbb93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a1fb1bc0b2115134372bdc5eda978bb" id="r_a7a1fb1bc0b2115134372bdc5eda978bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__AncsMonitorConfig.html#a7a1fb1bc0b2115134372bdc5eda978bb">require_existing_connection</a> {}</td></tr>
+<tr class="memdesc:a7a1fb1bc0b2115134372bdc5eda978bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Require the device to already be present, paired, and connected.  <br /></td></tr>
+<tr class="separator:a7a1fb1bc0b2115134372bdc5eda978bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01cc3b5688997df544ec49e95d8a8363" id="r_a01cc3b5688997df544ec49e95d8a8363"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__AncsMonitorConfig.html#a01cc3b5688997df544ec49e95d8a8363">request_remaining_profiles_when_connected</a> {}</td></tr>
+<tr class="memdesc:a01cc3b5688997df544ec49e95d8a8363"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request remaining BlueZ profiles for an already-connected target.  <br /></td></tr>
+<tr class="separator:a01cc3b5688997df544ec49e95d8a8363"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09480c3eaf9e1761d802fdcdf2ec27e5" id="r_a09480c3eaf9e1761d802fdcdf2ec27e5"><td class="memItemLeft" align="right" valign="top"><a id="a09480c3eaf9e1761d802fdcdf2ec27e5" name="a09480c3eaf9e1761d802fdcdf2ec27e5"></a>
 std::chrono::milliseconds&#160;</td><td class="memItemRight" valign="bottom"><b>discovery_timeout</b> {30000}</td></tr>
 <tr class="memdesc:a09480c3eaf9e1761d802fdcdf2ec27e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum time to discover a target not already in inventory. <br /></td></tr>
@@ -145,6 +151,40 @@ std::chrono::milliseconds&#160;</td><td class="memItemRight" valign="bottom"><b>
 
 <p>Optional callback invoked on the thread calling start(). </p>
 <p>It must return promptly, must not throw, and must not call start(), stop(), or destroy this monitor. The application may marshal these progress values to its own UI context. </p>
+
+</div>
+</div>
+<a id="a01cc3b5688997df544ec49e95d8a8363" name="a01cc3b5688997df544ec49e95d8a8363"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01cc3b5688997df544ec49e95d8a8363">&#9670;&#160;</a></span>request_remaining_profiles_when_connected</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a> dmn::Dmn_AncsMonitorConfig::request_remaining_profiles_when_connected {}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Request remaining BlueZ profiles for an already-connected target. </p>
+<p>This is intended for frontends that require a pre-existing link but need the CLI-equivalent profile completion before ANCS startup. It has no effect unless the selected device is already connected. </p>
+
+</div>
+</div>
+<a id="a7a1fb1bc0b2115134372bdc5eda978bb" name="a7a1fb1bc0b2115134372bdc5eda978bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a1fb1bc0b2115134372bdc5eda978bb">&#9670;&#160;</a></span>require_existing_connection</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a> dmn::Dmn_AncsMonitorConfig::require_existing_connection {}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Require the device to already be present, paired, and connected. </p>
+<p>When true, startup does not discover, pair, or establish a device connection. Remaining profiles are requested only when <code>request_remaining_profiles_when_connected</code> is enabled. </p>
 
 </div>
 </div>

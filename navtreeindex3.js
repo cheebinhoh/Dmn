@@ -14,8 +14,8 @@ var NAVTREEINDEX3 =
 "functions_e.html":[2,3,0,4],
 "functions_enum.html":[2,3,4],
 "functions_f.html":[2,3,0,5],
-"functions_func.html":[2,3,1,0],
 "functions_func.html":[2,3,1],
+"functions_func.html":[2,3,1,0],
 "functions_func_b.html":[2,3,1,1],
 "functions_func_c.html":[2,3,1,2],
 "functions_func_d.html":[2,3,1,3],
@@ -107,9 +107,11 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__AncsEvent.html#a84d3afc4a618662bffa1cade783b740e":[2,0,0,5,3],
 "structdmn_1_1Dmn__AncsEvent.html#acedfadac8aadf47fba8b5c6edc79b708":[2,0,0,5,1],
 "structdmn_1_1Dmn__AncsMonitorConfig.html":[2,0,0,6],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a01cc3b5688997df544ec49e95d8a8363":[2,0,0,6,6],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c":[2,0,0,6,5],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a09480c3eaf9e1761d802fdcdf2ec27e5":[2,0,0,6,3],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a3dc702b7fd0090f19f7e36807570ef30":[2,0,0,6,2],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a7a1fb1bc0b2115134372bdc5eda978bb":[2,0,0,6,7],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a8c9e8cb3875196f083554be2471e9ed6":[2,0,0,6,1],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a8fb2b5cc3257ed7df31d2dcd8870ff90":[2,0,0,6,4],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#ad09c4d27235a52d97e207ded38ddbb93":[2,0,0,6,0],
@@ -247,7 +249,5 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__GattEvent.html":[2,0,0,53],
 "structdmn_1_1Dmn__GattEvent.html#a28d23a2c6c02e14fa2f59c65f31a872a":[2,0,0,53,2],
 "structdmn_1_1Dmn__GattEvent.html#a357a6faa5219d95221da1c24815cd7cb":[2,0,0,53,3],
-"structdmn_1_1Dmn__GattEvent.html#a7cf4e6e86ef508381feb2fe585f92baa":[2,0,0,53,1],
-"structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db":[2,0,0,53,0],
-"structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba29a29047cd211a4eb34dd1129b3db135":[2,0,0,53,0,1]
+"structdmn_1_1Dmn__GattEvent.html#a7cf4e6e86ef508381feb2fe585f92baa":[2,0,0,53,1]
 };

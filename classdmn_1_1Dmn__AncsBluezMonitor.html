@@ -137,7 +137,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac4554dd7695526b9c7eaca8b02372075"><td class="mdescLeft">&#160;</td><td class="mdescRight">Install or clear the handler before starting the monitor.  <br /></td></tr>
 <tr class="separator:ac4554dd7695526b9c7eaca8b02372075"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19f0e2a6f8a7690e651a6f8eaf1a68c8" id="r_a19f0e2a6f8a7690e651a6f8eaf1a68c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#a19f0e2a6f8a7690e651a6f8eaf1a68c8">start</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">device_selector</a>, <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="structdmn_1_1Dmn__AncsMonitorConfig.html">Dmn_AncsMonitorConfig</a> &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">config</a>={}) -&gt; <a class="el" href="dmn-ancs-bluez-monitor_8hpp.html#a79b9794632bad0a5ae231617578a22a2">Dmn_AncsMonitorResult</a></td></tr>
-<tr class="memdesc:a19f0e2a6f8a7690e651a6f8eaf1a68c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select, connect, and start monitoring one exact device.  <br /></td></tr>
+<tr class="memdesc:a19f0e2a6f8a7690e651a6f8eaf1a68c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select and start monitoring one exact device.  <br /></td></tr>
 <tr class="separator:a19f0e2a6f8a7690e651a6f8eaf1a68c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa34561893bb0f78bcbf9350ae7f04ba3" id="r_aa34561893bb0f78bcbf9350ae7f04ba3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#aa34561893bb0f78bcbf9350ae7f04ba3">stop</a> () -&gt; <a class="el" href="dmn-ancs-client_8hpp.html#a52c7e9692897757047b0d233f21aa4e9">Dmn_AncsResult</a></td></tr>
 <tr class="memdesc:aa34561893bb0f78bcbf9350ae7f04ba3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop ANCS and retry any required subscription cleanup.  <br /></td></tr>
@@ -210,7 +210,7 @@ Public Member Functions</h2></td></tr>
 <p>Install or clear the handler before starting the monitor. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">handler</td><td>Callback receiving owned ANCS events on the ANCS worker. It must return promptly, must not throw, and must not call <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#a19f0e2a6f8a7690e651a6f8eaf1a68c8" title="Select, connect, and start monitoring one exact device.">start()</a>, <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#aa34561893bb0f78bcbf9350ae7f04ba3" title="Stop ANCS and retry any required subscription cleanup.">stop()</a>, or destroy this monitor. </td></tr>
+    <tr><td class="paramname">handler</td><td>Callback receiving owned ANCS events on the ANCS worker. It must return promptly, must not throw, and must not call <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#a19f0e2a6f8a7690e651a6f8eaf1a68c8" title="Select and start monitoring one exact device.">start()</a>, <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#aa34561893bb0f78bcbf9350ae7f04ba3" title="Stop ANCS and retry any required subscription cleanup.">stop()</a>, or destroy this monitor. </td></tr>
   </table>
   </dd>
 </dl>
@@ -244,8 +244,8 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Select, connect, and start monitoring one exact device. </p>
-<p>This operation is synchronous and bounded by <code>config</code>. If the target is already connected, BlueZ is also asked to connect remaining auto-connectable profiles before ANCS startup. Pairing and link state are retained after the monitor stops. <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#aa34561893bb0f78bcbf9350ae7f04ba3" title="Stop ANCS and retry any required subscription cleanup.">stop()</a> serializes with this operation and does not cancel an in-progress setup.</p>
+<p>Select and start monitoring one exact device. </p>
+<p>This operation is synchronous and bounded by <code>config</code>. By default it discovers, pairs, and connects as needed; if already connected, BlueZ is asked to connect remaining auto-connectable profiles. When <code>config.require_existing_connection</code> is true, it instead requires an already-present, paired, connected device and performs no discovery, pairing, or initial link connection. A connected target gets a BlueZ Connect request to complete remaining profiles in the normal setup-capable mode, or when <code>config.request_remaining_profiles_when_connected</code> is enabled. Pairing and link state are retained after the monitor stops. <a class="el" href="classdmn_1_1Dmn__AncsBluezMonitor.html#aa34561893bb0f78bcbf9350ae7f04ba3" title="Stop ANCS and retry any required subscription cleanup.">stop()</a> serializes with this operation and does not cancel an in-progress setup.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">device_selector</td><td>Exact display name or Bluetooth address. </td></tr>

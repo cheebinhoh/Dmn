@@ -55,7 +55,7 @@ var NAVTREEINDEX =
 "classdmn_1_1Dmn__DbusValue.html#a41bfcdfcb2d1094d656f601672a651c6",
 "dir_4686ca24dd046c131774f5a6c51fabc1.html",
 "dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7",
-"structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba902b0d55fddef6f8d651fe1035b7d4bd"
+"structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

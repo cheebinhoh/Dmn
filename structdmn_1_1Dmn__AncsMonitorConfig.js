@@ -5,5 +5,7 @@ var structdmn_1_1Dmn__AncsMonitorConfig =
     [ "connection_timeout", "structdmn_1_1Dmn__AncsMonitorConfig.html#a3dc702b7fd0090f19f7e36807570ef30", null ],
     [ "discovery_timeout", "structdmn_1_1Dmn__AncsMonitorConfig.html#a09480c3eaf9e1761d802fdcdf2ec27e5", null ],
     [ "pairing_timeout", "structdmn_1_1Dmn__AncsMonitorConfig.html#a8fb2b5cc3257ed7df31d2dcd8870ff90", null ],
-    [ "progress_handler", "structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c", null ]
+    [ "progress_handler", "structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c", null ],
+    [ "request_remaining_profiles_when_connected", "structdmn_1_1Dmn__AncsMonitorConfig.html#a01cc3b5688997df544ec49e95d8a8363", null ],
+    [ "require_existing_connection", "structdmn_1_1Dmn__AncsMonitorConfig.html#a7a1fb1bc0b2115134372bdc5eda978bb", null ]
 ];
