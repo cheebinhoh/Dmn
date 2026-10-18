@@ -37,6 +37,21 @@ option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
     "Exact BlueZ display name or address used by opt-in ANCS hardware tests")
 
+if (BUILD_KAFKA_TEST)
+  set(DMN_KAFKA_BOOTSTRAP_SCRIPT
+      "${PROJECT_SOURCE_DIR}/scripts/run-bookstrap-dmn.sh")
+  set(DMN_KAFKA_BUILD_SCRIPT
+      "${CMAKE_BINARY_DIR}/scripts/run-bookstrap-dmn.sh")
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/scripts")
+  configure_file("${DMN_KAFKA_BOOTSTRAP_SCRIPT}"
+                 "${DMN_KAFKA_BUILD_SCRIPT}" COPYONLY)
+  file(CHMOD "${DMN_KAFKA_BUILD_SCRIPT}"
+       PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                   GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  install(PROGRAMS "${DMN_KAFKA_BOOTSTRAP_SCRIPT}"
+          DESTINATION scripts)
+endif()
+
 # Application options enable their required library layers; BlueZ in turn
 # enables the D-Bus layer. All optional Bluetooth applications and libraries
 # default off, so the default configuration does not require Linux or libdbus.

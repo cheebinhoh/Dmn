@@ -67,3 +67,29 @@ does not remove them from Git history.
    example, `dmn-kafka`) and define compatibility/install rules for
    `Dmn_DMesgNet_Kafka`. This is a build/API architecture change and should be
    planned as a distinct feature; no such target exists today.
+
+## Local integration-test broker
+
+When `BUILD_KAFKA_TEST=ON`, CMake copies
+`scripts/run-bookstrap-dmn.sh` to `build/scripts/` and installs it at
+`<prefix>/scripts/`. Run it from either location to start a local broker and
+create the test topic:
+
+```sh
+./build/scripts/run-bookstrap-dmn.sh
+ctest --test-dir build -L kafka --output-on-failure
+./build/scripts/run-bookstrap-dmn.sh stop
+```
+
+The script looks for an existing distribution in the build/install tree or
+`DMN_KAFKA_HOME`, then downloads the pinned Apache Kafka archive and verifies
+its published SHA-512 checksum. A writable build/install prefix stores the
+distribution and broker state locally; a non-writable install prefix uses the
+user's XDG cache/state directories. It does not require a globally installed
+Kafka package or Docker. A Java runtime is still required; set `JAVA_HOME` if
+it is not available on `PATH`. `curl`, `tar`, `sha512sum`, and `ps` are also
+required for fetching, unpacking, checksum verification, and safe process
+shutdown. Native runs bind to loopback by default; set
+`DMN_KAFKA_LISTENERS` and `DMN_KAFKA_ADVERTISED_LISTENERS` to override the
+Kafka listener configuration. The Docker test image uses the same script but
+binds to all container interfaces and advertises its container hostname.

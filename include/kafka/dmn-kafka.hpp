@@ -173,8 +173,8 @@ private:
   ConfigType
       m_configs{}; ///< Copy of the configuration map passed at construction.
 
-  std::string m_key{};   ///< Kafka message key for produced messages.
-  std::string m_topic{}; ///< Kafka topic to produce to / consume from.
+  std::string m_key{};           ///< Kafka message key for produced messages.
+  std::string m_topic{};         ///< Kafka topic to produce to / consume from.
   long long m_poll_timeout_ms{}; ///< Consumer poll timeout in milliseconds.
 
   rd_kafka_t *m_kafka{}; ///< librdkafka producer or consumer handle.
