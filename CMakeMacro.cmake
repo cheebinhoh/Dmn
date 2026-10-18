@@ -169,11 +169,19 @@ macro(GENERATE_PROTOBUF ...)
                                  ${CMAKE_CURRENT_BINARY_DIR}
     )
 
+    set(DMN_PROTOBUF_PROTOC_OPTIONS)
+    if (DEFINED protobuf_SOURCE_DIR AND
+        EXISTS "${protobuf_SOURCE_DIR}/src")
+      list(APPEND DMN_PROTOBUF_PROTOC_OPTIONS
+             "-I${protobuf_SOURCE_DIR}/src"
+      )
+    endif()
+
     protobuf_generate(TARGET ${ARGV0}
                         PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/${arg}
                         LANGUAGE cpp
                         OUT_VAR PROTOBUF_GENERATED_FILES
-                        PROTOC_OPTIONS "-I${protobuf_SOURCE_DIR}/src"
+                        PROTOC_OPTIONS ${DMN_PROTOBUF_PROTOC_OPTIONS}
                         PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}
     )
   endforeach()

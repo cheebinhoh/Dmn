@@ -5,7 +5,24 @@ production service contracts.
 
 ## DMesg daemon
 
-`src/dmn-dmesg-daemon.cpp` obtains the singleton runtime manager, starts a
+Application entry points live in `src/app/`; reusable library implementations
+remain directly under `src/` or in component subdirectories such as `src/kafka/`.
+Production executable target rules are defined in `src/app/CMakeLists.txt`.
+With the current CMake directory layout, uninstalled executable binaries are
+placed under `build/src/app/`; installation places enabled applications in
+`bin/`.
+The private-bus tests compile the Bluetooth application entry points from
+`src/app/` with test-only definitions; their fixtures and CTest registration
+remain in `test/CMakeLists.txt`.
+The BlueZ inventory/device-actions command uses
+`src/app/dmn-bluez-cli.cpp` and builds as `dmn-bluez-cli`; the selected iPhone
+ANCS monitor uses `src/app/dmn-bluetooth-cli.cpp` and builds as
+`dmn-bluetooth-cli`. Their source and executable names make the command-line
+frontends distinct from future graphical application sources.
+Each installed BlueZ/Bluetooth CLI has a matching section-1 manual under
+`docs/man/`.
+
+`src/app/dmn-dmesg-daemon.cpp` obtains the singleton runtime manager, starts a
 separate `Dmn_Proc` that sleeps for ten seconds and then registers a SIGTERM
 hook, and enters the runtime main loop. The source explicitly marks this as a
 test harness; it does not construct a DMesgNet node or wire production I/O.
@@ -21,7 +38,7 @@ existing facade into the gateway.
 
 ## Kafka sender and receiver
 
-`src/dmn-kafka-sender.cpp` and `src/dmn-kafka-receiver.cpp` are stand-alone
+`src/app/dmn-kafka-sender.cpp` and `src/app/dmn-kafka-receiver.cpp` are stand-alone
 producer/consumer smoke examples against an external broker. They configure
 credentials in source, use a fixed topic, and are unsuitable for deployment.
 The sender produces ten values. The receiver polls until SIGINT and prints

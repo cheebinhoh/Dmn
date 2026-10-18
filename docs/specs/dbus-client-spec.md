@@ -392,26 +392,39 @@ separately from nearby discovery results.
 
 ## 5. Build and installation contract
 
-- `ENABLE_DBUS` remains off by default. When on, it builds/installs
+- `ENABLE_DBUS` has a declared default of `OFF`, but either default-on
+  application implies the required D-Bus layer in the default Linux
+  configuration. When enabled, it builds/installs
   `dmn-dbus`, containing the existing signal endpoints plus the generic
   client/value capability. It discovers and links `dbus-1`; core `dmn`
-  remains independent of libdbus. Update the option description to identify
-  both generic D-Bus client and byte-signal support.
-- `ENABLE_BLUEZ` is off by default, Linux-only, and requires
-  `ENABLE_DBUS=ON`. Configuration with BlueZ enabled and D-Bus disabled fails
-  with a clear instruction; it must not silently enable unrelated features.
+  remains independent of libdbus. Its option description identifies both
+  generic D-Bus client and byte-signal support.
+- `ENABLE_BLUEZ` has a declared default of `OFF` and is Linux-only. The
+  default-on applications imply it in the default Linux configuration.
+  Enabling it also enables
+  `ENABLE_DBUS`, its required lower library layer. `ENABLE_BLUEZ=ON` builds/
+  installs `dmn-bluez` and its public headers and enables its library tests;
+  it does not itself select a production application. To build only the
+  library, disable both default-on app options.
+- `ENABLE_APP_BLUEZ_DISCOVERY=ON` enables `ENABLE_BLUEZ` and builds/
+  installs `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH=ON` enables
+  `ENABLE_ANCS` and `ENABLE_BLUEZ`; D-Bus is enabled transitively by BlueZ.
+  Both app options default on. Set either app option to `OFF` to omit that
+  executable; set both to `OFF` for a library-only configuration. Non-Linux
+  configurations must disable both apps because they require BlueZ.
 - When `ENABLE_BLUEZ=ON`, build/install `dmn-bluez` and its public headers.
   `dmn-bluez` links to `dmn-dbus`, which owns libdbus runtime initialization
   and connection mechanics. BlueZ must not discover or link a second D-Bus
   wrapper or private duplicate initialization library.
 - `ENABLE_ANCS` remains optional and does not require BlueZ for parser,
-  scheduler, and protocol-only tests. The example monitor requires both
-  `ENABLE_ANCS` and `ENABLE_BLUEZ`.
-- With `ENABLE_DBUS=OFF`, core `dmn` has no libdbus dependency and the
-  generic D-Bus/BlueZ headers are not installed. With `ENABLE_DBUS=ON` and
-  `ENABLE_BLUEZ=OFF`, generic D-Bus client and existing signal transport
-  build without BlueZ. With both enabled, the typed BlueZ library builds on
-  the same Dmn client capability.
+  scheduler, and protocol-only tests. The Bluetooth application requires
+  both `ENABLE_ANCS` and `ENABLE_BLUEZ`; its app option enables those layers.
+- With both app options `OFF` and `ENABLE_DBUS=OFF`, core `dmn` has no libdbus
+  dependency and the generic D-Bus/BlueZ headers are not installed. With both
+  app options `OFF`, `ENABLE_DBUS=ON`, and `ENABLE_BLUEZ=OFF`, the generic
+  D-Bus client and existing signal transport build without BlueZ. With
+  `ENABLE_BLUEZ=ON`, D-Bus is enabled automatically and the typed BlueZ
+  library builds on the same Dmn client capability.
 - Public headers never include `<dbus/dbus.h>`. Build-interface definitions
   and include directories must follow the repository's existing optional
   target conventions.
@@ -495,7 +508,7 @@ production BlueZ qualification gates remain distinct requirements.
 
 ### Step 3 — BlueZ inventory/discovery API and CLI (initial implementation)
 
-The optional `dmn-bluez` target and `dmn-bluez-discovery` CLI provide the first
+The optional `dmn-bluez` target and `dmn-bluez-cli` CLI provide the first
 typed adapter/device snapshot, updates, and explicit scan. Private-bus tests
 cover known disconnected devices, property changes, discovery filter and
 owned start/stop, and the absence of forbidden Pair/Connect/Disconnect/

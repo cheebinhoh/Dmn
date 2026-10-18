@@ -107,7 +107,7 @@ The server handlers are registered directly on the network node's inherited
 `Dmn_DMesg` publisher. Do not bridge between two publisher instances in the
 recommended design.
 
-The daemon executable in `src/dmn-dmesg-daemon.cpp` is currently only a
+The daemon executable in `src/app/dmn-dmesg-daemon.cpp` is currently only a
 runtime signal-handling test stub. It is not the proposed production service
 and must not be treated as an existing gateway implementation.
 

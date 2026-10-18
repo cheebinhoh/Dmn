@@ -1,0 +1,147 @@
+.TH DMN-BLUETOOTH-CLI 1 "2026" "Dmn" "User Commands"
+.SH NAME
+dmn-bluetooth-cli \- monitor notifications from a selected iPhone using ANCS
+.SH SYNOPSIS
+.B dmn-bluetooth-cli monitor
+.I DEVICE
+[
+.B --adapter
+.I ADAPTER
+]
+[
+.B --discovery-timeout
+.I SECONDS
+]
+[
+.B --pair-timeout
+.I SECONDS
+]
+[
+.B --connect-timeout
+.I SECONDS
+]
+[
+.B --services-timeout
+.I SECONDS
+]
+[
+.B --unlimited
+]
+[
+.B --ignore-existing
+]
+.br
+.B dmn-bluetooth-cli --help
+.br
+.B dmn-bluetooth-cli monitor --help
+.SH DESCRIPTION
+.B dmn-bluetooth-cli
+connects to one selected Bluetooth device, establishes an Apple Notification
+Center Service (ANCS) session, and prints notification events and available
+attributes to standard output. Progress and diagnostics are written to
+standard error.
+.PP
+.I DEVICE
+is a Bluetooth address or exact BlueZ display name. A name must resolve to
+exactly one known device; ambiguous names are rejected. If the device is not
+known to BlueZ, the application performs bounded discovery to find it.
+.PP
+The command explicitly pairs the selected device if necessary and then
+connects it. It does not pair or connect to other discovery results. Normal
+exit and failure leave the pairing and connection in place.
+.SH OPTIONS
+.TP
+.BI "--adapter " ADAPTER
+Select a local adapter by its Bluetooth address or current BlueZ object path.
+If omitted, the application selects an adapter when the selection is
+unambiguous.
+.TP
+.BI "--discovery-timeout " SECONDS
+Maximum time to discover a device that is not already known to BlueZ.
+Default: 30 seconds.
+.TP
+.BI "--pair-timeout " SECONDS
+Maximum time allowed for pairing through BlueZ's configured default agent.
+Default: 120 seconds.
+.TP
+.BI "--connect-timeout " SECONDS
+Maximum time allowed for the selected device to connect. Default: 30 seconds.
+.TP
+.BI "--services-timeout " SECONDS
+Maximum time to wait for BlueZ to resolve services. Default: 30 seconds.
+.TP
+.B --unlimited
+Disable the cap on queued notification attribute requests. Without this
+option, the oldest pending notifications are discarded when the bounded queue
+is full.
+.TP
+.B --ignore-existing
+Suppress completed notification details whose ANCS date is older than the
+application process start time. Notifications with missing or unrecognized
+dates are also suppressed. The ANCS date has no timezone, so the phone and
+host clocks should be aligned.
+.TP
+.B --help
+Print usage and exit without contacting D-Bus.
+.PP
+Timeout values must be positive whole seconds no greater than 600.
+.SH OUTPUT
+Notification events are printed as they arrive during the current monitoring
+session; the application is not a notification-history store. Available
+attributes include app identifier, title, subtitle, message, and date. Missing
+attributes are omitted. Notification content is written to standard output;
+diagnostics are written to standard error and do not include notification
+bodies.
+.PP
+The application becomes ready only after it finds the ANCS service and its
+required characteristics and confirms that notifications are active on both
+ANCS characteristics. BlueZ reporting a connected device or resolved
+services alone does not establish ANCS readiness.
+.SH RECOVERY
+If ANCS is missing after a previous pairing, disconnecting and reconnecting
+from Linux may not clear stale GATT state. An observed recovery was to remove
+the Pop!_OS pairing from the iPhone, then pair again and retry monitoring.
+This removes the existing bond and requires pairing again; the command never
+does this automatically.
+.PP
+If BlueZ accepts a notification subscription but reports notifications
+inactive, or the session fails with a D-Bus timeout, the command reports the
+failure and exits rather than claiming that monitoring is active. Retry only
+after checking the BlueZ connection and pairing state.
+.SH EXAMPLES
+Monitor a device by exact display name:
+.PP
+.nf
+dmn-bluetooth-cli monitor "iPhone Genghis"
+.fi
+.PP
+Monitor a device by Bluetooth address and select an adapter:
+.PP
+.nf
+dmn-bluetooth-cli monitor 84:D3:28:96:72:9A --adapter /org/bluez/hci0
+.fi
+.SH EXIT STATUS
+.TP
+.B 0
+Monitoring stopped successfully or help was printed.
+.TP
+.B 2
+Invalid, unknown, duplicate, or incomplete command-line option.
+.TP
+.B 3
+BlueZ is unavailable or its service owner disappeared.
+.TP
+.B 4
+The selected device could not be resolved uniquely.
+.TP
+.B 5
+Pairing or connection failed.
+.TP
+.B 6
+ANCS service or required characteristics are unavailable.
+.TP
+.B 7
+ANCS session startup failed.
+.TP
+.B 8
+Runtime, protocol, or cleanup failure.

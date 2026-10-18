@@ -861,6 +861,71 @@ public:
       state->started = !state->invalidated;
     }
 
+    const auto rollback = [this, &state](Dmn_GattError failure)
+        -> Dmn_GattValueResult<Dmn_GattNotification> {
+      auto stopped = stopNotify(state);
+      if (!stopped) {
+        failure.message +=
+            "; notification cleanup failed: " + stopped.error().message;
+      }
+
+      return std::unexpected(std::move(failure));
+    };
+
+    bool invalidated{};
+    {
+      std::lock_guard lock{state->mutex};
+
+      invalidated = state->invalidated;
+    }
+
+    if (invalidated) {
+      return rollback(error(Dmn_GattErrorKind::NotReady,
+                            "GATT notification was invalidated during "
+                            "StartNotify"));
+    }
+
+    const auto notifyingTimeout = remaining();
+    if (notifyingTimeout <= std::chrono::milliseconds::zero()) {
+      return rollback(timeoutError(
+          "StartNotify deadline expired while verifying notification state"));
+    }
+
+    auto notifying = m_dbus.call(
+        std::string{kBluez}, characteristicId, std::string{kProperties}, "Get",
+        {Dmn_DbusValue{std::string{kGattCharacteristic}},
+         Dmn_DbusValue{"Notifying"}},
+        notifyingTimeout);
+    if (!notifying) {
+      return rollback(mapError(notifying.error()));
+    }
+
+    if (notifying->size() != 1 || notifying->front().signature() != "v" ||
+        notifying->front().asVariant().signature() != "b") {
+      return rollback(
+          error(Dmn_GattErrorKind::Decode,
+                "BlueZ returned an invalid GATT Notifying property"));
+    }
+
+    if (!notifying->front().asVariant().asBool()) {
+      return rollback(error(
+          Dmn_GattErrorKind::NotReady,
+          "BlueZ accepted StartNotify but reports notification delivery is "
+          "not active; the connected bearer may not provide live GATT"));
+    }
+
+    {
+      std::lock_guard lock{state->mutex};
+
+      invalidated = state->invalidated;
+    }
+
+    if (invalidated) {
+      return rollback(error(Dmn_GattErrorKind::NotReady,
+                            "GATT notification was invalidated during "
+                            "StartNotify"));
+    }
+
     auto self = shared_from_this();
 
     return Dmn_GattNotification{

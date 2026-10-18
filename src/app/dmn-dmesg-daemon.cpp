@@ -2,7 +2,7 @@
  * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dmesg-daemon.cpp
- * @brief Entry point for the DMesg daemon process.
+ * @brief Application entry point for the DMesg daemon process.
  *
  * This daemon is intended to run after system boot and provides a
  * Dmn_Runtime_Manager main loop that can receive, process and forward

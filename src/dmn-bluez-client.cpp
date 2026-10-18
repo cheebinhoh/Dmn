@@ -118,7 +118,7 @@ auto normalizedAddress(std::string_view address) -> std::string {
 
 class Dmn_BluezClient::Impl {
 public:
-  enum class DeviceAction { Connect, Disconnect, Pair };
+  enum class DeviceAction { Connect, ConnectProfiles, Disconnect, Pair };
 
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_dbus(makeDbusConfig(config)) {
@@ -223,6 +223,7 @@ public:
       std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
       -> Dmn_BluezValueResult<Dmn_BluezInventory> {
     std::lock_guard snapshotLock{m_snapshot_mutex};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -252,6 +253,7 @@ public:
 
     if (!result) {
       std::lock_guard eventOrderLock{m_event_order_mutex};
+
       {
         std::lock_guard lock{m_mutex};
 
@@ -269,6 +271,7 @@ public:
 
     if (result->empty() || result->front().signature() != "a{oa{sa{sv}}}") {
       std::lock_guard eventOrderLock{m_event_order_mutex};
+
       {
         std::lock_guard lock{m_mutex};
 
@@ -453,6 +456,7 @@ public:
                     std::chrono::milliseconds timeout,
                     DeviceAction action) -> Dmn_BluezResult {
     std::lock_guard actionLock{m_device_action_mutex};
+
     std::string devicePath;
     bool alreadyInRequestedState{};
 
@@ -509,7 +513,7 @@ public:
 
       if (action == DeviceAction::Pair) {
         alreadyInRequestedState = device.paired && *device.paired;
-      } else {
+      } else if (action != DeviceAction::ConnectProfiles) {
         const bool requestedConnected = action == DeviceAction::Connect;
         alreadyInRequestedState =
             device.connected && *device.connected == requestedConnected;
@@ -522,11 +526,24 @@ public:
 
     const auto result =
         m_dbus.call(std::string{kBluez}, devicePath, std::string{kDevice},
-                    action == DeviceAction::Connect      ? "Connect"
+                    action == DeviceAction::Connect ||
+                            action == DeviceAction::ConnectProfiles
+                        ? "Connect"
                     : action == DeviceAction::Disconnect ? "Disconnect"
                                                          : "Pair",
                     {}, timeout);
     if (!result) {
+      const auto &error = result.error();
+      const bool connectRequestAlreadyActive =
+          error.remote_name == "org.bluez.Error.InProgress" ||
+          (error.remote_name == "org.bluez.Error.Failed" &&
+           error.message == "Operation already in progress");
+      if (action == DeviceAction::ConnectProfiles &&
+          (error.remote_name == "org.bluez.Error.AlreadyConnected" ||
+           connectRequestAlreadyActive)) {
+        return {};
+      }
+
       return std::unexpected(result.error());
     }
 
@@ -535,8 +552,10 @@ public:
 
   auto startDiscovery(const std::string &adapterPath) -> Dmn_BluezResult {
     std::lock_guard discoveryLock{m_discovery_mutex};
+
     {
       std::lock_guard lock{m_mutex};
+
       const auto adapter = m_adapters.find(adapterPath);
 
       if (adapter == m_adapters.end()) {
@@ -805,6 +824,7 @@ private:
                 Dmn_DbusClient::Arguments arguments) {
     const auto droppedSignals = m_dbus.status().dropped_signal_messages;
     std::lock_guard eventOrderLock{m_event_order_mutex};
+
     std::vector<Dmn_BluezEvent> events;
     bool requestRecovery{};
 
@@ -1237,6 +1257,14 @@ auto Dmn_BluezClient::connectDevice(
     std::chrono::milliseconds timeout) -> Dmn_BluezResult {
   return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
                               Impl::DeviceAction::Connect);
+}
+
+auto Dmn_BluezClient::connectAvailableProfiles(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::ConnectProfiles);
 }
 
 auto Dmn_BluezClient::pairDevice(

@@ -1,8 +1,8 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file dmn-bluez-discovery.cpp
- * @brief BlueZ inventory, discovery, and explicit selected-device actions.
+ * @file dmn-bluez-cli.cpp
+ * @brief Command-line application for BlueZ inventory and device actions.
  */
 
 #include "dmn-bluez-client.hpp"
@@ -59,13 +59,14 @@ struct Options {
 };
 
 void usage(std::ostream &out) {
-  out << "Usage: dmn-bluez-discovery [--discovery] "
+  out << "BlueZ command-line utility for device inventory and operations.\n"
+         "Usage: dmn-bluez-cli [--discovery] "
          "[--adapter <address-or-object-path>] [--help]\n"
-         "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
+         "       dmn-bluez-cli [--adapter <address-or-object-path>] "
          "--connect <device-address-or-path> [--discovery]\n"
-         "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
+         "       dmn-bluez-cli [--adapter <address-or-object-path>] "
          "--pair <device-address-or-path>\n"
-         "       dmn-bluez-discovery [--adapter <address-or-object-path>] "
+         "       dmn-bluez-cli [--adapter <address-or-object-path>] "
          "--disconnect <device-address-or-path>\n"
          "Prints an RFC 4180 CSV inventory to stdout; diagnostics go to "
          "stderr.\n";

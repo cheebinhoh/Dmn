@@ -374,7 +374,8 @@ forwarders; no D-Bus protocol or DMesg state logic is duplicated.
 
 ### Step 8 — Build, packaging, and security gate
 
-`ENABLE_DBUS` (off by default), pkg-config discovery for `dbus-1`, and the
+`ENABLE_DBUS` (declared default `OFF`; enabled transitively by BlueZ in the
+default Linux app configuration), pkg-config discovery for `dbus-1`, and the
 separate `dmn-dbus` target are implemented. The optional endpoint headers are
 installed only when the feature is enabled. The private-bus test requires
 `dbus-daemon`; system-bus deployment still requires a separately reviewed
@@ -382,11 +383,12 @@ least-privilege policy example, which this specification does not provide.
 
 **Tests/review**
 
-- Configure/build/test with `ENABLE_DBUS=OFF`.
-- Configure/build/test with `ENABLE_DBUS=ON`.
+- Configure/build/test with both app options `OFF` and `ENABLE_DBUS=OFF`.
+- Configure/build/test with both app options `OFF` and `ENABLE_DBUS=ON`.
 - Enabling the private-bus test target requires `dbus-daemon` to be available.
-- Missing libdbus with option off remains a successful core configuration;
-  missing libdbus with option on fails with an explicit actionable message.
+- With both app options `OFF`, missing libdbus with `ENABLE_DBUS=OFF` remains
+  a successful core configuration; missing libdbus with `ENABLE_DBUS=ON` fails
+  with an explicit actionable message.
 - The standalone-header check includes the D-Bus endpoint headers in either
   build mode because they expose no libdbus types; it must pass with the
   option both on and off. The optional implementation and private-bus test
