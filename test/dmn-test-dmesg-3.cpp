@@ -10,9 +10,9 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <future>
 #include <iostream>
 #include <string>
-#include <thread>
 
 #include "proto/dmn-dmesg-type.pb.h"
 #include "proto/dmn-dmesg.pb.h"
@@ -24,18 +24,21 @@ int main(int argc, char *argv[]) {
 
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
-    std::string data1{};
-    std::string data2{};
+    std::promise<std::string> received1;
+    auto received1_future = received1.get_future();
 
     auto dmesg_handle1 = dmesg.openHandler(
-        "handler1", nullptr, [&data1](const dmn::DMesgPb &dmesgpb) -> void {
-          data1 = dmesgpb.body().message();
+        "handler1", nullptr, [&received1](const dmn::DMesgPb &dmesgpb) -> void {
+          received1.set_value(dmesgpb.body().message());
         });
+
     EXPECT_TRUE(dmesg_handle1);
 
+    std::promise<std::string> received2;
+    auto received2_future = received2.get_future();
     auto dmesg_handle2 = dmesg.openHandler(
-        "handler2", nullptr, [&data2](const dmn::DMesgPb &dmesgpb) -> void {
-          data2 = dmesgpb.body().message();
+        "handler2", nullptr, [&received2](const dmn::DMesgPb &dmesgpb) -> void {
+          received2.set_value(dmesgpb.body().message());
         });
 
     EXPECT_TRUE(dmesg_handle2);
@@ -53,18 +56,22 @@ int main(int argc, char *argv[]) {
 
     dmesg_handle3->write(dmesgpb);
 
-    dmn::Dmn_Proc::yield();
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    auto received1_status = received1_future.wait_for(std::chrono::seconds(30));
+    EXPECT_EQ(received1_status, std::future_status::ready);
+    if (received1_status == std::future_status::ready) {
+      EXPECT_EQ(data, received1_future.get());
+    }
 
-    std::cout << "after wait for data to sync\n";
+    auto received2_status = received2_future.wait_for(std::chrono::seconds(30));
+    EXPECT_EQ(received2_status, std::future_status::ready);
+    if (received2_status == std::future_status::ready) {
+      EXPECT_EQ(data, received2_future.get());
+    }
 
     dmesg.waitForEmpty();
     dmesg.closeHandler(dmesg_handle1);
     dmesg.closeHandler(dmesg_handle2);
     dmesg.closeHandler(dmesg_handle3);
-
-    EXPECT_TRUE(data == data1);
-    EXPECT_TRUE(data == data2);
   }
 
   google::protobuf::ShutdownProtobufLibrary();

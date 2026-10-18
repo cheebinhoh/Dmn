@@ -51,10 +51,11 @@ has no timezone, the iPhone and host clocks/timezones must agree. Notifications
 with a missing or unrecognized date are suppressed while this option is on.
 This is a best-effort timestamp filter, not a BlueZ-side history boundary.
 
-Earlier tests on “iPhone Old” remain unresolved: after services resolved, its
+Earlier tests on “iPhone Old” were unresolved: after services resolved, its
 BlueZ GATT tree contained Generic Attribute and vendor-specific services but
-no ANCS UUID. That device did not reach ANCS subscription or authorization;
-the successful Genghis result does not claim compatibility with Old.
+no ANCS UUID. A later 2026-10-18 `dmn-bluetooth-cli` test successfully received
+notifications from “iPhone Old,” superseding that earlier result and
+confirming ANCS notification delivery on the device.
 
 The monitor now explicitly retries `Device1.Connect` once through a separate
 remaining-profiles API when a selected device is already connected but its
@@ -62,8 +63,11 @@ services are unresolved. Ordinary `connectDevice` remains idempotent. BlueZ's
 `AlreadyConnected`/`InProgress` responses and the specific
 `Failed: Operation already in progress` response are handled as an already
 active request; they do not imply GATT readiness. Private-bus tests cover the
-request and its in-progress behavior. This recovery does not address why the
-earlier “iPhone Old” connection did not publish ANCS.
+request and its in-progress behavior. This recovery does not itself explain
+why an earlier “iPhone Old” connection did not publish ANCS; a later
+production-CLI test successfully received notifications from that device,
+showing that the earlier missing-service observation was not its final
+compatibility result.
 
 The bearer fix explicitly requests BlueZ's remaining GATT-capable profile, and
 both ANCS characteristics must report `Notifying=true` before the session is
@@ -73,9 +77,11 @@ authorization gate; approving it enabled the confirmed Genghis delivery.
 The phone is bonded, so a new pairing prompt is not expected; seeing Pop!_OS
 on the phone alone does not prove ANCS readiness. Apple's ANCS specification
 requires a BLE link and authorization for characteristic access. The
-notification-access approval was required on Genghis. The earlier “iPhone
-Old” attempt remains a separate unresolved case: its resolved GATT tree
-contained no ANCS service, so it never reached subscription or authorization.
+notification-access approval was required on Genghis. Earlier “iPhone Old”
+attempts had a resolved GATT tree with no ANCS service and never reached
+subscription or authorization. A later 2026-10-18 test using
+`dmn-bluetooth-cli` successfully received notifications from “iPhone Old,”
+superseding that earlier unresolved result for the tested device.
 
 This is a follow-on to the separately specified BlueZ inventory and
 `--discovery` CLI in [`bluez-discovery-cli-spec.md`](bluez-discovery-cli-spec.md).

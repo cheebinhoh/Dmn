@@ -4,11 +4,11 @@ on:
     branches: [ main ]
 
   workflow_dispatch:
-    inputs: 
+    inputs:
       reason:
         description: 'For doxygen documentation'
         required: false
-        default: 'Manual update' 
+        default: 'Manual update'
 
 permissions:
   contents: write

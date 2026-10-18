@@ -45,8 +45,9 @@ variants are only registered when `ENABLE_VALGRIND=ON`.
 ### Kafka integration tests
 
 Kafka tests are optional and require a broker available at
-`localhost:9092`. Start a broker and create the `timer_counter` topic before
-running them. For example, with Kafka's command-line tools:
+`localhost:9092`. Either start a broker and create the `timer_counter` topic
+yourself, or enable `BUILD_KAFKA_TEST=ON` and use the staged project helper.
+For example, with Kafka's command-line tools:
 
 ```bash
 kafka-topics.sh --create --topic timer_counter --bootstrap-server localhost:9092
@@ -57,11 +58,14 @@ Then configure, build, and run the Kafka tests:
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_KAFKA_TEST=ON
 cmake --build build -j2
+./build/scripts/run-bookstrap-dmn.sh
 ctest --test-dir build -L kafka --output-on-failure
+./build/scripts/run-bookstrap-dmn.sh stop
 ```
 
-The Docker entrypoint starts its bundled broker and creates this topic
-automatically; native runs must provide both themselves.
+The helper downloads and verifies the pinned Kafka distribution when needed;
+it requires Java and network access on first use. The Docker entrypoint starts
+Kafka and creates this topic automatically.
 
 ### D-Bus extension
 
@@ -109,12 +113,12 @@ On Linux, the optional `dmn-bluez-cli` program prints BlueZ's known
 adapter/device inventory and can explicitly start a scan on one powered
 adapter. It depends on the Dmn D-Bus extension, but not on GATT or ANCS.
 Install the D-Bus development package and daemon as above, then configure and
-build the CLI:
+build both optional Bluetooth CLIs:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-  -DENABLE_DBUS=ON -DENABLE_BLUEZ=ON
-cmake --build build --target dmn-bluez-cli -j2
+  -DENABLE_APP_BLUEZ_DISCOVERY=ON -DENABLE_APP_BLUETOOTH=ON
+cmake --build build --target dmn-bluez-cli dmn-bluetooth-cli -j2
 ```
 
 Install the built libraries, CLIs, headers, and their manual pages (use `sudo` if
@@ -165,8 +169,8 @@ needed and monitors its ANCS notifications:
 ```
 
 See `man dmn-bluetooth-cli` for its options, output, failure handling, and
-recovery guidance. This CLI requires a working BlueZ system service; it does
-not provide a GTK+ interface.
+recovery guidance. This CLI requires a working BlueZ system service and does
+not provide a graphical interface.
 
 ## Fault-injection tests
 
@@ -211,11 +215,11 @@ Start it interactively with its normal entrypoint:
 docker run -it --rm dmn
 ```
 
-The image enables every CMake option. On startup, the entrypoint bootstraps
-the Kafka topic and runs the `dmn`, `kafka`, `valgrind`, and `fault-injection`
-CTest groups. If they pass, it opens a Bash prompt in the container; if they
-fail, the entrypoint exits without opening the prompt. The run command removes
-the container when you exit because it uses `--rm`.
+The image enables all non-hardware CMake options. On startup, the entrypoint
+bootstraps the Kafka topic and runs the `dmn`, `kafka`, `valgrind`, and
+`fault-injection` CTest groups. If they pass, it opens a Bash prompt in the
+container; if they fail, the entrypoint exits without opening the prompt. The
+run command removes the container when you exit because it uses `--rm`.
 
 To enter a shell immediately without starting Kafka or running tests, bypass
 the entrypoint:
@@ -244,8 +248,12 @@ docker rmi dmn
 | --- | --- | --- |
 | `BUILD_NDEBUG` | `OFF` | Define `NDEBUG` for the build. |
 | `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests. |
-| `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and generic D-Bus client. Requires libdbus development files, pkg-config, and `dbus-daemon`. |
-| `ENABLE_BLUEZ` | `OFF` | Build the Linux BlueZ inventory API and discovery CLI; requires `ENABLE_DBUS=ON`. |
+| `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and generic D-Bus client. Requires libdbus development files and pkg-config; private-bus tests require `dbus-daemon`. |
+| `ENABLE_BLUEZ` | `OFF` | Build the Linux BlueZ library; automatically enables its `ENABLE_DBUS` dependency. |
+| `ENABLE_ANCS` | `OFF` | Build the backend-neutral ANCS protocol library. |
+| `ENABLE_APP_BLUEZ_DISCOVERY` | `OFF` | Build and install `dmn-bluez-cli`; automatically enables `ENABLE_BLUEZ` and `ENABLE_DBUS`. |
+| `ENABLE_APP_BLUETOOTH` | `OFF` | Build and install `dmn-bluetooth-cli`; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. |
+| `ENABLE_ANCS_HARDWARE_TESTS` | `OFF` | Register the opt-in physical-iPhone test; requires `ENABLE_APP_BLUETOOTH=ON`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
 
@@ -254,10 +262,10 @@ with the desired options before building. The `dmn` CTest label selects the
 regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
 respective optional test groups.
 
-On Linux, to enable every CMake option, including Kafka, D-Bus, and BlueZ,
-configure and build with the commands below. The first command enables all six
-options; the second builds all targets. BlueZ tests use a private bus and do
-not require a physical adapter:
+On Linux, to enable all non-hardware CMake options, including Kafka, D-Bus,
+BlueZ, ANCS, both Bluetooth applications, Valgrind, and fault injection,
+configure and build with the commands below. BlueZ tests use a private bus and
+do not require a physical adapter; the physical-iPhone test remains opt-in:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
@@ -265,19 +273,24 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DBUILD_KAFKA_TEST=ON \
   -DENABLE_DBUS=ON \
   -DENABLE_BLUEZ=ON \
+  -DENABLE_ANCS=ON \
+  -DENABLE_APP_BLUEZ_DISCOVERY=ON \
+  -DENABLE_APP_BLUETOOTH=ON \
   -DENABLE_VALGRIND=ON \
   -DENABLE_FAULT_INJECTION=ON
 cmake --build build -j2
 ```
 
 This configuration requires libdbus development files, pkg-config,
-`dbus-daemon`, Valgrind, and a Kafka broker listening at `localhost:9092` with
-the `timer_counter` topic for Kafka integration tests. Run every registered
+`dbus-daemon`, Valgrind, and Java plus network access to bootstrap Kafka on
+first use. Run the Kafka helper before its tests, then run every registered
 test group with:
 
 ```bash
+./build/scripts/run-bookstrap-dmn.sh
 ctest --test-dir build -L 'dmn|kafka|valgrind|fault-injection' \
   --output-on-failure
+./build/scripts/run-bookstrap-dmn.sh stop
 ```
 
 `BUILD_NDEBUG=ON` disables assertions, so use `OFF` if you want assertions

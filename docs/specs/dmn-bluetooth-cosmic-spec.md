@@ -7,7 +7,7 @@ a native `libcosmic` application for the full workflow and an optional COSMIC
 panel applet for concise status/quick access. Neither is required for the
 recommended standalone GTK app.
 
-![Wireframe of the native COSMIC app and optional panel applet](images/dmn-bluetooth-cosmic.svg)
+![Illustrative wide COSMIC app layout and optional panel applet](images/dmn-bluetooth-cosmic.svg)
 
 ## 1. Platform and architecture decision
 
@@ -93,12 +93,15 @@ COSMIC-specific applets use `com.system76.CosmicApplet` and the COSMIC Flatpak
 repository rather than treating app and applet as one package. Confirm current
 store submission requirements at implementation time.
 
-The first screen is a responsive two-column layout: **Phones** and
-**Notifications**, with header search/preferences, explicit Save/Monitor/Stop
-actions, newest-first events, and accessible states. Avoid custom shell chrome.
-Feature behavior, privacy policy, 1,000-row cap, filters, event details,
-ANCS errors, and test gates match the shared [GTK app spec](dmn-bluetooth-gtk-app-spec.md)
-unless this document says otherwise.
+At wide widths, the first screen is a two-pane **Phones** and **Notifications**
+layout with header search/preferences, explicit Save/Monitor/Stop actions,
+newest-first events, and accessible states. At narrow widths, use a
+single-view navigation flow from the phone list to the selected event feed and
+details; preserve a visible Back action and do not require horizontal
+scrolling. Avoid custom shell chrome. Feature behavior, privacy policy,
+1,000-row cap, filters, event details, ANCS errors, and test gates match the
+shared [GTK app spec](dmn-bluetooth-gtk-app-spec.md) unless this document says
+otherwise.
 
 ### Interaction requirements
 
@@ -145,7 +148,9 @@ dialogs, or address-level settings. **Open application** activates
 `dmn-bluetooth-cosmic`. Without a service, the applet must either be a
 launcher-only control or explicitly show unavailable state; it must not
 invent live status. If service connection is lost, disable mutations and
-preserve **Open application**.
+preserve **Open application**. The applet consumes only payload-free service
+status and aggregate-count signals; it never subscribes to event payloads or
+requests event history.
 
 The wireframe shows both the full window and compact applet popup.
 
@@ -210,7 +215,8 @@ may also use tested C++ FFI instead of a service when it is the sole frontend.
      app state loop continues and no callback uses a dropped view/controller.
 6. **Event feed and accessible view.**
    - Test: filters, sort/arrival sequence, search, detail values, empty and
-     no-results states, keyboard navigation, and no payload persistence.
+     no-results states, keyboard navigation, no payload persistence, and
+     narrow/wide layout transitions without clipped actions.
    - Implement: responsive list/table and detail surface using `libcosmic`
      widgets/theme and accessible labels.
    - Verify: unit tests first; use `iced_test::Simulator` only if the pinned
@@ -241,10 +247,13 @@ may also use tested C++ FFI instead of a service when it is the sole frontend.
 1. **Applet template.** Build/install official template. Verify enable,
    disable, and remove without affecting the native app or shell.
 2. **Popup model.** Test all state mappings, unknown future enum, service
-   missing, and count-hidden behavior with a fake service client. Verify
-   disconnected state is unavailable and never stale Ready.
+   missing, count-hidden behavior, and no `GetRecentEvents` call with a fake
+   service client. Verify the applet requests only payload-free status/count
+   data and disconnected state is unavailable, never stale Ready.
 3. **Popup UI.** Test keyboard, screen reader, popup open/close, panel
-   orientation/size, theme, and zero payload text. Verify interactively on
+   orientation/size, theme, and zero payload text. Verify the pinned
+   `libcosmic` accessibility feature is enabled and its exposed names/states
+   work with the target COSMIC accessibility stack. Verify interactively on
    the target shell and automate model/control actions where `libcosmic`
    widget simulation supports the pinned version.
 4. **Service calls.** Test authorization/error/timeout and ensure applet
@@ -256,14 +265,18 @@ may also use tested C++ FFI instead of a service when it is the sole frontend.
 
 ## 5. Acceptance criteria
 
-- The native application remains useful without an applet, shell-specific
-  component, or notification server.
-- The selected FFI or D-Bus boundary has automated ownership, shutdown, and
-  error tests; no direct ANCS logic is duplicated in Rust.
-- The applet is optional, concise, payload-free, and reports unavailable
-  rather than stale status.
-- UI and packaging pass on declared COSMIC versions; default Dmn CMake builds
-  do not acquire COSMIC dependencies.
+- **COSMIC-AC-01:** The native application remains useful without an applet,
+  shell-specific component, or notification server.
+- **COSMIC-AC-02:** The selected FFI or D-Bus boundary has automated ownership,
+  shutdown, and error tests; no direct ANCS logic is duplicated in Rust.
+- **COSMIC-AC-03:** The applet is optional, concise, payload-free, and reports
+  unavailable rather than stale status.
+- **COSMIC-AC-04:** UI and packaging pass on declared COSMIC versions; default
+  Dmn CMake builds do not acquire COSMIC dependencies.
+- **COSMIC-AC-05:** Both app and applet use `libcosmic` widgets/theme/spacing,
+  support keyboard operation and responsive layouts, and expose accessible
+  names/states through the verified accessibility feature on each supported
+  release.
 
 ## 6. Research references
 

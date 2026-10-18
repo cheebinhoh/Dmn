@@ -9,6 +9,7 @@ HOOK_PATH=".git/hooks/pre-commit"
 
 if [ -e "$HOOK_PATH" ]; then
   echo "Error: $HOOK_PATH already exists." >&2
+
   exit 1
 fi
 

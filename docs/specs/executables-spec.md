@@ -38,9 +38,9 @@ existing facade into the gateway.
 
 ## Kafka sender and receiver
 
-`src/app/dmn-kafka-sender.cpp` and `src/app/dmn-kafka-receiver.cpp` are stand-alone
-producer/consumer smoke examples against an external broker. They configure
-credentials in source, use a fixed topic, and are unsuitable for deployment.
+`src/app/dmn-kafka-sender.cpp` and `src/app/dmn-kafka-receiver.cpp` are
+standalone producer/consumer smoke examples. They read broker credentials from
+environment variables, use a fixed topic, and are not production applications.
 The sender produces ten values. The receiver polls until SIGINT and prints
 received payloads.
 
@@ -61,13 +61,10 @@ proposed D-Bus gateway service/client-proxy contract.
 
 ## Gaps / improvements
 
-1. Remove secrets from the two Kafka examples, rotate credentials if they were
-   valid, and source configuration from environment/secret-management input
-   that is not committed.
-2. Replace the daemon's placeholder sleep/hook with an explicitly named demo or
+1. Replace the daemon's placeholder sleep/hook with an explicitly named demo or
    a real daemon lifecycle. Do not present it as a production service.
-3. Reject or meaningfully parse command-line arguments; currently they are
+2. Reject or meaningfully parse command-line arguments; currently they are
    unused.
-4. Re-enable disabled tests only after making them deterministic, and document
+3. Re-enable disabled tests only after making them deterministic, and document
    the reason for each skipped target. Add coverage for cleanup and failures,
    not just happy-path transport.

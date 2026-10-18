@@ -10,9 +10,9 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <future>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <utility>
 
 #include "dmn-dmesg.hpp"
@@ -31,21 +31,23 @@ int main(int argc, char *argv[]) {
     auto topic2_write_handler =
         dmesg->openHandler("topic2_write_handler", "topic2");
 
-    dmn::DMesgPb dmesgpb_topic1_read{};
-    auto topic1_read_handler = dmesg->openHandler(
-        "topic1_read_handler", "topic1", nullptr,
-        [&dmesgpb_topic1_read](dmn::DMesgPb dmesgpb) -> void {
-          std::cout << "read topic1\n";
-          dmesgpb_topic1_read = std::move(dmesgpb);
-        });
+    std::promise<dmn::DMesgPb> topic1_message;
+    auto topic1_message_future = topic1_message.get_future();
+    auto topic1_read_handler =
+        dmesg->openHandler("topic1_read_handler", "topic1", nullptr,
+                           [&topic1_message](dmn::DMesgPb dmesgpb) -> void {
+                             std::cout << "read topic1\n";
+                             topic1_message.set_value(std::move(dmesgpb));
+                           });
 
-    dmn::DMesgPb dmesgpb_topic2_read{};
-    auto topic2_read_handler = dmesg->openHandler(
-        "topic2_read_handler", "topic2", nullptr,
-        [&dmesgpb_topic2_read](dmn::DMesgPb dmesgpb) -> void {
-          std::cout << "read topic2\n";
-          dmesgpb_topic2_read = std::move(dmesgpb);
-        });
+    std::promise<dmn::DMesgPb> topic2_message;
+    auto topic2_message_future = topic2_message.get_future();
+    auto topic2_read_handler =
+        dmesg->openHandler("topic2_read_handler", "topic2", nullptr,
+                           [&topic2_message](dmn::DMesgPb dmesgpb) -> void {
+                             std::cout << "read topic2\n";
+                             topic2_message.set_value(std::move(dmesgpb));
+                           });
     dmn::DMesgPb dmesgpb{};
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
@@ -55,10 +57,18 @@ int main(int argc, char *argv[]) {
 
     topic1_write_handler->write(dmesgpb);
 
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_TRUE("topic1" == dmesgpb_topic1_read.topic());
-    EXPECT_TRUE("Hello topic1" == dmesgpb_topic1_read.body().message());
-    EXPECT_TRUE(dmesgpb_topic2_read.body().message().empty());
+    auto topic1_status =
+        topic1_message_future.wait_for(std::chrono::seconds(30));
+    EXPECT_EQ(topic1_status, std::future_status::ready);
+    if (topic1_status == std::future_status::ready) {
+      auto dmesgpb_topic1_read = topic1_message_future.get();
+      EXPECT_EQ("topic1", dmesgpb_topic1_read.topic());
+      EXPECT_EQ("Hello topic1", dmesgpb_topic1_read.body().message());
+    }
+
+    dmesg->waitForEmpty();
+    EXPECT_EQ(topic2_message_future.wait_for(std::chrono::seconds(0)),
+              std::future_status::timeout);
 
     dmn::DMesgPb dmesgpb2{};
     dmesgpb2.set_type(dmn::DMesgTypePb::message);
@@ -69,12 +79,14 @@ int main(int argc, char *argv[]) {
 
     topic2_write_handler->write(dmesgpb2);
 
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    EXPECT_TRUE("topic1" == dmesgpb_topic1_read.topic());
-    EXPECT_TRUE("Hello topic1" == dmesgpb_topic1_read.body().message());
-
-    EXPECT_TRUE("topic2" == dmesgpb_topic2_read.topic());
-    EXPECT_TRUE("Hello topic2" == dmesgpb_topic2_read.body().message());
+    auto topic2_status =
+        topic2_message_future.wait_for(std::chrono::seconds(30));
+    EXPECT_EQ(topic2_status, std::future_status::ready);
+    if (topic2_status == std::future_status::ready) {
+      auto dmesgpb_topic2_read = topic2_message_future.get();
+      EXPECT_EQ("topic2", dmesgpb_topic2_read.topic());
+      EXPECT_EQ("Hello topic2", dmesgpb_topic2_read.body().message());
+    }
 
     dmesg = {};
   }

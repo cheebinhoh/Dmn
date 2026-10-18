@@ -8,9 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <iostream>
-#include <thread>
 
 #include "proto/dmn-dmesg-type.pb.h"
 #include "proto/dmn-dmesg.pb.h"
@@ -87,13 +85,7 @@ int main(int argc, char *argv[]) {
 
     proc_read1.exec();
     proc_read2.exec();
-    dmn::Dmn_Proc::yield();
-
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    std::cout << "after sleep 3 seconds\n";
-
     dmesg_write_handle->write(dmesgpb1);
-    std::this_thread::sleep_for(std::chrono::seconds(3));
 
     auto lastDMesg = dmesg.getTopicLastMessage("id1");
     EXPECT_TRUE((lastDMesg));
@@ -106,9 +98,6 @@ int main(int argc, char *argv[]) {
     EXPECT_TRUE((lastDMesg->body().message() == "message string 2"));
 
     dmesg.waitForEmpty();
-
-    std::cout << "after sleep 5 seconds\n";
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     proc_read1.wait();
     proc_read2.wait();
@@ -142,14 +131,12 @@ int main(int argc, char *argv[]) {
     std::cout << "****** reset\n";
     dmesg.resetConflictStateWithLastTopicMessage("id1");
 
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    std::cout << "****** after reset\n";
+    dmesg.waitForEmpty();
 
     inConflict = dmesg_write_handle->isInConflict();
     EXPECT_TRUE((!inConflict));
 
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
+    dmesg.waitForEmpty();
     inConflict = dmesg_read_handle1->isInConflict();
     EXPECT_TRUE((!inConflict));
 

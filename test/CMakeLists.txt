@@ -3,7 +3,7 @@
 # [TEST TYPE: GTEST]
 # Core unit and component tests (CTest label: dmn).
 ADD_TEST_EXECUTABLE(dmn
-                      # FIXME: the following test needs to be refactored to avoid none-stop running
+                      # FIXME: refactor this test so it does not run indefinitely
                       # dmn-test
                       dmn-test-async
                       dmn-test-async-2

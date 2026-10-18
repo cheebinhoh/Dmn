@@ -18,10 +18,13 @@ tree. A user-approved disconnect/reconnect then allowed
 `ServicesResolved=true`, but the production CLI exited because the resolved
 GATT tree had no ANCS service. Read-only inspection found Generic Attribute
 and two vendor-specific services, with no ANCS UUID. No ANCS subscription or
-attribute exchange occurred. The next hardware step requires investigation of
-why this iPhone/BlueZ connection does not publish ANCS; do not infer
-authorization or compatibility from the link or resolved services. The phone
-is bonded, so no pairing prompt is expected. A second target, “iPhone Genghis”
+attribute exchange occurred during those attempts. They showed that link and
+service-resolution state alone are not proof of ANCS availability. The phone
+was bonded, so no pairing prompt was expected. This earlier “iPhone Old”
+result was superseded by a successful 2026-10-18 `dmn-bluetooth-cli` run that
+received notifications from that phone; it is historical evidence of an
+earlier unresolved state, not the final compatibility result. A second target,
+“iPhone Genghis”
 (iPhone 15 Plus, iOS 26.7.1), was paired by the user and left disconnected
 without forgetting it. The production monitor reconnected it, resolved GATT,
 found ANCS and its required characteristics, subscribed, and reached its
@@ -80,10 +83,14 @@ separation, notification escaping, and broken-stdout cleanup are now covered
 by dedicated private-bus subprocess tests. SIGINT during blocked startup
 cleanup and output-queue saturation are covered as well. An opt-in physical
 device CTest exercises ANCS startup and shutdown through the production CLI;
-it is disabled by default. Recent monitor attempts found “iPhone Old” paired
+it is disabled by default. Earlier monitor attempts found “iPhone Old” paired
 and connected but service resolution did not complete within 60 seconds; a
 user-approved disconnect/reconnect then resolved the GATT tree but exposed no
-ANCS service, so no subscription or attribute exchange occurred. The current
+ANCS service, so no subscription or attribute exchange occurred. In a
+subsequent 2026-10-18 run, the user successfully tested notification delivery
+from “iPhone Old” with `dmn-bluetooth-cli`; this supersedes the earlier
+unresolved result and confirms that this device can deliver ANCS notifications
+with the current CLI. The current
 implementation and remaining gates
 are tracked against
 [`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md). The first,
@@ -261,12 +268,13 @@ already in progress,” after which the monitor continued waiting for service
 resolution. Following a user-approved disconnect/reconnect, the production
 CLI observed resolved services but found no ANCS service UUID in the GATT
 tree. There were no ANCS subscriptions or attribute exchanges. These
-observations do not establish usable ANCS access. Investigate why this
-iPhone/BlueZ connection does not publish the service, and only request further
-phone-side action when its purpose is clear. Until a real iPhone/iOS target
-passes the GATT and ANCS gates, Phase 1 remains hardware-unqualified; protocol
-work may continue against deterministic fake backends, but do not claim iPhone
-compatibility.
+observations, at the time, did not establish usable ANCS access. A later
+2026-10-18 `dmn-bluetooth-cli` run successfully received notifications from
+“iPhone Old,” superseding that unresolved result. The earlier missing-service
+state may warrant investigation if it recurs, but it is not a current blocker:
+the successful production-CLI notification test meets the real-device gate
+for “iPhone Old.” This result is specific to the tested device and does not
+qualify other iPhone/iOS/BlueZ/adapter combinations.
 
 ### Step 1 — CLI: pair/connect, monitor ANCS, and print notifications
 
@@ -377,10 +385,12 @@ cleanup remain frontend-specific CLI tests.
 
 **Verified gates:** parser, fake-GATT, focused private-bus CLI, existing
 discovery CLI, standalone-header, and formatting checks pass. The opt-in
-production-CLI hardware test is not run by default and requires a working
-iPhone ANCS GATT session. These software checks do not prove real-iPhone
-compatibility. The physical-device gate remains blocked while BlueZ reports
-`ServicesResolved=false`.
+production-CLI hardware test passed on 2026-10-18 with “iPhone Old”: the CLI
+reached ANCS-ready and exited cleanly after SIGINT. Separately, a manual
+`dmn-bluetooth-cli` test successfully received notifications from “iPhone Old,”
+confirming notification-attribute delivery on that device. Earlier
+observations of unresolved services are historical and were superseded by the
+successful run; do not treat `ServicesResolved` alone as proof of ANCS support.
 
 #### Step 1D — “iPhone Old” hardware qualification
 
@@ -397,6 +407,9 @@ compatibility. The physical-device gate remains blocked while BlueZ reports
   ServicesResolved, ANCS tree/flags, each subscription authorization, and one
   controlled notification attribute round trip as separate observed results.
   Do not record phone addresses or notification contents.
+- On 2026-10-18, `dmn-bluetooth-cli` successfully received notifications from
+  “iPhone Old.” This verifies ANCS notification delivery on that device; the
+  separate opt-in CTest verifies startup readiness and SIGINT cleanup.
 - Use a newly delivered notification from any app whose iOS notifications are
   enabled and allowed to appear in Notification Center. A Messages SMS or
   iMessage is a convenient test but is not an ANCS requirement. Check that
@@ -411,9 +424,11 @@ notification-details client requires all three. BlueZ `Device1.Connect`
 requests generic auto-connectable profiles and does not promise an LE bearer.
 `ServicesResolved=true` is not proof of ANCS. Pairing, link connection,
 service resolution, characteristic visibility, subscription authorization,
-and attribute response are separate results. If “iPhone Old” cannot pass the
+and attribute response are separate results. If a target cannot pass the
 gate, report it as unqualified rather than hiding the limitation with retries,
-fallback profiles, or success-shaped output.
+fallback profiles, or success-shaped output. “iPhone Old” has since passed
+the notification-delivery gate using `dmn-bluetooth-cli`; this does not qualify
+other iPhone/OS/BlueZ/adapter combinations.
 
 The physical CLI smoke test is registered only when
 `ENABLE_ANCS_HARDWARE_TESTS=ON`, which requires

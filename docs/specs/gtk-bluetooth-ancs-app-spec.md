@@ -71,6 +71,13 @@ subscription or notification-access prompt has occurred yet. Do not tell the
 user to approve notification access as though the prompt has already been
 requested.
 
+This is a documented failure mode, not the current result for every device
+that previously exhibited it: on 2026-10-18, `dmn-bluetooth-cli`
+successfully received notifications from “iPhone Old” after earlier
+no-service observations. Keep the failure handling for future/intermittent
+stale-GATT states, but do not describe “iPhone Old” as currently unable to use
+ANCS.
+
 For one observed stale-GATT incident, disconnecting/reconnecting from Pop!_OS
 alone did not restore ANCS. Forgetting Pop!_OS from the iPhone, then
 reconnecting and pairing again, restored ANCS discovery. The GUI must explain
@@ -157,20 +164,20 @@ device state, or notification category.
 
 ## 6. Acceptance criteria
 
-1. A connected device with `ServicesResolved=true` but no ANCS service is
+1. **ANCS-GUI-AC-01:** A connected device with `ServicesResolved=true` but no ANCS service is
    displayed as connected but not ready; show the missing-service recovery
    guidance and do not claim that iOS notification access was requested.
-2. A successful `StartNotify` reply with `Notifying=false` is shown as a
+2. **ANCS-GUI-AC-02:** A successful `StartNotify` reply with `Notifying=false` is shown as a
    subscription failure; the GUI does not enter **Ready**.
-3. A D-Bus timeout after **Ready** is shown as a runtime session failure
+3. **ANCS-GUI-AC-03:** A D-Bus timeout after **Ready** is shown as a runtime session failure
    without guessing the timed-out method or exposing notification content.
-4. The GUI distinguishes ANCS-ready from waiting for the first notification
+4. **ANCS-GUI-AC-04:** The GUI distinguishes ANCS-ready from waiting for the first notification
    and explains that iOS may prompt on receipt of a new notification.
-5. All synchronous Bluetooth operations leave the GTK main thread responsive;
+5. **ANCS-GUI-AC-05:** All synchronous Bluetooth operations leave the GTK main thread responsive;
    worker callbacks are marshalled before widget access.
-6. Retry, disconnect, pair, and monitor-stop actions are explicit and scoped
+6. **ANCS-GUI-AC-06:** Retry, disconnect, pair, and monitor-stop actions are explicit and scoped
    to the selected device. The GUI never automatically forgets the bond.
-7. Automated fake-backend and UI-model tests cover each failure state,
+7. **ANCS-GUI-AC-07:** Automated fake-backend and UI-model tests cover each failure state,
    recovery instructions, and the transition to ready only after both
    notification subscriptions are confirmed active.
 

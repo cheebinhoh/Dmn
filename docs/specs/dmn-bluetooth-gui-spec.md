@@ -65,12 +65,82 @@ history or embed an application feed into the notification center.
 | Native COSMIC app and COSMIC applet | Rust/`libcosmic` native window and optional panel surface | Alternative if COSMIC integration is the priority; requires a maintained C++ boundary. See [COSMIC spec](dmn-bluetooth-cosmic-spec.md). |
 | User-session D-Bus monitor service | Owns monitor lifetime/state for multiple frontends or after a window/process exits | Optional independent topic, not a default dependency; see [service spec](dmn-bluetooth-session-service-spec.md). |
 
+## Feasibility for test-driven, spec-driven implementation
+
+All four designs are feasible to implement incrementally with agentic AI if
+each task is bounded by a numbered acceptance criterion, a fakeable boundary,
+and an executable verification command. They are not equally automatable:
+
+| Surface | Feasibility | Reliably automatable | Must remain a separate qualification |
+| --- | --- | --- | --- |
+| GTK application | **High** | Core/model and controller behavior with GoogleTest; GTK widget/action checks with a display; package/build-gate checks; AT-SPI queries for accessible controls | Visual quality, screen-reader usability, target desktop integration, and iPhone/BlueZ behavior |
+| GNOME Shell extension | **Medium** | Pure GJS state/client modules, launcher behavior, and fake-service protocol tests | Shell popup lifecycle and API compatibility require an actual declared GNOME Shell session; no version-independent extension UI test contract is assumed |
+| COSMIC app | **Medium-high** | Rust model/reducer and boundary contract tests; headless widget interaction only when the pinned `libcosmic` version works with the chosen simulator | Target COSMIC session, package/launcher behavior, and any FFI/D-Bus integration not exercised by fakes |
+| COSMIC applet | **Medium** | Popup state mapping and service-client tests | Panel orientation, sizing, popup lifecycle, and shell integration on each supported COSMIC release |
+| Optional D-Bus service | **High** | Contract/introspection tests, pure state tests, and private-session-bus tests with delayed/failing fake monitors | Same-user threat assumptions, service packaging/session lifecycle, and real BlueZ/ANCS integration |
+
+These ratings describe testability, not implementation cost or product
+priority. GTK is the recommended first frontend because the main workflow can
+be tested in the existing C++/GoogleTest/CTest environment, with a small
+display-backed layer for GTK-specific behavior. The existing backend private
+bus tests can exercise the real monitor adapter without a physical phone.
+GNOME and COSMIC remain viable but add independently versioned runtimes and
+shell-specific release gates.
+
+### Gaps to close before implementation
+
+1. Declare and test the minimum supported GTK/libadwaita, GNOME Shell/GJS, and
+   COSMIC/libcosmic versions. Check package availability and CI image support
+   before choosing a release matrix; upstream web documentation is not a
+   compatibility guarantee for a distribution release.
+2. Keep the proposed GTK build option separate from the existing
+   `ENABLE_APP_BLUETOOTH`, which currently builds `dmn-bluetooth-cli`.
+   `ENABLE_APP_BLUETOOTH_GTK` is a new, proposed opt-in target and must not
+   silently rename, replace, or build the CLI. Its dependency behavior is
+   specified in the GTK application spec.
+3. For each milestone, link requirement IDs to focused tests and distinguish
+   automated evidence from human/hardware qualification. A test name or
+   screenshot alone is not evidence that the required behavior is covered.
+4. Keep platform-specific build and test dependencies optional. CI must
+   include the default/headless configuration and each enabled frontend
+   configuration; an unavailable GNOME/COSMIC shell runner must be reported
+   as an unrun integration gate, not a passing test.
+5. Keep payload-bearing event access in the full application. Shell surfaces
+   need only payload-free state/count signals and must not subscribe to or
+   request event contents.
+
+### Layout feasibility and standard compliance
+
+The proposed layouts are implementable with the selected toolkit, but the
+wireframes are interaction sketches, not evidence of platform compliance:
+
+| Layout | Assessment | Required design adjustment |
+| --- | --- | --- |
+| GTK/libadwaita main window | Feasible as a wide split view with a phone list and event feed | At narrow widths, collapse to a single navigable view; keep alert controls in Preferences rather than a persistent feed card. Use GTK/libadwaita theme styling, standard controls, and GNOME HIG keyboard/accessibility/adaptive rules. |
+| GNOME Shell extension | Feasible only as a compact Shell menu, not a full application panel | Use standard Shell menu items and actions; the extension remains launcher-only unless the optional service is present. Test on declared Shell releases. |
+| COSMIC application | Feasible as a native `libcosmic` list/detail application | Use COSMIC theme/spacing/widget conventions and an explicit narrow-window layout; validate keyboard and accessibility behavior against the pinned `libcosmic` revision. |
+| COSMIC applet | Feasible as a small, optional status/action popup | Keep it payload-free and compact; do not attempt to squeeze the full device/event workflow into the panel. |
+
+No spec can certify an app as GTK/GNOME/COSMIC-compliant before it is
+implemented and checked on declared platform versions. Each frontend's
+acceptance criteria therefore require a platform-specific design review,
+keyboard/accessibility checks, and shell/package verification; COSMIC
+accessibility is an explicit risk because upstream `libcosmic` currently
+describes its `a11y` feature as experimental.
+
+The detailed specs below define test seams and milestone checks. Before a
+coding milestone, the implementer must record the selected platform/version,
+requirement IDs under test, target commands, and any unavailable environment
+as explicit assumptions. If a test seam cannot be implemented without
+changing a public Dmn API, stop at the adapter boundary and propose that API
+change separately instead of faking proof in the UI test.
+
 ## UI scratch artifacts
 
 These are interaction/layout wireframes, not polished visual designs or
 pixel-perfect toolkit mockups:
 
-- [GTK main window and optional alert settings](images/dmn-bluetooth-gtk-app.svg)
+- [GTK wide-window layout sketch](images/dmn-bluetooth-gtk-app.svg)
 - [GNOME Shell extension menu](images/dmn-bluetooth-gnome-extension.svg)
 - [COSMIC application and applet](images/dmn-bluetooth-cosmic.svg)
 - [Optional background service ownership diagram](images/dmn-bluetooth-session-service.svg)
@@ -109,7 +179,7 @@ src/
         filter-state.hpp/.cpp
         monitor-controller.hpp/.cpp
         settings-model.hpp
-      gtk/                             # GTK/gtkmm views and adapters
+      gtk/                             # GTK/libadwaita C API views and adapters
         main.cpp
         bluetooth-gtk-application.hpp/.cpp
         main-window.hpp/.cpp
@@ -145,7 +215,7 @@ The actual filenames may be grouped differently; preserve the boundaries:
   types, but should accept injected monitor factories, clocks, executors, and
   alert sinks so model/controller tests do not require a display, Bluetooth,
   or the desktop notification daemon.
-- `gtk/` is the only C++ directory that includes GTK/gtkmm. It translates
+- `gtk/` is the only C++ directory that includes GTK/libadwaita APIs. It translates
   core state into widgets and translates user actions into controller
   requests. GTK models/widgets are created and mutated only on the GTK main
   context.
@@ -240,7 +310,8 @@ Read the shared contracts in dmn-bluetooth-gui-spec.md and the relevant
 backend/API spec. Do not implement later milestones.
 
 Allowed areas: <specific directories/files>.
-Behavior: <specific acceptance bullets from the milestone>.
+Requirement IDs: <specific AC IDs from the frontend spec>.
+Behavior: implement only those acceptance criteria.
 Test first: add or run the focused failing test(s) for <assertions>.
 Implementation: make the smallest change that passes those tests.
 Verification: run <targeted build>, <focused test command>, and any
@@ -255,6 +326,10 @@ The human or coordinating agent should review the work-item diff and test
 evidence before issuing the next milestone. For final toolkit-specific
 behavior, combine automated evidence with a short human acceptance checklist;
 do not use manual clicking in place of tests for deterministic state logic.
+Acceptance IDs use the prefix in each spec (`GTK-AC`, `ANCS-GUI-AC`,
+`GNOME-AC`, `COSMIC-AC`, or `SERVICE-AC`). Every ID must map to at least one
+automated test or be explicitly marked as a human/hardware qualification; do
+not silently drop criteria while splitting work into agent-sized tasks.
 
 ## Related specifications and evidence
 

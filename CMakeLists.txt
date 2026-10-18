@@ -22,8 +22,8 @@ enable_testing()
 
 
 # set build options
-option(BUILD_KAFKA_TEST "build with kafka test" OFF)
-option(BUILD_NDEBUG "build without debug" OFF)
+option(BUILD_KAFKA_TEST "Build optional Kafka integration tests" OFF)
+option(BUILD_NDEBUG "Define NDEBUG to disable assertions" OFF)
 option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
 option(ENABLE_DBUS
        "Build the optional D-Bus transport/client library and tests" OFF)
@@ -213,7 +213,7 @@ else()
   set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so)
 endif()
 
-message(STATUS "kakfa library reference is set to ${rdkafka_LIB}")
+message(STATUS "Kafka library reference is set to ${rdkafka_LIB}")
 
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
@@ -225,6 +225,6 @@ endif()
 # build DMN library and applications
 add_subdirectory(src)
 
-# run unit test for DMN
-message(STATUS "build and run unit test...")
+# Configure and register the DMN unit tests.
+message(STATUS "Configure DMN unit tests...")
 add_subdirectory(test)

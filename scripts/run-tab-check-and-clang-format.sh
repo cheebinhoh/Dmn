@@ -12,6 +12,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "Usage: $0 [--root=dir]" >&2
+
       exit 2
       ;;
   esac
@@ -19,12 +20,13 @@ done
 
 if [ ! -d "$ROOT_DIR" ]; then
   echo "Error: root directory '$ROOT_DIR' does not exist." >&2
+
   exit 2
 fi
 
 cd "$ROOT_DIR" || exit 2
 
-DIRS=". include src include/kafka src/kafka test"
+DIRS=". include src include/kafka src/kafka src/app test"
 FILE_PATTERN='*.cpp *.hpp'
 
 # Extra space following newline is never intended to be checked in, so we trim it.

@@ -9,9 +9,10 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "dmn-dmesg.hpp"
@@ -28,12 +29,19 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> topics{"counter sync 1", "counter sync 2"};
     const std::string subscribed_topic{"counter sync 1"};
 
-    int cnt{0};
+    std::mutex callback_mutex;
+    std::condition_variable callback_cv;
+    int callback_count{0};
     auto dmesg_handler =
         dmesg.openHandler("handler", subscribed_topic, nullptr,
-                          [&cnt](const dmn::DMesgPb &msg) mutable -> void {
+                          [&callback_mutex, &callback_cv, &callback_count](
+                              const dmn::DMesgPb &msg) mutable -> void {
                             EXPECT_TRUE("counter sync 1" == msg.topic());
-                            cnt++;
+                            {
+                              std::lock_guard lock{callback_mutex};
+                              callback_count++;
+                            }
+                            callback_cv.notify_one();
                           });
     EXPECT_TRUE(dmesg_handler);
 
@@ -42,8 +50,6 @@ int main(int argc, char *argv[]) {
 
     auto dmesg_write_handler2 = dmesg.openHandler("writeHandler", topics[1]);
     EXPECT_TRUE(dmesg_write_handler2);
-
-    std::this_thread::sleep_for(std::chrono::seconds(3));
 
     for (int n = 0; n < 6; n++) {
       dmn::DMesgPb dmesgpb{};
@@ -60,12 +66,17 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(8));
+    std::unique_lock lock{callback_mutex};
+    auto callbacks_completed =
+        callback_cv.wait_for(lock, std::chrono::seconds(30),
+                             [&callback_count] { return callback_count >= 3; });
+    EXPECT_TRUE(callbacks_completed);
+    lock.unlock();
 
     dmesg.closeHandler(dmesg_write_handler2);
     dmesg.closeHandler(dmesg_write_handler1);
     dmesg.closeHandler(dmesg_handler);
-    EXPECT_TRUE(3 == cnt);
+    EXPECT_EQ(callback_count, 3);
   }
 
   google::protobuf::ShutdownProtobufLibrary();

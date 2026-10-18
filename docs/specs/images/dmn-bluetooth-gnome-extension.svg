@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="610" viewBox="0 0 900 610" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth GNOME Shell extension wireframe</title>
-  <desc id="desc">GNOME top bar with a small Dmn panel control open to a compact status menu, with an explicit unavailable state if the optional service is absent.</desc>
+  <desc id="desc">GNOME top bar with an icon-only Dmn panel control and a compact standard-menu sketch. The event count is optional and off by default; an unavailable state is shown when the service is absent.</desc>
   <rect width="900" height="610" fill="#e8e9ed"/>
   <text x="36" y="42" font-family="sans-serif" font-size="23" font-weight="700" fill="#20212a">GNOME Shell extension · optional quick access</text>
   <text x="36" y="68" font-family="sans-serif" font-size="14" fill="#5b5e68">Not a notification-center plug-in · no Dmn/BlueZ logic runs in the extension</text>
@@ -8,11 +8,10 @@
   <rect x="36" y="98" width="828" height="40" rx="14" fill="#25252b"/>
   <text x="66" y="124" font-family="sans-serif" font-size="14" fill="#fff">Activities</text>
   <text x="447" y="124" font-family="sans-serif" font-size="14" fill="#fff">Oct 18  10:42</text>
-  <rect x="713" y="103" width="120" height="30" rx="8" fill="#45454f"/>
-  <text x="731" y="124" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">◉ Dmn ▾</text>
+  <path d="M773 107v22l12-11-12-11 0 22 12-11-12-11" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
   <rect x="498" y="146" width="330" height="362" rx="12" fill="#fff" stroke="#c7c9cf" stroke-width="2"/>
   <text x="522" y="181" font-family="sans-serif" font-size="18" font-weight="700" fill="#20212a">Dmn Bluetooth</text>
-  <text x="522" y="207" font-family="sans-serif" font-size="14" fill="#656975">Monitoring 1 of 2 · 3 new events</text>
+  <text x="522" y="207" font-family="sans-serif" font-size="14" fill="#656975">Monitoring 1 of 2</text>
   <path d="M518 226H808" stroke="#e1e2e6"/>
   <circle cx="533" cy="256" r="6" fill="#328455"/>
   <text x="551" y="261" font-family="sans-serif" font-size="15" font-weight="600" fill="#20212a">iPhone Genghis</text>
@@ -20,12 +19,10 @@
   <circle cx="533" cy="318" r="6" fill="#c08722"/>
   <text x="551" y="323" font-family="sans-serif" font-size="15" font-weight="600" fill="#20212a">iPhone Old</text>
   <text x="551" y="344" font-family="sans-serif" font-size="13" fill="#656975">Unavailable</text>
-  <path d="M518 366H808" stroke="#e1e2e6"/>
-  <rect x="518" y="383" width="290" height="38" rx="8" fill="#3478c5"/>
-  <text x="582" y="408" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">Open Dmn Bluetooth</text>
-  <rect x="518" y="431" width="140" height="36" rx="8" fill="#fff" stroke="#b9bdc6"/>
-  <text x="559" y="454" font-family="sans-serif" font-size="14" fill="#30313a">Stop all</text>
-  <text x="676" y="454" font-family="sans-serif" font-size="14" fill="#525561">Preferences</text>
+  <path d="M518 366H808M518 402H808M518 438H808M518 474H808" stroke="#e1e2e6"/>
+  <text x="538" y="390" font-family="sans-serif" font-size="14" fill="#30313a">Open Dmn Bluetooth</text>
+  <text x="538" y="426" font-family="sans-serif" font-size="14" fill="#30313a">Stop all</text>
+  <text x="538" y="462" font-family="sans-serif" font-size="14" fill="#30313a">Preferences</text>
   <rect x="58" y="161" width="386" height="155" rx="12" fill="#fff" stroke="#c7c9cf"/>
   <text x="82" y="195" font-family="sans-serif" font-size="16" font-weight="700" fill="#20212a">Service missing / disconnected</text>
   <text x="82" y="227" font-family="sans-serif" font-size="14" fill="#50535c">Status unavailable — open the app</text>
@@ -35,5 +32,5 @@
   <text x="58" y="386" font-family="sans-serif" font-size="14" fill="#626571">the extension is only a launcher and must not show stale “Ready” status.</text>
   <text x="58" y="432" font-family="sans-serif" font-size="14" fill="#626571">Never show message titles/bodies in the panel. Use text labels;</text>
   <text x="58" y="455" font-family="sans-serif" font-size="14" fill="#626571">icon/color alone must not communicate device or monitor state.</text>
-  <text x="58" y="535" font-family="sans-serif" font-size="13" fill="#777985">Illustrative layout only; actual GNOME Shell widget APIs vary by supported GNOME version.</text>
+  <text x="58" y="535" font-family="sans-serif" font-size="13" fill="#777985">Illustrative only; actual Shell widgets and APIs vary by supported GNOME version.</text>
 </svg>

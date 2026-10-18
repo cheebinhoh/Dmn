@@ -23,8 +23,8 @@ namespace dmn::app {
  * The credentials are supplied at runtime rather than stored in source.
  * Error messages identify a missing variable but never echo its value.
  */
-inline auto kafkaExampleConfig()
-    -> std::expected<Dmn_Kafka::ConfigType, std::string> {
+inline auto
+kafkaExampleConfig() -> std::expected<Dmn_Kafka::ConfigType, std::string> {
   constexpr const char *requiredVariables[]{
       "DMN_KAFKA_BOOTSTRAP_SERVERS",
       "DMN_KAFKA_SASL_USERNAME",

@@ -20,6 +20,9 @@ Provide a compact, discoverable GNOME Shell entry point to:
 The extension does not pair/connect devices, call BlueZ directly, instantiate
 `Dmn_AncsBluezMonitor`, read ANCS payloads, persist notification data, or
 replace the full app. It does not work on COSMIC or other non-GNOME shells.
+Treat this project as **partially automatable**: pure GJS and client logic can
+be tested deterministically, but popup behavior and compatibility require a
+real GNOME Shell release explicitly named in the support matrix.
 
 **MVP without service:** a menu item that activates the desktop application
 and an optional descriptive status that does not pretend to be live.
@@ -80,7 +83,7 @@ the extension itself a Dmn C++ library target.
 
 ## 3. Interaction and wireframe
 
-![Wireframe of the GNOME panel control and extension menu](images/dmn-bluetooth-gnome-extension.svg)
+![Illustrative GNOME panel icon and standard-menu layout](images/dmn-bluetooth-gnome-extension.svg)
 
 Keep the collapsed panel indicator minimal and use textual accessible status
 in the popup:
@@ -111,10 +114,13 @@ in the popup:
 Launcher-only MVP calls the desktop launcher and has no D-Bus monitor
 dependency. A future live menu uses the user-session service defined in
 [`dmn-bluetooth-session-service-spec.md`](dmn-bluetooth-session-service-spec.md).
-The extension may subscribe to read-only status and aggregate-count signals;
-all monitor mutations must be explicit method calls with typed errors and
-authorization. The service must not rely on extension presence to own or stop
-monitoring.
+The extension may subscribe to read-only status and a payload-free aggregate
+count signal; it must not subscribe to `EventReceived` or call
+`GetRecentEvents`. All monitor mutations must be explicit method calls with
+typed errors and authorization. The service must not rely on extension
+presence to own or stop monitoring. This is data minimization, not a
+same-user security boundary: the service spec documents that other processes
+running as the same user may still be able to request payloads.
 
 On missing service, name-owner loss, incompatible API version, timeout, or
 malformed response:
@@ -130,6 +136,9 @@ malformed response:
 
 ## 5. Accessibility, privacy, and security
 
+- Build the popup from standard GNOME Shell menu items and actions; do not
+  imitate a full application window inside the panel or add custom shell
+  chrome.
 - Support keyboard navigation, screen-reader names, high-contrast themes,
   text labels, and a visible focus indicator using shell-supported
   accessibility conventions.
@@ -139,7 +148,8 @@ malformed response:
   **Show event count** (off by default). A hidden count must not stop
   monitoring.
 - Do not add message content to shell UI, extension logs, D-Bus signal
-  subscriptions, or extension settings.
+  subscriptions, or extension settings. Do not subscribe to payload-bearing
+  event signals even if the extension currently discards their fields.
 - Treat every D-Bus response as untrusted input; bound strings/counts and
   validate the service version and enum values.
 - No automatic startup of monitoring at login. A service autostart policy, if
@@ -167,8 +177,11 @@ and API contract before testing Shell widgets.
    GNOME session, query controls through AT-SPI where supported, and verify
    disabling it removes the panel item and all subscriptions.
 4. **Optional service client.** Against the service test double, test major
-   version mismatch, malformed values, owner loss, finite timeout, event
-   sequence gap, unavailable transition, and forbidden payload fields.
+   version mismatch, malformed values, owner loss, finite timeout, status
+   sequence gap, unavailable transition, and that the extension neither
+   subscribes to payload-bearing events nor calls the event-history method.
+   Assert aggregate-count signals contain no notification attributes or
+   device addresses.
    **Verify:** run GJS tests against a private session bus; kill/restart the
    fake owner and assert the UI clears live status and disables mutations.
 5. **Status and actions.** Test multi-device summary, one failed phone among
@@ -184,14 +197,18 @@ and API contract before testing Shell widgets.
 
 ## 7. Acceptance criteria
 
-- The full device/event workflow works without the extension.
-- Launcher-only mode works without a background service and never reports
-  unverified live state.
-- Service-backed mode uses only the documented D-Bus contract, clears stale
-  status on owner loss, and never reads ANCS payload content.
-- No direct BlueZ/GATT/ANCS implementation exists in extension code.
-- Tested extension versions are explicitly listed; unsupported GNOME versions
-  are not silently claimed.
+- **GNOME-AC-01:** The full device/event workflow works without the extension.
+- **GNOME-AC-02:** Launcher-only mode works without a background service and
+  never reports unverified live state.
+- **GNOME-AC-03:** Service-backed mode uses only the documented D-Bus
+  contract, clears stale status on owner loss, and never reads ANCS payload
+  content.
+- **GNOME-AC-04:** No direct BlueZ/GATT/ANCS implementation exists in extension code.
+- **GNOME-AC-05:** Tested extension versions are explicitly listed;
+  unsupported GNOME versions are not silently claimed.
+- **GNOME-AC-06:** The popup uses standard Shell menu patterns, is keyboard
+  operable, exposes accessible status text, and removes all Shell/service
+  subscriptions when disabled.
 
 ## 8. Research references
 
@@ -199,7 +216,9 @@ and API contract before testing Shell widgets.
   describes extensions as GJS and CSS customizations loaded by GNOME Shell.
 - [GJS Guide](https://gjs.guide/extensions/): extension development entry
   point. Validate exact extension APIs and version metadata against the target
-  Shell release before coding.
+  Shell release before coding; the guide is version-sensitive and its
+  compatibility claims must not replace testing on the declared Shell
+  versions.
 - GNOME Shell source and extension documentation are versioned with Shell;
   treat source inspection as compatibility evidence, not a promise that
   internal APIs are stable.

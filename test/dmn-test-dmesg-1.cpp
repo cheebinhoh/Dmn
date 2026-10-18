@@ -8,9 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <iostream>
-#include <thread>
 
 #include "proto/dmn-dmesg-type.pb.h"
 #include "proto/dmn-dmesg.pb.h"
@@ -82,16 +80,11 @@ int main(int argc, char *argv[]) {
 
     proc_read1.exec();
     proc_read2.exec();
-    dmn::Dmn_Proc::yield();
-
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    std::cout << "after sleep 3 seconds\n";
-
     dmesg_write_handle->write(dmesgpb1);
     dmesg_write_handle->write(dmesgpb2);
 
-    std::cout << "after sleep 5 seconds\n";
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    proc_read1.wait();
+    proc_read2.wait();
 
     dmesg.closeHandler(dmesg_write_handle);
     dmesg.closeHandler(dmesg_read_handle1);

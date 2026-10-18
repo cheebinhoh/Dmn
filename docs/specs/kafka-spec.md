@@ -58,8 +58,9 @@ does not remove them from Git history.
    associated with the currently blocked write; test broker loss and shutdown.
 4. Make flush/poll deadlines configurable and avoid repeated one-second flush
    calls while waiting for each synchronous delivery.
-5. Kafka tests are behind `BUILD_KAFKA_TEST`; define a deterministic mock or
-   local-broker test path and keep external broker integration tests separate.
+5. Kafka tests are behind `BUILD_KAFKA_TEST` and require a broker. The
+   bootstrap helper now provides a local broker; keep those integration tests
+   separate from deterministic broker-independent tests.
 6. The top-level build currently includes Kafka implementation sources in
    `dmn`, always discovers/fetches librdkafka, and links it even when Kafka
    integration tests are disabled. If feature-off builds are intended to omit
