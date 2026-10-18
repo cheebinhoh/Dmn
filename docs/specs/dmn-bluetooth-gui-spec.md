@@ -141,6 +141,7 @@ These are interaction/layout wireframes, not polished visual designs or
 pixel-perfect toolkit mockups:
 
 - [GTK wide-window layout sketch](images/dmn-bluetooth-gtk-app.svg)
+- [GTK UI storyboard: selection through monitoring, settings, and recovery](dmn-bluetooth-gtk-ui-storyboard.md)
 - [GNOME Shell extension menu](images/dmn-bluetooth-gnome-extension.svg)
 - [COSMIC application and applet](images/dmn-bluetooth-cosmic.svg)
 - [Optional background service ownership diagram](images/dmn-bluetooth-session-service.svg)

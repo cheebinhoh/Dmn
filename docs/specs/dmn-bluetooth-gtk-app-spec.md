@@ -12,8 +12,9 @@ alerts are a secondary output and not an embedded notification-center view.
 
 ### Goals
 
-- Let a user inspect BlueZ-known devices, explicitly choose one or more
-  monitoring targets, save that choice, and start/stop each selected phone.
+- Let a user inspect BlueZ-known devices, explicitly choose monitoring
+  targets within the qualified concurrency limit, save that choice, and
+  start/stop each selected phone.
 - Display per-device setup/readiness/errors and a searchable, filterable,
   newest-first in-session ANCS event list.
 - Keep the UI responsive during device discovery, pairing, connection, GATT,
@@ -102,22 +103,38 @@ control is illustrative only and must not override this requirement.
 
 ![Illustrative wide-window layout of the standalone GTK app](images/dmn-bluetooth-gtk-app.svg)
 
+[The GTK UI storyboard](dmn-bluetooth-gtk-ui-storyboard.md) defines the
+numbered screen sequence, device-selection flow, Preferences, recovery states,
+and additional screens not represented by the layout sketch.
+
 ### First run
 
 1. Show a short explanation that the app reads notifications exposed by iOS
    over ANCS and displays only live-session data.
 2. Read a fresh `Dmn_BluezClient::snapshot()` on a worker. Present BlueZ-known
-   paired and unpaired devices, with addresses available in details. Use
-   stable adapter/device addresses to resolve saved selection; do not key
-   settings by display name or transient object path.
+   paired and unpaired devices, with addresses available in details. A nearby
+   device that is not yet in inventory requires an explicit **Scan for
+   devices** action; never start Bluetooth discovery on launch. Let the user
+   choose a powered adapter when more than one is available, expose scan
+   progress and **Stop scan**. Bound a scan to 30 seconds by default; stop only
+   a scan owned by this app when its deadline expires, the user cancels, or an
+   error occurs. Use stable adapter/device addresses to resolve saved
+   selection; do not key settings by display name or transient object path.
 3. Explain that initial pairing/authorization happens through the normal
    BlueZ/system prompt and that iOS may require approval after a new
    notification arrives. Do not request pairing merely to populate the list.
 4. Let the user select devices and press **Save selection**. Checkbox edits
    are draft state; **Monitor selected** is disabled while the draft differs
-   from saved settings. Offer **Discard changes**.
+   from saved settings. Offer **Discard changes**. Enforce the qualified
+   concurrent-monitor limit in the selector; until multi-device monitoring
+   passes its release gate, configure the initial release for one active phone
+   and explain that limit before selection rather than silently ignoring extra
+   choices.
 5. Monitoring begins only after explicit **Monitor selected** or per-device
-   **Start**.
+   **Start**. If the selected device is unpaired, this explicit action may
+   initiate the normal BlueZ pairing flow; make the unpaired status and
+   resulting system pairing/authorization prompts clear. Never pair merely
+   because the user selected or saved a device.
 
 ### Device pane
 
@@ -128,7 +145,8 @@ remains visible as **Unavailable**. Distinguish `Paired`, `Connected`, and
 `Not monitored → Waiting → Pairing → Connecting → Starting ANCS → Ready`,
 with `Failed`, `Unavailable`, and `Stopped` terminal/recovery states.
 
-Controls: **Refresh devices**, **Save selection**, **Discard changes**,
+Controls: **Refresh devices**, **Scan for devices**, **Stop scan**,
+**Save selection**, **Discard changes**,
 **Monitor selected**, **Stop selected**, **Stop all**, and a per-device
 **Retry** when failed. Stop ends ANCS subscriptions but does not disconnect
 or unpair. Do not place pairing, disconnect, or unpair in ambiguous one-click
@@ -408,6 +426,14 @@ the existing CMake/CTest structure; preserve repository build conventions.
 - **GTK-AC-07:** The wide and narrow layouts follow GNOME HIG navigation and
   adaptive behavior, and desktop-alert controls are in Preferences rather
   than a persistent event-feed panel.
+- **GTK-AC-08:** Bluetooth discovery begins only after **Scan for devices**;
+  the user can choose a powered adapter when needed, observe scan status, and
+  stop scanning. Scans have a finite deadline and every started, app-owned
+  scan is stopped on timeout, cancellation, failure, or shutdown.
+- **GTK-AC-09:** Device selection and save/discard behavior use stable
+  adapter/device identities, enforce the qualified active-monitor limit, and
+  issue no pairing or connection operation until the user explicitly starts
+  monitoring.
 
 ## 8. GTK automation notes
 
