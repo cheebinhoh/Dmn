@@ -1,14 +1,14 @@
-# GTK+ Bluetooth and ANCS Application Specification
+# GTK Bluetooth and ANCS Application Specification
 
 **Status:** Proposed GUI frontend. The reusable BlueZ/GATT/ANCS libraries and
 the `dmn-bluetooth-cli` command-line application are implemented; this document
-specifies GTK+ behavior, including user-visible handling of observed
+specifies GTK behavior, including user-visible handling of observed
 real-device failures. It does not claim that a GTK application has been
 implemented.
 
 ## 1. Purpose and boundaries
 
-Provide a responsive GTK+ application for explicitly selecting an iPhone,
+Provide a responsive GTK application for explicitly selecting an iPhone,
 connecting it through BlueZ, starting an ANCS session, and displaying
 notification events. Use the existing public `Dmn_BluezClient`,
 `Dmn_BluezGattClient`, and `Dmn_AncsBluezMonitor` APIs directly. Do not launch
@@ -170,6 +170,44 @@ device state, or notification category.
    worker callbacks are marshalled before widget access.
 6. Retry, disconnect, pair, and monitor-stop actions are explicit and scoped
    to the selected device. The GUI never automatically forgets the bond.
-7. A fake-backend/UI test covers each failure state, recovery instructions,
-   and the transition to ready only after both notification subscriptions are
-   confirmed active.
+7. Automated fake-backend and UI-model tests cover each failure state,
+   recovery instructions, and the transition to ready only after both
+   notification subscriptions are confirmed active.
+
+## 7. Failure-state test and verification plan
+
+Keep these tests in the frontend-independent status/error mapper and fake
+monitor integration layer. Do not make a human connect an iPhone to exercise
+routine failure rendering.
+
+1. **Missing ANCS service.** Test fixture: BlueZ reports connected and
+   services resolved, while fake GATT omits ANCS. Assert the controller maps
+   the typed `AncsStartup` failure to **Connected, not ready**, does not show
+   the iOS permission prompt as already triggered, and renders the complete
+   forget/re-pair warning without issuing a forget/unpair request. Verify
+   with a model test and a GTK view/status test driven by the fake result.
+2. **Inactive `Notifying`.** Test fixture: `StartNotify` succeeds but the
+   notification-source characteristic remains inactive. Assert the state is
+   subscription failure, never **Ready**, and diagnostic wording remains
+   uncertain about cause. Verify no auto-disconnect or bond removal call is
+   sent.
+3. **Timeout after Ready.** Test fixture: first transition both subscriptions
+   to active/Ready, then deliver the typed timeout. Assert the UI leaves Ready,
+   records runtime phase and typed timeout, does not name an unknown method,
+   and offers explicit Retry. Feed a synthetic secret string in another
+   payload and scan test logs/error summaries to prove it is not emitted.
+4. **First event / iOS prompt.** Test fixture: monitor reaches Ready and emits
+   no event, then receives a new ANCS event. Assert the waiting state explains
+   that iOS may prompt, does not claim prompt approval, and transitions to
+   event received only after the callback. Verify both no-event and event
+   cases without a phone.
+5. **Recovery and lifecycle.** Test user-triggered Retry, Stop, close, and
+   shutdown after each injected error. Assert no automatic forget/unpair,
+   no duplicate callbacks after teardown, and no Ready state from BlueZ
+   `Connected` or `ServicesResolved` alone.
+
+Run focused model/controller tests without a display. Run the small GTK
+presentation test under the frontend's display-test setup (Xvfb in CI if
+required) and assert status through its accessible label/action state. Real
+iPhone testing remains a separate opt-in compatibility check and cannot
+replace these deterministic tests.
