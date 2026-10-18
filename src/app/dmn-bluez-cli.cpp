@@ -432,6 +432,12 @@ auto errorExitCode(const dmn::Dmn_DbusError &error) -> int {
 } // namespace
 
 auto main(int argc, char **argv) -> int {
+  if (argc == 2 && std::string_view{argv[1]} == "--version") {
+    std::cout << "dmn-bluez-cli " << DMN_VERSION << '\n';
+
+    return exitCode(ExitStatus::Success);
+  }
+
   Options options;
   if (!parseOptions(argc, argv, options)) {
     usage(std::cerr);

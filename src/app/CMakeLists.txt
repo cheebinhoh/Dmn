@@ -8,6 +8,10 @@ add_executable(dmn-dmesg-daemon
                  dmn-dmesg-daemon.cpp
 )
 
+target_compile_definitions(dmn-dmesg-daemon
+                             PRIVATE DMN_VERSION="${PROJECT_VERSION}"
+)
+
 target_include_directories(dmn-dmesg-daemon
                              PRIVATE ${PROJECT_SOURCE_DIR}/include
 )
@@ -18,6 +22,10 @@ target_link_libraries(dmn-dmesg-daemon
 
 add_executable(dmn-kafka-receiver
                  dmn-kafka-receiver.cpp
+)
+
+target_compile_definitions(dmn-kafka-receiver
+                             PRIVATE DMN_VERSION="${PROJECT_VERSION}"
 )
 
 target_include_directories(dmn-kafka-receiver
@@ -32,6 +40,10 @@ target_link_libraries(dmn-kafka-receiver
 
 add_executable(dmn-kafka-sender
                  dmn-kafka-sender.cpp
+)
+
+target_compile_definitions(dmn-kafka-sender
+                             PRIVATE DMN_VERSION="${PROJECT_VERSION}"
 )
 
 target_include_directories(dmn-kafka-sender
@@ -51,6 +63,10 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
 
   target_compile_options(dmn-bluez-cli
                            PRIVATE -Wall -Wextra -Wpedantic
+  )
+
+  target_compile_definitions(dmn-bluez-cli
+                               PRIVATE DMN_VERSION="${PROJECT_VERSION}"
   )
 
   target_link_libraries(dmn-bluez-cli PRIVATE dmn-bluez)
@@ -73,6 +89,10 @@ if (ENABLE_APP_BLUETOOTH)
                            PRIVATE -Wall -Wextra -Wpedantic
   )
 
+  target_compile_definitions(dmn-bluetooth-cli
+                               PRIVATE DMN_VERSION="${PROJECT_VERSION}"
+  )
+
   target_link_libraries(dmn-bluetooth-cli
                           PRIVATE dmn-ancs-bluez-monitor
   )
@@ -84,4 +104,8 @@ if (ENABLE_APP_BLUETOOTH)
   install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluetooth-cli.1
             DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
   )
+endif()
+
+if (ENABLE_APP_BLUETOOTH_GTK)
+  add_subdirectory(gui)
 endif()

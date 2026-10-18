@@ -14,7 +14,7 @@ set(ABSL_PROPAGATE_CXX_STD ON)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
-project(dmn)
+project(dmn VERSION 0.9.0)
 
 include(GNUInstallDirs)
 
@@ -30,6 +30,8 @@ option(ENABLE_DBUS
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
 option(ENABLE_APP_BLUEZ_DISCOVERY "Build the BlueZ discovery application" OFF)
 option(ENABLE_APP_BLUETOOTH "Build the Bluetooth ANCS monitor application" OFF)
+option(ENABLE_APP_BLUETOOTH_GTK
+       "Build the optional GTK Bluetooth monitor application" OFF)
 option(ENABLE_ANCS_HARDWARE_TESTS
        "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
@@ -67,6 +69,11 @@ if (ENABLE_APP_BLUETOOTH)
       "Build the optional ANCS protocol library" FORCE)
 endif()
 
+if (ENABLE_APP_BLUETOOTH_GTK)
+  set(ENABLE_BLUEZ ON CACHE BOOL
+      "Build the optional Linux BlueZ library and tests" FORCE)
+endif()
+
 if (ENABLE_BLUEZ)
   set(ENABLE_DBUS ON CACHE BOOL
       "Build the optional D-Bus transport/client library and tests" FORCE)
@@ -86,6 +93,16 @@ endif()
 if (ENABLE_DBUS)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
+endif()
+
+if (ENABLE_APP_BLUETOOTH_GTK)
+  pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.14)
+  pkg_check_modules(ADWAITA REQUIRED IMPORTED_TARGET libadwaita-1>=1.5)
+
+  find_program(GLIB_COMPILE_SCHEMAS_EXECUTABLE
+               NAMES glib-compile-schemas
+               REQUIRED
+  )
 endif()
 
 if (ENABLE_VALGRIND)

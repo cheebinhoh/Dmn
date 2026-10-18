@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="com.cheebinhoh.DmnBluetooth" path="/com/cheebinhoh/dmn-bluetooth/">
+    <key name="selected-device" type="(ss)">
+      <default>(&apos;&apos;, &apos;&apos;)</default>
+      <summary>Selected Bluetooth adapter and device addresses</summary>
+      <description>Stable addresses identifying the saved monitoring target.</description>
+    </key>
+  </schema>
+</schemalist>

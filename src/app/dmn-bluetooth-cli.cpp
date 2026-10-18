@@ -654,6 +654,12 @@ auto runMonitor(const Options &options) -> int {
 } // namespace
 
 auto main(int argc, char **argv) -> int {
+  if (argc == 2 && std::string_view{argv[1]} == "--version") {
+    std::cout << "dmn-bluetooth-cli " << DMN_VERSION << '\n';
+
+    return exitCode(ExitStatus::Success);
+  }
+
   const auto applicationStartedAt = std::chrono::system_clock::now();
   Options options;
   options.applicationStartedAt = applicationStartedAt;
