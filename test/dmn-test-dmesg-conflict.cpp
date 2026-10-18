@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <future>
 #include <mutex>
 #include <stdexcept>
@@ -25,9 +26,12 @@ using namespace std::chrono_literals;
 class HandlerEventCollector {
 public:
   void add(const dmn::Dmn_DMesg::HandlerEvent &event) {
-    const std::lock_guard lock{m_mutex};
+    {
+      const std::lock_guard lock{m_mutex};
 
-    m_events.push_back(event);
+      m_events.push_back(event);
+    }
+    m_changed.notify_all();
   }
 
   auto snapshot() const -> std::vector<dmn::Dmn_DMesg::HandlerEvent> {
@@ -36,8 +40,16 @@ public:
     return m_events;
   }
 
+  auto waitForSize(std::size_t size,
+                   std::chrono::milliseconds timeout) -> bool {
+    auto lock = std::unique_lock{m_mutex};
+    return m_changed.wait_for(lock, timeout,
+                              [&] { return m_events.size() >= size; });
+  }
+
 private:
   mutable std::mutex m_mutex{};
+  std::condition_variable m_changed{};
   std::vector<dmn::Dmn_DMesg::HandlerEvent> m_events{};
 };
 
@@ -414,6 +426,7 @@ TEST(DmnDMesgConflictTest, InitialPlaybackEventPrecedesSubsequentDelivery) {
   ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("newer")));
   publisher.waitForEmpty();
 
+  ASSERT_TRUE(events.waitForSize(2U, 5s));
   const auto eventsSnapshot = snapshotEvents(observer, events);
   ASSERT_EQ(eventsSnapshot.size(), 2U);
   EXPECT_EQ(eventsSnapshot[0].m_type,

@@ -46,6 +46,7 @@ inline auto kafkaExampleConfig()
   config["sasl.password"] = values[2];
   config["security.protocol"] = "SASL_SSL";
   config["sasl.mechanisms"] = "PLAIN";
+
   return config;
 }
 
