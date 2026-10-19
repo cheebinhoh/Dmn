@@ -189,6 +189,10 @@ the live monitor but preserves the intent, so monitoring can resume after
 reconnection or relaunch. The newest-first event feed contains only
 notifications received while the app process is running; it is not a
 persistent notification archive or a desktop notification-history reader.
+Search and device, event-kind, and category filters compose; activating a row
+shows available details. The feed is capped at 1,000 in-memory events, with
+older-event eviction reported in the interface. Hovering over notification
+text shows its full value wrapped to the available feed width.
 The GTK app requires a running BlueZ system service and a graphical desktop
 session.
 

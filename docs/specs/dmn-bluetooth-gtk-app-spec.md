@@ -8,9 +8,12 @@ explicit per-device user action; that intent is saved and restored at the next
 launch. Restored monitors start only after BlueZ confirms that the saved,
 paired device is connected. Active monitors stop when their device
 disconnects and resume after it reconnects while the saved monitoring intent
-remains enabled. The preferences window, event search/filter/details, and
-desktop alerts remain unimplemented. Concurrent multi-device operation is
-implemented but still requires qualification with multiple physical devices.
+remains enabled. The live event feed supports composed device, event-kind,
+category, and case-insensitive text filters, row details, clearing, stable
+arrival ordering, and bounded retention. The preferences window, close
+confirmation/hidden-window mode, and desktop alerts remain unimplemented.
+Concurrent multi-device operation is implemented but still requires
+qualification with multiple physical devices.
 
 This document separates code-derived current behavior from proposed product
 requirements below. The optional GIO `GNotification` design is a proposal
@@ -27,21 +30,23 @@ separately describe proposed product behavior.
 | Optional GTK build and desktop application | Implemented under `ENABLE_APP_BLUETOOTH_GTK`; GTK 4 and libadwaita are optional dependencies. |
 | BlueZ inventory and explicit discovery | Implemented with worker-thread BlueZ requests, powered-adapter selection, a finite scan, and explicit scan stop. |
 | Saved device selection | Implemented with stable adapter/device addresses, multiple draft/save/discard entries, and unavailable saved devices. |
-| Device inventory view | Implemented with Name/Status sorting, a Selected only filter over the current draft selection, separate paired/connected/monitor states, and per-row Connect/Disconnect and Start/Stop monitoring actions. |
-| Adjustable device pane | Implemented with a draggable GTK divider; pane width is saved in GSettings. |
+| Device inventory view | Implemented with Name/Status sorting, a Selected only filter over the current draft selection (its on/off preference is restored across launches), separate paired/connected/monitor states, and per-row Connect/Disconnect and Start/Stop monitoring actions. |
+| Adjustable device pane | The window opens maximized. Its draggable GTK divider defaults to an even 50/50 split; user-adjusted pane proportion is saved in GSettings and restored independently of window size. Existing saved absolute pane positions are migrated to a proportion on first launch after the update. |
 | Connect/disconnect actions | Implemented per saved device. Unpaired devices must be paired in Bluetooth Settings; disconnect stops that device's monitor first when needed. |
 | ANCS monitor lifecycle | Implemented per saved, paired, already-connected device with progress and explicit start/stop. Monitor start requires an existing connection and never pairs or establishes the initial link; like the CLI, it asks BlueZ to connect any remaining auto-connectable profiles before ANCS startup. |
 | Remembered monitoring intent | Implemented in GSettings using stable adapter/device addresses. An explicit Start monitoring choice is restored on launch; startup waits for a saved, paired device to be connected. Stop monitoring clears the intent. Disconnect or app exit stops the live monitor but preserves the intent. |
 | Adaptive layout | Implemented as a two-pane window at wide sizes and a device-list/device-detail navigation flow below the libadwaita breakpoint. The narrow layout stacks scan and selection controls. |
-| In-session event feed | Implemented in bounded process memory, newest-first, and filtered by the device opened from the inventory. Rows show host receipt time, event kind, and available event text; the feed scrolls to the top after an actual feed/device change. Notification text is selectable and can be copied from its Copy-only context menu or with Ctrl+C. Routine inventory refreshes do not rebuild the feed or clear text selection. It contains only events received during this app process; Removed events show no stale attributes. |
+| In-session event feed | Implemented using `GListStore`, `GtkFilterListModel`, `GtkSortListModel`, and `GtkColumnView`. Composable filters cover the viewed device or all devices, event kind, category, and Unicode case-insensitive text search. Rows show device, host receipt time, kind/category, and an event preview; row activation opens available details, including phone-provided date when present. Hovering notification text shows its full value wrapped within the feed-pane width. Arrival sequence—not wall-clock time—orders events newest-first. The process-local store retains at most 1,000 events and announces evictions. Clear notifications removes the in-memory feed; Clear filters restores defaults. Removed events show no stale attributes. Notification text remains selectable/copyable. |
 | Desktop metadata and icon | Implemented with an AppStream `.metainfo.xml`, a lowercase desktop/application ID, a scalable 128×128 full-color SVG icon, and a matching symbolic icon installed in hicolor. The previous GSettings schema ID is retained to preserve saved preferences. |
-| Preferences window, event search/filter/details, desktop alerts | Not implemented. Monitoring intent is controlled by the per-device Start/Stop actions, not a separate preference screen. |
+| Preferences window, close confirmation/hidden-window mode, desktop alerts | Not implemented. Monitoring intent is controlled by per-device Start/Stop actions, not a separate preference screen. |
 
-The current GTK window has an inventory/sidebar, per-device actions, and a
-selected-device event pane. Checking a device changes its draft selection but
-does not navigate away from the inventory; activating its name opens the
-detail/feed pane. The current mockups illustrate only implemented controls and
-states. Simultaneous monitors have not yet been hardware-qualified.
+The current GTK window has a **Devices** inventory/sidebar and a
+**Notifications** pane with per-device status and the live event feed. Checking
+a device changes its draft selection but does not navigate away from the
+inventory; activating its name opens the detail/feed pane. Event filters and
+the detail view are part of the live feed; Preferences, desktop alerts, and
+close/hidden-window options remain proposed. Simultaneous monitors have not
+yet been hardware-qualified.
 
 ## 1. Goals, non-goals, and build boundary
 
@@ -135,9 +140,11 @@ event feed. At narrow widths, show one view at a time: the device list is the
 navigation root, selecting a device/feed opens its event view, and a standard
 Back action returns to the list. Opening event details must not create a
 stack of unrelated windows. At wide widths, let users drag the pane divider
-to choose how much room the device rows receive, and persist that pane
-position. Use a breakpoint/layout component supported by the declared minimum
-libadwaita version; do not invent a custom resizing framework.
+to choose how much room the device rows receive, and persist the pane
+proportion rather than a fixed pixel position. Open the main window maximized
+and use an even split by default. Use a breakpoint/layout component supported
+by the declared minimum libadwaita version; do not invent a custom resizing
+framework.
 
 Desktop-alert and hidden-window preferences belong in the standard
 Preferences surface, not in a permanently visible card embedded in the event
@@ -148,8 +155,8 @@ control is illustrative only and must not override this requirement.
 ![Current wide-window layout of the standalone GTK app](images/dmn-bluetooth-gtk-app.svg)
 
 [The GTK UI storyboard](dmn-bluetooth-gtk-ui-storyboard.md) depicts current
-inventory, connection, monitoring, and feed states. It does not depict
-unimplemented Preferences, desktop alerts, event filters, or event details.
+inventory, connection, monitoring, and feed states. Preferences, desktop
+alerts, and close/hidden-window options remain unimplemented.
 
 ### First run
 
@@ -210,8 +217,10 @@ Each row shows the display name (address fallback), paired/connected facts,
 monitor status when a session exists, a draft-selection checkbox, and
 per-device connection and monitor actions. A saved device absent from BlueZ
 remains visible as **Unavailable**. The selected-device pane displays live
-status and the last monitor error. `Paired`, `Connected`, and
-`ServicesResolved` are not treated as ANCS **Ready**.
+status and the last monitor error; when **All devices** is enabled for the
+event feed, the status-page title changes to **All devices** and device-specific
+status is hidden until a particular device is selected again.
+`Paired`, `Connected`, and `ServicesResolved` are not treated as ANCS **Ready**.
 
 Current controls include **Refresh devices**, **Scan for devices**, **Stop
 scan**, **Save selection**, **Discard changes**, **Selected only**,
@@ -232,36 +241,28 @@ clears the intent. To retry a failed session, clear the intent and choose
 
 ### Implemented event pane
 
-The feed is scoped to the device opened from the inventory. It shows each
-event's host receipt time and kind, followed by the available event text.
-Events are displayed newest-first and are held in a bounded, process-local
-store; the oldest event is evicted when the 1,000-entry limit is exceeded.
-The feed scrolls to its top when the viewed device changes or a new event is
-received. A routine BlueZ inventory refresh leaves the rendered feed intact,
-so a user selecting text is not interrupted by polling. Notification text is
-selectable; right-click offers **Copy** only, and Ctrl+C copies the current
-selection. No search, event filters, detail view, or clear-feed control is
-implemented.
+The `GtkColumnView` shows **Device**, **Received**, **Type/category**, and
+**Notification**. Search and device scope (the opened device or all devices),
+event kind, and category filters compose without mutating source events.
+Search case-folds Unicode text and checks device identity/name, app identifier,
+title, subtitle, message, phone-provided date, and error text. Activating a row
+opens available ANCS attributes, event kind, device identity, phone-provided
+date, and host receipt time; missing values are labeled unavailable. Removed
+events show only their current removal metadata, not stale notification
+attributes. Hovering a notification value displays its full text wrapped to
+the available feed-pane width.
 
-### Proposed event-pane enhancements
-
-Default table columns: **Device**, **Received**, **Type/category**, and
-**Notification** (app identifier and concise title/message preview).
-Activating a row opens details with available ANCS attributes, event kind,
-device identity, phone-provided date, and host receipt time. Missing data is
-not invented. Removed events contain no stale notification attributes.
-
-Use an explicit monotonic arrival sequence if the feed later needs ordering
-across independently queued monitor callbacks; the current store preserves
-append order and displays host receipt time. Consider a nonintrusive eviction
-notice if users need feedback about the bounded in-memory history. These
-enhancements are independent of the monitor's ANCS pending-request limit.
-
-Filters compose without mutating source events: device, Added/Updated/Removed,
-available category, and case-insensitive search over app identifier, title,
-subtitle, message, and device name. Provide **Clear filters**, **Clear
-notifications**, useful empty/no-results messages, keyboard navigation, and
-screen-reader-visible state. Never persist search terms or event payloads.
+The monitor callback captures host receipt time and a process-wide monotonic
+arrival sequence before queuing the event to the GTK context. The bounded
+store orders by sequence rather than wall clock or dispatch order, retains at
+most 1,000 records across devices, and displays an eviction notice. **Clear
+notifications** clears the process-local event store; **Clear filters**
+restores the default device scope and filter values. Selecting **All devices**
+updates the Bluetooth status-page title and hides device-specific status until
+a particular device is selected again. The table distinguishes
+empty and no-results states. Search terms and event payloads are never saved.
+Notification text remains selectable and copyable from its Copy-only context
+menu or Ctrl+C. Routine BlueZ refreshes do not rebuild unchanged event rows.
 
 ### Window and process lifecycle
 
@@ -518,13 +519,14 @@ the existing CMake/CTest structure; preserve repository build conventions.
      each filter independently and composed, case-folding, missing fields,
      Details content, Removed behavior, no-results, no-events state, clear,
      overflow notice, and all payload retention boundaries.
-   - Implement: a bounded process-local event store and a per-device GtkListBox
-     feed with newest-first rendering. Search, filters, rich details, and a
-     clear action remain future work.
-   - Current status: per-device filtering, arrival timestamps, Removed-event
-     handling, and bounded eviction are implemented. Core tests exercise
-     identity filtering and eviction; GTK display/widget automation remains
-     outstanding.
+   - Implemented: bounded process-local event store, stable callback arrival
+     sequence, `GListStore`/`GtkFilterListModel`/`GtkSortListModel` and
+     `GtkColumnView`, composable device/kind/category/text filters, details,
+     clear actions, empty/no-results states, and an eviction notice.
+   - Verified: GTK-independent tests cover arrival ordering across wall-clock
+     rollback and dispatch reordering, Unicode case folding, composed filters,
+     missing attributes, Removed events, clearing, and eviction. Display-backed
+     widget and AT-SPI automation remains outstanding.
 9. **Optional desktop alert sink.**
    - Test first: injected fake sink proves default Off, no payload in
      summaries/body, per-device aggregate/replacement IDs, Clear/stop

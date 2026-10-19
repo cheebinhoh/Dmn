@@ -18,6 +18,10 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
 
 namespace dmn::gui {
@@ -26,6 +30,14 @@ namespace dmn::gui {
 struct Dmn_DeviceMonitorEvent {
   /** @brief Stable adapter/device identity associated with the event. */
   Dmn_DeviceIdentity m_identity;
+
+  /**
+   * @brief Monotonic arrival sequence assigned by the callback or store.
+   *
+   * The sequence, rather than wall-clock time or dispatch order, defines event
+   * order.
+   */
+  std::uint64_t m_sequence{};
 
   /** @brief Host wall-clock time when the monitor callback received it. */
   std::chrono::system_clock::time_point m_received;
@@ -58,18 +70,68 @@ public:
    *
    * @param identity Adapter/device identity to select.
    * @return Pointers into this store, ordered from oldest to newest and valid
-   * until the next append or store destruction.
+   * until the next append, clear, or store destruction.
    */
   [[nodiscard]] auto eventsFor(const Dmn_DeviceIdentity &identity) const
       -> std::vector<const Dmn_DeviceMonitorEvent *>;
 
+  /** @brief Return all retained events in arrival order. */
+  [[nodiscard]] auto
+  events() const -> std::vector<const Dmn_DeviceMonitorEvent *>;
+
+  /**
+   * @brief Find an event by its stable arrival sequence.
+   *
+   * @param sequence Sequence assigned by append().
+   * @return The retained event, or nullptr if it was cleared or evicted. The
+   * pointer is invalidated by a later append, clear, or store destruction.
+   */
+  [[nodiscard]] auto eventForSequence(std::uint64_t sequence) const
+      -> const Dmn_DeviceMonitorEvent *;
+
+  /** @brief Remove all retained events and return the number removed. */
+  auto clear() -> std::size_t;
+
   /** @brief Return the current number of retained events. */
   [[nodiscard]] auto size() const -> std::size_t;
 
+  /** @brief Return the total count evicted due to the retention limit. */
+  [[nodiscard]] auto evictedCount() const -> std::size_t;
+
 private:
   std::size_t m_maximum_events;
+  std::uint64_t m_next_sequence{1};
+  std::size_t m_evicted_events{};
   std::vector<Dmn_DeviceMonitorEvent> m_events;
 };
+
+/** @brief Composable in-memory filters for the event feed. */
+struct Dmn_DeviceMonitorEventFilter {
+  /** @brief Optional device identity; absent includes every device. */
+  std::optional<Dmn_DeviceIdentity> m_identity;
+
+  /** @brief Optional exact ANCS event kind. */
+  std::optional<Dmn_AncsEvent::Kind> m_kind;
+
+  /** @brief Optional raw ANCS category value. */
+  std::optional<std::uint8_t> m_category;
+
+  /** @brief Case-insensitive text query; event payloads are never persisted. */
+  std::string m_search;
+};
+
+/**
+ * @brief Test an event against all enabled filter dimensions.
+ *
+ * @param event Event to evaluate.
+ * @param filter Active feed filters.
+ * @param deviceName Optional display name included in text search.
+ * @return true if every active filter matches.
+ */
+[[nodiscard]] auto
+matchesEventFilter(const Dmn_DeviceMonitorEvent &event,
+                   const Dmn_DeviceMonitorEventFilter &filter,
+                   std::string_view deviceName = {}) -> bool;
 
 } // namespace dmn::gui
 

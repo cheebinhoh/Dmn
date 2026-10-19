@@ -13,6 +13,7 @@ target_compile_options(dmn-bluetooth-gui-core
 
 target_link_libraries(dmn-bluetooth-gui-core
                         PUBLIC dmn-ancs
+                        PRIVATE PkgConfig::GLIB2
 )
 
 add_subdirectory(gtk)

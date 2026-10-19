@@ -1,10 +1,12 @@
 # Dmn Bluetooth GTK UI Storyboard
 
 **Status:** Implementation-accurate overview of the current GTK 4/libadwaita
-application. The frames show existing controls and behavior, not planned
-Preferences, alerts, event filtering, or a separate event-detail view.
+application. The frames show existing controls and behavior; Preferences,
+desktop alerts, and close/hidden-window options remain planned. The wide
+window opens maximized with an even default split, and its divider proportion
+is restored on later launches.
 
-![Five implementation-accurate frames show inventory, selection, connection, monitoring, and the live event feed](images/dmn-bluetooth-gtk-ui-storyboard.svg)
+![Five implementation-accurate frames show inventory, selection, connection, monitoring, and the filterable event table](images/dmn-bluetooth-gtk-ui-storyboard.svg)
 
 The application uses a resizable two-pane layout at wide window sizes. Below
 the libadwaita breakpoint, it shows either the device list or selected-device
@@ -18,7 +20,7 @@ page, with a Back button. The app menu contains About and Quit.
 | 02 | **Device selection.** Device rows show a checkbox, name, paired/connection status, and per-device Connect/Disconnect and Start/Stop monitoring buttons. Save selection and Discard changes share a row with Selected only at wide sizes; those controls adapt to narrow widths. | Checkbox edits change the draft only. Selected only filters by the draft. Activating the device name opens its detail page; checking it does not navigate. |
 | 03 | **Connected, not monitoring.** The selected-device page shows current device status and an empty session feed. Start monitoring is available only after BlueZ reports Connected for a saved, paired device. | Connect only connects. The app subscribes to ANCS only after the user explicitly starts monitoring; that intent is remembered and restored after relaunch once the device is connected. Stop monitoring clears the intent but leaves the Bluetooth connection intact. |
 | 04 | **Monitor setup and ready.** Setup progress and monitor state are shown in the device row and selected-device status. Once ready, the feed explains that only new notifications received during this monitor session appear. | Monitor start/stop runs away from the GTK thread. A disconnect or disappearance observed during inventory polling stops an active monitor. Polling resumes monitoring only when the device has previously saved monitoring intent and is confirmed connected. |
-| 05 | **Live event feed.** Entries show host receipt time, event kind, and available event text, newest first. | A new event or changed viewed device scrolls the feed to the top. Text can be selected; right-click offers Copy only, and Ctrl+C copies the selection. Routine inventory refreshes preserve the rendered feed and current text selection. |
+| 05 | **Live event feed.** A sortable-by-arrival table shows device, host receipt time, event kind/category, and available event text. Search, device, kind, and category filters compose; activating a row opens available details. Hovering notification text shows its full value wrapped to the feed pane. | New events appear first by callback arrival sequence, regardless of wall-clock changes. Selecting All devices shows that title without device-specific status; selecting a device restores its status and filters the feed. Clear filters restores the default view; Clear notifications removes only this process's in-memory feed. The 1,000-event limit is visible when older rows are evicted. Notification text remains selectable and copyable. |
 
 ### Narrow-window behavior
 
@@ -46,6 +48,8 @@ per-device lifecycle rules apply in either layout.
 - Event data is held only in bounded process memory. Removed events do not
   display stale attributes. Closing the app waits for monitor/scan cleanup and
   then quits; it does not disconnect or unpair devices.
+- The Selected only inventory filter restores its last on/off preference
+  across launches.
 - Device inventory polling does not recreate an unchanged event feed, which
   avoids clearing a text selection during routine refreshes.
 
@@ -53,10 +57,8 @@ per-device lifecycle rules apply in either layout.
 
 The following remain proposed work in
 [the application specification](dmn-bluetooth-gtk-app-spec.md): Preferences,
-desktop alerts, event search/filtering, a separate event-details view,
-notification clearing, confirmation dialogs, and configurable
-keep-monitoring-on-close behavior. They are intentionally absent from these
-current-state mockups.
+desktop alerts, close confirmation, and configurable keep-monitoring-on-close
+behavior. They are intentionally absent from these current-state mockups.
 
 ## GNOME HIG considerations
 
@@ -66,7 +68,8 @@ current-state mockups.
   connection state is communicated as text, not color alone.
 - Ongoing monitor status remains in the selected-device context rather than
   being represented by transient feedback.
-- The event feed is plain selectable text, with a Copy-only context menu to
+- Notification preview text in the event table remains selectable, has a
+  wrapped full-value hover tooltip, and offers a Copy-only context menu to
   avoid presenting irrelevant editing actions.
 
 See the application's [implementation status and proposed roadmap](dmn-bluetooth-gtk-app-spec.md)
