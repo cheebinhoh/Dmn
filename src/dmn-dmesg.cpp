@@ -621,9 +621,8 @@ Dmn_DMesg::Dmn_DMesg(std::string_view name)
                 assert(handler != nullptr);
 
                 return nullptr != handler && nullptr != handler->m_owner &&
-                       ((msg.playback() &&
-                         !handler->m_after_initial_playback.test()) ||
-                        handler->m_after_initial_playback.test()) &&
+                       (!msg.playback() ||
+                        !handler->m_after_initial_playback.test()) &&
                        (handler->m_no_topic_filter ||
                         handler->m_topic.empty() ||
                         msg.topic() == handler->m_topic);

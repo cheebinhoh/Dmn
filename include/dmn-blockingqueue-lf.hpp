@@ -679,7 +679,7 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
     node->m_retired_next.store(first, std::memory_order_relaxed);
 
     if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
-            first, node, std::memory_order_release,
+            first, node, std::memory_order_acq_rel,
             std::memory_order_acquire)) {
       continue;
     }
@@ -714,7 +714,7 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
       EpochData epNew{.m_in_flight_total = total, .m_id = ep.m_id + 1};
 
       if (!m_epochData.compare_exchange_strong(ep, epNew,
-                                               std::memory_order_release,
+                                               std::memory_order_acq_rel,
                                                std::memory_order_acquire)) {
         continue;
       }
@@ -732,7 +732,7 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
                 m_epochReclaimNode[index].load(std::memory_order_acquire);
             if (nullptr != ptr) {
               if (!m_epochReclaimNode[index].compare_exchange_strong(
-                      ptr, nullptr, std::memory_order_release,
+                      ptr, nullptr, std::memory_order_acq_rel,
                       std::memory_order_acquire)) {
                 continue;
               }
@@ -784,7 +784,7 @@ void Dmn_BlockingQueue_Lf<T>::leaveInflightGuardFnc(
             m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
         if (nullptr != ptr) {
           if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
-                  ptr, nullptr, std::memory_order_release,
+                  ptr, nullptr, std::memory_order_acq_rel,
                   std::memory_order_acquire)) {
             continue;
           }

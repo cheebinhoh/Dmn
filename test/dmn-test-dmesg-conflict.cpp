@@ -420,10 +420,44 @@ TEST(DmnDMesgConflictTest, InitialPlaybackEventPrecedesSubsequentDelivery) {
   ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("cached")));
 
   HandlerEventCollector events;
-  auto observer = openObservedHandler(publisher, "observer", events);
+  std::promise<void> playbackCallbackStarted;
+  auto playbackCallbackStartedFuture = playbackCallbackStarted.get_future();
+  std::promise<void> continuePlaybackCallback;
+  auto continuePlaybackCallbackFuture =
+      continuePlaybackCallback.get_future().share();
+  dmn::Dmn_DMesg::HandlerSpec spec{
+      "observer",
+      "orders",
+      {},
+      {},
+      {},
+      [&events, &playbackCallbackStarted, continuePlaybackCallbackFuture](
+          const dmn::Dmn_DMesg::HandlerEvent &event) {
+        events.add(event);
+        if (event.m_message.has_value() && event.m_message->playback()) {
+          playbackCallbackStarted.set_value();
+          continuePlaybackCallbackFuture.wait();
+        }
+      }};
+  auto observer = publisher.openHandlerWithFactory(
+      spec, [](const dmn::Dmn_DMesg::HandlerSpec &handlerSpec) {
+        return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
+            handlerSpec.m_name, handlerSpec.m_topic, handlerSpec.m_filter_fn,
+            handlerSpec.m_async_process_fn, handlerSpec.m_configs);
+      });
   ASSERT_TRUE(observer);
 
-  ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("newer")));
+  const bool playbackCallbackIsRunning =
+      playbackCallbackStartedFuture.wait_for(5s) == std::future_status::ready;
+  bool newerMessageAccepted{};
+  if (playbackCallbackIsRunning) {
+    newerMessageAccepted = writer->writeAndCheckConflict(makeMessage("newer"));
+    publisher.waitForEmpty();
+  }
+
+  continuePlaybackCallback.set_value();
+  ASSERT_TRUE(playbackCallbackIsRunning);
+  ASSERT_TRUE(newerMessageAccepted);
   publisher.waitForEmpty();
 
   ASSERT_TRUE(events.waitForSize(2U, 5s));
