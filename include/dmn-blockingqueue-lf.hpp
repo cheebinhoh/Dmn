@@ -48,6 +48,7 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <exception>
 #include <initializer_list>
 #include <memory>
 #include <optional>
@@ -55,6 +56,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+// libstdc++ uses forced unwind for pthread cancellation; never intercept it as
+// an ordinary exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
 
 namespace dmn {
 
@@ -473,21 +480,38 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
 
   auto end = std::chrono::high_resolution_clock::now() +
              std::chrono::microseconds(timeout);
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  do {
-    auto data = popOptional(false, inflightTicket);
-    if (data) {
-      res.push_back(std::move_if_noexcept(*data));
-    } else {
-      dmn::Dmn_Proc::yield();
-    }
-  } while ((!isShutdown()) && res.size() < count &&
-           (0 == timeout || std::chrono::high_resolution_clock::now() < end));
+  try {
+    do {
+      auto data = popOptional(false, inflightTicket);
+      if (data) {
+        res.push_back(std::move_if_noexcept(*data));
+      } else {
+        dmn::Dmn_Proc::yield();
+      }
+    } while ((!isShutdown()) && res.size() < count &&
+             (0 == timeout || std::chrono::high_resolution_clock::now() < end));
+  }
+#if defined(__GLIBCXX__)
+  // Let cancellation unwind; ordinary exceptions are saved until the cleanup
+  // handler is popped below.
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return res;
 }
@@ -497,13 +521,28 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> data{};
 
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  data = popOptional(wait, inflightTicket);
+  try {
+    data = popOptional(wait, inflightTicket);
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return data;
 }
@@ -562,24 +601,54 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(item); // copy
+  try {
+    pushImpl(item); // copy
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(std::move(item)); // move
+  try {
+    pushImpl(std::move(item)); // move
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 }
 
 template <typename T>

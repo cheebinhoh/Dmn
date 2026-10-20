@@ -262,6 +262,44 @@ TEST(DmnBlockingQueueLfStressTest, ThrowingPushAndPopKeepQueueUsable) {
   EXPECT_EQ(queue.waitForEmpty(), 2);
 }
 
+TEST(DmnBlockingQueueLfStressTest, ThrowingOperationsAllowWorkerThreadExit) {
+  dmn::Dmn_BlockingQueue_Lf<ThrowingValue> queue{};
+  ThrowingValue value{1};
+  std::atomic_bool push_exception_caught{};
+  std::atomic_bool pop_exception_caught{};
+
+  std::thread producer{[&queue, &value, &push_exception_caught] {
+    ThrowingValue::s_throw_copy_assignment.store(true,
+                                                 std::memory_order_relaxed);
+    try {
+      queue.push(value);
+    } catch (const std::runtime_error &) {
+      push_exception_caught.store(true, std::memory_order_relaxed);
+    }
+    ThrowingValue::s_throw_copy_assignment.store(false,
+                                                 std::memory_order_relaxed);
+  }};
+  producer.join();
+  EXPECT_TRUE(push_exception_caught.load(std::memory_order_relaxed));
+
+  queue.push(ThrowingValue{2});
+  std::thread consumer{[&queue, &pop_exception_caught] {
+    ThrowingValue::s_throw_copy_constructor.store(true,
+                                                  std::memory_order_relaxed);
+    try {
+      [[maybe_unused]] auto popped = queue.pop();
+    } catch (const std::runtime_error &) {
+      pop_exception_caught.store(true, std::memory_order_relaxed);
+    }
+    ThrowingValue::s_throw_copy_constructor.store(false,
+                                                  std::memory_order_relaxed);
+  }};
+  consumer.join();
+
+  EXPECT_TRUE(pop_exception_caught.load(std::memory_order_relaxed));
+  EXPECT_EQ(queue.waitForEmpty(), 1);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

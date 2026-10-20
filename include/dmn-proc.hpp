@@ -289,8 +289,8 @@ protected:
   Dmn_Proc::ExceptionPolicy
       m_exception_policy{};       ///< Worker exception behavior.
   std::exception_ptr m_failure{}; ///< Worker failure handed to the joiner.
-  std::atomic_bool m_cancel_requested{}; ///< Marks cancellation initiated
-                                         ///< through stopExec().
+  std::atomic_bool m_cancel_requested{}; ///< Fallback for pthread runtimes
+                                         ///< without a distinct unwind type.
   std::atomic<ThreadId> m_thread_id{};
 }; // class Dmn_Proc
 

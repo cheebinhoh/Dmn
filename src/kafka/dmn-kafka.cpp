@@ -32,13 +32,20 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #include "rdkafka.h"
 
 #include "dmn-proc.hpp"
 #include "kafka/dmn-kafka-util.hpp"
+
+// libstdc++ represents pthread cancellation with a forced-unwind exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
 
 namespace dmn {
 
@@ -246,41 +253,47 @@ auto Dmn_Kafka::read() -> std::optional<std::string> {
 
   try {
     inflightTicket = this->enterInflightGate();
-  } catch (...) {
+  } catch (const std::runtime_error &) {
     return {};
   }
+
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_Kafka::cleanup_thunk_inflight, &inflightTicket);
 
-  rd_kafka_message_t *consumer_message{};
+  try {
+    std::unique_ptr<rd_kafka_message_t, decltype(&rd_kafka_message_destroy)>
+        consumer_message{rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms),
+                         &rd_kafka_message_destroy};
 
-  consumer_message = rd_kafka_consumer_poll(m_kafka, m_poll_timeout_ms);
+    Dmn_Proc::yield();
 
-  Dmn_Proc::yield();
-
-  if (!consumer_message) {
-    return {};
-  }
-
-  // after this point, we need to free consumer_message
-  if (consumer_message->err) {
-    if (consumer_message->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-      /* We can ignore this error - it just means we've read
-       * everything and are waiting for more data.
-       */
-    } else {
-      std::cerr << "Consumer error: "
-                << rd_kafka_message_errstr(consumer_message) << "\n";
-      m_kafka_err = consumer_message->err;
+    if (consumer_message) {
+      if (consumer_message->err) {
+        if (consumer_message->err != RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+          std::cerr << "Consumer error: "
+                    << rd_kafka_message_errstr(consumer_message.get()) << "\n";
+          m_kafka_err = consumer_message->err;
+        }
+      } else {
+        ret = std::string(static_cast<const char *>(consumer_message->payload),
+                          static_cast<std::size_t>(consumer_message->len));
+      }
     }
-  } else {
-    ret = std::string((char *)consumer_message->payload,
-                      (int)consumer_message->len);
   }
-
-  rd_kafka_message_destroy(consumer_message);
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return ret;
 }

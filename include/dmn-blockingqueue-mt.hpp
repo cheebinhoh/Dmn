@@ -91,6 +91,7 @@
 #include <cstring>
 #include <ctime>
 #include <deque>
+#include <exception>
 #include <initializer_list>
 #include <mutex>
 #include <optional>
@@ -98,6 +99,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+// libstdc++ represents pthread cancellation with a forced-unwind exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
 
 namespace dmn {
 
@@ -300,23 +306,37 @@ template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Mt<T>::pushImpl(U &&item) {
   auto inflightTicket = this->enterInflightGate();
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  std::unique_lock<std::mutex> lock(m_mutex);
+  try {
+    std::unique_lock<std::mutex> lock(m_mutex);
 
-  Dmn_Proc::testcancel();
+    Dmn_Proc::testcancel();
 
-  m_queue.emplace_back(std::forward<U>(item));
-  ++m_push_count;
+    m_queue.emplace_back(std::forward<U>(item));
+    ++m_push_count;
 
-  lock.unlock();
+    lock.unlock();
 
-  // Notify multi-pop waiters first (they use m_none_empty_cond).
-  m_not_empty_cond.notify_one();
+    // Notify multi-pop waiters first (they use m_none_empty_cond).
+    m_not_empty_cond.notify_one();
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 }
 
 template <typename T> void Dmn_BlockingQueue_Mt<T>::shutdown() {
@@ -358,52 +378,66 @@ auto Dmn_BlockingQueue_Mt<T>::pop(size_t count,
   auto inflightTicket = this->enterInflightGate();
 
   std::unique_lock<std::mutex> lock(m_mutex);
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  Dmn_Proc::testcancel();
+  try {
+    Dmn_Proc::testcancel();
 
-  // Wait until there are at least 'count' items OR a timeout occurs with at
-  // least one available item.
-  if (timeout > 0) {
-    if (m_not_empty_cond.wait_for(
-            lock, std::chrono::microseconds(timeout), [this, count] {
-              return m_queue.size() >= count || this->isInflightGuardClosed();
-            })) {
-      // do nothing and we have what we want
-    } else if (m_queue.empty()) {
-      // do nothing and fetch zero
+    // Wait until there are at least 'count' items OR a timeout occurs with at
+    // least one available item.
+    if (timeout > 0) {
+      if (m_not_empty_cond.wait_for(
+              lock, std::chrono::microseconds(timeout), [this, count] {
+                return m_queue.size() >= count || this->isInflightGuardClosed();
+              })) {
+        // do nothing and we have what we want
+      } else if (m_queue.empty()) {
+        // do nothing and fetch zero
+      } else {
+        // do nothing and fetch whatever we have
+      }
     } else {
-      // do nothing and fetch whatever we have
+      m_not_empty_cond.wait(lock, [this, count] {
+        return m_queue.size() >= count || this->isInflightGuardClosed();
+      });
     }
-  } else {
-    m_not_empty_cond.wait(lock, [this, count] {
-      return m_queue.size() >= count || this->isInflightGuardClosed();
-    });
+
+    // Collect up to 'count' items (moved out).
+    while (count > 0 && (!m_queue.empty())) {
+      ret.push_back(std::move_if_noexcept(m_queue.front()));
+      m_queue.pop_front();
+      ++m_pop_count;
+
+      count--;
+    }
+
+    // If queue became empty as a result of this pop, notify waitForEmpty()
+    // waiters.
+    bool empty = m_queue.empty();
+    lock.unlock();
+
+    if (empty) {
+      m_empty_cond.notify_all();
+    } else {
+      m_not_empty_cond.notify_one();
+    }
   }
-
-  // Collect up to 'count' items (moved out).
-  while (count > 0 && (!m_queue.empty())) {
-    ret.push_back(std::move_if_noexcept(m_queue.front()));
-    m_queue.pop_front();
-    ++m_pop_count;
-
-    count--;
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
   }
-
-  // If queue became empty as a result of this pop, notify waitForEmpty()
-  // waiters.
-  bool empty = m_queue.empty();
-  lock.unlock();
-
-  if (empty) {
-    m_empty_cond.notify_all();
-  } else {
-    m_not_empty_cond.notify_one();
+#endif
+  catch (...) {
+    failure = std::current_exception();
   }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return ret;
 }
@@ -415,43 +449,57 @@ auto Dmn_BlockingQueue_Mt<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> ret{};
 
   auto inflightTicket = this->enterInflightGate();
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  Dmn_Proc::testcancel();
+  try {
+    Dmn_Proc::testcancel();
 
-  if (m_queue.empty()) {
-    if (wait) {
-      // Block until an item is available. This wait is a cancellation point.
-      m_not_empty_cond.wait(lock, [this] {
-        return !m_queue.empty() || this->isInflightGuardClosed();
-      });
+    if (m_queue.empty()) {
+      if (wait) {
+        // Block until an item is available. This wait is a cancellation point.
+        m_not_empty_cond.wait(lock, [this] {
+          return !m_queue.empty() || this->isInflightGuardClosed();
+        });
 
-      if (!this->isInflightGuardClosed()) {
-        ret = std::move_if_noexcept(m_queue.front());
-        m_queue.pop_front();
-        ++m_pop_count;
+        if (!this->isInflightGuardClosed()) {
+          ret = std::move_if_noexcept(m_queue.front());
+          m_queue.pop_front();
+          ++m_pop_count;
+        }
       }
+    } else {
+      ret = std::move_if_noexcept(m_queue.front());
+      m_queue.pop_front();
+      ++m_pop_count;
     }
-  } else {
-    ret = std::move_if_noexcept(m_queue.front());
-    m_queue.pop_front();
-    ++m_pop_count;
+
+    bool empty = m_queue.empty();
+
+    lock.unlock();
+
+    // Notify waiters waiting for the queue to become empty.
+    if (empty) {
+      m_empty_cond.notify_all();
+    } else {
+      m_not_empty_cond.notify_one();
+    }
   }
-
-  bool empty = m_queue.empty();
-
-  lock.unlock();
-
-  // Notify waiters waiting for the queue to become empty.
-  if (empty) {
-    m_empty_cond.notify_all();
-  } else {
-    m_not_empty_cond.notify_one();
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+    failure = std::current_exception();
   }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return ret;
 } // method popOptional()
