@@ -26,6 +26,11 @@
 #include <system_error>
 #include <utility>
 
+// libstdc++ represents pthread cancellation with a forced-unwind exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
+
 namespace dmn {
 
 /**
@@ -165,9 +170,9 @@ auto Dmn_Proc::wait() -> bool {
   if (0 != err) {
     throw std::runtime_error(std::system_category().message(err));
   }
-
   setState(State::kReady);
-  m_cancel_requested.store(false, std::memory_order_release);
+  setState(State::kReady);
+  setState(State::kReady);
 
   auto failure = std::exchange(m_failure, {});
   if (failure) {
@@ -215,7 +220,6 @@ auto Dmn_Proc::stopExec() -> bool {
     err = pthread_cancel(m_th);
     if (0 != err) {
       m_cancel_requested.store(false, std::memory_order_release);
-
       throw std::runtime_error(std::system_category().message(err));
     }
 
@@ -303,10 +307,20 @@ auto Dmn_Proc::runFnInThreadHelper(void *context) -> void * {
     }
 
     proc->m_fnc();
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
+#if !defined(__GLIBCXX__)
+    // Some pthread runtimes do not expose cancellation as a distinct C++
+    // exception type. Preserve cancellation propagation on those runtimes.
     if (proc->m_cancel_requested.load(std::memory_order_acquire)) {
       throw;
     }
+#endif
 
     if (proc->m_exception_policy == ExceptionPolicy::kTerminate) {
       std::terminate();

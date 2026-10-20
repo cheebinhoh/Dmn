@@ -97,6 +97,11 @@
 #include <string_view>
 #include <vector>
 
+// libstdc++ represents pthread cancellation with a forced-unwind exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
+
 namespace dmn {
 
 /**
@@ -443,7 +448,13 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
       execSuccess = exec([this, fn = std::move(fn)]() {
         try {
           scheduledProcessingLoop(fn);
-        } catch (...) {
+        }
+#if defined(__GLIBCXX__)
+        catch (const __cxxabiv1::__forced_unwind &) {
+          throw;
+        }
+#endif
+        catch (...) {
           recordProcessingFailure(std::current_exception());
         }
       });
@@ -454,7 +465,13 @@ Dmn_Pipe<T, QueueType>::Dmn_Pipe(std::string_view name, Dmn_Pipe::Task fn,
 
           try {
             readAndProcess(fn, count, timeout);
-          } catch (...) {
+          }
+#if defined(__GLIBCXX__)
+          catch (const __cxxabiv1::__forced_unwind &) {
+            throw;
+          }
+#endif
+          catch (...) {
             recordProcessingFailure(std::current_exception());
 
             break;
@@ -523,7 +540,13 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
     } else {
       processedCount = dataList.size();
     }
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
     const auto failure = std::current_exception();
 
     {
