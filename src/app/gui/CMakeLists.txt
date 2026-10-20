@@ -1,4 +1,5 @@
 add_library(dmn-bluetooth-gui-core
+             core/device-monitor-controller.cpp
              core/device-monitor-event-store.cpp
              core/device-selection-model.cpp
 )

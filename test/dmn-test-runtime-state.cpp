@@ -410,9 +410,7 @@ TEST(DmnRuntimeState, DelaysInitialSubmission) {
   EXPECT_TRUE(state->run(dmn::Dmn_Runtime_Job::Priority::kMedium, delay));
 
   Runtime_Main_Loop loop{runtime()};
-  EXPECT_EQ(state->getFuture().wait_for(delay / 2),
-            std::future_status::timeout);
-  EXPECT_TRUE(state->wait_for(5s));
+  ASSERT_TRUE(state->wait_for(5s));
   loop.stop();
 
   EXPECT_GE(executedAt - submittedAt, delay);

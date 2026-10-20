@@ -5,6 +5,7 @@
  * @brief GTK-independent tests for Bluetooth GUI selection and event state.
  */
 
+#include "device-monitor-controller.hpp"
 #include "device-monitor-event-store.hpp"
 #include "device-selection-model.hpp"
 
@@ -21,10 +22,13 @@ namespace {
 using dmn::gui::Dmn_DeviceActionContext;
 using dmn::gui::Dmn_DeviceEntry;
 using dmn::gui::Dmn_DeviceIdentity;
+using dmn::gui::Dmn_DeviceMonitorController;
 using dmn::gui::Dmn_DeviceMonitorEvent;
 using dmn::gui::Dmn_DeviceMonitorEventStore;
 using dmn::gui::Dmn_DeviceSelectionModel;
 using dmn::gui::Dmn_DeviceSortColumn;
+using dmn::gui::Dmn_MonitorControllerCommand;
+using dmn::gui::Dmn_MonitorControllerDeviceState;
 
 auto device(std::string adapter, std::string address, std::string name,
             const bool paired = true) -> Dmn_DeviceEntry {
@@ -130,6 +134,141 @@ TEST(DmnBluetoothGuiDeviceSelection,
   EXPECT_FALSE(actions.m_can_connect);
   EXPECT_FALSE(actions.m_can_start_monitoring);
   EXPECT_TRUE(actions.m_can_stop_monitoring);
+}
+
+TEST(DmnBluetoothGuiMonitorController,
+     StartsOnlyForSavedConnectedDevicesWithMonitoringIntent) {
+  Dmn_DeviceMonitorController controller;
+  const Dmn_MonitorControllerDeviceState ready{.m_identity = {"AA:00", "BB:01"},
+                                               .m_saved = true,
+                                               .m_monitoring_requested = true,
+                                               .m_present = true,
+                                               .m_paired = true,
+                                               .m_connected = true};
+
+  const auto commands = controller.reconcile(
+      {ready}, true, Dmn_DeviceMonitorController::Clock::time_point{});
+
+  ASSERT_EQ(commands.size(), 1U);
+  EXPECT_EQ(commands.front().m_action,
+            Dmn_MonitorControllerCommand::Action::kStart);
+  EXPECT_EQ(commands.front().m_identity, ready.m_identity);
+  EXPECT_TRUE(controller
+                  .reconcile({ready}, false,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+  auto busy = ready;
+  busy.m_monitor_busy = true;
+  EXPECT_TRUE(controller
+                  .reconcile({busy}, true,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+
+  auto noIntent = ready;
+  noIntent.m_monitoring_requested = false;
+  EXPECT_TRUE(controller
+                  .reconcile({noIntent}, true,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+
+  auto unsaved = ready;
+  unsaved.m_saved = false;
+  EXPECT_TRUE(controller
+                  .reconcile({unsaved}, true,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+
+  auto disconnected = ready;
+  disconnected.m_connected = false;
+  EXPECT_TRUE(controller
+                  .reconcile({disconnected}, true,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+}
+
+TEST(DmnBluetoothGuiMonitorController,
+     StopsActiveMonitorWhenDeviceIsDisconnectedOrNoLongerSaved) {
+  Dmn_DeviceMonitorController controller;
+  auto active =
+      Dmn_MonitorControllerDeviceState{.m_identity = {"AA:00", "BB:01"},
+                                       .m_saved = true,
+                                       .m_present = true,
+                                       .m_paired = true,
+                                       .m_connected = false,
+                                       .m_monitor_active = true};
+
+  auto commands = controller.reconcile(
+      {active}, true, Dmn_DeviceMonitorController::Clock::time_point{});
+
+  ASSERT_EQ(commands.size(), 1U);
+  EXPECT_EQ(commands.front().m_action,
+            Dmn_MonitorControllerCommand::Action::kStop);
+
+  active.m_connected = true;
+  active.m_saved = false;
+  commands = controller.reconcile(
+      {active}, true, Dmn_DeviceMonitorController::Clock::time_point{});
+  ASSERT_EQ(commands.size(), 1U);
+  EXPECT_EQ(commands.front().m_action,
+            Dmn_MonitorControllerCommand::Action::kStop);
+
+  active.m_monitor_busy = true;
+  EXPECT_TRUE(controller
+                  .reconcile({active}, true,
+                             Dmn_DeviceMonitorController::Clock::time_point{})
+                  .empty());
+}
+
+TEST(DmnBluetoothGuiMonitorController,
+     RetriesFailedStartsWithCappedBackoffAndResetsAfterSuccess) {
+  Dmn_DeviceMonitorController controller;
+  const Dmn_DeviceIdentity identity{"AA:00", "BB:01"};
+  const auto start = Dmn_DeviceMonitorController::Clock::time_point{};
+  auto ready = Dmn_MonitorControllerDeviceState{.m_identity = identity,
+                                                .m_saved = true,
+                                                .m_monitoring_requested = true,
+                                                .m_present = true,
+                                                .m_paired = true,
+                                                .m_connected = true};
+
+  EXPECT_EQ(controller.recordStartFailure(identity, start, 100),
+            std::chrono::seconds{5});
+  EXPECT_TRUE(
+      controller.reconcile({ready}, true, start + std::chrono::seconds{4})
+          .empty());
+  EXPECT_EQ(controller.reconcile({ready}, true, start + std::chrono::seconds{5})
+                .front()
+                .m_action,
+            Dmn_MonitorControllerCommand::Action::kStart);
+
+  auto failureTime = start + std::chrono::seconds{5};
+  EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
+            std::chrono::seconds{10});
+  EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
+            std::chrono::seconds{20});
+  EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
+            std::chrono::seconds{40});
+  EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
+            std::chrono::seconds{60});
+  EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 80),
+            std::chrono::seconds{48});
+  EXPECT_THROW(controller.recordStartFailure(identity, failureTime, 101),
+               std::invalid_argument);
+
+  controller.recordStartSuccess(identity);
+  auto commands = controller.reconcile({ready}, true, start);
+  ASSERT_EQ(commands.size(), 1U);
+  EXPECT_EQ(commands.front().m_action,
+            Dmn_MonitorControllerCommand::Action::kStart);
+
+  ready.m_connected = false;
+  controller.recordStartFailure(identity, failureTime, 100);
+  EXPECT_TRUE(controller.reconcile({ready}, true, failureTime).empty());
+  ready.m_connected = true;
+  commands = controller.reconcile({ready}, true, start);
+  ASSERT_EQ(commands.size(), 1U);
+  EXPECT_EQ(commands.front().m_action,
+            Dmn_MonitorControllerCommand::Action::kStart);
 }
 
 TEST(DmnBluetoothGuiMonitorEventStore,

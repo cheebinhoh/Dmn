@@ -8,10 +8,15 @@ explicit per-device user action; that intent is saved and restored at the next
 launch. Restored monitors start only after BlueZ confirms that the saved,
 paired device is connected. Active monitors stop when their device
 disconnects and resume after it reconnects while the saved monitoring intent
-remains enabled. The live event feed supports composed device, event-kind,
-category, and case-insensitive text filters, row details, clearing, stable
-arrival ordering, and bounded retention. The preferences window, close
-confirmation/hidden-window mode, and desktop alerts remain unimplemented.
+remains enabled. Failed monitor starts are retried with jittered exponential
+backoff, starting at about 5 seconds and capped at about 60 seconds; intent is
+preserved until the user stops monitoring. The GTK frontend delegates
+platform-independent lifecycle decisions and retry scheduling to the
+`dmn-bluetooth-gui-core` controller. The live event feed supports
+composed device, event-kind, category, and case-insensitive text filters, row
+details, clearing, stable arrival ordering, and bounded retention. The
+preferences window, close confirmation/hidden-window mode, and desktop alerts
+remain unimplemented.
 Concurrent multi-device operation is implemented but still requires
 qualification with multiple physical devices.
 
@@ -34,7 +39,7 @@ separately describe proposed product behavior.
 | Adjustable device pane | The window opens maximized. Its draggable GTK divider defaults to an even 50/50 split; user-adjusted pane proportion is saved in GSettings and restored independently of window size. Existing saved absolute pane positions are migrated to a proportion on first launch after the update. |
 | Connect/disconnect actions | Implemented per saved device. Unpaired devices must be paired in Bluetooth Settings; disconnect stops that device's monitor first when needed. |
 | ANCS monitor lifecycle | Implemented per saved, paired, already-connected device with progress and explicit start/stop. Monitor start requires an existing connection and never pairs or establishes the initial link; like the CLI, it asks BlueZ to connect any remaining auto-connectable profiles before ANCS startup. |
-| Remembered monitoring intent | Implemented in GSettings using stable adapter/device addresses. An explicit Start monitoring choice is restored on launch; startup waits for a saved, paired device to be connected. Stop monitoring clears the intent. Disconnect or app exit stops the live monitor but preserves the intent. |
+| Remembered monitoring intent | Implemented in GSettings using stable adapter/device addresses. An explicit Start monitoring choice is restored on launch; startup waits for a saved, paired device to be connected. Failed monitor starts retry with jittered exponential backoff (about 5 seconds initially, capped at about 60 seconds) while the device remains connected and intent remains enabled. The retry policy and lifecycle decisions are implemented in the GTK-independent GUI core. Stop monitoring clears the intent. Disconnect or app exit stops the live monitor but preserves the intent. |
 | Adaptive layout | Implemented as a two-pane window at wide sizes and a device-list/device-detail navigation flow below the libadwaita breakpoint. The narrow layout stacks scan and selection controls. |
 | In-session event feed | Implemented using `GListStore`, `GtkFilterListModel`, `GtkSortListModel`, and `GtkColumnView`. Composable filters cover the viewed device or all devices, event kind, category, and Unicode case-insensitive text search. Rows show device, host receipt time, kind/category, and an event preview; row activation opens available details, including phone-provided date when present. Hovering notification text shows its full value wrapped within the feed-pane width. Arrival sequence—not wall-clock time—orders events newest-first. The process-local store retains at most 1,000 events and announces evictions. Clear notifications removes the in-memory feed; Clear filters restores defaults. Removed events show no stale attributes. Notification text remains selectable/copyable. |
 | Desktop metadata and icon | Implemented with an AppStream `.metainfo.xml`, a lowercase desktop/application ID, a scalable 128×128 full-color SVG icon, and a matching symbolic icon installed in hicolor. The previous GSettings schema ID is retained to preserve saved preferences. |
@@ -209,7 +214,10 @@ alerts, and close/hidden-window options remain unimplemented.
    through the app stops the monitor first, then requests BlueZ disconnection;
    stopping a monitor alone must not disconnect the device. An explicit
    **Stop monitoring** action ends the monitor and clears the saved intent
-   until the user explicitly starts it again.
+   until the user explicitly starts it again. While monitoring intent remains
+   enabled, failed starts retry with jittered exponential backoff, initially
+   about every 5 seconds and capped at about 60 seconds; clearing the intent
+   stops further retries.
 
 ### Implemented device pane
 
@@ -236,8 +244,10 @@ user chooses **Start monitoring**. That choice is remembered across launches;
 the app resumes only for devices with this explicit intent, after connection
 is confirmed. **Stop monitoring** remains available while an intent is saved,
 even when the device is disconnected or no monitor session is active; it
-clears the intent. To retry a failed session, clear the intent and choose
-**Start monitoring** again.
+clears the intent and cancels automatic retries. Failed starts are retried
+while the saved device remains connected and monitoring intent is enabled,
+using jittered exponential backoff starting at about 5 seconds and capped at
+about 60 seconds.
 
 ### Implemented event pane
 
@@ -501,7 +511,8 @@ the existing CMake/CTest structure; preserve repository build conventions.
      connection; devices with intent resume only after connection; Stop clears
      intent; disconnected devices stop without losing saved intent, unrelated
      devices never start, shutdown waits for all monitor cleanup, and
-     notification events are device-scoped.
+     notification events are device-scoped; the GTK-independent monitor
+     controller tests lifecycle decisions and retry backoff.
    - Implement: own one `Dmn_AncsBluezMonitor` per saved device with explicit
      monitoring intent, serialize each instance's transitions on managed
      workers, marshal progress/events onto GTK, poll selected-device link
@@ -510,10 +521,12 @@ the existing CMake/CTest structure; preserve repository build conventions.
      initial connection.
    - Current status: per-device start/stop, persisted monitoring intent and
      restoration after connection, per-device event routing, and monitor
-     cleanup on disconnect/quit are implemented.
-     Action-availability and bounded event-store unit tests cover core UI
-     state; full fake-controller/widget tests and simultaneous hardware
-     qualification remain outstanding.
+     cleanup on disconnect/quit are implemented. The GTK-independent
+     controller decides start/stop transitions and schedules failed-start
+     retries with jittered exponential backoff while monitoring intent remains
+     enabled. Action-availability, monitor-controller, and bounded event-store
+     unit tests cover core UI state; full fake-BlueZ/widget tests and
+     simultaneous hardware qualification remain outstanding.
 8. **Event feed and filtering.**
    - Test first: arrival ordering with wall-clock rollback, stable sequence,
      each filter independently and composed, case-folding, missing fields,
