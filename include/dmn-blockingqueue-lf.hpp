@@ -57,6 +57,12 @@
 #include <utility>
 #include <vector>
 
+// libstdc++ uses forced unwind for pthread cancellation; never intercept it as
+// an ordinary exception.
+#if defined(__GLIBCXX__)
+#include <cxxabi.h>
+#endif
+
 namespace dmn {
 
 /**
@@ -474,6 +480,7 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
 
   auto end = std::chrono::high_resolution_clock::now() +
              std::chrono::microseconds(timeout);
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
   auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
@@ -489,7 +496,15 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
       }
     } while ((!isShutdown()) && res.size() < count &&
              (0 == timeout || std::chrono::high_resolution_clock::now() < end));
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  // Let cancellation unwind; ordinary exceptions are saved until the cleanup
+  // handler is popped below.
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
     failure = std::current_exception();
   }
 
@@ -506,6 +521,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> data{};
 
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
   auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
@@ -513,7 +529,13 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
 
   try {
     data = popOptional(wait, inflightTicket);
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
     failure = std::current_exception();
   }
 
@@ -579,6 +601,7 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
   auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
@@ -586,7 +609,13 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
 
   try {
     pushImpl(item); // copy
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
     failure = std::current_exception();
   }
 
@@ -598,6 +627,7 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   auto inflightTicket = this->enterInflightGate();
+  // Defer ordinary exceptions until the pthread cleanup scope is closed.
   auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
@@ -605,7 +635,13 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
 
   try {
     pushImpl(std::move(item)); // move
-  } catch (...) {
+  }
+#if defined(__GLIBCXX__)
+  catch (const __cxxabiv1::__forced_unwind &) {
+    throw;
+  }
+#endif
+  catch (...) {
     failure = std::current_exception();
   }
 
