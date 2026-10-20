@@ -48,6 +48,7 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <exception>
 #include <initializer_list>
 #include <memory>
 #include <optional>
@@ -473,21 +474,29 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
 
   auto end = std::chrono::high_resolution_clock::now() +
              std::chrono::microseconds(timeout);
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  do {
-    auto data = popOptional(false, inflightTicket);
-    if (data) {
-      res.push_back(std::move_if_noexcept(*data));
-    } else {
-      dmn::Dmn_Proc::yield();
-    }
-  } while ((!isShutdown()) && res.size() < count &&
-           (0 == timeout || std::chrono::high_resolution_clock::now() < end));
+  try {
+    do {
+      auto data = popOptional(false, inflightTicket);
+      if (data) {
+        res.push_back(std::move_if_noexcept(*data));
+      } else {
+        dmn::Dmn_Proc::yield();
+      }
+    } while ((!isShutdown()) && res.size() < count &&
+             (0 == timeout || std::chrono::high_resolution_clock::now() < end));
+  } catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return res;
 }
@@ -497,13 +506,21 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> data{};
 
   auto inflightTicket = this->enterInflightGate();
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  data = popOptional(wait, inflightTicket);
+  try {
+    data = popOptional(wait, inflightTicket);
+  } catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 
   return data;
 }
@@ -562,24 +579,40 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
   auto inflightTicket = this->enterInflightGate();
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(item); // copy
+  try {
+    pushImpl(item); // copy
+  } catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
   auto inflightTicket = this->enterInflightGate();
+  auto failure = std::exception_ptr{};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
-  pushImpl(std::move(item)); // move
+  try {
+    pushImpl(std::move(item)); // move
+  } catch (...) {
+    failure = std::current_exception();
+  }
 
   DMN_PROC_CLEANUP_POP(0);
+  if (failure) {
+    std::rethrow_exception(failure);
+  }
 }
 
 template <typename T>
