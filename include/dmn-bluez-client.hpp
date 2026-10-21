@@ -306,6 +306,25 @@ public:
       -> Dmn_BluezResult;
 
   /**
+   * @brief Send a disconnect request even if Connected is still false.
+   *
+   * Intended to interrupt a pending Device1.Connect request from a separate
+   * client. Unlike disconnectDevice(), this does not treat a currently
+   * disconnected device as an idempotent no-op.
+   *
+   * @param deviceSelector Bluetooth address or current object path in
+   * inventory.
+   * @param adapterSelector Optional adapter address or current object path.
+   * @param timeout Finite method timeout; zero selects the configured default.
+   * @return Success or the typed local/remote BlueZ error.
+   */
+  [[nodiscard]] auto cancelConnectionAttempt(
+      const std::string &deviceSelector,
+      const std::optional<std::string> &adapterSelector = std::nullopt,
+      std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+      -> Dmn_BluezResult;
+
+  /**
    * @brief Set the default auto-transport filter and start one adapter scan.
    *
    * This operation does not power the adapter, pair, or connect to devices.

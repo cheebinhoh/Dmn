@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file device-selection-model.hpp
- * @brief GTK-independent device inventory and selection state.
+ * @brief Public GTK-independent device inventory and selection state.
  *
  * The model separates durable selection rules from GTK widgets and BlueZ
  * transport. The UI supplies owned inventory snapshots, edits a draft, and
@@ -80,6 +80,21 @@ struct Dmn_DeviceActionContext {
   /** @brief Whether this device's monitor is starting or stopping. */
   bool m_monitor_busy{};
 
+  /** @brief Whether this device's monitor startup may be canceled. */
+  bool m_monitor_start_pending{};
+
+  /** @brief Whether cancellation of this startup was already requested. */
+  bool m_monitor_cancel_requested{};
+
+  /** @brief Whether this device has a pending connection attempt. */
+  bool m_connection_pending{};
+
+  /** @brief Whether a disconnect is queued for this device. */
+  bool m_disconnect_pending{};
+
+  /** @brief Whether a connect is queued until this device's monitor stops. */
+  bool m_connect_after_monitor_stop{};
+
   /** @brief Whether a shared Bluetooth operation is in progress. */
   bool m_operation_busy{};
 
@@ -98,7 +113,7 @@ struct Dmn_DeviceActionAvailability {
   /** @brief Whether ANCS monitoring may be started. */
   bool m_can_start_monitoring{};
 
-  /** @brief Whether its active ANCS monitor may be stopped. */
+  /** @brief Whether monitoring intent or pending startup may be stopped. */
   bool m_can_stop_monitoring{};
 };
 
@@ -129,8 +144,10 @@ deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string;
 /**
  * @brief Derive row actions from saved selection and live device state.
  *
- * Stop remains available for an active monitor while the selection is dirty;
- * the user must not be trapped in a running session by editing its selection.
+ * Connection actions remain independent of monitor activity and backend busy
+ * state. Monitoring actions follow saved user intent and confirmed connection
+ * state rather than transient ANCS state; Stop remains available while the
+ * selection is dirty so an active intent can still be cleared.
  *
  * @param device Current device facts.
  * @param context Saved/draft and asynchronous operation state.

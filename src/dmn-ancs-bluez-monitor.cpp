@@ -181,6 +181,13 @@ auto validConfig(const Dmn_AncsMonitorConfig &config) -> bool {
          (!config.adapter_selector || !config.adapter_selector->empty());
 }
 
+auto cancellationError() -> Dmn_AncsMonitorError {
+  return {Dmn_AncsMonitorStage::Cancelled,
+          "monitor startup canceled",
+          {},
+          std::nullopt};
+}
+
 } // namespace
 
 class Dmn_AncsBluezMonitor::Impl {
@@ -205,6 +212,10 @@ public:
                                std::nullopt});
     }
 
+    if (cancellationRequested(config)) {
+      return std::unexpected(cancellationError());
+    }
+
     if (m_ancs.state() != Dmn_AncsState::Stopped) {
       return std::unexpected(
           Dmn_AncsMonitorError{Dmn_AncsMonitorStage::NotReady,
@@ -218,6 +229,9 @@ public:
     if (!inventory) {
       return std::unexpected(
           makeError(Dmn_AncsMonitorStage::Inventory, inventory.error()));
+    }
+    if (cancellationRequested(config)) {
+      return std::unexpected(cancellationError());
     }
 
     std::optional<Dmn_BluezAdapter> requestedAdapter;
@@ -279,7 +293,13 @@ public:
       auto discovered =
           discoverDevice(deviceSelector, *adapter, config.discovery_timeout);
       if (!discovered) {
+        if (cancellationRequested(config)) {
+          return std::unexpected(cancellationError());
+        }
         return std::unexpected(discovered.error());
+      }
+      if (cancellationRequested(config)) {
+        return std::unexpected(cancellationError());
       }
 
       matches.push_back(std::move(discovered->first));
@@ -422,13 +442,24 @@ public:
       auto connected = m_bluez.connectAvailableProfiles(
           actionSelector, adapter->object_path, config.connection_timeout);
       if (!connected) {
+        if (cancellationRequested(config)) {
+          return std::unexpected(cancellationError());
+        }
         return std::unexpected(
             makeError(Dmn_AncsMonitorStage::Connection, connected.error()));
       }
       requestedRemainingProfiles = true;
     }
 
+    if (cancellationRequested(config)) {
+      return std::unexpected(cancellationError());
+    }
+
     reportProgress(config, Dmn_AncsMonitorProgress::AncsStartup);
+    if (cancellationRequested(config)) {
+      return std::unexpected(cancellationError());
+    }
+
     auto ancsStarted = m_ancs.start(target.object_path, config.ancs);
     if (!ancsStarted) {
       const auto cleanup = m_ancs.stop();
@@ -438,9 +469,24 @@ public:
             cleanup.error().remote_name, cleanup.error().kind});
       }
 
+      if (cancellationRequested(config)) {
+        return std::unexpected(cancellationError());
+      }
+
       return std::unexpected(Dmn_AncsMonitorError{
           Dmn_AncsMonitorStage::AncsStartup, ancsStarted.error().message,
           ancsStarted.error().remote_name, ancsStarted.error().kind});
+    }
+
+    if (cancellationRequested(config)) {
+      const auto cleanup = m_ancs.stop();
+      if (!cleanup) {
+        return std::unexpected(Dmn_AncsMonitorError{
+            Dmn_AncsMonitorStage::Cleanup, cleanup.error().message,
+            cleanup.error().remote_name, cleanup.error().kind});
+      }
+
+      return std::unexpected(cancellationError());
     }
 
     return Dmn_AncsMonitorSession{std::move(*adapter), std::move(target),
@@ -456,6 +502,11 @@ public:
   auto state() const -> Dmn_AncsState { return m_ancs.state(); }
 
 private:
+  auto
+  cancellationRequested(const Dmn_AncsMonitorConfig &config) const -> bool {
+    return config.cancellation_requested && config.cancellation_requested();
+  }
+
   void reportProgress(const Dmn_AncsMonitorConfig &config,
                       Dmn_AncsMonitorProgress progress) {
     if (config.progress_handler) {

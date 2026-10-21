@@ -582,6 +582,10 @@ auto runMonitor(const Options &options) -> int {
                    ? ExitStatus::AncsUnavailable
                    : ExitStatus::AncsStartupFailure;
       break;
+    case dmn::Dmn_AncsMonitorStage::Cancelled:
+      prefix = "monitor startup canceled";
+      status = ExitStatus::RuntimeFailure;
+      break;
     case dmn::Dmn_AncsMonitorStage::Cleanup:
       prefix = "ANCS cleanup failed";
       status = ExitStatus::RuntimeFailure;

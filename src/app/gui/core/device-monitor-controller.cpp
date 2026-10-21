@@ -5,7 +5,7 @@
  * @brief GTK-independent monitor lifecycle decisions and retry policy.
  */
 
-#include "device-monitor-controller.hpp"
+#include "app/gui/core/device-monitor-controller.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -39,7 +39,9 @@ auto Dmn_DeviceMonitorController::reconcile(
 
     const bool connected =
         device.m_present && device.m_paired && device.m_connected;
-    if (device.m_monitor_active && (!device.m_saved || !connected)) {
+    if (device.m_monitor_active &&
+        (!device.m_saved || !device.m_monitoring_requested || !connected ||
+         device.m_monitor_restart_required)) {
       commands.push_back(
           {device.m_identity, Dmn_MonitorControllerCommand::Action::kStop});
 

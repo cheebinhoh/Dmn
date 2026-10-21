@@ -5,7 +5,7 @@
  * @brief Bounded, process-local ANCS events associated with device identities.
  */
 
-#include "device-monitor-event-store.hpp"
+#include "app/gui/core/device-monitor-event-store.hpp"
 
 #include <glib.h>
 
@@ -46,6 +46,7 @@ void Dmn_DeviceMonitorEventStore::append(Dmn_DeviceMonitorEvent event) {
   if (event.m_sequence == 0) {
     event.m_sequence = m_next_sequence;
   }
+
   m_next_sequence = std::max(m_next_sequence, event.m_sequence + 1);
   const auto position =
       std::upper_bound(m_events.begin(), m_events.end(), event.m_sequence,
@@ -114,14 +115,17 @@ auto matchesEventFilter(const Dmn_DeviceMonitorEvent &event,
   if (filter.m_identity && event.m_identity != *filter.m_identity) {
     return false;
   }
+
   if (filter.m_kind && event.m_event.kind != *filter.m_kind) {
     return false;
   }
+
   if (filter.m_category &&
       (!event.m_event.notification ||
        event.m_event.notification->category != *filter.m_category)) {
     return false;
   }
+
   if (filter.m_search.empty()) {
     return true;
   }
@@ -147,6 +151,7 @@ auto matchesEventFilter(const Dmn_DeviceMonitorEvent &event,
       return true;
     }
   }
+
   if (event.m_event.error && containsQuery(event.m_event.error->message)) {
     return true;
   }

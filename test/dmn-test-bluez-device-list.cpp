@@ -2162,6 +2162,79 @@ TEST(DmnAncsBluezMonitorTest, RequiresAlreadyConnectedDevice) {
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
 }
 
+TEST(DmnAncsBluezMonitorTest,
+     CancelsBeforeStartingAncsWithoutCreatingSubscriptions) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  ASSERT_TRUE(monitor.setEventHandler([](const auto &) {}));
+
+  std::atomic_bool cancelRequested{};
+  dmn::Dmn_AncsMonitorConfig config;
+  config.require_existing_connection = true;
+  config.cancellation_requested = [&] {
+    return cancelRequested.load(std::memory_order_acquire);
+  };
+  config.progress_handler = [&](const auto progress) {
+    if (progress == dmn::Dmn_AncsMonitorProgress::AncsStartup) {
+      cancelRequested.store(true, std::memory_order_release);
+    }
+  };
+
+  const auto started = monitor.start("Known headset", config);
+
+  ASSERT_FALSE(started);
+  EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Cancelled);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+}
+
+TEST(DmnAncsBluezMonitorTest,
+     CancellationDuringAncsStartupStopsNewSubscriptions) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address(), 0, 0, true};
+  service.enableAncsGatt();
+
+  dmn::Dmn_BluezClientConfig bluezConfig;
+  bluezConfig.test_bus_address = bus.address();
+  dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
+  ASSERT_TRUE(monitor.setEventHandler([](const auto &) {}));
+
+  service.holdNextGattStartNotify();
+  std::atomic_bool cancelRequested{};
+  dmn::Dmn_AncsMonitorConfig config;
+  config.require_existing_connection = true;
+  config.cancellation_requested = [&] {
+    return cancelRequested.load(std::memory_order_acquire);
+  };
+
+  auto pendingStart = std::async(std::launch::async, [&] {
+    return monitor.start("Known headset", config);
+  });
+  if (!service.waitForHeldGattStartNotify(5s)) {
+    service.releaseHeldGattStartNotify();
+    ASSERT_EQ(pendingStart.wait_for(5s), std::future_status::ready);
+    FAIL() << "fake BlueZ did not hold the ANCS StartNotify call";
+  }
+
+  cancelRequested.store(true, std::memory_order_release);
+  service.releaseHeldGattStartNotify();
+  ASSERT_EQ(pendingStart.wait_for(5s), std::future_status::ready);
+  const auto started = pendingStart.get();
+  ASSERT_FALSE(started);
+  EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Cancelled);
+  EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 0}));
+  EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
+}
+
 TEST(DmnAncsBluezMonitorTest, RejectsKnownDeviceOnUnpoweredAdapter) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
@@ -3554,6 +3627,22 @@ TEST(DmnBluezClient, ConnectAvailableProfilesAcceptsInProgressResponse) {
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
   EXPECT_EQ(service.forbiddenCount(), 0);
+}
+
+TEST(DmnBluezClient, CancelConnectionAttemptDisconnectsEvenWhenNotConnected) {
+  PrivateBus bus;
+  ASSERT_TRUE(bus.valid());
+  FakeBluezService service{bus.address()};
+  dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
+  ASSERT_TRUE(client.snapshot());
+
+  const auto canceled =
+      client.cancelConnectionAttempt("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+
+  ASSERT_TRUE(canceled) << canceled.error().message;
+  EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
+  EXPECT_EQ(service.deviceActionPaths(),
+            (std::pair{std::string{}, std::string{kDevicePath}}));
 }
 
 TEST(DmnBluezClient, PairUsesCurrentObjectPathAndDefaultAgent) {

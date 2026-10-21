@@ -43,5 +43,13 @@
         selection.
       </description>
     </key>
+    <key name="desktop-alerts" type="b">
+      <default>false</default>
+      <summary>Show generic desktop alerts</summary>
+      <description>
+        Submit generic desktop notifications when new ANCS notifications
+        arrive. Notification content is never included.
+      </description>
+    </key>
   </schema>
 </schemalist>

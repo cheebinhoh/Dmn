@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1290" viewBox="0 0 1720 1290" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth current GTK UI storyboard</title>
-  <desc id="desc">Five current application states show the device inventory, draft selection, connection without monitoring, explicit monitor startup and ready state, and the live event feed with a Copy-only context menu.</desc>
+  <desc id="desc">Five current application states show the device inventory, draft selection, connection without monitoring, cancelable monitor startup and ready state, and the live event feed with a Copy-only context menu.</desc>
   <defs>
     <style>
       .bg { fill: #f6f5f4; }
@@ -23,7 +23,7 @@
   </defs>
   <rect class="bg" width="1720" height="1290"/>
   <text class="text" x="40" y="48" font-size="30" font-weight="700">Dmn Bluetooth · current GTK UI storyboard</text>
-  <text class="muted" x="40" y="77" font-size="16">Implementation-accurate states · actions remain explicit · event filters implemented; Preferences and desktop alerts remain planned</text>
+  <text class="muted" x="40" y="77" font-size="16">Implementation-accurate states · actions remain explicit · event filters and opt-in desktop alerts implemented; Preferences out of scope</text>
 
   <!-- Frame 01: inventory -->
   <g transform="translate(40 112)">
@@ -110,7 +110,7 @@
     <rect x="38" y="251" width="725" height="55" rx="6" fill="#f6f5f4"/>
     <text class="text small" x="55" y="274">ANCS is ready. Only new notifications received while this monitor is running appear here.</text>
     <text class="muted small" x="55" y="294">iOS may ask for access after a new notification arrives.</text>
-    <text class="muted tiny" x="580" y="322">Stop monitoring leaves Bluetooth connected.</text>
+    <text class="muted tiny" x="580" y="322">Setup: Stop monitoring cancels the pending start.</text>
   </g>
 
   <!-- Frame 05: event feed and copy -->
