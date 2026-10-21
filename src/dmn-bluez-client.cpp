@@ -118,7 +118,13 @@ auto normalizedAddress(std::string_view address) -> std::string {
 
 class Dmn_BluezClient::Impl {
 public:
-  enum class DeviceAction { Connect, ConnectProfiles, Disconnect, Pair };
+  enum class DeviceAction {
+    Connect,
+    ConnectProfiles,
+    Disconnect,
+    CancelConnection,
+    Pair
+  };
 
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_dbus(makeDbusConfig(config)) {
@@ -513,7 +519,8 @@ public:
 
       if (action == DeviceAction::Pair) {
         alreadyInRequestedState = device.paired && *device.paired;
-      } else if (action != DeviceAction::ConnectProfiles) {
+      } else if (action != DeviceAction::ConnectProfiles &&
+                 action != DeviceAction::CancelConnection) {
         const bool requestedConnected = action == DeviceAction::Connect;
         alreadyInRequestedState =
             device.connected && *device.connected == requestedConnected;
@@ -529,8 +536,10 @@ public:
                     action == DeviceAction::Connect ||
                             action == DeviceAction::ConnectProfiles
                         ? "Connect"
-                    : action == DeviceAction::Disconnect ? "Disconnect"
-                                                         : "Pair",
+                    : action == DeviceAction::Disconnect ||
+                            action == DeviceAction::CancelConnection
+                        ? "Disconnect"
+                        : "Pair",
                     {}, timeout);
     if (!result) {
       const auto &error = result.error();
@@ -1281,6 +1290,14 @@ auto Dmn_BluezClient::disconnectDevice(
     std::chrono::milliseconds timeout) -> Dmn_BluezResult {
   return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
                               Impl::DeviceAction::Disconnect);
+}
+
+auto Dmn_BluezClient::cancelConnectionAttempt(
+    const std::string &deviceSelector,
+    const std::optional<std::string> &adapterSelector,
+    std::chrono::milliseconds timeout) -> Dmn_BluezResult {
+  return m_impl->deviceAction(deviceSelector, adapterSelector, timeout,
+                              Impl::DeviceAction::CancelConnection);
 }
 
 auto Dmn_BluezClient::startDiscovery(const std::string &adapterPath)

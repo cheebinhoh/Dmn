@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.cheebinhoh.dmn-bluetooth
+Exec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk

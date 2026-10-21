@@ -1,25 +1,27 @@
 # Dmn Bluetooth GTK UI Storyboard
 
 **Status:** Implementation-accurate overview of the current GTK 4/libadwaita
-application. The frames show existing controls and behavior; Preferences,
-desktop alerts, and close/hidden-window options remain planned. The wide
-window opens maximized with an even default split, and its divider proportion
-is restored on later launches.
+application. The frames show existing controls and behavior; generic desktop
+alerts are available through the app menu. Preferences and
+close/hidden-window options are out of scope. The wide window opens maximized
+with an even default split, and its divider proportion is restored on later
+launches.
 
 ![Five implementation-accurate frames show inventory, selection, connection, monitoring, and the filterable event table](images/dmn-bluetooth-gtk-ui-storyboard.svg)
 
 The application uses a resizable two-pane layout at wide window sizes. Below
 the libadwaita breakpoint, it shows either the device list or selected-device
-page, with a Back button. The app menu contains About and Quit.
+page, with a Back button. The app menu contains About, Desktop alerts, and
+Quit.
 
 ## Current screens and interaction contract
 
 | Frame | Current UI state | User action and behavior |
 | --- | --- | --- |
 | 01 | **Inventory and empty detail.** The device pane contains adapter selection, Refresh/Scan/Stop scan, sortable Name/Status headings, and the device list. The detail pane prompts the user to choose a device. | Scanning, pairing, and connection are never initiated on launch. Monitoring resumes only for a saved device with previously enabled monitoring intent, after BlueZ confirms it is connected. |
-| 02 | **Device selection.** Device rows show a checkbox, name, paired/connection status, and per-device Connect/Disconnect and Start/Stop monitoring buttons. Save selection and Discard changes share a row with Selected only at wide sizes; those controls adapt to narrow widths. | Checkbox edits change the draft only. Selected only filters by the draft. Activating the device name opens its detail page; checking it does not navigate. |
-| 03 | **Connected, not monitoring.** The selected-device page shows current device status and an empty session feed. Start monitoring is available only after BlueZ reports Connected for a saved, paired device. | Connect only connects. The app subscribes to ANCS only after the user explicitly starts monitoring; that intent is remembered and restored after relaunch once the device is connected. Stop monitoring clears the intent but leaves the Bluetooth connection intact. |
-| 04 | **Monitor setup and ready.** Setup progress and monitor state are shown in the device row and selected-device status. Once ready, the feed explains that only new notifications received during this monitor session appear. | Monitor start/stop runs away from the GTK thread. A disconnect or disappearance observed during inventory polling stops an active monitor. Polling resumes monitoring only when the device has previously saved monitoring intent and is confirmed connected. Failed starts retry with jittered exponential backoff while that intent remains enabled. |
+| 02 | **Device selection.** Device rows show a checkbox, name, paired/connection status, and per-device Connect/Disconnect and Start/Stop monitoring buttons. A pending Connect is labeled **Disconnect** so it can be canceled; monitoring actions become available as soon as BlueZ confirms the connection. Save selection and Discard changes share a row with Selected only at wide sizes; those controls adapt to narrow widths. | Checkbox edits change the draft only. Selected only filters by the draft. Activating the device name opens its detail page; checking it does not navigate. |
+| 03 | **Connected, not monitoring.** The selected-device page shows current device status and an empty session feed. After connection is confirmed, both **Disconnect** and **Start monitoring** are available. | Connect only connects unless saved monitoring intent is being restored; in that case monitoring starts as soon as BlueZ confirms Connected. A manual **Disconnect** clears that intent, stops monitoring first if active, and returns to a disconnected row with **Connect** enabled and **Start monitoring** disabled. Stop monitoring alone clears the intent but leaves the Bluetooth connection intact. |
+| 04 | **Monitor setup and ready.** Setup progress and monitor state are shown in the device row and selected-device status. While setup is pending, the row offers **Stop monitoring** immediately; pressing it cancels startup and clears monitoring intent. Once ready, the feed explains that only new notifications received during this monitor session appear. | Monitor start/stop runs away from the GTK thread. The monitoring action follows saved intent rather than transient ANCS state; a Failed or Stopped monitor is cleaned up and retried while the device remains connected and intent remains enabled. Cancellation is cooperative between setup stages; an in-flight subscription is cleaned up when its bounded call returns, and its events are suppressed. A disconnect or disappearance observed during inventory polling stops an active monitor. Failed starts retry with jittered exponential backoff while that intent remains enabled. |
 | 05 | **Live event feed.** A sortable-by-arrival table shows device, host receipt time, event kind/category, and available event text. Search, device, kind, and category filters compose; activating a row opens available details. Hovering notification text shows its full value wrapped to the feed pane. | New events appear first by callback arrival sequence, regardless of wall-clock changes. Selecting All devices shows that title without device-specific status; selecting a device restores its status and filters the feed. Clear filters restores the default view; Clear notifications removes only this process's in-memory feed. The 1,000-event limit is visible when older rows are evicted. Notification text remains selectable and copyable. |
 
 ### Narrow-window behavior
@@ -40,14 +42,17 @@ per-device lifecycle rules apply in either layout.
   requires BlueZ-confirmed Connected state and does not perform discovery,
   pairing, or connection setup.
 - Stop monitoring ends ANCS subscriptions but does not disconnect or unpair.
-  Disconnect first stops an active monitor, then asks BlueZ to disconnect.
+  Manual **Disconnect** clears monitoring intent, stops an active monitor
+  first, then asks BlueZ to disconnect. An external connection loss stops the
+  monitor while retaining saved intent for a later reconnection.
 - An explicit monitoring choice persists across app exits. On relaunch, and
   after a device reconnects, the app resumes only those saved devices for
   which monitoring intent remains enabled; it never connects devices
   automatically.
-- Failed monitor starts retain the saved intent and retry with jittered
-  exponential backoff (about 5 seconds initially, capped at about 60 seconds).
-  Stop monitoring clears the intent and ends automatic retries.
+- Failed monitor starts and unexpected ANCS Failed/Stopped events retain the
+  saved intent and retry with jittered exponential backoff (about 5 seconds
+  initially, capped at about 60 seconds). Stop monitoring clears the intent
+  and ends automatic retries.
 - Event data is held only in bounded process memory. Removed events do not
   display stale attributes. Closing the app waits for monitor/scan cleanup and
   then quits; it does not disconnect or unpair devices.
@@ -56,12 +61,15 @@ per-device lifecycle rules apply in either layout.
 - Device inventory polling does not recreate an unchanged event feed, which
   avoids clearing a text selection during routine refreshes.
 
-## Not implemented in the current UI
+## Out of scope
 
-The following remain proposed work in
-[the application specification](dmn-bluetooth-gtk-app-spec.md): Preferences,
-desktop alerts, close confirmation, and configurable keep-monitoring-on-close
-behavior. They are intentionally absent from these current-state mockups.
+Preferences, close confirmation, and configurable keep-monitoring-on-close
+behavior are not part of the active roadmap. The active roadmap is limited to
+implemented optional desktop alerts (with desktop-session qualification
+remaining) and release qualification. Generic desktop alerts are available
+through the app-menu toggle, but are not depicted in these current-state
+mockups; their presentation depends on the desktop notification service and
+its user policy.
 
 ## GNOME HIG considerations
 
@@ -75,5 +83,6 @@ behavior. They are intentionally absent from these current-state mockups.
   wrapped full-value hover tooltip, and offers a Copy-only context menu to
   avoid presenting irrelevant editing actions.
 
-See the application's [implementation status and proposed roadmap](dmn-bluetooth-gtk-app-spec.md)
-for build requirements, GNOME/GTK references, and work not represented here.
+See the application's [implementation status and remaining release
+qualification](dmn-bluetooth-gtk-app-spec.md) for build requirements,
+GNOME/GTK references, and release gates.

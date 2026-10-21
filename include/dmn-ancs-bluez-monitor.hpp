@@ -45,6 +45,7 @@ enum class Dmn_AncsMonitorStage {
   Pairing,        /**< Pairing failed or paired state was not confirmed. */
   Connection,  /**< Connection failed or connected state was not confirmed. */
   AncsStartup, /**< ANCS service discovery or subscription failed. */
+  Cancelled,   /**< Startup was canceled by the caller. */
   Cleanup      /**< ANCS startup rollback or stop cleanup failed. */
 };
 
@@ -133,6 +134,16 @@ struct Dmn_AncsMonitorConfig {
    * values to its own UI context.
    */
   Dmn_AncsMonitorProgressHandler progress_handler{};
+
+  /**
+   * @brief Optional cooperative cancellation check for startup.
+   *
+   * Checked between setup stages. Calls already in progress remain bounded by
+   * their configured timeout; if cancellation arrives during ANCS startup,
+   * the newly started session is stopped before start() returns. The callback
+   * must return promptly and must not throw.
+   */
+  std::function<bool()> cancellation_requested{};
 
   /** @brief ANCS operation deadlines, pending-request policy, and date cutoff.
    */

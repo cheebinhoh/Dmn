@@ -1,7 +1,7 @@
 # Dmn Bluetooth GUI Design and Specification Index
 
-**Status:** The optional GTK 4/libadwaita application is partially implemented.
-Its implemented behavior and remaining features are documented in the
+**Status:** The optional GTK 4/libadwaita application is implemented; release
+qualification remains. Its behavior and remaining gates are documented in the
 [GTK application specification](dmn-bluetooth-gtk-app-spec.md), which is the
 source of truth for current GTK behavior. GNOME Shell, COSMIC, and
 user-session-service concepts below remain proposals.
@@ -15,16 +15,14 @@ existing BlueZ/ANCS monitor. It replaces the former GTK-only proposal:
 the product is a Bluetooth notification GUI, while GTK, GNOME Shell, and
 COSMIC are distinct presentation/integration choices.
 
-## Recommendation
+## Frontend decision
 
-Build the first complete user-facing experience as a standalone GTK 4
-application. Keep the event feed and device lifecycle in that application,
-use the existing C++ Dmn monitor, and optionally send privacy-safe desktop
-alerts through GIO `GNotification` when the user explicitly enables them.
-The window may be hidden while the application remains running; alerts require
-the process and monitor session to remain alive. By default closing/exiting
-stops monitoring; an explicit **Keep monitoring when the window is closed**
-preference may hide the window and keep that app process alive.
+The first complete user-facing experience is implemented as a standalone GTK 4
+application. The app owns the event feed and device lifecycle, uses the
+existing C++ Dmn monitor, and can send privacy-safe desktop alerts through
+GIO `GNotification` when the user explicitly enables them. Alerts require
+the process and monitor session to remain alive. Quitting stops monitoring
+after cleanup; hidden-window monitoring is out of scope.
 
 Do not start with a GNOME Shell extension or a COSMIC applet: they provide
 small shell surfaces, not a portable home for a detailed event table. They
@@ -60,14 +58,16 @@ history or embed an application feed into the notification center.
   names when an address is available.
 - GUI code must keep bounded blocking monitor startup/stop work off the UI
   thread. Event/progress callbacks must be copied and marshalled safely to
-  the UI context. `stop()` waits for a synchronous `start()`; it does not
-  cancel discovery, pairing, or connection in progress.
+  the UI context. Startup cancellation is cooperative between setup stages;
+  it does not interrupt an in-flight D-Bus/GATT call. `stop()` waits for a
+  synchronous `start()` and does not itself cancel discovery, pairing, or
+  connection in progress.
 
 ## Architecture options and decision
 
 | Option | Role | Decision |
 | --- | --- | --- |
-| Standalone GTK 4 app with optional GIO desktop alerts | Full device manager and live event reader; can send passive alerts while still running with its window hidden | Initial GTK application is implemented; desktop alerts and hidden-window monitoring remain future work. See [GTK application spec](dmn-bluetooth-gtk-app-spec.md). |
+| Standalone GTK 4 app with optional GIO desktop alerts | Full device manager and live event reader; can send passive alerts while the process and monitor remain running | GTK application and generic opt-in GNotification submission are implemented. Target-shell presentation and release qualification remain; Preferences and hidden-window monitoring are out of scope. See [GTK application spec](dmn-bluetooth-gtk-app-spec.md). |
 | GNOME Shell extension | GNOME-only panel menu/quick actions that may activate the app or, later, call a service | Optional companion only; it cannot run on COSMIC and is not a plug-in for the GNOME notification center. See [GNOME extension spec](dmn-bluetooth-gnome-extension-spec.md). |
 | Native COSMIC app and COSMIC applet | Rust/`libcosmic` native window and optional panel surface | Alternative if COSMIC integration is the priority; requires a maintained C++ boundary. See [COSMIC spec](dmn-bluetooth-cosmic-spec.md). |
 | User-session D-Bus monitor service | Owns monitor lifetime/state for multiple frontends or after a window/process exits | Optional independent topic, not a default dependency; see [service spec](dmn-bluetooth-session-service-spec.md). |
@@ -100,10 +100,11 @@ shell-specific release gates.
    versions. The GTK build currently requires GTK 4.14+ and libadwaita 1.5+;
    upstream web documentation is not a compatibility guarantee for a
    distribution release.
-2. Keep the implemented `ENABLE_APP_BLUETOOTH_GTK` option separate from
-   `ENABLE_APP_BLUETOOTH`, which builds `dmn-bluetooth-cli`. Enabling one must
-   not silently rename, replace, or build the other. See the GTK application
-   specification for the current build contract.
+2. Preserve the separation between the implemented
+   `ENABLE_APP_BLUETOOTH_GTK` option and `ENABLE_APP_BLUETOOTH`, which builds
+   `dmn-bluetooth-cli`. Enabling one must not silently rename, replace, or
+   build the other. See the GTK application specification for the current
+   build contract.
 3. For each milestone, link requirement IDs to focused tests and distinguish
    automated evidence from human/hardware qualification. A test name or
    screenshot alone is not evidence that the required behavior is covered.
@@ -122,7 +123,7 @@ wireframes are interaction sketches, not evidence of platform compliance:
 
 | Layout | Assessment | Required design adjustment |
 | --- | --- | --- |
-| GTK/libadwaita main window | Feasible as a wide split view with a phone list and event feed | At narrow widths, collapse to a single navigable view; keep alert controls in Preferences rather than a persistent feed card. Use GTK/libadwaita theme styling, standard controls, and GNOME HIG keyboard/accessibility/adaptive rules. |
+| GTK/libadwaita main window | Feasible as a wide split view with a phone list and event feed | At narrow widths, collapse to a single navigable view; keep the alert control in the app menu, not a persistent feed card. Use GTK/libadwaita theme styling, standard controls, and GNOME HIG keyboard/accessibility/adaptive rules. |
 | GNOME Shell extension | Feasible only as a compact Shell menu, not a full application panel | Use standard Shell menu items and actions; the extension remains launcher-only unless the optional service is present. Test on declared Shell releases. |
 | COSMIC application | Feasible as a native `libcosmic` list/detail application | Use COSMIC theme/spacing/widget conventions and an explicit narrow-window layout; validate keyboard and accessibility behavior against the pinned `libcosmic` revision. |
 | COSMIC applet | Feasible as a small, optional status/action popup | Keep it payload-free and compact; do not attempt to squeeze the full device/event workflow into the panel. |
@@ -147,7 +148,7 @@ These are interaction/layout wireframes, not polished visual designs or
 pixel-perfect toolkit mockups:
 
 - [GTK wide-window layout sketch](images/dmn-bluetooth-gtk-app.svg)
-- [GTK UI storyboard: selection through monitoring, settings, and recovery](dmn-bluetooth-gtk-ui-storyboard.md)
+- [GTK UI storyboard: selection through monitoring and the event feed](dmn-bluetooth-gtk-ui-storyboard.md)
 - [GNOME Shell extension menu](images/dmn-bluetooth-gnome-extension.svg)
 - [COSMIC application and applet](images/dmn-bluetooth-cosmic.svg)
 - [Optional background service ownership diagram](images/dmn-bluetooth-session-service.svg)

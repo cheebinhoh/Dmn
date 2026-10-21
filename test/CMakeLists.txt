@@ -440,6 +440,7 @@ endif()
 # Compile each public header independently to check self-contained includes.
 file(GLOB DMN_PUBLIC_HEADERS CONFIGURE_DEPENDS
        "${PROJECT_SOURCE_DIR}/include/*.hpp"
+       "${PROJECT_SOURCE_DIR}/include/app/gui/core/*.hpp"
        "${PROJECT_SOURCE_DIR}/include/kafka/*.hpp"
 )
 

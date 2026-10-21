@@ -2,9 +2,12 @@
 Name=Dmn Bluetooth
 GenericName=Bluetooth Device Monitor
 Comment=Select a Bluetooth device for monitoring
-Exec=dmn-bluetooth-gtk
+Exec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk
+TryExec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk
 Icon=com.cheebinhoh.dmn-bluetooth
 Terminal=false
 Type=Application
 Categories=Utility;
 StartupNotify=true
+DBusActivatable=true
+X-GNOME-UsesNotifications=true

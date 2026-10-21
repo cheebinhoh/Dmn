@@ -14,9 +14,10 @@
 
 #define G_LOG_DOMAIN "dmn-bluetooth-gtk"
 
-#include "device-monitor-controller.hpp"
-#include "device-monitor-event-store.hpp"
-#include "device-selection-model.hpp"
+#include "app/gui/core/desktop-alert-policy.hpp"
+#include "app/gui/core/device-monitor-controller.hpp"
+#include "app/gui/core/device-monitor-event-store.hpp"
+#include "app/gui/core/device-selection-model.hpp"
 
 #include "dmn-ancs-bluez-monitor.hpp"
 #include "dmn-bluez-client.hpp"
@@ -28,6 +29,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <exception>
@@ -86,11 +88,20 @@ struct BackendReply {
   std::string m_error;
   bool m_discovery_started{};
   bool m_discovery_stopped{};
+  bool m_connection_cancelled{};
 };
 
 /** @brief Serialize every BlueZ call on the application's worker thread. */
 class BluezInventoryBackend {
 public:
+  BluezInventoryBackend() = default;
+  // The mutex and serialized client make this backend instance-specific.
+  BluezInventoryBackend(const BluezInventoryBackend &) = delete;
+  auto
+  operator=(const BluezInventoryBackend &) -> BluezInventoryBackend & = delete;
+  BluezInventoryBackend(BluezInventoryBackend &&) = delete;
+  auto operator=(BluezInventoryBackend &&) -> BluezInventoryBackend & = delete;
+
   /**
    * @brief Perform a serialized BlueZ operation and capture an inventory.
    *
@@ -102,7 +113,8 @@ public:
    * @return Owned inventory, operation status, and any failure message.
    */
   auto perform(Dmn_Operation operation, const std::string &adapterPath,
-               const std::optional<dmn::gui::Dmn_DeviceIdentity> &identity)
+               const std::optional<dmn::gui::Dmn_DeviceIdentity> &identity,
+               const std::shared_ptr<std::atomic_bool> &cancelConnect)
       -> BackendReply {
     std::lock_guard lock{m_mutex};
     try {
@@ -168,11 +180,43 @@ public:
                 : m_client->disconnectDevice(identity->m_device_address,
                                              identity->m_adapter_address,
                                              kDeviceStateTimeout);
+        // Connect is bounded but synchronous; honor cancellation as soon as
+        // it returns, before waiting for BlueZ to publish the connected state.
+        if (operation == Dmn_Operation::kConnect && cancelConnect != nullptr &&
+            cancelConnect->load(std::memory_order_acquire)) {
+          auto current = m_client->snapshot();
+
+          return {operation,
+                  current ? std::optional<dmn::Dmn_BluezInventory>{std::move(
+                                *current)}
+                          : std::nullopt,
+                  {},
+                  false,
+                  false,
+                  true};
+        }
+
         if (!result) {
           return {operation, std::nullopt, result.error().message};
         }
 
         for (;;) {
+          // A separate cancel task sends Disconnect while this worker waits.
+          if (operation == Dmn_Operation::kConnect &&
+              cancelConnect != nullptr &&
+              cancelConnect->load(std::memory_order_acquire)) {
+            auto current = m_client->snapshot();
+
+            return {operation,
+                    current ? std::optional<dmn::Dmn_BluezInventory>{std::move(
+                                  *current)}
+                            : std::nullopt,
+                    {},
+                    false,
+                    false,
+                    true};
+          }
+
           const auto remaining =
               std::chrono::duration_cast<std::chrono::milliseconds>(
                   stateDeadline - std::chrono::steady_clock::now());
@@ -256,11 +300,21 @@ struct AdapterOption {
 struct MonitorSession {
   dmn::gui::Dmn_DeviceIdentity m_identity;
   std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
+  std::shared_ptr<std::atomic_bool> m_cancel_start;
   std::string m_status{"Not monitoring"};
   std::string m_error;
   bool m_busy{};
   bool m_stopping{};
+  bool m_start_cancel_requested{};
+  bool m_monitor_restart_required{};
   bool m_disconnect_after_stop{};
+  bool m_connect_after_stop{};
+};
+
+/** @brief A row connection action waiting for another Bluetooth operation. */
+struct QueuedConnectionAction {
+  dmn::gui::Dmn_DeviceIdentity m_identity;
+  bool m_connect{};
 };
 
 /** @brief GTK-main-context-owned widgets, settings, and selection state. */
@@ -269,13 +323,21 @@ struct AppState {
       : m_app{application},
         m_backend{std::make_shared<BluezInventoryBackend>()}, m_selection{} {}
 
+  // GTK callbacks retain this address, and the destructor releases owned refs.
+  AppState(const AppState &) = delete;
+  auto operator=(const AppState &) -> AppState & = delete;
+  AppState(AppState &&) = delete;
+  auto operator=(AppState &&) -> AppState & = delete;
+
   ~AppState() {
     if (m_scan_poll_source != 0) {
       g_source_remove(m_scan_poll_source);
     }
+
     if (m_device_poll_source != 0) {
       g_source_remove(m_device_poll_source);
     }
+
     if (m_pane_restore_source != 0) {
       g_source_remove(m_pane_restore_source);
     }
@@ -353,6 +415,16 @@ struct AppState {
   std::optional<dmn::gui::Dmn_DeviceIdentity> m_viewed_device;
   std::vector<dmn::gui::Dmn_DeviceIdentity> m_monitoring_intents;
   std::unordered_map<std::string, MonitorSession> m_monitor_sessions;
+  std::unordered_map<std::string, std::size_t> m_desktop_alert_counts;
+  bool m_desktop_alerts_enabled{};
+  std::optional<dmn::gui::Dmn_DeviceIdentity> m_connecting_device;
+  std::shared_ptr<std::atomic_bool> m_connect_cancel_token;
+  bool m_connection_task_active{};
+  bool m_connection_cancel_requested{};
+  bool m_connection_cancel_task_active{};
+  std::optional<dmn::gui::Dmn_DeviceIdentity> m_disconnecting_device;
+  std::optional<dmn::gui::Dmn_DeviceIdentity> m_reconnect_after_disconnect;
+  std::optional<QueuedConnectionAction> m_queued_connection_action;
   dmn::gui::Dmn_DeviceMonitorEventStore m_event_store;
   dmn::gui::Dmn_DeviceMonitorEventFilter m_event_filters;
   // Keep the feed revision separate from routine inventory refreshes so
@@ -378,6 +450,16 @@ struct TaskData {
   Dmn_Operation m_operation{Dmn_Operation::kInventory};
   std::string m_adapter_path;
   std::optional<dmn::gui::Dmn_DeviceIdentity> m_identity;
+  std::shared_ptr<std::atomic_bool> m_cancel_connect;
+};
+
+struct ConnectionCancelTaskData {
+  dmn::gui::Dmn_DeviceIdentity m_identity;
+};
+
+struct ConnectionCancelReply {
+  dmn::gui::Dmn_DeviceIdentity m_identity;
+  std::string m_error;
 };
 
 /** @brief Callback context identifying one selection row and its owner. */
@@ -390,10 +472,29 @@ enum class Dmn_MonitorOperation { kStart, kStop };
 
 /** @brief Worker arguments for one per-device monitor transition. */
 struct MonitorTaskData {
+  MonitorTaskData(
+      GtkApplication *app, const dmn::gui::Dmn_DeviceIdentity &identity,
+      const Dmn_MonitorOperation operation,
+      const std::shared_ptr<dmn::Dmn_AncsBluezMonitor> &monitor,
+      const std::shared_ptr<std::atomic_bool> &cancelStart,
+      const std::chrono::system_clock::time_point notificationCutoff)
+      : m_app{app}, m_identity{identity}, m_operation{operation},
+        m_monitor{monitor}, m_cancel_start{cancelStart},
+        m_notification_cutoff{notificationCutoff} {}
+
+  ~MonitorTaskData() { g_object_unref(m_app); }
+
+  // This task data owns a GObject reference and must not be duplicated.
+  MonitorTaskData(const MonitorTaskData &) = delete;
+  auto operator=(const MonitorTaskData &) -> MonitorTaskData & = delete;
+  MonitorTaskData(MonitorTaskData &&) = delete;
+  auto operator=(MonitorTaskData &&) -> MonitorTaskData & = delete;
+
   GtkApplication *m_app{};
   dmn::gui::Dmn_DeviceIdentity m_identity;
   Dmn_MonitorOperation m_operation{Dmn_MonitorOperation::kStart};
   std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
+  std::shared_ptr<std::atomic_bool> m_cancel_start;
   std::chrono::system_clock::time_point m_notification_cutoff;
 };
 
@@ -403,6 +504,7 @@ struct MonitorReply {
   Dmn_MonitorOperation m_operation{Dmn_MonitorOperation::kStart};
   std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
   std::string m_error;
+  bool m_cancelled{};
 };
 
 auto stateFor(GObject *object) -> AppState * {
@@ -410,10 +512,52 @@ auto stateFor(GObject *object) -> AppState * {
       g_object_get_data(object, "dmn-bluetooth-state"));
 }
 
+void withdrawDesktopAlerts(AppState *state) {
+  for (const auto &[notificationId, count] : state->m_desktop_alert_counts) {
+    (void)count;
+    g_application_withdraw_notification(G_APPLICATION(state->m_app),
+                                        notificationId.c_str());
+  }
+
+  state->m_desktop_alert_counts.clear();
+}
+
+void withdrawDesktopAlert(AppState *state,
+                          const dmn::gui::Dmn_DeviceIdentity &identity) {
+  const auto alert = dmn::gui::makeDesktopAlert(identity, 1);
+  if (state->m_desktop_alert_counts.erase(alert.m_id) != 0) {
+    g_application_withdraw_notification(G_APPLICATION(state->m_app),
+                                        alert.m_id.c_str());
+  }
+}
+
+void sendDesktopAlert(AppState *state,
+                      const dmn::gui::Dmn_DeviceIdentity &identity) {
+  if (!state->m_desktop_alerts_enabled) {
+    return;
+  }
+
+  const auto notificationId = dmn::gui::makeDesktopAlert(identity, 1).m_id;
+  auto &count = state->m_desktop_alert_counts[notificationId];
+  ++count;
+  const auto alert = dmn::gui::makeDesktopAlert(identity, count);
+  auto *notification = g_notification_new(alert.m_title.c_str());
+  g_notification_set_body(notification, alert.m_body.c_str());
+  g_notification_set_default_action(notification, "app.open");
+  g_application_send_notification(G_APPLICATION(state->m_app),
+                                  alert.m_id.c_str(), notification);
+  g_object_unref(notification);
+}
+
 void refreshView(AppState *state, bool rebuildDevices = true);
 void rebuildEventFeed(AppState *state);
 void setStatus(AppState *state, const std::string &message,
                bool announce = true);
+auto isSelected(const std::vector<dmn::gui::Dmn_DeviceIdentity> &selection,
+                const dmn::gui::Dmn_DeviceIdentity &identity) -> bool;
+void synchronizeMonitorSessions(AppState *state);
+void requestConnectionCancel(AppState *state,
+                             const dmn::gui::Dmn_DeviceIdentity &identity);
 
 auto identityKey(const dmn::gui::Dmn_DeviceIdentity &identity) -> std::string {
   return identity.m_adapter_address + "|" + identity.m_device_address;
@@ -423,6 +567,7 @@ auto findMonitorSession(AppState *state,
                         const dmn::gui::Dmn_DeviceIdentity &identity)
     -> MonitorSession * {
   const auto found = state->m_monitor_sessions.find(identityKey(identity));
+
   return found == state->m_monitor_sessions.end() ? nullptr : &found->second;
 }
 
@@ -471,6 +616,23 @@ auto monitorStateName(const dmn::Dmn_AncsState state) -> const char * {
 }
 
 struct MonitorEventDispatch {
+  MonitorEventDispatch(GtkApplication *app,
+                       const dmn::gui::Dmn_DeviceIdentity &identity,
+                       const std::uint64_t sequence,
+                       const std::chrono::system_clock::time_point received,
+                       const dmn::Dmn_AncsEvent &event)
+      : m_app{app}, m_identity{identity}, m_sequence{sequence},
+        m_received{received}, m_event{event} {}
+
+  ~MonitorEventDispatch() { g_object_unref(m_app); }
+
+  // This dispatch owns a GObject reference and must not be duplicated.
+  MonitorEventDispatch(const MonitorEventDispatch &) = delete;
+  auto
+  operator=(const MonitorEventDispatch &) -> MonitorEventDispatch & = delete;
+  MonitorEventDispatch(MonitorEventDispatch &&) = delete;
+  auto operator=(MonitorEventDispatch &&) -> MonitorEventDispatch & = delete;
+
   GtkApplication *m_app{};
   dmn::gui::Dmn_DeviceIdentity m_identity;
   std::uint64_t m_sequence{};
@@ -493,7 +655,21 @@ void dispatchMonitorEvent(GtkApplication *app,
         auto *state = stateFor(G_OBJECT(dispatch->m_app));
         if (state != nullptr) {
           auto *session = findMonitorSession(state, dispatch->m_identity);
+          bool monitorNeedsReconcile = false;
           if (session != nullptr) {
+            const auto requireMonitorRestart = [&] {
+              const bool requested = isSelected(state->m_monitoring_intents,
+                                                dispatch->m_identity) &&
+                                     !state->m_close_requested;
+              if (requested && !session->m_monitor_restart_required) {
+                (void)state->m_monitor_controller.recordStartFailure(
+                    dispatch->m_identity,
+                    dmn::gui::Dmn_DeviceMonitorController::Clock::now(),
+                    static_cast<unsigned int>(g_random_int_range(80, 101)));
+              }
+
+              session->m_monitor_restart_required = requested;
+            };
             if (dispatch->m_event.kind ==
                     dmn::Dmn_AncsEvent::Kind::StateChanged &&
                 dispatch->m_event.state) {
@@ -501,12 +677,32 @@ void dispatchMonitorEvent(GtkApplication *app,
               if (*dispatch->m_event.state == dmn::Dmn_AncsState::Failed) {
                 session->m_error = "The ANCS monitor entered a failed state.";
               }
+
+              if ((*dispatch->m_event.state == dmn::Dmn_AncsState::Failed ||
+                   *dispatch->m_event.state == dmn::Dmn_AncsState::Stopped) &&
+                  session->m_monitor != nullptr && !session->m_busy &&
+                  !session->m_stopping) {
+                // ANCS failure does not clear user intent; reconcile and retry.
+                requireMonitorRestart();
+                monitorNeedsReconcile = true;
+              }
             } else if (dispatch->m_event.kind ==
                            dmn::Dmn_AncsEvent::Kind::Error &&
                        dispatch->m_event.error) {
               session->m_error = dispatch->m_event.error->message;
               session->m_status = "Monitor failed";
+              if (session->m_monitor != nullptr && !session->m_busy &&
+                  !session->m_stopping) {
+                requireMonitorRestart();
+                monitorNeedsReconcile = true;
+              }
             }
+          }
+
+          if (session != nullptr && !session->m_stopping &&
+              (session->m_monitor != nullptr || session->m_busy) &&
+              dmn::gui::shouldSendDesktopAlert(dispatch->m_event)) {
+            sendDesktopAlert(state, dispatch->m_identity);
           }
 
           state->m_event_store.append(
@@ -514,9 +710,10 @@ void dispatchMonitorEvent(GtkApplication *app,
                std::move(dispatch->m_event)});
           ++state->m_event_feed_revision;
           refreshView(state);
+          if (monitorNeedsReconcile) {
+            synchronizeMonitorSessions(state);
+          }
         }
-
-        g_object_unref(dispatch->m_app);
 
         return G_SOURCE_REMOVE;
       },
@@ -525,7 +722,8 @@ void dispatchMonitorEvent(GtkApplication *app,
 
 void postMonitorProgress(GtkApplication *app,
                          const dmn::gui::Dmn_DeviceIdentity &identity,
-                         const dmn::Dmn_AncsMonitorProgress progress) {
+                         const dmn::Dmn_AncsMonitorProgress progress,
+                         const std::shared_ptr<std::atomic_bool> &cancelStart) {
   const auto message = [progress]() -> const char * {
     switch (progress) {
     case dmn::Dmn_AncsMonitorProgress::Inventory:
@@ -544,27 +742,45 @@ void postMonitorProgress(GtkApplication *app,
   }();
 
   struct ProgressDispatch {
+    ProgressDispatch(GtkApplication *app,
+                     const dmn::gui::Dmn_DeviceIdentity &identity,
+                     std::string status,
+                     const std::shared_ptr<std::atomic_bool> &cancelStart)
+        : m_app{app}, m_identity{identity}, m_status{std::move(status)},
+          m_cancel_start{cancelStart} {}
+
+    ~ProgressDispatch() { g_object_unref(m_app); }
+
+    // This dispatch owns a GObject reference and must not be duplicated.
+    ProgressDispatch(const ProgressDispatch &) = delete;
+    auto operator=(const ProgressDispatch &) -> ProgressDispatch & = delete;
+    ProgressDispatch(ProgressDispatch &&) = delete;
+    auto operator=(ProgressDispatch &&) -> ProgressDispatch & = delete;
+
     GtkApplication *m_app{};
     dmn::gui::Dmn_DeviceIdentity m_identity;
     std::string m_status;
+    std::shared_ptr<std::atomic_bool> m_cancel_start;
   };
   auto *dispatch = new ProgressDispatch{GTK_APPLICATION(g_object_ref(app)),
-                                        identity, message};
+                                        identity, message, cancelStart};
   g_idle_add_full(
       G_PRIORITY_DEFAULT,
       [](gpointer userData) -> gboolean {
         std::unique_ptr<ProgressDispatch> dispatch{
             static_cast<ProgressDispatch *>(userData)};
         auto *state = stateFor(G_OBJECT(dispatch->m_app));
-        if (state != nullptr) {
+        if (state != nullptr &&
+            (dispatch->m_cancel_start == nullptr ||
+             !dispatch->m_cancel_start->load(std::memory_order_acquire))) {
           if (auto *session = findMonitorSession(state, dispatch->m_identity);
               session != nullptr) {
             session->m_status = dispatch->m_status;
           }
+
           setStatus(state, dispatch->m_status);
           refreshView(state);
         }
-        g_object_unref(dispatch->m_app);
 
         return G_SOURCE_REMOVE;
       },
@@ -580,7 +796,6 @@ void requestMonitorOperation(AppState *state,
                              Dmn_MonitorOperation operation,
                              bool disconnectAfterStop = false);
 void maybeFinishClose(AppState *state);
-void synchronizeMonitorSessions(AppState *state);
 void updateMonitorPolling(AppState *state);
 void requestClose(AppState *state);
 auto setMonitoringIntent(AppState *state,
@@ -735,6 +950,7 @@ void windowBreakpointChanged(GObject *object, GParamSpec *, gpointer userData) {
                        state->m_stop_scan_button}) {
     gtk_widget_set_hexpand(button, state->m_collapsed);
   }
+
   gtk_widget_set_hexpand(state->m_save_button, state->m_collapsed);
   gtk_widget_set_hexpand(state->m_discard_button, state->m_collapsed);
   updateSplitLayout(state);
@@ -827,13 +1043,38 @@ void viewDeviceClicked(GtkButton *, gpointer userData) {
   refreshView(state);
 }
 
-auto isSelected(const std::vector<dmn::gui::Dmn_DeviceIdentity> &selection,
-                const dmn::gui::Dmn_DeviceIdentity &identity) -> bool;
+auto isDisconnectPending(const AppState *state,
+                         const dmn::gui::Dmn_DeviceIdentity &identity,
+                         const MonitorSession *session) -> bool;
 
 void connectionClicked(GtkButton *, gpointer userData) {
   auto *context = static_cast<RowContext *>(userData);
   auto *state = context->m_state;
+  if (state->m_connecting_device.has_value() &&
+      *state->m_connecting_device == context->m_identity) {
+    requestConnectionCancel(state, context->m_identity);
+
+    return;
+  }
+
   auto *session = findMonitorSession(state, context->m_identity);
+  if (session != nullptr && session->m_disconnect_after_stop) {
+    session->m_disconnect_after_stop = false;
+    setStatus(state, "Disconnect canceled; this device will remain connected.");
+    refreshView(state, false);
+
+    return;
+  }
+
+  if (state->m_disconnecting_device.has_value() &&
+      *state->m_disconnecting_device == context->m_identity) {
+    state->m_reconnect_after_disconnect = context->m_identity;
+    setStatus(state, "Will reconnect after the current disconnect completes.");
+    refreshView(state, false);
+
+    return;
+  }
+
   const auto device = std::find_if(
       state->m_selection.devices().begin(), state->m_selection.devices().end(),
       [context](const auto &entry) {
@@ -851,18 +1092,6 @@ void connectionClicked(GtkButton *, gpointer userData) {
     return;
   }
 
-  if (state->m_selection.hasUnsavedChanges()) {
-    setStatus(state, "Save or discard selection changes before connecting.");
-
-    return;
-  }
-
-  if (session != nullptr && session->m_busy) {
-    setStatus(state, "Wait for this device's monitor operation to finish.");
-
-    return;
-  }
-
   if (!device->m_paired.value_or(false)) {
     setStatus(state,
               "Pair this device in Bluetooth Settings before connecting.");
@@ -870,10 +1099,119 @@ void connectionClicked(GtkButton *, gpointer userData) {
     return;
   }
 
+  if (session != nullptr && session->m_busy) {
+    if (!device->m_connected.value_or(false) && session->m_monitor != nullptr &&
+        session->m_stopping) {
+      session->m_connect_after_stop = true;
+      setStatus(state, "Will connect after the monitor stops.");
+      refreshView(state, false);
+
+      return;
+    }
+
+    if (!device->m_connected.value_or(false) &&
+        session->m_cancel_start != nullptr &&
+        !session->m_start_cancel_requested) {
+      if (!setMonitoringIntent(state, context->m_identity, false)) {
+        setStatus(state, "Could not clear the monitoring preference; "
+                         "monitor startup was not canceled.");
+
+        return;
+      }
+
+      session->m_monitor_restart_required = false;
+      session->m_connect_after_stop = true;
+      session->m_start_cancel_requested = true;
+      session->m_stopping = true;
+      session->m_cancel_start->store(true, std::memory_order_release);
+      state->m_monitor_controller.resetRetries(context->m_identity);
+      session->m_status = "Canceling disconnected monitor start";
+      setStatus(state, "Canceling monitor startup before connecting…");
+      refreshView(state, false);
+
+      return;
+    }
+
+    if (device->m_connected.value_or(false) && session->m_monitor != nullptr) {
+      if (!setMonitoringIntent(state, context->m_identity, false)) {
+        setStatus(state, "Could not clear the monitoring preference; "
+                         "disconnect was not started.");
+
+        return;
+      }
+
+      session->m_monitor_restart_required = false;
+      session->m_disconnect_after_stop = true;
+      setStatus(state, "Stopping monitoring before disconnecting…");
+      refreshView(state, false);
+
+      return;
+    }
+
+    if (device->m_connected.value_or(false) &&
+        session->m_cancel_start != nullptr &&
+        !session->m_start_cancel_requested) {
+      if (!setMonitoringIntent(state, context->m_identity, false)) {
+        setStatus(state, "Could not clear the monitoring preference; "
+                         "monitor startup was not canceled.");
+
+        return;
+      }
+
+      session->m_monitor_restart_required = false;
+      session->m_disconnect_after_stop = true;
+      session->m_start_cancel_requested = true;
+      session->m_stopping = true;
+      session->m_cancel_start->store(true, std::memory_order_release);
+      state->m_monitor_controller.resetRetries(context->m_identity);
+      session->m_status = "Canceling monitor start";
+      setStatus(state, "Canceling monitor startup before disconnecting…");
+      refreshView(state, false);
+
+      return;
+    }
+
+    setStatus(state, "Wait for this device's monitor operation to finish.");
+
+    return;
+  }
+
+  if (!device->m_connected.value_or(false) && session != nullptr &&
+      session->m_monitor != nullptr) {
+    session->m_connect_after_stop = true;
+    requestMonitorOperation(state, context->m_identity,
+                            Dmn_MonitorOperation::kStop);
+
+    return;
+  }
+
   if (device->m_connected.value_or(false)) {
+    if (isSelected(state->m_monitoring_intents, context->m_identity) &&
+        !setMonitoringIntent(state, context->m_identity, false)) {
+      setStatus(state, "Could not clear the monitoring preference; "
+                       "disconnect was not started.");
+
+      return;
+    }
+
+    if (session != nullptr) {
+      session->m_monitor_restart_required = false;
+    }
+
     if (session != nullptr && session->m_monitor != nullptr) {
+      session->m_disconnect_after_stop = true;
       requestMonitorOperation(state, context->m_identity,
                               Dmn_MonitorOperation::kStop, true);
+
+      return;
+    }
+
+    if (state->m_busy) {
+      state->m_queued_connection_action =
+          QueuedConnectionAction{context->m_identity, false};
+      setStatus(state, "Disconnect queued until the current Bluetooth "
+                       "operation finishes.");
+      refreshView(state, false);
 
       return;
     }
@@ -884,61 +1222,24 @@ void connectionClicked(GtkButton *, gpointer userData) {
     return;
   }
 
+  if (state->m_busy) {
+    state->m_queued_connection_action =
+        QueuedConnectionAction{context->m_identity, true};
+    setStatus(state, "Connect queued until the current Bluetooth operation "
+                     "finishes.");
+    refreshView(state, false);
+
+    return;
+  }
+
   requestOperation(state, Dmn_Operation::kConnect, {}, context->m_identity);
 }
 
 void monitoringClicked(GtkButton *, gpointer userData) {
   auto *context = static_cast<RowContext *>(userData);
   auto *state = context->m_state;
-  if (state->m_busy || state->m_close_requested) {
-    setStatus(state, state->m_close_requested
-                         ? "The application is closing."
-                         : "Wait for the current Bluetooth operation to "
-                           "finish.");
-
-    return;
-  }
-
-  auto *session = findMonitorSession(state, context->m_identity);
-  if (session != nullptr && session->m_busy) {
-    setStatus(state, "Wait for this device's monitor operation to finish.");
-
-    return;
-  }
-
-  if (session != nullptr && session->m_monitor != nullptr) {
-    if (!setMonitoringIntent(state, context->m_identity, false)) {
-      setStatus(state, "Could not save the monitoring preference; monitoring "
-                       "was not stopped.");
-
-      return;
-    }
-    requestMonitorOperation(state, context->m_identity,
-                            Dmn_MonitorOperation::kStop);
-
-    return;
-  }
-
-  if (isSelected(state->m_monitoring_intents, context->m_identity)) {
-    if (!setMonitoringIntent(state, context->m_identity, false)) {
-      setStatus(state, "Could not clear the saved monitoring preference.");
-
-      return;
-    }
-
-    if (session != nullptr) {
-      state->m_monitor_controller.resetRetries(context->m_identity);
-      session->m_error.clear();
-      session->m_status = "Not monitoring";
-    }
-    setStatus(state, "Monitoring preference cleared.");
-    refreshView(state, false);
-
-    return;
-  }
-
-  if (state->m_selection.hasUnsavedChanges()) {
-    setStatus(state, "Save or discard selection changes before monitoring.");
+  if (state->m_close_requested) {
+    setStatus(state, "The application is closing.");
 
     return;
   }
@@ -950,6 +1251,12 @@ void monitoringClicked(GtkButton *, gpointer userData) {
       });
   if (device == state->m_selection.devices().end() || !device->m_present) {
     setStatus(state, "Refresh the device inventory before monitoring.");
+
+    return;
+  }
+
+  if (!isSelected(state->m_selection.savedSelection(), context->m_identity)) {
+    setStatus(state, "Save this device before starting its monitor.");
 
     return;
   }
@@ -967,8 +1274,56 @@ void monitoringClicked(GtkButton *, gpointer userData) {
     return;
   }
 
-  if (!isSelected(state->m_selection.savedSelection(), context->m_identity)) {
-    setStatus(state, "Save this device before starting its monitor.");
+  auto *session = findMonitorSession(state, context->m_identity);
+  if (isSelected(state->m_monitoring_intents, context->m_identity)) {
+    if (!setMonitoringIntent(state, context->m_identity, false)) {
+      setStatus(state, "Could not clear the saved monitoring preference.");
+
+      return;
+    }
+
+    state->m_monitor_controller.resetRetries(context->m_identity);
+    if (session != nullptr) {
+      session->m_monitor_restart_required = false;
+      if (session->m_busy && session->m_monitor == nullptr &&
+          session->m_cancel_start != nullptr &&
+          !session->m_start_cancel_requested) {
+        session->m_start_cancel_requested = true;
+        session->m_stopping = true;
+        session->m_cancel_start->store(true, std::memory_order_release);
+        session->m_status = "Canceling monitor start";
+        setStatus(state, "Canceling ANCS monitoring startup…");
+        refreshView(state, false);
+
+        return;
+      }
+
+      if (session->m_busy) {
+        setStatus(state, "Monitoring preference cleared.");
+        refreshView(state, false);
+
+        return;
+      }
+
+      if (session->m_monitor != nullptr && !state->m_busy) {
+        requestMonitorOperation(state, context->m_identity,
+                                Dmn_MonitorOperation::kStop);
+
+        return;
+      }
+
+      session->m_error.clear();
+      session->m_status = "Not monitoring";
+    }
+
+    setStatus(state, "Monitoring preference cleared.");
+    refreshView(state, false);
+
+    return;
+  }
+
+  if (state->m_selection.hasUnsavedChanges()) {
+    setStatus(state, "Save or discard selection changes before monitoring.");
 
     return;
   }
@@ -979,12 +1334,29 @@ void monitoringClicked(GtkButton *, gpointer userData) {
 
     return;
   }
+
   auto &retrySession =
       state->m_monitor_sessions[identityKey(context->m_identity)];
   retrySession.m_identity = context->m_identity;
   state->m_monitor_controller.resetRetries(context->m_identity);
-  requestMonitorOperation(state, context->m_identity,
-                          Dmn_MonitorOperation::kStart);
+  if (retrySession.m_busy) {
+    refreshView(state, false);
+
+    return;
+  }
+
+  if (retrySession.m_monitor != nullptr) {
+    retrySession.m_monitor_restart_required = true;
+    if (!state->m_busy) {
+      requestMonitorOperation(state, context->m_identity,
+                              Dmn_MonitorOperation::kStop);
+    }
+  } else if (!state->m_busy) {
+    requestMonitorOperation(state, context->m_identity,
+                            Dmn_MonitorOperation::kStart);
+  }
+
+  refreshView(state, false);
 }
 
 auto isSelected(const std::vector<dmn::gui::Dmn_DeviceIdentity> &selection,
@@ -1037,6 +1409,7 @@ auto persistMonitoringIntents(AppState *state) -> bool {
     g_variant_builder_add(&builder, "(ss)", intent.m_adapter_address.c_str(),
                           intent.m_device_address.c_str());
   }
+
   if (!g_settings_set_value(state->m_settings, "monitoring-devices",
                             g_variant_builder_end(&builder))) {
     g_warning("Could not persist the Bluetooth monitoring preference");
@@ -1050,8 +1423,15 @@ auto persistMonitoringIntents(AppState *state) -> bool {
 auto rowActions(const AppState *state, const dmn::gui::Dmn_DeviceEntry &device,
                 const MonitorSession *session)
     -> dmn::gui::Dmn_DeviceActionAvailability {
+  const bool disconnectPending =
+      isDisconnectPending(state, device.m_identity, session);
+  auto effectiveDevice = device;
+  if (disconnectPending) {
+    effectiveDevice.m_connected = false;
+  }
+
   return dmn::gui::deviceActionAvailability(
-      device,
+      effectiveDevice,
       {.m_saved =
            isSelected(state->m_selection.savedSelection(), device.m_identity),
        .m_selection_dirty = state->m_selection.hasUnsavedChanges(),
@@ -1059,8 +1439,25 @@ auto rowActions(const AppState *state, const dmn::gui::Dmn_DeviceEntry &device,
        .m_monitor_requested =
            isSelected(state->m_monitoring_intents, device.m_identity),
        .m_monitor_busy = session != nullptr && session->m_busy,
+       .m_monitor_start_pending = session != nullptr && session->m_busy &&
+                                  session->m_monitor == nullptr,
+       .m_monitor_cancel_requested =
+           session != nullptr && session->m_start_cancel_requested,
+       .m_connection_pending = state->m_connecting_device.has_value() &&
+                               *state->m_connecting_device == device.m_identity,
+       .m_disconnect_pending = disconnectPending,
+       .m_connect_after_monitor_stop =
+           session != nullptr && session->m_connect_after_stop,
        .m_operation_busy = state->m_busy,
        .m_close_requested = state->m_close_requested});
+}
+
+auto isDisconnectPending(const AppState *state,
+                         const dmn::gui::Dmn_DeviceIdentity &identity,
+                         const MonitorSession *session) -> bool {
+  return (session != nullptr && session->m_disconnect_after_stop) ||
+         (state->m_disconnecting_device.has_value() &&
+          *state->m_disconnecting_device == identity);
 }
 
 auto eventDescription(const dmn::Dmn_AncsEvent &event) -> std::string {
@@ -1083,18 +1480,22 @@ auto eventDescription(const dmn::Dmn_AncsEvent &event) -> std::string {
       description += " · ";
       description += *notification.app_identifier;
     }
+
     if (notification.title) {
       description += " · ";
       description += *notification.title;
     }
+
     if (notification.subtitle) {
       description += " · ";
       description += *notification.subtitle;
     }
+
     if (notification.message) {
       description += " · ";
       description += *notification.message;
     }
+
     if (notification.kind ==
         dmn::Dmn_AncsNotificationKind::AttributesUnavailable) {
       description += " · Notification attributes are unavailable";
@@ -1225,6 +1626,7 @@ auto eventSequenceFromItem(gpointer item) -> std::uint64_t {
   }
 
   const auto *text = gtk_string_object_get_string(GTK_STRING_OBJECT(item));
+
   return text == nullptr ? 0 : g_ascii_strtoull(text, nullptr, 10);
 }
 
@@ -1232,6 +1634,7 @@ auto eventMatchesGtkFilter(gpointer item, gpointer userData) -> gboolean {
   const auto sequence = eventSequenceFromItem(item);
   const auto *state = static_cast<const AppState *>(userData);
   const auto *event = state->m_event_store.eventForSequence(sequence);
+
   return event != nullptr &&
          dmn::gui::matchesEventFilter(
              *event, state->m_event_filters,
@@ -1246,6 +1649,7 @@ auto compareEventSequence(gconstpointer first, gconstpointer second,
   if (firstSequence > secondSequence) {
     return -1;
   }
+
   if (firstSequence < secondSequence) {
     return 1;
   }
@@ -1266,6 +1670,7 @@ auto eventSummary(const dmn::Dmn_AncsEvent &event) -> std::string {
         if (!summary.empty()) {
           summary += " · ";
         }
+
         summary += *value;
       }
     };
@@ -1297,6 +1702,7 @@ auto eventColumnText(const AppState *state,
       kind += " · ";
       kind += eventCategoryName(event.m_event.notification->category);
     }
+
     return kind;
   }
   default:
@@ -1318,6 +1724,7 @@ void showEventDetails(GtkColumnView *, const guint position,
   if (item == nullptr) {
     return;
   }
+
   const auto sequence = eventSequenceFromItem(item);
   g_object_unref(item);
   const auto *event = state->m_event_store.eventForSequence(sequence);
@@ -1351,10 +1758,12 @@ void showEventDetails(GtkColumnView *, const guint position,
               << '\n';
     }
   }
+
   if (event->m_event.state) {
     details << "Monitor state: " << monitorStateName(*event->m_event.state)
             << '\n';
   }
+
   if (event->m_event.error) {
     details << "Error: " << event->m_event.error->message << '\n';
   }
@@ -1488,6 +1897,7 @@ void eventCellSetup(GtkSignalListItemFactory *, GtkListItem *item,
     g_signal_connect(label, "query-tooltip", G_CALLBACK(showEventCellTooltip),
                      nullptr);
   }
+
   gtk_widget_set_margin_top(label, 6);
   gtk_widget_set_margin_bottom(label, 6);
   gtk_widget_set_margin_start(label, 8);
@@ -1520,6 +1930,7 @@ void eventCellSetup(GtkSignalListItemFactory *, GtkListItem *item,
   if (popover != nullptr) {
     gtk_widget_set_parent(popover, cell);
   }
+
   gtk_list_item_set_child(item, cell);
 }
 
@@ -1588,6 +1999,7 @@ void clearEventFiltersClicked(GtkButton *, gpointer userData) {
 
 void clearNotificationsClicked(GtkButton *, gpointer userData) {
   auto *state = static_cast<AppState *>(userData);
+  withdrawDesktopAlerts(state);
   if (state->m_event_store.clear() == 0) {
     return;
   }
@@ -1624,6 +2036,7 @@ void updateEventFeedStatus(AppState *state) {
   if (visibleCount != 0) {
     gtk_widget_set_visible(state->m_feed_empty, FALSE);
     gtk_widget_set_visible(state->m_feed_view, TRUE);
+
     return;
   }
 
@@ -1708,6 +2121,7 @@ void createEventFeedModel(AppState *state) {
     gtk_column_view_append_column(GTK_COLUMN_VIEW(state->m_feed_view), column);
     g_object_unref(column);
   }
+
   g_signal_connect(state->m_feed_view, "activate", G_CALLBACK(showEventDetails),
                    state);
 }
@@ -1744,14 +2158,17 @@ void rebuildEventFeed(AppState *state) {
       g_list_store_append(state->m_event_rows, row);
       g_object_unref(row);
     }
+
     state->m_event_feed_rendered = true;
     state->m_rendered_feed_device = state->m_viewed_device;
     state->m_rendered_event_feed_revision = state->m_event_feed_revision;
   }
+
   if (sourceChanged || identityChanged) {
     gtk_filter_changed(GTK_FILTER(state->m_event_filter),
                        GTK_FILTER_CHANGE_DIFFERENT);
   }
+
   gtk_widget_set_visible(state->m_feed_heading, TRUE);
   gtk_widget_set_visible(state->m_feed_controls, TRUE);
   gtk_widget_set_visible(state->m_feed_scroll, TRUE);
@@ -1860,9 +2277,25 @@ void rebuildDeviceList(AppState *state) {
 
     auto facts = dmn::gui::deviceDisplayStatus(device);
     auto *session = findMonitorSession(state, device.m_identity);
-    if (session != nullptr) {
+    const bool connectionPending =
+        state->m_connecting_device.has_value() &&
+        *state->m_connecting_device == device.m_identity;
+    const bool disconnectPending =
+        isDisconnectPending(state, device.m_identity, session);
+    const bool connected =
+        device.m_connected.value_or(false) && !disconnectPending;
+    const auto actions = rowActions(state, device, session);
+    const bool monitorActionEnabled =
+        actions.m_can_stop_monitoring || actions.m_can_start_monitoring;
+    if (connectionPending) {
+      facts += state->m_connection_cancel_requested ? " · Canceling connection"
+                                                    : " · Connecting…";
+    }
+
+    if (session != nullptr && monitorActionEnabled) {
       facts += " · " + session->m_status;
     }
+
     auto *detail = gtk_label_new(facts.c_str());
     gtk_widget_set_halign(detail, GTK_ALIGN_START);
     gtk_label_set_wrap(GTK_LABEL(detail), TRUE);
@@ -1872,19 +2305,27 @@ void rebuildDeviceList(AppState *state) {
     auto *rowActionsBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     gtk_widget_set_halign(rowActionsBox, GTK_ALIGN_END);
     auto *connectionButton = gtk_button_new_with_label(
-        device.m_connected.value_or(false) ? "Disconnect" : "Connect");
+        connected || connectionPending ? "Disconnect" : "Connect");
     const auto connectionLabel =
-        std::string{device.m_connected.value_or(false) ? "Disconnect "
-                                                       : "Connect "} +
+        std::string{connected || connectionPending ? "Disconnect "
+                                                   : "Connect "} +
         title;
     gtk_accessible_update_property(GTK_ACCESSIBLE(connectionButton),
                                    GTK_ACCESSIBLE_PROPERTY_LABEL,
                                    connectionLabel.c_str(), -1);
-    const auto actions = rowActions(state, device, session);
+    const bool monitorStarting = session != nullptr && session->m_busy &&
+                                 !session->m_stopping &&
+                                 !session->m_start_cancel_requested;
+    const bool showStopMonitoring = monitorStarting || monitorRequested;
     gtk_widget_set_sensitive(connectionButton,
-                             device.m_connected.value_or(false)
-                                 ? actions.m_can_disconnect
-                                 : actions.m_can_connect);
+                             connectionPending ? actions.m_can_disconnect
+                             : connected       ? actions.m_can_disconnect
+                                               : actions.m_can_connect);
+    if (connectionPending) {
+      gtk_widget_set_tooltip_text(connectionButton,
+                                  "Disconnect to cancel this connection "
+                                  "attempt");
+    }
 
     if (!device.m_paired.value_or(false)) {
       gtk_widget_set_tooltip_text(
@@ -1892,25 +2333,19 @@ void rebuildDeviceList(AppState *state) {
     }
 
     auto *monitorButton = gtk_button_new_with_label(
-        session != nullptr && session->m_busy
-            ? session->m_stopping ? "Stopping…" : "Starting…"
-        : (session != nullptr && session->m_monitor != nullptr) ||
-                monitorRequested
-            ? "Stop monitoring"
-            : "Start monitoring");
+        showStopMonitoring ? "Stop monitoring" : "Start monitoring");
     const auto monitorLabel =
-        std::string{session != nullptr && session->m_busy
-                        ? session->m_stopping ? "Stopping monitoring for "
-                                              : "Starting monitoring for "
-                    : (session != nullptr && session->m_monitor != nullptr) ||
-                            monitorRequested
-                        ? "Stop monitoring "
-                        : "Start monitoring "} +
+        std::string{showStopMonitoring ? "Stop monitoring "
+                                       : "Start monitoring "} +
         title;
     gtk_accessible_update_property(GTK_ACCESSIBLE(monitorButton),
                                    GTK_ACCESSIBLE_PROPERTY_LABEL,
                                    monitorLabel.c_str(), -1);
-    if (monitorRequested) {
+    if (monitorStarting && session->m_monitor == nullptr) {
+      gtk_widget_set_tooltip_text(monitorButton,
+                                  "Cancel startup and clear the saved "
+                                  "monitoring preference");
+    } else if (monitorRequested && !disconnectPending) {
       gtk_widget_set_tooltip_text(
           monitorButton, "Stop monitoring and clear the saved monitoring "
                          "preference");
@@ -1920,6 +2355,7 @@ void rebuildDeviceList(AppState *state) {
           "Connect this device and wait for Bluetooth to report Connected "
           "before starting monitoring");
     }
+
     gtk_widget_set_sensitive(monitorButton, actions.m_can_stop_monitoring ||
                                                 actions.m_can_start_monitoring);
 
@@ -1992,58 +2428,84 @@ void synchronizeDeviceListSelection(AppState *state) {
                                    checkLabel.c_str(), -1);
     gtk_button_set_label(GTK_BUTTON(viewButton), title.c_str());
     auto facts = dmn::gui::deviceDisplayStatus(device);
-    if (session != nullptr) {
+    const bool connectionPending =
+        state->m_connecting_device.has_value() &&
+        *state->m_connecting_device == device.m_identity;
+    const bool disconnectPending =
+        isDisconnectPending(state, device.m_identity, session);
+    const bool connected =
+        device.m_connected.value_or(false) && !disconnectPending;
+    const auto actions = rowActions(state, device, session);
+    const bool monitorActionEnabled =
+        actions.m_can_stop_monitoring || actions.m_can_start_monitoring;
+    if (connectionPending) {
+      facts += state->m_connection_cancel_requested ? " · Canceling connection"
+                                                    : " · Connecting…";
+    }
+
+    if (session != nullptr && monitorActionEnabled) {
       facts += " · " + session->m_status;
     }
+
     gtk_label_set_text(GTK_LABEL(detail), facts.c_str());
     gtk_button_set_label(GTK_BUTTON(connectionButton),
-                         device.m_connected.value_or(false) ? "Disconnect"
-                                                            : "Connect");
+                         connected || connectionPending ? "Disconnect"
+                                                        : "Connect");
     const auto connectionLabel =
-        std::string{device.m_connected.value_or(false) ? "Disconnect "
-                                                       : "Connect "} +
+        std::string{connected || connectionPending ? "Disconnect "
+                                                   : "Connect "} +
         title;
     gtk_accessible_update_property(GTK_ACCESSIBLE(connectionButton),
                                    GTK_ACCESSIBLE_PROPERTY_LABEL,
                                    connectionLabel.c_str(), -1);
-    const auto actions = rowActions(state, device, session);
+    const bool monitorStarting = session != nullptr && session->m_busy &&
+                                 !session->m_stopping &&
+                                 !session->m_start_cancel_requested;
+    const bool monitorRequested =
+        isSelected(state->m_monitoring_intents, device.m_identity);
+    const bool showStopMonitoring = monitorStarting || monitorRequested;
     gtk_widget_set_sensitive(connectionButton,
-                             device.m_connected.value_or(false)
-                                 ? actions.m_can_disconnect
-                                 : actions.m_can_connect);
-    gtk_button_set_label(
-        GTK_BUTTON(monitorButton),
-        session != nullptr && session->m_busy
-            ? session->m_stopping ? "Stopping…" : "Starting…"
-        : (session != nullptr && session->m_monitor != nullptr) ||
-                isSelected(state->m_monitoring_intents, device.m_identity)
-            ? "Stop monitoring"
-            : "Start monitoring");
+                             connectionPending ? actions.m_can_disconnect
+                             : connected       ? actions.m_can_disconnect
+                                               : actions.m_can_connect);
+    if (connectionPending) {
+      gtk_widget_set_tooltip_text(connectionButton,
+                                  "Disconnect to cancel this connection "
+                                  "attempt");
+    } else if (!device.m_paired.value_or(false)) {
+      gtk_widget_set_tooltip_text(connectionButton,
+                                  "Pair this device in Bluetooth Settings "
+                                  "first");
+    } else {
+      gtk_widget_set_tooltip_text(connectionButton, nullptr);
+    }
+
+    gtk_button_set_label(GTK_BUTTON(monitorButton), showStopMonitoring
+                                                        ? "Stop monitoring"
+                                                        : "Start monitoring");
     const auto monitorLabel =
-        std::string{
-            session != nullptr && session->m_busy
-                ? session->m_stopping ? "Stopping monitoring for "
-                                      : "Starting monitoring for "
-            : (session != nullptr && session->m_monitor != nullptr) ||
-                    isSelected(state->m_monitoring_intents, device.m_identity)
-                ? "Stop monitoring "
-                : "Start monitoring "} +
+        std::string{showStopMonitoring ? "Stop monitoring "
+                                       : "Start monitoring "} +
         title;
     gtk_accessible_update_property(GTK_ACCESSIBLE(monitorButton),
                                    GTK_ACCESSIBLE_PROPERTY_LABEL,
                                    monitorLabel.c_str(), -1);
-    if (isSelected(state->m_monitoring_intents, device.m_identity)) {
+    if (monitorStarting && session->m_monitor == nullptr) {
+      gtk_widget_set_tooltip_text(monitorButton,
+                                  "Cancel startup and clear the saved "
+                                  "monitoring preference");
+    } else if (monitorRequested && !disconnectPending) {
       gtk_widget_set_tooltip_text(
           monitorButton,
           "Stop monitoring and clear the saved monitoring preference");
     } else {
       gtk_widget_set_tooltip_text(
           monitorButton,
-          device.m_connected.value_or(false)
-              ? nullptr
-              : "Connect this device and wait for Bluetooth to report "
-                "Connected before starting monitoring");
+          connected ? nullptr
+                    : "Connect this device and wait for Bluetooth to report "
+                      "Connected before starting monitoring");
     }
+
     gtk_widget_set_sensitive(monitorButton, actions.m_can_stop_monitoring ||
                                                 actions.m_can_start_monitoring);
   }
@@ -2139,6 +2601,7 @@ void refreshView(AppState *state, const bool rebuildDevices) {
   } else {
     description += " · Not saved";
   }
+
   const auto *session = findMonitorSession(state, *state->m_viewed_device);
   if (session != nullptr && !session->m_error.empty()) {
     description += " · ";
@@ -2154,6 +2617,7 @@ void refreshView(AppState *state, const bool rebuildDevices) {
     description +=
         " · Start monitoring to receive new notifications in this session.";
   }
+
   adw_status_page_set_description(ADW_STATUS_PAGE(state->m_details_page),
                                   description.c_str());
   rebuildEventFeed(state);
@@ -2181,6 +2645,7 @@ void loadSavedSelection(AppState *state) {
                              &deviceAddress)) {
     selection.push_back({adapterAddress, deviceAddress});
   }
+
   g_variant_unref(savedDevices);
 
   if (selection.empty()) {
@@ -2197,6 +2662,7 @@ void loadSavedSelection(AppState *state) {
     if (*legacyAdapter != '\0' && *legacyDevice != '\0') {
       selection.push_back({legacyAdapter, legacyDevice});
     }
+
     g_variant_unref(legacy);
   }
 
@@ -2247,6 +2713,7 @@ void loadMonitoringIntents(AppState *state) {
     session.m_identity = std::move(identity);
     session.m_status = "Monitoring when connected";
   }
+
   g_variant_unref(monitoringDevices);
 }
 
@@ -2265,6 +2732,7 @@ void saveSelection(AppState *state) {
     g_variant_builder_add(&builder, "(ss)", identity.m_adapter_address.c_str(),
                           identity.m_device_address.c_str());
   }
+
   auto *value = g_variant_builder_end(&builder);
   if (!g_settings_set_value(state->m_settings, "selected-devices", value)) {
     g_warning("Could not persist the Bluetooth device selection");
@@ -2305,10 +2773,12 @@ void saveSelection(AppState *state) {
     status += " The legacy selection setting could not be updated; the current "
               "selection is active.";
   }
+
   if (!intentsSaved) {
     status += " Monitoring preferences could not be updated; the previous "
               "monitoring intent was retained.";
   }
+
   setStatus(state, status);
   refreshView(state, false);
   synchronizeMonitorSessions(state);
@@ -2316,41 +2786,43 @@ void saveSelection(AppState *state) {
 }
 
 auto settingsForApp() -> GSettings * {
-  GError *error = nullptr;
-  auto *source = g_settings_schema_source_new_from_directory(
-      DMN_BLUETOOTH_GTK_SCHEMA_DIR, g_settings_schema_source_get_default(),
-      FALSE, &error);
-  if (source == nullptr) {
-    if (error != nullptr) {
-      g_warning("Could not load the build-time settings schema: %s",
+  // Prefer the installed schema, then the build-tree copy for development.
+  const char *schemaDirectories[] = {DMN_BLUETOOTH_GTK_INSTALL_SCHEMA_DIR,
+                                     DMN_BLUETOOTH_GTK_SCHEMA_DIR};
+  GSettingsSchema *schema = nullptr;
+  for (const auto *schemaDirectory : schemaDirectories) {
+    GError *error = nullptr;
+    auto *source = g_settings_schema_source_new_from_directory(
+        schemaDirectory, g_settings_schema_source_get_default(), FALSE, &error);
+    if (source == nullptr) {
+      if (error != nullptr) {
+        g_debug("Could not load GSettings schemas from %s: %s", schemaDirectory,
                 error->message);
+      }
+
+      g_clear_error(&error);
+
+      continue;
     }
 
-    g_clear_error(&error);
-    source = g_settings_schema_source_get_default();
+    schema = g_settings_schema_source_lookup(source, kSettingsSchemaId, TRUE);
+    g_settings_schema_source_unref(source);
+    if (schema != nullptr) {
+      break;
+    }
+  }
+
+  if (schema == nullptr) {
+    auto *source = g_settings_schema_source_get_default();
     if (source == nullptr) {
       g_warning("No GSettings schema source is available");
 
       return nullptr;
     }
 
-    auto *schema =
-        g_settings_schema_source_lookup(source, kSettingsSchemaId, TRUE);
-    if (schema == nullptr) {
-      g_warning("GSettings schema '%s' was not found", kSettingsSchemaId);
-
-      return nullptr;
-    }
-
-    auto *settings = g_settings_new_full(schema, nullptr, nullptr);
-    g_settings_schema_unref(schema);
-
-    return settings;
+    schema = g_settings_schema_source_lookup(source, kSettingsSchemaId, TRUE);
   }
 
-  auto *schema =
-      g_settings_schema_source_lookup(source, kSettingsSchemaId, TRUE);
-  g_settings_schema_source_unref(source);
   if (schema == nullptr) {
     g_warning("GSettings schema '%s' was not found", kSettingsSchemaId);
 
@@ -2367,11 +2839,39 @@ void taskWorker(GTask *task, gpointer, gpointer taskData, GCancellable *) {
   auto *data = static_cast<TaskData *>(taskData);
   // Return only owned values from the worker; GTK objects stay on the main
   // context and are updated by the GTask completion callback.
-  auto reply = data->m_backend->perform(data->m_operation, data->m_adapter_path,
-                                        data->m_identity);
+  auto reply =
+      data->m_backend->perform(data->m_operation, data->m_adapter_path,
+                               data->m_identity, data->m_cancel_connect);
   g_task_return_pointer(
       task, new BackendReply{std::move(reply)},
       [](gpointer result) { delete static_cast<BackendReply *>(result); });
+}
+
+void connectionCancelTaskWorker(GTask *task, gpointer, gpointer taskData,
+                                GCancellable *) {
+  auto *data = static_cast<ConnectionCancelTaskData *>(taskData);
+  ConnectionCancelReply reply{data->m_identity, {}};
+  try {
+    dmn::Dmn_BluezClient client;
+    const auto inventory = client.snapshot(kDeviceSnapshotTimeout);
+    if (!inventory) {
+      reply.m_error = inventory.error().message;
+    } else {
+      const auto result = client.cancelConnectionAttempt(
+          data->m_identity.m_device_address, data->m_identity.m_adapter_address,
+          kDeviceStateTimeout);
+      if (!result) {
+        reply.m_error = result.error().message;
+      }
+    }
+  } catch (const std::exception &exception) {
+    reply.m_error = exception.what();
+  }
+
+  g_task_return_pointer(task, new ConnectionCancelReply{std::move(reply)},
+                        [](gpointer result) {
+                          delete static_cast<ConnectionCancelReply *>(result);
+                        });
 }
 
 auto monitorStageName(const dmn::Dmn_AncsMonitorStage stage) -> const char * {
@@ -2392,6 +2892,8 @@ auto monitorStageName(const dmn::Dmn_AncsMonitorStage stage) -> const char * {
     return "connection";
   case dmn::Dmn_AncsMonitorStage::AncsStartup:
     return "ANCS startup";
+  case dmn::Dmn_AncsMonitorStage::Cancelled:
+    return "canceled";
   case dmn::Dmn_AncsMonitorStage::Cleanup:
     return "monitor cleanup";
   }
@@ -2409,8 +2911,15 @@ void monitorTaskWorker(GTask *task, gpointer, gpointer taskData,
           GTK_APPLICATION(g_object_ref(data->m_app)),
           [](GtkApplication *application) { g_object_unref(application); });
       auto monitor = std::make_shared<dmn::Dmn_AncsBluezMonitor>();
-      const auto handlerResult = monitor->setEventHandler(
-          [app, identity = data->m_identity](const dmn::Dmn_AncsEvent &event) {
+      const auto handlerResult =
+          monitor->setEventHandler([app, identity = data->m_identity,
+                                    cancelStart = data->m_cancel_start](
+                                       const dmn::Dmn_AncsEvent &event) {
+            if (cancelStart != nullptr &&
+                cancelStart->load(std::memory_order_acquire)) {
+              return;
+            }
+
             dispatchMonitorEvent(app.get(), identity, event);
           });
       if (!handlerResult) {
@@ -2421,16 +2930,34 @@ void monitorTaskWorker(GTask *task, gpointer, gpointer taskData,
         config.require_existing_connection = true;
         config.request_remaining_profiles_when_connected = true;
         config.ancs.notification_date_cutoff = data->m_notification_cutoff;
+        config.cancellation_requested = [cancelStart = data->m_cancel_start] {
+          return cancelStart != nullptr &&
+                 cancelStart->load(std::memory_order_acquire);
+        };
         config.progress_handler =
-            [app, identity = data->m_identity](
+            [app, identity = data->m_identity,
+             cancelStart = data->m_cancel_start](
                 const dmn::Dmn_AncsMonitorProgress progress) {
-              postMonitorProgress(app.get(), identity, progress);
+              postMonitorProgress(app.get(), identity, progress, cancelStart);
             };
         auto started =
             monitor->start(data->m_identity.m_device_address, config);
         if (!started) {
-          reply.m_error = std::string{monitorStageName(started.error().stage)} +
-                          ": " + started.error().message;
+          if (started.error().stage == dmn::Dmn_AncsMonitorStage::Cancelled) {
+            reply.m_cancelled = true;
+          } else {
+            reply.m_error =
+                std::string{monitorStageName(started.error().stage)} + ": " +
+                started.error().message;
+          }
+        } else if (data->m_cancel_start != nullptr &&
+                   data->m_cancel_start->load(std::memory_order_acquire)) {
+          const auto stopped = monitor->stop();
+          if (!stopped) {
+            reply.m_error = stopped.error().message;
+          } else {
+            reply.m_cancelled = true;
+          }
         } else {
           reply.m_monitor = std::move(monitor);
         }
@@ -2470,39 +2997,105 @@ void monitorOperationFinished(GObject *sourceObject, GAsyncResult *result,
       reply != nullptr ? reply->m_identity : dmn::gui::Dmn_DeviceIdentity{};
   auto *session = findMonitorSession(state, identity);
   bool shouldDisconnect = false;
+  bool shouldConnect = false;
+  bool shouldStopCanceledStart = false;
   bool monitorStartFailed = false;
+  bool monitorStopFailed = false;
   if (session != nullptr) {
+    const bool startCancellationRequested = session->m_start_cancel_requested;
+    const bool disconnectAfterOperation = session->m_disconnect_after_stop;
+    const bool connectAfterOperation = session->m_connect_after_stop;
     session->m_busy = false;
     session->m_stopping = false;
+    session->m_cancel_start.reset();
+    session->m_start_cancel_requested = false;
     if (error != nullptr) {
       session->m_error = error->message;
       session->m_status = "Monitor operation failed";
       monitorStartFailed = reply != nullptr &&
                            reply->m_operation == Dmn_MonitorOperation::kStart;
+      monitorStopFailed =
+          reply != nullptr && reply->m_operation == Dmn_MonitorOperation::kStop;
+      shouldDisconnect = disconnectAfterOperation;
+      shouldConnect = connectAfterOperation;
+      if (shouldConnect) {
+        session->m_connect_after_stop = false;
+      }
+
+      if (monitorStopFailed) {
+        session->m_disconnect_after_stop = false;
+      }
     } else if (reply != nullptr && !reply->m_error.empty()) {
       session->m_error = reply->m_error;
       session->m_status = reply->m_operation == Dmn_MonitorOperation::kStart
                               ? "Monitor failed"
                               : "Monitor cleanup failed";
       monitorStartFailed = reply->m_operation == Dmn_MonitorOperation::kStart;
+      monitorStopFailed = reply->m_operation == Dmn_MonitorOperation::kStop;
+      shouldDisconnect = disconnectAfterOperation;
+      shouldConnect = connectAfterOperation;
+      if (reply->m_operation == Dmn_MonitorOperation::kStop) {
+        session->m_disconnect_after_stop = false;
+        session->m_connect_after_stop = false;
+      }
+
+      if (shouldConnect) {
+        session->m_connect_after_stop = false;
+      }
+    } else if (reply != nullptr && reply->m_cancelled) {
+      session->m_monitor.reset();
+      session->m_monitor_restart_required = false;
+      session->m_error.clear();
+      session->m_status = "Not monitoring";
+      shouldDisconnect = disconnectAfterOperation;
+      shouldConnect = connectAfterOperation;
+      session->m_disconnect_after_stop = false;
+      session->m_connect_after_stop = false;
     } else if (reply != nullptr &&
                reply->m_operation == Dmn_MonitorOperation::kStart) {
       session->m_monitor = std::move(reply->m_monitor);
       session->m_error.clear();
-      session->m_status = session->m_monitor != nullptr
+      shouldStopCanceledStart =
+          session->m_monitor != nullptr && startCancellationRequested;
+      session->m_status = shouldStopCanceledStart
+                              ? "Stopping canceled monitor startup"
+                          : session->m_monitor != nullptr
                               ? monitorStateName(session->m_monitor->state())
                               : "Monitor failed";
-      monitorStartFailed = session->m_monitor == nullptr;
-      if (!monitorStartFailed) {
-        state->m_monitor_controller.recordStartSuccess(session->m_identity);
+      monitorStartFailed =
+          session->m_monitor == nullptr && !shouldStopCanceledStart;
+      if (session->m_monitor != nullptr && !shouldStopCanceledStart) {
+        const auto monitorState = session->m_monitor->state();
+        const bool monitorEnded = monitorState == dmn::Dmn_AncsState::Failed ||
+                                  monitorState == dmn::Dmn_AncsState::Stopped;
+        if (monitorEnded &&
+            isSelected(state->m_monitoring_intents, session->m_identity)) {
+          session->m_monitor_restart_required = true;
+          (void)state->m_monitor_controller.recordStartFailure(
+              session->m_identity,
+              dmn::gui::Dmn_DeviceMonitorController::Clock::now(),
+              static_cast<unsigned int>(g_random_int_range(80, 101)));
+        } else {
+          state->m_monitor_controller.recordStartSuccess(session->m_identity);
+        }
+      }
+
+      if (monitorStartFailed) {
+        session->m_monitor_restart_required = false;
       }
     } else if (reply != nullptr) {
+      const bool retryMonitor = session->m_monitor_restart_required;
       shouldDisconnect = session->m_disconnect_after_stop;
+      shouldConnect = session->m_connect_after_stop;
       session->m_disconnect_after_stop = false;
+      session->m_connect_after_stop = false;
+      withdrawDesktopAlert(state, session->m_identity);
       session->m_monitor.reset();
+      session->m_monitor_restart_required = retryMonitor;
       session->m_error.clear();
       session->m_status =
-          isSelected(state->m_monitoring_intents, session->m_identity)
+          retryMonitor ? "Retrying monitor start"
+          : isSelected(state->m_monitoring_intents, session->m_identity)
               ? "Monitoring when connected"
               : "Not monitoring";
     }
@@ -2530,6 +3123,15 @@ void monitorOperationFinished(GObject *sourceObject, GAsyncResult *result,
         reply->m_operation == Dmn_MonitorOperation::kStart ? "start" : "stop",
         reply->m_identity.m_device_address.c_str(), reply->m_error.c_str());
     setStatus(state, reply->m_error);
+  } else if (reply != nullptr && reply->m_cancelled) {
+    g_message("ANCS monitor startup canceled for %s",
+              reply->m_identity.m_device_address.c_str());
+    setStatus(state, "ANCS monitor startup canceled.");
+  } else if (shouldStopCanceledStart) {
+    g_message(
+        "ANCS monitor startup completed after cancellation for %s; stopping it",
+        reply->m_identity.m_device_address.c_str());
+    setStatus(state, "Stopping canceled ANCS monitor startup.");
   } else if (reply != nullptr) {
     g_message("ANCS monitor %s completed for %s",
               reply->m_operation == Dmn_MonitorOperation::kStart ? "start"
@@ -2550,12 +3152,22 @@ void monitorOperationFinished(GObject *sourceObject, GAsyncResult *result,
       session->m_status == "Monitor cleanup failed") {
     state->m_close_requested = false;
     updateButtonState(state);
+    updateMonitorPolling(state);
+  } else if (shouldStopCanceledStart) {
+    requestMonitorOperation(state, identity, Dmn_MonitorOperation::kStop);
   } else if (shouldDisconnect) {
+    if (session != nullptr) {
+      session->m_disconnect_after_stop = false;
+    }
+
     requestOperation(state, Dmn_Operation::kDisconnect, {}, identity);
+  } else if (shouldConnect) {
+    requestOperation(state, Dmn_Operation::kConnect, {}, identity);
   } else {
-    if (!state->m_close_requested) {
+    if (!state->m_close_requested && !monitorStopFailed) {
       synchronizeMonitorSessions(state);
     }
+
     maybeFinishClose(state);
   }
 }
@@ -2576,10 +3188,12 @@ void requestMonitorOperation(AppState *state,
   if (session.m_busy) {
     return;
   }
+
   if (operation == Dmn_MonitorOperation::kStart &&
       session.m_monitor != nullptr) {
     return;
   }
+
   if (operation == Dmn_MonitorOperation::kStop &&
       session.m_monitor == nullptr) {
     setStatus(state, "This device does not have an active monitor.");
@@ -2592,11 +3206,15 @@ void requestMonitorOperation(AppState *state,
     session.m_status = "Starting ANCS monitor";
     session.m_error.clear();
     session.m_stopping = false;
+    session.m_start_cancel_requested = false;
+    session.m_monitor_restart_required = false;
+    session.m_cancel_start = std::make_shared<std::atomic_bool>(false);
   } else {
     session.m_status = "Stopping ANCS monitor";
     session.m_disconnect_after_stop = disconnectAfterStop;
     session.m_stopping = true;
   }
+
   ++state->m_monitor_operations;
   setStatus(state, operation == Dmn_MonitorOperation::kStart
                        ? "Starting ANCS monitoring…"
@@ -2606,12 +3224,13 @@ void requestMonitorOperation(AppState *state,
   auto *task = g_task_new(G_OBJECT(state->m_app), nullptr,
                           monitorOperationFinished, nullptr);
   auto *data = new MonitorTaskData{GTK_APPLICATION(g_object_ref(state->m_app)),
-                                   identity, operation, session.m_monitor,
+                                   identity,
+                                   operation,
+                                   session.m_monitor,
+                                   session.m_cancel_start,
                                    state->m_session_started};
   g_task_set_task_data(task, data, [](gpointer taskData) {
-    auto *monitorData = static_cast<MonitorTaskData *>(taskData);
-    g_object_unref(monitorData->m_app);
-    delete monitorData;
+    delete static_cast<MonitorTaskData *>(taskData);
   });
   g_task_run_in_thread(task, monitorTaskWorker);
   g_object_unref(task);
@@ -2651,12 +3270,116 @@ void updateMonitorPolling(AppState *state) {
   }
 }
 
+void finishConnectionCancellation(AppState *state) {
+  if (!state->m_connection_cancel_requested ||
+      state->m_connection_task_active ||
+      state->m_connection_cancel_task_active) {
+    return;
+  }
+
+  state->m_connecting_device.reset();
+  state->m_connect_cancel_token.reset();
+  state->m_connection_cancel_requested = false;
+  state->m_busy = false;
+  setStatus(state, "Connection attempt canceled; refreshing device state.");
+  updateButtonState(state);
+  requestOperation(state, Dmn_Operation::kInventory, {}, std::nullopt, false);
+}
+
+void connectionCancelFinished(GObject *sourceObject, GAsyncResult *result,
+                              gpointer) {
+  auto *state = stateFor(sourceObject);
+  GError *error = nullptr;
+  auto *reply = static_cast<ConnectionCancelReply *>(
+      g_task_propagate_pointer(G_TASK(result), &error));
+  state->m_connection_cancel_task_active = false;
+
+  if (error != nullptr) {
+    state->m_connection_cancel_requested = false;
+    if (state->m_connect_cancel_token != nullptr) {
+      state->m_connect_cancel_token->store(false, std::memory_order_release);
+    }
+
+    g_warning("Could not cancel the Bluetooth connection attempt: %s",
+              error->message);
+    setStatus(state, error->message);
+    g_error_free(error);
+  } else if (reply != nullptr && !reply->m_error.empty()) {
+    state->m_connection_cancel_requested = false;
+    if (state->m_connect_cancel_token != nullptr) {
+      state->m_connect_cancel_token->store(false, std::memory_order_release);
+    }
+
+    g_warning("Could not cancel the Bluetooth connection attempt: %s",
+              reply->m_error.c_str());
+    setStatus(state, reply->m_error);
+  }
+
+  delete reply;
+  state->m_busy = state->m_connection_task_active;
+  if (!state->m_connection_cancel_requested &&
+      !state->m_connection_task_active) {
+    state->m_connecting_device.reset();
+    state->m_connect_cancel_token.reset();
+    if (!state->m_close_requested) {
+      synchronizeMonitorSessions(state);
+    }
+  } else {
+    finishConnectionCancellation(state);
+  }
+
+  updateButtonState(state);
+  refreshView(state, false);
+  maybeFinishClose(state);
+}
+
+void requestConnectionCancel(AppState *state,
+                             const dmn::gui::Dmn_DeviceIdentity &identity) {
+  if (state->m_connection_cancel_requested ||
+      state->m_connection_cancel_task_active ||
+      !state->m_connecting_device.has_value() ||
+      *state->m_connecting_device != identity ||
+      state->m_connect_cancel_token == nullptr) {
+    return;
+  }
+
+  state->m_connection_cancel_requested = true;
+  state->m_connection_cancel_task_active = true;
+  state->m_connect_cancel_token->store(true, std::memory_order_release);
+  setStatus(state, "Disconnecting to cancel the connection attempt…");
+  refreshView(state, false);
+
+  auto *task = g_task_new(G_OBJECT(state->m_app), nullptr,
+                          connectionCancelFinished, nullptr);
+  auto *data = new ConnectionCancelTaskData{identity};
+  g_task_set_task_data(task, data, [](gpointer taskData) {
+    delete static_cast<ConnectionCancelTaskData *>(taskData);
+  });
+  g_task_run_in_thread(task, connectionCancelTaskWorker);
+  g_object_unref(task);
+}
+
 void synchronizeMonitorSessions(AppState *state) {
   std::vector<dmn::gui::Dmn_MonitorControllerDeviceState> devices;
   devices.reserve(state->m_selection.devices().size() +
                   state->m_monitor_sessions.size());
+  const auto cancelDisconnectedStart = [](MonitorSession *session,
+                                          const bool connected) {
+    if (session != nullptr && session->m_busy &&
+        session->m_monitor == nullptr && !connected &&
+        session->m_cancel_start != nullptr &&
+        !session->m_start_cancel_requested) {
+      session->m_monitor_restart_required = false;
+      session->m_start_cancel_requested = true;
+      session->m_stopping = true;
+      session->m_cancel_start->store(true, std::memory_order_release);
+    }
+  };
   for (const auto &device : state->m_selection.devices()) {
-    const auto *session = findMonitorSession(state, device.m_identity);
+    auto *session = findMonitorSession(state, device.m_identity);
+    cancelDisconnectedStart(session, device.m_present &&
+                                         device.m_paired.value_or(false) &&
+                                         device.m_connected.value_or(false));
     devices.push_back(
         {device.m_identity,
          isSelected(state->m_selection.savedSelection(), device.m_identity),
@@ -2664,26 +3387,30 @@ void synchronizeMonitorSessions(AppState *state) {
          device.m_present, device.m_paired.value_or(false),
          device.m_connected.value_or(false),
          session != nullptr && session->m_monitor != nullptr,
+         session != nullptr && session->m_monitor_restart_required,
          session != nullptr && session->m_busy});
   }
 
-  for (const auto &[key, session] : state->m_monitor_sessions) {
+  for (auto &[key, session] : state->m_monitor_sessions) {
     (void)key;
     const auto exists = std::any_of(
         devices.begin(), devices.end(), [&session](const auto &device) {
           return device.m_identity == session.m_identity;
         });
     if (!exists) {
+      cancelDisconnectedStart(&session, false);
       devices.push_back(
           {session.m_identity,
            isSelected(state->m_selection.savedSelection(), session.m_identity),
            isSelected(state->m_monitoring_intents, session.m_identity), false,
-           false, false, session.m_monitor != nullptr, session.m_busy});
+           false, false, session.m_monitor != nullptr,
+           session.m_monitor_restart_required, session.m_busy});
     }
   }
 
   const bool allowStarts = !state->m_close_requested && !state->m_busy &&
-                           !state->m_selection.hasUnsavedChanges();
+                           !state->m_selection.hasUnsavedChanges() &&
+                           !state->m_connection_cancel_requested;
   const auto commands = state->m_monitor_controller.reconcile(
       devices, allowStarts,
       dmn::gui::Dmn_DeviceMonitorController::Clock::now());
@@ -2699,7 +3426,11 @@ void synchronizeMonitorSessions(AppState *state) {
                 dmn::gui::Dmn_MonitorControllerCommand::Action::kStart
             ? Dmn_MonitorOperation::kStart
             : Dmn_MonitorOperation::kStop;
-    requestMonitorOperation(state, command.m_identity, operation);
+    const auto *session = findMonitorSession(state, command.m_identity);
+    requestMonitorOperation(state, command.m_identity, operation,
+                            operation == Dmn_MonitorOperation::kStop &&
+                                session != nullptr &&
+                                session->m_disconnect_after_stop);
   }
 
   updateMonitorPolling(state);
@@ -2750,15 +3481,40 @@ void operationFinished(GObject *sourceObject, GAsyncResult *result, gpointer) {
   GError *error = nullptr;
   auto *reply = static_cast<BackendReply *>(
       g_task_propagate_pointer(G_TASK(result), &error));
+  const bool isConnectOperation =
+      reply != nullptr && reply->m_operation == Dmn_Operation::kConnect;
+  const bool isDisconnectOperation =
+      reply != nullptr && reply->m_operation == Dmn_Operation::kDisconnect;
   const bool stopFailed = reply != nullptr &&
                           reply->m_operation == Dmn_Operation::kStopDiscovery &&
                           !reply->m_error.empty();
+  std::optional<dmn::gui::Dmn_DeviceIdentity> reconnectAfterDisconnect;
 
-  state->m_busy = false;
+  if (isConnectOperation) {
+    state->m_connection_task_active = false;
+  }
+
+  if (isDisconnectOperation) {
+    state->m_disconnecting_device.reset();
+    if (error == nullptr && reply->m_error.empty()) {
+      reconnectAfterDisconnect = state->m_reconnect_after_disconnect;
+    }
+
+    state->m_reconnect_after_disconnect.reset();
+  }
+
+  state->m_busy =
+      isConnectOperation ? state->m_connection_cancel_task_active : false;
   if (error != nullptr) {
     g_warning("Bluetooth background task failed: %s", error->message);
     setStatus(state, error->message);
     g_error_free(error);
+  } else if (reply != nullptr && reply->m_connection_cancelled) {
+    if (reply->m_inventory) {
+      applyInventory(state, *reply->m_inventory);
+    }
+
+    setStatus(state, "Connection attempt canceled.");
   } else if (reply != nullptr) {
     if (!reply->m_error.empty()) {
       g_warning("Bluetooth %s failed: %s", operationName(reply->m_operation),
@@ -2821,6 +3577,15 @@ void operationFinished(GObject *sourceObject, GAsyncResult *result, gpointer) {
     delete reply;
   }
 
+  if (isConnectOperation) {
+    if (state->m_connection_cancel_requested) {
+      finishConnectionCancellation(state);
+    } else {
+      state->m_connecting_device.reset();
+      state->m_connect_cancel_token.reset();
+    }
+  }
+
   if (state->m_close_requested && stopFailed) {
     state->m_close_requested = false;
     updateButtonState(state);
@@ -2829,10 +3594,38 @@ void operationFinished(GObject *sourceObject, GAsyncResult *result, gpointer) {
     return;
   }
 
+  if (reconnectAfterDisconnect.has_value() && !state->m_close_requested) {
+    requestOperation(state, Dmn_Operation::kConnect, {},
+                     reconnectAfterDisconnect);
+
+    return;
+  }
+
+  state->m_busy = state->m_connection_cancel_task_active || state->m_busy;
+  if (!state->m_busy && !state->m_close_requested &&
+      state->m_queued_connection_action.has_value()) {
+    const auto queued = *state->m_queued_connection_action;
+    state->m_queued_connection_action.reset();
+    const auto device = std::find_if(
+        state->m_selection.devices().begin(),
+        state->m_selection.devices().end(), [&queued](const auto &entry) {
+          return entry.m_identity == queued.m_identity;
+        });
+    if (device == state->m_selection.devices().end() || !device->m_present) {
+      setStatus(state,
+                "Queued connection action canceled because the device is "
+                "unavailable.");
+    } else if (queued.m_connect != device->m_connected.value_or(false)) {
+      RowContext context{state, queued.m_identity};
+      connectionClicked(nullptr, &context);
+    }
+  }
+
   updateButtonState(state);
-  if (!state->m_close_requested) {
+  if (!state->m_close_requested && !state->m_connection_cancel_requested) {
     synchronizeMonitorSessions(state);
   }
+
   refreshView(state, false);
   maybeFinishClose(state);
 }
@@ -2852,6 +3645,20 @@ void requestOperation(AppState *state, const Dmn_Operation operation,
   }
 
   state->m_busy = true;
+  std::shared_ptr<std::atomic_bool> cancelConnect;
+  if (operation == Dmn_Operation::kDisconnect && identity.has_value()) {
+    state->m_disconnecting_device = identity;
+    state->m_reconnect_after_disconnect.reset();
+  }
+
+  if (operation == Dmn_Operation::kConnect && identity.has_value()) {
+    state->m_connecting_device = identity;
+    state->m_connection_cancel_requested = false;
+    state->m_connection_task_active = true;
+    cancelConnect = std::make_shared<std::atomic_bool>(false);
+    state->m_connect_cancel_token = cancelConnect;
+  }
+
   g_debug("Starting Bluetooth %s", operationName(operation));
   if (operation == Dmn_Operation::kInventory && state->m_scanning) {
     setStatus(state, "Updating nearby Bluetooth devices…", announceStatus);
@@ -2875,7 +3682,7 @@ void requestOperation(AppState *state, const Dmn_Operation operation,
   auto *task =
       g_task_new(G_OBJECT(state->m_app), nullptr, operationFinished, nullptr);
   auto *data = new TaskData{state->m_backend, operation, std::move(adapterPath),
-                            std::move(identity)};
+                            std::move(identity), std::move(cancelConnect)};
   g_task_set_task_data(task, data, [](gpointer taskData) {
     delete static_cast<TaskData *>(taskData);
   });
@@ -2946,6 +3753,7 @@ void requestClose(AppState *state) {
     g_source_remove(state->m_device_poll_source);
     state->m_device_poll_source = 0;
   }
+
   setStatus(state, "Stopping Bluetooth monitors before quitting…");
   refreshView(state, false);
   maybeFinishClose(state);
@@ -2973,12 +3781,42 @@ void maybeFinishClose(AppState *state) {
     }
   }
 
+  withdrawDesktopAlerts(state);
   g_message("Bluetooth monitors stopped; quitting application");
   g_application_quit(G_APPLICATION(state->m_app));
 }
 
 void quitAction(GSimpleAction *, GVariant *, gpointer userData) {
   requestClose(static_cast<AppState *>(userData));
+}
+
+void openAction(GSimpleAction *, GVariant *, gpointer userData) {
+  g_application_activate(G_APPLICATION(userData));
+}
+
+void desktopAlertsAction(GSimpleAction *action, GVariant *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  if (state->m_settings == nullptr) {
+    setStatus(state, "Desktop alert preference is unavailable.");
+
+    return;
+  }
+
+  const bool enabled = !state->m_desktop_alerts_enabled;
+  if (!g_settings_set_boolean(state->m_settings, "desktop-alerts", enabled)) {
+    setStatus(state, "Could not save the desktop alert preference.");
+
+    return;
+  }
+
+  state->m_desktop_alerts_enabled = enabled;
+  g_simple_action_set_state(action, g_variant_new_boolean(enabled));
+  if (!enabled) {
+    withdrawDesktopAlerts(state);
+  }
+
+  setStatus(state, enabled ? "Generic desktop alerts enabled."
+                           : "Desktop alerts disabled.");
 }
 
 /**
@@ -3037,6 +3875,18 @@ void addAction(GtkApplication *app, const char *name, GCallback callback,
   g_object_unref(action);
 }
 
+void addDesktopAlertsAction(GtkApplication *app, AppState *state) {
+  state->m_desktop_alerts_enabled =
+      state->m_settings != nullptr &&
+      g_settings_get_boolean(state->m_settings, "desktop-alerts");
+  auto *action = g_simple_action_new_stateful(
+      "desktop-alerts", nullptr,
+      g_variant_new_boolean(state->m_desktop_alerts_enabled));
+  g_signal_connect(action, "activate", G_CALLBACK(desktopAlertsAction), state);
+  g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(action));
+  g_object_unref(action);
+}
+
 auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
                      const bool isDevicePage) -> GtkWidget * {
   auto *toolbar = adw_toolbar_view_new();
@@ -3060,6 +3910,7 @@ auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
   auto *menu = g_menu_new();
   auto *quitSection = g_menu_new();
   g_menu_append(menu, "_About Dmn Bluetooth", "app.about");
+  g_menu_append(menu, "Desktop alerts", "app.desktop-alerts");
   g_menu_append(quitSection, "_Quit", "app.quit");
   g_menu_append_section(menu, nullptr, G_MENU_MODEL(quitSection));
   g_object_unref(quitSection);
@@ -3167,6 +4018,7 @@ auto makeSidebar(AppState *state) -> GtkWidget * {
         GTK_CHECK_BUTTON(state->m_selected_only_filter),
         g_settings_get_boolean(state->m_settings, "selected-only"));
   }
+
   gtk_widget_set_tooltip_text(
       state->m_selected_only_filter,
       "Show devices selected in the current selection draft");
@@ -3369,6 +4221,7 @@ void activate(GtkApplication *app, gpointer) {
     if (state->m_settings != nullptr) {
       state->m_pane_fraction = loadPaneFraction(state->m_settings);
     }
+
     loadSavedSelection(state);
     loadMonitoringIntents(state);
 
@@ -3382,6 +4235,8 @@ void activate(GtkApplication *app, gpointer) {
 
     addAction(app, "about", G_CALLBACK(aboutAction), app);
     addAction(app, "quit", G_CALLBACK(quitAction), state);
+    addAction(app, "open", G_CALLBACK(openAction), app);
+    addDesktopAlertsAction(app, state);
 
     state->m_sidebar_page =
         makeToolbarPage(makeSidebar(state), "Devices", state, false);

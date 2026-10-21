@@ -12,7 +12,7 @@
 #ifndef DMN_BLUETOOTH_GUI_DEVICE_MONITOR_CONTROLLER_HPP_
 #define DMN_BLUETOOTH_GUI_DEVICE_MONITOR_CONTROLLER_HPP_
 
-#include "device-selection-model.hpp"
+#include "app/gui/core/device-selection-model.hpp"
 
 #include <chrono>
 #include <vector>
@@ -42,6 +42,10 @@ struct Dmn_MonitorControllerDeviceState {
   /** @brief Whether an ANCS monitor session is active for this device. */
   bool m_monitor_active{};
 
+  /** @brief Whether an active session stopped unexpectedly and needs cleanup.
+   */
+  bool m_monitor_restart_required{};
+
   /** @brief Whether a monitor start or stop operation is in progress. */
   bool m_monitor_busy{};
 };
@@ -64,8 +68,9 @@ struct Dmn_MonitorControllerCommand {
  * @brief Decide monitor lifecycle transitions independently of any GUI.
  *
  * Frontends provide observed state and execute the returned commands on
- * their own asynchronous facilities. Failed starts retain monitoring intent
- * and are retried using jittered exponential backoff.
+ * their own asynchronous facilities. Failed starts and unexpected session
+ * stops retain monitoring intent and are retried using jittered exponential
+ * backoff.
  */
 class Dmn_DeviceMonitorController {
 public:
@@ -74,9 +79,9 @@ public:
   /**
    * @brief Reconcile current devices with saved intent and monitor sessions.
    *
-   * Active sessions are stopped when their device is no longer saved or is
-   * no longer present, paired, and connected. Starts are returned only when
-   * @p allowStarts is true and the retry delay has elapsed.
+   * Active sessions are stopped when their device is no longer saved,
+   * requested, or connected, or needs restart cleanup. Starts are returned
+   * only when @p allowStarts is true and the retry delay has elapsed.
    *
    * @param devices Current state for saved devices and active monitor sessions.
    * @param allowStarts Whether new start commands may currently be issued.
@@ -89,9 +94,9 @@ public:
             Clock::time_point now) -> std::vector<Dmn_MonitorControllerCommand>;
 
   /**
-   * @brief Record a failed start and schedule its next retry.
+   * @brief Record a failed start or unexpected session stop and retry later.
    *
-   * @param identity Stable identity of the device whose start failed.
+   * @param identity Stable identity of the device whose monitor needs retry.
    * @param now Current monotonic time.
    * @param jitterPercent Retry-delay percentage in the inclusive range 80 to
    * 100.

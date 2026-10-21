@@ -5,7 +5,7 @@
  * @brief GTK-independent device inventory and selection state.
  */
 
-#include "device-selection-model.hpp"
+#include "app/gui/core/device-selection-model.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -98,22 +98,23 @@ auto deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string {
 auto deviceActionAvailability(const Dmn_DeviceEntry &device,
                               const Dmn_DeviceActionContext &context)
     -> Dmn_DeviceActionAvailability {
-  const bool operationsAllowed = !context.m_monitor_busy &&
-                                 !context.m_operation_busy &&
-                                 !context.m_close_requested;
   const bool paired = device.m_paired.value_or(false);
   const bool connected = device.m_connected == std::optional<bool>{true};
   const bool targetReady = context.m_saved && device.m_present && paired;
+  const bool connectionActionsAllowed =
+      targetReady && !context.m_close_requested;
+  const bool monitoringAllowed =
+      targetReady && connected && !context.m_close_requested;
+  // A stale or failed ANCS session must not disable the user's next action.
+  const bool monitoringRequested =
+      context.m_monitor_requested ||
+      (context.m_monitor_start_pending && !context.m_monitor_cancel_requested);
 
-  return {targetReady && !context.m_selection_dirty && !connected &&
-              !context.m_monitor_active && operationsAllowed,
-          targetReady && !context.m_selection_dirty && connected &&
-              operationsAllowed,
-          targetReady && !context.m_selection_dirty && connected &&
-              !context.m_monitor_active && !context.m_monitor_requested &&
-              operationsAllowed,
-          (context.m_monitor_active || context.m_monitor_requested) &&
-              operationsAllowed};
+  return {
+      connectionActionsAllowed && !connected && !context.m_connection_pending,
+      connectionActionsAllowed && (connected || context.m_connection_pending),
+      monitoringAllowed && !context.m_selection_dirty && !monitoringRequested,
+      monitoringAllowed && monitoringRequested};
 }
 
 Dmn_DeviceSelectionModel::Dmn_DeviceSelectionModel(

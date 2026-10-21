@@ -106,6 +106,10 @@ if (ENABLE_APP_BLUETOOTH_GTK)
                NAMES glib-compile-schemas
                REQUIRED
   )
+
+  find_program(GTK4_UPDATE_ICON_CACHE_EXECUTABLE
+               NAMES gtk4-update-icon-cache
+  )
 endif()
 
 if (ENABLE_VALGRIND)
