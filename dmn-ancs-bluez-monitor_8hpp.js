@@ -22,6 +22,7 @@ var dmn_ancs_bluez_monitor_8hpp =
       [ "Pairing", "dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea4039036d3d20091fb6400cb1368a97fc", null ],
       [ "Connection", "dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeac2cc7082a89c1ad6631a2f66af5f00c0", null ],
       [ "AncsStartup", "dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea346216f05a1e317a3f90321e214d664c", null ],
+      [ "Cancelled", "dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeaa149e85a44aeec9140e92733d9ed694e", null ],
       [ "Cleanup", "dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea8c6384dda98d8864d00e29dc96179970", null ]
     ] ]
 ];

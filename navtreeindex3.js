@@ -1,5 +1,7 @@
 var NAVTREEINDEX3 =
 {
+"dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b":[3,0,0,35,1],
+"dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e":[3,0,0,35,4],
 "dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7":[3,0,0,35,3],
 "dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f":[3,0,0,35,5],
 "dmn-util_8hpp_source.html":[3,0,0,35],
@@ -107,13 +109,14 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__AncsEvent.html#a84d3afc4a618662bffa1cade783b740e":[2,0,0,5,3],
 "structdmn_1_1Dmn__AncsEvent.html#acedfadac8aadf47fba8b5c6edc79b708":[2,0,0,5,1],
 "structdmn_1_1Dmn__AncsMonitorConfig.html":[2,0,0,6],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a01cc3b5688997df544ec49e95d8a8363":[2,0,0,6,6],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c":[2,0,0,6,5],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a09480c3eaf9e1761d802fdcdf2ec27e5":[2,0,0,6,3],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a3dc702b7fd0090f19f7e36807570ef30":[2,0,0,6,2],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a7a1fb1bc0b2115134372bdc5eda978bb":[2,0,0,6,7],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a01cc3b5688997df544ec49e95d8a8363":[2,0,0,6,7],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c":[2,0,0,6,6],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a09480c3eaf9e1761d802fdcdf2ec27e5":[2,0,0,6,4],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a3dc702b7fd0090f19f7e36807570ef30":[2,0,0,6,3],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a7a1fb1bc0b2115134372bdc5eda978bb":[2,0,0,6,8],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#a8c9e8cb3875196f083554be2471e9ed6":[2,0,0,6,1],
-"structdmn_1_1Dmn__AncsMonitorConfig.html#a8fb2b5cc3257ed7df31d2dcd8870ff90":[2,0,0,6,4],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a8fb2b5cc3257ed7df31d2dcd8870ff90":[2,0,0,6,5],
+"structdmn_1_1Dmn__AncsMonitorConfig.html#a9c55c4193ee0b32df00c778c174c552e":[2,0,0,6,2],
 "structdmn_1_1Dmn__AncsMonitorConfig.html#ad09c4d27235a52d97e207ded38ddbb93":[2,0,0,6,0],
 "structdmn_1_1Dmn__AncsMonitorError.html":[2,0,0,7],
 "structdmn_1_1Dmn__AncsMonitorError.html#a1a724fc3a2a3b2ec30b9b965a38be254":[2,0,0,7,3],
@@ -246,8 +249,5 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__GattError.html#a8b95181f3640d5b37190b4001aad50b8":[2,0,0,52,1],
 "structdmn_1_1Dmn__GattError.html#abd54ac0fb97c7c874037a3e46c2b6d01":[2,0,0,52,0],
 "structdmn_1_1Dmn__GattError.html#ad71c2af5ac85754efdd4c7321dd5c85f":[2,0,0,52,2],
-"structdmn_1_1Dmn__GattEvent.html":[2,0,0,53],
-"structdmn_1_1Dmn__GattEvent.html#a28d23a2c6c02e14fa2f59c65f31a872a":[2,0,0,53,2],
-"structdmn_1_1Dmn__GattEvent.html#a357a6faa5219d95221da1c24815cd7cb":[2,0,0,53,3],
-"structdmn_1_1Dmn__GattEvent.html#a7cf4e6e86ef508381feb2fe585f92baa":[2,0,0,53,1]
+"structdmn_1_1Dmn__GattEvent.html":[2,0,0,53]
 };

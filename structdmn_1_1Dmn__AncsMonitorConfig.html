@@ -129,6 +129,9 @@ std::chrono::milliseconds&#160;</td><td class="memItemRight" valign="bottom"><b>
 <tr class="memitem:a03b314feb4b7e04fe7f1286bf896132c" id="r_a03b314feb4b7e04fe7f1286bf896132c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-bluez-monitor_8hpp.html#ac1866a84e2be3014f352f98eb2814329">Dmn_AncsMonitorProgressHandler</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__AncsMonitorConfig.html#a03b314feb4b7e04fe7f1286bf896132c">progress_handler</a> {}</td></tr>
 <tr class="memdesc:a03b314feb4b7e04fe7f1286bf896132c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional callback invoked on the thread calling start().  <br /></td></tr>
 <tr class="separator:a03b314feb4b7e04fe7f1286bf896132c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c55c4193ee0b32df00c778c174c552e" id="r_a9c55c4193ee0b32df00c778c174c552e"><td class="memItemLeft" align="right" valign="top">std::function&lt; <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdmn_1_1Dmn__AncsMonitorConfig.html#a9c55c4193ee0b32df00c778c174c552e">cancellation_requested</a> {}</td></tr>
+<tr class="memdesc:a9c55c4193ee0b32df00c778c174c552e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional cooperative cancellation check for startup.  <br /></td></tr>
+<tr class="separator:a9c55c4193ee0b32df00c778c174c552e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c9e8cb3875196f083554be2471e9ed6" id="r_a8c9e8cb3875196f083554be2471e9ed6"><td class="memItemLeft" align="right" valign="top"><a id="a8c9e8cb3875196f083554be2471e9ed6" name="a8c9e8cb3875196f083554be2471e9ed6"></a>
 <a class="el" href="structdmn_1_1Dmn__AncsConfig.html">Dmn_AncsConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ancs</b> {}</td></tr>
 <tr class="memdesc:a8c9e8cb3875196f083554be2471e9ed6"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANCS operation deadlines, pending-request policy, and date cutoff. <br /></td></tr>
@@ -137,6 +140,23 @@ std::chrono::milliseconds&#160;</td><td class="memItemRight" valign="bottom"><b>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Configuration for selecting, connecting, and monitoring one device. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a9c55c4193ee0b32df00c778c174c552e" name="a9c55c4193ee0b32df00c778c174c552e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c55c4193ee0b32df00c778c174c552e">&#9670;&#160;</a></span>cancellation_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">bool</a>()&gt; dmn::Dmn_AncsMonitorConfig::cancellation_requested {}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional cooperative cancellation check for startup. </p>
+<p>Checked between setup stages. Calls already in progress remain bounded by their configured timeout; if cancellation arrives during ANCS startup, the newly started session is stopped before start() returns. The callback must return promptly and must not throw. </p>
+
+</div>
+</div>
 <a id="a03b314feb4b7e04fe7f1286bf896132c" name="a03b314feb4b7e04fe7f1286bf896132c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a03b314feb4b7e04fe7f1286bf896132c">&#9670;&#160;</a></span>progress_handler</h2>
 
