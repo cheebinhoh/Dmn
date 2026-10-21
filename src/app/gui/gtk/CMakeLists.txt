@@ -5,12 +5,15 @@ set(DMN_BLUETOOTH_GTK_SCHEMA_DIR
 set(DMN_BLUETOOTH_GTK_SCHEMA_FILE
     "${DMN_BLUETOOTH_GTK_SCHEMA_DIR}/gschemas.compiled"
 )
+
 set(DMN_BLUETOOTH_GTK_INSTALL_SCHEMA_DIR
     "${CMAKE_INSTALL_FULL_DATADIR}/dmn-bluetooth/schemas"
 )
+
 set(DMN_BLUETOOTH_GTK_DBUS_SERVICE_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/com.cheebinhoh.dmn-bluetooth.service"
 )
+
 set(DMN_BLUETOOTH_GTK_DESKTOP_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/com.cheebinhoh.dmn-bluetooth.desktop"
 )
@@ -20,6 +23,7 @@ configure_file(
   "${DMN_BLUETOOTH_GTK_DBUS_SERVICE_FILE}"
   @ONLY
 )
+
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/data/com.cheebinhoh.dmn-bluetooth.desktop.in"
   "${DMN_BLUETOOTH_GTK_DESKTOP_FILE}"
@@ -123,6 +127,7 @@ endif()
            DMN_BLUETOOTH_GTK_ICON_CACHE_INSTALL_CODE
            @ONLY
   )
+
   install(CODE "${DMN_BLUETOOTH_GTK_ICON_CACHE_INSTALL_CODE}")
 else()
   message(WARNING
