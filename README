@@ -179,6 +179,7 @@ interface for browsing BlueZ devices, saving a device selection, connecting
 and disconnecting, and explicitly starting or stopping ANCS monitoring. The
 GTK application and CLI are separate frontends to the same BlueZ/ANCS
 functionality; enabling the GTK build does not build or replace the CLI.
+Optional desktop alerts use GNotification.
 
 The app never connects automatically. **Start monitoring** is an explicit
 choice saved per device, so the app can restore that intent on later launches.
