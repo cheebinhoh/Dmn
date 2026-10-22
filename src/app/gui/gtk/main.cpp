@@ -363,7 +363,6 @@ struct AppState {
   GtkWidget *m_paned{};
   GtkWidget *m_sidebar_page{};
   GtkWidget *m_device_page{};
-  GtkWidget *m_back_button{};
   GtkWidget *m_device_list{};
   GtkWidget *m_adapter_dropdown{};
   GtkWidget *m_scan_actions{};
@@ -390,6 +389,7 @@ struct AppState {
   GtkWidget *m_feed_empty{};
   GtkWidget *m_feed_scroll{};
   GtkWidget *m_feed_view{};
+  GtkWidget *m_sidebar_toggle_button{};
   GtkStringList *m_adapter_names{};
   GListStore *m_event_rows{};
   GtkCustomFilter *m_event_filter{};
@@ -407,7 +407,8 @@ struct AppState {
   bool m_scanning{};
   bool m_rendering{};
   bool m_collapsed{};
-  bool m_showing_device_page{};
+  bool m_sidebar_open{true};
+  bool m_all_devices{};
   bool m_pane_position_ready{};
   double m_pane_fraction{0.5};
   bool m_inventory_loaded{};
@@ -888,23 +889,47 @@ void setStatus(AppState *state, const std::string &message,
 }
 
 void updateSplitLayout(AppState *state) {
-  gtk_widget_set_visible(state->m_sidebar_page,
-                         !state->m_collapsed || !state->m_showing_device_page);
+  gtk_widget_set_visible(state->m_sidebar_page, state->m_sidebar_open);
   gtk_widget_set_visible(state->m_device_page,
-                         !state->m_collapsed || state->m_showing_device_page);
-  gtk_widget_set_visible(state->m_back_button, state->m_collapsed);
+                         !state->m_collapsed || !state->m_sidebar_open);
+  if (state->m_sidebar_toggle_button != nullptr) {
+    const auto accessibleLabel = state->m_collapsed || !state->m_sidebar_open
+                                     ? "Show Bluetooth devices"
+                                     : "Hide device sidebar";
+    gtk_button_set_icon_name(GTK_BUTTON(state->m_sidebar_toggle_button),
+                             "sidebar-show-symbolic");
+    gtk_widget_set_tooltip_text(state->m_sidebar_toggle_button,
+                                accessibleLabel);
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(state->m_sidebar_toggle_button),
+        GTK_ACCESSIBLE_PROPERTY_LABEL, accessibleLabel, -1);
+  }
 }
 
-void backToDevicesClicked(GtkButton *, gpointer userData) {
+void sidebarToggleClicked(GtkButton *, gpointer userData) {
   auto *state = static_cast<AppState *>(userData);
-  state->m_showing_device_page = false;
+  state->m_sidebar_open = !state->m_sidebar_open;
+  if (state->m_settings != nullptr &&
+      !g_settings_set_boolean(state->m_settings, "sidebar-open",
+                              state->m_sidebar_open)) {
+    g_warning("Could not persist the sidebar visibility preference");
+  }
+
   updateSplitLayout(state);
+  if (state->m_sidebar_open && !state->m_collapsed) {
+    const auto width = gtk_widget_get_width(state->m_paned);
+    if (width > 0) {
+      gtk_paned_set_position(
+          GTK_PANED(state->m_paned),
+          static_cast<int>(std::lround(width * state->m_pane_fraction)));
+    }
+  }
 }
 
 void panePositionChanged(GObject *object, GParamSpec *, gpointer userData) {
   auto *state = static_cast<AppState *>(userData);
   if (state->m_settings == nullptr || !state->m_pane_position_ready ||
-      state->m_collapsed) {
+      state->m_collapsed || !state->m_sidebar_open) {
     return;
   }
 
@@ -1036,9 +1061,27 @@ void viewDeviceClicked(GtkButton *, gpointer userData) {
   auto *context = static_cast<RowContext *>(userData);
   auto *state = context->m_state;
   state->m_viewed_device = context->m_identity;
+  state->m_all_devices = false;
   gtk_check_button_set_active(
       GTK_CHECK_BUTTON(state->m_feed_all_devices_filter), FALSE);
-  state->m_showing_device_page = true;
+  if (state->m_settings != nullptr) {
+    if (!g_settings_set_value(
+            state->m_settings, "viewed-device",
+            g_variant_new("(ss)", context->m_identity.m_adapter_address.c_str(),
+                          context->m_identity.m_device_address.c_str()))) {
+      g_warning("Could not persist the viewed Bluetooth device");
+    }
+    if (!g_settings_set_boolean(state->m_settings, "all-devices", FALSE)) {
+      g_warning("Could not persist the notification view preference");
+    }
+  }
+  if (state->m_collapsed) {
+    state->m_sidebar_open = false;
+    if (state->m_settings != nullptr &&
+        !g_settings_set_boolean(state->m_settings, "sidebar-open", FALSE)) {
+      g_warning("Could not persist the sidebar visibility preference");
+    }
+  }
   updateSplitLayout(state);
   refreshView(state);
 }
@@ -1716,6 +1759,17 @@ void setDetailLine(std::ostringstream &details, const char *name,
           << '\n';
 }
 
+gboolean closeEventDetailsOnEscape(GtkEventControllerKey *, const guint keyval,
+                                   guint, GdkModifierType, gpointer userData) {
+  if (keyval != GDK_KEY_Escape) {
+    return FALSE;
+  }
+
+  gtk_window_close(GTK_WINDOW(userData));
+
+  return TRUE;
+}
+
 void showEventDetails(GtkColumnView *, const guint position,
                       gpointer userData) {
   auto *state = static_cast<AppState *>(userData);
@@ -1773,6 +1827,11 @@ void showEventDetails(GtkColumnView *, const guint position,
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(state->m_window));
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_default_size(GTK_WINDOW(dialog), 520, 420);
+  auto *keyController = gtk_event_controller_key_new();
+  gtk_event_controller_set_propagation_phase(keyController, GTK_PHASE_CAPTURE);
+  g_signal_connect(keyController, "key-pressed",
+                   G_CALLBACK(closeEventDetailsOnEscape), dialog);
+  gtk_widget_add_controller(dialog, keyController);
   auto *content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
   gtk_widget_set_margin_top(content, 18);
   gtk_widget_set_margin_bottom(content, 18);
@@ -1963,11 +2022,17 @@ void eventFilterChanged(GObject *, GParamSpec *, gpointer userData) {
       gtk_drop_down_get_selected(GTK_DROP_DOWN(state->m_feed_kind_filter)));
   state->m_event_filters.m_category = eventCategoryForFilter(
       gtk_drop_down_get_selected(GTK_DROP_DOWN(state->m_feed_category_filter)));
+  const bool allDevices = gtk_check_button_get_active(
+      GTK_CHECK_BUTTON(state->m_feed_all_devices_filter));
+  const bool allDevicesChanged = allDevices != state->m_all_devices;
+  state->m_all_devices = allDevices;
   state->m_event_filters.m_identity =
-      gtk_check_button_get_active(
-          GTK_CHECK_BUTTON(state->m_feed_all_devices_filter))
-          ? std::nullopt
-          : state->m_viewed_device;
+      state->m_all_devices ? std::nullopt : state->m_viewed_device;
+  if (allDevicesChanged && state->m_settings != nullptr &&
+      !g_settings_set_boolean(state->m_settings, "all-devices",
+                              state->m_all_devices)) {
+    g_warning("Could not persist the notification view preference");
+  }
   updateEventFeedHeading(state);
 
   gtk_filter_changed(GTK_FILTER(state->m_event_filter),
@@ -1993,6 +2058,7 @@ void clearEventFiltersClicked(GtkButton *, gpointer userData) {
   gtk_drop_down_set_selected(GTK_DROP_DOWN(state->m_feed_category_filter), 0);
   gtk_check_button_set_active(
       GTK_CHECK_BUTTON(state->m_feed_all_devices_filter), FALSE);
+  state->m_all_devices = false;
   state->m_updating_event_filters = false;
   eventFilterChanged(nullptr, nullptr, state);
 }
@@ -2669,6 +2735,47 @@ void loadSavedSelection(AppState *state) {
   if (!selection.empty()) {
     state->m_selection.loadSavedSelection(std::move(selection));
   }
+}
+
+void loadViewPreferences(AppState *state) {
+  if (state->m_settings == nullptr) {
+    return;
+  }
+
+  state->m_sidebar_open =
+      g_settings_get_boolean(state->m_settings, "sidebar-open");
+  state->m_all_devices =
+      g_settings_get_boolean(state->m_settings, "all-devices");
+
+  auto *viewedDevice = g_settings_get_value(state->m_settings, "viewed-device");
+  if (viewedDevice == nullptr) {
+    g_warning("Could not read the previously viewed Bluetooth device");
+
+    return;
+  }
+
+  const char *adapterAddress = nullptr;
+  const char *deviceAddress = nullptr;
+  g_variant_get(viewedDevice, "(&s&s)", &adapterAddress, &deviceAddress);
+  if (adapterAddress != nullptr && *adapterAddress != '\0' &&
+      deviceAddress != nullptr && *deviceAddress != '\0') {
+    state->m_viewed_device =
+        dmn::gui::Dmn_DeviceIdentity{adapterAddress, deviceAddress};
+    std::transform(state->m_viewed_device->m_adapter_address.begin(),
+                   state->m_viewed_device->m_adapter_address.end(),
+                   state->m_viewed_device->m_adapter_address.begin(),
+                   [](const unsigned char character) {
+                     return static_cast<char>(std::toupper(character));
+                   });
+    std::transform(state->m_viewed_device->m_device_address.begin(),
+                   state->m_viewed_device->m_device_address.end(),
+                   state->m_viewed_device->m_device_address.begin(),
+                   [](const unsigned char character) {
+                     return static_cast<char>(std::toupper(character));
+                   });
+  }
+
+  g_variant_unref(viewedDevice);
 }
 
 void loadMonitoringIntents(AppState *state) {
@@ -3794,6 +3901,18 @@ void openAction(GSimpleAction *, GVariant *, gpointer userData) {
   g_application_activate(G_APPLICATION(userData));
 }
 
+void searchAction(GSimpleAction *, GVariant *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  if (state->m_viewed_device != std::nullopt &&
+      gtk_widget_get_mapped(state->m_feed_search)) {
+    gtk_widget_grab_focus(state->m_feed_search);
+
+    return;
+  }
+
+  setStatus(state, "Open a device's notification feed before searching.");
+}
+
 void desktopAlertsAction(GSimpleAction *action, GVariant *, gpointer userData) {
   auto *state = static_cast<AppState *>(userData);
   if (state->m_settings == nullptr) {
@@ -3888,23 +4007,20 @@ void addDesktopAlertsAction(GtkApplication *app, AppState *state) {
 }
 
 auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
-                     const bool isDevicePage) -> GtkWidget * {
+                     const bool isDetailsPage) -> GtkWidget * {
   auto *toolbar = adw_toolbar_view_new();
   auto *header = adw_header_bar_new();
   auto *titleLabel = gtk_label_new(title);
   gtk_widget_add_css_class(titleLabel, "title");
   adw_header_bar_set_title_widget(ADW_HEADER_BAR(header), titleLabel);
 
-  if (isDevicePage) {
-    auto *backButton = gtk_button_new_from_icon_name("go-previous-symbolic");
-    state->m_back_button = backButton;
-    gtk_widget_set_tooltip_text(backButton, "Back to devices");
-    gtk_accessible_update_property(GTK_ACCESSIBLE(backButton),
-                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                   "Back to devices", -1);
-    g_signal_connect(backButton, "clicked", G_CALLBACK(backToDevicesClicked),
+  if (isDetailsPage) {
+    auto *sidebarToggle =
+        gtk_button_new_from_icon_name("sidebar-show-symbolic");
+    state->m_sidebar_toggle_button = sidebarToggle;
+    g_signal_connect(sidebarToggle, "clicked", G_CALLBACK(sidebarToggleClicked),
                      state);
-    adw_header_bar_pack_start(ADW_HEADER_BAR(header), backButton);
+    adw_header_bar_pack_start(ADW_HEADER_BAR(header), sidebarToggle);
   }
 
   auto *menu = g_menu_new();
@@ -4080,6 +4196,8 @@ auto makeDetails(AppState *state) -> GtkWidget * {
   gtk_widget_set_hexpand(state->m_feed_search, TRUE);
   state->m_feed_all_devices_filter =
       gtk_check_button_new_with_label("All devices");
+  gtk_check_button_set_active(
+      GTK_CHECK_BUTTON(state->m_feed_all_devices_filter), state->m_all_devices);
   gtk_widget_set_tooltip_text(
       state->m_feed_all_devices_filter,
       "Include events received from every device during this app session");
@@ -4223,6 +4341,7 @@ void activate(GtkApplication *app, gpointer) {
     }
 
     loadSavedSelection(state);
+    loadViewPreferences(state);
     loadMonitoringIntents(state);
 
     state->m_window = adw_application_window_new(GTK_APPLICATION(app));
@@ -4236,6 +4355,7 @@ void activate(GtkApplication *app, gpointer) {
     addAction(app, "about", G_CALLBACK(aboutAction), app);
     addAction(app, "quit", G_CALLBACK(quitAction), state);
     addAction(app, "open", G_CALLBACK(openAction), app);
+    addAction(app, "search", G_CALLBACK(searchAction), state);
     addDesktopAlertsAction(app, state);
 
     state->m_sidebar_page =
@@ -4265,9 +4385,12 @@ void activate(GtkApplication *app, gpointer) {
     windowBreakpointChanged(G_OBJECT(state->m_window), nullptr, state);
 
     static const char *quitAccelerators[] = {"<Primary>q", nullptr};
-    static const char *aboutAccelerators[] = {"<Primary>a", nullptr};
     gtk_application_set_accels_for_action(app, "app.quit", quitAccelerators);
-    gtk_application_set_accels_for_action(app, "app.about", aboutAccelerators);
+    static const char *searchAccelerators[] = {"<Primary>f", nullptr};
+    gtk_application_set_accels_for_action(app, "app.search",
+                                          searchAccelerators);
+    static const char *closeAccelerators[] = {"<Primary>w", nullptr};
+    gtk_application_set_accels_for_action(app, "win.close", closeAccelerators);
 
     refreshView(state);
     if (state->m_settings == nullptr) {

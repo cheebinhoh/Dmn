@@ -2,17 +2,21 @@
 
 **Status:** Implementation-accurate overview of the current GTK 4/libadwaita
 application. The frames show existing controls and behavior; generic desktop
-alerts are available through the app menu. Preferences and
+alerts are available through the app menu. A general Preferences dialog and
 close/hidden-window options are out of scope. The wide window opens maximized
 with an even default split, and its divider proportion is restored on later
-launches.
+launches. The Devices sidebar is open by default, can be toggled by the single
+sidebar button at the left edge of the Notifications header bar, and its
+visibility, last viewed device, and All devices feed choice are restored on
+later launches.
 
 ![Five implementation-accurate frames show inventory, selection, connection, monitoring, and the filterable event table](images/dmn-bluetooth-gtk-ui-storyboard.svg)
 
-The application uses a resizable two-pane layout at wide window sizes. Below
-the libadwaita breakpoint, it shows either the device list or selected-device
-page, with a Back button. The app menu contains About, Desktop alerts, and
-Quit.
+The application uses a resizable two-pane layout at wide window sizes, with a
+left-edge Notifications header-bar control to hide or show the device sidebar.
+Below the libadwaita breakpoint, it shows either the device list or
+selected-device page; the same control navigates between them. The app menu
+contains About, Desktop alerts, and Quit.
 
 ## Current screens and interaction contract
 
@@ -29,8 +33,9 @@ Quit.
 At narrow widths, the sidebar and detail page are navigated one at a time.
 Device rows place their selection/name, status, and actions in separate
 horizontal bands; scan and selection controls stack to avoid clipping. The
-Back button returns to the device list. The same saved/draft selection and
-per-device lifecycle rules apply in either layout.
+header-bar sidebar toggle returns to the device list or opens the detail page.
+The same saved/draft selection and per-device lifecycle rules apply in either
+layout.
 
 ### State ownership and lifecycle
 

@@ -13,11 +13,13 @@
 #include <array>
 #include <atomic>
 #include <cctype>
+#include <cerrno>
 #include <charconv>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -600,6 +602,44 @@ auto runMonitor(const Options &options) -> int {
     std::cerr << '\n';
 
     return exitCode(status);
+  }
+
+  auto stopBeforeMainLoop = [&] {
+    auto stopped = monitor->stop();
+    if (!stopped) {
+      std::cerr << "ANCS subscription cleanup failed: "
+                << escapedText(stopped.error().message) << '\n';
+
+      return exitCode(ExitStatus::RuntimeFailure);
+    }
+
+    return exitCode(ExitStatus::Success);
+  };
+
+  sigset_t pendingSignals{};
+  if (sigpending(&pendingSignals) != 0) {
+    const auto error = errno;
+    std::cerr << "unable to check for pending shutdown signals: "
+              << std::strerror(error) << '\n';
+    (void)stopBeforeMainLoop();
+
+    return exitCode(ExitStatus::RuntimeFailure);
+  }
+
+  const auto interruptPending = sigismember(&pendingSignals, SIGINT);
+  const auto terminatePending = sigismember(&pendingSignals, SIGTERM);
+  if (interruptPending < 0 || terminatePending < 0) {
+    const auto error = errno;
+    std::cerr << "unable to inspect pending shutdown signals: "
+              << std::strerror(error) << '\n';
+    (void)stopBeforeMainLoop();
+
+    return exitCode(ExitStatus::RuntimeFailure);
+  }
+
+  if (signalSeen.load(std::memory_order_acquire) || interruptPending != 0 ||
+      terminatePending != 0) {
+    return stopBeforeMainLoop();
   }
 
   if (started->requested_remaining_profiles) {

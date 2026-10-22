@@ -38,9 +38,9 @@ explain the necessary deviation.
 - `docs/specs/` contains code-derived specifications and separately labeled
   design proposals. Keep statements about current behavior distinct from
   recommendations and future design.
-- Keep deprecated or unsupported components clearly segregated under
-  `include/deprecated/` or `test/deprecated/`; do not imply that they are part
-  of the supported public API without build and test evidence.
+- Keep unsupported components out of the public include tree; do not imply
+  that they are part of the supported public API without build and test
+  evidence.
 
 Use descriptive lowercase hyphen-separated filenames, such as
 `dmn-runtime-state.hpp` and `dmn-runtime-state.cpp`. Keep paired header and
@@ -266,9 +266,9 @@ pattern; do not perform signature-style churn unrelated to the task.
   reorder sequences whose order affects behavior, such as ordered command
   arguments or linker inputs.
 - Public headers should be covered by the `dmn-standalone-header-check`
-  target, which compiles supported headers independently. Generated and
-  deprecated headers may have different build constraints; state exclusions
-  explicitly rather than counting them as passing checks.
+  target, which compiles supported headers independently. Generated headers
+  may have different build constraints; state exclusions explicitly rather
+  than counting them as passing checks.
 - Use the smallest relevant build/test command first, then expand validation
   when failures or cross-module effects require it.
 - Project targets use `-Wall -Wextra -Wpedantic`; do not introduce avoidable

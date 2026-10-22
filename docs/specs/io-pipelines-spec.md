@@ -1,7 +1,7 @@
 # I/O interfaces, pipes, and sockets
 
 **Status:** Current behavior is extracted from `Dmn_Io`, `Dmn_Pipe`, and
-`Dmn_Socket`; the tee-pipe is deprecated.
+`Dmn_Socket`. The legacy tee-pipe has been removed.
 
 ## `Dmn_Io<T>`
 
@@ -119,16 +119,8 @@ handshake, retry, delivery guarantee, or peer authentication. The receiver's
 address binding and the sender's destination are currently derived from the
 same `ip4` argument.
 
-## Deprecated `Dmn_TeePipe`
+## Removed legacy tee-pipe
 
-The deprecated tee-pipe provides capacity-one input sources and a conveyor
-that waits until each active source has data, gathers one item per source,
-optionally transforms/reorders the batch, and forwards it to an outbound pipe.
-Source removal waits for its buffer to drain. `wait()` also waits for source
-owners to release their handles; `waitForEmpty()` waits for pending source and
-outbound work. It is not included in the umbrella header.
-
-The deprecated tee-pipe and limited-queue remain in `include/deprecated/` and
-are intentionally kept outside the supported public API; they do not currently
-represent a public-contract gap once isolated from the active `Dmn_Io`/
-`Dmn_Pipe` interfaces.
+`Dmn_TeePipe` was removed because it depended on the obsolete bounded-queue
+API and was not part of the supported `Dmn_Io`/`Dmn_Pipe` interfaces. No
+tee-pipe type is currently provided by this library.

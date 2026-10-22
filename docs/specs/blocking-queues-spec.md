@@ -11,8 +11,8 @@ lock-free implementations, and in-flight operation guard.
   active-wait pop behavior and epoch-based node reclamation.
 - `Dmn_Inflight_Guard<T>` issues RAII tickets to prevent teardown/reclamation
   from racing with operations already admitted.
-- `Dmn_Limit_BlockingQueue<T>` is deprecated and is not a supported variant of
-  the current queue API.
+- The obsolete `Dmn_Limit_BlockingQueue<T>` header was removed; it is not a
+  supported variant of the current queue API.
 
 ## Shared queue contract
 
@@ -107,6 +107,5 @@ compiler and linker flags; it cannot be combined with AddressSanitizer.
 
 ## Gaps / improvements
 
-1. The deprecated bounded queue refers to the old one-parameter queue base and
-   old push/pop signatures. Keep it outside public support until repaired and
-   independently built/tested, or remove it.
+1. The removed bounded queue had referred to the old one-parameter queue base
+   and old push/pop signatures; there is no supported bounded-queue variant.
