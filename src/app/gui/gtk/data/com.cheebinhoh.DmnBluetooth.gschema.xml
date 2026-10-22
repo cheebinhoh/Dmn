@@ -43,6 +43,27 @@
         selection.
       </description>
     </key>
+    <key name="sidebar-open" type="b">
+      <default>true</default>
+      <summary>Show the Bluetooth device sidebar</summary>
+      <description>
+        Whether the device list sidebar is open in the main application window.
+      </description>
+    </key>
+    <key name="viewed-device" type="(ss)">
+      <default>(&apos;&apos;, &apos;&apos;)</default>
+      <summary>Previously viewed Bluetooth device</summary>
+      <description>
+        Stable adapter and device addresses for the last viewed device.
+      </description>
+    </key>
+    <key name="all-devices" type="b">
+      <default>false</default>
+      <summary>Show notifications from all devices</summary>
+      <description>
+        Whether the notifications view includes events from all devices.
+      </description>
+    </key>
     <key name="desktop-alerts" type="b">
       <default>false</default>
       <summary>Show generic desktop alerts</summary>

@@ -38,6 +38,7 @@ This table records behavior verified in the current implementation.
 | BlueZ inventory and explicit discovery | Implemented with worker-thread BlueZ requests, powered-adapter selection, a finite scan, and explicit scan stop. |
 | Saved device selection | Implemented with stable adapter/device addresses, multiple draft/save/discard entries, and unavailable saved devices. |
 | Device inventory view | Implemented with Name/Status sorting, a Selected only filter over the current draft selection (its on/off preference is restored across launches), separate paired/connected/monitor states, and per-row Connect/Disconnect and Start/Stop monitoring actions. |
+| Sidebar and view restoration | A single themed sidebar toggle at the left edge of the Notifications header bar opens/closes the device panel; it is open by default and its visibility is restored from GSettings. The last viewed device and All devices feed choice are also restored using stable addresses and a separate boolean preference. |
 | Adjustable device pane | The window opens maximized. Its draggable GTK divider defaults to an even 50/50 split; user-adjusted pane proportion is saved in GSettings and restored independently of window size. Existing saved absolute pane positions are migrated to a proportion on first launch after the update. |
 | Connect/disconnect actions | Implemented per saved device. Unpaired devices must be paired in Bluetooth Settings. A disconnected device offers **Connect**; during a pending connection it changes to enabled **Disconnect**. A connected device offers enabled **Disconnect** regardless of ANCS monitor state or monitor transitions; manual disconnect stops monitoring first and clears its saved monitoring intent. During a queued or running disconnect, the row immediately shows **Connect** and allows a reconnect request to run after disconnect completes. |
 | ANCS monitor lifecycle | Implemented per saved, paired, already-connected device with progress and explicit start/stop. **Start monitoring** is available only after BlueZ confirms Connected. The monitoring action remains available during monitor transitions and follows saved user intent rather than transient ANCS state. Starting changes the action to **Stop monitoring** immediately; activating it clears saved intent and cooperatively cancels startup, cleaning up subscriptions created by an in-flight ANCS setup. Stopping changes it back to **Start monitoring**. Disconnecting also stops monitoring and presents **Start monitoring** while disconnected. Monitor start never pairs or establishes the initial link; like the CLI, it asks BlueZ to connect any remaining auto-connectable profiles before ANCS startup. |
@@ -51,11 +52,14 @@ This table records behavior verified in the current implementation.
 The current GTK window has a **Devices** inventory/sidebar and a
 **Notifications** pane with per-device status and the live event feed. Checking
 a device changes its draft selection but does not navigate away from the
-inventory; activating its name opens the detail/feed pane. Event filters and
-the detail view are part of the live feed. Generic desktop alerts are available
-through the app-menu toggle. Preferences and hidden-window monitoring are
-explicitly out of scope. Simultaneous monitors have not yet been
-hardware-qualified.
+inventory; activating its name opens the detail/feed pane. The sidebar starts
+open, can be toggled by the single button at the left edge of the Notifications
+header bar, and remembers its visibility across launches. The last viewed
+device and All devices feed choice are restored; other event filters remain
+session-local. Event filters and the detail view are part of the live feed.
+Generic desktop alerts are available through the app-menu toggle. A general
+Preferences dialog and hidden-window monitoring are explicitly out of scope.
+Simultaneous monitors have not yet been hardware-qualified.
 
 ## 1. Goals, non-goals, and build boundary
 
@@ -186,7 +190,11 @@ system text scaling, standard spacing/style classes, and accessible names.
 Do not hard-code colors or rely on color/icon alone for lifecycle state.
 Build for the narrowest supported window before optimizing the wide layout;
 the device list and event content must remain usable without a permanently
-visible sidebar. Use standard GNOME keyboard shortcuts/actions.
+visible sidebar. Use standard GNOME keyboard shortcuts/actions, including
+**Ctrl+W** to close the focused window, **Ctrl+Q** to quit the app, **Ctrl+F**
+to focus notification search when a device feed is open, and **Esc** to dismiss
+modal event details. Do not override standard editing shortcuts such as
+**Ctrl+A**.
 
 CMake must discover `gtk4` and `libadwaita-1` with imported pkg-config
 targets only inside the GTK app option. Add `src/app/gui` only when this
@@ -558,10 +566,13 @@ they are not planned feature work.
      the real monitor facade; no physical device is required.
 4. **GTK shell and navigation.**
    - Test first: application activation opens/presents one window; actions
-     have stable names; keyboard shortcuts activate the same actions; quit
-     requests monitor shutdown first. Resize across the declared adaptive
-     breakpoint and assert phone navigation, feed, details, and Back remain
-     reachable with no clipped actions or horizontal overflow.
+     have stable names; **Ctrl+W** closes the focused window, **Ctrl+Q** starts
+     orderly app shutdown, **Ctrl+F** focuses notification search when a device
+     feed is open, **Esc** dismisses modal event details, and standard editing
+     shortcuts retain their normal behavior; quit requests monitor shutdown
+     first. Resize across the declared adaptive breakpoint and assert phone
+     navigation, feed, details, and Back remain reachable with no clipped
+     actions or horizontal overflow.
    - Implement: `gtk/` application/window and empty-state placeholders using
      standard GTK widgets. Keep all GTK objects on the main context.
    - Verify: run `dmn-test-bluetooth-gtk-smoke` under a display; assert window
@@ -713,6 +724,11 @@ they are not planned feature work.
   monitoring**; activating it clears saved intent, suppresses events, and
   cancels startup cooperatively. In-flight bounded D-Bus/GATT calls are not
   interrupted, but any subscriptions they create are cleaned up on return.
+- **GTK-AC-11:** The device sidebar is open on first launch and can be toggled
+  by the single button at the left edge of the Notifications header bar. Its
+  visibility, last viewed stable device identity, and All devices feed choice
+  are restored on later launches without initiating Bluetooth actions. Other
+  event filters remain session-local.
 ## 8. GTK automation notes
 
 Use the existing GoogleTest/CTest stack for `core/` and controller tests.
@@ -740,6 +756,25 @@ must use barriers, completion signals, or main-context iteration with a
 deadline; fixed sleeps are not valid evidence. A failed or unavailable
 display/shell test must fail or be explicitly marked skipped in CI, never
 silently count as passed.
+
+### Acceptance-criterion test mapping
+
+This mapping reflects the currently registered tests; backend and core tests
+do not count as GTK interaction coverage.
+
+| Criterion | Current automated coverage | Remaining qualification |
+| --- | --- | --- |
+| GTK-AC-01 | `dmn-bluetooth-gtk-help`, `dmn-bluetooth-gtk-version`; enabled app/core build | Default-off dependency isolation, package/install validation, and missing-dependency diagnostics |
+| GTK-AC-02 | `dmn-test-bluetooth-gui-selection` covers core action and monitor-controller state | Display-backed progress, responsiveness, and stop behavior |
+| GTK-AC-03 | None | Minimized/obscured monitoring and alerts in supported desktop sessions |
+| GTK-AC-04 | Core monitor and BlueZ private-bus coverage only; no GTK quit integration test | App shutdown ordering, scan cleanup, and alert withdrawal |
+| GTK-AC-05 | `dmn-test-bluetooth-gui-selection` covers alert policy and privacy-safe text | GNOME/COSMIC notification delivery, user policy, replacement, and withdrawal |
+| GTK-AC-06 | Individual core, CLI private-bus, and app smoke tests are registered | Complete package, accessibility, desktop-session, and hardware release gates |
+| GTK-AC-07 | None | Wide/narrow layout, keyboard traversal, clipping, theme, and AT-SPI checks |
+| GTK-AC-08 | `dmn-test-bluez-device-list` and `dmn-bluetooth-cli-monitor-private-bus` cover BlueZ/CLI behavior, not GTK controls | GTK scan controls, adapter selection, timeout, and stop behavior |
+| GTK-AC-09 | `dmn-test-bluetooth-gui-selection` covers the GTK-independent selection model | GTK settings round-trip and proof that UI inventory/save actions do not pair or connect |
+| GTK-AC-10 | `dmn-test-bluetooth-gui-selection` covers action availability; private-bus cancellation coverage is for the monitor/CLI, not GTK interaction | GTK start-cancel, event suppression, cleanup, and pending-connection interaction |
+| GTK-AC-11 | None | Display-backed toggle, settings round-trip, restoration, and narrow-layout behavior |
 
 ## 9. Research references
 

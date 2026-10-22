@@ -191,9 +191,12 @@ reconnection or relaunch. The newest-first event feed contains only
 notifications received while the app process is running; it is not a
 persistent notification archive or a desktop notification-history reader.
 Search and device, event-kind, and category filters compose; activating a row
-shows available details. The feed is capped at 1,000 in-memory events, with
-older-event eviction reported in the interface. Hovering over notification
-text shows its full value wrapped to the available feed width.
+shows available details. A single sidebar toggle at the left edge of the
+Notifications panel opens and closes the device sidebar; its visibility,
+viewed device, and All devices feed setting are remembered across launches.
+The feed is capped at 1,000 in-memory events, with older-event eviction
+reported in the interface. Hovering over notification text shows its full
+value wrapped to the available feed width.
 The GTK app requires a running BlueZ system service and a graphical desktop
 session.
 
@@ -208,9 +211,10 @@ build the app without enabling the CLI:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-  -DENABLE_APP_BLUETOOTH_GTK=ON
+  -DENABLE_APP_BLUETOOTH_GTK=ON \
+  -DCMAKE_INSTALL_PREFIX="$HOME/.local"
 cmake --build build --target dmn-bluetooth-gtk -j2
-./build/src/app/dmn-bluetooth-gtk
+./build/src/app/gui/gtk/dmn-bluetooth-gtk
 ```
 
 The GTK option enables the required ANCS, BlueZ, and D-Bus libraries but
@@ -218,7 +222,7 @@ remains off in default/headless builds. To install the application, desktop
 launcher, AppStream metadata, icons, and settings schema into a user prefix:
 
 ```bash
-cmake --install build --prefix "$HOME/.local"
+cmake --install build
 ```
 
 For the implemented UI, remaining features, and current design details, see
