@@ -2575,6 +2575,7 @@ TEST(DmnBluetoothMonitorCli, InterruptsDuringStartupAndCleansUp) {
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_EQ(WEXITSTATUS(process.status), 0);
+  EXPECT_EQ(process.output.find("monitor ready"), std::string::npos);
   EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
 }
 
