@@ -35,7 +35,6 @@ socket, state, timer, interval-tree, DLock, and Kafka headers, including
 `dmn-runtime-state.hpp`. It does not itself add symbols. Consumers needing a
 narrow dependency surface should include component headers directly.
 
-The `dmn-standalone-header-check` test compiles each supported public header
-as an independent translation unit. The deprecated headers are excluded; they
-still reference the pre-CRTP blocking-queue API and do not compile against the
-current queue interface.
+The `dmn-standalone-header-check` test compiles each installed public header
+as an independent translation unit. Removed legacy headers are not part of
+the supported public-header surface.

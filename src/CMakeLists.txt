@@ -115,14 +115,6 @@ target_sources(dmn
                  ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
 )
 
-# Deprecated headers are retained in the source tree for migration reference;
-# they are not supported public interfaces and are intentionally not installed.
-target_sources(dmn
-                 PRIVATE
-                 ${PROJECT_SOURCE_DIR}/include/deprecated/dmn-limit-blockingqueue.hpp
-                 ${PROJECT_SOURCE_DIR}/include/deprecated/dmn-teepipe.hpp
-)
-
 if (ENABLE_FAULT_INJECTION)
   target_sources(dmn
                    INTERFACE
@@ -329,7 +321,6 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
           DESTINATION include/dmn
-          PATTERN "deprecated" EXCLUDE
           ${DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS}
 )
 

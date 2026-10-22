@@ -19,8 +19,6 @@
  *   DMN_ENABLE_DBUS; BlueZ headers are included when dmn-bluez defines
  *   DMN_ENABLE_BLUEZ; fault-injection helpers are included when FIU_ENABLE is
  *   defined.
- * - Deprecated headers under deprecated/ are unsupported legacy code and are
- *   intentionally excluded from this umbrella.
  * - Include guard: The guard below prevents multiple inclusion across the
  * build.
  *

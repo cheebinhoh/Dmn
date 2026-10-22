@@ -51,9 +51,8 @@ DMesg/DMesgNet, state, runtime, sockets, and interval-tree. Kafka tests are
 registered only when `BUILD_KAFKA_TEST` is enabled. Several DMesg/DMesgNet tests
 are disabled or commented out, and a general test target is marked
 non-terminating. `dmn-standalone-header-check` also compiles each supported
-public header as an independent translation unit; deprecated headers are
-excluded because they still depend on the obsolete queue API. Deprecated
-components are not registered as normal behavior tests. The focused
+public header as an independent translation unit. Removed legacy components
+are not registered as normal behavior tests. The focused
 `dmn-test-dmesg-conflict` target covers current handler-scoped conflict
 behavior and the Phase 1 ordered handler-event observer without the fixed
 sleeps used by older DMesg conflict tests. It does not implement or prove the
