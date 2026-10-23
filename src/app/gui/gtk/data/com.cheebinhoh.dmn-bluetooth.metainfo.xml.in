@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
 <component type="desktop-application">
-  <id>com.cheebinhoh.dmn-bluetooth</id>
+  <id>@DMN_BLUETOOTH_GTK_APP_ID@</id>
   <name>Dmn Bluetooth</name>
   <summary>Monitor iPhone notifications over Bluetooth</summary>
   <metadata_license>CC0-1.0</metadata_license>
@@ -23,11 +24,11 @@
       notifications or continue monitoring after it quits.
     </p>
   </description>
-  <launchable type="desktop-id">com.cheebinhoh.dmn-bluetooth.desktop</launchable>
+  <launchable type="desktop-id">@DMN_BLUETOOTH_GTK_APP_ID@.desktop</launchable>
   <provides>
     <binary>dmn-bluetooth-gtk</binary>
   </provides>
   <url type="homepage">https://github.com/cheebinhoh/Dmn</url>
   <url type="bugtracker">https://github.com/cheebinhoh/Dmn/issues</url>
-  <icon type="stock">com.cheebinhoh.dmn-bluetooth</icon>
+  <icon type="stock">@DMN_BLUETOOTH_GTK_APP_ID@</icon>
 </component>

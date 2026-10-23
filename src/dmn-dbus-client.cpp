@@ -1103,9 +1103,8 @@ public:
 
       m_accepting = false;
 
-      for (const auto &[raw, pending] : m_pending) {
-        (void)raw;
-        pendingRequests.push_back(pending.request);
+      for (const auto &entry : m_pending) {
+        pendingRequests.push_back(entry.second.request);
       }
     }
 
@@ -1145,8 +1144,8 @@ public:
 
         m_subscriptions.clear();
 
-        for (auto &[raw, pending] : m_pending) {
-          (void)raw;
+        for (auto &entry : m_pending) {
+          auto &pending = entry.second;
 
           if (pending.call != nullptr) {
             dbus_pending_call_unref(pending.call);
@@ -1457,8 +1456,8 @@ private:
     {
       std::lock_guard lock{self->m_mutex};
 
-      for (const auto &[id, subscription] : self->m_subscriptions) {
-        (void)id;
+      for (const auto &entry : self->m_subscriptions) {
+        const auto &subscription = entry.second;
 
         if (subscription.match.interface !=
                 (interface == nullptr ? "" : interface) ||
@@ -1579,8 +1578,8 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      for (const auto &[raw, pending] : m_pending) {
-        (void)raw;
+      for (const auto &entry : m_pending) {
+        const auto &pending = entry.second;
 
         if (pending.request->deadline <= now) {
           expired.push_back(pending.request);
@@ -1608,9 +1607,8 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      for (const auto &[raw, pending] : m_pending) {
-        (void)raw;
-        pendingRequests.push_back(pending.request);
+      for (const auto &entry : m_pending) {
+        pendingRequests.push_back(entry.second.request);
       }
     }
 

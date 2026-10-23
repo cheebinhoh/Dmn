@@ -47,7 +47,7 @@
 
 namespace {
 
-constexpr auto kApplicationId = "com.cheebinhoh.dmn-bluetooth";
+constexpr auto kApplicationId = DMN_BLUETOOTH_GTK_APP_ID;
 constexpr auto kSettingsSchemaId = "com.cheebinhoh.DmnBluetooth";
 constexpr auto kDiscoveryDuration = std::chrono::seconds{30};
 constexpr auto kDeviceStateTimeout = std::chrono::seconds{30};
@@ -81,7 +81,9 @@ auto operationName(const Dmn_Operation operation) -> const char * {
   return "unknown operation";
 }
 
-/** @brief Owned result sent from the BlueZ worker to the GTK main context. */
+/**
+ * @brief Owned result sent from the BlueZ worker to the GTK main context.
+ */
 struct BackendReply {
   Dmn_Operation m_operation{Dmn_Operation::kInventory};
   std::optional<dmn::Dmn_BluezInventory> m_inventory;
@@ -91,7 +93,9 @@ struct BackendReply {
   bool m_connection_cancelled{};
 };
 
-/** @brief Serialize every BlueZ call on the application's worker thread. */
+/**
+ * @brief Serialize every BlueZ call on the application's worker thread.
+ */
 class BluezInventoryBackend {
 public:
   BluezInventoryBackend() = default;
@@ -296,7 +300,9 @@ struct AdapterOption {
   std::string m_address;
 };
 
-/** @brief Per-device frontend state for one ANCS monitor session. */
+/**
+ * @brief Per-device frontend state for one ANCS monitor session.
+ */
 struct MonitorSession {
   dmn::gui::Dmn_DeviceIdentity m_identity;
   std::shared_ptr<dmn::Dmn_AncsBluezMonitor> m_monitor;
@@ -311,13 +317,17 @@ struct MonitorSession {
   bool m_connect_after_stop{};
 };
 
-/** @brief A row connection action waiting for another Bluetooth operation. */
+/**
+ * @brief A row connection action waiting for another Bluetooth operation.
+ */
 struct QueuedConnectionAction {
   dmn::gui::Dmn_DeviceIdentity m_identity;
   bool m_connect{};
 };
 
-/** @brief GTK-main-context-owned widgets, settings, and selection state. */
+/**
+ * @brief GTK-main-context-owned widgets, settings, and selection state.
+ */
 struct AppState {
   explicit AppState(GtkApplication *application)
       : m_app{application},
@@ -445,7 +455,9 @@ struct AppState {
   std::chrono::steady_clock::time_point m_scan_deadline{};
 };
 
-/** @brief Owned arguments copied into a GTask worker invocation. */
+/**
+ * @brief Owned arguments copied into a GTask worker invocation.
+ */
 struct TaskData {
   std::shared_ptr<BluezInventoryBackend> m_backend;
   Dmn_Operation m_operation{Dmn_Operation::kInventory};
@@ -463,7 +475,9 @@ struct ConnectionCancelReply {
   std::string m_error;
 };
 
-/** @brief Callback context identifying one selection row and its owner. */
+/**
+ * @brief Callback context identifying one selection row and its owner.
+ */
 struct RowContext {
   AppState *m_state{};
   dmn::gui::Dmn_DeviceIdentity m_identity;
@@ -471,7 +485,9 @@ struct RowContext {
 
 enum class Dmn_MonitorOperation { kStart, kStop };
 
-/** @brief Worker arguments for one per-device monitor transition. */
+/**
+ * @brief Worker arguments for one per-device monitor transition.
+ */
 struct MonitorTaskData {
   MonitorTaskData(
       GtkApplication *app, const dmn::gui::Dmn_DeviceIdentity &identity,
@@ -499,7 +515,9 @@ struct MonitorTaskData {
   std::chrono::system_clock::time_point m_notification_cutoff;
 };
 
-/** @brief Owned per-device monitor result returned to the GTK context. */
+/**
+ * @brief Owned per-device monitor result returned to the GTK context.
+ */
 struct MonitorReply {
   dmn::gui::Dmn_DeviceIdentity m_identity;
   Dmn_MonitorOperation m_operation{Dmn_MonitorOperation::kStart};
@@ -3498,8 +3516,8 @@ void synchronizeMonitorSessions(AppState *state) {
          session != nullptr && session->m_busy});
   }
 
-  for (auto &[key, session] : state->m_monitor_sessions) {
-    (void)key;
+  for (auto &entry : state->m_monitor_sessions) {
+    auto &session = entry.second;
     const auto exists = std::any_of(
         devices.begin(), devices.end(), [&session](const auto &device) {
           return device.m_identity == session.m_identity;
@@ -3878,8 +3896,8 @@ void maybeFinishClose(AppState *state) {
     return;
   }
 
-  for (auto &[key, session] : state->m_monitor_sessions) {
-    (void)key;
+  for (auto &entry : state->m_monitor_sessions) {
+    auto &session = entry.second;
     if (session.m_monitor != nullptr && !session.m_busy) {
       requestMonitorOperation(state, session.m_identity,
                               Dmn_MonitorOperation::kStop);

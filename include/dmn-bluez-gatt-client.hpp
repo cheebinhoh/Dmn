@@ -37,19 +37,29 @@ public:
    */
   explicit Dmn_BluezGattClient(const Dmn_BluezClientConfig &config = {});
 
-  /** @brief Stop backend work and release the client-owned D-Bus connection. */
+  /**
+   * @brief Stop backend work and release the client-owned D-Bus connection.
+   */
   ~Dmn_BluezGattClient() override;
 
-  /** @brief BlueZ clients cannot be copied because they own bus resources. */
+  /**
+   * @brief BlueZ clients cannot be copied because they own bus resources.
+   */
   Dmn_BluezGattClient(const Dmn_BluezGattClient &) = delete;
 
-  /** @brief BlueZ clients cannot be copy-assigned. */
+  /**
+   * @brief BlueZ clients cannot be copy-assigned.
+   */
   auto operator=(const Dmn_BluezGattClient &) -> Dmn_BluezGattClient & = delete;
 
-  /** @brief BlueZ clients cannot be moved while operations own their state. */
+  /**
+   * @brief BlueZ clients cannot be moved while operations own their state.
+   */
   Dmn_BluezGattClient(Dmn_BluezGattClient &&) = delete;
 
-  /** @brief BlueZ clients cannot be move-assigned. */
+  /**
+   * @brief BlueZ clients cannot be move-assigned.
+   */
   auto operator=(Dmn_BluezGattClient &&) -> Dmn_BluezGattClient & = delete;
 
   /** @copydoc Dmn_GattClient::waitForServicesResolved */

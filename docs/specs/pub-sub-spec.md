@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Publish/subscribe
 
 **Status:** Code-derived specification of `Dmn_Pub<T>` and its nested

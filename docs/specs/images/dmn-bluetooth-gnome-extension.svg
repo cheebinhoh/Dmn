@@ -1,3 +1,4 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="610" viewBox="0 0 900 610" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth GNOME Shell extension wireframe</title>
   <desc id="desc">GNOME top bar with an icon-only Dmn panel control and a compact standard-menu sketch. The event count is optional and off by default; an unavailable state is shown when the service is absent.</desc>

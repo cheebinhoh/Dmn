@@ -59,33 +59,53 @@ enum class Dmn_DbusBusKind {
   Address
 };
 
-/** @brief Local error category for a failed D-Bus operation. */
+/**
+ * @brief Local error category for a failed D-Bus operation.
+ */
 enum class Dmn_DbusErrorKind {
-  /** @brief Input or configuration did not satisfy the D-Bus API contract. */
+  /**
+   * @brief Input or configuration did not satisfy the D-Bus API contract.
+   */
   InvalidArgument,
 
-  /** @brief No usable connection exists for the requested operation. */
+  /**
+   * @brief No usable connection exists for the requested operation.
+   */
   NotConnected,
 
-  /** @brief A local transport or connection failure occurred. */
+  /**
+   * @brief A local transport or connection failure occurred.
+   */
   Transport,
 
-  /** @brief The finite method-call deadline expired. */
+  /**
+   * @brief The finite method-call deadline expired.
+   */
   Timeout,
 
-  /** @brief The caller cancelled the operation. */
+  /**
+   * @brief The caller cancelled the operation.
+   */
   Cancelled,
 
-  /** @brief The client is shutting down or has already shut down. */
+  /**
+   * @brief The client is shutting down or has already shut down.
+   */
   Shutdown,
 
-  /** @brief A configured resource bound rejected the operation. */
+  /**
+   * @brief A configured resource bound rejected the operation.
+   */
   ResourceLimit,
 
-  /** @brief The remote service returned a named D-Bus error. */
+  /**
+   * @brief The remote service returned a named D-Bus error.
+   */
   Remote,
 
-  /** @brief A D-Bus value could not be encoded or decoded. */
+  /**
+   * @brief A D-Bus value could not be encoded or decoded.
+   */
   Codec
 };
 
@@ -96,17 +116,25 @@ enum class Dmn_DbusErrorKind {
  * Remote and remote_name retains the service's D-Bus error name.
  */
 struct Dmn_DbusError {
-  /** @brief Local category describing the failed D-Bus operation. */
+  /**
+   * @brief Local category describing the failed D-Bus operation.
+   */
   Dmn_DbusErrorKind kind{Dmn_DbusErrorKind::Transport};
 
-  /** @brief Human-readable local or remote error message. */
+  /**
+   * @brief Human-readable local or remote error message.
+   */
   std::string message;
 
-  /** @brief Remote D-Bus error name, empty for local failures. */
+  /**
+   * @brief Remote D-Bus error name, empty for local failures.
+   */
   std::string remote_name;
 };
 
-/** @brief Success value or structured D-Bus operation failure. */
+/**
+ * @brief Success value or structured D-Bus operation failure.
+ */
 template <typename T> using Dmn_DbusResult = std::expected<T, Dmn_DbusError>;
 
 /**
@@ -118,10 +146,14 @@ template <typename T> using Dmn_DbusResult = std::expected<T, Dmn_DbusError>;
  * cap are dropped and counted in Dmn_DbusClientStatus.
  */
 struct Dmn_DbusClientLimits {
-  /** @brief Default finite timeout for method calls. */
+  /**
+   * @brief Default finite timeout for method calls.
+   */
   std::chrono::milliseconds method_timeout{5000};
 
-  /** @brief Maximum admitted method calls awaiting completion. */
+  /**
+   * @brief Maximum admitted method calls awaiting completion.
+   */
   std::size_t max_in_flight_calls{128};
 
   /**
@@ -157,14 +189,20 @@ struct Dmn_DbusClientLimits {
    */
   std::size_t max_message_bytes{8U * 1024U * 1024U};
 
-  /** @brief Maximum recursive array/dictionary/struct nesting depth. */
+  /**
+   * @brief Maximum recursive array/dictionary/struct nesting depth.
+   */
   std::size_t max_container_depth{32};
 
-  /** @brief Maximum values or entries accepted in one message. */
+  /**
+   * @brief Maximum values or entries accepted in one message.
+   */
   std::size_t max_values{65536};
 };
 
-/** @brief Bus selection and resource limits for a Dmn_DbusClient. */
+/**
+ * @brief Bus selection and resource limits for a Dmn_DbusClient.
+ */
 struct Dmn_DbusClientConfig {
   /**
    * @brief Selects the session bus, system bus, or explicit address.
@@ -186,7 +224,9 @@ struct Dmn_DbusClientConfig {
    */
   std::string bus_address;
 
-  /** @brief Finite resource limits for calls and signals. */
+  /**
+   * @brief Finite resource limits for calls and signals.
+   */
   Dmn_DbusClientLimits limits;
 };
 
@@ -198,19 +238,29 @@ struct Dmn_DbusClientConfig {
  * daemon and checked locally before callback delivery.
  */
 struct Dmn_DbusSignalMatch {
-  /** @brief Optional well-known or unique sender name. */
+  /**
+   * @brief Optional well-known or unique sender name.
+   */
   std::string sender;
 
-  /** @brief Required signal interface. */
+  /**
+   * @brief Required signal interface.
+   */
   std::string interface;
 
-  /** @brief Required signal member. */
+  /**
+   * @brief Required signal member.
+   */
   std::string member;
 
-  /** @brief Optional exact object path. */
+  /**
+   * @brief Optional exact object path.
+   */
   std::string path;
 
-  /** @brief Optional object-path namespace prefix. */
+  /**
+   * @brief Optional object-path namespace prefix.
+   */
   std::string path_namespace;
 };
 
@@ -222,13 +272,19 @@ struct Dmn_DbusSignalMatch {
  * no field indicates that a remote service applied an operation.
  */
 struct Dmn_DbusClientStatus {
-  /** @brief Whether this client's dedicated connection is currently usable. */
+  /**
+   * @brief Whether this client's dedicated connection is currently usable.
+   */
   bool connected{};
 
-  /** @brief Whether shutdown has stopped new operation admission. */
+  /**
+   * @brief Whether shutdown has stopped new operation admission.
+   */
   bool shutting_down{};
 
-  /** @brief Number of pending method calls. */
+  /**
+   * @brief Number of pending method calls.
+   */
   std::size_t pending_calls{};
 
   /**
@@ -263,7 +319,9 @@ struct Dmn_DbusClientStatus {
    */
   std::size_t dropped_signal_bytes{};
 
-  /** @brief Queued callback deliveries discarded during shutdown. */
+  /**
+   * @brief Queued callback deliveries discarded during shutdown.
+   */
   std::size_t shutdown_discarded_signal_messages{};
 
   /**
@@ -296,27 +354,41 @@ public:
    */
   Dmn_DbusSubscription() = default;
 
-  /** @brief Construct a subscription token with its cancellation action. */
+  /**
+   * @brief Construct a subscription token with its cancellation action.
+   */
   explicit Dmn_DbusSubscription(std::function<void()> cancel);
 
-  /** @brief Cancel the subscription when this token is destroyed. */
+  /**
+   * @brief Cancel the subscription when this token is destroyed.
+   */
   ~Dmn_DbusSubscription();
 
-  /** @brief Subscriptions cannot be copied. */
+  /**
+   * @brief Subscriptions cannot be copied.
+   */
   Dmn_DbusSubscription(const Dmn_DbusSubscription &) = delete;
 
-  /** @brief Subscriptions cannot be copy-assigned. */
+  /**
+   * @brief Subscriptions cannot be copy-assigned.
+   */
   auto
   operator=(const Dmn_DbusSubscription &) -> Dmn_DbusSubscription & = delete;
 
-  /** @brief Transfer cancellation ownership from another token. */
+  /**
+   * @brief Transfer cancellation ownership from another token.
+   */
   Dmn_DbusSubscription(Dmn_DbusSubscription &&other) noexcept;
 
-  /** @brief Transfer cancellation ownership from another token. */
+  /**
+   * @brief Transfer cancellation ownership from another token.
+   */
   auto
   operator=(Dmn_DbusSubscription &&other) noexcept -> Dmn_DbusSubscription &;
 
-  /** @brief Cancel this subscription; cancellation is idempotent. */
+  /**
+   * @brief Cancel this subscription; cancellation is idempotent.
+   */
   void cancel() noexcept;
 
 private:
@@ -333,10 +405,14 @@ private:
  */
 class Dmn_DbusCall final {
 public:
-  /** @brief Owned sequence of method-reply arguments. */
+  /**
+   * @brief Owned sequence of method-reply arguments.
+   */
   using Arguments = std::vector<Dmn_DbusValue>;
 
-  /** @brief Method reply arguments or the corresponding typed failure. */
+  /**
+   * @brief Method reply arguments or the corresponding typed failure.
+   */
   using Result = Dmn_DbusResult<Arguments>;
 
   /**
@@ -347,29 +423,43 @@ public:
    */
   Dmn_DbusCall(std::future<Result> future, std::function<void()> cancel);
 
-  /** @brief Transfer ownership of an asynchronous call. */
+  /**
+   * @brief Transfer ownership of an asynchronous call.
+   */
   Dmn_DbusCall(Dmn_DbusCall &&) noexcept = default;
 
-  /** @brief Transfer ownership of an asynchronous call. */
+  /**
+   * @brief Transfer ownership of an asynchronous call.
+   */
   auto operator=(Dmn_DbusCall &&) noexcept -> Dmn_DbusCall & = default;
 
-  /** @brief Asynchronous calls cannot be copied. */
+  /**
+   * @brief Asynchronous calls cannot be copied.
+   */
   Dmn_DbusCall(const Dmn_DbusCall &) = delete;
 
-  /** @brief Asynchronous calls cannot be copy-assigned. */
+  /**
+   * @brief Asynchronous calls cannot be copy-assigned.
+   */
   auto operator=(const Dmn_DbusCall &) -> Dmn_DbusCall & = delete;
 
-  /** @brief Wait for a result without consuming it. */
+  /**
+   * @brief Wait for a result without consuming it.
+   */
   template <typename Rep, typename Period>
   auto waitFor(const std::chrono::duration<Rep, Period> &duration) const
       -> std::future_status {
     return m_future.wait_for(duration);
   }
 
-  /** @brief Wait for and retrieve the single asynchronous call result. */
+  /**
+   * @brief Wait for and retrieve the single asynchronous call result.
+   */
   [[nodiscard]] auto get() -> Result;
 
-  /** @brief Cancel the call; cancellation is idempotent. */
+  /**
+   * @brief Cancel the call; cancellation is idempotent.
+   */
   void cancel() noexcept;
 
 private:
@@ -382,6 +472,30 @@ private:
  *
  * Architecture
  * ------------
+ * Dmn has two D-Bus integration paths. They share the libdbus runtime, but
+ * the byte-signal endpoints do not use this generic method-call client:
+ *
+ * @verbatim
+ * Bluetooth / typed service API
+ * Application
+ *   -> Dmn_BluezClient / Dmn_BluezGattClient
+ *        -> Dmn_DbusClient + Dmn_DbusValue
+ *             -> private codec -> libdbus -> bus daemon -> org.bluez
+ *
+ * DMesg / byte-signal transport
+ * Application -> Dmn_DMesgDbus -> Dmn_DMesgNet
+ *                  -> Dmn_DbusInput / Dmn_DbusOutput
+ *                       -> libdbus -> bus daemon
+ * @endverbatim
+ *
+ * The BlueZ clients use typed method calls, properties, and signal
+ * subscriptions through this class; they interpret generic D-Bus values as
+ * Bluetooth state. In the DMesg path, separate `Dmn_DbusInput` and
+ * `Dmn_DbusOutput` endpoints carry byte-array signals through `Dmn_Io`.
+ * Those endpoints own their own connections and workers and do not call
+ * `Dmn_DbusClient`. Both paths use the process-wide libdbus initialization
+ * provided by `dmn-dbus`.
+ *
  * This library is a D-Bus client, not a bus daemon or a D-Bus service. The
  * selected bus daemon must already be running. A service process connects to
  * that same bus, owns the destination name, and exports the requested methods
@@ -425,6 +539,9 @@ private:
  * shutdown() stops new admission, resolves outstanding calls with a shutdown
  * result, joins the workers, and releases the connection.
  * The client does not automatically reconnect after a terminal disconnect.
+ * The detailed generic-client and BlueZ contract is in
+ * `docs/specs/dbus-client-spec.md`; the byte-signal transport contract is in
+ * `docs/specs/dmesg-dbus-spec.md`.
  *
  * Bus selection and security
  * --------------------------
@@ -450,13 +567,19 @@ private:
  */
 class Dmn_DbusClient {
 public:
-  /** @brief Owned argument list used for method replies and signal bodies. */
+  /**
+   * @brief Owned argument list used for method replies and signal bodies.
+   */
   using Arguments = std::vector<Dmn_DbusValue>;
 
-  /** @brief Signal callback receiving owned decoded arguments. */
+  /**
+   * @brief Signal callback receiving owned decoded arguments.
+   */
   using SignalCallback = std::function<void(Arguments)>;
 
-  /** @brief Signal callback receiving its object path and owned arguments. */
+  /**
+   * @brief Signal callback receiving its object path and owned arguments.
+   */
   using SignalCallbackWithPath = std::function<void(std::string, Arguments)>;
 
   /**
@@ -490,14 +613,18 @@ public:
    */
   Dmn_DbusClient(const Dmn_DbusClient &) = delete;
 
-  /** @brief Clients cannot be copy-assigned. */
+  /**
+   * @brief Clients cannot be copy-assigned.
+   */
   auto operator=(const Dmn_DbusClient &) -> Dmn_DbusClient & = delete;
 
   /** @brief Clients cannot be moved because their workers retain client state.
    */
   Dmn_DbusClient(Dmn_DbusClient &&) = delete;
 
-  /** @brief Clients cannot be move-assigned. */
+  /**
+   * @brief Clients cannot be move-assigned.
+   */
   auto operator=(Dmn_DbusClient &&) -> Dmn_DbusClient & = delete;
 
   /**

@@ -17,15 +17,23 @@
 
 namespace dmn::gui {
 
-/** @brief Generic notification payload without device or ANCS content. */
+/**
+ * @brief Generic notification payload without device or ANCS content.
+ */
 struct Dmn_DesktopAlert {
-  /** @brief Stable replacement ID scoped to one adapter/device pair. */
+  /**
+   * @brief Stable replacement ID scoped to one adapter/device pair.
+   */
   std::string m_id;
 
-  /** @brief Generic alert summary. */
+  /**
+   * @brief Generic alert summary.
+   */
   std::string m_title;
 
-  /** @brief Generic count and app-opening instruction. */
+  /**
+   * @brief Generic count and app-opening instruction.
+   */
   std::string m_body;
 };
 

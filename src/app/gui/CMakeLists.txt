@@ -1,3 +1,5 @@
+# Copyright © 2026 Chee Bin HOH. All rights reserved.
+
 add_library(dmn-bluetooth-gui-core
              core/desktop-alert-policy.cpp
              core/device-monitor-controller.cpp

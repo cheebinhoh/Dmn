@@ -38,7 +38,11 @@ target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-add_dependencies(dmn rdkafka)
+if (TARGET ${DMN_RDKAFKA_TARGET})
+  if (DMN_RDKAFKA_TARGET STREQUAL "rdkafka")
+    add_dependencies(dmn rdkafka)
+  endif()
+endif()
 
 # The GATT API is a backend-neutral contract shared by ANCS and BlueZ.
 add_library(dmn-gatt INTERFACE)
@@ -70,8 +74,11 @@ if (ENABLE_ANCS)
 
   install(TARGETS dmn-ancs
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -124,16 +131,26 @@ endif()
 
 target_include_directories(dmn
                              INTERFACE
-                             ${protobuf_SOURCE_DIR}/src
-                             ${absl_SOURCE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}
-                             ${rdkafka_INCLUDE}
 )
 
-target_include_directories(dmn
-                             PRIVATE
-                             ${rdkafka_INCLUDE}
-)
+if (DEFINED protobuf_SOURCE_DIR)
+  target_include_directories(dmn
+                               INTERFACE "${protobuf_SOURCE_DIR}/src"
+  )
+endif()
+
+if (DEFINED absl_SOURCE_DIR)
+  target_include_directories(dmn
+                               INTERFACE "${absl_SOURCE_DIR}"
+  )
+endif()
+
+if (DMN_RDKAFKA_INCLUDE_DIR)
+  target_include_directories(dmn
+                               PUBLIC "${DMN_RDKAFKA_INCLUDE_DIR}"
+  )
+endif()
 
 if(ENABLE_FAULT_INJECTION)
   # Expose libfiu's enabled failure-point API to Dmn and its test executables.
@@ -153,7 +170,7 @@ if(NOT APPLE)
                           PUBLIC
                           ICU::uc
                           protobuf::libprotobuf
-                          ${rdkafka_LIB}
+                          ${DMN_RDKAFKA_TARGET}
                           atomic
   )
 else()
@@ -161,7 +178,7 @@ else()
                           PUBLIC
                           ICU::uc
                           protobuf::libprotobuf
-                          ${rdkafka_LIB}
+                          ${DMN_RDKAFKA_TARGET}
   )
 endif()
 
@@ -204,8 +221,11 @@ if (ENABLE_DBUS)
 
   install(TARGETS dmn-dbus
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -232,8 +252,11 @@ if (ENABLE_BLUEZ)
 
   install(TARGETS dmn-bluez
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -261,8 +284,11 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
 
   install(TARGETS dmn-ancs-bluez-monitor
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -270,8 +296,11 @@ endif()
 install(TARGETS dmn
           #   EXPORT mylibTargets
           ARCHIVE DESTINATION lib/dmn
+          COMPONENT Development
           LIBRARY DESTINATION lib/dmn
+          COMPONENT Runtime
           RUNTIME DESTINATION bin
+          COMPONENT Runtime
           INCLUDES DESTINATION include/dmn
 )
 
@@ -321,6 +350,7 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
           DESTINATION include/dmn
+          COMPONENT Development
           ${DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS}
 )
 

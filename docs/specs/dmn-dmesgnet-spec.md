@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # `Dmn_DMesgNet`: Existing Design, Guarantees, and Improvement Study
 
 Status: code-derived specification and design review. The **current behavior**

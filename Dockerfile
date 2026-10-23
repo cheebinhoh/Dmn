@@ -45,6 +45,8 @@ EXPOSE 9092 2181
 # Configure and build all optional non-hardware test groups.
 RUN cmake -B build \
       -DCMAKE_BUILD_TYPE=Debug \
+      -DDMN_BUILD_TESTS=ON \
+      -DDMN_ALLOW_DEPENDENCY_FETCH=ON \
       -DBUILD_NDEBUG=ON \
       -DBUILD_KAFKA_TEST=ON \
       -DENABLE_APP_BLUEZ_DISCOVERY=ON \

@@ -74,7 +74,9 @@ public:
 
   using Dmn_Io<std::string>::write;
 
-  /** @brief Selects whether this instance acts as a producer or a consumer. */
+  /**
+   * @brief Selects whether this instance acts as a producer or a consumer.
+   */
   enum class Role {
     kConsumer, ///< Consume messages from the configured Kafka topic.
     kProducer, ///< Produce messages to the configured Kafka topic.

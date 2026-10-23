@@ -258,13 +258,19 @@ public:
    */
   bool isCancelled() const;
 
-  /** @brief Return whether the state completed successfully. */
+  /**
+   * @brief Return whether the state completed successfully.
+   */
   bool isCompleted() const;
 
-  /** @brief Return whether a user-state callback failed. */
+  /**
+   * @brief Return whether a user-state callback failed.
+   */
   bool isFailed() const;
 
-  /** @brief Return whether the state is queued or has started but not ended. */
+  /**
+   * @brief Return whether the state is queued or has started but not ended.
+   */
   bool isRunning() const;
 
 protected:
@@ -279,7 +285,9 @@ protected:
    * An exception from onStarted() is handled as a state failure before a user
    * callback runs.
    */
-  /** @brief Called once when the first runtime dispatch begins. */
+  /**
+   * @brief Called once when the first runtime dispatch begins.
+   */
   virtual void onStarted();
 
   /**
@@ -306,7 +314,9 @@ protected:
 private:
   enum class Terminal_State { kCompleted, kFailed, kCancelled };
 
-  /** @brief Begin a runtime dispatch and invoke @ref onStarted exactly once. */
+  /**
+   * @brief Begin a runtime dispatch and invoke @ref onStarted exactly once.
+   */
   bool beginStep();
 
   /**
@@ -332,13 +342,19 @@ private:
    */
   bool runNextManaged();
 
-  /** @brief Force terminal selection with manager-only execution access. */
+  /**
+   * @brief Force terminal selection with manager-only execution access.
+   */
   void setEndManaged();
 
-  /** @brief Enter a manager-authorized runtime dispatch. */
+  /**
+   * @brief Enter a manager-authorized runtime dispatch.
+   */
   void enterInternalExecution(bool permitRunNext);
 
-  /** @brief Leave a manager-authorized runtime dispatch. */
+  /**
+   * @brief Leave a manager-authorized runtime dispatch.
+   */
   void leaveInternalExecution() noexcept;
 
   void beforeSetStateFnc() override;

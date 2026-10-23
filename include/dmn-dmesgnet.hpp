@@ -76,7 +76,9 @@
 
 namespace dmn {
 
-/** @brief Heartbeat period in nanoseconds (1 second). */
+/**
+ * @brief Heartbeat period in nanoseconds (1 second).
+ */
 #define DMN_DMESGNET_HEARTBEAT_IN_NS (1000000000)
 
 /** @brief Maximum number of consecutive heartbeat cycles to wait for a master
@@ -151,7 +153,9 @@ private:
    *         outbound local messages to @c m_output_handler. */
   void createSubscriptHandler();
 
-  /** @brief Create and start the periodic heartbeat timer thread. */
+  /**
+   * @brief Create and start the periodic heartbeat timer thread.
+   */
   void createTimerProc();
 
   /** @brief Drain and send any messages queued in the outbound pending

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth GNOME Shell Extension Specification
 
 **Status:** Optional proposed GNOME-only companion; not implemented.

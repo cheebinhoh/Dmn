@@ -1,3 +1,4 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 [D-BUS Service]
-Name=com.cheebinhoh.dmn-bluetooth
+Name=@DMN_BLUETOOTH_GTK_APP_ID@
 Exec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk

@@ -96,10 +96,14 @@ public:
    */
   void write(std::string &&item) override;
 
-  /** @brief Stop dispatch and wake readers; safe to call repeatedly. */
+  /**
+   * @brief Stop dispatch and wake readers; safe to call repeatedly.
+   */
   void shutdown() noexcept override;
 
-  /** @brief Return a thread-safe snapshot of input counters and state. */
+  /**
+   * @brief Return a thread-safe snapshot of input counters and state.
+   */
   [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
 
 private:
@@ -155,11 +159,14 @@ public:
    */
   void write(std::string &&item) override;
 
-  /** @brief Stop admission and drain the application queue for a bounded time.
+  /**
+   * @brief Stop admission and drain the application queue for a bounded time.
    */
   void shutdown() noexcept override;
 
-  /** @brief Return a thread-safe snapshot of output counters and state. */
+  /**
+   * @brief Return a thread-safe snapshot of output counters and state.
+   */
   [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
 
 private:

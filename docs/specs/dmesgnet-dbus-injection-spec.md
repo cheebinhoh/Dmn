@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Option A: Inject D-Bus I/O into `Dmn_DMesgNet`
 
 **Status:** Option A is implemented behind the optional `ENABLE_DBUS` build

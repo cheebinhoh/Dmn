@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Future-Based Asynchronous API Extension
 
 **Status:** The first two increments (`Dmn_Async` typed task futures and

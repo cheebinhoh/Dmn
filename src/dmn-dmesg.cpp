@@ -209,7 +209,9 @@ Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name,
     : Dmn_DMesgHandler{name, std::move(filter_fn),
                        static_cast<AsyncProcessTask>(nullptr)} {}
 
-/** @brief Minimal constructor: name only, all callbacks null, empty topic. */
+/**
+ * @brief Minimal constructor: name only, all callbacks null, empty topic.
+ */
 Dmn_DMesg::Dmn_DMesgHandler::Dmn_DMesgHandler(std::string_view name)
     : Dmn_DMesgHandler{name, static_cast<FilterTask>(nullptr)} {}
 

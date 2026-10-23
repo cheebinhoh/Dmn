@@ -3,6 +3,34 @@
  *
  * @file dmn-bluez-client.hpp
  * @brief Optional BlueZ adapter, device, and discovery API.
+ *
+ * Architecture
+ * ------------
+ * @ref Dmn_BluezClient is the typed BlueZ domain layer for adapter/device
+ * inventory and explicit discovery, pairing, and connection operations. It
+ * translates BlueZ's ObjectManager objects, properties, signals, and method
+ * results into owned Dmn_Bluez values and typed errors:
+ *
+ * @verbatim
+ * Application / Dmn_AncsBluezMonitor
+ *          |
+ *          v
+ * Dmn_BluezClient                 BlueZ inventory and device operations
+ *          |
+ *          v
+ * Dmn_DbusClient + Dmn_DbusValue  generic method/property/signal API
+ *          |
+ *          v
+ * libdbus -> system bus -> org.bluez
+ * @endverbatim
+ *
+ * This class depends on the generic D-Bus client, not on libdbus directly.
+ * It does not expose arbitrary D-Bus calls and does not implement GATT
+ * characteristic operations; those belong to @ref Dmn_BluezGattClient. In
+ * the ANCS monitor architecture, this client handles device inventory and
+ * link setup while the GATT backend handles the ANCS service tree and
+ * characteristics. See `docs/specs/dbus-client-spec.md` for the detailed
+ * generic-client and BlueZ boundary.
  */
 
 #ifndef DMN_BLUEZ_CLIENT_HPP_
@@ -21,130 +49,214 @@
 
 namespace dmn {
 
-/** @brief Owned adapter state from the current BlueZ inventory. */
+/**
+ * @brief Owned adapter state from the current BlueZ inventory.
+ */
 struct Dmn_BluezAdapter {
-  /** @brief Current BlueZ object path; it is not a stable adapter identity. */
+  /**
+   * @brief Current BlueZ object path; it is not a stable adapter identity.
+   */
   std::string object_path;
 
-  /** @brief Adapter Bluetooth address, empty when unavailable. */
+  /**
+   * @brief Adapter Bluetooth address, empty when unavailable.
+   */
   std::string address;
 
-  /** @brief Display name selected from alias, reported name, then address. */
+  /**
+   * @brief Display name selected from alias, reported name, then address.
+   */
   std::string name;
 
-  /** @brief BlueZ `Alias`, when available. */
+  /**
+   * @brief BlueZ `Alias`, when available.
+   */
   std::optional<std::string> alias;
 
-  /** @brief BlueZ `Name`, when available. */
+  /**
+   * @brief BlueZ `Name`, when available.
+   */
   std::optional<std::string> reported_name;
 
-  /** @brief BlueZ `Powered` state; absent means unknown or unavailable. */
+  /**
+   * @brief BlueZ `Powered` state; absent means unknown or unavailable.
+   */
   std::optional<bool> powered;
 };
 
-/** @brief Owned device state from the current BlueZ inventory. */
+/**
+ * @brief Owned device state from the current BlueZ inventory.
+ */
 struct Dmn_BluezDevice {
-  /** @brief Current BlueZ object path; it may change after rediscovery. */
+  /**
+   * @brief Current BlueZ object path; it may change after rediscovery.
+   */
   std::string object_path;
 
-  /** @brief Object path of the parent adapter. */
+  /**
+   * @brief Object path of the parent adapter.
+   */
   std::string adapter_path;
 
-  /** @brief Bluetooth device address used with adapter identity for updates. */
+  /**
+   * @brief Bluetooth device address used with adapter identity for updates.
+   */
   std::string address;
 
-  /** @brief Display name selected from alias, reported name, then address. */
+  /**
+   * @brief Display name selected from alias, reported name, then address.
+   */
   std::string name;
 
-  /** @brief BlueZ `Alias`, when available. */
+  /**
+   * @brief BlueZ `Alias`, when available.
+   */
   std::optional<std::string> alias;
 
-  /** @brief BlueZ `Name`, when available. */
+  /**
+   * @brief BlueZ `Name`, when available.
+   */
   std::optional<std::string> reported_name;
 
-  /** @brief BlueZ signal strength in dBm, when available. */
+  /**
+   * @brief BlueZ signal strength in dBm, when available.
+   */
   std::optional<std::int16_t> rssi;
 
-  /** @brief BlueZ `Paired` state; absent means unknown or unavailable. */
+  /**
+   * @brief BlueZ `Paired` state; absent means unknown or unavailable.
+   */
   std::optional<bool> paired;
 
-  /** @brief BlueZ `Connected` state; absent means unknown or unavailable. */
+  /**
+   * @brief BlueZ `Connected` state; absent means unknown or unavailable.
+   */
   std::optional<bool> connected;
 
-  /** @brief BlueZ `ServicesResolved` state, when available. */
+  /**
+   * @brief BlueZ `ServicesResolved` state, when available.
+   */
   std::optional<bool> services_resolved;
 
-  /** @brief Whether this device was observed during this client's scan. */
+  /**
+   * @brief Whether this device was observed during this client's scan.
+   */
   bool seen_during_discovery{};
 };
 
-/** @brief Reconciled adapter and known-device snapshot. */
+/**
+ * @brief Reconciled adapter and known-device snapshot.
+ */
 struct Dmn_BluezInventory {
-  /** @brief Adapters in the reconciled ObjectManager snapshot. */
+  /**
+   * @brief Adapters in the reconciled ObjectManager snapshot.
+   */
   std::vector<Dmn_BluezAdapter> adapters;
 
-  /** @brief Known devices, including devices not currently connected. */
+  /**
+   * @brief Known devices, including devices not currently connected.
+   */
   std::vector<Dmn_BluezDevice> devices;
 };
 
-/** @brief Inventory or service-state transition reported by BlueZ. */
+/**
+ * @brief Inventory or service-state transition reported by BlueZ.
+ */
 enum class Dmn_BluezEventKind {
-  /** @brief An adapter appeared in ObjectManager inventory. */
+  /**
+   * @brief An adapter appeared in ObjectManager inventory.
+   */
   AdapterAdded,
 
-  /** @brief An adapter property changed. */
+  /**
+   * @brief An adapter property changed.
+   */
   AdapterChanged,
 
-  /** @brief An adapter disappeared from ObjectManager inventory. */
+  /**
+   * @brief An adapter disappeared from ObjectManager inventory.
+   */
   AdapterRemoved,
 
-  /** @brief A known device appeared in inventory. */
+  /**
+   * @brief A known device appeared in inventory.
+   */
   DeviceAdded,
 
-  /** @brief A known device property or path changed. */
+  /**
+   * @brief A known device property or path changed.
+   */
   DeviceChanged,
 
-  /** @brief A known device disappeared from inventory. */
+  /**
+   * @brief A known device disappeared from inventory.
+   */
   DeviceRemoved,
 
-  /** @brief The BlueZ service owner disappeared. */
+  /**
+   * @brief The BlueZ service owner disappeared.
+   */
   ServiceUnavailable,
 
-  /** @brief A new BlueZ owner was found and inventory is ready. */
+  /**
+   * @brief A new BlueZ owner was found and inventory is ready.
+   */
   ServiceAvailable,
 
-  /** @brief A terminal or resynchronization error occurred. */
+  /**
+   * @brief A terminal or resynchronization error occurred.
+   */
   Error
 };
 
-/** @brief Owned inventory or service-state update delivered to a handler. */
+/**
+ * @brief Owned inventory or service-state update delivered to a handler.
+ */
 struct Dmn_BluezEvent {
-  /** @brief Kind of inventory or service-state transition. */
+  /**
+   * @brief Kind of inventory or service-state transition.
+   */
   Dmn_BluezEventKind kind{Dmn_BluezEventKind::Error};
 
-  /** @brief Adapter associated with an adapter event, when applicable. */
+  /**
+   * @brief Adapter associated with an adapter event, when applicable.
+   */
   std::optional<Dmn_BluezAdapter> adapter;
 
-  /** @brief Device associated with a device event, when applicable. */
+  /**
+   * @brief Device associated with a device event, when applicable.
+   */
   std::optional<Dmn_BluezDevice> device;
 
-  /** @brief Human-readable detail for service and terminal error events. */
+  /**
+   * @brief Human-readable detail for service and terminal error events.
+   */
   std::string message;
 };
 
-/** @brief Connection and resource-limit configuration for a BlueZ client. */
+/**
+ * @brief Connection and resource-limit configuration for a BlueZ client.
+ */
 struct Dmn_BluezClientConfig {
-  /** @brief Generic D-Bus limits used by the underlying client. */
+  /**
+   * @brief Generic D-Bus limits used by the underlying client.
+   */
   Dmn_DbusClientLimits limits;
 
-  /** @brief Explicit private-bus address for isolated integration tests. */
+  /**
+   * @brief Explicit private-bus address for isolated integration tests.
+   */
   std::string test_bus_address;
 };
 
-/** @brief BlueZ operation result carrying success or a typed D-Bus error. */
+/**
+ * @brief BlueZ operation result carrying success or a typed D-Bus error.
+ */
 using Dmn_BluezResult = std::expected<void, Dmn_DbusError>;
 
-/** @brief BlueZ operation result carrying a value or typed D-Bus error. */
+/**
+ * @brief BlueZ operation result carrying a value or typed D-Bus error.
+ */
 template <typename T>
 using Dmn_BluezValueResult = std::expected<T, Dmn_DbusError>;
 
@@ -157,7 +269,9 @@ using Dmn_BluezValueResult = std::expected<T, Dmn_DbusError>;
  */
 class Dmn_BluezClient {
 public:
-  /** @brief Callback receiving serialized, owned BlueZ inventory events. */
+  /**
+   * @brief Callback receiving serialized, owned BlueZ inventory events.
+   */
   using EventHandler = std::function<void(const Dmn_BluezEvent &)>;
 
   /**
@@ -172,19 +286,29 @@ public:
    */
   explicit Dmn_BluezClient(const Dmn_BluezClientConfig &config = {});
 
-  /** @brief Stop an owned discovery session and release worker resources. */
+  /**
+   * @brief Stop an owned discovery session and release worker resources.
+   */
   virtual ~Dmn_BluezClient();
 
-  /** @brief Clients cannot be copied because they own a bus connection. */
+  /**
+   * @brief Clients cannot be copied because they own a bus connection.
+   */
   Dmn_BluezClient(const Dmn_BluezClient &) = delete;
 
-  /** @brief Clients cannot be copy-assigned. */
+  /**
+   * @brief Clients cannot be copy-assigned.
+   */
   auto operator=(const Dmn_BluezClient &) -> Dmn_BluezClient & = delete;
 
-  /** @brief Clients cannot be moved because workers retain client state. */
+  /**
+   * @brief Clients cannot be moved because workers retain client state.
+   */
   Dmn_BluezClient(Dmn_BluezClient &&) = delete;
 
-  /** @brief Clients cannot be move-assigned. */
+  /**
+   * @brief Clients cannot be move-assigned.
+   */
   auto operator=(Dmn_BluezClient &&) -> Dmn_BluezClient & = delete;
 
   /**

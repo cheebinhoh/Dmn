@@ -137,10 +137,14 @@ class Dmn_Proc {
   };
 
 public:
-  /** @brief Backend-neutral identifier for a worker thread. */
+  /**
+   * @brief Backend-neutral identifier for a worker thread.
+   */
   using ThreadId = std::thread::id;
 
-  /** @brief Callable executed by the worker. */
+  /**
+   * @brief Callable executed by the worker.
+   */
   using Task = std::function<void()>;
 
   /**

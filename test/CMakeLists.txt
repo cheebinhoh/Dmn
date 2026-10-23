@@ -231,6 +231,7 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   )
 
   add_dependencies(dmn-test-bluez-device-list dmn-bluetooth-cli-test)
+
   add_test(NAME dmn-bluetooth-cli-monitor-private-bus
              COMMAND dmn-test-bluez-device-list
                      --gtest_filter=DmnBluetoothMonitorCli.*:DmnAncsBluezMonitorTest.*
@@ -314,6 +315,33 @@ if (ENABLE_APP_BLUETOOTH_GTK)
                          LABELS "dmn-gui"
                          PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}"
   )
+
+  find_program(DESKTOP_FILE_VALIDATE_EXECUTABLE
+               NAMES desktop-file-validate
+  )
+
+  if (DESKTOP_FILE_VALIDATE_EXECUTABLE)
+    add_test(NAME dmn-bluetooth-gtk-desktop-entry
+               COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}"
+                       "${CMAKE_BINARY_DIR}/src/app/gui/gtk/${DMN_BLUETOOTH_GTK_APP_ID}.desktop"
+    )
+
+    set_tests_properties(dmn-bluetooth-gtk-desktop-entry
+                           PROPERTIES LABELS "dmn-gui"
+    )
+  endif()
+
+  find_program(APPSTREAMCLI_EXECUTABLE NAMES appstreamcli)
+  if (APPSTREAMCLI_EXECUTABLE)
+    add_test(NAME dmn-bluetooth-gtk-appstream
+               COMMAND "${APPSTREAMCLI_EXECUTABLE}" validate
+                       "${CMAKE_BINARY_DIR}/src/app/gui/gtk/${DMN_BLUETOOTH_GTK_APP_ID}.metainfo.xml"
+    )
+
+    set_tests_properties(dmn-bluetooth-gtk-appstream
+                           PROPERTIES LABELS "dmn-gui"
+    )
+  endif()
 endif()
 
 if (ENABLE_ANCS_HARDWARE_TESTS)

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Option B: `Dmn_DMesgDbus` facade
 
 **Status:** Implemented behind `ENABLE_DBUS`. This facade composes the

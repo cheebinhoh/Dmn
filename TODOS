@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 - Refactor conflict detection between Dmn_DMesgNet nodes
 - Refactor conflict resolution protocol between Dmn_DMesgNet level
 - Add IPC stuff via wrapper Dmn_Io and allow integration into Dmn_DMesgNet

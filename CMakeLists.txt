@@ -18,12 +18,16 @@ project(dmn VERSION 0.9.0)
 
 include(GNUInstallDirs)
 
-enable_testing()
-
+# Install components are shared by all applications: Runtime contains
+# executables and runtime assets/shared libraries; Development contains
+# reusable static libraries, public headers, and developer tools.
 
 # set build options
 option(BUILD_KAFKA_TEST "Build optional Kafka integration tests" OFF)
 option(BUILD_NDEBUG "Define NDEBUG to disable assertions" OFF)
+option(DMN_BUILD_TESTS "Build and register Dmn unit tests" ON)
+option(DMN_ALLOW_DEPENDENCY_FETCH
+       "Fetch missing build dependencies with CMake FetchContent" ON)
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
 option(ENABLE_ANCS_HARDWARE_TESTS
        "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
@@ -36,6 +40,9 @@ option(ENABLE_DBUS
        "Build the optional D-Bus transport/client library and tests" OFF)
 option(ENABLE_FAULT_INJECTION "Enable fault injection tests with libfiu" OFF)
 option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
+if (DMN_BUILD_TESTS)
+  enable_testing()
+endif()
 set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
     "Exact BlueZ display name or address used by opt-in ANCS hardware tests")
 
@@ -51,7 +58,9 @@ if (BUILD_KAFKA_TEST)
        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                    GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
   install(PROGRAMS "${DMN_KAFKA_BOOTSTRAP_SCRIPT}"
-          DESTINATION scripts)
+          DESTINATION scripts
+          COMPONENT Development
+  )
 endif()
 
 # Application options enable their required library layers; BlueZ in turn
@@ -139,7 +148,11 @@ if (ENABLE_FAULT_INJECTION)
     set(DMN_LIBFIU_LIBRARY_DIR "${LIBFIU_LIBRARY_DIRS}")
     find_program(LIBFIU_RUN NAMES fiu-run REQUIRED)
   else()
-    message(STATUS "find or fetching libfiu...")
+    if (NOT DMN_ALLOW_DEPENDENCY_FETCH)
+      message(FATAL_ERROR
+              "libfiu was not found and DMN_ALLOW_DEPENDENCY_FETCH=OFF. "
+              "Install libfiu and fiu-run or disable ENABLE_FAULT_INJECTION.")
+    endif()
 
     FetchContent_Declare(libfiu
                            GIT_REPOSITORY https://github.com/albertito/libfiu.git
@@ -191,56 +204,92 @@ if (ENABLE_FAULT_INJECTION)
   endif()
 endif()
 
-message(STATUS "find or fetching protobuf...")
+message(STATUS "Looking for Protobuf...")
 find_package(Protobuf QUIET)
 
 if (NOT Protobuf_FOUND)
-  FetchContent_Declare(protobuf
-                         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-                         GIT_TAG        v30.0-rc1
+  if (DMN_ALLOW_DEPENDENCY_FETCH)
+    FetchContent_Declare(protobuf
+                           GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+                           GIT_TAG        v30.0-rc1
+                           EXCLUDE_FROM_ALL
+    )
+
+    FetchContent_MakeAvailable(protobuf)
+  else()
+    message(FATAL_ERROR
+            "Protobuf was not found and DMN_ALLOW_DEPENDENCY_FETCH=OFF. "
+            "Install Protobuf development files or provide it as a build "
+            "dependency before configuring Dmn.")
+  endif()
+endif()
+
+if (DMN_BUILD_TESTS)
+  message(STATUS "Looking for GoogleTest...")
+
+  find_package(GTest QUIET)
+  if (GTest_FOUND)
+    set(DMN_GTEST_TARGET GTest::gtest)
+    set(DMN_GTEST_MAIN_TARGET GTest::gtest_main)
+  elseif (DMN_ALLOW_DEPENDENCY_FETCH)
+    FetchContent_Declare(googletest
+                           GIT_REPOSITORY https://github.com/google/googletest.git
+                           GIT_TAG        v1.14.0
+                           EXCLUDE_FROM_ALL
+    )
+
+    FetchContent_MakeAvailable(googletest)
+    set(DMN_GTEST_TARGET gtest)
+    set(DMN_GTEST_MAIN_TARGET gtest_main)
+  else()
+    message(FATAL_ERROR
+            "GoogleTest was not found and DMN_ALLOW_DEPENDENCY_FETCH=OFF. "
+            "Install GoogleTest or configure with DMN_BUILD_TESTS=OFF.")
+  endif()
+endif()
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(RDKAFKA QUIET IMPORTED_TARGET rdkafka)
+
+if (TARGET PkgConfig::RDKAFKA)
+  find_path(DMN_RDKAFKA_INCLUDE_DIR
+              NAMES rdkafka.h
+              HINTS ${RDKAFKA_INCLUDE_DIRS}
+              PATH_SUFFIXES librdkafka
+  )
+  if (NOT DMN_RDKAFKA_INCLUDE_DIR)
+    message(FATAL_ERROR
+            "librdkafka was found through pkg-config, but rdkafka.h could "
+            "not be located in its include directories.")
+  endif()
+  set(DMN_RDKAFKA_TARGET PkgConfig::RDKAFKA)
+else()
+  if (NOT DMN_ALLOW_DEPENDENCY_FETCH)
+    message(FATAL_ERROR
+            "librdkafka was not found through pkg-config and "
+            "DMN_ALLOW_DEPENDENCY_FETCH=OFF. Install librdkafka development "
+            "files or provide it as a build dependency before configuring Dmn.")
+  endif()
+
+  # librdkafka registers its own tests, which Dmn does not use.
+  set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL
+      "Build librdkafka tests" FORCE)
+  FetchContent_Declare(rdkafka
+                         GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
+                         GIT_TAG        v2.8.0
                          EXCLUDE_FROM_ALL
   )
+  FetchContent_MakeAvailable(rdkafka)
 
-  FetchContent_MakeAvailable(protobuf)
+  set(DMN_RDKAFKA_INCLUDE_DIR "${rdkafka_SOURCE_DIR}/src")
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib")
+  else()
+    set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so")
+  endif()
+  set(DMN_RDKAFKA_TARGET rdkafka)
+  set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
 endif()
-
-message(STATUS "find or fetching googletest...")
-
-FetchContent_Declare(googletest
-                       GIT_REPOSITORY https://github.com/google/googletest.git
-                       GIT_TAG        v1.14.0
-                       EXCLUDE_FROM_ALL
-)
-
-FetchContent_MakeAvailable(googletest)
-
-message(STATUS "fetching rdkafka...")
-# librdkafka registers its own CTest suite, which is not part of Dmn's test
-# suite and requires a separate test runner (and, for some cases, a broker).
-set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL "Build librdkafka tests" FORCE)
-FetchContent_Declare(rdkafka
-                       GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
-                       GIT_TAG        v2.8.0
-                       EXCLUDE_FROM_ALL
-)
-
-FetchContent_MakeAvailable(rdkafka)
-
-string(REPLACE "-src" "-build" rdkafka_BUILD_DIR "${rdkafka_SOURCE_DIR}")
-set(rdkafka_INCLUDE ${rdkafka_SOURCE_DIR}/src)
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  message(STATUS "Running on macOS")
-  set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib)
-else()
-  message(STATUS "Running on none-macOS")
-  set(rdkafka_LIB ${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so)
-endif()
-
-message(STATUS "Kafka library reference is set to ${rdkafka_LIB}")
-
-set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
-set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
 
 if(BUILD_NDEBUG)
   add_compile_definitions(NDEBUG)
@@ -249,6 +298,8 @@ endif()
 # build DMN library and applications
 add_subdirectory(src)
 
-# Configure and register the DMN unit tests.
-message(STATUS "Configure DMN unit tests...")
-add_subdirectory(test)
+if (DMN_BUILD_TESTS)
+  # Configure and register the DMN unit tests.
+  message(STATUS "Configure DMN unit tests...")
+  add_subdirectory(test)
+endif()

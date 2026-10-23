@@ -46,7 +46,9 @@
 
 namespace dmn {
 
-/** @brief ANCS-level failure category, independent of the GATT backend. */
+/**
+ * @brief ANCS-level failure category, independent of the GATT backend.
+ */
 enum class Dmn_AncsErrorKind {
   InvalidArgument,
   NotReady,
@@ -60,7 +62,9 @@ enum class Dmn_AncsErrorKind {
   Cleanup
 };
 
-/** @brief Structured ANCS failure; messages must never contain payload data. */
+/**
+ * @brief Structured ANCS failure; messages must never contain payload data.
+ */
 struct Dmn_AncsError {
   Dmn_AncsErrorKind kind{Dmn_AncsErrorKind::Protocol};
   std::string message{};
@@ -68,14 +72,20 @@ struct Dmn_AncsError {
   bool fatal{true};
 };
 
-/** @brief Success or typed ANCS failure. */
+/**
+ * @brief Success or typed ANCS failure.
+ */
 using Dmn_AncsResult = std::expected<void, Dmn_AncsError>;
 
-/** @brief Value result or typed ANCS failure. */
+/**
+ * @brief Value result or typed ANCS failure.
+ */
 template <typename T>
 using Dmn_AncsValueResult = std::expected<T, Dmn_AncsError>;
 
-/** @brief Lifecycle states of one ANCS client session. */
+/**
+ * @brief Lifecycle states of one ANCS client session.
+ */
 enum class Dmn_AncsState {
   Stopped,
   Starting,
@@ -88,7 +98,9 @@ enum class Dmn_AncsState {
   Failed
 };
 
-/** @brief Semantic kind of a normalized ANCS notification value. */
+/**
+ * @brief Semantic kind of a normalized ANCS notification value.
+ */
 enum class Dmn_AncsNotificationKind {
   Added,
   Updated,
@@ -116,7 +128,9 @@ struct Dmn_AncsNotification {
   std::optional<std::string> date{};
 };
 
-/** @brief Finite operation deadlines for an ANCS session. */
+/**
+ * @brief Finite operation deadlines for an ANCS session.
+ */
 struct Dmn_AncsConfig {
   std::chrono::milliseconds service_resolution_timeout{30000};
   std::chrono::milliseconds gatt_operation_timeout{10000};
@@ -149,7 +163,9 @@ struct Dmn_AncsConfig {
  * notification and its request-scoped error when one is available.
  */
 struct Dmn_AncsEvent {
-  /** @brief Event categories emitted by one ANCS session. */
+  /**
+   * @brief Event categories emitted by one ANCS session.
+   */
   enum class Kind {
     StateChanged,
     NotificationAdded,
@@ -159,16 +175,24 @@ struct Dmn_AncsEvent {
     Error
   };
 
-  /** @brief Event category. */
+  /**
+   * @brief Event category.
+   */
   Kind kind{Kind::Error};
 
-  /** @brief New state for StateChanged events. */
+  /**
+   * @brief New state for StateChanged events.
+   */
   std::optional<Dmn_AncsState> state{};
 
-  /** @brief Owned notification value for notification events. */
+  /**
+   * @brief Owned notification value for notification events.
+   */
   std::optional<Dmn_AncsNotification> notification{};
 
-  /** @brief Typed error for Error and AttributesUnavailable events. */
+  /**
+   * @brief Typed error for Error and AttributesUnavailable events.
+   */
   std::optional<Dmn_AncsError> error{};
 };
 
@@ -183,7 +207,9 @@ struct Dmn_AncsEvent {
  */
 class Dmn_AncsClient {
 public:
-  /** @brief Callback receiving owned state, notification, and error events. */
+  /**
+   * @brief Callback receiving owned state, notification, and error events.
+   */
   using EventHandler = std::function<void(const Dmn_AncsEvent &)>;
 
   /**
@@ -193,19 +219,29 @@ public:
    */
   explicit Dmn_AncsClient(Dmn_GattClient &gatt);
 
-  /** @brief Best-effort session cleanup; never throws. */
+  /**
+   * @brief Best-effort session cleanup; never throws.
+   */
   ~Dmn_AncsClient() noexcept;
 
-  /** @brief Clients cannot be copied because they own worker state. */
+  /**
+   * @brief Clients cannot be copied because they own worker state.
+   */
   Dmn_AncsClient(const Dmn_AncsClient &) = delete;
 
-  /** @brief Clients cannot be copy-assigned. */
+  /**
+   * @brief Clients cannot be copy-assigned.
+   */
   auto operator=(const Dmn_AncsClient &) -> Dmn_AncsClient & = delete;
 
-  /** @brief Clients cannot be moved while callbacks retain their state. */
+  /**
+   * @brief Clients cannot be moved while callbacks retain their state.
+   */
   Dmn_AncsClient(Dmn_AncsClient &&) = delete;
 
-  /** @brief Clients cannot be move-assigned. */
+  /**
+   * @brief Clients cannot be move-assigned.
+   */
   auto operator=(Dmn_AncsClient &&) -> Dmn_AncsClient & = delete;
 
   /**
@@ -243,7 +279,9 @@ public:
    */
   [[nodiscard]] auto stop() -> Dmn_AncsResult;
 
-  /** @brief Return a thread-safe snapshot of the current session state. */
+  /**
+   * @brief Return a thread-safe snapshot of the current session state.
+   */
   [[nodiscard]] auto state() const -> Dmn_AncsState;
 
 private:
@@ -290,7 +328,9 @@ struct Dmn_AncsAttributeSet {
  */
 class Dmn_AncsDataSourceReassembler {
 public:
-  /** @brief Create a parser bound to the expected session-scoped UID. */
+  /**
+   * @brief Create a parser bound to the expected session-scoped UID.
+   */
   explicit Dmn_AncsDataSourceReassembler(std::uint32_t expectedUid);
 
   /**

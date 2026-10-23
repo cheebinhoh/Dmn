@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth User-Session D-Bus Service Specification
 
 **Status:** Optional architecture proposal; no service is implemented.

@@ -73,10 +73,12 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
 
   install(TARGETS dmn-bluez-cli
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 
   install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluez-cli.1
             DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+            COMPONENT Runtime
   )
 endif()
 
@@ -99,10 +101,12 @@ if (ENABLE_APP_BLUETOOTH)
 
   install(TARGETS dmn-bluetooth-cli
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 
   install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluetooth-cli.1
             DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+            COMPONENT Runtime
   )
 endif()
 

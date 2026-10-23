@@ -26,9 +26,13 @@
 
 namespace dmn::gui {
 
-/** @brief One owned event received for a device during this process session. */
+/**
+ * @brief One owned event received for a device during this process session.
+ */
 struct Dmn_DeviceMonitorEvent {
-  /** @brief Stable adapter/device identity associated with the event. */
+  /**
+   * @brief Stable adapter/device identity associated with the event.
+   */
   Dmn_DeviceIdentity m_identity;
 
   /**
@@ -39,10 +43,14 @@ struct Dmn_DeviceMonitorEvent {
    */
   std::uint64_t m_sequence{};
 
-  /** @brief Host wall-clock time when the monitor callback received it. */
+  /**
+   * @brief Host wall-clock time when the monitor callback received it.
+   */
   std::chrono::system_clock::time_point m_received;
 
-  /** @brief Owned ANCS event payload; retained in memory only. */
+  /**
+   * @brief Owned ANCS event payload; retained in memory only.
+   */
   Dmn_AncsEvent m_event;
 };
 
@@ -62,7 +70,9 @@ public:
    */
   explicit Dmn_DeviceMonitorEventStore(std::size_t maximumEvents = 1000);
 
-  /** @brief Append an owned event and evict the oldest record if needed. */
+  /**
+   * @brief Append an owned event and evict the oldest record if needed.
+   */
   void append(Dmn_DeviceMonitorEvent event);
 
   /**
@@ -75,7 +85,9 @@ public:
   [[nodiscard]] auto eventsFor(const Dmn_DeviceIdentity &identity) const
       -> std::vector<const Dmn_DeviceMonitorEvent *>;
 
-  /** @brief Return all retained events in arrival order. */
+  /**
+   * @brief Return all retained events in arrival order.
+   */
   [[nodiscard]] auto
   events() const -> std::vector<const Dmn_DeviceMonitorEvent *>;
 
@@ -89,13 +101,19 @@ public:
   [[nodiscard]] auto eventForSequence(std::uint64_t sequence) const
       -> const Dmn_DeviceMonitorEvent *;
 
-  /** @brief Remove all retained events and return the number removed. */
+  /**
+   * @brief Remove all retained events and return the number removed.
+   */
   auto clear() -> std::size_t;
 
-  /** @brief Return the current number of retained events. */
+  /**
+   * @brief Return the current number of retained events.
+   */
   [[nodiscard]] auto size() const -> std::size_t;
 
-  /** @brief Return the total count evicted due to the retention limit. */
+  /**
+   * @brief Return the total count evicted due to the retention limit.
+   */
   [[nodiscard]] auto evictedCount() const -> std::size_t;
 
 private:
@@ -105,18 +123,28 @@ private:
   std::vector<Dmn_DeviceMonitorEvent> m_events;
 };
 
-/** @brief Composable in-memory filters for the event feed. */
+/**
+ * @brief Composable in-memory filters for the event feed.
+ */
 struct Dmn_DeviceMonitorEventFilter {
-  /** @brief Optional device identity; absent includes every device. */
+  /**
+   * @brief Optional device identity; absent includes every device.
+   */
   std::optional<Dmn_DeviceIdentity> m_identity;
 
-  /** @brief Optional exact ANCS event kind. */
+  /**
+   * @brief Optional exact ANCS event kind.
+   */
   std::optional<Dmn_AncsEvent::Kind> m_kind;
 
-  /** @brief Optional raw ANCS category value. */
+  /**
+   * @brief Optional raw ANCS category value.
+   */
   std::optional<std::uint8_t> m_category;
 
-  /** @brief Case-insensitive text query; event payloads are never persisted. */
+  /**
+   * @brief Case-insensitive text query; event payloads are never persisted.
+   */
   std::string m_search;
 };
 

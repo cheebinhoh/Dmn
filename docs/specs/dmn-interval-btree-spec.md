@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Feature Specification: DMN Interval B‑Tree (`Dmn_IntervalBTree`)
 
 Status: implemented API contract; verified coverage is tracked below and in

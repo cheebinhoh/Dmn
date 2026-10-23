@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth Native COSMIC Application and Applet Specification
 
 **Status:** Optional alternative/companion proposal; not implemented.

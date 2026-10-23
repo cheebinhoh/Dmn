@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Executables and integration fixtures
 
 **Status:** Current checked-in executable behavior; these programs are not

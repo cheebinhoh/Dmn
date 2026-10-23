@@ -62,7 +62,9 @@ public:
    */
   Dmn_DMesgNet_Kafka(std::string_view name, Dmn_Kafka::ConfigType configs);
 
-  /** @brief Destroy the @c Dmn_DMesgNet_Kafka and release all resources. */
+  /**
+   * @brief Destroy the @c Dmn_DMesgNet_Kafka and release all resources.
+   */
   ~Dmn_DMesgNet_Kafka() noexcept;
 
   Dmn_DMesgNet_Kafka(const Dmn_DMesgNet_Kafka &obj) = delete;

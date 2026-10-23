@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Blocking queues and shutdown safety
 
 **Status:** Code-derived specification of the queue abstraction, mutex and

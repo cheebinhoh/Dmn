@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # DMesg messaging and protobuf schema
 
 **Status:** Current DMesg contracts are extracted from the handler API,

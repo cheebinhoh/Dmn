@@ -308,10 +308,14 @@ void Dmn_Kafka::shutdown() {
   waitForEmptyInflight();
 }
 
-/** @brief Copy-write overload: delegates to write(item, move=false). */
+/**
+ * @brief Copy-write overload: delegates to write(item, move=false).
+ */
 void Dmn_Kafka::write(const std::string &item) { writeCopy(item); }
 
-/** @brief Move-write overload: delegates to write(item, move=true). */
+/**
+ * @brief Move-write overload: delegates to write(item, move=true).
+ */
 void Dmn_Kafka::write(std::string &&item) { writeCopy(std::as_const(item)); }
 
 /**

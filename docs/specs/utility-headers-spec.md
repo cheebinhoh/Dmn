@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Utility and public-header surface
 
 **Status:** Code-derived reference for debugging macros, small utilities, and

@@ -3,6 +3,40 @@
  *
  * @file dmn-gatt-client.hpp
  * @brief Backend-neutral remote GATT client contract.
+ *
+ * Architecture
+ * ------------
+ * The dependency direction between the GATT contract, its BlueZ backend,
+ * and the ANCS protocol client is:
+ *
+ * @verbatim
+ * Dmn_GattClient                 backend-neutral GATT interface
+ *       ^                         (implemented by backends)
+ *       | implements
+ * Dmn_BluezGattClient            BlueZ/D-Bus implementation
+ *
+ * Dmn_AncsClient --------------> uses Dmn_GattClient
+ *                                (does not depend on BlueZ)
+ * @endverbatim
+ *
+ * This is the Strategy pattern: ANCS uses the GATT interface while a
+ * replaceable backend, such as BlueZ, provides the concrete behavior. It also
+ * follows the Dependency Inversion Principle: the ANCS protocol client
+ * depends on the GATT abstraction rather than on the BlueZ implementation.
+ * Dmn_BluezGattClient can additionally be viewed as an adapter from BlueZ's
+ * D-Bus API to the backend-neutral GATT contract.
+ *
+ * @ref Dmn_GattClient is the boundary between protocol clients and transport
+ * backends. @ref Dmn_BluezGattClient implements that contract using BlueZ and
+ * D-Bus. @ref Dmn_AncsClient uses the contract to perform the Apple
+ * Notification Center Service (ANCS) protocol, so another GATT backend can
+ * be substituted without changing the ANCS client.
+ *
+ * The application is responsible for connecting the device before starting
+ * ANCS. The ANCS client borrows its @ref Dmn_GattClient and does not connect,
+ * pair, or own that backend; the backend must outlive the ANCS client. GATT
+ * service and characteristic identifiers are backend-owned opaque values
+ * scoped to the current connection and service tree.
  */
 
 #ifndef DMN_GATT_CLIENT_HPP_
@@ -20,57 +54,89 @@
 
 namespace dmn {
 
-/** @brief Backend-neutral category for a failed GATT operation. */
+/**
+ * @brief Backend-neutral category for a failed GATT operation.
+ */
 enum class Dmn_GattErrorKind {
-  /** @brief The supplied device or GATT identifier is invalid. */
+  /**
+   * @brief The supplied device or GATT identifier is invalid.
+   */
   InvalidArgument,
 
-  /** @brief The device is disconnected or its GATT tree is not ready. */
+  /**
+   * @brief The device is disconnected or its GATT tree is not ready.
+   */
   NotReady,
 
-  /** @brief The finite operation deadline expired. */
+  /**
+   * @brief The finite operation deadline expired.
+   */
   Timeout,
 
-  /** @brief BlueZ or another backend rejected the operation. */
+  /**
+   * @brief BlueZ or another backend rejected the operation.
+   */
   Remote,
 
-  /** @brief A transport or local backend failure occurred. */
+  /**
+   * @brief A transport or local backend failure occurred.
+   */
   Backend,
 
-  /** @brief A D-Bus value did not match the GATT object contract. */
+  /**
+   * @brief A D-Bus value did not match the GATT object contract.
+   */
   Decode
 };
 
-/** @brief Backend-neutral typed error for GATT operations. */
+/**
+ * @brief Backend-neutral typed error for GATT operations.
+ */
 struct Dmn_GattError {
-  /** @brief Local error category. */
+  /**
+   * @brief Local error category.
+   */
   Dmn_GattErrorKind kind{Dmn_GattErrorKind::Backend};
 
-  /** @brief Human-readable failure detail. */
+  /**
+   * @brief Human-readable failure detail.
+   */
   std::string message;
 
-  /** @brief Original remote error name, when reported by the backend. */
+  /**
+   * @brief Original remote error name, when reported by the backend.
+   */
   std::string remote_name;
 };
 
-/** @brief A GATT operation result carrying either a value or typed error. */
+/**
+ * @brief A GATT operation result carrying either a value or typed error.
+ */
 template <typename T>
 using Dmn_GattValueResult = std::expected<T, Dmn_GattError>;
 
-/** @brief A GATT operation result carrying success or a typed error. */
+/**
+ * @brief A GATT operation result carrying success or a typed error.
+ */
 using Dmn_GattResult = std::expected<void, Dmn_GattError>;
 
 /**
  * @brief A remote GATT characteristic and its advertised capabilities.
  */
 struct Dmn_GattCharacteristic {
-  /** @brief Backend-owned opaque characteristic identifier. */
+  /**
+   * @brief Backend-owned opaque characteristic identifier.
+   */
   std::string id;
 
-  /** @brief Canonical uppercase UUID reported by the backend. */
+  /**
+   * @brief Canonical uppercase UUID reported by the backend.
+   */
   std::string uuid;
 
-  /** @brief Backend-neutral capability names, such as `notify` or `write`. */
+  /**
+   * @brief Backend-neutral capability names, such as `notify` or `write`.
+   */
   std::vector<std::string> flags;
 };
 
@@ -78,16 +144,24 @@ struct Dmn_GattCharacteristic {
  * @brief A remote GATT service and its currently discovered characteristics.
  */
 struct Dmn_GattService {
-  /** @brief Backend-owned opaque service identifier. */
+  /**
+   * @brief Backend-owned opaque service identifier.
+   */
   std::string id;
 
-  /** @brief Canonical uppercase UUID reported by the backend. */
+  /**
+   * @brief Canonical uppercase UUID reported by the backend.
+   */
   std::string uuid;
 
-  /** @brief Whether the service is primary. */
+  /**
+   * @brief Whether the service is primary.
+   */
   bool primary{};
 
-  /** @brief Characteristics belonging to this service. */
+  /**
+   * @brief Characteristics belonging to this service.
+   */
   std::vector<Dmn_GattCharacteristic> characteristics;
 };
 
@@ -95,25 +169,39 @@ struct Dmn_GattService {
  * @brief One notification or invalidation from a GATT subscription.
  */
 struct Dmn_GattEvent {
-  /** @brief Category of notification callback event. */
+  /**
+   * @brief Category of notification callback event.
+   */
   enum class Kind {
-    /** @brief Characteristic value changed. */
+    /**
+     * @brief Characteristic value changed.
+     */
     ValueChanged,
 
-    /** @brief The device, service, or backend session became invalid. */
+    /**
+     * @brief The device, service, or backend session became invalid.
+     */
     Invalidated,
 
-    /** @brief A typed backend error occurred. */
+    /**
+     * @brief A typed backend error occurred.
+     */
     Error
   };
 
-  /** @brief Event kind. */
+  /**
+   * @brief Event kind.
+   */
   Kind kind{Kind::Invalidated};
 
-  /** @brief Owned characteristic bytes for ValueChanged. */
+  /**
+   * @brief Owned characteristic bytes for ValueChanged.
+   */
   std::vector<std::uint8_t> value;
 
-  /** @brief Human-readable detail for invalidation or error events. */
+  /**
+   * @brief Human-readable detail for invalidation or error events.
+   */
   std::string message;
 };
 
@@ -128,7 +216,9 @@ struct Dmn_GattEvent {
  */
 class Dmn_GattNotification {
 public:
-  /** @brief Construct an empty notification token. */
+  /**
+   * @brief Construct an empty notification token.
+   */
   Dmn_GattNotification() = default;
   /**
    * @brief Construct a token with backend cleanup ownership.
@@ -144,14 +234,20 @@ public:
    */
   virtual ~Dmn_GattNotification() noexcept { (void)stop(); }
 
-  /** @brief Notification cleanup ownership cannot be copied. */
+  /**
+   * @brief Notification cleanup ownership cannot be copied.
+   */
   Dmn_GattNotification(const Dmn_GattNotification &) = delete;
 
-  /** @brief Notification cleanup ownership cannot be copy-assigned. */
+  /**
+   * @brief Notification cleanup ownership cannot be copy-assigned.
+   */
   auto
   operator=(const Dmn_GattNotification &) -> Dmn_GattNotification & = delete;
 
-  /** @brief Transfer notification cleanup ownership. */
+  /**
+   * @brief Transfer notification cleanup ownership.
+   */
   Dmn_GattNotification(Dmn_GattNotification &&other) noexcept
       : m_stop{std::exchange(other.m_stop, {})} {}
 
@@ -214,26 +310,40 @@ private:
  */
 class Dmn_GattClient {
 public:
-  /** @brief Callback invoked for each notification or invalidation event. */
+  /**
+   * @brief Callback invoked for each notification or invalidation event.
+   */
   using NotificationHandler = std::function<void(const Dmn_GattEvent &)>;
 
-  /** @brief Destroy the GATT backend interface polymorphically. */
+  /**
+   * @brief Destroy the GATT backend interface polymorphically.
+   */
   virtual ~Dmn_GattClient() noexcept = default;
 
-  /** @brief GATT backend instances cannot be copied. */
+  /**
+   * @brief GATT backend instances cannot be copied.
+   */
   Dmn_GattClient(const Dmn_GattClient &) = delete;
 
-  /** @brief GATT backend instances cannot be copy-assigned. */
+  /**
+   * @brief GATT backend instances cannot be copy-assigned.
+   */
   auto operator=(const Dmn_GattClient &) -> Dmn_GattClient & = delete;
 
-  /** @brief GATT backend instances cannot be moved. */
+  /**
+   * @brief GATT backend instances cannot be moved.
+   */
   Dmn_GattClient(Dmn_GattClient &&) = delete;
 
-  /** @brief GATT backend instances cannot be move-assigned. */
+  /**
+   * @brief GATT backend instances cannot be move-assigned.
+   */
   auto operator=(Dmn_GattClient &&) -> Dmn_GattClient & = delete;
 
 protected:
-  /** @brief Initialize the backend-neutral contract for a derived backend. */
+  /**
+   * @brief Initialize the backend-neutral contract for a derived backend.
+   */
   Dmn_GattClient() = default;
 
 public:

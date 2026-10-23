@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Test-Driven Implementation Plan: Network DLock over `Dmn_DMesgNet`
 
 Status: proposed implementation roadmap; no network DLock protocol is
