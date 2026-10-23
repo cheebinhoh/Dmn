@@ -26,4 +26,4 @@ modules:
     sources:
       - type: git
         url: https://github.com/cheebinhoh/Dmn.git
-        commit: d8628bda491257cf852b1f209fc66b7919d2ef27
+        commit: 29ef32698147b2fd69853c469ba4a1280dc283d5
