@@ -11,11 +11,13 @@
 
 #include "dmn.hpp"
 
+#if defined(DMN_ENABLE_DMN_DMESGNET)
 TEST(DmnUmbrellaTest, ExposesDLockTypes) {
   const dmn::Dmn_DLock_Range range{1, 2};
 
   EXPECT_TRUE(range.isValid());
 }
+#endif
 
 #if defined(DMN_ENABLE_DBUS)
 static_assert(std::is_class_v<dmn::Dmn_DbusClient>);

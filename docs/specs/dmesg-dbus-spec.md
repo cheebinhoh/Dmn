@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Shared Design: byte I/O and DMesg transport over Linux D-Bus
 
 **Status:** Shared contract for the implemented Option A endpoints and Option

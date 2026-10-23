@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn code-derived specifications and review
 
 These documents record the current observable contracts of the public modules,

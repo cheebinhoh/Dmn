@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Runtime scheduler and coroutine task
 
 **Status:** Code-derived specification of `Dmn_Runtime_Manager`,

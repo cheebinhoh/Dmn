@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # GTK Bluetooth and ANCS Application Specification
 
 **Status:** Historical proposal for GTK failure handling. The optional GTK

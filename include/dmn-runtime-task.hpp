@@ -26,7 +26,9 @@ struct Dmn_Runtime_Task {
    * propagation for @c Dmn_Runtime_Task coroutines.
    */
   struct promise_type {
-    /** @brief Return the @c Dmn_Runtime_Task handle that wraps this promise. */
+    /**
+     * @brief Return the @c Dmn_Runtime_Task handle that wraps this promise.
+     */
     Dmn_Runtime_Task get_return_object() {
       return Dmn_Runtime_Task{
           std::coroutine_handle<promise_type>::from_promise(*this)};
@@ -41,7 +43,9 @@ struct Dmn_Runtime_Task {
      * (if any) when this coroutine finishes.
      */
     struct FinalAwaiter {
-      /** @brief Never ready — always suspend to allow continuation transfer. */
+      /**
+       * @brief Never ready — always suspend to allow continuation transfer.
+       */
       bool await_ready() const noexcept { return false; }
 
       /** @brief Resume the stored continuation (if any) via symmetric transfer.
@@ -57,14 +61,18 @@ struct Dmn_Runtime_Task {
       void await_resume() const noexcept {}
     };
 
-    /** @brief Return the custom final awaiter that chains the continuation. */
+    /**
+     * @brief Return the custom final awaiter that chains the continuation.
+     */
     FinalAwaiter final_suspend() noexcept { return {}; }
 
     /** @brief Capture any exception thrown by the coroutine body for later
      *         rethrowing via @c Awaiter::await_resume(). */
     void unhandled_exception() { m_except = std::current_exception(); }
 
-    /** @brief Coroutines that return @c void reach this on co_return. */
+    /**
+     * @brief Coroutines that return @c void reach this on co_return.
+     */
     void return_void() {}
 
     std::coroutine_handle<>

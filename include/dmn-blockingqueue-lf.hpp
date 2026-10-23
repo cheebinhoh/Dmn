@@ -159,7 +159,9 @@ class Dmn_BlockingQueue_Lf
     uint64_t m_id{}; ///< Monotonically increasing epoch identifier.
   };
 
-  /** @brief Internal linked-list node holding a stored item. */
+  /**
+   * @brief Internal linked-list node holding a stored item.
+   */
   struct Node {
     T m_data{};                          ///< The stored queue element.
     std::atomic<Node *> m_next{nullptr}; ///< Next node in the live queue chain.
@@ -176,10 +178,14 @@ public:
    *         epoch bookkeeping structures. */
   Dmn_BlockingQueue_Lf();
 
-  /** @brief Construct and populate the queue from an initializer list. */
+  /**
+   * @brief Construct and populate the queue from an initializer list.
+   */
   Dmn_BlockingQueue_Lf(std::initializer_list<T> list);
 
-  /** @brief Destroy the queue; triggers shutdown and reclaims all nodes. */
+  /**
+   * @brief Destroy the queue; triggers shutdown and reclaims all nodes.
+   */
   virtual ~Dmn_BlockingQueue_Lf() noexcept;
 
   Dmn_BlockingQueue_Lf(const Dmn_BlockingQueue_Lf<T> &obj) = delete;

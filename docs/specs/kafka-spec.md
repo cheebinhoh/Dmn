@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Kafka transport
 
 **Status:** Code-derived specification for `Dmn_Kafka`, its configuration
@@ -58,20 +60,15 @@ does not remove them from Git history.
    associated with the currently blocked write; test broker loss and shutdown.
 4. Make flush/poll deadlines configurable and avoid repeated one-second flush
    calls while waiting for each synchronous delivery.
-5. Kafka tests are behind `BUILD_KAFKA_TEST` and require a broker. The
-   bootstrap helper now provides a local broker; keep those integration tests
-   separate from deterministic broker-independent tests.
-6. The top-level build currently includes Kafka implementation sources in
-   `dmn`, always discovers/fetches librdkafka, and links it even when Kafka
-   integration tests are disabled. If feature-off builds are intended to omit
-   Kafka and its dependency, split Kafka into a separately gated target (for
-   example, `dmn-kafka`) and define compatibility/install rules for
-   `Dmn_DMesgNet_Kafka`. This is a build/API architecture change and should be
-   planned as a distinct feature; no such target exists today.
+5. Kafka integration tests are behind `BUILD_KAFKA_TEST` and require
+   `ENABLE_DMN_DMESGNET=ON` plus a broker. If requested while the messaging
+   feature is disabled, CMake reports that the tests are skipped. The
+   bootstrap helper provides a local broker; keep integration tests separate
+   from deterministic broker-independent tests.
 
 ## Local integration-test broker
 
-When `BUILD_KAFKA_TEST=ON`, CMake copies
+When both `BUILD_KAFKA_TEST=ON` and `ENABLE_DMN_DMESGNET=ON`, CMake copies
 `scripts/run-bookstrap-dmn.sh` to `build/scripts/` and installs it at
 `<prefix>/scripts/`. Run it from either location to start a local broker and
 create the test topic:

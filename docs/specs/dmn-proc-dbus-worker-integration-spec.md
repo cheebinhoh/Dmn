@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # D-Bus endpoint workers using `Dmn_Proc`
 
 **Status:** Implemented in the D-Bus endpoints without changing `Dmn_Proc`.

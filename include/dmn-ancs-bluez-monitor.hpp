@@ -12,6 +12,43 @@
  * Applications receive owned ANCS events through the configured callback and
  * can present them in a terminal, GTK interface, or another frontend.
  *
+ * Architecture
+ * ------------
+ * The monitor coordinates device/link management and the backend-neutral
+ * ANCS protocol over the BlueZ GATT implementation:
+ *
+ * @verbatim
+ * Application / frontend
+ *          |
+ *          v
+ * Dmn_AncsBluezMonitor            setup orchestration + ANCS lifecycle
+ *       /              \
+ *      v                v
+ * Dmn_BluezClient      Dmn_AncsClient
+ * inventory, pairing,       | uses Dmn_GattClient
+ * connection                v
+ *                    Dmn_BluezGattClient
+ *                    GATT services, notifications, writes
+ *       |                |
+ *       v                v
+ * Dmn_DbusClient      Dmn_DbusClient
+ *       \                /
+ *        libdbus -> system bus -> org.bluez
+ * @endverbatim
+ *
+ * @ref Dmn_BluezClient manages BlueZ adapter/device inventory and explicit
+ * discovery, pairing, and link connection. @ref Dmn_BluezGattClient implements
+ * the backend-neutral GATT interface used by @ref Dmn_AncsClient to discover
+ * ANCS characteristics, subscribe to their device notifications, and write
+ * ANCS requests. The monitor owns and coordinates these components; the ANCS
+ * protocol client itself does not depend on BlueZ. The BlueZ inventory and
+ * GATT clients each use the generic @ref Dmn_DbusClient API and own their
+ * respective D-Bus connection. D-Bus method/property calls and signal
+ * subscriptions are implemented through Dmn's generic D-Bus layer; the
+ * existing byte-signal `Dmn_DbusInput`/`Dmn_DbusOutput` transport is not used
+ * for BlueZ. See `docs/specs/ancs-bluez-client-spec.md` and
+ * `docs/specs/dbus-client-spec.md` for detailed contracts.
+ *
  * The synchronous start operation performs bounded BlueZ and GATT calls.
  * GUI applications must invoke it away from their UI thread and marshal event
  * callbacks onto their UI context. Setup progress is reported synchronously
@@ -35,7 +72,9 @@
 
 namespace dmn {
 
-/** @brief Stage at which reusable monitor startup or cleanup failed. */
+/**
+ * @brief Stage at which reusable monitor startup or cleanup failed.
+ */
 enum class Dmn_AncsMonitorStage {
   InvalidArgument, /**< Invalid selector, timeout, or monitor configuration. */
   NotReady,  /**< The monitor is already active or otherwise unavailable. */
@@ -49,38 +88,60 @@ enum class Dmn_AncsMonitorStage {
   Cleanup      /**< ANCS startup rollback or stop cleanup failed. */
 };
 
-/** @brief Typed monitor orchestration failure with optional BlueZ detail. */
+/**
+ * @brief Typed monitor orchestration failure with optional BlueZ detail.
+ */
 struct Dmn_AncsMonitorError {
-  /** @brief Startup or cleanup stage associated with the failure. */
+  /**
+   * @brief Startup or cleanup stage associated with the failure.
+   */
   Dmn_AncsMonitorStage stage{Dmn_AncsMonitorStage::Inventory};
 
-  /** @brief Human-readable detail without notification payload data. */
+  /**
+   * @brief Human-readable detail without notification payload data.
+   */
   std::string message{};
 
-  /** @brief Remote BlueZ error name when the backend supplied one. */
+  /**
+   * @brief Remote BlueZ error name when the backend supplied one.
+   */
   std::string remote_name{};
 
-  /** @brief ANCS error category for an ANCS startup failure. */
+  /**
+   * @brief ANCS error category for an ANCS startup failure.
+   */
   std::optional<Dmn_AncsErrorKind> ancs_error_kind{};
 };
 
-/** @brief Successful ANCS monitor startup result. */
+/**
+ * @brief Successful ANCS monitor startup result.
+ */
 struct Dmn_AncsMonitorSession {
-  /** @brief Current BlueZ adapter selected for this session. */
+  /**
+   * @brief Current BlueZ adapter selected for this session.
+   */
   Dmn_BluezAdapter adapter;
 
-  /** @brief Current BlueZ device selected for this session. */
+  /**
+   * @brief Current BlueZ device selected for this session.
+   */
   Dmn_BluezDevice device;
 
-  /** @brief Whether startup requested connection of remaining profiles. */
+  /**
+   * @brief Whether startup requested connection of remaining profiles.
+   */
   bool requested_remaining_profiles{};
 };
 
-/** @brief Successful startup result or typed orchestration failure. */
+/**
+ * @brief Successful startup result or typed orchestration failure.
+ */
 using Dmn_AncsMonitorResult =
     std::expected<Dmn_AncsMonitorSession, Dmn_AncsMonitorError>;
 
-/** @brief Setup phase reported by a monitor's optional progress callback. */
+/**
+ * @brief Setup phase reported by a monitor's optional progress callback.
+ */
 enum class Dmn_AncsMonitorProgress {
   Inventory,  /**< Resolving the target in the current BlueZ inventory. */
   Discovery,  /**< Scanning for a target absent from the inventory. */
@@ -89,14 +150,18 @@ enum class Dmn_AncsMonitorProgress {
   AncsStartup /**< Resolving and subscribing to ANCS characteristics. */
 };
 
-/** @brief Callback for synchronous selected-device setup progress. */
+/**
+ * @brief Callback for synchronous selected-device setup progress.
+ */
 using Dmn_AncsMonitorProgressHandler =
     std::function<void(Dmn_AncsMonitorProgress)>;
 
 /** @brief Configuration for selecting, connecting, and monitoring one device.
  */
 struct Dmn_AncsMonitorConfig {
-  /** @brief Optional adapter address or current BlueZ object path. */
+  /**
+   * @brief Optional adapter address or current BlueZ object path.
+   */
   std::optional<std::string> adapter_selector{};
 
   /**
@@ -117,13 +182,19 @@ struct Dmn_AncsMonitorConfig {
    */
   bool request_remaining_profiles_when_connected{};
 
-  /** @brief Maximum time to discover a target not already in inventory. */
+  /**
+   * @brief Maximum time to discover a target not already in inventory.
+   */
   std::chrono::milliseconds discovery_timeout{30000};
 
-  /** @brief Maximum time for pairing the selected device. */
+  /**
+   * @brief Maximum time for pairing the selected device.
+   */
   std::chrono::milliseconds pairing_timeout{120000};
 
-  /** @brief Maximum time for establishing the selected device connection. */
+  /**
+   * @brief Maximum time for establishing the selected device connection.
+   */
   std::chrono::milliseconds connection_timeout{30000};
 
   /**
@@ -173,21 +244,29 @@ public:
    */
   explicit Dmn_AncsBluezMonitor(const Dmn_BluezClientConfig &bluezConfig = {});
 
-  /** @brief Stop ANCS subscriptions and release owned backend resources. */
+  /**
+   * @brief Stop ANCS subscriptions and release owned backend resources.
+   */
   ~Dmn_AncsBluezMonitor() noexcept;
 
   /** @brief Monitors cannot be copied because they own workers and bus state.
    */
   Dmn_AncsBluezMonitor(const Dmn_AncsBluezMonitor &) = delete;
 
-  /** @brief Monitors cannot be copy-assigned. */
+  /**
+   * @brief Monitors cannot be copy-assigned.
+   */
   auto
   operator=(const Dmn_AncsBluezMonitor &) -> Dmn_AncsBluezMonitor & = delete;
 
-  /** @brief Monitors cannot be moved while callbacks retain their state. */
+  /**
+   * @brief Monitors cannot be moved while callbacks retain their state.
+   */
   Dmn_AncsBluezMonitor(Dmn_AncsBluezMonitor &&) = delete;
 
-  /** @brief Monitors cannot be move-assigned. */
+  /**
+   * @brief Monitors cannot be move-assigned.
+   */
   auto operator=(Dmn_AncsBluezMonitor &&) -> Dmn_AncsBluezMonitor & = delete;
 
   /**

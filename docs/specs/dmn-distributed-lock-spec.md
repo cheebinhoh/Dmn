@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Feature Specification: DMN Distributed Range Lock (`Dmn_DLock`)
 
 Status: design target; **not implemented as specified**. The repository has a

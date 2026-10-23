@@ -33,7 +33,9 @@ namespace dmn_test_dbus {
 
 using namespace std::chrono_literals;
 
-/** @brief Close and unref a D-Bus connection owned by a unique pointer. */
+/**
+ * @brief Close and unref a D-Bus connection owned by a unique pointer.
+ */
 struct DbusConnectionDeleter {
   void operator()(DBusConnection *connection) const noexcept {
     if (connection != nullptr) {
@@ -43,7 +45,9 @@ struct DbusConnectionDeleter {
   }
 };
 
-/** @brief Unref a D-Bus message owned by a unique pointer. */
+/**
+ * @brief Unref a D-Bus message owned by a unique pointer.
+ */
 struct DbusMessageDeleter {
   void operator()(DBusMessage *message) const noexcept {
     if (message != nullptr) {
@@ -56,7 +60,9 @@ using DbusConnectionPtr =
     std::unique_ptr<DBusConnection, DbusConnectionDeleter>;
 using DbusMessagePtr = std::unique_ptr<DBusMessage, DbusMessageDeleter>;
 
-/** @brief Initialize and release a libdbus error value with RAII. */
+/**
+ * @brief Initialize and release a libdbus error value with RAII.
+ */
 class DbusErrorGuard {
 public:
   DbusErrorGuard() { dbus_error_init(&m_error); }
@@ -205,10 +211,14 @@ public:
 
   ~PrivateBus() { stop(); }
 
-  /** @brief Return the address printed by this test's isolated bus daemon. */
+  /**
+   * @brief Return the address printed by this test's isolated bus daemon.
+   */
   auto address() const -> const std::string & { return m_address; }
 
-  /** @brief Report whether daemon startup produced a usable address and PID. */
+  /**
+   * @brief Report whether daemon startup produced a usable address and PID.
+   */
   auto valid() const -> bool { return !m_address.empty() && m_pid > 0; }
 
   /**
@@ -233,7 +243,9 @@ public:
     return true;
   }
 
-  /** @brief Stop the owned daemon; safe to call more than once. */
+  /**
+   * @brief Stop the owned daemon; safe to call more than once.
+   */
   void stop() noexcept {
     if (m_pid > 0) {
       kill(m_pid, SIGTERM);
@@ -246,7 +258,9 @@ private:
   pid_t m_pid{-1};
 };
 
-/** @brief Return the default endpoint configuration used by D-Bus tests. */
+/**
+ * @brief Return the default endpoint configuration used by D-Bus tests.
+ */
 inline auto makeConfig() -> dmn::Dmn_DbusConfig { return {}; }
 
 /**

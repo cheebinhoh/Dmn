@@ -34,10 +34,6 @@
 #include "dmn-blockingqueue-mt.hpp"
 #include "dmn-blockingqueue.hpp"
 #include "dmn-debug.hpp"
-#include "dmn-dlock.hpp"
-#include "dmn-dmesg-pb-util.hpp"
-#include "dmn-dmesg.hpp"
-#include "dmn-dmesgnet.hpp"
 #include "dmn-inflight-guard.hpp"
 #include "dmn-interval-btree.hpp"
 #include "dmn-io.hpp"
@@ -53,9 +49,15 @@
 #include "dmn-timer.hpp"
 #include "dmn-util.hpp"
 
+#if defined(DMN_ENABLE_DMN_DMESGNET)
+#include "dmn-dlock.hpp"
+#include "dmn-dmesg-pb-util.hpp"
+#include "dmn-dmesg.hpp"
+#include "dmn-dmesgnet.hpp"
 #include "kafka/dmn-dmesgnet-kafka.hpp"
 #include "kafka/dmn-kafka-util.hpp"
 #include "kafka/dmn-kafka.hpp"
+#endif
 
 #if defined(FIU_ENABLE)
 #include "dmn-fault-injection.hpp"
@@ -66,7 +68,9 @@
 #include "dmn-dbus-config.hpp"
 #include "dmn-dbus-io.hpp"
 #include "dmn-dbus-value.hpp"
+#if defined(DMN_ENABLE_DMN_DMESGNET)
 #include "dmn-dmesgnet-dbus.hpp"
+#endif
 #endif
 
 #if defined(DMN_ENABLE_BLUEZ)

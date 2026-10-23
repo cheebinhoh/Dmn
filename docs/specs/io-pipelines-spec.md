@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # I/O interfaces, pipes, and sockets
 
 **Status:** Current behavior is extracted from `Dmn_Io`, `Dmn_Pipe`, and

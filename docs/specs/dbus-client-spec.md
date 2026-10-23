@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Generic D-Bus Client Capability and BlueZ Extension
 
 **Status:** The generic D-Bus client implementation and its focused private-bus API tests

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Implementation Plan: `Dmn_IntervalBTree` (Template Interval B‑Tree)
 
 ## Current implementation status

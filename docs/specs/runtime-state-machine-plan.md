@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Implementation Plan: Runtime State Manager
 
 ## 1. Goal

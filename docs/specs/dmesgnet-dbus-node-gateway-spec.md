@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Per-Node DMesg Gateway over Local D-Bus
 
 **Status:** Proposed architecture; its local-conflict DMesg handler-event

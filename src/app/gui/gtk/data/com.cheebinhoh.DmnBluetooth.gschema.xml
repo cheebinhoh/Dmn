@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
 <schemalist>
   <schema id="com.cheebinhoh.DmnBluetooth" path="/com/cheebinhoh/dmn-bluetooth/">
     <key name="selected-devices" type="a(ss)">

@@ -1,3 +1,4 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 name: build and run on macOS platform
 
 on:
@@ -38,6 +39,8 @@ jobs:
         run: |
           cmake -B ${{github.workspace}}/build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DDMN_BUILD_TESTS=ON \
+            -DDMN_ALLOW_DEPENDENCY_FETCH=ON \
             -DENABLE_BLUEZ=OFF \
             -DENABLE_DBUS=OFF \
             -DICU_ROOT="$(brew --prefix icu4c)"

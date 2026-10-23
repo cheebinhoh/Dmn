@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # BlueZ Device Inventory and `--discovery` CLI
 
 **Status:** Inventory, adapter-scoped discovery, and explicit selected-device

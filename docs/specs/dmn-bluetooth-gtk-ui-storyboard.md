@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth GTK UI Storyboard
 
 **Status:** Implementation-accurate overview of the current GTK 4/libadwaita

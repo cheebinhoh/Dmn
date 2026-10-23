@@ -35,89 +35,145 @@ struct Dmn_DeviceIdentity {
    */
   auto operator==(const Dmn_DeviceIdentity &other) const -> bool = default;
 
-  /** @brief Bluetooth address of the adapter that owns the device. */
+  /**
+   * @brief Bluetooth address of the adapter that owns the device.
+   */
   std::string m_adapter_address;
 
-  /** @brief Bluetooth address identifying the device on that adapter. */
+  /**
+   * @brief Bluetooth address identifying the device on that adapter.
+   */
   std::string m_device_address;
 };
 
-/** @brief Display and availability state for one known Bluetooth device. */
+/**
+ * @brief Display and availability state for one known Bluetooth device.
+ */
 struct Dmn_DeviceEntry {
-  /** @brief Stable device identity used to reconcile snapshots and settings. */
+  /**
+   * @brief Stable device identity used to reconcile snapshots and settings.
+   */
   Dmn_DeviceIdentity m_identity;
 
-  /** @brief Preferred human-readable name, possibly empty. */
+  /**
+   * @brief Preferred human-readable name, possibly empty.
+   */
   std::string m_display_name;
 
-  /** @brief Pairing state; absent means unknown or unavailable. */
+  /**
+   * @brief Pairing state; absent means unknown or unavailable.
+   */
   std::optional<bool> m_paired;
 
-  /** @brief Connection state; absent means unknown or unavailable. */
+  /**
+   * @brief Connection state; absent means unknown or unavailable.
+   */
   std::optional<bool> m_connected;
 
-  /** @brief Whether the device is present in the latest BlueZ snapshot. */
+  /**
+   * @brief Whether the device is present in the latest BlueZ snapshot.
+   */
   bool m_present{};
 
-  /** @brief Whether BlueZ observed this device during discovery. */
+  /**
+   * @brief Whether BlueZ observed this device during discovery.
+   */
   bool m_seen_during_discovery{};
 };
 
-/** @brief Inputs used to decide which actions a device row may expose. */
+/**
+ * @brief Inputs used to decide which actions a device row may expose.
+ */
 struct Dmn_DeviceActionContext {
-  /** @brief Whether this identity is in the saved selection. */
+  /**
+   * @brief Whether this identity is in the saved selection.
+   */
   bool m_saved{};
 
-  /** @brief Whether the editable draft differs from saved settings. */
+  /**
+   * @brief Whether the editable draft differs from saved settings.
+   */
   bool m_selection_dirty{};
 
-  /** @brief Whether a monitor object is active for this device. */
+  /**
+   * @brief Whether a monitor object is active for this device.
+   */
   bool m_monitor_active{};
 
-  /** @brief Whether this device has saved monitoring intent. */
+  /**
+   * @brief Whether this device has saved monitoring intent.
+   */
   bool m_monitor_requested{};
 
-  /** @brief Whether this device's monitor is starting or stopping. */
+  /**
+   * @brief Whether this device's monitor is starting or stopping.
+   */
   bool m_monitor_busy{};
 
-  /** @brief Whether this device's monitor startup may be canceled. */
+  /**
+   * @brief Whether this device's monitor startup may be canceled.
+   */
   bool m_monitor_start_pending{};
 
-  /** @brief Whether cancellation of this startup was already requested. */
+  /**
+   * @brief Whether cancellation of this startup was already requested.
+   */
   bool m_monitor_cancel_requested{};
 
-  /** @brief Whether this device has a pending connection attempt. */
+  /**
+   * @brief Whether this device has a pending connection attempt.
+   */
   bool m_connection_pending{};
 
-  /** @brief Whether a disconnect is queued for this device. */
+  /**
+   * @brief Whether a disconnect is queued for this device.
+   */
   bool m_disconnect_pending{};
 
-  /** @brief Whether a connect is queued until this device's monitor stops. */
+  /**
+   * @brief Whether a connect is queued until this device's monitor stops.
+   */
   bool m_connect_after_monitor_stop{};
 
-  /** @brief Whether a shared Bluetooth operation is in progress. */
+  /**
+   * @brief Whether a shared Bluetooth operation is in progress.
+   */
   bool m_operation_busy{};
 
-  /** @brief Whether application shutdown has been requested. */
+  /**
+   * @brief Whether application shutdown has been requested.
+   */
   bool m_close_requested{};
 };
 
-/** @brief Availability of the four per-device row actions. */
+/**
+ * @brief Availability of the four per-device row actions.
+ */
 struct Dmn_DeviceActionAvailability {
-  /** @brief Whether the device may be connected. */
+  /**
+   * @brief Whether the device may be connected.
+   */
   bool m_can_connect{};
 
-  /** @brief Whether the device may be disconnected. */
+  /**
+   * @brief Whether the device may be disconnected.
+   */
   bool m_can_disconnect{};
 
-  /** @brief Whether ANCS monitoring may be started. */
+  /**
+   * @brief Whether ANCS monitoring may be started.
+   */
   bool m_can_start_monitoring{};
 
-  /** @brief Whether monitoring intent or pending startup may be stopped. */
+  /**
+   * @brief Whether monitoring intent or pending startup may be stopped.
+   */
   bool m_can_stop_monitoring{};
 };
 
-/** @brief Device property used to order the inventory for display. */
+/**
+ * @brief Device property used to order the inventory for display.
+ */
 enum class Dmn_DeviceSortColumn {
   kName,   /**< Sort by the displayed device name. */
   kStatus, /**< Sort by the displayed connection/pairing status. */
@@ -207,13 +263,19 @@ public:
   [[nodiscard]] auto setDraftSelected(const Dmn_DeviceIdentity &identity,
                                       bool selected) -> bool;
 
-  /** @brief Make the current draft the saved selection. */
+  /**
+   * @brief Make the current draft the saved selection.
+   */
   void saveSelection();
 
-  /** @brief Restore the draft from the saved selection. */
+  /**
+   * @brief Restore the draft from the saved selection.
+   */
   void discardChanges();
 
-  /** @brief Return the current devices in display order. */
+  /**
+   * @brief Return the current devices in display order.
+   */
   [[nodiscard]] auto devices() const -> const std::vector<Dmn_DeviceEntry> &;
 
   /**
@@ -226,21 +288,31 @@ public:
    */
   void sortDevices(Dmn_DeviceSortColumn column, bool ascending);
 
-  /** @brief Return the column currently used to order the inventory. */
+  /**
+   * @brief Return the column currently used to order the inventory.
+   */
   [[nodiscard]] auto sortColumn() const -> Dmn_DeviceSortColumn;
 
-  /** @brief Return whether the current sort is ascending. */
+  /**
+   * @brief Return whether the current sort is ascending.
+   */
   [[nodiscard]] auto sortAscending() const -> bool;
 
-  /** @brief Return the persisted selection. */
+  /**
+   * @brief Return the persisted selection.
+   */
   [[nodiscard]] auto
   savedSelection() const -> const std::vector<Dmn_DeviceIdentity> &;
 
-  /** @brief Return the current editable selection. */
+  /**
+   * @brief Return the current editable selection.
+   */
   [[nodiscard]] auto
   draftSelection() const -> const std::vector<Dmn_DeviceIdentity> &;
 
-  /** @brief Return whether the draft differs from the saved selection. */
+  /**
+   * @brief Return whether the draft differs from the saved selection.
+   */
   [[nodiscard]] auto hasUnsavedChanges() const -> bool;
 
   /**
@@ -251,7 +323,9 @@ public:
    */
   [[nodiscard]] auto canStartMonitoring() const -> bool;
 
-  /** @brief Return the configured maximum selection size. */
+  /**
+   * @brief Return the configured maximum selection size.
+   */
   [[nodiscard]] auto selectionLimit() const -> std::size_t;
 
 private:

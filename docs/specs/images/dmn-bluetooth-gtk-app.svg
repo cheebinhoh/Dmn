@@ -1,3 +1,4 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1480" height="760" viewBox="0 0 1480 760" role="img" aria-labelledby="title desc">
   <title id="title">Dmn Bluetooth current GTK app layout</title>
   <desc id="desc">A maximized wide application window with an even split, Bluetooth adapter and scan controls, sortable device rows with a Selected only filter, and an All devices notification view. The Bluetooth status page shows All devices without device-specific status. Search and event filters compose; hovering a notification shows its full text wrapped to the feed pane.</desc>

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth GUI Design and Specification Index
 
 **Status:** The optional GTK 4/libadwaita application is implemented; release

@@ -19,48 +19,72 @@
 
 namespace dmn::gui {
 
-/** @brief Live state needed to reconcile one device's monitor lifecycle. */
+/**
+ * @brief Live state needed to reconcile one device's monitor lifecycle.
+ */
 struct Dmn_MonitorControllerDeviceState {
-  /** @brief Stable identity for the target device. */
+  /**
+   * @brief Stable identity for the target device.
+   */
   Dmn_DeviceIdentity m_identity;
 
-  /** @brief Whether the identity remains in the saved device selection. */
+  /**
+   * @brief Whether the identity remains in the saved device selection.
+   */
   bool m_saved{};
 
-  /** @brief Whether the user has retained explicit monitoring intent. */
+  /**
+   * @brief Whether the user has retained explicit monitoring intent.
+   */
   bool m_monitoring_requested{};
 
-  /** @brief Whether the device is present in the current BlueZ inventory. */
+  /**
+   * @brief Whether the device is present in the current BlueZ inventory.
+   */
   bool m_present{};
 
-  /** @brief Whether BlueZ currently reports the device as paired. */
+  /**
+   * @brief Whether BlueZ currently reports the device as paired.
+   */
   bool m_paired{};
 
-  /** @brief Whether BlueZ currently confirms the device is connected. */
+  /**
+   * @brief Whether BlueZ currently confirms the device is connected.
+   */
   bool m_connected{};
 
-  /** @brief Whether an ANCS monitor session is active for this device. */
+  /**
+   * @brief Whether an ANCS monitor session is active for this device.
+   */
   bool m_monitor_active{};
 
   /** @brief Whether an active session stopped unexpectedly and needs cleanup.
    */
   bool m_monitor_restart_required{};
 
-  /** @brief Whether a monitor start or stop operation is in progress. */
+  /**
+   * @brief Whether a monitor start or stop operation is in progress.
+   */
   bool m_monitor_busy{};
 };
 
-/** @brief Monitor command selected by lifecycle reconciliation. */
+/**
+ * @brief Monitor command selected by lifecycle reconciliation.
+ */
 struct Dmn_MonitorControllerCommand {
   enum class Action {
     kStart, /**< Start monitoring a connected device with saved intent. */
     kStop,  /**< Stop a monitor that is no longer valid for its device. */
   };
 
-  /** @brief Stable identity for the target device. */
+  /**
+   * @brief Stable identity for the target device.
+   */
   Dmn_DeviceIdentity m_identity;
 
-  /** @brief Start or stop action to execute in the frontend. */
+  /**
+   * @brief Start or stop action to execute in the frontend.
+   */
   Action m_action{Action::kStart};
 };
 
@@ -107,10 +131,14 @@ public:
   recordStartFailure(const Dmn_DeviceIdentity &identity, Clock::time_point now,
                      unsigned int jitterPercent) -> std::chrono::milliseconds;
 
-  /** @brief Clear retry state after a successful monitor start. */
+  /**
+   * @brief Clear retry state after a successful monitor start.
+   */
   void recordStartSuccess(const Dmn_DeviceIdentity &identity);
 
-  /** @brief Clear retry state after an explicit intent change. */
+  /**
+   * @brief Clear retry state after an explicit intent change.
+   */
   void resetRetries(const Dmn_DeviceIdentity &identity);
 
 private:

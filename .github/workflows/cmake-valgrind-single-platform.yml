@@ -1,3 +1,4 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 name: build and run with Valgrind on linux platform
 
 on:

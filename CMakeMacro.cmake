@@ -34,11 +34,14 @@ macro(ADD_TEST_EXECUTABLE ...)
 
     target_link_libraries(${arg}
                             PRIVATE
-                            gtest_main
-                            gtest
+                            ${DMN_GTEST_MAIN_TARGET}
+                            ${DMN_GTEST_TARGET}
                             dmn
-                            protobuf::libprotobuf
     )
+
+    if (ENABLE_DMN_DMESGNET)
+      target_link_libraries(${arg} PRIVATE protobuf::libprotobuf)
+    endif()
 
     add_test(NAME ${arg} COMMAND ${arg})
     set_tests_properties(${arg} PROPERTIES LABELS "${ARGV0}")
@@ -94,10 +97,13 @@ function(ADD_TEST_FAULT_INJECTION_EXECUTABLE test_program)
 
   target_link_libraries(${test_program}
                           PRIVATE
-                          gtest
+                          ${DMN_GTEST_TARGET}
                           dmn
-                          protobuf::libprotobuf
   )
+
+  if (ENABLE_DMN_DMESGNET)
+    target_link_libraries(${test_program} PRIVATE protobuf::libprotobuf)
+  endif()
 
   if (TARGET libfiu-tools)
     add_dependencies(${test_program} libfiu-tools)
@@ -106,6 +112,7 @@ function(ADD_TEST_FAULT_INJECTION_EXECUTABLE test_program)
   add_dependencies(fault-injection-tests ${test_program})
 
   set(fiu_run_args)
+
   foreach (failure_point IN LISTS ARGN)
     list(APPEND fiu_run_args -c "enable name=${failure_point}")
   endforeach()

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Codebase Constitution
 
 This document records the repository's coding, layout, and documentation

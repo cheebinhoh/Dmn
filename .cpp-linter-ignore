@@ -1,3 +1,4 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 # Ignore the entire build directory
 build/**
 # Or be more specific to FetchContent dependencies

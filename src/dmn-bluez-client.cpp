@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dmn {
+
 namespace {
 
 constexpr std::string_view kBluez{"org.bluez"};
@@ -186,6 +187,7 @@ public:
     }
 
     m_dbus.shutdown();
+
     {
       std::lock_guard lock{m_event_mutex};
 
@@ -357,6 +359,7 @@ public:
             auto parsedDevice = parseDevice(path, *device);
             const auto prior =
                 previousDevices.find(deviceIdentity(parsedDevice));
+
             if (prior != previousDevices.end()) {
               parsedDevice.seen_during_discovery =
                   prior->second.seen_during_discovery;
@@ -399,14 +402,12 @@ public:
       } else {
         m_available = true;
 
-        for (const auto &[path, adapter] : m_adapters) {
-          (void)path;
-          adapters.push_back(adapter);
+        for (const auto &entry : m_adapters) {
+          adapters.push_back(entry.second);
         }
 
-        for (const auto &[identity, device] : m_devices) {
-          (void)identity;
-          devices.push_back(device);
+        for (const auto &entry : m_devices) {
+          devices.push_back(entry.second);
         }
       }
     }
@@ -442,9 +443,8 @@ public:
     std::vector<Dmn_BluezDevice> result;
     result.reserve(m_devices.size());
 
-    for (const auto &[identity, device] : m_devices) {
-      (void)identity;
-      result.push_back(device);
+    for (const auto &entry : m_devices) {
+      result.push_back(entry.second);
     }
 
     std::sort(result.begin(), result.end(),
@@ -478,8 +478,8 @@ public:
       const auto targetAddress = normalizedAddress(deviceSelector);
       std::vector<const Dmn_BluezDevice *> matches;
 
-      for (const auto &[identity, device] : m_devices) {
-        (void)identity;
+      for (const auto &entry : m_devices) {
+        const auto &device = entry.second;
         const bool matchesSelector =
             isObjectPath ? device.object_path == deviceSelector
                          : normalizedAddress(device.address) == targetAddress;
@@ -497,7 +497,7 @@ public:
           continue;
         }
 
-        matches.push_back(&device);
+        matches.push_back(&entry.second);
       }
 
       if (matches.empty()) {
@@ -522,6 +522,7 @@ public:
       } else if (action != DeviceAction::ConnectProfiles &&
                  action != DeviceAction::CancelConnection) {
         const bool requestedConnected = action == DeviceAction::Connect;
+
         alreadyInRequestedState =
             device.connected && *device.connected == requestedConnected;
       }
@@ -547,6 +548,7 @@ public:
           error.remote_name == "org.bluez.Error.InProgress" ||
           (error.remote_name == "org.bluez.Error.Failed" &&
            error.message == "Operation already in progress");
+
       if (action == DeviceAction::ConnectProfiles &&
           (error.remote_name == "org.bluez.Error.AlreadyConnected" ||
            connectRequestAlreadyActive)) {
@@ -608,8 +610,8 @@ public:
       m_discovery_starting = true;
       m_discovery_adapter = adapterPath;
 
-      for (auto &[identity, device] : m_devices) {
-        (void)identity;
+      for (auto &entry : m_devices) {
+        auto &device = entry.second;
 
         if (device.adapter_path == adapterPath) {
           device.seen_during_discovery = false;
@@ -624,8 +626,9 @@ public:
 
       m_discovery_starting = false;
       m_discovery_adapter.clear();
-      for (auto &[identity, device] : m_devices) {
-        (void)identity;
+
+      for (auto &entry : m_devices) {
+        auto &device = entry.second;
 
         if (device.adapter_path == adapterPath) {
           device.seen_during_discovery = false;
@@ -700,6 +703,7 @@ private:
   parseAdapter(const std::string &path,
                const Dmn_DbusValue &properties) -> Dmn_BluezAdapter {
     Dmn_BluezAdapter adapter;
+
     adapter.object_path = path;
     adapter.address = stringProperty(properties, "Address").value_or("");
     adapter.alias = stringProperty(properties, "Alias");
@@ -714,6 +718,7 @@ private:
   static auto parseDevice(const std::string &path,
                           const Dmn_DbusValue &properties) -> Dmn_BluezDevice {
     Dmn_BluezDevice device;
+
     device.object_path = path;
     device.adapter_path = adapterForDevicePath(path);
     device.address = stringProperty(properties, "Address").value_or("");
@@ -846,6 +851,7 @@ private:
         m_adapters.clear();
         m_devices.clear();
         m_device_paths.clear();
+
         if (m_loading) {
           m_staged_signals.clear();
           m_stage_overflow = true;
@@ -865,6 +871,7 @@ private:
           m_adapters.clear();
           m_devices.clear();
           m_device_paths.clear();
+
           events.push_back(
               {Dmn_BluezEventKind::Error,
                {},
@@ -905,6 +912,7 @@ private:
 
         const auto oldOwner = arguments[1].asString();
         const auto newOwner = arguments[2].asString();
+
         if (!oldOwner.empty()) {
           m_available = false;
           m_adapters.clear();

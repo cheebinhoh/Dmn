@@ -564,8 +564,8 @@ public:
 
       std::vector<Dmn_GattService> result;
       result.reserve(services.size());
-      for (auto &[path, service] : services) {
-        (void)path;
+      for (auto &entry : services) {
+        auto &service = entry.second;
         std::sort(service.characteristics.begin(),
                   service.characteristics.end(),
                   [](const auto &left, const auto &right) {

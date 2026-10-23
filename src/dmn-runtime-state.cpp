@@ -393,9 +393,8 @@ void Dmn_Runtime_State_Manager::shutdown() {
     m_shutdown = true;
     pendingStates.reserve(m_pendingStates.size());
 
-    for (const auto &[state, handle] : m_pendingStates) {
-      (void)state;
-      pendingStates.emplace_back(handle);
+    for (const auto &entry : m_pendingStates) {
+      pendingStates.emplace_back(entry.second);
     }
   }
 

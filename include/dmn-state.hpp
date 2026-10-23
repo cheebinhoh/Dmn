@@ -180,7 +180,9 @@ public:
     return hasStateFncs() && !m_finalized;
   }
 
-  /** @brief Return the logical complement of operator bool(). */
+  /**
+   * @brief Return the logical complement of operator bool().
+   */
   bool operator!() const noexcept { return !static_cast<bool>(*this); }
 
 protected:

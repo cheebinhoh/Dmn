@@ -34,45 +34,65 @@ namespace dmn {
  */
 class Dmn_DbusValue final {
 public:
-  /** @brief Owned storage for a D-Bus byte array (`ay`). */
+  /**
+   * @brief Owned storage for a D-Bus byte array (`ay`).
+   */
   using ByteArray = std::vector<std::uint8_t>;
 
   struct ObjectPath {
-    /** @brief The validated D-Bus object-path text. */
+    /**
+     * @brief The validated D-Bus object-path text.
+     */
     std::string value;
   };
 
   struct SignatureValue {
-    /** @brief The D-Bus type-signature text. */
+    /**
+     * @brief The D-Bus type-signature text.
+     */
     std::string value;
   };
 
   struct ArrayData {
-    /** @brief Signature of each element, retained for empty arrays. */
+    /**
+     * @brief Signature of each element, retained for empty arrays.
+     */
     std::string element_signature;
 
-    /** @brief Array elements in their original order. */
+    /**
+     * @brief Array elements in their original order.
+     */
     std::vector<Dmn_DbusValue> values;
   };
 
   struct DictionaryData {
-    /** @brief Signature of each dictionary key. */
+    /**
+     * @brief Signature of each dictionary key.
+     */
     std::string key_signature;
 
-    /** @brief Signature of each dictionary value. */
+    /**
+     * @brief Signature of each dictionary value.
+     */
     std::string value_signature;
 
-    /** @brief Key/value entries in their original order. */
+    /**
+     * @brief Key/value entries in their original order.
+     */
     std::vector<std::pair<Dmn_DbusValue, Dmn_DbusValue>> entries;
   };
 
   struct StructData {
-    /** @brief Structure fields in their original order. */
+    /**
+     * @brief Structure fields in their original order.
+     */
     std::vector<Dmn_DbusValue> fields;
   };
 
   struct VariantData {
-    /** @brief The one value wrapped by this D-Bus variant. */
+    /**
+     * @brief The one value wrapped by this D-Bus variant.
+     */
     std::shared_ptr<const Dmn_DbusValue> value;
   };
 
@@ -83,55 +103,89 @@ public:
       std::shared_ptr<const ArrayData>, std::shared_ptr<const DictionaryData>,
       std::shared_ptr<const StructData>, std::shared_ptr<const VariantData>>;
 
-  /** @brief Construct an empty sentinel; it is not a wire-encodable value. */
+  /**
+   * @brief Construct an empty sentinel; it is not a wire-encodable value.
+   */
   Dmn_DbusValue() = default;
 
-  /** @brief Copy a value; immutable container storage may be shared. */
+  /**
+   * @brief Copy a value; immutable container storage may be shared.
+   */
   Dmn_DbusValue(const Dmn_DbusValue &) = default;
 
-  /** @brief Copy-assign a value; immutable container storage may be shared. */
+  /**
+   * @brief Copy-assign a value; immutable container storage may be shared.
+   */
   auto operator=(const Dmn_DbusValue &) -> Dmn_DbusValue & = default;
 
-  /** @brief Move a value and its owned storage. */
+  /**
+   * @brief Move a value and its owned storage.
+   */
   Dmn_DbusValue(Dmn_DbusValue &&) noexcept = default;
 
-  /** @brief Move-assign a value and its owned storage. */
+  /**
+   * @brief Move-assign a value and its owned storage.
+   */
   auto operator=(Dmn_DbusValue &&) noexcept -> Dmn_DbusValue & = default;
 
-  /** @brief Destroy the value and release its owned/shared storage. */
+  /**
+   * @brief Destroy the value and release its owned/shared storage.
+   */
   ~Dmn_DbusValue() = default;
 
-  /** @brief Construct a D-Bus boolean value. */
+  /**
+   * @brief Construct a D-Bus boolean value.
+   */
   Dmn_DbusValue(bool value);
 
-  /** @brief Construct a signed 16-bit D-Bus integer. */
+  /**
+   * @brief Construct a signed 16-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::int16_t value);
 
-  /** @brief Construct an unsigned 16-bit D-Bus integer. */
+  /**
+   * @brief Construct an unsigned 16-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::uint16_t value);
 
-  /** @brief Construct a signed 32-bit D-Bus integer. */
+  /**
+   * @brief Construct a signed 32-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::int32_t value);
 
-  /** @brief Construct an unsigned 32-bit D-Bus integer. */
+  /**
+   * @brief Construct an unsigned 32-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::uint32_t value);
 
-  /** @brief Construct a signed 64-bit D-Bus integer. */
+  /**
+   * @brief Construct a signed 64-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::int64_t value);
 
-  /** @brief Construct an unsigned 64-bit D-Bus integer. */
+  /**
+   * @brief Construct an unsigned 64-bit D-Bus integer.
+   */
   Dmn_DbusValue(std::uint64_t value);
 
-  /** @brief Construct a D-Bus double value. */
+  /**
+   * @brief Construct a D-Bus double value.
+   */
   Dmn_DbusValue(double value);
 
-  /** @brief Construct a D-Bus byte value. */
+  /**
+   * @brief Construct a D-Bus byte value.
+   */
   Dmn_DbusValue(std::uint8_t value);
 
-  /** @brief Construct an owned D-Bus string value. */
+  /**
+   * @brief Construct an owned D-Bus string value.
+   */
   Dmn_DbusValue(std::string value);
 
-  /** @brief Construct an owned D-Bus string value from a C string. */
+  /**
+   * @brief Construct an owned D-Bus string value from a C string.
+   */
   Dmn_DbusValue(const char *value);
 
   /**
@@ -199,7 +253,9 @@ public:
    */
   [[nodiscard]] static auto variant(Dmn_DbusValue value) -> Dmn_DbusValue;
 
-  /** @brief Return this value's complete D-Bus wire signature. */
+  /**
+   * @brief Return this value's complete D-Bus wire signature.
+   */
   [[nodiscard]] auto signature() const -> std::string;
 
   /**
@@ -208,50 +264,79 @@ public:
    */
   [[nodiscard]] auto asBool() const -> bool;
 
-  /** @brief Read a signed 16-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read a signed 16-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asInt16() const -> std::int16_t;
 
-  /** @brief Read an unsigned 16-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read an unsigned 16-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asUint16() const -> std::uint16_t;
 
-  /** @brief Read a signed 32-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read a signed 32-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asInt32() const -> std::int32_t;
 
-  /** @brief Read an unsigned 32-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read an unsigned 32-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asUint32() const -> std::uint32_t;
 
-  /** @brief Read a signed 64-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read a signed 64-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asInt64() const -> std::int64_t;
 
-  /** @brief Read an unsigned 64-bit value; throws on a type mismatch. */
+  /**
+   * @brief Read an unsigned 64-bit value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asUint64() const -> std::uint64_t;
 
-  /** @brief Read a double value; throws on a type mismatch. */
+  /**
+   * @brief Read a double value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asDouble() const -> double;
 
-  /** @brief Read a byte value; throws on a type mismatch. */
+  /**
+   * @brief Read a byte value; throws on a type mismatch.
+   */
   [[nodiscard]] auto asByte() const -> std::uint8_t;
 
-  /** @brief Read a string by reference; throws on a type mismatch. */
+  /**
+   * @brief Read a string by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asString() const -> const std::string &;
 
-  /** @brief Read object-path text by reference; throws on a type mismatch. */
+  /**
+   * @brief Read object-path text by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asObjectPath() const -> const std::string &;
 
-  /** @brief Read signature text by reference; throws on a type mismatch. */
+  /**
+   * @brief Read signature text by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asSignatureValue() const -> const std::string &;
 
-  /** @brief Read bytes by reference; throws on a type mismatch. */
+  /**
+   * @brief Read bytes by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asByteArray() const -> const ByteArray &;
 
-  /** @brief Read array contents by reference; throws on a type mismatch. */
+  /**
+   * @brief Read array contents by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asArray() const -> const ArrayData &;
 
-  /** @brief Read dictionary contents by reference; throws on a type mismatch.
+  /**
+   * @brief Read dictionary contents by reference; throws on a type mismatch.
    */
   [[nodiscard]] auto asDictionary() const -> const DictionaryData &;
 
-  /** @brief Read structure fields by reference; throws on a type mismatch. */
+  /**
+   * @brief Read structure fields by reference; throws on a type mismatch.
+   */
   [[nodiscard]] auto asStruct() const -> const StructData &;
 
   /**

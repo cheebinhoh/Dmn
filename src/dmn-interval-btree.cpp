@@ -1,4 +1,5 @@
 /**
+ * Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
  * @file dmn-interval-btree.cpp
  * @brief Provides a template-based B-tree for indexing inclusive intervals
  * and querying overlapping entries.

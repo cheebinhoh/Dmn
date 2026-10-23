@@ -3,42 +3,55 @@
 # build the dmn library
 message(STATUS "build dmn...")
 add_library(dmn
-              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-interval-btree.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-proc.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime-state.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-runtime.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-socket.cpp
               ${CMAKE_CURRENT_SOURCE_DIR}/dmn-state.cpp
-
-              # kafka
-              ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-dmesgnet-kafka.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka-util.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka.cpp
-
-              # proto c++ sources
-              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.cc
-              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.cc
-              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.cc
-              ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.cc
 )
 
-GENERATE_PROTOBUF(dmn
-                    dmn-dlock.proto
-                    dmn-dmesg-body.proto
-                    dmn-dmesg-type.proto
-                    dmn-dmesg.proto
-)
+if (ENABLE_DMN_DMESGNET)
+  target_sources(dmn
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesg.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet.cpp
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.cc
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.cc
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.cc
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.cc
+  )
+
+  GENERATE_PROTOBUF(dmn
+                      dmn-dlock.proto
+                      dmn-dmesg-body.proto
+                      dmn-dmesg-type.proto
+                      dmn-dmesg.proto
+  )
+endif()
+
+if (ENABLE_DMN_DMESGNET)
+  target_sources(dmn
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-dmesgnet-kafka.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka-util.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/kafka/dmn-kafka.cpp
+  )
+  target_compile_definitions(dmn PUBLIC DMN_ENABLE_DMN_DMESGNET=1)
+  if (TARGET ${DMN_RDKAFKA_TARGET} AND
+      DMN_RDKAFKA_TARGET STREQUAL "rdkafka")
+    add_dependencies(dmn rdkafka)
+  endif()
+endif()
 
 target_include_directories(dmn PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(dmn INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+if (ENABLE_DMN_DMESGNET)
+  target_include_directories(dmn INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 target_include_directories(dmn INTERFACE ${PROJECT_SOURCE_DIR})
 target_compile_options(dmn PRIVATE -Wall -Wextra -Wpedantic)
 
 set_target_properties(dmn PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-add_dependencies(dmn rdkafka)
 
 # The GATT API is a backend-neutral contract shared by ANCS and BlueZ.
 add_library(dmn-gatt INTERFACE)
@@ -70,8 +83,11 @@ if (ENABLE_ANCS)
 
   install(TARGETS dmn-ancs
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -83,10 +99,6 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue-mt.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-blockingqueue.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-debug.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dlock.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
-                 ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-inflight-guard.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-interval-btree.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-io.hpp
@@ -102,18 +114,27 @@ target_sources(dmn
                  ${PROJECT_SOURCE_DIR}/include/dmn-timer.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn-util.hpp
                  ${PROJECT_SOURCE_DIR}/include/dmn.hpp
-
-                 # kafka
-                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
-                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka-util.hpp
-                 ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
-
-                 # proto c++ sources
-                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.h
-                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
-                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
-                 ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
 )
+
+if (ENABLE_DMN_DMESGNET)
+  target_sources(dmn
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dlock.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dmesg-pb-util.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dmesg.hpp
+                   ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet.hpp
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dlock.pb.h
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-body.pb.h
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg-type.pb.h
+                   ${CMAKE_CURRENT_BINARY_DIR}/proto/dmn-dmesg.pb.h
+  )
+  target_sources(dmn
+                   INTERFACE
+                   ${PROJECT_SOURCE_DIR}/include/kafka/dmn-dmesgnet-kafka.hpp
+                   ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka-util.hpp
+                   ${PROJECT_SOURCE_DIR}/include/kafka/dmn-kafka.hpp
+  )
+endif()
 
 if (ENABLE_FAULT_INJECTION)
   target_sources(dmn
@@ -124,16 +145,26 @@ endif()
 
 target_include_directories(dmn
                              INTERFACE
-                             ${protobuf_SOURCE_DIR}/src
-                             ${absl_SOURCE_DIR}
                              ${CMAKE_CURRENT_SOURCE_DIR}
-                             ${rdkafka_INCLUDE}
 )
 
-target_include_directories(dmn
-                             PRIVATE
-                             ${rdkafka_INCLUDE}
-)
+if (ENABLE_DMN_DMESGNET AND DEFINED protobuf_SOURCE_DIR)
+  target_include_directories(dmn
+                               INTERFACE "${protobuf_SOURCE_DIR}/src"
+  )
+endif()
+
+if (DEFINED absl_SOURCE_DIR)
+  target_include_directories(dmn
+                               INTERFACE "${absl_SOURCE_DIR}"
+  )
+endif()
+
+if (ENABLE_DMN_DMESGNET AND DMN_RDKAFKA_INCLUDE_DIR)
+  target_include_directories(dmn
+                               PUBLIC "${DMN_RDKAFKA_INCLUDE_DIR}"
+  )
+endif()
 
 if(ENABLE_FAULT_INJECTION)
   # Expose libfiu's enabled failure-point API to Dmn and its test executables.
@@ -148,21 +179,13 @@ if(ENABLE_FAULT_INJECTION)
   endif()
 endif()
 
-if(NOT APPLE)
-  target_link_libraries(dmn
-                          PUBLIC
-                          ICU::uc
-                          protobuf::libprotobuf
-                          ${rdkafka_LIB}
-                          atomic
-  )
-else()
-  target_link_libraries(dmn
-                          PUBLIC
-                          ICU::uc
-                          protobuf::libprotobuf
-                          ${rdkafka_LIB}
-  )
+target_link_libraries(dmn PUBLIC ICU::uc)
+if (ENABLE_DMN_DMESGNET)
+  target_link_libraries(dmn PUBLIC protobuf::libprotobuf)
+  target_link_libraries(dmn PUBLIC ${DMN_RDKAFKA_TARGET})
+endif()
+if (NOT APPLE)
+  target_link_libraries(dmn PUBLIC atomic)
 endif()
 
 if (ENABLE_DBUS)
@@ -171,8 +194,16 @@ if (ENABLE_DBUS)
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-io.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-runtime.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dbus-value.cpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet-dbus.cpp
   )
+
+  if (ENABLE_DMN_DMESGNET)
+    target_sources(dmn-dbus
+                     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dmn-dmesgnet-dbus.cpp
+    )
+    target_sources(dmn-dbus
+                     INTERFACE ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet-dbus.hpp
+    )
+  endif()
 
   target_include_directories(dmn-dbus
                                PUBLIC ${PROJECT_SOURCE_DIR}/include
@@ -185,7 +216,6 @@ if (ENABLE_DBUS)
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-config.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-io.hpp
                    ${PROJECT_SOURCE_DIR}/include/dmn-dbus-value.hpp
-                   ${PROJECT_SOURCE_DIR}/include/dmn-dmesgnet-dbus.hpp
   )
 
   # Internal implementation header shared only by this target's .cpp files.
@@ -204,8 +234,11 @@ if (ENABLE_DBUS)
 
   install(TARGETS dmn-dbus
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -232,8 +265,11 @@ if (ENABLE_BLUEZ)
 
   install(TARGETS dmn-bluez
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -261,8 +297,11 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
 
   install(TARGETS dmn-ancs-bluez-monitor
             ARCHIVE DESTINATION lib/dmn
+            COMPONENT Development
             LIBRARY DESTINATION lib/dmn
+            COMPONENT Runtime
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 endif()
 
@@ -270,8 +309,11 @@ endif()
 install(TARGETS dmn
           #   EXPORT mylibTargets
           ARCHIVE DESTINATION lib/dmn
+          COMPONENT Development
           LIBRARY DESTINATION lib/dmn
+          COMPONENT Runtime
           RUNTIME DESTINATION bin
+          COMPONENT Runtime
           INCLUDES DESTINATION include/dmn
 )
 
@@ -281,6 +323,17 @@ set(DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS)
 list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
        PATTERN "dmn-dbus-runtime.hpp" EXCLUDE
 )
+
+if (NOT ENABLE_DMN_DMESGNET)
+  list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
+         PATTERN "dmn-dlock.hpp" EXCLUDE
+         PATTERN "dmn-dmesg-pb-util.hpp" EXCLUDE
+         PATTERN "dmn-dmesg.hpp" EXCLUDE
+         PATTERN "dmn-dmesgnet.hpp" EXCLUDE
+         PATTERN "dmn-dmesgnet-dbus.hpp" EXCLUDE
+         PATTERN "kafka" EXCLUDE
+  )
+endif()
 
 if (NOT ENABLE_ANCS)
   list(APPEND DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS
@@ -321,6 +374,7 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
           DESTINATION include/dmn
+          COMPONENT Development
           ${DMN_EXCLUDED_PUBLIC_HEADER_PATTERNS}
 )
 

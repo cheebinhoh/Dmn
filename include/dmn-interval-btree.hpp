@@ -87,10 +87,14 @@ template <class T> struct Dmn_IntervalBTreeTestAccess;
  * adjacent but non-overlapping ranges remain distinct.
  */
 struct Dmn_IntervalRange {
-  /** @brief Inclusive lower endpoint of the range. */
+  /**
+   * @brief Inclusive lower endpoint of the range.
+   */
   std::int64_t m_start{};
 
-  /** @brief Inclusive upper endpoint of the range. */
+  /**
+   * @brief Inclusive upper endpoint of the range.
+   */
   std::int64_t m_end{};
 
   /**
@@ -137,13 +141,19 @@ enum class Dmn_OverlayTopology {
  * @tparam T Payload type stored with each interval.
  */
 template <class T> struct Dmn_TopologyResult {
-  /** @brief Geometric classification of the candidate interval. */
+  /**
+   * @brief Geometric classification of the candidate interval.
+   */
   Dmn_OverlayTopology m_status{Dmn_OverlayTopology::Clear};
 
-  /** @brief Whether the candidate is top-ranked among its overlaps. */
+  /**
+   * @brief Whether the candidate is top-ranked among its overlaps.
+   */
   bool m_isTop{true};
 
-  /** @brief Canonically ordered copies of all overlapping range/value pairs. */
+  /**
+   * @brief Canonically ordered copies of all overlapping range/value pairs.
+   */
   std::vector<std::pair<Dmn_IntervalRange, T>> m_overlappingEntries;
 };
 
@@ -152,10 +162,14 @@ template <class T> struct Dmn_TopologyResult {
  * @brief Topology and priority state recorded for a stored entry.
  */
 struct Dmn_OverlayState {
-  /** @brief Current geometric relationship to overlapping entries. */
+  /**
+   * @brief Current geometric relationship to overlapping entries.
+   */
   Dmn_OverlayTopology m_topology{Dmn_OverlayTopology::Clear};
 
-  /** @brief True when no overlapping entry has strictly higher priority. */
+  /**
+   * @brief True when no overlapping entry has strictly higher priority.
+   */
   bool m_isTop{true};
 };
 
@@ -204,16 +218,24 @@ using state_change_callback =
  */
 template <class T> class Dmn_IntervalBTree final {
 public:
-  /** @brief Payload type associated with each range. */
+  /**
+   * @brief Payload type associated with each range.
+   */
   using value_type = T;
 
-  /** @brief Inclusive signed 64-bit interval key type. */
+  /**
+   * @brief Inclusive signed 64-bit interval key type.
+   */
   using range_type = Dmn_IntervalRange;
 
-  /** @brief Ordering callback used only for payloads of identical ranges. */
+  /**
+   * @brief Ordering callback used only for payloads of identical ranges.
+   */
   using duplicate_order_evaluator = dmn::duplicate_order_evaluator<value_type>;
 
-  /** @brief Strict weak ordering over ranges, independent of payload values. */
+  /**
+   * @brief Strict weak ordering over ranges, independent of payload values.
+   */
   using canonical_comparator =
       std::function<bool(const range_type &, const range_type &)>;
 
@@ -222,10 +244,14 @@ public:
   using priority_evaluator =
       std::function<bool(const value_type &, const value_type &)>;
 
-  /** @brief Callback for changes to an existing entry's overlay state. */
+  /**
+   * @brief Callback for changes to an existing entry's overlay state.
+   */
   using state_change_callback = dmn::state_change_callback<value_type>;
 
-  /** @brief Predicate for selecting an exact-range entry by its payload. */
+  /**
+   * @brief Predicate for selecting an exact-range entry by its payload.
+   */
   using entry_matcher = dmn::entry_matcher<value_type>;
 
   /** @brief Callback receiving matching ranges and payloads by const reference.
@@ -233,10 +259,14 @@ public:
   using overlap_visitor =
       std::function<void(const range_type &, const value_type &)>;
 
-  /** @brief Opaque identifier returned when registering a state callback. */
+  /**
+   * @brief Opaque identifier returned when registering a state callback.
+   */
   using callback_registration_id = std::uint64_t;
 
-  /** @brief Shared client context retained by a callback registration. */
+  /**
+   * @brief Shared client context retained by a callback registration.
+   */
   using callback_context = std::shared_ptr<void>;
 
   /** @brief Registered callback receiving context, payload, and old/new state.
@@ -245,7 +275,9 @@ public:
       std::function<void(const callback_context &, const value_type &,
                          const Dmn_OverlayState &, const Dmn_OverlayState &)>;
 
-  /** @brief Construct an empty tree using the default range ordering. */
+  /**
+   * @brief Construct an empty tree using the default range ordering.
+   */
   Dmn_IntervalBTree() noexcept = default;
 
   /**
@@ -272,16 +304,24 @@ public:
       : m_canonicalComparator(std::move(comparator)),
         m_priorityEvaluator(std::move(priorityEvaluator)) {}
 
-  /** @brief Copying a tree is disabled because it uniquely owns its nodes. */
+  /**
+   * @brief Copying a tree is disabled because it uniquely owns its nodes.
+   */
   Dmn_IntervalBTree(const Dmn_IntervalBTree &) = delete;
 
-  /** @brief Copy assignment is disabled. */
+  /**
+   * @brief Copy assignment is disabled.
+   */
   Dmn_IntervalBTree &operator=(const Dmn_IntervalBTree &) = delete;
 
-  /** @brief Moving a tree is disabled. */
+  /**
+   * @brief Moving a tree is disabled.
+   */
   Dmn_IntervalBTree(Dmn_IntervalBTree &&) = delete;
 
-  /** @brief Move assignment is disabled. */
+  /**
+   * @brief Move assignment is disabled.
+   */
   Dmn_IntervalBTree &operator=(Dmn_IntervalBTree &&) = delete;
 
   /** @brief Destroy the tree and release all uniquely owned nodes and entries.
@@ -404,10 +444,14 @@ public:
    */
   void clear();
 
-  /** @brief Return whether the tree contains no entries. */
+  /**
+   * @brief Return whether the tree contains no entries.
+   */
   bool empty() const noexcept;
 
-  /** @brief Return the number of stored entries, including duplicate ranges. */
+  /**
+   * @brief Return the number of stored entries, including duplicate ranges.
+   */
   std::size_t size() const noexcept;
 
   /**

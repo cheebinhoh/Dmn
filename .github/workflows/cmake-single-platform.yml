@@ -1,3 +1,4 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 name: build and run on linux platform
 
 on:
@@ -34,3 +35,62 @@ jobs:
       - name: Run container tests
         run: docker run --rm dmn
 
+  gtk-build-test-components:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GTK and test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            appstream \
+            dbus-daemon \
+            desktop-file-utils \
+            libdbus-1-dev \
+            libadwaita-1-dev \
+            libgtk-4-dev \
+            libicu-dev
+
+      - name: Configure GTK application and development tests
+        run: |
+          cmake -S . -B build-gtk \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/app \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DDMN_BUILD_TESTS=ON \
+            -DDMN_ALLOW_DEPENDENCY_FETCH=ON \
+            -DENABLE_APP_BLUEZ_DISCOVERY=OFF \
+            -DENABLE_APP_BLUETOOTH=OFF \
+            -DENABLE_APP_BLUETOOTH_GTK=ON
+
+      - name: Build all configured targets
+        run: cmake --build build-gtk --parallel 2
+
+      - name: Run all configured tests
+        run: ctest --test-dir build-gtk --output-on-failure
+
+      - name: Verify Runtime and Development install components
+        run: |
+          runtime_stage="${RUNNER_TEMP}/dmn-runtime"
+          development_stage="${RUNNER_TEMP}/dmn-development"
+          mkdir -p "$runtime_stage" "$development_stage"
+
+          DESTDIR="$runtime_stage" \
+            cmake --install build-gtk --component Runtime
+          DESTDIR="$development_stage" \
+            cmake --install build-gtk --component Development
+
+          test -x "$runtime_stage/app/bin/dmn-bluetooth-gtk"
+          test -f "$runtime_stage/app/share/applications/com.cheebinhoh.dmn-bluetooth.desktop"
+          test -d "$development_stage/app/include/dmn"
+          find "$development_stage/app/lib/dmn" -type f -name '*.a' \
+            -print -quit | grep -q .
+
+          if find "$runtime_stage/app" -type f \
+            \( -name '*.a' -o -path '*/include/*' \) -print -quit | grep -q .; then
+            echo "Development headers or static libraries leaked into Runtime" >&2
+            exit 1
+          fi

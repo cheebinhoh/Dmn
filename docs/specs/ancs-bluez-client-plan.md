@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Implementation Plan: Layered ANCS Client for Linux
 
 **Status:** Phase 0 inventory/discovery and Phase 1A pairing plus Phase 1B

@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Local DMesg Clients over D-Bus: Handler and Conflict Contract
 
 **Status:** Phase 1 (the DMesg handler-event observer) is implemented. The

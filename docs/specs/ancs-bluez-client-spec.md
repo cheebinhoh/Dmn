@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # iPhone Notifications on Linux with ANCS and BlueZ
 
 **Status:** Phase 0 inventory/discovery, Phase 1A pairing, and Phase 1B

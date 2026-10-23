@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Dmn Bluetooth GTK Application and Desktop Alerts Specification
 
 **Status:** Implemented feature scope with release qualification outstanding.
@@ -169,8 +171,90 @@ payload and retain its runtime dependencies; do not manually copy only the
 binary. The built app links to the host's GTK 4, libadwaita, GLib/GIO, D-Bus,
 and other system runtime libraries. Dmn's application-specific C++ libraries
 are linked into the executable; no Dmn shared library needs a build-tree
-RPATH. The install rules keep the developer-facing Dmn static libraries and
-headers under the configured prefix as well.
+RPATH.
+
+CMake install rules separate product runtime files from reusable development
+files using the `Runtime` and `Development` components. This separation is
+project-wide rather than GTK-specific: all installed application executables
+and their launch assets belong to `Runtime`; reusable static archives and
+public headers belong to `Development`; shared libraries belong to `Runtime`
+so dynamically linked applications keep their required libraries. A normal
+unqualified `cmake --install` still installs both components for developers.
+For Flatpak or another app-only package, stage only the runtime component:
+
+```sh
+cmake -S . -B build-flatpak \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_APP_BLUETOOTH_GTK=ON \
+  -DENABLE_APP_BLUETOOTH=OFF \
+  -DENABLE_DMN_DMESGNET=OFF \
+  -DDMN_BUILD_TESTS=OFF \
+  -DDMN_ALLOW_DEPENDENCY_FETCH=OFF \
+  -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn \
+  -DCMAKE_INSTALL_PREFIX=/app
+cmake --build build-flatpak --target dmn-bluetooth-gtk --parallel
+DESTDIR="$PWD/stage" cmake --install build-flatpak \
+  --component Runtime
+```
+
+In a Flatpak manifest, include `-DENABLE_DMN_DMESGNET=OFF` in the module's
+`config-opts`. The option defaults to `ON`; setting
+`DMN_ALLOW_DEPENDENCY_FETCH=OFF` alone does not omit the messaging stack or its
+Protobuf/librdkafka dependency requirements. When using a GNOME runtime, select
+the same branch for `org.gnome.Platform` and `org.gnome.Sdk` (for example,
+runtime version `50` with SDK version `50`).
+
+Use a dedicated build directory for packaging and set the final prefix at
+configure time; do not override it with `cmake --install --prefix`, because
+the launcher and activation service contain prefix-dependent paths. Each
+Flathub manifest builds one application, so enable only that application's
+CMake option(s), then install the shared `Runtime` component. Future Dmn apps
+can follow this same convention without being added to this app's manifest.
+Do not install the `Development` component into the app payload. Keep the Dmn
+libraries available to build and link the executable; the component split
+only excludes their development archives and headers from the installed
+runtime image. `ENABLE_DMN_DMESGNET=OFF` excludes the unused DMesg/DMesgNet
+messaging family, which is the part that requires Protobuf and librdkafka.
+The GTK Bluetooth app uses the independent generic D-Bus and BlueZ components,
+so this app-only configuration does not discover or fetch Protobuf or Kafka.
+The Flathub manifest and submission content must be authored
+by the maintainer in accordance with Flathub's current policy.
+
+### Distribution channels and packaging constraints
+
+For broad GNOME and COSMIC availability, Flatpak/Flathub is a practical
+shared channel to investigate: Flatpak is desktop-agnostic, and COSMIC Store
+supports Flatpak sources as well as Debian packages. GNOME users can install
+Flathub apps through GNOME Software when the Flathub remote is enabled. This
+is a route to evaluate, not a claim that the app is already packaged or
+accepted by either project. A distro-maintained Debian package is another
+option for COSMIC/Pop!_OS and can be built from the CMake install payload.
+
+Flatpak is not a mechanical repackaging of the current install. The app needs
+BlueZ on the host system bus (`org.bluez`) and host Bluetooth hardware, so a
+manifest would need narrowly scoped D-Bus permissions and validation on
+supported GNOME and COSMIC hosts. Flathub's inclusion policy specifically
+flags host-dependent apps and system utilities as generally unsuitable,
+though it allows case-by-case exceptions. That makes acceptance uncertain
+for an app whose core function needs host BlueZ; discuss suitability with
+Flathub before investing in packaging.
+
+Flathub's current generative-AI policy is not a blanket prohibition on all
+AI-assisted work. It requires submitters to disclose known or reasonably
+believed AI-generated code, documentation, packaging, or other material
+included in the application or Flathub packaging, identifying the affected
+parts and approximate extent. Reviewers decide acceptability; excessive
+AI-generated content may result in closure. Flathub manifests themselves
+must not contain AI-generated or AI-assisted content, even if disclosed, and
+AI agents must not create or automate the submission PR or its communication.
+Maintainers should review the current policy and identify relevant material
+themselves; no Flatpak manifest is provided here.
+
+Useful upstream guidance: [GNOME developer documentation](https://developer.gnome.org/documentation/),
+[Flatpak documentation](https://docs.flatpak.org/en/latest/),
+[Flathub submission](https://docs.flathub.org/docs/for-app-authors/submission),
+[Flathub requirements](https://docs.flathub.org/docs/for-app-authors/requirements),
+and [COSMIC Store](https://github.com/pop-os/cosmic-store).
 
 ### GTK and GNOME toolkit requirements
 
@@ -512,9 +596,41 @@ release qualification; it does not reopen those descoped feature areas.
   app-menu toggle, generic per-device alerts, and best-effort withdrawal are
   implemented. GNOME/COSMIC presentation and user-policy behavior still need
   qualification.
-- **Release qualification — outstanding.** Complete supported-desktop
-  notification checks, install/package and accessibility checks, and opt-in
-  real-iPhone/BlueZ qualification before making release claims.
+- **Next phase: GTK integration verification and release qualification.** No
+  additional product feature is currently required by this specification.
+  The GTK shell and shared GUI core are implemented. Registered tests cover
+  `--help`, `--version`, display-free core behavior, and (when the validators
+  are installed) the desktop entry and AppStream metadata. A real-session
+  application activation/quit smoke check has also passed manually, but
+  display-backed integration tests and a fake inventory/monitor seam are not
+  yet automated. Before release, close the remaining evidence gap in this
+  order:
+  1. Add a deterministic GTK integration-test seam for inventory and monitor
+     operations. The current app constructs its production BlueZ backend
+     directly, so app-level tests cannot yet drive delayed, failed, or
+     canceled operations through a fake backend. Prefer exercising the real
+     monitor facade against the existing private-bus fake BlueZ/GATT support
+     where appropriate; do not require a physical phone for these tests.
+  2. Add display-backed coverage for the highest-risk GTK acceptance gaps:
+     responsive progress and stop/quit cleanup (GTK-AC-02/04), adaptive wide
+     and narrow navigation plus keyboard/accessibility basics (GTK-AC-07),
+     scan and adapter controls (GTK-AC-08), settings restoration and proof
+     that selection/save do not initiate Bluetooth actions (GTK-AC-09/11),
+     and pending connection/monitor-start cancellation (GTK-AC-10). Keep
+     lifecycle and policy logic in the display-free GUI-core tests.
+  3. Complete default-off dependency-isolation and installed-package checks
+     (GTK-AC-01), then run the requirement-to-test mapping in Section 8 so
+     each criterion has explicit automated or manual evidence.
+  4. Qualify alert submission/withdrawal in supported GNOME and COSMIC desktop
+     sessions (GTK-AC-03/05), accessibility and packaging, and opt-in
+     real-iPhone/BlueZ operation, including concurrent-monitor behavior.
+     Record unsupported or unavailable environments as unqualified rather
+     than treating them as passing.
+
+  Release qualification remains outstanding until these gates pass. This is
+  verification and testability work, not a commitment to add a background
+  service, preferences dialog, keep-monitoring-on-close behavior, or other
+  previously descoped feature.
 
 ### Historical implementation milestones
 

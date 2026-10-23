@@ -1,10 +1,11 @@
+# Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.
 [Desktop Entry]
 Name=Dmn Bluetooth
 GenericName=Bluetooth Device Monitor
 Comment=Select a Bluetooth device for monitoring
 Exec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk
 TryExec=@CMAKE_INSTALL_FULL_BINDIR@/dmn-bluetooth-gtk
-Icon=com.cheebinhoh.dmn-bluetooth
+Icon=@DMN_BLUETOOTH_GTK_APP_ID@
 Terminal=false
 Type=Application
 Categories=Utility;

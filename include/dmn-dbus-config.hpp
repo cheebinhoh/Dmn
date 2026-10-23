@@ -43,22 +43,34 @@ struct Dmn_DbusConfig {
    */
   std::string bus_address{};
 
-  /** @brief Signal object path; defaults to the Dmn_DMesgNet wire path. */
+  /**
+   * @brief Signal object path; defaults to the Dmn_DMesgNet wire path.
+   */
   std::string signal_path{"/org/dmn/DMesg1"};
 
-  /** @brief Signal interface; defaults to the Dmn_DMesgNet wire interface. */
+  /**
+   * @brief Signal interface; defaults to the Dmn_DMesgNet wire interface.
+   */
   std::string signal_interface{"org.dmn.DMesg1.Transport"};
 
-  /** @brief Signal member; defaults to the Dmn_DMesgNet wire member. */
+  /**
+   * @brief Signal member; defaults to the Dmn_DMesgNet wire member.
+   */
   std::string signal_member{"Message"};
 
-  /** @brief Maximum accepted payload size. */
+  /**
+   * @brief Maximum accepted payload size.
+   */
   std::size_t max_message_bytes{1024 * 1024};
 
-  /** @brief Maximum items retained by either application queue. */
+  /**
+   * @brief Maximum items retained by either application queue.
+   */
   std::size_t max_queued_messages{1024};
 
-  /** @brief Maximum payload bytes retained by either application queue. */
+  /**
+   * @brief Maximum payload bytes retained by either application queue.
+   */
   std::size_t max_queued_bytes{16 * 1024 * 1024};
 };
 

@@ -112,7 +112,9 @@ public:
   auto openHandlerWithFactory(const HandlerSpec &spec,
                               const HandlerFactory &factory) -> HandlerType;
 
-  /** @brief Close the handler and invalidate its proxy. */
+  /**
+   * @brief Close the handler and invalidate its proxy.
+   */
   void closeHandler(HandlerType &handler);
 
   /**
@@ -120,10 +122,14 @@ public:
    */
   auto getTopicLastMessage(std::string_view topic) -> std::optional<DMesgPb>;
 
-  /** @brief Republish the last known topic message to resolve conflicts. */
+  /**
+   * @brief Republish the last known topic message to resolve conflicts.
+   */
   void resetConflictStateWithLastTopicMessage(std::string_view topic);
 
-  /** @brief Return thread-safe input and output endpoint status snapshots. */
+  /**
+   * @brief Return thread-safe input and output endpoint status snapshots.
+   */
   [[nodiscard]] auto status() const -> Dmn_DMesgDbusStatus;
 
 private:

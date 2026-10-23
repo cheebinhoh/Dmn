@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Asynchronous execution and lifetime
 
 **Status:** Code-derived contract for the existing thread, async-queue,

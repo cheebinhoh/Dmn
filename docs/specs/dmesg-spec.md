@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # DMesg messaging and protobuf schema
 
 **Status:** Current DMesg contracts are extracted from the handler API,
@@ -7,6 +9,13 @@ The related network bridge has a separate specification at
 
 ## Component responsibilities
 
+- This feature stack is controlled by `ENABLE_DMN_DMESGNET` (default `ON`).
+  Enabling it builds local DMesg, DMesgNet, Kafka and DMesgNet-over-D-Bus
+  adapters, and enables Protobuf and librdkafka discovery/fetching. Disabling
+  it omits those sources and public headers without affecting the base runtime,
+  generic D-Bus I/O, BlueZ, or GTK Bluetooth application. DMesg, DMesgNet, and
+  Kafka tests are registered only when the feature is enabled; unrelated tests
+  remain available with it disabled.
 - `Dmn_DMesg` publishes `DMesgPb` values through `Dmn_Pub`, maintains
   per-topic counters and last-value cache, and controls handler registration.
 - `Dmn_DMesgHandler` is an I/O-style publisher/subscriber endpoint. It supports

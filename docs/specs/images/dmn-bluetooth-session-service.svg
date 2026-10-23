@@ -1,3 +1,4 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620" role="img" aria-labelledby="title desc">
   <title id="title">Optional Dmn Bluetooth user-session service architecture</title>
   <desc id="desc">Service-backed GTK, GNOME extension, and COSMIC applet frontends connect over the user's session D-Bus to one C++ service that owns Dmn monitors and communicates with BlueZ on the system bus. Shell clients receive status and aggregate counts, not event payloads.</desc>

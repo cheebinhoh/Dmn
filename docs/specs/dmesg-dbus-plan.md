@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Implementation and Test Plan: DMesg over D-Bus
 
 **Status:** Options A and B are implemented behind `ENABLE_DBUS` and have

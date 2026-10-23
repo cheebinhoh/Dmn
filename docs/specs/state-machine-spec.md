@@ -1,3 +1,5 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+
 # Caller-driven state machine
 
 **Status:** Code-derived contract for `Dmn_State`. The asynchronous wrapper

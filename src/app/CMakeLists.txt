@@ -20,41 +20,39 @@ target_link_libraries(dmn-dmesg-daemon
                         PRIVATE dmn
 )
 
-add_executable(dmn-kafka-receiver
-                 dmn-kafka-receiver.cpp
-)
+if (ENABLE_DMN_DMESGNET)
+  add_executable(dmn-kafka-receiver
+                   dmn-kafka-receiver.cpp
+  )
 
-target_compile_definitions(dmn-kafka-receiver
-                             PRIVATE DMN_VERSION="${PROJECT_VERSION}"
-)
+  target_compile_definitions(dmn-kafka-receiver
+                               PRIVATE DMN_VERSION="${PROJECT_VERSION}"
+  )
 
-target_include_directories(dmn-kafka-receiver
-                             PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include
-                             dmn
-)
+  target_include_directories(dmn-kafka-receiver
+                               PRIVATE
+                               ${PROJECT_SOURCE_DIR}/include
+                               dmn
+  )
 
-target_link_libraries(dmn-kafka-receiver
-                        PRIVATE dmn
-)
+  target_link_libraries(dmn-kafka-receiver PRIVATE dmn)
 
-add_executable(dmn-kafka-sender
-                 dmn-kafka-sender.cpp
-)
+  add_executable(dmn-kafka-sender
+                   dmn-kafka-sender.cpp
+  )
 
-target_compile_definitions(dmn-kafka-sender
-                             PRIVATE DMN_VERSION="${PROJECT_VERSION}"
-)
+  target_compile_definitions(dmn-kafka-sender
+                               PRIVATE DMN_VERSION="${PROJECT_VERSION}"
+  )
 
-target_include_directories(dmn-kafka-sender
-                             PRIVATE
-                             ${PROJECT_SOURCE_DIR}/include
-                             dmn
-)
+  target_include_directories(dmn-kafka-sender
+                               PRIVATE
+                               ${PROJECT_SOURCE_DIR}/include
+                               dmn
+  )
 
-target_link_libraries(dmn-kafka-sender
-                        PRIVATE dmn
-)
+  target_link_libraries(dmn-kafka-sender PRIVATE dmn)
+endif()
 
 if (ENABLE_APP_BLUEZ_DISCOVERY)
   add_executable(dmn-bluez-cli
@@ -73,10 +71,12 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
 
   install(TARGETS dmn-bluez-cli
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 
   install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluez-cli.1
             DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+            COMPONENT Runtime
   )
 endif()
 
@@ -99,10 +99,12 @@ if (ENABLE_APP_BLUETOOTH)
 
   install(TARGETS dmn-bluetooth-cli
             RUNTIME DESTINATION bin
+            COMPONENT Runtime
   )
 
   install(FILES ${PROJECT_SOURCE_DIR}/docs/man/dmn-bluetooth-cli.1
             DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
+            COMPONENT Runtime
   )
 endif()
 
