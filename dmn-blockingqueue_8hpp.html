@@ -117,15 +117,15 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Thread-safe FIFO blocking queue interface for passing items between threads. </p>
 <p>Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Design pattern</h2>
 <ul>
 <li>Degenerate Bridge : the blocking queue interface is abstracted from the underlying implementation (mutex lock or lock-free), this is not a full-fledged bridge as written in the Gang of Four, but a simplified version with a CRTP template where abstraction and implementation are in one hierarchy tree.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Static polymorphism</h2>
 <p>We use Curiously Recurring Template Pattern (CRTP) to achieve static polymorphism that effectively offsets the runtime overhead of vtable lookup by moving the function dispatch to compile time.</p>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
 Move and copy behavior</h2>
 <ul>
 <li>push(const T&amp;): Accepts a const lvalue and enqueues it by copy. Passing a plain lvalue such as <code>push(item)</code> will bind to this overload and copy the item into the queue.</li>

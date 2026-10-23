@@ -174,6 +174,26 @@ Enumerations</h2></td></tr>
 <h2><a class="anchor" id="autotoc_md0"></a>
 Overview</h2>
 <p>This facade owns the BlueZ inventory client, BlueZ GATT backend, and ANCS session client. It moves device selection, optional discovery, pairing, connection, service readiness, and ANCS startup out of terminal frontends. Applications receive owned ANCS events through the configured callback and can present them in a terminal, GTK interface, or another frontend.</p>
+<h2><a class="anchor" id="autotoc_md1"></a>
+Architecture</h2>
+<p>The monitor coordinates device/link management and the backend-neutral ANCS protocol over the BlueZ GATT implementation:</p>
+<pre class="fragment">* Application / frontend
+*          |
+*          v
+* Dmn_AncsBluezMonitor            setup orchestration + ANCS lifecycle
+*       /              \
+*      v                v
+* Dmn_BluezClient      Dmn_AncsClient
+* inventory, pairing,       | uses Dmn_GattClient
+* connection                v
+*                    Dmn_BluezGattClient
+*                    GATT services, notifications, writes
+*       |                |
+*       v                v
+* Dmn_DbusClient      Dmn_DbusClient
+*       \                /
+*        libdbus -&gt; system bus -&gt; org.bluez
+* </pre><p>Dmn_BluezClient manages BlueZ adapter/device inventory and explicit discovery, pairing, and link connection. Dmn_BluezGattClient implements the backend-neutral GATT interface used by Dmn_AncsClient to discover ANCS characteristics, subscribe to their device notifications, and write ANCS requests. The monitor owns and coordinates these components; the ANCS protocol client itself does not depend on BlueZ. The BlueZ inventory and GATT clients each use the generic Dmn_DbusClient API and own their respective D-Bus connection. D-Bus method/property calls and signal subscriptions are implemented through Dmn's generic D-Bus layer; the existing byte-signal <code>Dmn_DbusInput</code>/<code>Dmn_DbusOutput</code> transport is not used for BlueZ. See <code>docs/specs/ancs-bluez-client-spec.md</code> and <code>docs/specs/dbus-client-spec.md</code> for detailed contracts.</p>
 <p>The synchronous start operation performs bounded BlueZ and GATT calls. GUI applications must invoke it away from their UI thread and marshal event callbacks onto their UI context. Setup progress is reported synchronously on the thread calling start. Calls must not race object destruction; stop serializes with startup and does not cancel an in-progress setup. The facade does not disconnect or unpair the selected device during stop. </p>
 </div><h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a23cff2663877d2f0f949c733b4b779f3" name="a23cff2663877d2f0f949c733b4b779f3"></a>

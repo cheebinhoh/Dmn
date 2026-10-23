@@ -162,7 +162,20 @@ Enumerations</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Backend-neutral remote GATT client contract. </p>
-<p>Copyright © 2026 Chee Bin HOH. All rights reserved. </p>
+<p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
+<h2><a class="anchor" id="autotoc_md26"></a>
+Architecture</h2>
+<p>The dependency direction between the GATT contract, its BlueZ backend, and the ANCS protocol client is:</p>
+<pre class="fragment">* Dmn_GattClient                 backend-neutral GATT interface
+*       ^                         (implemented by backends)
+*       | implements
+* Dmn_BluezGattClient            BlueZ/D-Bus implementation
+*
+* Dmn_AncsClient --------------&gt; uses Dmn_GattClient
+*                                (does not depend on BlueZ)
+* </pre><p>This is the Strategy pattern: ANCS uses the GATT interface while a replaceable backend, such as BlueZ, provides the concrete behavior. It also follows the Dependency Inversion Principle: the ANCS protocol client depends on the GATT abstraction rather than on the BlueZ implementation. Dmn_BluezGattClient can additionally be viewed as an adapter from BlueZ's D-Bus API to the backend-neutral GATT contract.</p>
+<p>Dmn_GattClient is the boundary between protocol clients and transport backends. Dmn_BluezGattClient implements that contract using BlueZ and D-Bus. Dmn_AncsClient uses the contract to perform the Apple Notification Center Service (ANCS) protocol, so another GATT backend can be substituted without changing the ANCS client.</p>
+<p>The application is responsible for connecting the device before starting ANCS. The ANCS client borrows its Dmn_GattClient and does not connect, pair, or own that backend; the backend must outlive the ANCS client. GATT service and characteristic identifiers are backend-owned opaque values scoped to the current connection and service tree. </p>
 </div><h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a9b6c6c7e76be998318c425c5e27bb645" name="a9b6c6c7e76be998318c425c5e27bb645"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9b6c6c7e76be998318c425c5e27bb645">&#9670;&#160;</a></span>Dmn_GattErrorKind</h2>

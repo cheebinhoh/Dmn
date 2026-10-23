@@ -190,11 +190,11 @@ Enumerations</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Public ANCS values and backend-neutral protocol parsing primitives. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md1"></a>
+<h2><a class="anchor" id="autotoc_md2"></a>
 Overview</h2>
 <p>This header defines the owned value/error vocabulary used by the ANCS client and the bounded protocol parsers shared by that client. It depends only on the backend-neutral GATT contract and standard C++ types; no BlueZ, D-Bus, iOS SDK, or user-interface type crosses this boundary.</p>
 <p>The notification-source parser decodes one complete eight-byte ANCS event. The data-source reassembler accepts arbitrary byte fragments for one serialized Get Notification Attributes response. It reports completion only after every requested attribute tuple has been fully received and validated.</p>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Design constraints</h2>
 <ul>
 <li>Notification UIDs and parser instances are scoped to one live ANCS session; neither is a durable notification identity.</li>

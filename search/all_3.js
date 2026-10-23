@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['data_20flow_0',['Data flow',['../dmn-dbus-io_8hpp.html#autotoc_md17',1,'']]],
+  ['data_20flow_0',['Data flow',['../dmn-dbus-io_8hpp.html#autotoc_md19',1,'']]],
   ['decode_1',['Decode',['../dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8',1,'dmn']]],
-  ['design_20constraints_2',['Design constraints',['../dmn-ancs-client_8hpp.html#autotoc_md2',1,'']]],
-  ['design_20goals_3',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md42',1,'']]],
-  ['design_20pattern_4',['design pattern',['../dmn-pub-sub_8hpp.html#autotoc_md41',1,'Design pattern'],['../dmn-proc_8hpp.html#autotoc_md39',1,'Design pattern'],['../dmn-dmesg_8hpp.html#autotoc_md23',1,'Design pattern'],['../dmn-blockingqueue_8hpp.html#autotoc_md11',1,'Design pattern'],['../dmn-async_8hpp.html#autotoc_md3',1,'Design pattern']]],
-  ['design_20patterns_5',['Design patterns',['../dmn-singleton_8hpp.html#autotoc_md59',1,'']]],
-  ['determinism_6',['Ordering and determinism',['../dmn-interval-btree_8hpp.html#autotoc_md29',1,'']]],
+  ['design_20constraints_2',['Design constraints',['../dmn-ancs-client_8hpp.html#autotoc_md3',1,'']]],
+  ['design_20goals_3',['Key design goals',['../dmn-pub-sub_8hpp.html#autotoc_md45',1,'']]],
+  ['design_20pattern_4',['design pattern',['../dmn-pub-sub_8hpp.html#autotoc_md44',1,'Design pattern'],['../dmn-proc_8hpp.html#autotoc_md42',1,'Design pattern'],['../dmn-dmesg_8hpp.html#autotoc_md25',1,'Design pattern'],['../dmn-blockingqueue_8hpp.html#autotoc_md12',1,'Design pattern'],['../dmn-async_8hpp.html#autotoc_md4',1,'Design pattern']]],
+  ['design_20patterns_5',['Design patterns',['../dmn-singleton_8hpp.html#autotoc_md62',1,'']]],
+  ['determinism_6',['Ordering and determinism',['../dmn-interval-btree_8hpp.html#autotoc_md32',1,'']]],
   ['device_7',['device',['../structdmn_1_1Dmn__AncsMonitorSession.html#ad4e0c75975d3505681eaf6066e070dae',1,'dmn::Dmn_AncsMonitorSession::device'],['../structdmn_1_1Dmn__BluezEvent.html#af2c313b0ea5af9893fad70bbb2143bd0',1,'dmn::Dmn_BluezEvent::device']]],
   ['deviceadded_8',['DeviceAdded',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a77b4f494c4226ecfe3bbc708a3064091',1,'dmn']]],
   ['devicechanged_9',['DeviceChanged',['../dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7ab87fe40cb2469d99583440a7d4686ff7',1,'dmn']]],
