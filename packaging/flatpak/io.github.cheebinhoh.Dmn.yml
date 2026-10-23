@@ -21,9 +21,9 @@ modules:
       - -DBUILD_SHARED_LIBS=OFF
       - -DDMN_BUILD_TESTS=OFF
       - -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
-      - -DENABLE_DMN_DMESGNET=OF
+      - -DENABLE_DMN_DMESGNET=OFF
       - -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn
     sources:
       - type: git
         url: https://github.com/cheebinhoh/Dmn.git
-        commit: 796cc205447d7c0ab3a4f24211cebde8d3b1d4fe
+        commit: eebe0b672f3a2e72c329637f96bcb9b5231dd28f
