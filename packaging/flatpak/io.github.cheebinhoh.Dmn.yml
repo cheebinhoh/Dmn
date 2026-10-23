@@ -1,0 +1,29 @@
+app-id: io.github.cheebinhoh.Dmn
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: dmn-bluetooth-gtk
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --system-talk-name=org.bluez
+  - --talk-name=ca.desrt.dconf
+  - --filesystem=xdg-run/dconf
+cleanup:
+  - /include
+  - /lib/dmn
+modules:
+  - name: dmn-bluetooth
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DENABLE_APP_BLUETOOTH_GTK=ON
+      - -DBUILD_SHARED_LIBS=OFF
+      - -DDMN_BUILD_TESTS=OFF
+      - -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
+      - -DENABLE_DMN_DMESGNET=OF
+      - -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn
+    sources:
+      - type: git
+        url: https://github.com/cheebinhoh/Dmn.git
+        commit: 796cc205447d7c0ab3a4f24211cebde8d3b1d4fe

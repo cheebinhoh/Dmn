@@ -28,42 +28,10 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-blockingqueue-perf-1
                       dmn-test-blockingqueue-perf-2
                       dmn-test-blockingqueue-shutdown
-                      dmn-test-dlock-1
-                      dmn-test-dlock-2
-                      dmn-test-dlock-3
-                      dmn-test-dlock-4
-                      dmn-test-dlock-5
-                      dmn-test-dlock-dmesg-seam
-                      dmn-test-dmesg-1
-                      dmn-test-dmesg-10
-                      dmn-test-dmesg-11
-                      dmn-test-dmesg-2
-                      dmn-test-dmesg-3
-                      # FIXME: the following test is not deterministic
-                      # dmn-test-dmesg-4
-                      dmn-test-dmesg-5
-                      dmn-test-dmesg-6
-                      dmn-test-dmesg-7
-                      dmn-test-dmesg-8
-                      dmn-test-dmesg-9
-                      dmn-test-dmesg-conflict
-                      dmn-test-dmesg-pb
-                      dmn-test-dmesg-pb-util
-                      dmn-test-dmesgnet-1
-                      dmn-test-dmesgnet-2
-                      dmn-test-dmesgnet-3
-                      dmn-test-dmesgnet-4
-                      dmn-test-dmesgnet-5
-                      dmn-test-dmesgnet-6
-                      #dmn-test-dmesgnet-7
-                      #dmn-test-dmesgnet-8
-                      #dmn-test-dmesgnet-9
-                      dmn-test-dmesgnet-shutdown
                       dmn-test-inflight-guard
                       dmn-test-interval-btree
                       dmn-test-io
                       dmn-test-io-contract
-                      dmn-test-kafka-config
                       dmn-test-pipe
                       dmn-test-pipe-2
                       dmn-test-pipe-3
@@ -94,6 +62,40 @@ ADD_TEST_EXECUTABLE(dmn
                       dmn-test-util
 )
 
+if (ENABLE_DMN_DMESGNET)
+  ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-dlock-1
+                        dmn-test-dlock-2
+                        dmn-test-dlock-3
+                        dmn-test-dlock-4
+                        dmn-test-dlock-5
+                        dmn-test-dlock-dmesg-seam
+                        dmn-test-dmesg-1
+                        dmn-test-dmesg-10
+                        dmn-test-dmesg-11
+                        dmn-test-dmesg-2
+                        dmn-test-dmesg-3
+                        # FIXME: the following test is not deterministic
+                        # dmn-test-dmesg-4
+                        dmn-test-dmesg-5
+                        dmn-test-dmesg-6
+                        dmn-test-dmesg-7
+                        dmn-test-dmesg-8
+                        dmn-test-dmesg-9
+                        dmn-test-dmesg-conflict
+                        dmn-test-dmesg-pb
+                        dmn-test-dmesg-pb-util
+                        dmn-test-dmesgnet-1
+                        dmn-test-dmesgnet-2
+                        dmn-test-dmesgnet-3
+                        dmn-test-dmesgnet-4
+                        dmn-test-dmesgnet-5
+                        dmn-test-dmesgnet-6
+                        dmn-test-dmesgnet-shutdown
+                        dmn-test-kafka-config
+  )
+endif()
+
 function(add_dmn_cli_version_test target)
   add_test(NAME "${target}-version"
              COMMAND "${target}" --version
@@ -107,8 +109,10 @@ function(add_dmn_cli_version_test target)
 endfunction()
 
 add_dmn_cli_version_test(dmn-dmesg-daemon)
-add_dmn_cli_version_test(dmn-kafka-receiver)
-add_dmn_cli_version_test(dmn-kafka-sender)
+if (ENABLE_DMN_DMESGNET)
+  add_dmn_cli_version_test(dmn-kafka-receiver)
+  add_dmn_cli_version_test(dmn-kafka-sender)
+endif()
 
 if (ENABLE_ANCS)
   ADD_TEST_EXECUTABLE(dmn
@@ -137,15 +141,11 @@ if (ENABLE_DBUS)
   ADD_TEST_EXECUTABLE(dmn
                         dmn-test-dbus-client
                         dmn-test-dbus-client-session
-                        dmn-test-dbus-facade
-                        dmn-test-dbus-io
   )
 
   foreach(test_target IN ITEMS
           dmn-test-dbus-client
-          dmn-test-dbus-client-session
-          dmn-test-dbus-facade
-          dmn-test-dbus-io)
+          dmn-test-dbus-client-session)
     target_compile_definitions(${test_target}
                                  PRIVATE
                                  DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
@@ -155,6 +155,24 @@ if (ENABLE_DBUS)
                             PRIVATE dmn-dbus PkgConfig::DBUS
     )
   endforeach()
+
+  if (ENABLE_DMN_DMESGNET)
+    ADD_TEST_EXECUTABLE(dmn
+                        dmn-test-dbus-facade
+                        dmn-test-dbus-io
+    )
+
+    foreach(test_target IN ITEMS dmn-test-dbus-facade dmn-test-dbus-io)
+      target_compile_definitions(${test_target}
+                                   PRIVATE
+                                   DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
+      )
+
+      target_link_libraries(${test_target}
+                              PRIVATE dmn-dbus PkgConfig::DBUS
+      )
+    endforeach()
+  endif()
 endif()
 
 if (ENABLE_BLUEZ)
@@ -401,17 +419,24 @@ if (ENABLE_FAULT_INJECTION)
       dmn/dbus/output/send_stall
     )
 
-    ADD_TEST_FAULT_INJECTION_EXECUTABLE(
-      dmn-test-fi-dbus-facade-rollback
-      dmn/dbus/facade/output_endpoint_creation
-    )
-
-    foreach(test_target IN ITEMS
-            dmn-test-fi-dbus-facade-rollback
+    set(DMN_DBUS_FAULT_TEST_TARGETS
             dmn-test-fi-dbus-input-allocation
             dmn-test-fi-dbus-output-stall
             dmn-test-fi-dbus-output-worker-start-failure
-            dmn-test-fi-dbus-worker-start-failure)
+            dmn-test-fi-dbus-worker-start-failure
+    )
+
+    if (ENABLE_DMN_DMESGNET)
+      ADD_TEST_FAULT_INJECTION_EXECUTABLE(
+        dmn-test-fi-dbus-facade-rollback
+        dmn/dbus/facade/output_endpoint_creation
+      )
+      list(APPEND DMN_DBUS_FAULT_TEST_TARGETS
+             dmn-test-fi-dbus-facade-rollback
+      )
+    endif()
+
+    foreach(test_target IN LISTS DMN_DBUS_FAULT_TEST_TARGETS)
       target_compile_definitions(${test_target}
                                    PRIVATE
                                    DMN_DBUS_DAEMON_EXECUTABLE="${DBUS_DAEMON_EXECUTABLE}"
@@ -439,18 +464,14 @@ if (ENABLE_FAULT_INJECTION)
     list(JOIN DMN_LIBFIU_LIBRARY_DIR ":" fiu_library_path)
 
     set_tests_properties(
-      dmn-test-fi-dbus-facade-rollback
-      dmn-test-fi-dbus-input-allocation
-      dmn-test-fi-dbus-output-stall
-      dmn-test-fi-dbus-output-worker-start-failure
-      dmn-test-fi-dbus-worker-start-failure
+      ${DMN_DBUS_FAULT_TEST_TARGETS}
       PROPERTIES ENVIRONMENT
                  "${fiu_loader_path}=${fiu_library_path}:${fiu_existing_loader_path}"
     )
   endif()
 endif()
 
-if (BUILD_KAFKA_TEST)
+if (BUILD_KAFKA_TEST AND ENABLE_DMN_DMESGNET)
   # [TEST TYPE: GTEST - KAFKA]
   # Kafka integration tests (CTest label: kafka).
   ADD_TEST_EXECUTABLE(kafka
@@ -475,6 +496,11 @@ file(GLOB DMN_PUBLIC_HEADERS CONFIGURE_DEPENDS
 set(DMN_STANDALONE_HEADER_SOURCES)
 
 foreach(header IN LISTS DMN_PUBLIC_HEADERS)
+  if (NOT ENABLE_DMN_DMESGNET AND
+      header MATCHES "/(dmn-(dlock|dmesg)[^/]*|kafka)/?")
+    continue()
+  endif()
+
   file(RELATIVE_PATH header_relative "${PROJECT_SOURCE_DIR}/include" "${header}")
   string(MAKE_C_IDENTIFIER "${header_relative}" header_id)
 
@@ -535,31 +561,6 @@ if (ENABLE_VALGRIND)
         dmn-test-blockingqueue-perf-1
         dmn-test-blockingqueue-perf-2
         dmn-test-blockingqueue-shutdown
-        dmn-test-dlock-1
-        dmn-test-dlock-2
-        dmn-test-dlock-3
-        dmn-test-dlock-4
-        dmn-test-dlock-5
-        dmn-test-dlock-dmesg-seam
-        dmn-test-dmesg-1
-        dmn-test-dmesg-10
-        dmn-test-dmesg-11
-        dmn-test-dmesg-2
-        dmn-test-dmesg-3
-        dmn-test-dmesg-5
-        dmn-test-dmesg-6
-        dmn-test-dmesg-7
-        dmn-test-dmesg-8
-        dmn-test-dmesg-9
-        dmn-test-dmesg-pb
-        dmn-test-dmesg-pb-util
-        dmn-test-dmesgnet-1
-        dmn-test-dmesgnet-2
-        dmn-test-dmesgnet-3
-        dmn-test-dmesgnet-4
-        dmn-test-dmesgnet-5
-        dmn-test-dmesgnet-6
-        dmn-test-dmesgnet-shutdown
         dmn-test-inflight-guard
         dmn-test-interval-btree
         dmn-test-io
@@ -592,6 +593,36 @@ if (ENABLE_VALGRIND)
         dmn-test-umbrella
         dmn-test-util
   )
+
+  if (ENABLE_DMN_DMESGNET)
+    list(APPEND DMN_VALGRIND_TESTS
+           dmn-test-dlock-1
+           dmn-test-dlock-2
+           dmn-test-dlock-3
+           dmn-test-dlock-4
+           dmn-test-dlock-5
+           dmn-test-dlock-dmesg-seam
+           dmn-test-dmesg-1
+           dmn-test-dmesg-10
+           dmn-test-dmesg-11
+           dmn-test-dmesg-2
+           dmn-test-dmesg-3
+           dmn-test-dmesg-5
+           dmn-test-dmesg-6
+           dmn-test-dmesg-7
+           dmn-test-dmesg-8
+           dmn-test-dmesg-9
+           dmn-test-dmesg-pb
+           dmn-test-dmesg-pb-util
+           dmn-test-dmesgnet-1
+           dmn-test-dmesgnet-2
+           dmn-test-dmesgnet-3
+           dmn-test-dmesgnet-4
+           dmn-test-dmesgnet-5
+           dmn-test-dmesgnet-6
+           dmn-test-dmesgnet-shutdown
+    )
+  endif()
 
   ADD_TEST_VALGRIND(dmn
                       ${DMN_VALGRIND_TESTS}

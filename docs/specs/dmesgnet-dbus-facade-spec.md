@@ -2,9 +2,11 @@
 
 # Option B: `Dmn_DMesgDbus` facade
 
-**Status:** Implemented behind `ENABLE_DBUS`. This facade composes the
-implemented Option A byte-signal endpoints with `Dmn_DMesgNet`; it adds no
-transport protocol or DMesg behavior of its own.
+**Status:** Implemented when both `ENABLE_DBUS` and
+`ENABLE_DMN_DMESGNET` are enabled. This facade composes the implemented
+Option A byte-signal endpoints with `Dmn_DMesgNet`; it adds no transport
+protocol or DMesg behavior of its own. The generic byte-signal endpoints
+remain available with `ENABLE_DBUS` alone.
 
 ## Purpose and scope
 
@@ -140,12 +142,14 @@ endpoint snapshots.
 
 ## Build boundary
 
-The facade is available only when `ENABLE_DBUS=ON`, as part of the optional
-`dmn-dbus` target. The core `dmn` target remains independent of libdbus. The
-facade header is installed only when the optional feature is enabled. The
-header itself must compile without exposing libdbus declarations; the facade
-implementation links against the existing D-Bus endpoint target and does not
-duplicate its transport implementation.
+The generic `dmn-dbus` endpoints are available when `ENABLE_DBUS=ON`. This
+facade additionally requires `ENABLE_DMN_DMESGNET=ON`, because it composes
+`Dmn_DMesgNet`; its source and header are omitted otherwise. The base `dmn`
+target remains independent of libdbus, and generic D-Bus I/O remains usable
+without Protobuf or librdkafka. The facade header itself must compile without
+exposing libdbus declarations; the facade implementation links against the
+existing D-Bus endpoint target and does not duplicate its transport
+implementation.
 
 ## Required tests
 

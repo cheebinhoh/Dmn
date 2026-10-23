@@ -32,10 +32,12 @@ callables are rejected at compile time.
 
 ## Umbrella header
 
-`include/dmn.hpp` re-exports the common queue, async, DMesg, I/O, runtime,
-socket, state, timer, interval-tree, DLock, and Kafka headers, including
-`dmn-runtime-state.hpp`. It does not itself add symbols. Consumers needing a
-narrow dependency surface should include component headers directly.
+`include/dmn.hpp` always re-exports the common queue, async, I/O, runtime,
+socket, state, timer, and interval-tree headers, including
+`dmn-runtime-state.hpp`. When linked through the `dmn` target with
+`ENABLE_DMN_DMESGNET=ON`, it also re-exports DMesg, DLock, DMesgNet, and Kafka
+headers. It does not itself add symbols. Consumers needing a narrow dependency
+surface should include component headers directly.
 
 The `dmn-standalone-header-check` test compiles each installed public header
 as an independent translation unit. Removed legacy headers are not part of

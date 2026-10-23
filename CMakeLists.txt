@@ -23,11 +23,14 @@ include(GNUInstallDirs)
 # reusable static libraries, public headers, and developer tools.
 
 # set build options
-option(BUILD_KAFKA_TEST "Build optional Kafka integration tests" OFF)
+option(BUILD_KAFKA_TEST
+       "Build Kafka integration tests when ENABLE_DMN_DMESGNET is enabled" OFF)
 option(BUILD_NDEBUG "Define NDEBUG to disable assertions" OFF)
 option(DMN_BUILD_TESTS "Build and register Dmn unit tests" ON)
 option(DMN_ALLOW_DEPENDENCY_FETCH
        "Fetch missing build dependencies with CMake FetchContent" ON)
+option(ENABLE_DMN_DMESGNET
+       "Build the Protobuf-based DMesg/DMesgNet stack and Kafka transport" ON)
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
 option(ENABLE_ANCS_HARDWARE_TESTS
        "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
@@ -43,10 +46,15 @@ option(ENABLE_VALGRIND "Enable valgrind-based tests (ctest -L valgrind)" OFF)
 if (DMN_BUILD_TESTS)
   enable_testing()
 endif()
+
+if (BUILD_KAFKA_TEST AND NOT ENABLE_DMN_DMESGNET)
+  message(STATUS
+          "BUILD_KAFKA_TEST=ON but ENABLE_DMN_DMESGNET=OFF; Kafka integration tests are skipped.")
+endif()
 set(DMN_ANCS_HARDWARE_DEVICE "iPhone Old" CACHE STRING
     "Exact BlueZ display name or address used by opt-in ANCS hardware tests")
 
-if (BUILD_KAFKA_TEST)
+if (BUILD_KAFKA_TEST AND ENABLE_DMN_DMESGNET)
   set(DMN_KAFKA_BOOTSTRAP_SCRIPT
       "${PROJECT_SOURCE_DIR}/scripts/run-bookstrap-dmn.sh")
   set(DMN_KAFKA_BUILD_SCRIPT
@@ -204,23 +212,25 @@ if (ENABLE_FAULT_INJECTION)
   endif()
 endif()
 
-message(STATUS "Looking for Protobuf...")
-find_package(Protobuf QUIET)
+if (ENABLE_DMN_DMESGNET)
+  message(STATUS "Looking for Protobuf...")
+  find_package(Protobuf QUIET)
 
-if (NOT Protobuf_FOUND)
-  if (DMN_ALLOW_DEPENDENCY_FETCH)
-    FetchContent_Declare(protobuf
-                           GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-                           GIT_TAG        v30.0-rc1
-                           EXCLUDE_FROM_ALL
-    )
+  if (NOT Protobuf_FOUND)
+    if (DMN_ALLOW_DEPENDENCY_FETCH)
+      FetchContent_Declare(protobuf
+                             GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+                             GIT_TAG        v30.0-rc1
+                             EXCLUDE_FROM_ALL
+      )
 
-    FetchContent_MakeAvailable(protobuf)
-  else()
-    message(FATAL_ERROR
-            "Protobuf was not found and DMN_ALLOW_DEPENDENCY_FETCH=OFF. "
-            "Install Protobuf development files or provide it as a build "
-            "dependency before configuring Dmn.")
+      FetchContent_MakeAvailable(protobuf)
+    else()
+      message(FATAL_ERROR
+              "Protobuf was not found and DMN_ALLOW_DEPENDENCY_FETCH=OFF. "
+              "Install Protobuf development files or provide it as a build "
+              "dependency before configuring Dmn.")
+    endif()
   endif()
 endif()
 
@@ -248,47 +258,49 @@ if (DMN_BUILD_TESTS)
   endif()
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(RDKAFKA QUIET IMPORTED_TARGET rdkafka)
+if (ENABLE_DMN_DMESGNET)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(RDKAFKA QUIET IMPORTED_TARGET rdkafka)
 
-if (TARGET PkgConfig::RDKAFKA)
-  find_path(DMN_RDKAFKA_INCLUDE_DIR
-              NAMES rdkafka.h
-              HINTS ${RDKAFKA_INCLUDE_DIRS}
-              PATH_SUFFIXES librdkafka
-  )
-  if (NOT DMN_RDKAFKA_INCLUDE_DIR)
-    message(FATAL_ERROR
-            "librdkafka was found through pkg-config, but rdkafka.h could "
-            "not be located in its include directories.")
-  endif()
-  set(DMN_RDKAFKA_TARGET PkgConfig::RDKAFKA)
-else()
-  if (NOT DMN_ALLOW_DEPENDENCY_FETCH)
-    message(FATAL_ERROR
-            "librdkafka was not found through pkg-config and "
-            "DMN_ALLOW_DEPENDENCY_FETCH=OFF. Install librdkafka development "
-            "files or provide it as a build dependency before configuring Dmn.")
-  endif()
-
-  # librdkafka registers its own tests, which Dmn does not use.
-  set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL
-      "Build librdkafka tests" FORCE)
-  FetchContent_Declare(rdkafka
-                         GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
-                         GIT_TAG        v2.8.0
-                         EXCLUDE_FROM_ALL
-  )
-  FetchContent_MakeAvailable(rdkafka)
-
-  set(DMN_RDKAFKA_INCLUDE_DIR "${rdkafka_SOURCE_DIR}/src")
-  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib")
+  if (TARGET PkgConfig::RDKAFKA)
+    find_path(DMN_RDKAFKA_INCLUDE_DIR
+                NAMES rdkafka.h
+                HINTS ${RDKAFKA_INCLUDE_DIRS}
+                PATH_SUFFIXES librdkafka
+    )
+    if (NOT DMN_RDKAFKA_INCLUDE_DIR)
+      message(FATAL_ERROR
+              "librdkafka was found through pkg-config, but rdkafka.h could "
+              "not be located in its include directories.")
+    endif()
+    set(DMN_RDKAFKA_TARGET PkgConfig::RDKAFKA)
   else()
-    set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so")
+    if (NOT DMN_ALLOW_DEPENDENCY_FETCH)
+      message(FATAL_ERROR
+              "librdkafka was not found through pkg-config and "
+              "DMN_ALLOW_DEPENDENCY_FETCH=OFF. Install librdkafka development "
+              "files or provide it as a build dependency before configuring Dmn.")
+    endif()
+
+    # librdkafka registers its own tests, which Dmn does not use.
+    set(RDKAFKA_BUILD_TESTS OFF CACHE BOOL
+        "Build librdkafka tests" FORCE)
+    FetchContent_Declare(rdkafka
+                           GIT_REPOSITORY https://github.com/confluentinc/librdkafka.git
+                           GIT_TAG        v2.8.0
+                           EXCLUDE_FROM_ALL
+    )
+    FetchContent_MakeAvailable(rdkafka)
+
+    set(DMN_RDKAFKA_INCLUDE_DIR "${rdkafka_SOURCE_DIR}/src")
+    if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+      set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.dylib")
+    else()
+      set(rdkafka_LIB "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src/librdkafka.so")
+    endif()
+    set(DMN_RDKAFKA_TARGET rdkafka)
+    set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
   endif()
-  set(DMN_RDKAFKA_TARGET rdkafka)
-  set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/_deps/rdkafka-build/src")
 endif()
 
 if(BUILD_NDEBUG)

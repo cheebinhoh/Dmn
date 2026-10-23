@@ -44,17 +44,23 @@ existing facade into the gateway.
 standalone producer/consumer smoke examples. They read broker credentials from
 environment variables, use a fixed topic, and are not production applications.
 The sender produces ten values. The receiver polls until SIGINT and prints
-received payloads.
+received payloads. These targets and their version tests are built only when
+`ENABLE_DMN_DMESGNET=ON`; this option also controls Protobuf-based DMesg and
+the librdkafka dependency.
 
 ## Test/build surface
 
-The default CMake test list covers queue variants, async/pipe/pub-sub,
-DMesg/DMesgNet, state, runtime, sockets, and interval-tree. Kafka tests are
-registered only when `BUILD_KAFKA_TEST` is enabled. Several DMesg/DMesgNet tests
-are disabled or commented out, and a general test target is marked
-non-terminating. `dmn-standalone-header-check` also compiles each supported
-public header as an independent translation unit. Removed legacy components
-are not registered as normal behavior tests. The focused
+The default CMake test list covers queue variants, async/pipe/pub-sub, state,
+runtime, sockets, and interval-tree. DMesg/DMesgNet tests are added only when
+`ENABLE_DMN_DMESGNET` is enabled; Kafka integration tests additionally require
+`BUILD_KAFKA_TEST=ON`. If Kafka tests are requested while the feature is off,
+CMake reports that they are skipped rather than failing configuration. Several
+DMesg/DMesgNet tests are disabled or commented out,
+and a general test target is marked non-terminating.
+`dmn-standalone-header-check` also compiles each supported public header as an
+independent translation unit; it excludes DMesg/Kafka headers when that
+optional stack is disabled. Removed legacy components are not registered as
+normal behavior tests. The focused
 `dmn-test-dmesg-conflict` target covers current handler-scoped conflict
 behavior and the Phase 1 ordered handler-event observer without the fixed
 sleeps used by older DMesg conflict tests. It does not implement or prove the

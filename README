@@ -69,7 +69,10 @@ cmake -S . -B build-app \
   -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
   -DENABLE_APP_BLUETOOTH_GTK=ON \
   -DENABLE_APP_BLUETOOTH=OFF \
-  -DENABLE_APP_BLUEZ_DISCOVERY=OFF
+  -DENABLE_APP_BLUEZ_DISCOVERY=OFF \
+  -DENABLE_DMN_DMESGNET=OFF \
+  -DDMN_BUILD_TESTS=OFF \
+  -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
 cmake --build build-app --target dmn-bluetooth-gtk --parallel 2
 cmake --install build-app --component Runtime
 "$HOME/.local/bin/dmn-bluetooth-gtk"
@@ -362,7 +365,8 @@ docker rmi dmn
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `BUILD_NDEBUG` | `OFF` | Define `NDEBUG` for the build. |
-| `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests. |
+| `BUILD_KAFKA_TEST` | `OFF` | Build the additional Kafka integration tests when `ENABLE_DMN_DMESGNET` is also `ON`; otherwise they are skipped with a CMake status message. |
+| `ENABLE_DMN_DMESGNET` | `ON` | Build the Protobuf-based DMesg/DMesgNet messaging stack and its Kafka transport; requires Protobuf and librdkafka. Set `OFF` for applications that do not use DMesg messaging, such as the GTK Bluetooth app. DMesg, DMesgNet, and Kafka tests are registered only when this option is `ON`; other tests remain available. |
 | `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and generic D-Bus client. Requires libdbus development files and pkg-config; private-bus tests require `dbus-daemon`. |
 | `ENABLE_BLUEZ` | `OFF` | Build the Linux BlueZ library; automatically enables its `ENABLE_DBUS` dependency. |
 | `ENABLE_ANCS` | `OFF` | Build the backend-neutral ANCS protocol library. |
@@ -377,6 +381,20 @@ The options are cached in the build directory. Reconfigure that directory
 with the desired options before building. The `dmn` CTest label selects the
 regular unit tests; `kafka`, `fault-injection`, and `valgrind` select their
 respective optional test groups.
+
+`ENABLE_DMN_DMESGNET` controls the complete DMesg messaging layer: local
+`Dmn_DMesg`, `Dmn_DMesgNet`, the Kafka adapter and examples, and the
+DMesgNet-over-D-Bus facade. When enabled, CMake discovers or fetches both
+Protobuf and librdkafka according to `DMN_ALLOW_DEPENDENCY_FETCH`. Generic
+D-Bus I/O, BlueZ, and the GTK Bluetooth app are independent of this layer.
+For a GTK-only Flatpak build, explicitly pass
+`-DENABLE_DMN_DMESGNET=OFF` in the module's `config-opts`: this option defaults
+to `ON`, and disabling dependency fetching alone does not disable the feature
+or remove its Protobuf/librdkafka requirements.
+When `DMN_BUILD_TESTS=ON`, the DMesg/DMesgNet/Kafka-specific tests are added
+only if `ENABLE_DMN_DMESGNET=ON`; other tests can run with the messaging stack
+disabled. The GTK application-only build command above disables the unused
+messaging stack and does not discover or fetch Protobuf or librdkafka.
 
 On Linux, to enable the non-hardware options used in the example below,
 including Kafka, D-Bus, BlueZ, ANCS, both Bluetooth CLI programs, Valgrind,

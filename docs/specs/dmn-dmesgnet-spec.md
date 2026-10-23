@@ -10,6 +10,14 @@ code. This document does not prescribe a complete Raft implementation.
 
 ## 1. Purpose and relationship to `Dmn_DMesg`
 
+The DMesg/DMesgNet feature family is controlled by
+`ENABLE_DMN_DMESGNET` (default `ON`). It includes `Dmn_DMesg`,
+`Dmn_DMesgNet`, the Kafka transport/examples, and the DMesgNet-over-D-Bus
+facade. Protobuf and librdkafka are discovered or fetched only when this
+feature is enabled. The independent generic D-Bus byte-I/O layer does not
+require DMesgNet. DMesg/DMesgNet/Kafka tests are registered only when the
+feature is enabled; unrelated tests remain available without it.
+
 `Dmn_DMesgNet` publicly derives from `Dmn_DMesg`. It retains the local
 DMesg handler API and publisher/subscriber behavior, and adds a bridge between
 that local in-process message bus and caller-supplied

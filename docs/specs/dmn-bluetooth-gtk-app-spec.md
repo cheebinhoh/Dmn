@@ -187,11 +187,22 @@ cmake -S . -B build-flatpak \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_APP_BLUETOOTH_GTK=ON \
   -DENABLE_APP_BLUETOOTH=OFF \
+  -DENABLE_DMN_DMESGNET=OFF \
+  -DDMN_BUILD_TESTS=OFF \
+  -DDMN_ALLOW_DEPENDENCY_FETCH=OFF \
+  -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn \
   -DCMAKE_INSTALL_PREFIX=/app
 cmake --build build-flatpak --target dmn-bluetooth-gtk --parallel
 DESTDIR="$PWD/stage" cmake --install build-flatpak \
   --component Runtime
 ```
+
+In a Flatpak manifest, include `-DENABLE_DMN_DMESGNET=OFF` in the module's
+`config-opts`. The option defaults to `ON`; setting
+`DMN_ALLOW_DEPENDENCY_FETCH=OFF` alone does not omit the messaging stack or its
+Protobuf/librdkafka dependency requirements. When using a GNOME runtime, select
+the same branch for `org.gnome.Platform` and `org.gnome.Sdk` (for example,
+runtime version `50` with SDK version `50`).
 
 Use a dedicated build directory for packaging and set the final prefix at
 configure time; do not override it with `cmake --install --prefix`, because
@@ -202,7 +213,11 @@ can follow this same convention without being added to this app's manifest.
 Do not install the `Development` component into the app payload. Keep the Dmn
 libraries available to build and link the executable; the component split
 only excludes their development archives and headers from the installed
-runtime image. The Flathub manifest and submission content must be authored
+runtime image. `ENABLE_DMN_DMESGNET=OFF` excludes the unused DMesg/DMesgNet
+messaging family, which is the part that requires Protobuf and librdkafka.
+The GTK Bluetooth app uses the independent generic D-Bus and BlueZ components,
+so this app-only configuration does not discover or fetch Protobuf or Kafka.
+The Flathub manifest and submission content must be authored
 by the maintainer in accordance with Flathub's current policy.
 
 ### Distribution channels and packaging constraints
