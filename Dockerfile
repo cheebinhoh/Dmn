@@ -56,7 +56,7 @@ RUN cmake -B build \
     cmake --build build/ -j2
 
 
-ENV CTEST_LABEL="dmn|kafka|valgrind|fault-injection"
+ENV CTEST_LABEL="^(dmn|kafka|valgrind|fault-injection)$"
 
 # Entry point
 ENTRYPOINT ["/bin/bash", "-c", "set -e; export DMN_KAFKA_LISTENERS=\"${DMN_KAFKA_LISTENERS:-PLAINTEXT://0.0.0.0:9092}\"; export DMN_KAFKA_ADVERTISED_LISTENERS=\"${DMN_KAFKA_ADVERTISED_LISTENERS:-PLAINTEXT://${HOSTNAME}:9092}\"; /app/build/scripts/run-bookstrap-dmn.sh; cd /app/build; ctest -L \"${CTEST_LABEL}\" -VV --output-on-failure; exec /bin/bash"]
