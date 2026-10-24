@@ -407,8 +407,8 @@ separately from nearby discovery results.
   `ENABLE_DBUS`, its required lower library layer. `ENABLE_BLUEZ=ON` builds/
   installs `dmn-bluez` and its public headers and enables its library tests;
   it does not itself select a production application.
-- `ENABLE_APP_BLUEZ_DISCOVERY=ON` enables `ENABLE_BLUEZ` and builds/
-  installs `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH=ON` enables
+- `ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON` enables `ENABLE_BLUEZ` and builds/
+  installs `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH_CLI=ON` enables
   `ENABLE_ANCS` and `ENABLE_BLUEZ`; D-Bus is enabled transitively by BlueZ.
   Both app options default off. The default build therefore omits both
   executables and all optional D-Bus/BlueZ/ANCS libraries. Non-Linux
