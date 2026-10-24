@@ -523,7 +523,7 @@ the selected adapter; it still cannot promise all nearby devices.
 
 Executable: `dmn-bluez-cli`, implemented by the
 `src/app/dmn-bluez-cli.cpp` command-line frontend and built only when
-`ENABLE_APP_BLUEZ_DISCOVERY=ON`. This application option enables the BlueZ
+`ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON`. This application option enables the BlueZ
 library layer; BlueZ in turn enables its D-Bus dependency.
 
 ```text
@@ -567,7 +567,7 @@ dmn-bluez-cli --list-services <device-address-or-path>
 ## 5. Build contract
 
 - The declared defaults for `ENABLE_DBUS`, `ENABLE_BLUEZ`, `ENABLE_ANCS`,
-  `ENABLE_APP_BLUEZ_DISCOVERY`, and `ENABLE_APP_BLUETOOTH` are all off. The
+  `ENABLE_APP_BLUEZ_DISCOVERY_CLI`, and `ENABLE_APP_BLUETOOTH_CLI` are all off. The
   default configuration therefore builds neither Bluetooth application nor
   its optional D-Bus/BlueZ/ANCS libraries. Enabling an application option
   enables its required library layers.
@@ -575,15 +575,15 @@ dmn-bluez-cli --list-services <device-address-or-path>
 - `ENABLE_BLUEZ` is Linux-only and enables `ENABLE_DBUS` because `dmn-bluez`
   links to `dmn-dbus`. To build only the BlueZ library and tests, set
   `ENABLE_BLUEZ=ON` while leaving both app options off.
-- `ENABLE_APP_BLUEZ_DISCOVERY=ON` enables `ENABLE_BLUEZ` (and transitively
+- `ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON` enables `ENABLE_BLUEZ` (and transitively
   `ENABLE_DBUS`) and builds the production discovery CLI. The BlueZ library
   option does not itself select the discovery app; set
-  `ENABLE_APP_BLUEZ_DISCOVERY=OFF` to omit it.
+  `ENABLE_APP_BLUEZ_DISCOVERY_CLI=OFF` to omit it.
 - `dmn-bluez` links to `dmn-dbus`; `dmn-bluez-cli` links to
   `dmn-bluez`. Do not make libdbus, BlueZ, or Bluetooth hardware dependencies
   of core `dmn`.
 - Install the BlueZ public header/library when BlueZ is enabled; install the
-  CLI and its man page only when `ENABLE_APP_BLUEZ_DISCOVERY=ON`.
+  CLI and its man page only when `ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON`.
 - The inventory/discovery API must be usable without `ENABLE_ANCS`.
 - Public headers compile independently and do not include libdbus headers.
 
@@ -746,7 +746,7 @@ the CLI stopped its owned session without stopping the other discovery
 session.
 
 The inventory/discovery milestone is complete only when
-`ENABLE_APP_BLUEZ_DISCOVERY=ON` configures and builds,
+`ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON` configures and builds,
 the private-bus API and CLI tests pass, standalone headers compile, and the
 opt-in adapter smoke test has been recorded for at least one supported Linux
 environment. Do not block this milestone on iPhone or ANCS feasibility.
@@ -766,8 +766,8 @@ environment. Do not block this milestone on iPhone or ANCS feasibility.
    installation rules. Verify snapshot mode is read-only and scan mode never
    pairs or connects.
 6. Run private-bus tests with both app options `OFF` and `ENABLE_BLUEZ=ON`,
-   then with `ENABLE_APP_BLUEZ_DISCOVERY=ON` and
-   `ENABLE_APP_BLUETOOTH=OFF`. Record the opt-in adapter smoke test before
+   then with `ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON` and
+   `ENABLE_APP_BLUETOOTH_CLI=OFF`. Record the opt-in adapter smoke test before
    marking this milestone complete.
 7. Connection control is implemented separately from inventory/discovery.
    Continue closing its owner-loss/removal/timeout acceptance gaps without

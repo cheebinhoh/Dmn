@@ -7,82 +7,113 @@ provides building blocks for networking, message exchange, concurrency control,
 and conflict resolution, with an emphasis on delegation and integration into
 existing applications.
 
+On Linux, Dmn also provides `dmn-bluetooth-gtk`, an optional GTK 4/libadwaita
+desktop app for browsing BlueZ devices and explicitly managing Bluetooth
+connections and ANCS notification monitoring. It is a separate frontend from
+the `dmn-bluez-cli` discovery tool and `dmn-bluetooth-cli` ANCS monitor.
+
 ## Documentation
 
 Generated documentation: <https://cheebinhoh.github.io/Dmn/>
 
 ## Build, test, and install
 
-The project uses CMake and fetches its third-party dependencies during
-configuration when they are not available locally. ICU development files are
-required. On Ubuntu, install the native build prerequisites with:
+The default Linux CI workflow uses the Dockerfile to build and test the
+complete configuration: DMesg messaging, Kafka, all three Bluetooth
+applications, and their registered tests. A plain CMake configure remains
+lean: each app option defaults to `OFF`, while enabling an app automatically
+enables its required ANCS, BlueZ, and D-Bus libraries. CMake fetches missing
+third-party dependencies when `DMN_ALLOW_DEPENDENCY_FETCH=ON`.
+
+### 1. Complete Linux build and test
+
+On Ubuntu 24.04, install the native build and test prerequisites:
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake git libicu-dev
+sudo apt-get install build-essential cmake git pkg-config libicu-dev \
+  libdbus-1-dev dbus-daemon libgtk-4-dev libadwaita-1-dev \
+  desktop-file-utils appstream valgrind openjdk-17-jre-headless curl tar \
+  unzip automake autoconf libtool
 ```
 
-Choose one of these workflows. Optional applications and libraries are
-selected at configure time; see [Build options](#build-options) for their
-dependencies and flags.
-
-### 1. Developer build and install
-
-Build the project, run the regular unit tests, and install the reusable
-headers and libraries for development. Setting the prefix at configure time
-also makes it easy to install locally without `sudo`:
+Configure and build all supported software features. This enables the two
+Bluetooth CLIs, GTK desktop app, Kafka integration tests, Valgrind test
+variants, and fault-injection tests; physical-device tests remain opt-in.
+The optional application flags are the only flags needed to select the apps:
+their ANCS, BlueZ, and D-Bus dependencies are enabled automatically.
 
 ```bash
-cmake -S . -B build-dev \
-  -DCMAKE_BUILD_TYPE=Debug \
+cmake -S . -B build-all -DCMAKE_BUILD_TYPE=Debug \
+  -DDMN_BUILD_TESTS=ON \
+  -DDMN_ALLOW_DEPENDENCY_FETCH=ON \
+  -DBUILD_KAFKA_TEST=ON \
+  -DENABLE_APP_BLUEZ_DISCOVERY_CLI=ON \
+  -DENABLE_APP_BLUETOOTH_CLI=ON \
+  -DENABLE_APP_BLUETOOTH_GTK=ON \
+  -DENABLE_VALGRIND=ON \
+  -DENABLE_FAULT_INJECTION=ON
+cmake --build build-all --parallel 2
+./build-all/scripts/run-bookstrap-dmn.sh
+ctest --test-dir build-all --output-on-failure
+./build-all/scripts/run-bookstrap-dmn.sh stop
+```
+
+CTest runs every test registered by this configuration, including the GTK
+headless smoke/metadata tests. Kafka tests need Java and a first-run download;
+the helper starts a local broker and creates the required topic. The GUI is
+compiled and tested without opening a desktop window. To build and run the
+same full Linux configuration in the project's Docker image, see
+[Docker](#docker). The default Linux CI workflow builds and tests this image.
+
+### 2. Minimal GTK app build and runtime install
+
+For the GTK Bluetooth app without Dmn's DMesg/DMesgNet messaging stack (and
+therefore without Protobuf, librdkafka, or Kafka), install only its required
+Ubuntu development packages:
+
+```bash
+sudo apt-get install build-essential cmake git pkg-config libicu-dev \
+  libdbus-1-dev libgtk-4-dev libadwaita-1-dev
+```
+
+Configure with just the GTK app enabled. This minimal app-only build disables
+tests and dependency fetching; GTK automatically enables its ANCS, BlueZ, and
+D-Bus libraries. Set the final install prefix at configure time because the
+desktop launcher and D-Bus activation service contain prefix-dependent paths.
+
+```bash
+cmake -S . -B build-gtk-app \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
+  -DENABLE_APP_BLUETOOTH_GTK=ON \
+  -DENABLE_DMN_DMESGNET=OFF \
+  -DDMN_BUILD_TESTS=OFF \
+  -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
+cmake --build build-gtk-app --target dmn-bluetooth-gtk --parallel 2
+cmake --install build-gtk-app --component Runtime
+"$HOME/.local/bin/dmn-bluetooth-gtk"
+```
+
+`Runtime` installs the executable and desktop assets. `Development` installs
+the reusable headers, static libraries, and developer tools; an unqualified
+`cmake --install build-gtk-app` installs both components.
+
+### 3. Developer build and install
+
+For the core library and regular unit tests without optional Bluetooth apps:
+
+```bash
+cmake -S . -B build-dev -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_INSTALL_PREFIX="$HOME/.local"
 cmake --build build-dev --parallel 2
 ctest --test-dir build-dev -L dmn --output-on-failure
 cmake --install build-dev --component Development
 ```
 
-To install both development files and runtime files for the applications
-enabled in that build, omit `--component Development`:
-
-```bash
-cmake --install build-dev
-```
-
-### 2. Application runtime build and install
-
-Build the application(s) you want and install only their runnable files and
-assets. This example builds the GTK Bluetooth app; it requires a Linux
-desktop, BlueZ, GTK 4.14+, libadwaita 1.5+, and GLib schema tools. On Ubuntu,
-install the additional development dependencies with:
-
-```bash
-sudo apt-get install libdbus-1-dev libgtk-4-dev libadwaita-1-dev
-```
-
-Configure a dedicated build directory with the desired application options
-and the final install prefix. `Runtime` installs all runtime files for the
-applications enabled in that build:
-
-```bash
-cmake -S . -B build-app \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
-  -DENABLE_APP_BLUETOOTH_GTK=ON \
-  -DENABLE_APP_BLUETOOTH=OFF \
-  -DENABLE_APP_BLUEZ_DISCOVERY=OFF \
-  -DENABLE_DMN_DMESGNET=OFF \
-  -DDMN_BUILD_TESTS=OFF \
-  -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
-cmake --build build-app --target dmn-bluetooth-gtk --parallel 2
-cmake --install build-app --component Runtime
-"$HOME/.local/bin/dmn-bluetooth-gtk"
-```
-
-`Runtime` contains installed application executables, desktop assets, and any
-shared libraries. `Development` contains reusable public headers, static
-libraries, and developer tools. A normal `cmake --install` installs both.
-Keep the configured prefix when installing: the GTK desktop launcher and
-D-Bus activation service are generated with prefix-dependent paths.
+To run every test registered in this developer configuration, use
+`ctest --test-dir build-dev --output-on-failure`. Optional applications and
+test groups are selected at configure time; see [Build options](#build-options).
 
 ## Optional build and test configurations
 
@@ -187,7 +218,7 @@ build both optional Bluetooth CLIs:
 
 ```bash
 cmake -S . -B build-cli -DCMAKE_BUILD_TYPE=Debug \
-  -DENABLE_APP_BLUEZ_DISCOVERY=ON -DENABLE_APP_BLUETOOTH=ON \
+  -DENABLE_APP_BLUEZ_DISCOVERY_CLI=ON -DENABLE_APP_BLUETOOTH_CLI=ON \
   -DENABLE_APP_BLUETOOTH_GTK=OFF \
   -DCMAKE_INSTALL_PREFIX="$HOME/.local"
 cmake --build build-cli --target dmn-bluez-cli dmn-bluetooth-cli \
@@ -279,10 +310,9 @@ The GTK app requires a running BlueZ system service and a graphical desktop
 session.
 
 GTK 4 4.14 or newer and libadwaita 1.5 or newer are required. Follow the
-[runtime build and install](#2-application-runtime-build-and-install)
-workflow above to build and install this app; its example enables GTK and
-disables both CLIs. The GTK option enables the required ANCS, BlueZ, and D-Bus
-libraries but remains off in default/headless builds.
+[minimal GTK app build](#2-minimal-gtk-app-build-and-runtime-install) above
+to build and install this app. The GTK option enables the required ANCS,
+BlueZ, and D-Bus libraries but remains off in default builds.
 
 For the implemented UI, remaining features, and current design details, see
 the [GTK application specification](docs/specs/dmn-bluetooth-gtk-app-spec.md)
@@ -332,12 +362,14 @@ Start it interactively with its normal entrypoint:
 docker run -it --rm dmn
 ```
 
-The image enables its non-hardware CMake options (the GTK desktop app is not
-included). On startup, the entrypoint
-bootstraps the Kafka topic and runs the `dmn`, `kafka`, `valgrind`, and
-`fault-injection` CTest groups. If they pass, it opens a Bash prompt in the
-container; if they fail, the entrypoint exits without opening the prompt. The
-run command removes the container when you exit because it uses `--rm`.
+The image installs GTK 4/libadwaita development packages, enables all three
+applications plus Kafka, Valgrind, and fault-injection tests, and builds all
+configured targets. On startup, the entrypoint bootstraps Kafka and runs the
+regular, CLI, GTK, Kafka, Valgrind, and fault-injection tests. These tests do
+not launch a graphical window; showing the app itself requires forwarding a
+host graphical session. If tests pass, the container opens a Bash prompt; if
+they fail, it exits. The run command removes the container on exit because it
+uses `--rm`. The default Linux CI workflow builds and runs this Docker image.
 
 To enter a shell immediately without starting Kafka or running tests, bypass
 the entrypoint:
@@ -346,9 +378,8 @@ the entrypoint:
 docker run -it --rm --entrypoint /bin/bash dmn
 ```
 
-The image is built with `BUILD_NDEBUG=ON`, which disables assertions. Use a
-native build with `BUILD_NDEBUG=OFF` when assertions are needed. To build with
-Docker Buildx and load the image into the local Docker engine:
+The Docker build leaves assertions enabled. To build with Docker Buildx and
+load the image into the local Docker engine:
 
 ```bash
 docker buildx build -t dmn:latest --load .
@@ -370,10 +401,10 @@ docker rmi dmn
 | `ENABLE_DBUS` | `OFF` | Build the optional D-Bus signal I/O extension and generic D-Bus client. Requires libdbus development files and pkg-config; private-bus tests require `dbus-daemon`. |
 | `ENABLE_BLUEZ` | `OFF` | Build the Linux BlueZ library; automatically enables its `ENABLE_DBUS` dependency. |
 | `ENABLE_ANCS` | `OFF` | Build the backend-neutral ANCS protocol library. |
-| `ENABLE_APP_BLUEZ_DISCOVERY` | `OFF` | Build and install `dmn-bluez-cli`; automatically enables `ENABLE_BLUEZ` and `ENABLE_DBUS`. |
-| `ENABLE_APP_BLUETOOTH` | `OFF` | Build and install `dmn-bluetooth-cli`; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. |
+| `ENABLE_APP_BLUEZ_DISCOVERY_CLI` | `OFF` | Build and install `dmn-bluez-cli`; automatically enables `ENABLE_BLUEZ` and `ENABLE_DBUS`. |
+| `ENABLE_APP_BLUETOOTH_CLI` | `OFF` | Build and install `dmn-bluetooth-cli`; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. |
 | `ENABLE_APP_BLUETOOTH_GTK` | `OFF` | Build and install the Linux GTK 4/libadwaita `dmn-bluetooth-gtk` desktop app; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. Requires GTK 4 4.14+, libadwaita 1.5+, and GLib schema tools. |
-| `ENABLE_ANCS_HARDWARE_TESTS` | `OFF` | Register the opt-in physical-iPhone test; requires `ENABLE_APP_BLUETOOTH=ON`. |
+| `ENABLE_ANCS_HARDWARE_TESTS` | `OFF` | Register the opt-in physical-iPhone test; requires `ENABLE_APP_BLUETOOTH_CLI=ON`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |
 
@@ -393,41 +424,8 @@ to `ON`, and disabling dependency fetching alone does not disable the feature
 or remove its Protobuf/librdkafka requirements.
 When `DMN_BUILD_TESTS=ON`, the DMesg/DMesgNet/Kafka-specific tests are added
 only if `ENABLE_DMN_DMESGNET=ON`; other tests can run with the messaging stack
-disabled. The GTK application-only build command above disables the unused
-messaging stack and does not discover or fetch Protobuf or librdkafka.
-
-On Linux, to enable the non-hardware options used in the example below,
-including Kafka, D-Bus, BlueZ, ANCS, both Bluetooth CLI programs, Valgrind,
-and fault injection, configure and build as shown. The optional GTK app has
-separate GTK/libadwaita dependencies described above. BlueZ tests use a private
-bus and do not require a physical adapter; the physical-iPhone test remains
-opt-in:
-
-```bash
-cmake -S . -B build-options -DCMAKE_BUILD_TYPE=Debug \
-  -DBUILD_NDEBUG=ON \
-  -DBUILD_KAFKA_TEST=ON \
-  -DENABLE_DBUS=ON \
-  -DENABLE_BLUEZ=ON \
-  -DENABLE_ANCS=ON \
-  -DENABLE_APP_BLUEZ_DISCOVERY=ON \
-  -DENABLE_APP_BLUETOOTH=ON \
-  -DENABLE_VALGRIND=ON \
-  -DENABLE_FAULT_INJECTION=ON
-cmake --build build-options --parallel 2
-```
-
-This configuration requires libdbus development files, pkg-config,
-`dbus-daemon`, Valgrind, and Java plus network access to bootstrap Kafka on
-first use. Run the Kafka helper before its tests, then run every registered
-test group with:
-
-```bash
-./build-options/scripts/run-bookstrap-dmn.sh
-ctest --test-dir build-options -L 'dmn|kafka|valgrind|fault-injection' \
-  --output-on-failure
-./build-options/scripts/run-bookstrap-dmn.sh stop
-```
-
-`BUILD_NDEBUG=ON` disables assertions, so use `OFF` if you want assertions
-enabled while running the full test groups.
+disabled. The minimal GTK application-only build above disables this stack,
+so it does not discover or fetch Protobuf or librdkafka. For the full
+Linux configuration, use the [complete build and test](#1-complete-linux-build-and-test)
+instructions. BlueZ tests use a private bus and do not require a physical
+adapter; physical-iPhone tests remain opt-in.

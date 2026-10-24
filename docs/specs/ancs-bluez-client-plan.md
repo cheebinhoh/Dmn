@@ -379,7 +379,7 @@ cleanup remain frontend-specific CLI tests.
   `ENABLE_ANCS` without BlueZ/D-Bus linkage; build
   `dmn-ancs-bluez-monitor` when both `ENABLE_ANCS` and `ENABLE_BLUEZ` are
   enabled, and the production `dmn-bluetooth-cli` executable only when
-  `ENABLE_APP_BLUETOOTH` is enabled.
+  `ENABLE_APP_BLUETOOTH_CLI` is enabled.
 - Test exact/ambiguous selectors, unrelated-device noninterference, discovery
   and Pair/Connect ordering, authorization/startup failures, ongoing events,
   output/privacy/escaping, SIGINT/SIGTERM cleanup, queue saturation, and
@@ -434,14 +434,14 @@ other iPhone/OS/BlueZ/adapter combinations.
 
 The physical CLI smoke test is registered only when
 `ENABLE_ANCS_HARDWARE_TESTS=ON`, which requires
-`ENABLE_APP_BLUETOOTH=ON`. That app option enables `ENABLE_ANCS` and
+`ENABLE_APP_BLUETOOTH_CLI=ON`. That app option enables `ENABLE_ANCS` and
 `ENABLE_BLUEZ`; BlueZ enables `ENABLE_DBUS`. It runs the production
 `dmn-bluetooth-cli` binary against the exact `DMN_ANCS_HARDWARE_DEVICE` selector
 (default `iPhone Old`), waits for ANCS readiness, and sends SIGINT to verify
 orderly shutdown. It is not part of Docker/default test runs. Enable it with:
 
 ```bash
-cmake -B build -DENABLE_APP_BLUETOOTH=ON -DENABLE_ANCS_HARDWARE_TESTS=ON \
+cmake -B build -DENABLE_APP_BLUETOOTH_CLI=ON -DENABLE_ANCS_HARDWARE_TESTS=ON \
   -DDMN_ANCS_HARDWARE_DEVICE="iPhone Old"
 cmake --build build --target dmn-bluetooth-cli dmn-test-bluez-device-list
 ctest --test-dir build -L hardware --output-on-failure
@@ -567,8 +567,8 @@ adapter/device/GATT client behind `ENABLE_BLUEZ` (declared default `OFF`,
 Linux-only); enabling BlueZ also enables `ENABLE_DBUS`, its required lower
 layer. `ENABLE_BLUEZ` does not enable ANCS or either production application, so
 the BlueZ library and tests can be built without those features.
-`ENABLE_APP_BLUEZ_DISCOVERY` enables `ENABLE_BLUEZ` (and transitively
-`ENABLE_DBUS`) and builds `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH` enables
+`ENABLE_APP_BLUEZ_DISCOVERY_CLI` enables `ENABLE_BLUEZ` (and transitively
+`ENABLE_DBUS`) and builds `dmn-bluez-cli`. `ENABLE_APP_BLUETOOTH_CLI` enables
 `ENABLE_ANCS` and `ENABLE_BLUEZ` (and transitively `ENABLE_DBUS`) and builds
 `dmn-bluetooth-cli`. Both application options default to `OFF`; the default
 configuration therefore omits both production apps and the optional D-Bus,
@@ -607,12 +607,12 @@ Do not make BlueZ, libdbus, libnotify, or a real adapter a dependency of core
 | Configuration | Required result |
 |---|---|
 | All optional Bluetooth options at defaults | Build neither production application nor optional D-Bus/BlueZ/ANCS libraries; core tests remain enabled and hardware tests remain off |
-| `ENABLE_APP_BLUEZ_DISCOVERY=OFF`, `ENABLE_APP_BLUETOOTH=OFF`, `ENABLE_ANCS=ON` | Build `dmn-ancs`, parser/session tests, and public headers without D-Bus or BlueZ |
+| `ENABLE_APP_BLUEZ_DISCOVERY_CLI=OFF`, `ENABLE_APP_BLUETOOTH_CLI=OFF`, `ENABLE_ANCS=ON` | Build `dmn-ancs`, parser/session tests, and public headers without D-Bus or BlueZ |
 | Both application options `OFF`, `ENABLE_BLUEZ=ON` on Linux | Also enables `ENABLE_DBUS`; build `dmn-bluez` and BlueZ tests without either production application or ANCS |
-| `ENABLE_APP_BLUEZ_DISCOVERY=ON`, `ENABLE_APP_BLUETOOTH=OFF` on Linux | Also enables `ENABLE_BLUEZ` and `ENABLE_DBUS`; build the BlueZ library/tests and `dmn-bluez-cli`, without ANCS |
-| `ENABLE_APP_BLUEZ_DISCOVERY=OFF`, `ENABLE_APP_BLUETOOTH=ON` on Linux | Also enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and transitively `ENABLE_DBUS`; build the ANCS, BlueZ, and D-Bus libraries/tests plus `dmn-bluetooth-cli` |
+| `ENABLE_APP_BLUEZ_DISCOVERY_CLI=ON`, `ENABLE_APP_BLUETOOTH_CLI=OFF` on Linux | Also enables `ENABLE_BLUEZ` and `ENABLE_DBUS`; build the BlueZ library/tests and `dmn-bluez-cli`, without ANCS |
+| `ENABLE_APP_BLUEZ_DISCOVERY_CLI=OFF`, `ENABLE_APP_BLUETOOTH_CLI=ON` on Linux | Also enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and transitively `ENABLE_DBUS`; build the ANCS, BlueZ, and D-Bus libraries/tests plus `dmn-bluetooth-cli` |
 | Both application options `ON` on Linux | Build both production applications and all library/test layers required by each |
-| `ENABLE_APP_BLUETOOTH=ON` plus `ENABLE_ANCS_HARDWARE_TESTS=ON` | Additionally register the physical-device production-CLI test with the `hardware` label; never enabled by default |
+| `ENABLE_APP_BLUETOOTH_CLI=ON` plus `ENABLE_ANCS_HARDWARE_TESTS=ON` | Additionally register the physical-device production-CLI test with the `hardware` label; never enabled by default |
 
 No matrix entry may require an adapter or paired phone. The ANCS-only
 configuration must remain portable to supported non-Linux builds; the

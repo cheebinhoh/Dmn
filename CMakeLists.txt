@@ -34,8 +34,10 @@ option(ENABLE_DMN_DMESGNET
 option(ENABLE_ANCS "Build the optional ANCS protocol library" OFF)
 option(ENABLE_ANCS_HARDWARE_TESTS
        "Enable opt-in ANCS tests that use a physical iPhone over BlueZ" OFF)
-option(ENABLE_APP_BLUEZ_DISCOVERY "Build the BlueZ discovery application" OFF)
-option(ENABLE_APP_BLUETOOTH "Build the Bluetooth ANCS monitor application" OFF)
+option(ENABLE_APP_BLUEZ_DISCOVERY_CLI
+       "Build the BlueZ discovery CLI application" OFF)
+option(ENABLE_APP_BLUETOOTH_CLI
+       "Build the Bluetooth ANCS monitor CLI application" OFF)
 option(ENABLE_APP_BLUETOOTH_GTK
        "Build the optional GTK Bluetooth monitor application" OFF)
 option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
@@ -74,12 +76,12 @@ endif()
 # Application options enable their required library layers; BlueZ in turn
 # enables the D-Bus layer. All optional Bluetooth applications and libraries
 # default off, so the default configuration does not require Linux or libdbus.
-if (ENABLE_APP_BLUEZ_DISCOVERY)
+if (ENABLE_APP_BLUEZ_DISCOVERY_CLI)
   set(ENABLE_BLUEZ ON CACHE BOOL
       "Build the optional Linux BlueZ library and tests" FORCE)
 endif()
 
-if (ENABLE_APP_BLUETOOTH)
+if (ENABLE_APP_BLUETOOTH_CLI)
   set(ENABLE_BLUEZ ON CACHE BOOL
       "Build the optional Linux BlueZ library and tests" FORCE)
   set(ENABLE_ANCS ON CACHE BOOL
@@ -98,9 +100,9 @@ if (ENABLE_BLUEZ)
       "Build the optional D-Bus transport/client library and tests" FORCE)
 endif()
 
-if (ENABLE_ANCS_HARDWARE_TESTS AND NOT ENABLE_APP_BLUETOOTH)
+if (ENABLE_ANCS_HARDWARE_TESTS AND NOT ENABLE_APP_BLUETOOTH_CLI)
   message(FATAL_ERROR
-          "ENABLE_ANCS_HARDWARE_TESTS=ON requires ENABLE_APP_BLUETOOTH=ON")
+          "ENABLE_ANCS_HARDWARE_TESTS=ON requires ENABLE_APP_BLUETOOTH_CLI=ON")
 endif()
 
 if (ENABLE_BLUEZ)

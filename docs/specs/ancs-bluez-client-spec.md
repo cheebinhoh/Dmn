@@ -1096,7 +1096,7 @@ specific iPhone/iOS/BlueZ/adapter combination.
 
 The physical CLI test is registered only with
 `ENABLE_ANCS_HARDWARE_TESTS=ON` (default `OFF`), which requires
-`ENABLE_APP_BLUETOOTH=ON`. That application option enables `ENABLE_ANCS` and
+`ENABLE_APP_BLUETOOTH_CLI=ON`. That application option enables `ENABLE_ANCS` and
 `ENABLE_BLUEZ`; BlueZ transitively enables `ENABLE_DBUS`. The exact target is
 configured with `DMN_ANCS_HARDWARE_DEVICE` (default `iPhone Old`). Run only on
 a Linux host with the target phone and adapter available; it is not part of

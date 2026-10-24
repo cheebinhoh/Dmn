@@ -54,7 +54,9 @@ jobs:
             libgtk-4-dev \
             libicu-dev
 
-      - name: Configure GTK application and development tests
+      # This standalone GTK check complements the complete Docker build above.
+      # It ensures GTK can be built without Dmn's messaging/Kafka dependencies.
+      - name: Configure GTK-only development tests without DMesgNet
         run: |
           cmake -S . -B build-gtk \
             -DCMAKE_BUILD_TYPE=Release \
@@ -63,8 +65,6 @@ jobs:
             -DDMN_BUILD_TESTS=ON \
             -DDMN_ALLOW_DEPENDENCY_FETCH=ON \
             -DENABLE_DMN_DMESGNET=OFF \
-            -DENABLE_APP_BLUEZ_DISCOVERY=OFF \
-            -DENABLE_APP_BLUETOOTH=OFF \
             -DENABLE_APP_BLUETOOTH_GTK=ON
 
       - name: Build all configured targets

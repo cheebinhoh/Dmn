@@ -92,9 +92,8 @@ Simultaneous monitors have not yet been hardware-qualified.
 
 ### Build integration
 
-The separate `ENABLE_APP_BLUETOOTH_GTK` option defaults to `OFF`; the existing
-`ENABLE_APP_BLUETOOTH` builds
-`dmn-bluetooth-cli` and must remain unchanged. Enabling the GTK option must
+The separate `ENABLE_APP_BLUETOOTH_GTK` option defaults to `OFF`;
+`ENABLE_APP_BLUETOOTH_CLI` builds `dmn-bluetooth-cli`. Enabling the GTK option must
 enable the required ANCS, BlueZ, and D-Bus library layers using the project's
 existing dependency pattern, but must not implicitly enable the CLI app
 option or build the CLI unless the user separately requests it. When enabled,
@@ -134,7 +133,7 @@ sudo apt install build-essential cmake pkg-config libicu-dev libdbus-1-dev \
 cmake -S . -B build-gtk \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_APP_BLUETOOTH_GTK=ON \
-  -DENABLE_APP_BLUETOOTH=OFF \
+  -DENABLE_APP_BLUETOOTH_CLI=OFF \
   -DCMAKE_INSTALL_PREFIX="$HOME/.local"
 cmake --build build-gtk --target dmn-bluetooth-gtk --parallel
 cmake --install build-gtk
@@ -186,7 +185,7 @@ For Flatpak or another app-only package, stage only the runtime component:
 cmake -S . -B build-flatpak \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_APP_BLUETOOTH_GTK=ON \
-  -DENABLE_APP_BLUETOOTH=OFF \
+  -DENABLE_APP_BLUETOOTH_CLI=OFF \
   -DENABLE_DMN_DMESGNET=OFF \
   -DDMN_BUILD_TESTS=OFF \
   -DDMN_ALLOW_DEPENDENCY_FETCH=OFF \
@@ -641,7 +640,7 @@ they are not planned feature work.
    - Test first: configure/build with the new option `OFF`; confirm no GTK or
      libadwaita
      package lookup occurs and no GTK target is added. Configure with it `ON`
-     while `ENABLE_APP_BLUETOOTH=OFF`; assert the CLI target remains absent
+     while `ENABLE_APP_BLUETOOTH_CLI=OFF`; assert the CLI target remains absent
      and the GTK target is present. Configure with it `ON` and GTK missing;
      require a direct actionable diagnostic. On the minimum supported
      Pop!_OS image, verify `pkg-config --modversion gtk4 libadwaita-1`.
@@ -655,7 +654,7 @@ they are not planned feature work.
    - Current focused verification commands are:
      `cmake -S . -B build-no-gui -DENABLE_APP_BLUETOOTH_GTK=OFF`,
      `cmake -S . -B build-gui -DENABLE_APP_BLUETOOTH_GTK=ON
-     -DENABLE_APP_BLUETOOTH=OFF`,
+     -DENABLE_APP_BLUETOOTH_CLI=OFF`,
      `cmake --build build-gui --target dmn-bluetooth-gtk`, and
      `ctest --test-dir build-gui -L dmn-gui --output-on-failure`.
 2. **Pure presentation model.**

@@ -263,7 +263,7 @@ endif()
 
 # Production application smoke/CLI tests are gated by their app options,
 # separately from the supporting library and integration-test blocks above.
-if (ENABLE_APP_BLUEZ_DISCOVERY)
+if (ENABLE_APP_BLUEZ_DISCOVERY_CLI)
   add_dmn_cli_version_test(dmn-bluez-cli)
 
   add_test(NAME dmn-bluez-cli-help
@@ -281,7 +281,7 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
   )
 endif()
 
-if (ENABLE_APP_BLUETOOTH)
+if (ENABLE_APP_BLUETOOTH_CLI)
   add_dmn_cli_version_test(dmn-bluetooth-cli)
 
   add_test(NAME dmn-bluetooth-cli-help
