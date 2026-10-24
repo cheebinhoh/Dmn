@@ -218,6 +218,14 @@ if (ENABLE_DMN_DMESGNET)
 
   if (NOT Protobuf_FOUND)
     if (DMN_ALLOW_DEPENDENCY_FETCH)
+      # The fetched dependency shares this build's CTest project. Keep its own
+      # tests out of Dmn's test registry, since EXCLUDE_FROM_ALL leaves those
+      # test executables unbuilt.
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL
+          "Build Protobuf tests" FORCE)
+      set(protobuf_BUILD_CONFORMANCE OFF CACHE BOOL
+          "Build Protobuf conformance tests" FORCE)
+
       FetchContent_Declare(protobuf
                              GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
                              GIT_TAG        v30.0-rc1
