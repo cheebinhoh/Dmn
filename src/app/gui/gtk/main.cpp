@@ -31,6 +31,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <exception>
 #include <iomanip>
@@ -4428,6 +4429,28 @@ void activate(GtkApplication *app, gpointer) {
 } // namespace
 
 auto main(int argc, char **argv) -> int {
+  // dmn-bluetooth-gtk-help  and  dmn-bluetooth-gtk-version command-line smoke
+  // tests will verify the app prints help/version and exits successfully.
+  for (int index = 1; index < argc; ++index) {
+    if (std::strcmp(argv[index], "--version") == 0) {
+      g_print("%s\n", DMN_VERSION);
+
+      return 0;
+    }
+
+    if (std::strcmp(argv[index], "--help") == 0 ||
+        std::strcmp(argv[index], "-h") == 0) {
+      g_print("Usage: %s [OPTION…]\n"
+              "Bluetooth device and ANCS notification monitor\n\n"
+              "Help Options:\n"
+              "  -h, --help     Show help options\n"
+              "  --version      Show application version\n",
+              argv[0]);
+
+      return 0;
+    }
+  }
+
   adw_init();
   auto *app = adw_application_new(kApplicationId, G_APPLICATION_DEFAULT_FLAGS);
   g_application_set_version(G_APPLICATION(app), DMN_VERSION);
