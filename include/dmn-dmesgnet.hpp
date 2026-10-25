@@ -81,12 +81,16 @@ namespace dmn {
  */
 #define DMN_DMESGNET_HEARTBEAT_IN_NS (1000000000)
 
-/** @brief Maximum number of consecutive heartbeat cycles to wait for a master
- *         acknowledgement before declaring self as master. */
+/**
+ * @brief Maximum number of consecutive heartbeat cycles to wait for a master
+ *         acknowledgement before declaring self as master.
+ */
 #define DMN_DMESGNET_MASTERPENDING_MAX_COUNTER (3)
 
-/** @brief Maximum number of consecutive heartbeat cycles to wait for a master
- *         synchronisation confirmation before triggering a re-election. */
+/**
+ * @brief Maximum number of consecutive heartbeat cycles to wait for a master
+ *         synchronisation confirmation before triggering a re-election.
+ */
 #define DMN_DMESGNET_MASTERSYNC_MAX_COUNTER (5)
 
 class Dmn_DMesgNet : public Dmn_DMesg {
@@ -145,12 +149,16 @@ protected:
       -> std::unordered_map<std::string, dmn::DMesgPb> & override;
 
 private:
-  /** @brief Create and start the background thread that reads from
-   *         @c m_input_handler and republishes inbound messages locally. */
+  /**
+   * @brief Create and start the background thread that reads from
+   *         @c m_input_handler and republishes inbound messages locally.
+   */
   void createInputHandlerProc();
 
-  /** @brief Register the internal publish-subscriber handler that forwards
-   *         outbound local messages to @c m_output_handler. */
+  /**
+   * @brief Register the internal publish-subscriber handler that forwards
+   *         outbound local messages to @c m_output_handler.
+   */
   void createSubscriptHandler();
 
   /**
@@ -158,8 +166,10 @@ private:
    */
   void createTimerProc();
 
-  /** @brief Drain and send any messages queued in the outbound pending
-   *         buffer (@c m_topic_outbound_pending_dmesgpb). */
+  /**
+   * @brief Drain and send any messages queued in the outbound pending
+   *         buffer (@c m_topic_outbound_pending_dmesgpb).
+   */
   void sendPendingOutboundQueueMessage();
 
   /**

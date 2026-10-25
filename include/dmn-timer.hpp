@@ -78,7 +78,7 @@ public:
    * destruction can wait until the latest queued deadline. Destruction must
    * not race public operations or be called from this timer's callback.
    */
-  ~Dmn_Timer() noexcept {
+  virtual ~Dmn_Timer() noexcept {
     {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_active = false;

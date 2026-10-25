@@ -131,7 +131,7 @@ public:
   /**
    * @brief Destroy the value and release its owned/shared storage.
    */
-  ~Dmn_DbusValue() = default;
+  virtual ~Dmn_DbusValue() = default;
 
   /**
    * @brief Construct a D-Bus boolean value.

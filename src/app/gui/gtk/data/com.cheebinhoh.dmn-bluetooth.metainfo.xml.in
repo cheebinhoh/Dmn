@@ -12,6 +12,12 @@
   <categories>
     <category>Utility</category>
   </categories>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="2026-10-25" type="stable" />
+  </releases>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">none</content_attribute>
+  </content_rating>
   <description>
     <p>
       Discover Bluetooth devices, choose which paired iPhones to connect, and

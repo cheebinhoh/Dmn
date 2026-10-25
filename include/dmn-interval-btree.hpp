@@ -239,7 +239,8 @@ public:
   using canonical_comparator =
       std::function<bool(const range_type &, const range_type &)>;
 
-  /** @brief Returns true when its first payload has strictly higher priority.
+  /**
+   * @brief Returns true when its first payload has strictly higher priority.
    */
   using priority_evaluator =
       std::function<bool(const value_type &, const value_type &)>;
@@ -254,7 +255,8 @@ public:
    */
   using entry_matcher = dmn::entry_matcher<value_type>;
 
-  /** @brief Callback receiving matching ranges and payloads by const reference.
+  /**
+   * @brief Callback receiving matching ranges and payloads by const reference.
    */
   using overlap_visitor =
       std::function<void(const range_type &, const value_type &)>;
@@ -269,7 +271,8 @@ public:
    */
   using callback_context = std::shared_ptr<void>;
 
-  /** @brief Registered callback receiving context, payload, and old/new state.
+  /**
+   * @brief Registered callback receiving context, payload, and old/new state.
    */
   using registered_state_callback =
       std::function<void(const callback_context &, const value_type &,
@@ -324,9 +327,10 @@ public:
    */
   Dmn_IntervalBTree &operator=(Dmn_IntervalBTree &&) = delete;
 
-  /** @brief Destroy the tree and release all uniquely owned nodes and entries.
+  /**
+   * @brief Destroy the tree and release all uniquely owned nodes and entries.
    */
-  ~Dmn_IntervalBTree() noexcept;
+  virtual ~Dmn_IntervalBTree() noexcept;
 
   /**
    * @brief Insert a copy of a payload for a valid range.
@@ -586,7 +590,7 @@ private:
       m_blocked = true;
     }
 
-    ~MutationBlockGuard() { m_blocked = m_wasBlocked; }
+    virtual ~MutationBlockGuard() { m_blocked = m_wasBlocked; }
 
     bool &m_blocked;
     bool m_wasBlocked;
@@ -701,7 +705,7 @@ private:
     bool m_isLeaf{true};
   };
 
-  static constexpr std::size_t kMinimumDegree = 2;
+  static constexpr std::size_t s_minimumDegree = 2;
 
   auto entryLess(const Entry &lhs, const Entry &rhs) const -> bool {
     const bool identicalRanges = lhs.m_range.m_start == rhs.m_range.m_start &&
@@ -828,7 +832,7 @@ private:
       m_root = std::make_unique<Node>();
     }
 
-    if (m_root->m_entries.size() == 2 * kMinimumDegree - 1) {
+    if (m_root->m_entries.size() == 2 * s_minimumDegree - 1) {
       auto newRoot = std::make_unique<Node>();
 
       newRoot->m_isLeaf = false;
@@ -963,9 +967,9 @@ private:
     }
 
     auto childIndex = node.m_children.size() - 1;
-    if (node.m_children[childIndex]->m_entries.size() == kMinimumDegree - 1) {
-      if (childIndex > 0 &&
-          node.m_children[childIndex - 1]->m_entries.size() >= kMinimumDegree) {
+    if (node.m_children[childIndex]->m_entries.size() == s_minimumDegree - 1) {
+      if (childIndex > 0 && node.m_children[childIndex - 1]->m_entries.size() >=
+                                s_minimumDegree) {
         borrowFromPrevious(node, childIndex);
       } else if (childIndex > 0) {
         mergeChildren(node, childIndex - 1);
@@ -989,9 +993,9 @@ private:
     }
 
     constexpr std::size_t childIndex = 0;
-    if (node.m_children[childIndex]->m_entries.size() == kMinimumDegree - 1) {
+    if (node.m_children[childIndex]->m_entries.size() == s_minimumDegree - 1) {
       if (node.m_children.size() > 1 &&
-          node.m_children[1]->m_entries.size() >= kMinimumDegree) {
+          node.m_children[1]->m_entries.size() >= s_minimumDegree) {
         borrowFromNext(node, childIndex);
       } else if (node.m_children.size() > 1) {
         mergeChildren(node, childIndex);
@@ -1075,11 +1079,11 @@ private:
         node.m_entries.erase(node.m_entries.begin() +
                              static_cast<std::ptrdiff_t>(index));
         refreshNodeMaxEnd(&node);
-      } else if (node.m_children[index]->m_entries.size() >= kMinimumDegree) {
+      } else if (node.m_children[index]->m_entries.size() >= s_minimumDegree) {
         node.m_entries[index] = removeMaximum(*node.m_children[index]);
         refreshNodeMaxEnd(&node);
       } else if (node.m_children[index + 1]->m_entries.size() >=
-                 kMinimumDegree) {
+                 s_minimumDegree) {
         node.m_entries[index] = removeMinimum(*node.m_children[index + 1]);
         refreshNodeMaxEnd(&node);
       } else {
@@ -1095,13 +1099,13 @@ private:
       return;
     }
 
-    if (node.m_children[index]->m_entries.size() == kMinimumDegree - 1) {
+    if (node.m_children[index]->m_entries.size() == s_minimumDegree - 1) {
       if (index > 0 &&
-          node.m_children[index - 1]->m_entries.size() >= kMinimumDegree) {
+          node.m_children[index - 1]->m_entries.size() >= s_minimumDegree) {
         borrowFromPrevious(node, index);
       } else if (index < node.m_entries.size() &&
                  node.m_children[index + 1]->m_entries.size() >=
-                     kMinimumDegree) {
+                     s_minimumDegree) {
         borrowFromNext(node, index);
       } else if (index < node.m_entries.size()) {
         mergeChildren(node, index);
@@ -1145,30 +1149,30 @@ private:
     auto sibling = std::make_unique<Node>();
     sibling->m_isLeaf = child.m_isLeaf;
 
-    constexpr auto maxKeys = 2 * kMinimumDegree - 1;
-    sibling->m_entries.reserve(kMinimumDegree - 1);
+    constexpr auto maxKeys = 2 * s_minimumDegree - 1;
+    sibling->m_entries.reserve(s_minimumDegree - 1);
 
     if (!child.m_isLeaf) {
-      sibling->m_children.reserve(kMinimumDegree);
+      sibling->m_children.reserve(s_minimumDegree);
     }
 
     parent.m_entries.reserve(parent.m_entries.size() + 1);
     parent.m_children.reserve(parent.m_children.size() + 1);
 
-    for (std::size_t index = kMinimumDegree; index < maxKeys; ++index) {
+    for (std::size_t index = s_minimumDegree; index < maxKeys; ++index) {
       sibling->m_entries.push_back(std::move(child.m_entries[index]));
     }
 
-    auto promoted = std::move(child.m_entries[kMinimumDegree - 1]);
-    child.m_entries.resize(kMinimumDegree - 1);
+    auto promoted = std::move(child.m_entries[s_minimumDegree - 1]);
+    child.m_entries.resize(s_minimumDegree - 1);
 
     if (!child.m_isLeaf) {
-      for (std::size_t index = kMinimumDegree; index < child.m_children.size();
+      for (std::size_t index = s_minimumDegree; index < child.m_children.size();
            ++index) {
         sibling->m_children.push_back(std::move(child.m_children[index]));
       }
 
-      child.m_children.resize(kMinimumDegree);
+      child.m_children.resize(s_minimumDegree);
     }
 
     parent.m_entries.insert(parent.m_entries.begin() +
@@ -1201,7 +1205,7 @@ private:
     }
 
     if (node.m_children[childIndex]->m_entries.size() ==
-        2 * kMinimumDegree - 1) {
+        2 * s_minimumDegree - 1) {
       splitChild(node, childIndex);
 
       if (entryLess(*node.m_entries[childIndex], *entry)) {

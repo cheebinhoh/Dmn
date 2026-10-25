@@ -97,7 +97,7 @@ public:
    * @brief Destroy the Kafka handle, flushing any pending producer messages
    * and closing the consumer session.
    */
-  ~Dmn_Kafka() noexcept;
+  ~Dmn_Kafka() noexcept override;
 
   Dmn_Kafka(const Dmn_Kafka &obj) = delete;
   Dmn_Kafka &operator=(const Dmn_Kafka &obj) = delete;

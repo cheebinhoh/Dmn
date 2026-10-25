@@ -362,7 +362,7 @@ public:
   /**
    * @brief Cancel the subscription when this token is destroyed.
    */
-  ~Dmn_DbusSubscription();
+  virtual ~Dmn_DbusSubscription();
 
   /**
    * @brief Subscriptions cannot be copied.
@@ -609,7 +609,8 @@ public:
    */
   void shutdown() noexcept;
 
-  /** @brief Clients cannot be copied because they own a connection and workers.
+  /**
+   * @brief Clients cannot be copied because they own a connection and workers.
    */
   Dmn_DbusClient(const Dmn_DbusClient &) = delete;
 
@@ -618,7 +619,8 @@ public:
    */
   auto operator=(const Dmn_DbusClient &) -> Dmn_DbusClient & = delete;
 
-  /** @brief Clients cannot be moved because their workers retain client state.
+  /**
+   * @brief Clients cannot be moved because their workers retain client state.
    */
   Dmn_DbusClient(Dmn_DbusClient &&) = delete;
 

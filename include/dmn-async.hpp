@@ -184,7 +184,7 @@ public:
       m_fut = m_p.get_future();
     }
 
-    ~Dmn_Async_Handle() = default;
+    virtual ~Dmn_Async_Handle() = default;
 
     Dmn_Async_Handle(const Dmn_Async_Handle &obj) = delete;
     Dmn_Async_Handle &operator=(const Dmn_Async_Handle &obj) = delete;

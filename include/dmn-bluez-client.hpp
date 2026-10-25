@@ -199,12 +199,13 @@ enum class Dmn_BluezEventKind {
   ServiceUnavailable,
 
   /**
-   * @brief A new BlueZ owner was found and inventory is ready.
+   * @brief BlueZ is available and its inventory is ready, including after
+   *        resynchronization.
    */
   ServiceAvailable,
 
   /**
-   * @brief A terminal or resynchronization error occurred.
+   * @brief An inventory, signal-decoding, or synchronization error occurred.
    */
   Error
 };
@@ -229,7 +230,7 @@ struct Dmn_BluezEvent {
   std::optional<Dmn_BluezDevice> device;
 
   /**
-   * @brief Human-readable detail for service and terminal error events.
+   * @brief Human-readable detail for service-state and error events.
    */
   std::string message;
 };

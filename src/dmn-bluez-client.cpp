@@ -864,7 +864,7 @@ private:
                           "D-Bus signal queue dropped BlueZ events; "
                           "resynchronizing inventory"});
       } else if (m_loading) {
-        if (m_staged_signals.size() >= kMaxStagedSignals) {
+        if (m_staged_signals.size() >= s_maxStagedSignals) {
           m_staged_signals.clear();
           m_stage_overflow = true;
           m_available = false;
@@ -1066,7 +1066,7 @@ private:
         return;
       }
 
-      if (m_event_queue.size() >= kMaxQueuedEvents) {
+      if (m_event_queue.size() >= s_maxQueuedEvents) {
         overflow = true;
         m_event_queue.clear();
         m_event_queue.push_back({Dmn_BluezEventKind::Error,
@@ -1217,8 +1217,8 @@ private:
     return inserted;
   }
 
-  static constexpr std::size_t kMaxStagedSignals{1024};
-  static constexpr std::size_t kMaxQueuedEvents{4096};
+  static constexpr std::size_t s_maxStagedSignals{1024};
+  static constexpr std::size_t s_maxQueuedEvents{4096};
   Dmn_DbusClient m_dbus;
   std::vector<Dmn_DbusSubscription> m_subscriptions;
   std::mutex m_event_order_mutex;

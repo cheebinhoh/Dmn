@@ -146,6 +146,7 @@ struct Dmn_AncsConfig {
    */
   std::optional<std::chrono::system_clock::time_point>
       notification_date_cutoff{};
+
   /**
    * @brief Maximum queued notification-attribute requests.
    *
@@ -222,7 +223,7 @@ public:
   /**
    * @brief Best-effort session cleanup; never throws.
    */
-  ~Dmn_AncsClient() noexcept;
+  virtual ~Dmn_AncsClient() noexcept;
 
   /**
    * @brief Clients cannot be copied because they own worker state.
