@@ -14,8 +14,8 @@ set(ABSL_PROPAGATE_CXX_STD ON)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
-# Update VERSION for a release; app binaries and AppStream metadata use it.
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" DMN_PROJECT_VERSION
+# Update VERSION.txt for a release; app binaries and AppStream metadata use it.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" DMN_PROJECT_VERSION
      LIMIT_COUNT 1)
 project(dmn VERSION "${DMN_PROJECT_VERSION}")
 
