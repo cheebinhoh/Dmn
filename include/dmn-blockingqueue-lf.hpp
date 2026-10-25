@@ -151,8 +151,10 @@ class Dmn_BlockingQueue_Lf
   static constexpr uint32_t s_epochDataSize{
       50}; ///< Number of epoch reclamation buckets.
 
-  /** @brief Atomically updated epoch metadata (cache-line aligned to avoid
-   *         false sharing). */
+  /**
+   * @brief Atomically updated epoch metadata (cache-line aligned to avoid
+   *         false sharing).
+   */
   struct alignas(16) EpochData {
     uint64_t m_in_flight_total{}; ///< Global in-flight API-call count when the
                                   ///< current epoch started.
@@ -174,8 +176,10 @@ public:
   using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::pop;
   using Dmn_BlockingQueue<Dmn_BlockingQueue_Lf<T>, T>::push;
 
-  /** @brief Default constructor: initialises the sentinel head/tail node and
-   *         epoch bookkeeping structures. */
+  /**
+   * @brief Default constructor: initialises the sentinel head/tail node and
+   *         epoch bookkeeping structures.
+   */
   Dmn_BlockingQueue_Lf();
 
   /**

@@ -65,7 +65,7 @@ public:
   /**
    * @brief Destroy the @c Dmn_DMesgNet_Kafka and release all resources.
    */
-  ~Dmn_DMesgNet_Kafka() noexcept;
+  virtual ~Dmn_DMesgNet_Kafka() noexcept;
 
   Dmn_DMesgNet_Kafka(const Dmn_DMesgNet_Kafka &obj) = delete;
   Dmn_DMesgNet_Kafka &operator=(const Dmn_DMesgNet_Kafka &obj) = delete;

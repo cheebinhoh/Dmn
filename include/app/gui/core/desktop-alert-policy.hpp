@@ -37,7 +37,8 @@ struct Dmn_DesktopAlert {
   std::string m_body;
 };
 
-/** @brief Return whether an ANCS event represents a newly added notification.
+/**
+ * @brief Return whether an ANCS event represents a newly added notification.
  */
 [[nodiscard]] auto shouldSendDesktopAlert(const Dmn_AncsEvent &event) -> bool;
 

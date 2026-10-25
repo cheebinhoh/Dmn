@@ -34,8 +34,10 @@ struct Dmn_Runtime_Task {
           std::coroutine_handle<promise_type>::from_promise(*this)};
     }
 
-    /** @brief Suspend the coroutine immediately on entry so the scheduler
-     *         controls when it first runs. */
+    /**
+     * @brief Suspend the coroutine immediately on entry so the scheduler
+     *         controls when it first runs.
+     */
     std::suspend_always initial_suspend() { return {}; }
 
     /**
@@ -48,7 +50,8 @@ struct Dmn_Runtime_Task {
        */
       bool await_ready() const noexcept { return false; }
 
-      /** @brief Resume the stored continuation (if any) via symmetric transfer.
+      /**
+       * @brief Resume the stored continuation (if any) via symmetric transfer.
        */
       void await_suspend(std::coroutine_handle<promise_type> h) const noexcept {
         if (h && h.promise().m_continuation) {
@@ -56,7 +59,8 @@ struct Dmn_Runtime_Task {
         }
       }
 
-      /** @brief No-op: the coroutine frame is already finished at this point.
+      /**
+       * @brief No-op: the coroutine frame is already finished at this point.
        */
       void await_resume() const noexcept {}
     };
@@ -66,7 +70,8 @@ struct Dmn_Runtime_Task {
      */
     FinalAwaiter final_suspend() noexcept { return {}; }
 
-    /** @brief Capture any exception thrown by the coroutine body for later
+    /**
+     * @brief Capture any exception thrown by the coroutine body for later
      *         rethrowing via @c Awaiter::await_resume(). */
     void unhandled_exception() { m_except = std::current_exception(); }
 
@@ -99,7 +104,8 @@ struct Dmn_Runtime_Task {
     std::coroutine_handle<promise_type>
         m_handle; ///< Handle to the task coroutine being awaited.
 
-    /** @brief Return @c true when the task has already completed (or the
+    /**
+     * @brief Return @c true when the task has already completed (or the
      *         handle is null), so no suspension is needed. */
     bool await_ready() const noexcept { return !m_handle || m_handle.done(); }
 
@@ -118,7 +124,8 @@ struct Dmn_Runtime_Task {
       return std::noop_coroutine();
     }
 
-    /** @brief Resume after task completion; rethrow any exception stored in
+    /**
+     * @brief Resume after task completion; rethrow any exception stored in
      *         the promise. */
     void await_resume() {
       if (m_handle) {
@@ -130,21 +137,24 @@ struct Dmn_Runtime_Task {
     }
   };
 
-  /** @brief Return an @c Awaiter that suspends the caller until this task
+  /**
+   * @brief Return an @c Awaiter that suspends the caller until this task
    *         finishes (non-const overload). */
   [[nodiscard]] Awaiter operator co_await() noexcept {
     return Awaiter{m_handle};
   }
 
-  /** @brief Return an @c Awaiter that suspends the caller until this task
+  /**
+   * @brief Return an @c Awaiter that suspends the caller until this task
    *         finishes (const overload). */
   [[nodiscard]] Awaiter operator co_await() const noexcept {
     return Awaiter{m_handle};
   }
 
-  /** @brief Destroy the coroutine frame if this task still owns a valid
+  /**
+   * @brief Destroy the coroutine frame if this task still owns a valid
    *         handle. */
-  ~Dmn_Runtime_Task() noexcept {
+  virtual ~Dmn_Runtime_Task() noexcept {
     if (m_handle) {
       m_handle.destroy();
     }

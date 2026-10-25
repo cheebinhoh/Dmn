@@ -224,11 +224,13 @@ namespace detail {
 // Platform specific implementation
 struct Dmn_Runtime_Manager_Impl;
 
-/** @brief Allocate and initialize a platform-specific runtime implementation.
+/**
+ * @brief Allocate and initialize a platform-specific runtime implementation.
  */
 auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl *;
 
-/** @brief Destroy and deallocate the platform-specific runtime implementation.
+/**
+ * @brief Destroy and deallocate the platform-specific runtime implementation.
  */
 void Dmn_Runtime_Manager_Impl_destroy(Dmn_Runtime_Manager_Impl **) noexcept;
 
@@ -362,7 +364,8 @@ public:
    */
   void exitMainLoop();
 
-  /** @brief Return true if the caller is running on the singleton async thread.
+  /**
+   * @brief Return true if the caller is running on the singleton async thread.
    */
   auto isRunInAsyncThread() -> bool;
 
@@ -392,7 +395,8 @@ protected:
   static void runPriorToCreateInstance();
 
 private:
-  /** @brief Wrap a job in a coroutine task and add it to the scheduler context.
+  /**
+   * @brief Wrap a job in a coroutine task and add it to the scheduler context.
    */
   void addRuntimeJobToCoroutineSchedulerContext(Dmn_Runtime_Job &&job);
 
@@ -420,7 +424,8 @@ private:
    */
   void registerSignalHandlerHookInternal(int signo, SignalHandlerHook &&hook);
 
-  /** @brief Run one iteration of the coroutine scheduler; returns true if work
+  /**
+   * @brief Run one iteration of the coroutine scheduler; returns true if work
    * remains. */
   auto runRuntimeCoroutineScheduler() -> bool;
 
@@ -429,7 +434,8 @@ private:
    */
   void runRuntimeJobExecutor();
 
-  /** @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec
+  /**
+   * @brief Arm the SIGALRM timer relative to now by @p sec seconds and @p nsec
    * nanoseconds. */
   void setNextTimer(SecInt sec, NSecInt nsec);
 
@@ -479,15 +485,16 @@ private:
   std::thread::id
       m_asyncThreadId{}; ///< Thread ID of the singleton asynchronous context.
 
-  inline static sigset_t s_mask{}; ///< Signal mask applied to the process
-                                   ///< before singleton creation.
+  inline static sigset_t s_processSignalMask{}; ///< Signal mask applied to the
+                                                ///< process before singleton
+                                                ///< creation.
 }; // class Dmn_Runtime_Manager
 
 template <template <class> class QueueType>
 Dmn_Runtime_Manager<QueueType>::Dmn_Runtime_Manager()
     : Dmn_Singleton<Dmn_Runtime_Manager<QueueType>>{},
       Dmn_Async<QueueType>{"Dmn_Runtime_Manager"},
-      m_mask{Dmn_Runtime_Manager::s_mask} {
+      m_mask{Dmn_Runtime_Manager::s_processSignalMask} {
   this->addExecTask([this]() { m_asyncThreadId = std::this_thread::get_id(); });
 
   // default, these signal handler hooks will be executed in the singleton
@@ -917,14 +924,15 @@ void Dmn_Runtime_Manager<QueueType>::runPriorToCreateInstance() {
   sigset_t old_mask{};
   int err{};
 
-  sigemptyset(&Dmn_Runtime_Manager::s_mask);
-  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGALRM);
-  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGINT);
-  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGTERM);
-  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGQUIT);
-  sigaddset(&Dmn_Runtime_Manager::s_mask, SIGHUP);
+  sigemptyset(&Dmn_Runtime_Manager::s_processSignalMask);
+  sigaddset(&Dmn_Runtime_Manager::s_processSignalMask, SIGALRM);
+  sigaddset(&Dmn_Runtime_Manager::s_processSignalMask, SIGINT);
+  sigaddset(&Dmn_Runtime_Manager::s_processSignalMask, SIGTERM);
+  sigaddset(&Dmn_Runtime_Manager::s_processSignalMask, SIGQUIT);
+  sigaddset(&Dmn_Runtime_Manager::s_processSignalMask, SIGHUP);
 
-  err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_mask, &old_mask);
+  err = pthread_sigmask(SIG_BLOCK, &Dmn_Runtime_Manager::s_processSignalMask,
+                        &old_mask);
   if (0 != err) {
     throw std::runtime_error("Error in pthread_sigmask: " +
                              std::string{strerror(err)});

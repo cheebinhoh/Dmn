@@ -293,7 +293,7 @@ public:
         m_active(std::exchange(other.m_active, false)) {}
 
   /// @brief Invoke the cleanup callable if this guard remains armed.
-  ~ScopeGuard() noexcept {
+  virtual ~ScopeGuard() noexcept {
     if (m_active) {
       m_callable();
     }

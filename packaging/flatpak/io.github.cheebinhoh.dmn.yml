@@ -1,4 +1,4 @@
-app-id: io.github.cheebinhoh.Dmn
+app-id: io.github.cheebinhoh.dmn
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
@@ -22,8 +22,10 @@ modules:
       - -DDMN_BUILD_TESTS=OFF
       - -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
       - -DENABLE_DMN_DMESGNET=OFF
-      - -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn
+      - -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.dmn
+    post-install:
+      - install -Dm0644 LICENSE "$FLATPAK_DEST/share/licenses/$FLATPAK_ID/dmn-bluetooth/LICENSE"
     sources:
       - type: git
         url: https://github.com/cheebinhoh/Dmn.git
-        tag: 0.9.0
+        tag: 0.9.1

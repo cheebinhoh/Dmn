@@ -82,7 +82,7 @@ public:
    */
   explicit Dmn_DMesgDbus(std::string_view node_id,
                          const Dmn_DbusConfig &config = {});
-  ~Dmn_DMesgDbus() noexcept;
+  virtual ~Dmn_DMesgDbus() noexcept;
 
   Dmn_DMesgDbus(const Dmn_DMesgDbus &) = delete;
   auto operator=(const Dmn_DMesgDbus &) -> Dmn_DMesgDbus & = delete;

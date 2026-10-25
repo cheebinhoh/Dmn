@@ -58,7 +58,8 @@ struct Dmn_MonitorControllerDeviceState {
    */
   bool m_monitor_active{};
 
-  /** @brief Whether an active session stopped unexpectedly and needs cleanup.
+  /**
+   * @brief Whether an active session stopped unexpectedly and needs cleanup.
    */
   bool m_monitor_restart_required{};
 

@@ -489,8 +489,10 @@ void Dmn_DMesgNet::createTimerProc() {
   }
 }
 
-/** @brief Return a mutable reference to the net-layer per-topic last-message
- * cache. */
+/**
+ * @brief Return a mutable reference to the net-layer per-topic last-message
+ * cache.
+ */
 auto Dmn_DMesgNet::getLastTopicCacheInternal()
     -> std::unordered_map<std::string, dmn::DMesgPb> & {
   return this->m_topic_last_dmesgpb;

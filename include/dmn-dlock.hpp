@@ -606,8 +606,8 @@ public:
 
     std::lock_guard workersLock{m_async_workers_mutex};
     for (auto &worker : m_async_workers) {
-      worker.completion.wait();
-      worker.process->wait();
+      worker.m_completion.wait();
+      worker.m_process->wait();
     }
 
     m_async_workers.clear();
@@ -758,16 +758,16 @@ public:
 
 private:
   struct AsyncWorker {
-    std::unique_ptr<Dmn_Proc> process;
-    std::shared_future<void> completion;
+    std::unique_ptr<Dmn_Proc> m_process;
+    std::shared_future<void> m_completion;
   };
 
   void reapCompletedAsyncWorkers() {
     auto worker = m_async_workers.begin();
     while (worker != m_async_workers.end()) {
-      if (worker->completion.wait_for(std::chrono::seconds::zero()) ==
+      if (worker->m_completion.wait_for(std::chrono::seconds::zero()) ==
           std::future_status::ready) {
-        worker->process->wait();
+        worker->m_process->wait();
         worker = m_async_workers.erase(worker);
       } else {
         ++worker;

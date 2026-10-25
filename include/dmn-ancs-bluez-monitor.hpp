@@ -18,22 +18,32 @@
  * ANCS protocol over the BlueZ GATT implementation:
  *
  * @verbatim
- * Application / frontend
- *          |
- *          v
- * Dmn_AncsBluezMonitor            setup orchestration + ANCS lifecycle
- *       /              \
- *      v                v
- * Dmn_BluezClient      Dmn_AncsClient
- * inventory, pairing,       | uses Dmn_GattClient
- * connection                v
- *                    Dmn_BluezGattClient
- *                    GATT services, notifications, writes
- *       |                |
- *       v                v
- * Dmn_DbusClient      Dmn_DbusClient
- *       \                /
- *        libdbus -> system bus -> org.bluez
+ * GUI Application / CLI frontend
+ *                 |
+ *                 v
+ *       Dmn_AncsBluezMonitor
+ *       /                   \
+ *      v                     v
+ * Dmn_BluezClient       Dmn_AncsClient
+ * (inventory,           (ANCS protocol,
+ *  pairing,              backend-neutral)
+ *  connection)               |
+ *      |                     v
+ *      |                Dmn_GattClient
+ *      |                     ^
+ *      |                     | implemented by
+ *      |                     |
+ *      |                Dmn_BluezGattClient
+ *      |                (BlueZ GATT, notifications,
+ *      |                 and writes)
+ *      |                     |
+ *      v                     v
+ * Dmn_DbusClient        Dmn_DbusClient
+ *      |                     |
+ *      +---------------------+
+ *                 |
+ *                 v
+ *       libdbus -> system bus -> org.bluez
  * @endverbatim
  *
  * @ref Dmn_BluezClient manages BlueZ adapter/device inventory and explicit
@@ -156,7 +166,8 @@ enum class Dmn_AncsMonitorProgress {
 using Dmn_AncsMonitorProgressHandler =
     std::function<void(Dmn_AncsMonitorProgress)>;
 
-/** @brief Configuration for selecting, connecting, and monitoring one device.
+/**
+ * @brief Configuration for selecting, connecting, and monitoring one device.
  */
 struct Dmn_AncsMonitorConfig {
   /**
@@ -216,7 +227,8 @@ struct Dmn_AncsMonitorConfig {
    */
   std::function<bool()> cancellation_requested{};
 
-  /** @brief ANCS operation deadlines, pending-request policy, and date cutoff.
+  /**
+   * @brief ANCS operation deadlines, pending-request policy, and date cutoff.
    */
   Dmn_AncsConfig ancs{};
 };
@@ -247,9 +259,10 @@ public:
   /**
    * @brief Stop ANCS subscriptions and release owned backend resources.
    */
-  ~Dmn_AncsBluezMonitor() noexcept;
+  virtual ~Dmn_AncsBluezMonitor() noexcept;
 
-  /** @brief Monitors cannot be copied because they own workers and bus state.
+  /**
+   * @brief Monitors cannot be copied because they own workers and bus state.
    */
   Dmn_AncsBluezMonitor(const Dmn_AncsBluezMonitor &) = delete;
 

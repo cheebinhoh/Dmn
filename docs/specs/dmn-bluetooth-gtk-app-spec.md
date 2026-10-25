@@ -189,7 +189,7 @@ cmake -S . -B build-flatpak \
   -DENABLE_DMN_DMESGNET=OFF \
   -DDMN_BUILD_TESTS=OFF \
   -DDMN_ALLOW_DEPENDENCY_FETCH=OFF \
-  -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.Dmn \
+  -DDMN_BLUETOOTH_GTK_APP_ID=io.github.cheebinhoh.dmn \
   -DCMAKE_INSTALL_PREFIX=/app
 cmake --build build-flatpak --target dmn-bluetooth-gtk --parallel
 DESTDIR="$PWD/stage" cmake --install build-flatpak \

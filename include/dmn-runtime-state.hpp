@@ -330,8 +330,10 @@ private:
    */
   void complete(Terminal_State terminalState, std::exception_ptr failure = {});
 
-  /** @brief Clear submission state after the manager declines or cannot queue
-   * it. */
+  /**
+   * @brief Clear submission state after the manager declines or cannot queue
+   * it.
+   */
   void resetQueuedAfterSubmission();
 
   /**
