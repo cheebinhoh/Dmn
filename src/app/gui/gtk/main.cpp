@@ -388,6 +388,7 @@ struct AppState {
   GtkWidget *m_save_button{};
   GtkWidget *m_discard_button{};
   GtkWidget *m_details_page{};
+  AdwDialog *m_about_dialog{};
   GtkWidget *m_feed_heading{};
   GtkWidget *m_feed_controls{};
   GtkWidget *m_feed_search{};
@@ -3958,51 +3959,55 @@ void desktopAlertsAction(GSimpleAction *action, GVariant *, gpointer userData) {
 }
 
 /**
- * @brief Show or present the application's About window.
+ * @brief Show or present the application's About dialog.
  *
- * The standard libadwaita window separates details, credits, and legal
+ * The standard libadwaita dialog separates details, credits, and legal
  * information while keeping displayed links tied to application metadata.
  */
+void aboutDialogClosed(AdwDialog *, gpointer userData) {
+  auto *state = static_cast<AppState *>(userData);
+  state->m_about_dialog = nullptr;
+}
+
 void aboutAction(GSimpleAction *, GVariant *, gpointer userData) {
   auto *app = GTK_APPLICATION(userData);
-  for (auto *window = gtk_application_get_windows(app); window != nullptr;
-       window = window->next) {
-    if (ADW_IS_ABOUT_WINDOW(window->data)) {
-      gtk_window_present(GTK_WINDOW(window->data));
+  auto *state = stateFor(G_OBJECT(app));
+  auto *parent = gtk_application_get_active_window(app);
+  if (state == nullptr || parent == nullptr) {
+    return;
+  }
 
-      return;
-    }
+  if (state->m_about_dialog != nullptr) {
+    adw_dialog_present(state->m_about_dialog, GTK_WIDGET(parent));
+
+    return;
   }
 
   const char *developers[] = {"Chee Bin Hoh https://github.com/cheebinhoh",
                               nullptr};
-  auto *parent = gtk_application_get_active_window(app);
-  auto *about = ADW_ABOUT_WINDOW(adw_about_window_new());
-  adw_about_window_set_application_name(about, "Dmn Bluetooth");
-  adw_about_window_set_application_icon(about, kApplicationId);
-  adw_about_window_set_developer_name(about, "Chee Bin Hoh");
-  adw_about_window_set_version(about, DMN_VERSION);
-  adw_about_window_set_comments(
+  auto *about = ADW_ABOUT_DIALOG(adw_about_dialog_new());
+  adw_about_dialog_set_application_name(about, "Dmn Bluetooth");
+  adw_about_dialog_set_application_icon(about, kApplicationId);
+  adw_about_dialog_set_developer_name(about, "Chee Bin Hoh");
+  adw_about_dialog_set_version(about, DMN_VERSION);
+  adw_about_dialog_set_comments(
       about, "Bluetooth device discovery and selection for Dmn.");
-  adw_about_window_set_copyright(about, "© 2026 Chee Bin Hoh");
-  adw_about_window_set_developers(about, developers);
-  adw_about_window_set_license_type(about, GTK_LICENSE_GPL_3_0_ONLY);
-  adw_about_window_add_link(about, "Repository",
+  adw_about_dialog_set_copyright(about, "© 2026 Chee Bin Hoh");
+  adw_about_dialog_set_developers(about, developers);
+  adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_3_0_ONLY);
+  adw_about_dialog_add_link(about, "Repository",
                             "https://github.com/cheebinhoh/Dmn");
-  adw_about_window_add_link(about, "Issues",
+  adw_about_dialog_add_link(about, "Issues",
                             "https://github.com/cheebinhoh/Dmn/issues");
-  adw_about_window_add_link(about, "Email", "mailto:CheeBin.Hoh@gmail.com");
-  adw_about_window_add_link(
+  adw_about_dialog_add_link(about, "Email", "mailto:CheeBin.Hoh@gmail.com");
+  adw_about_dialog_add_link(
       about, "GPL-3.0-only",
       "https://github.com/cheebinhoh/Dmn?tab=GPL-3.0-1-ov-file");
 
-  g_message("Showing application About window");
-  gtk_window_set_application(GTK_WINDOW(about), app);
-  if (parent != nullptr) {
-    gtk_window_set_transient_for(GTK_WINDOW(about), parent);
-  }
-
-  gtk_window_present(GTK_WINDOW(about));
+  g_message("Showing application About dialog");
+  state->m_about_dialog = ADW_DIALOG(about);
+  g_signal_connect(about, "closed", G_CALLBACK(aboutDialogClosed), state);
+  adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(parent));
 }
 
 void addAction(GtkApplication *app, const char *name, GCallback callback,
