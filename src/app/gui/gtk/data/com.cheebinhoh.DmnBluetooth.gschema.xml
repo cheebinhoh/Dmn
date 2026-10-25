@@ -66,7 +66,7 @@
       </description>
     </key>
     <key name="desktop-alerts" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>Show generic desktop alerts</summary>
       <description>
         Submit generic desktop notifications when new ANCS notifications

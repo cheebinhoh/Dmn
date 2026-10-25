@@ -31,6 +31,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <exception>
 #include <iomanip>
@@ -4042,12 +4043,11 @@ auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
   }
 
   auto *menu = g_menu_new();
-  auto *quitSection = g_menu_new();
-  g_menu_append(menu, "_About Dmn Bluetooth", "app.about");
   g_menu_append(menu, "Desktop alerts", "app.desktop-alerts");
-  g_menu_append(quitSection, "_Quit", "app.quit");
-  g_menu_append_section(menu, nullptr, G_MENU_MODEL(quitSection));
-  g_object_unref(quitSection);
+  auto *aboutSection = g_menu_new();
+  g_menu_append(aboutSection, "_About Dmn Bluetooth", "app.about");
+  g_menu_append_section(menu, nullptr, G_MENU_MODEL(aboutSection));
+  g_object_unref(aboutSection);
 
   auto *menuButton = gtk_menu_button_new();
   gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menuButton),
@@ -4428,6 +4428,28 @@ void activate(GtkApplication *app, gpointer) {
 } // namespace
 
 auto main(int argc, char **argv) -> int {
+  // dmn-bluetooth-gtk-help  and  dmn-bluetooth-gtk-version command-line smoke
+  // tests will verify the app prints help/version and exits successfully.
+  for (int index = 1; index < argc; ++index) {
+    if (std::strcmp(argv[index], "--version") == 0) {
+      g_print("%s\n", DMN_VERSION);
+
+      return 0;
+    }
+
+    if (std::strcmp(argv[index], "--help") == 0 ||
+        std::strcmp(argv[index], "-h") == 0) {
+      g_print("Usage: %s [OPTION…]\n"
+              "Bluetooth device and ANCS notification monitor\n\n"
+              "Help Options:\n"
+              "  -h, --help     Show help options\n"
+              "  --version      Show application version\n",
+              argv[0]);
+
+      return 0;
+    }
+  }
+
   adw_init();
   auto *app = adw_application_new(kApplicationId, G_APPLICATION_DEFAULT_FLAGS);
   g_application_set_version(G_APPLICATION(app), DMN_VERSION);

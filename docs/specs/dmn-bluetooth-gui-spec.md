@@ -103,7 +103,7 @@ shell-specific release gates.
    upstream web documentation is not a compatibility guarantee for a
    distribution release.
 2. Preserve the separation between the implemented
-   `ENABLE_APP_BLUETOOTH_GTK` option and `ENABLE_APP_BLUETOOTH`, which builds
+   `ENABLE_APP_BLUETOOTH_GTK` option and `ENABLE_APP_BLUETOOTH_CLI`, which builds
    `dmn-bluetooth-cli`. Enabling one must not silently rename, replace, or
    build the other. See the GTK application specification for the current
    build contract.

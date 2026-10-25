@@ -54,7 +54,7 @@ if (ENABLE_DMN_DMESGNET)
   target_link_libraries(dmn-kafka-sender PRIVATE dmn)
 endif()
 
-if (ENABLE_APP_BLUEZ_DISCOVERY)
+if (ENABLE_APP_BLUEZ_DISCOVERY_CLI)
   add_executable(dmn-bluez-cli
                    dmn-bluez-cli.cpp
   )
@@ -80,7 +80,7 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
   )
 endif()
 
-if (ENABLE_APP_BLUETOOTH)
+if (ENABLE_APP_BLUETOOTH_CLI)
   add_executable(dmn-bluetooth-cli
                    dmn-bluetooth-cli.cpp
   )

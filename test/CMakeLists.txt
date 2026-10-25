@@ -236,6 +236,8 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   target_compile_definitions(dmn-bluetooth-cli-test
                                PRIVATE
                                DMN_BLUETOOTH_TESTING=1
+                               DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE=1
+                               DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT=8
                                DMN_VERSION="${PROJECT_VERSION}"
   )
 
@@ -245,6 +247,7 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
+                               DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT=8
                                DMN_BLUETOOTH_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-cli-test>"
   )
 
@@ -263,7 +266,7 @@ endif()
 
 # Production application smoke/CLI tests are gated by their app options,
 # separately from the supporting library and integration-test blocks above.
-if (ENABLE_APP_BLUEZ_DISCOVERY)
+if (ENABLE_APP_BLUEZ_DISCOVERY_CLI)
   add_dmn_cli_version_test(dmn-bluez-cli)
 
   add_test(NAME dmn-bluez-cli-help
@@ -281,7 +284,7 @@ if (ENABLE_APP_BLUEZ_DISCOVERY)
   )
 endif()
 
-if (ENABLE_APP_BLUETOOTH)
+if (ENABLE_APP_BLUETOOTH_CLI)
   add_dmn_cli_version_test(dmn-bluetooth-cli)
 
   add_test(NAME dmn-bluetooth-cli-help

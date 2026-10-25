@@ -921,6 +921,7 @@ private:
           m_discovery_active = false;
           m_discovery_starting = false;
           m_discovery_adapter.clear();
+
           events.push_back({Dmn_BluezEventKind::ServiceUnavailable,
                             {},
                             {},

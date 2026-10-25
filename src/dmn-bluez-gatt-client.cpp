@@ -299,6 +299,7 @@ public:
           state->condition.notify_all();
         },
         propertiesTimeout);
+
     if (!properties) {
       return std::unexpected(mapError(properties.error()));
     }
@@ -371,9 +372,11 @@ public:
           state->failure =
               error(Dmn_GattErrorKind::NotReady,
                     "selected BlueZ device was removed during service wait");
+
           state->condition.notify_all();
         },
         objectsTimeout);
+
     if (!objects) {
       return std::unexpected(mapError(objects.error()));
     }
@@ -394,6 +397,7 @@ public:
     }
 
     std::unique_lock lock{state->mutex};
+
     if (!state->connected) {
       state->connected = initial->first;
     }
@@ -486,6 +490,7 @@ public:
     try {
       std::map<std::string, Dmn_GattService> services;
       std::vector<std::pair<std::string, Dmn_GattCharacteristic>> chars;
+
       for (const auto &[pathValue, interfaces] :
            objects->front().asDictionary().entries) {
         if (pathValue.signature() != "o") {
@@ -571,6 +576,7 @@ public:
                   [](const auto &left, const auto &right) {
                     return left.id < right.id;
                   });
+
         result.push_back(std::move(service));
       }
 
@@ -630,6 +636,7 @@ public:
                                return candidate.id == characteristicId;
                              });
         });
+
     if (characteristic == services->end()) {
       return std::unexpected(error(
           Dmn_GattErrorKind::InvalidArgument,
@@ -642,6 +649,7 @@ public:
                      [&characteristicId](const auto &candidate) {
                        return candidate.id == characteristicId;
                      });
+
     if (!hasFlag(*capability, "notify") && !hasFlag(*capability, "indicate")) {
       return std::unexpected(
           error(Dmn_GattErrorKind::InvalidArgument,
@@ -711,6 +719,7 @@ public:
           }
         },
         propertyTimeout);
+
     if (!propertySubscription) {
       return std::unexpected(mapError(propertySubscription.error()));
     }
@@ -760,6 +769,7 @@ public:
           }
         },
         ownerTimeout);
+
     if (!ownerSubscription) {
       state->property_subscription.cancel();
 
@@ -816,6 +826,7 @@ public:
           }
         },
         objectTimeout);
+
     if (!objectSubscription) {
       state->property_subscription.cancel();
       state->owner_subscription.cancel();

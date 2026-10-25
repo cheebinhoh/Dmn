@@ -230,6 +230,7 @@ public:
       return std::unexpected(
           makeError(Dmn_AncsMonitorStage::Inventory, inventory.error()));
     }
+
     if (cancellationRequested(config)) {
       return std::unexpected(cancellationError());
     }
@@ -296,8 +297,10 @@ public:
         if (cancellationRequested(config)) {
           return std::unexpected(cancellationError());
         }
+
         return std::unexpected(discovered.error());
       }
+
       if (cancellationRequested(config)) {
         return std::unexpected(cancellationError());
       }
@@ -445,9 +448,11 @@ public:
         if (cancellationRequested(config)) {
           return std::unexpected(cancellationError());
         }
+
         return std::unexpected(
             makeError(Dmn_AncsMonitorStage::Connection, connected.error()));
       }
+
       requestedRemainingProfiles = true;
     }
 
