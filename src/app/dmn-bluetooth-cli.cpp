@@ -16,6 +16,7 @@
 #include <cerrno>
 #include <charconv>
 #include <chrono>
+#include <condition_variable>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
@@ -54,7 +55,12 @@ constexpr auto exitCode(ExitStatus status) -> int {
   return static_cast<int>(status);
 }
 
+#if defined(DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT)
+constexpr std::size_t kMaximumQueuedOutputEvents{
+    DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT};
+#else
 constexpr std::size_t kMaximumQueuedOutputEvents{256};
+#endif
 
 struct Options {
   bool help{};
@@ -363,6 +369,7 @@ auto printNotification(const dmn::Dmn_AncsEvent &event) -> bool {
 struct FailureState {
   void set(ExitStatus status, std::string message) {
     std::lock_guard lock{mutex};
+
     if (exitStatus == exitCode(ExitStatus::Success)) {
       diagnostic = std::move(message);
       exitStatus = exitCode(status);
@@ -428,10 +435,25 @@ auto runMonitor(const Options &options) -> int {
   std::atomic_bool outputFailed{};
   std::atomic_bool mainLoopActive{};
   std::atomic<std::size_t> queuedOutputEvents{};
+#if defined(DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE)
+  const bool testBackpressureGate =
+      std::getenv("DMN_BLUETOOTH_TEST_ENABLE_BACKPRESSURE_GATE") != nullptr;
+  std::mutex testOutputMutex;
+  std::condition_variable testOutputCondition;
+  bool releaseTestOutput{};
+#endif
 
   dmn::Dmn_Pipe<OutputRecord> outputPipe{
       "dmn-bluetooth-output", [&](OutputRecord &&record) {
         CountRelease countRelease{queuedOutputEvents};
+#if defined(DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE)
+        if (testBackpressureGate) {
+          std::cerr << "DMN_TEST_OUTPUT_GATE_REACHED\n" << std::flush;
+          std::unique_lock lock{testOutputMutex};
+
+          testOutputCondition.wait(lock, [&] { return releaseTestOutput; });
+        }
+#endif
         if (outputFailed) {
           return;
         }
@@ -452,7 +474,21 @@ auto runMonitor(const Options &options) -> int {
         if (count > kMaximumQueuedOutputEvents) {
           queuedOutputEvents.fetch_sub(1);
           failure.set(ExitStatus::RuntimeFailure,
-                      "monitor output queue exceeded its 256-event limit");
+                      "monitor output queue exceeded its " +
+                          std::to_string(kMaximumQueuedOutputEvents) +
+                          "-event limit");
+#if defined(DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE)
+          if (testBackpressureGate) {
+            {
+              std::lock_guard lock{testOutputMutex};
+
+              releaseTestOutput = true;
+            }
+
+            testOutputCondition.notify_all();
+            std::cerr << "DMN_TEST_QUEUE_OVERFLOW\n" << std::flush;
+          }
+#endif
           if (mainLoopActive) {
             runtime->exitMainLoop();
           }

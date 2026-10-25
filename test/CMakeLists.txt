@@ -236,6 +236,8 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   target_compile_definitions(dmn-bluetooth-cli-test
                                PRIVATE
                                DMN_BLUETOOTH_TESTING=1
+                               DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE=1
+                               DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT=8
                                DMN_VERSION="${PROJECT_VERSION}"
   )
 
@@ -245,6 +247,7 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
 
   target_compile_definitions(dmn-test-bluez-device-list
                                PRIVATE
+                               DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT=8
                                DMN_BLUETOOTH_CLI_EXECUTABLE="$<TARGET_FILE:dmn-bluetooth-cli-test>"
   )
 

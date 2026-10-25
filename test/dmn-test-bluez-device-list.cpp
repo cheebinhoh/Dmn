@@ -1501,7 +1501,8 @@ auto startCli(
     const std::string &busAddress, const std::vector<std::string> &arguments,
     const std::string &executable = DMN_BLUEZ_CLI_EXECUTABLE,
     const std::string &busAddressEnvironment = "DMN_BLUEZ_TEST_BUS_ADDRESS",
-    bool separateOutput = false, int outputPipeCapacity = 0) -> CliProcess {
+    bool separateOutput = false, int outputPipeCapacity = 0,
+    bool enableBackpressureGate = false) -> CliProcess {
   int descriptors[2]{};
   if (pipe(descriptors) != 0) {
     throw std::runtime_error("unable to create CLI output pipe");
@@ -1583,9 +1584,14 @@ auto startCli(
   const auto testBusPrefix = busAddressEnvironment.empty()
                                  ? std::string{}
                                  : busAddressEnvironment + '=';
+  constexpr std::string_view backpressureGateEnvironment{
+      "DMN_BLUETOOTH_TEST_ENABLE_BACKPRESSURE_GATE="};
   for (char **entry = environ; entry != nullptr && *entry != nullptr; ++entry) {
     if (!testBusPrefix.empty() &&
         std::string_view{*entry}.starts_with(testBusPrefix)) {
+      continue;
+    }
+    if (std::string_view{*entry}.starts_with(backpressureGateEnvironment)) {
       continue;
     }
 
@@ -1594,6 +1600,10 @@ auto startCli(
 
   if (!testBusPrefix.empty()) {
     environmentStorage.push_back(std::string{testBusPrefix} + busAddress);
+  }
+  if (enableBackpressureGate) {
+    environmentStorage.emplace_back(std::string{backpressureGateEnvironment} +
+                                    '1');
   }
 
   std::vector<char *> environmentVector;
@@ -2530,28 +2540,34 @@ TEST(DmnBluetoothMonitorCli, BoundsOutputQueueWhenStdoutIsBackpressured) {
   auto process = startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
       DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true,
-      4096);
+      4096, true);
 
   ASSERT_TRUE(waitForCliStderrText(process, "monitor ready", 10s))
       << process.output;
   int queuedBytes{};
   ASSERT_EQ(ioctl(process.outputFd, FIONREAD, &queuedBytes), 0);
   EXPECT_EQ(queuedBytes, 4096);
-  for (std::uint32_t uid = 1; uid <= 280; ++uid) {
+  ASSERT_TRUE(
+      waitForCliStderrText(process, "DMN_TEST_OUTPUT_GATE_REACHED", 10s))
+      << process.output;
+  constexpr auto testOutputQueueLimit =
+      static_cast<std::uint32_t>(DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT);
+  const auto overflowMessage =
+      "monitor failed: monitor output queue exceeded its " +
+      std::to_string(testOutputQueueLimit) + "-event limit";
+  for (std::uint32_t uid = 1; uid <= testOutputQueueLimit + 1; ++uid) {
     service.emitGattValue(kNotificationSourcePath,
                           makeAncsNotificationSourceValue(uid, 2));
-    std::this_thread::sleep_for(25ms);
   }
 
-  std::this_thread::sleep_for(1s);
-  ASSERT_EQ(kill(process.pid, SIGINT), 0);
-  ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
+  ASSERT_TRUE(waitForCliStderrText(process, "DMN_TEST_QUEUE_OVERFLOW", 10s))
+      << process.output;
+  collectCliOutput(process);
+  ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
   EXPECT_NE(WEXITSTATUS(process.status), 0);
-  EXPECT_NE(process.stderrOutput.find(
-                "monitor output queue exceeded its 256-event limit"),
-            std::string::npos);
+  EXPECT_NE(process.stderrOutput.find(overflowMessage), std::string::npos);
   EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
   EXPECT_EQ(service.forbiddenCount(), 0);
 }

@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dmn::detail {
+
 namespace {
 
 constexpr std::size_t kNotificationSourceSize{8};
@@ -554,6 +555,7 @@ public:
 
     setState(Dmn_AncsState::Starting);
     setState(Dmn_AncsState::ResolvingServices);
+
     auto resolved = m_gatt.waitForServicesResolved(
         deviceId, config.service_resolution_timeout);
     if (!resolved) {
@@ -566,6 +568,7 @@ public:
     }
 
     setState(Dmn_AncsState::DiscoveringANCS);
+
     auto services = m_gatt.discover(deviceId, config.gatt_operation_timeout);
     if (!services) {
       return failStartup(mapGattError(services.error()));
@@ -625,6 +628,7 @@ public:
         deviceId, dataSource->id,
         [this](const Dmn_GattEvent &event) { enqueueGattEvent(true, event); },
         config.gatt_operation_timeout);
+
     if (!dataSubscription) {
       return failStartup(mapGattError(dataSubscription.error()));
     }
@@ -716,6 +720,7 @@ public:
       auto cleanup = stopSubscriptions();
       if (!cleanup) {
         auto error = cleanup.error();
+
         error.kind = Dmn_AncsErrorKind::Cleanup;
         Dmn_AncsEvent event;
         event.kind = Dmn_AncsEvent::Kind::Error;
@@ -819,6 +824,7 @@ private:
       Dmn_AncsEvent event;
       event.kind = Dmn_AncsEvent::Kind::StateChanged;
       event.state = state;
+
       m_event_queue.push_back(std::move(event));
     }
 
@@ -835,6 +841,7 @@ private:
       Dmn_AncsEvent event;
       event.kind = Dmn_AncsEvent::Kind::Error;
       event.error = error;
+
       m_event_queue.push_back(std::move(event));
     }
 
@@ -862,6 +869,7 @@ private:
     std::optional<Dmn_AncsError> firstError;
     if (m_notification_source_subscription) {
       auto result = m_notification_source_subscription->stop();
+
       if (result) {
         m_notification_source_subscription.reset();
       } else {
@@ -1037,6 +1045,7 @@ private:
       if (parsed.error().kind == Dmn_AncsErrorKind::Unsupported &&
           !parsed.error().fatal) {
         Dmn_AncsEvent event;
+
         event.kind = Dmn_AncsEvent::Kind::Error;
         event.error = parsed.error();
         enqueueApplicationEvent(std::move(event));
@@ -1061,6 +1070,7 @@ private:
             m_config.notification_date_cutoff.has_value() &&
             (found == m_records.end() || found->second.ignored_before_start ||
              found->second.added_not_reported);
+
         m_records.erase(notification.uid);
         std::erase(m_pending_requests, notification.uid);
         m_queued_uids.erase(notification.uid);
@@ -1073,6 +1083,7 @@ private:
 
       if (!ignoredBeforeStart) {
         Dmn_AncsEvent event;
+
         event.kind = Dmn_AncsEvent::Kind::NotificationRemoved;
         event.notification = notification;
         enqueueApplicationEvent(std::move(event));
@@ -1092,12 +1103,14 @@ private:
       record.notification.category = notification.category;
       record.notification.category_count = notification.category_count;
       record.notification.flags = notification.flags;
+
       if (!record.unavailable && m_queued_uids.count(notification.uid) == 0 &&
           (!m_active_request ||
            m_active_request->notification.uid != notification.uid)) {
         const auto maximum = m_config.maximum_pending_notifications;
         if (maximum != 0 && m_pending_requests.size() >= maximum) {
           const auto droppedUid = m_pending_requests.front();
+
           m_pending_requests.pop_front();
           m_queued_uids.erase(droppedUid);
           m_records.erase(droppedUid);
@@ -1116,14 +1129,17 @@ private:
     }
 
     m_condition.notify_one();
+
     if (reportBacklogLimit) {
       Dmn_AncsEvent event;
+
       event.kind = Dmn_AncsEvent::Kind::Error;
       event.error = makeAncsError(
           Dmn_AncsErrorKind::ResourceLimit,
           "ANCS reached the configured pending-notification limit; oldest "
           "pending notification requests are being discarded",
           {}, false);
+
       enqueueApplicationEvent(std::move(event));
     }
   }
@@ -1290,6 +1306,7 @@ private:
       }
 
       Dmn_GattResult result;
+
       {
         std::lock_guard operationLock{m_operation_mutex};
 
@@ -1430,6 +1447,7 @@ private:
       Dmn_AncsEvent stateEvent;
       stateEvent.kind = Dmn_AncsEvent::Kind::StateChanged;
       stateEvent.state = Dmn_AncsState::Failed;
+
       m_event_queue.push_back(std::move(stateEvent));
     }
 
