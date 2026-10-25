@@ -5,7 +5,7 @@ var classdmn_1_1Dmn__Kafka =
       [ "kProducer", "classdmn_1_1Dmn__Kafka.html#ae6010e6a6ec4e20dc7c8f3b4b565d423a86f1bbaafa45cdc1469b0acad27fcdd1", null ]
     ] ],
     [ "Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html#a81bd30e073b287e1ea10bef88825f553", null ],
-    [ "~Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html#aabd914aaa127aec86d826788dc104638", null ],
+    [ "~Dmn_Kafka", "classdmn_1_1Dmn__Kafka.html#a718f89115bd8070a8b39dbadeb5af5ac", null ],
     [ "read", "classdmn_1_1Dmn__Kafka.html#a40ef6a642adbdc8b609dac86390a6e14", null ],
     [ "shutdown", "classdmn_1_1Dmn__Kafka.html#a36f0bad5a7c7e9012bbb6547bbc763f6", null ],
     [ "write", "classdmn_1_1Dmn__Kafka.html#a28de08efbf58ef3124f71cbed2166c47", null ],

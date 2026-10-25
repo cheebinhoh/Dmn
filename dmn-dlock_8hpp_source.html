@@ -615,8 +615,8 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp_source.html',''); initR
 <div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span> </div>
 <div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span>    std::lock_guard <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">workersLock</a>{m_async_workers_mutex};</div>
 <div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> &amp;<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a> : m_async_workers) {</div>
-<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>      <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>.completion.wait();</div>
-<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>      <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>.process-&gt;wait();</div>
+<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>      <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>.m_completion.wait();</div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>      <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>.m_process-&gt;wait();</div>
 <div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>    }</div>
 <div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span> </div>
 <div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span>    m_async_workers.clear();</div>
@@ -767,16 +767,16 @@ $(document).ready(function(){initNavTree('dmn-dlock_8hpp_source.html',''); initR
 <div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span> </div>
 <div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>  <span class="keyword">struct </span>AsyncWorker {</div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>    std::unique_ptr&lt;Dmn_Proc&gt; process;</div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>    std::shared_future&lt;void&gt; completion;</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>    std::unique_ptr&lt;Dmn_Proc&gt; m_process;</div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>    std::shared_future&lt;void&gt; m_completion;</div>
 <div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>  };</div>
 <div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span> </div>
 <div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>  <span class="keywordtype">void</span> reapCompletedAsyncWorkers() {</div>
 <div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>    <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a> = m_async_workers.begin();</div>
 <div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>    <span class="keywordflow">while</span> (<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a> != m_async_workers.end()) {</div>
-<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>      <span class="keywordflow">if</span> (<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>-&gt;completion.wait_for(std::chrono::seconds::zero()) ==</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>      <span class="keywordflow">if</span> (<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>-&gt;m_completion.wait_for(std::chrono::seconds::zero()) ==</div>
 <div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span>          std::future_status::ready) {</div>
-<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>        <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>-&gt;process-&gt;wait();</div>
+<div class="line"><a id="l00770" name="l00770"></a><span class="lineno">  770</span>        <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>-&gt;m_process-&gt;wait();</div>
 <div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span>        <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a> = m_async_workers.erase(<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>);</div>
 <div class="line"><a id="l00772" name="l00772"></a><span class="lineno">  772</span>      } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>        ++<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">worker</a>;</div>
