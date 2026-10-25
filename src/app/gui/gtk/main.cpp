@@ -4043,12 +4043,11 @@ auto makeToolbarPage(GtkWidget *content, const char *title, AppState *state,
   }
 
   auto *menu = g_menu_new();
-  auto *quitSection = g_menu_new();
-  g_menu_append(menu, "_About Dmn Bluetooth", "app.about");
   g_menu_append(menu, "Desktop alerts", "app.desktop-alerts");
-  g_menu_append(quitSection, "_Quit", "app.quit");
-  g_menu_append_section(menu, nullptr, G_MENU_MODEL(quitSection));
-  g_object_unref(quitSection);
+  auto *aboutSection = g_menu_new();
+  g_menu_append(aboutSection, "_About Dmn Bluetooth", "app.about");
+  g_menu_append_section(menu, nullptr, G_MENU_MODEL(aboutSection));
+  g_object_unref(aboutSection);
 
   auto *menuButton = gtk_menu_button_new();
   gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menuButton),
