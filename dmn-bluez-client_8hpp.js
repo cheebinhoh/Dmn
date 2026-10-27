@@ -15,8 +15,8 @@ var dmn_bluez_client_8hpp =
       [ "DeviceAdded", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a77b4f494c4226ecfe3bbc708a3064091", null ],
       [ "DeviceChanged", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7ab87fe40cb2469d99583440a7d4686ff7", null ],
       [ "DeviceRemoved", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a0f98d176e3c1724c9a23539cb7bec73e", null ],
-      [ "ServiceUnavailable", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a2a4581043d849bcb0e4747970ef1489b", null ],
+      [ "Error", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a902b0d55fddef6f8d651fe1035b7d4bd", null ],
       [ "ServiceAvailable", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a5c42a10f48e4227b04315ef978c176b6", null ],
-      [ "Error", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a902b0d55fddef6f8d651fe1035b7d4bd", null ]
+      [ "ServiceUnavailable", "dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a2a4581043d849bcb0e4747970ef1489b", null ]
     ] ]
 ];

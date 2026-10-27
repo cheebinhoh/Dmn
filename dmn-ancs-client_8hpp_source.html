@@ -119,16 +119,16 @@ $(document).ready(function(){initNavTree('dmn-ancs-client_8hpp_source.html','');
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
 <div class="foldopen" id="foldopen00052" data-start="{" data-end="};">
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="dmn-ancs-client_8hpp.html#a948cc37a7e02bbdb9fc0e4c2d2cc1c83">   52</a></span><span class="keyword">enum class</span> <a class="code hl_enumeration" href="dmn-ancs-client_8hpp.html#a948cc37a7e02bbdb9fc0e4c2d2cc1c83">Dmn_AncsErrorKind</a> {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>,</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeadd353567e8118a2b8df4e822e59084ab">NotReady</a>,</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  Timeout,</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  Unsupported,</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  Authorization,</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  Remote,</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  Protocol,</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  Authorization,</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  Backend,</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea8c6384dda98d8864d00e29dc96179970">Cleanup</a>,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>,</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeadd353567e8118a2b8df4e822e59084ab">NotReady</a>,</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  Protocol,</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  Remote,</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  ResourceLimit,</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  Backend,</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea8c6384dda98d8864d00e29dc96179970">Cleanup</a></div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  Timeout,</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  Unsupported</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>};</div>
 </div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
@@ -163,9 +163,9 @@ $(document).ready(function(){initNavTree('dmn-ancs-client_8hpp_source.html','');
 <div class="foldopen" id="foldopen00104" data-start="{" data-end="};">
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="dmn-ancs-client_8hpp.html#ab31bc5eed4e4c1b42cf03fc78a049ae6">  104</a></span><span class="keyword">enum class</span> <a class="code hl_enumeration" href="dmn-ancs-client_8hpp.html#ab31bc5eed4e4c1b42cf03fc78a049ae6">Dmn_AncsNotificationKind</a> {</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  Added,</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  Updated,</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  AttributesUnavailable,</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>  Removed,</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  AttributesUnavailable</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  Updated</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>};</div>
 </div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
@@ -201,12 +201,12 @@ $(document).ready(function(){initNavTree('dmn-ancs-client_8hpp_source.html','');
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno"><a class="line" href="structdmn_1_1Dmn__AncsEvent.html">  166</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structdmn_1_1Dmn__AncsEvent.html">Dmn_AncsEvent</a> {</div>
 <div class="foldopen" id="foldopen00170" data-start="{" data-end="};">
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="structdmn_1_1Dmn__AncsEvent.html#a289a5536308b4a8fef257728bb235eed">  170</a></span>  <span class="keyword">enum class</span> <a class="code hl_enumeration" href="structdmn_1_1Dmn__AncsEvent.html#a289a5536308b4a8fef257728bb235eed">Kind</a> {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    StateChanged,</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    NotificationAdded,</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    NotificationUpdated,</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    AttributesUnavailable,</div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    <a class="code hl_enumvalue" href="dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a902b0d55fddef6f8d651fe1035b7d4bd">Error</a>,</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    NotificationAdded,</div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    NotificationRemoved,</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    AttributesUnavailable,</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    <a class="code hl_enumvalue" href="dmn-bluez-client_8hpp.html#af0dc38322e5c977f3b7ad8fb269cd0b7a902b0d55fddef6f8d651fe1035b7d4bd">Error</a></div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    NotificationUpdated,</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    StateChanged</div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>  };</div>
 </div>
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span> </div>
@@ -284,16 +284,17 @@ $(document).ready(function(){initNavTree('dmn-ancs-client_8hpp_source.html','');
 <div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>};</div>
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span> </div>
 <div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>} <span class="comment">// namespace detail</span></div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>} <span class="comment">// namespace dmn</span></div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span> </div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="preprocessor">#endif </span><span class="comment">// DMN_ANCS_CLIENT_HPP_</span></div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span> </div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>} <span class="comment">// namespace dmn</span></div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span> </div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span><span class="preprocessor">#endif </span><span class="comment">// DMN_ANCS_CLIENT_HPP_</span></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html">dmn::Dmn_AncsClient</a></div><div class="ttdoc">Reusable, backend-neutral ANCS session over one borrowed GATT client.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.hpp:209</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_a47874ac16d91b804d3b138a0edf9a6a6"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#a47874ac16d91b804d3b138a0edf9a6a6">dmn::Dmn_AncsClient::~Dmn_AncsClient</a></div><div class="ttdeci">virtual ~Dmn_AncsClient() noexcept</div><div class="ttdoc">Best-effort session cleanup; never throws.</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_a4932857acdd7c6d7eeebd16f1dbcbfa5"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#a4932857acdd7c6d7eeebd16f1dbcbfa5">dmn::Dmn_AncsClient::stop</a></div><div class="ttdeci">auto stop() -&gt; Dmn_AncsResult</div><div class="ttdoc">Stop the session and explicitly release acquired subscriptions.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1507</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_aae64b4d4c731d1355c027feee9a08c03"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#aae64b4d4c731d1355c027feee9a08c03">dmn::Dmn_AncsClient::setEventHandler</a></div><div class="ttdeci">auto setEventHandler(EventHandler handler) -&gt; Dmn_AncsResult</div><div class="ttdoc">Install or clear the event callback while the session is stopped.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1498</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_abdf2eff79643bf952b1688296c8487e7"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#abdf2eff79643bf952b1688296c8487e7">dmn::Dmn_AncsClient::state</a></div><div class="ttdeci">auto state() const -&gt; Dmn_AncsState</div><div class="ttdoc">Return a thread-safe snapshot of the current session state.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1509</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_a4932857acdd7c6d7eeebd16f1dbcbfa5"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#a4932857acdd7c6d7eeebd16f1dbcbfa5">dmn::Dmn_AncsClient::stop</a></div><div class="ttdeci">auto stop() -&gt; Dmn_AncsResult</div><div class="ttdoc">Stop the session and explicitly release acquired subscriptions.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1509</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_aae64b4d4c731d1355c027feee9a08c03"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#aae64b4d4c731d1355c027feee9a08c03">dmn::Dmn_AncsClient::setEventHandler</a></div><div class="ttdeci">auto setEventHandler(EventHandler handler) -&gt; Dmn_AncsResult</div><div class="ttdoc">Install or clear the event callback while the session is stopped.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1500</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_abdf2eff79643bf952b1688296c8487e7"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#abdf2eff79643bf952b1688296c8487e7">dmn::Dmn_AncsClient::state</a></div><div class="ttdeci">auto state() const -&gt; Dmn_AncsState</div><div class="ttdoc">Return a thread-safe snapshot of the current session state.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1511</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_ac17c529d853c7d499b9ae74579cee562"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#ac17c529d853c7d499b9ae74579cee562">dmn::Dmn_AncsClient::EventHandler</a></div><div class="ttdeci">std::function&lt; void(const Dmn_AncsEvent &amp;)&gt; EventHandler</div><div class="ttdoc">Callback receiving owned state, notification, and error events.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.hpp:214</div></div>
-<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_ae5d6afe6cf4dcd25190da54de49dd37b"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#ae5d6afe6cf4dcd25190da54de49dd37b">dmn::Dmn_AncsClient::start</a></div><div class="ttdeci">auto start(const std::string &amp;deviceId, const Dmn_AncsConfig &amp;config={}) -&gt; Dmn_AncsResult</div><div class="ttdoc">Resolve ANCS on a ready GATT link and subscribe to its sources.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1502</div></div>
+<div class="ttc" id="aclassdmn_1_1Dmn__AncsClient_html_ae5d6afe6cf4dcd25190da54de49dd37b"><div class="ttname"><a href="classdmn_1_1Dmn__AncsClient.html#ae5d6afe6cf4dcd25190da54de49dd37b">dmn::Dmn_AncsClient::start</a></div><div class="ttdeci">auto start(const std::string &amp;deviceId, const Dmn_AncsConfig &amp;config={}) -&gt; Dmn_AncsResult</div><div class="ttdoc">Resolve ANCS on a ready GATT link and subscribe to its sources.</div><div class="ttdef"><b>Definition</b> dmn-ancs-client.cpp:1504</div></div>
 <div class="ttc" id="aclassdmn_1_1Dmn__GattClient_html"><div class="ttname"><a href="classdmn_1_1Dmn__GattClient.html">dmn::Dmn_GattClient</a></div><div class="ttdoc">Backend-neutral, bounded GATT operations for one selected device.</div><div class="ttdef"><b>Definition</b> dmn-gatt-client.hpp:311</div></div>
 <div class="ttc" id="admn-ancs-bluez-monitor_8hpp_html_a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b"><div class="ttname"><a href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b">dmn::Dmn_AncsMonitorStage::InvalidArgument</a></div><div class="ttdeci">@ InvalidArgument</div></div>
 <div class="ttc" id="admn-ancs-bluez-monitor_8hpp_html_a5196b933c9b2ce0f6266bd2c768f6ebea8c6384dda98d8864d00e29dc96179970"><div class="ttname"><a href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea8c6384dda98d8864d00e29dc96179970">dmn::Dmn_AncsMonitorStage::Cleanup</a></div><div class="ttdeci">@ Cleanup</div></div>

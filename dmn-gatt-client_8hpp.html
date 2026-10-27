@@ -148,13 +148,13 @@ template&lt;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
 <tr class="memitem:a9b6c6c7e76be998318c425c5e27bb645" id="r_a9b6c6c7e76be998318c425c5e27bb645"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645">dmn::Dmn_GattErrorKind</a> { <br />
-&#160;&#160;<a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>
-, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645add353567e8118a2b8df4e822e59084ab">NotReady</a>
-, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398">Timeout</a>
-, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645af8508f576cd3f742dfc268258dcdf0dd">Remote</a>
-, <br />
 &#160;&#160;<a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a2e427c268ac1768b9add94b65e2d6c14">Backend</a>
 , <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8">Decode</a>
+, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>
+, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645add353567e8118a2b8df4e822e59084ab">NotReady</a>
+, <br />
+&#160;&#160;<a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645af8508f576cd3f742dfc268258dcdf0dd">Remote</a>
+, <a class="el" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398">Timeout</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a9b6c6c7e76be998318c425c5e27bb645"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend-neutral category for a failed GATT operation.  <a href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645">More...</a><br /></td></tr>
@@ -199,17 +199,17 @@ Architecture</h2>
 
 <p>Backend-neutral category for a failed GATT operation. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b" name="a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b"></a>InvalidArgument&#160;</td><td class="fielddoc"><p>The supplied device or GATT identifier is invalid. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a2e427c268ac1768b9add94b65e2d6c14" name="a9b6c6c7e76be998318c425c5e27bb645a2e427c268ac1768b9add94b65e2d6c14"></a>Backend&#160;</td><td class="fielddoc"><p>A transport or local backend failure occurred. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8" name="a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8"></a>Decode&#160;</td><td class="fielddoc"><p>A D-Bus value did not match the GATT object contract. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b" name="a9b6c6c7e76be998318c425c5e27bb645a253ca7dd096ee0956cccee4d376cab8b"></a>InvalidArgument&#160;</td><td class="fielddoc"><p>The supplied device or GATT identifier is invalid. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645add353567e8118a2b8df4e822e59084ab" name="a9b6c6c7e76be998318c425c5e27bb645add353567e8118a2b8df4e822e59084ab"></a>NotReady&#160;</td><td class="fielddoc"><p>The device is disconnected or its GATT tree is not ready. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398" name="a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398"></a>Timeout&#160;</td><td class="fielddoc"><p>The finite operation deadline expired. </p>
-</td></tr>
 <tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645af8508f576cd3f742dfc268258dcdf0dd" name="a9b6c6c7e76be998318c425c5e27bb645af8508f576cd3f742dfc268258dcdf0dd"></a>Remote&#160;</td><td class="fielddoc"><p>BlueZ or another backend rejected the operation. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a2e427c268ac1768b9add94b65e2d6c14" name="a9b6c6c7e76be998318c425c5e27bb645a2e427c268ac1768b9add94b65e2d6c14"></a>Backend&#160;</td><td class="fielddoc"><p>A transport or local backend failure occurred. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8" name="a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8"></a>Decode&#160;</td><td class="fielddoc"><p>A D-Bus value did not match the GATT object contract. </p>
+<tr><td class="fieldname"><a id="a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398" name="a9b6c6c7e76be998318c425c5e27bb645ac85a251cc457840f1e032f1b733e9398"></a>Timeout&#160;</td><td class="fielddoc"><p>The finite operation deadline expired. </p>
 </td></tr>
 </table>
 

@@ -116,17 +116,17 @@ $(document).ready(function(){initNavTree('dmn-gatt-client_8hpp_source.html','');
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
 <div class="foldopen" id="foldopen00060" data-start="{" data-end="};">
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645">   60</a></span><span class="keyword">enum class</span> <a class="code hl_enumeration" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645">Dmn_GattErrorKind</a> {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>,</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  Backend,</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeadd353567e8118a2b8df4e822e59084ab">NotReady</a>,</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  <a class="code hl_enumvalue" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8">Decode</a>,</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  Timeout,</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebea253ca7dd096ee0956cccee4d376cab8b">InvalidArgument</a>,</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  Remote,</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  <a class="code hl_enumvalue" href="dmn-ancs-bluez-monitor_8hpp.html#a5196b933c9b2ce0f6266bd2c768f6ebeadd353567e8118a2b8df4e822e59084ab">NotReady</a>,</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>  Backend,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>  Remote,</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  <a class="code hl_enumvalue" href="dmn-gatt-client_8hpp.html#a9b6c6c7e76be998318c425c5e27bb645a6002396e8a3e3aa796237f6469eb84f8">Decode</a></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  Timeout</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>};</div>
 </div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
@@ -171,11 +171,11 @@ $(document).ready(function(){initNavTree('dmn-gatt-client_8hpp_source.html','');
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno"><a class="line" href="structdmn_1_1Dmn__GattEvent.html">  171</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structdmn_1_1Dmn__GattEvent.html">Dmn_GattEvent</a> {</div>
 <div class="foldopen" id="foldopen00175" data-start="{" data-end="};">
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db">  175</a></span>  <span class="keyword">enum class</span> <a class="code hl_enumeration" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db">Kind</a> {</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <a class="code hl_enumvalue" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dbaa72ca94385e8f515adeac34b9e23d32c">ValueChanged</a>,</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <a class="code hl_enumvalue" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba902b0d55fddef6f8d651fe1035b7d4bd">Error</a>,</div>
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    <a class="code hl_enumvalue" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba29a29047cd211a4eb34dd1129b3db135">Invalidated</a>,</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_enumvalue" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba902b0d55fddef6f8d651fe1035b7d4bd">Error</a></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <a class="code hl_enumvalue" href="structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dbaa72ca94385e8f515adeac34b9e23d32c">ValueChanged</a></div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>  };</div>
 </div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
