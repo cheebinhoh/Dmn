@@ -2,12 +2,15 @@
 
 # Dmn Bluetooth Native COSMIC Application and Applet Specification
 
-**Status:** Optional alternative/companion proposal; not implemented.
+**Status:** The native `libcosmic` application (`dmn-bluetooth-cosmic`) is
+specified in [section 1A](#1a-implemented-native-application-architecture) and
+implemented under `src/app/gui/cosmic/`; hardware and target-session
+qualification remain. The COSMIC panel applet and the user-session D-Bus
+service remain proposals. Neither is required for the standalone GTK app.
 
 This document covers two related but separately packaged COSMIC integrations:
 a native `libcosmic` application for the full workflow and an optional COSMIC
-panel applet for concise status/quick access. Neither is required for the
-recommended standalone GTK app.
+panel applet for concise status/quick access.
 
 ![Illustrative wide COSMIC app layout and optional panel applet](images/dmn-bluetooth-cosmic.svg)
 
@@ -17,27 +20,163 @@ COSMIC applications and applets use the Rust-based `libcosmic` toolkit and
 COSMIC templates. This gives a COSMIC-coherent appearance and a supported
 COSMIC applet mechanism, but the existing ANCS/BlueZ monitor is C++.
 
-Choose and test one integration boundary before implementing UI:
+Two boundaries were evaluated:
 
-1. **Rust-to-C++ FFI:** expose a narrow, exception-safe C ABI (or a maintained
-   CXX bridge) around Dmn monitor/controller values. Own every opaque handle
-   explicitly, translate typed errors, and guarantee callbacks are stopped
-   before Rust state is freed. Do not expose C++ STL types or exceptions over
-   the ABI. This can keep a standalone native app independent of a daemon but
-   increases cross-language build/test complexity.
-2. **User-session D-Bus service:** the Rust applet/app uses a versioned,
-   typed D-Bus protocol; a C++ service owns Dmn monitors. This is the preferred
-   boundary if both app and applet need the same live monitor or monitoring
-   must outlive a window. It introduces service lifecycle, authorization, and
-   packaging obligations in
+1. **Rust-to-C++ FFI (selected for the native application):** a narrow,
+   exception-safe C ABI around the existing C++ monitor and GUI core. Every
+   value that crosses the ABI is an owned, NUL-terminated UTF-8 JSON string; no
+   STL type, exception, callback, or borrowed pointer crosses it.
+2. **User-session D-Bus service (deferred):** the preferred boundary only if
+   several frontends (for example app plus applet) must share one live monitor
+   or monitoring must outlive a window. See
    [`dmn-bluetooth-session-service-spec.md`](dmn-bluetooth-session-service-spec.md).
 
-Do not duplicate BlueZ/GATT/ANCS in Rust, do not let an applet independently
-connect to BlueZ, and do not assume the D-Bus service is mandatory for a
-single native app if a tested FFI is selected. The applet needs shared state
-through either an explicit FFI-hosted process architecture or the service;
-the service is the cleaner multi-frontend design. A panel applet alone is
-not suitable for a detailed event archive.
+Do not duplicate BlueZ/GATT/ANCS in Rust and do not let an applet independently
+connect to BlueZ. A panel applet alone is not suitable for a detailed event
+archive; the applet needs shared state through the service.
+
+## 1A. Implemented native application architecture
+
+### Build direction: Cargo drives CMake
+
+Cargo is the only entry point for building the application. CMake never
+invokes Cargo or Rust.
+
+```text
+cargo build / cargo test
+  +- crates/dmn-bluetooth-sys/dmn-build.rs
+       +- cmake -S <repo> -B <OUT_DIR>/cmake -DENABLE_APP_BLUETOOTH_COSMIC=ON
+            +- builds target dmn-bluetooth-cabi (libdmn-bluetooth-cabi.so)
+       +- emits cargo:rustc-link-* so Rust links the C library
+```
+
+- `ENABLE_APP_BLUETOOTH_COSMIC` (default `OFF`) is the only gate for the C++
+  side. It enables the ANCS/BlueZ/D-Bus layers, requires GLib (used by GUI
+  core), and defines `dmn-bluetooth-cabi`. With the option off the target does
+  not exist, and default, headless, GTK, and CLI builds never need Rust or
+  `libcosmic`. A developer may also configure CMake with the option directly to
+  build and test the C library without Rust.
+- `dmn-build.rs` passes the option, a build type matching the Cargo profile,
+  `DMN_BUILD_TESTS=OFF`, and `ENABLE_DMN_DMESGNET=OFF`, and configures into
+  Cargo's `OUT_DIR`, so the source tree stays clean. It fails with an actionable
+  message if `cmake` is missing and re-runs when C++ sources change.
+- The library is shared so its transitive static C++ dependencies (ANCS,
+  BlueZ, D-Bus, GUI core) need no hand-maintained link list in Rust. The
+  executable's RPATH points at the library's build directory; an installed
+  package places the library beside the binary.
+
+### Reuse boundary
+
+| Layer | Source | Reuse |
+| --- | --- | --- |
+| BlueZ inventory/connect/discovery | `Dmn_BluezClient` | Linked unchanged |
+| ANCS monitor lifecycle | `Dmn_AncsBluezMonitor` | Linked unchanged |
+| Selection, draft/save, sorting, action availability | `dmn-bluetooth-gui-core` | Linked unchanged |
+| Retry/backoff and monitor reconciliation | `Dmn_DeviceMonitorController` | Linked unchanged |
+| Engine (orchestration without GTK) | `src/app/gui/engine/` | New; mirrors GTK behavior without GLib/GTask |
+| JSON protocol | `include/app/gui/engine/` | New |
+| Presentation and persistence | `src/app/gui/cosmic/` | New (Rust) |
+
+`src/app/gui/gtk/main.cpp` interleaves orchestration with GTK/GTask and is not
+modified. Folding the GTK app onto the engine is possible future work.
+
+### C ABI (`include/app/gui/cabi/dmn-bluetooth-cabi.h`)
+
+```c
+dmn_bt_engine *dmn_bt_engine_create(void);       /* real BlueZ/ANCS backend */
+dmn_bt_engine *dmn_bt_engine_create_demo(void);  /* synthetic, no hardware */
+int   dmn_bt_engine_send(dmn_bt_engine *, const char *command_json);
+char *dmn_bt_engine_next_message(dmn_bt_engine *, int timeout_ms);
+void  dmn_bt_string_free(char *);
+void  dmn_bt_engine_destroy(dmn_bt_engine *);
+const char *dmn_bt_version(void);
+```
+
+- The ABI is pull-based. The frontend blocks on `next_message` in its own
+  thread, so no C++ thread ever calls into Rust and "no callback after drop"
+  holds by construction.
+- Functions catch every C++ exception. `send` returns 0 when the command was
+  accepted and non-zero for malformed input or a closed engine.
+  `next_message` returns `NULL` on timeout or after the engine closed and the
+  queue drained. Returned strings are caller-owned and freed only with
+  `dmn_bt_string_free`.
+- `destroy` stops monitors and joins all worker threads before returning;
+  callers must not race it with other calls on the same handle.
+- The demo backend provides deterministic synthetic phones and notifications so
+  the UI, Docker, and CI run without Bluetooth hardware. It is a documented
+  product mode (`dmn-bluetooth-cosmic --demo`), not a test-only symbol.
+
+### Protocol v1 (UTF-8 JSON, one object per message)
+
+Frontend to engine (`type`): `hello`, `configure` (restore saved selection,
+monitoring intents, sort), `refresh`, `scan` (`enabled`, optional `adapter`),
+`select` (draft), `save_selection`, `discard_selection`, `sort`, `connect`,
+`disconnect`, `monitor` (`enabled`), `shutdown`. Device commands carry stable
+`adapter` and `device` Bluetooth addresses, never object paths.
+
+Engine to frontend (`type`): `ready` (protocol and engine version), `state`
+(full snapshot: adapters, scanning, busy, status text, unsaved flag, and per
+device identity/name/status text/paired/connected/present/saved/selected,
+monitor requested/state/detail, and action availability computed by the shared
+GUI core), `event` (sequence, receive time, device identity, kind, optional
+state/notification/error), `persist` (saved selection and monitoring intents to
+store), `error` (message), `bye`.
+
+Unknown fields and unknown `type`/`kind` values must be ignored by both sides
+so v1 can grow compatibly. A protocol major-version mismatch is reported in
+`ready` and refused by the frontend.
+
+### Engine behavior
+
+The engine mirrors the GTK semantics in the
+[GTK specification](dmn-bluetooth-gtk-app-spec.md): launch and selection never
+pair or connect; monitoring is per saved, paired, connected device; intent is
+persisted until the user stops monitoring or explicitly disconnects; failed
+starts and unexpected ANCS failures retry with jittered exponential backoff
+through `Dmn_DeviceMonitorController`; events are ordered by an engine-assigned
+arrival sequence. Bounded blocking work (BlueZ operations, monitor start/stop)
+runs on worker threads and never on the thread that reads commands. The
+engine never writes to disk or logs notification content; the frontend owns
+persistence and stores only stable identities and UI preferences.
+
+### Rust workspace (`src/app/gui/cosmic/`)
+
+```text
+Cargo.toml                         # workspace, pinned libcosmic revision
+crates/dmn-bluetooth-sys/          # dmn-build.rs (drives CMake), FFI, safe Engine
+crates/dmn-cosmic-model/           # pure protocol types, reducer, feed, filters
+app/                               # binary dmn-bluetooth-cosmic (libcosmic UI)
+data/                              # desktop entry, AppStream metadata, icon
+```
+
+The model crate has no UI or FFI dependency, so `cargo test -p
+dmn-cosmic-model` runs without a shell or C++ build. The sys crate's tests
+drive the real C library through the demo backend.
+
+### Docker and CI
+
+The repository `Dockerfile` installs a current Rust toolchain and the
+`libcosmic` system packages and runs `cargo test --workspace` (which builds the
+C library through `dmn-build.rs`) during the image build. The container entry point
+runs the same Cargo tests after `ctest`. The default CMake configuration in the
+image is unchanged and does not enable `ENABLE_APP_BLUETOOTH_COSMIC`.
+
+### Acceptance additions
+
+- **COSMIC-IMPL-01:** A default CMake configure defines no COSMIC target;
+  `ENABLE_APP_BLUETOOTH_COSMIC=ON` defines only `dmn-bluetooth-cabi` and its
+  tests.
+- **COSMIC-IMPL-02:** `cargo build` from a clean checkout builds the C library
+  without a manual CMake step.
+- **COSMIC-IMPL-03:** C ABI tests cover create/destroy, malformed commands,
+  timeout, and the full demo workflow including shutdown with a live monitor.
+- **COSMIC-IMPL-04:** The Docker image builds and `cargo test --workspace`
+  passes without Bluetooth hardware.
+- **COSMIC-IMPL-05:** The app starts in `--demo` mode on a Wayland COSMIC
+  session; real iPhone/BlueZ behavior is a separate manual hardware gate.
+
+Out of scope for this implementation: the applet, desktop alerts, hidden-window
+monitoring, and the session D-Bus service.
 
 ### Toolkit and package layout
 
@@ -49,35 +188,13 @@ Rust-based and built on iced; do not assume upstream iced examples or
 The official template's `just build`, `just run`, and `just check` are useful
 build/lint entry points; add deterministic `cargo test` suites for logic.
 
-Suggested layout if both are pursued:
-
-```text
-apps/cosmic/
-  Cargo.toml                         # workspace; not part of CMake configure
-  crates/
-    dmn-cosmic-model/                # pure Rust view-state / reducers
-    dmn-service-client/              # only if the service boundary is chosen
-    dmn-cxx-bridge/                  # only if direct FFI is chosen
-  app/
-    Cargo.toml
-    src/main.rs
-    src/app.rs
-    src/view/
-      device_list.rs
-      notification_list.rs
-      notification_details.rs
-      preferences.rs
-  applet/
-    Cargo.toml                       # separate installable applet
-    src/main.rs
-    src/popup.rs
-    src/service_client.rs
-```
+The implemented layout is the Rust workspace described above. If an applet is
+added later, give it its own package under the same workspace.
 
 Do not add empty packages before they are needed. The pure model and service
 client should be Rust libraries with injected clocks/transports, allowing
 `cargo test` without a running COSMIC shell or Dmn C++ runtime. Keep COSMIC
-widgets in `view/` and an applet's shell integration in its package.
+widgets in the app package and an applet's shell integration in its own package.
 
 ## 2. Native COSMIC application
 
@@ -104,6 +221,17 @@ scrolling. Avoid custom shell chrome. Feature behavior, privacy policy,
 1,000-row cap, filters, event details, ANCS errors, and test gates match the
 shared [GTK app spec](dmn-bluetooth-gtk-app-spec.md) unless this document says
 otherwise.
+
+The phone list has two groups. **Previous selected devices** (top) holds phones
+whose selection has been saved; **Nearby devices** (bottom) holds nearby or
+unselected phones. Grouping follows the saved state: ticking a phone in the
+bottom group moves it up only after Save, and unticking a top phone moves it
+down only after the unselection is saved. The device list and the notification feed scroll
+independently, each with its own scroll bar, and the device panel can be hidden
+with the header toggle. Device cards and notification rows share one
+vertical gap (half of the standard `space_xs` step). Each group heading sits
+56% of `space_xs` above its list, and the two groups are 130% of `space_xs`
+apart.
 
 ### Interaction requirements
 

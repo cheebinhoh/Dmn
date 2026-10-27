@@ -312,6 +312,14 @@ if (ENABLE_APP_BLUETOOTH_CLI)
   )
 endif()
 
+if (ENABLE_APP_BLUETOOTH_COSMIC)
+  ADD_TEST_EXECUTABLE(dmn-gui dmn-test-bluetooth-cosmic-engine)
+
+  target_link_libraries(dmn-test-bluetooth-cosmic-engine
+                          PRIVATE dmn-bluetooth-cabi dmn-bluetooth-gui-engine
+  )
+endif()
+
 if (ENABLE_APP_BLUETOOTH_GTK)
   ADD_TEST_EXECUTABLE(dmn-gui dmn-test-bluetooth-gui-selection)
 

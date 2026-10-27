@@ -1,0 +1,10 @@
+# Copyright © 2026 Chee Bin HOH. All rights reserved.
+[Desktop Entry]
+Type=Application
+Name=Dmn Bluetooth (COSMIC)
+Comment=Monitor iPhone notifications over Bluetooth ANCS
+Exec=dmn-bluetooth-cosmic
+Icon=io.github.cheebinhoh.DmnBluetoothCosmic
+Terminal=false
+Categories=Utility;
+StartupWMClass=io.github.cheebinhoh.DmnBluetoothCosmic

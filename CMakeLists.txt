@@ -41,6 +41,8 @@ option(ENABLE_APP_BLUEZ_DISCOVERY_CLI
        "Build the BlueZ discovery CLI application" OFF)
 option(ENABLE_APP_BLUETOOTH_CLI
        "Build the Bluetooth ANCS monitor CLI application" OFF)
+option(ENABLE_APP_BLUETOOTH_COSMIC
+       "Build the C ABI library used by the Cargo-built COSMIC Bluetooth app" OFF)
 option(ENABLE_APP_BLUETOOTH_GTK
        "Build the optional GTK Bluetooth monitor application" OFF)
 option(ENABLE_BLUEZ "Build the optional Linux BlueZ library and tests" OFF)
@@ -91,6 +93,15 @@ if (ENABLE_APP_BLUETOOTH_CLI)
       "Build the optional ANCS protocol library" FORCE)
 endif()
 
+if (ENABLE_APP_BLUETOOTH_COSMIC)
+  set(ENABLE_BLUEZ ON CACHE BOOL
+      "Build the optional Linux BlueZ library and tests" FORCE)
+  set(ENABLE_ANCS ON CACHE BOOL
+      "Build the optional ANCS protocol library" FORCE)
+  # The C ABI library is shared and links the static Dmn layers.
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 if (ENABLE_APP_BLUETOOTH_GTK)
   set(ENABLE_BLUEZ ON CACHE BOOL
       "Build the optional Linux BlueZ library and tests" FORCE)
@@ -119,8 +130,11 @@ if (ENABLE_DBUS)
   pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
 endif()
 
-if (ENABLE_APP_BLUETOOTH_GTK)
+if (ENABLE_APP_BLUETOOTH_COSMIC OR ENABLE_APP_BLUETOOTH_GTK)
   pkg_check_modules(GLIB2 REQUIRED IMPORTED_TARGET glib-2.0)
+endif()
+
+if (ENABLE_APP_BLUETOOTH_GTK)
   pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.14)
   pkg_check_modules(ADWAITA REQUIRED IMPORTED_TARGET libadwaita-1>=1.5)
 

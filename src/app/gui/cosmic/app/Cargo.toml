@@ -1,0 +1,25 @@
+# Copyright © 2026 Chee Bin HOH. All rights reserved.
+
+[package]
+name = "dmn-bluetooth-cosmic"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "COSMIC frontend for Dmn Bluetooth ANCS monitoring"
+build = "dmn-build.rs"
+
+[[bin]]
+name = "dmn-bluetooth-cosmic"
+path = "src/dmn-bluetooth-cosmic.rs"
+
+[dependencies]
+dmn-bluetooth-sys = { path = "../crates/dmn-bluetooth-sys" }
+dmn-cosmic-model = { path = "../crates/dmn-cosmic-model" }
+tokio = { version = "1", features = ["rt", "time", "sync"] }
+
+[dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic.git"
+rev = "8990a058e1deb8f9f7f4c0a42f6b1362fa1437ec"
+default-features = false
+features = ["a11y", "multi-window", "tokio", "wayland", "winit"]
