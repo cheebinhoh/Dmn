@@ -59,6 +59,16 @@ namespace dmn {
  */
 enum class Dmn_GattErrorKind {
   /**
+   * @brief A transport or local backend failure occurred.
+   */
+  Backend,
+
+  /**
+   * @brief A D-Bus value did not match the GATT object contract.
+   */
+  Decode,
+
+  /**
    * @brief The supplied device or GATT identifier is invalid.
    */
   InvalidArgument,
@@ -69,24 +79,14 @@ enum class Dmn_GattErrorKind {
   NotReady,
 
   /**
-   * @brief The finite operation deadline expired.
-   */
-  Timeout,
-
-  /**
    * @brief BlueZ or another backend rejected the operation.
    */
   Remote,
 
   /**
-   * @brief A transport or local backend failure occurred.
+   * @brief The finite operation deadline expired.
    */
-  Backend,
-
-  /**
-   * @brief A D-Bus value did not match the GATT object contract.
-   */
-  Decode
+  Timeout
 };
 
 /**
@@ -174,9 +174,9 @@ struct Dmn_GattEvent {
    */
   enum class Kind {
     /**
-     * @brief Characteristic value changed.
+     * @brief A typed backend error occurred.
      */
-    ValueChanged,
+    Error,
 
     /**
      * @brief The device, service, or backend session became invalid.
@@ -184,9 +184,9 @@ struct Dmn_GattEvent {
     Invalidated,
 
     /**
-     * @brief A typed backend error occurred.
+     * @brief Characteristic value changed.
      */
-    Error
+    ValueChanged
   };
 
   /**

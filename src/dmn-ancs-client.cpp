@@ -320,6 +320,8 @@ auto Dmn_AncsDataSourceReassembler::consume(
 namespace dmn {
 namespace {
 
+constexpr auto kMaximumConfigTimeout = std::chrono::seconds{600};
+
 auto localDateString(std::chrono::system_clock::time_point timestamp)
     -> std::optional<std::string> {
   const auto time = std::chrono::system_clock::to_time_t(timestamp);
@@ -806,7 +808,7 @@ private:
   auto validConfig(const Dmn_AncsConfig &config) const -> bool {
     const auto validTimeout = [](std::chrono::milliseconds timeout) {
       return timeout > std::chrono::milliseconds::zero() &&
-             timeout <= std::chrono::seconds{600};
+             timeout <= kMaximumConfigTimeout;
     };
 
     return validTimeout(config.service_resolution_timeout) &&

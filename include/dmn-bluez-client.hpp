@@ -194,9 +194,9 @@ enum class Dmn_BluezEventKind {
   DeviceRemoved,
 
   /**
-   * @brief The BlueZ service owner disappeared.
+   * @brief An inventory, signal-decoding, or synchronization error occurred.
    */
-  ServiceUnavailable,
+  Error,
 
   /**
    * @brief BlueZ is available and its inventory is ready, including after
@@ -205,9 +205,9 @@ enum class Dmn_BluezEventKind {
   ServiceAvailable,
 
   /**
-   * @brief An inventory, signal-decoding, or synchronization error occurred.
+   * @brief The BlueZ service owner disappeared.
    */
-  Error
+  ServiceUnavailable
 };
 
 /**

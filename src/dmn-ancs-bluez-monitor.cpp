@@ -20,8 +20,11 @@ namespace {
 
 using namespace std::chrono_literals;
 
+constexpr std::size_t kBluetoothAddressLength = 17;
+constexpr auto kMaxSetupTimeout = 600s;
+
 auto isBluetoothAddress(std::string_view value) -> bool {
-  if (value.size() != 17) {
+  if (value.size() != kBluetoothAddressLength) {
     return false;
   }
 
@@ -158,7 +161,7 @@ auto makeError(Dmn_AncsMonitorStage stage,
 }
 
 auto validTimeout(std::chrono::milliseconds timeout) -> bool {
-  return timeout > 0ms && timeout <= 600s;
+  return timeout > 0ms && timeout <= kMaxSetupTimeout;
 }
 
 auto remainingTimeout(std::chrono::steady_clock::time_point deadline)
@@ -192,6 +195,16 @@ auto cancellationError() -> Dmn_AncsMonitorError {
 
 class Dmn_AncsBluezMonitor::Impl {
 public:
+  /** Interval between inventory checks while waiting for discovery. */
+  static constexpr auto kDiscoveryPollInterval = 100ms;
+
+  /** Interval between checks while waiting for a pairing/connection state. */
+  static constexpr auto kDeviceStatePollInterval = 100ms;
+
+  /** Upper bound for one BlueZ snapshot taken while waiting for device state.
+   */
+  static constexpr auto kDeviceStateSnapshotTimeout = 2000ms;
+
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_bluez{config}, m_gatt{config}, m_ancs{m_gatt} {}
 
@@ -225,6 +238,7 @@ public:
     }
 
     reportProgress(config, Dmn_AncsMonitorProgress::Inventory);
+
     auto inventory = m_bluez.snapshot();
     if (!inventory) {
       return std::unexpected(
@@ -504,6 +518,9 @@ public:
     return m_ancs.stop();
   }
 
+  // Intentionally not guarded by m_api_mutex: that mutex serializes the
+  // long-running start()/stop() calls, and the client's state() is already
+  // thread-safe, so status queries must not block behind them.
   auto state() const -> Dmn_AncsState { return m_ancs.state(); }
 
 private:
@@ -538,7 +555,7 @@ private:
         break;
       }
 
-      std::this_thread::sleep_for(100ms);
+      std::this_thread::sleep_for(kDiscoveryPollInterval);
     } while (std::chrono::steady_clock::now() < deadline);
 
     auto stopped = m_bluez.stopDiscovery();
@@ -573,7 +590,8 @@ private:
                           Dmn_AncsMonitorStage stage)
       -> std::expected<Dmn_AncsMonitorSession, Dmn_AncsMonitorError> {
     while (std::chrono::steady_clock::now() < deadline) {
-      const auto snapshotTimeout = std::min(2000ms, remainingTimeout(deadline));
+      const auto snapshotTimeout =
+          std::min(kDeviceStateSnapshotTimeout, remainingTimeout(deadline));
       auto inventory = m_bluez.snapshot(snapshotTimeout);
       if (!inventory) {
         return std::unexpected(makeError(stage, inventory.error()));
@@ -592,7 +610,8 @@ private:
                                       false};
       }
 
-      std::this_thread::sleep_for(std::min(100ms, remainingTimeout(deadline)));
+      std::this_thread::sleep_for(
+          std::min(kDeviceStatePollInterval, remainingTimeout(deadline)));
     }
 
     return std::unexpected(Dmn_AncsMonitorError{

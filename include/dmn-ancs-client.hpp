@@ -50,16 +50,16 @@ namespace dmn {
  * @brief ANCS-level failure category, independent of the GATT backend.
  */
 enum class Dmn_AncsErrorKind {
+  Authorization,
+  Backend,
+  Cleanup,
   InvalidArgument,
   NotReady,
-  Timeout,
-  Unsupported,
-  Authorization,
-  Remote,
   Protocol,
+  Remote,
   ResourceLimit,
-  Backend,
-  Cleanup
+  Timeout,
+  Unsupported
 };
 
 /**
@@ -103,9 +103,9 @@ enum class Dmn_AncsState {
  */
 enum class Dmn_AncsNotificationKind {
   Added,
-  Updated,
+  AttributesUnavailable,
   Removed,
-  AttributesUnavailable
+  Updated
 };
 
 /**
@@ -168,12 +168,12 @@ struct Dmn_AncsEvent {
    * @brief Event categories emitted by one ANCS session.
    */
   enum class Kind {
-    StateChanged,
-    NotificationAdded,
-    NotificationUpdated,
-    NotificationRemoved,
     AttributesUnavailable,
-    Error
+    Error,
+    NotificationAdded,
+    NotificationRemoved,
+    NotificationUpdated,
+    StateChanged
   };
 
   /**
@@ -355,6 +355,7 @@ private:
 };
 
 } // namespace detail
+
 } // namespace dmn
 
 #endif // DMN_ANCS_CLIENT_HPP_

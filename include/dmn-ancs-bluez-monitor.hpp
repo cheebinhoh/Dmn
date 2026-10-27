@@ -86,16 +86,16 @@ namespace dmn {
  * @brief Stage at which reusable monitor startup or cleanup failed.
  */
 enum class Dmn_AncsMonitorStage {
-  InvalidArgument, /**< Invalid selector, timeout, or monitor configuration. */
-  NotReady,  /**< The monitor is already active or otherwise unavailable. */
-  Inventory, /**< BlueZ adapter or device inventory failure. */
-  Discovery, /**< Discovery start, stop, or adapter selection failure. */
-  DeviceNotFound, /**< No unique matching device was found. */
-  Pairing,        /**< Pairing failed or paired state was not confirmed. */
-  Connection,  /**< Connection failed or connected state was not confirmed. */
   AncsStartup, /**< ANCS service discovery or subscription failed. */
   Cancelled,   /**< Startup was canceled by the caller. */
-  Cleanup      /**< ANCS startup rollback or stop cleanup failed. */
+  Cleanup,     /**< ANCS startup rollback or stop cleanup failed. */
+  Connection,  /**< Connection failed or connected state was not confirmed. */
+  DeviceNotFound,  /**< No unique matching device was found. */
+  Discovery,       /**< Discovery start, stop, or adapter selection failure. */
+  InvalidArgument, /**< Invalid selector, timeout, or monitor configuration. */
+  Inventory,       /**< BlueZ adapter or device inventory failure. */
+  NotReady, /**< The monitor is already active or otherwise unavailable. */
+  Pairing   /**< Pairing failed or paired state was not confirmed. */
 };
 
 /**
