@@ -124,6 +124,7 @@ auto notificationFrom(const Dmn_AncsNotification &source)
   notification.m_uid = source.uid;
   notification.m_category = source.category;
   notification.m_flags = source.flags;
+  notification.m_category_count = source.category_count;
   notification.m_app_identifier = source.app_identifier;
   notification.m_title = source.title;
   notification.m_subtitle = source.subtitle;

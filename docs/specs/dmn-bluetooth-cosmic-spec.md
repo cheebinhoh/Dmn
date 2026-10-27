@@ -175,8 +175,8 @@ image is unchanged and does not enable `ENABLE_APP_BLUETOOTH_COSMIC`.
 - **COSMIC-IMPL-05:** The app starts in `--demo` mode on a Wayland COSMIC
   session; real iPhone/BlueZ behavior is a separate manual hardware gate.
 
-Out of scope for this implementation: the applet, desktop alerts, hidden-window
-monitoring, and the session D-Bus service.
+Out of scope for this implementation: the applet, hidden-window monitoring, and
+the session D-Bus service. Generic desktop alerts are implemented (see below).
 
 ### Toolkit and package layout
 
@@ -215,7 +215,9 @@ store submission requirements at implementation time.
 ### Implemented layout
 
 **Toolbar** (always visible): a device search box, the **Selected only**
-checkbox, then **Save** and **Discard**. The search box is half as wide as the
+checkbox, then **Save** and **Discard**. A header-bar menu holds the **Desktop
+alerts** checkbox and **About Dmn Bluetooth**, which opens libcosmic's About
+panel in the context drawer. The search box is half as wide as the
 device panel (a quarter of the window when the panes are side by side) and
 filters both device groups case-insensitively by name, address, adapter,
 status, or monitor state. Save and Discard are enabled only while there are
@@ -271,9 +273,11 @@ privacy explanation or an applet remain targets, not current behavior.
   unavailable, no-results, overflow, and permission-needed states are
   explicit.
 - **Stop** ends the ANCS session only. Quit stops monitor and clears
-  in-memory content; bonds/links remain. Optional generic desktop alerts and
-  hidden-window monitoring follow the GTK spec only if the selected platform
-  integration is actually available.
+  in-memory content; bonds/links remain. Generic desktop alerts (on by default,
+  toggled in the header menu) are sent over `org.freedesktop.Notifications`
+  with the same text and per-device replacement ids as the GTK app; clicking an
+  alert does not raise the window. Hidden-window monitoring follows the GTK
+  spec only if the selected platform integration is actually available.
 - Persist UI preferences and selected stable identities only. Never persist,
   log, or export ANCS notification text by default.
 

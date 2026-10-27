@@ -27,6 +27,27 @@ written to disk, sent over a network, or monitored after the app quits.
   persistence of window/preferences.
 - No network, no filesystem access, no device nodes.
 
+## Reviewing without Bluetooth hardware
+
+Reviewers do not need an iPhone, a Bluetooth adapter, or BlueZ. The GTK and
+COSMIC frontends share one engine and both have a demo mode backed by its
+synthetic backend:
+
+```bash
+dmn-bluetooth-gtk --demo
+dmn-bluetooth-cosmic --demo
+```
+
+It shows fake phones that can be selected, saved, connected and monitored, and
+produces synthetic notifications and generic desktop alerts. Demo mode never
+reads or writes the user's saved devices. The engine tests use the same
+backend and need no host Bluetooth dependency:
+
+```bash
+cd src/app/gui/cosmic && cargo test --workspace --locked
+ctest -R dmn-test-bluetooth-cosmic-engine   # needs -DENABLE_APP_BLUETOOTH_COSMIC=ON
+```
+
 ## Trademarks
 
 "Apple", "iPhone" and "ANCS" are used only to describe compatibility. The

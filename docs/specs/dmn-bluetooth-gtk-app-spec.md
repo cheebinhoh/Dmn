@@ -30,6 +30,36 @@ the remaining release-qualification gates. The application owns a live
 in-process event feed and submits optional generic alerts through GIO; alerts
 are not a durable feed.
 
+## 0.1 Frontend architecture (0.9.2)
+
+The GTK app is a thin client of the shared GUI engine
+(`dmn::gui::Dmn_Engine`, `dmn-bluetooth-gui-engine`), the same engine the COSMIC
+frontend uses through its C ABI. GTK links the static engine library directly;
+it no longer calls BlueZ, the ANCS monitor, or the GUI-core controller itself.
+Inventory, selection drafts, connect/disconnect, monitor intent, and retry
+scheduling therefore behave identically in both frontends (see
+[the COSMIC specification](dmn-bluetooth-cosmic-spec.md) for the JSON protocol).
+
+- A reader thread blocks on `Dmn_Engine::nextMessage()` and hands each message to
+  the GTK main loop with `g_idle_add_full`; widgets are touched only on the main
+  thread. Commands are sent from the main thread.
+- The engine never writes to disk. The app applies `persist` messages to the
+  `selected-devices` and `monitoring-devices` GSettings keys and sends them back
+  in `configure` at launch.
+- The window follows the COSMIC layout: a left panel with device search,
+  **Selected only**, Name/Status sort, Save/Discard, and two groups, **Previous
+  selected devices** and **Nearby devices**; and a notifications panel on the
+  right. The app scans for its whole lifetime, so there are no Scan/Refresh
+  buttons. **Desktop alerts** and **About** are in the header menu.
+- `dmn-bluetooth-gtk --demo` runs over the engine's synthetic backend: fake
+  phones and notifications, no BlueZ or hardware, and the user's saved devices
+  and preferences are neither read nor written. `--help` and `--version` are
+  handled before GTK initialization.
+
+Sections below that describe the earlier `GtkColumnView` feed, detail pane, and
+pane-position persistence record the pre-0.9.2 design and are superseded by this
+section where they differ.
+
 ## 0. Current implementation
 
 This table records behavior verified in the current implementation.
@@ -40,14 +70,14 @@ This table records behavior verified in the current implementation.
 | BlueZ inventory and explicit discovery | Implemented with worker-thread BlueZ requests, powered-adapter selection, a finite scan, and explicit scan stop. |
 | Saved device selection | Implemented with stable adapter/device addresses, multiple draft/save/discard entries, and unavailable saved devices. |
 | Device inventory view | Implemented with Name/Status sorting, a Selected only filter over the current draft selection (its on/off preference is restored across launches), separate paired/connected/monitor states, and per-row Connect/Disconnect and Start/Stop monitoring actions. |
-| Sidebar and view restoration | A single themed sidebar toggle at the left edge of the Notifications header bar opens/closes the device panel; it is open by default and its visibility is restored from GSettings. The last viewed device and All devices feed choice are also restored using stable addresses and a separate boolean preference. |
-| Adjustable device pane | The window opens maximized. Its draggable GTK divider defaults to an even 50/50 split; user-adjusted pane proportion is saved in GSettings and restored independently of window size. Existing saved absolute pane positions are migrated to a proportion on first launch after the update. |
+| Sidebar restoration | A sidebar toggle at the left edge of the header bar, next to the app title, opens/closes the device panel; it is open by default and its visibility is restored from GSettings (not in `--demo`). The Selected only filter preference is restored the same way. |
+| Device pane | A `GtkPaned` splits the device panel and the notifications panel. The window opens at 960×680. Pane position is not persisted; the legacy `pane-position`, `pane-fraction`, `viewed-device`, and `all-devices` keys are kept in the schema but no longer read. |
 | Connect/disconnect actions | Implemented per saved device. Unpaired devices must be paired in Bluetooth Settings. A disconnected device offers **Connect**; during a pending connection it changes to enabled **Disconnect**. A connected device offers enabled **Disconnect** regardless of ANCS monitor state or monitor transitions; manual disconnect stops monitoring first and clears its saved monitoring intent. During a queued or running disconnect, the row immediately shows **Connect** and allows a reconnect request to run after disconnect completes. |
 | ANCS monitor lifecycle | Implemented per saved, paired, already-connected device with progress and explicit start/stop. **Start monitoring** is available only after BlueZ confirms Connected. The monitoring action remains available during monitor transitions and follows saved user intent rather than transient ANCS state. Starting changes the action to **Stop monitoring** immediately; activating it clears saved intent and cooperatively cancels startup, cleaning up subscriptions created by an in-flight ANCS setup. Stopping changes it back to **Start monitoring**. Disconnecting also stops monitoring and presents **Start monitoring** while disconnected. Monitor start never pairs or establishes the initial link; like the CLI, it asks BlueZ to connect any remaining auto-connectable profiles before ANCS startup. |
 | Remembered monitoring intent | Implemented in GSettings using stable adapter/device addresses. An explicit Start monitoring choice is restored on launch; startup waits for a saved, paired device to be connected. Failed starts and unexpected ANCS **Failed**/**Stopped** states retain intent and retry with jittered exponential backoff (about 5 seconds initially, capped at about 60 seconds) while the device remains connected. Unexpectedly stopped sessions are cleaned up before retry. The retry policy and lifecycle decisions are implemented in the GTK-independent GUI core. Stop monitoring and an explicit user Disconnect clear the intent. An external disconnect or app exit stops the live monitor but preserves the intent. |
-| Adaptive layout | Implemented as a two-pane window at wide sizes and a device-list/device-detail navigation flow below the libadwaita breakpoint. The narrow layout stacks scan and selection controls. |
-| In-session event feed | Implemented using `GListStore`, `GtkFilterListModel`, `GtkSortListModel`, and `GtkColumnView`. Composable filters cover the viewed device or all devices, event kind, category, and Unicode case-insensitive text search. Rows show device, host receipt time, kind/category, and an event preview; row activation opens available details, including phone-provided date when present. Hovering notification text shows its full value wrapped within the feed-pane width. Arrival sequence—not wall-clock time—orders events newest-first. The process-local store retains at most 1,000 events and announces evictions. Clear notifications removes the in-memory feed; Clear filters restores defaults. Removed events show no stale attributes. Notification text remains selectable/copyable. |
-| Optional desktop alerts | Implemented through GIO `GNotification`, controlled by an app-menu toggle and disabled by default. New ANCS notification-added events submit a generic alert; titles, bodies, device names, and addresses are excluded. Alerts aggregate per device using replacement IDs and are withdrawn on feed clear, monitor stop, preference disable, or quit. The installed desktop entry declares D-Bus activation and GNOME notification metadata. Submission is best-effort; popup behavior has not been qualified on each supported GNOME/COSMIC release. |
+| Adaptive layout | Two panes side by side at wide sizes; an `AdwBreakpoint` (`max-width: 600sp`) stacks them vertically below that width. |
+| In-session event feed | Rendered from engine `event` messages as a bounded list (1,000 retained, newest first, 200 shown). Filters compose: All/Notifications/Problems kind, category drop-down, per-device filter (**Show notifications** on a device row, cleared by **All devices**), and Unicode case-insensitive text search. Each notification has a **Details** dialog (UID, category, app identifier, title, subtitle, message, phone-provided date). Removed notifications show no stale attributes. Text is selectable/copyable. Clear notifications empties the in-memory feed. |
+| Optional desktop alerts | Implemented through GIO `GNotification`, controlled by a header-menu toggle and enabled by default. New ANCS notification-added events submit a generic alert; titles, bodies, device names, and addresses are excluded. Alerts aggregate per device using replacement IDs and are withdrawn on feed clear, monitor stop, preference disable, or quit. The installed desktop entry declares D-Bus activation and GNOME notification metadata. Submission is best-effort; popup behavior has not been qualified on each supported GNOME/COSMIC release. |
 | Desktop metadata and icon | Implemented with an AppStream `.metainfo.xml`, a lowercase desktop/application ID, a full-color Dmn mark (Bluetooth rune inside a D-shaped first letter, followed by `mn`) installed as both 128×128 PNG and scalable SVG hicolor icons, and a matching symbolic Bluetooth icon. The previous GSettings schema ID is retained to preserve saved preferences. |
 | Preferences, close confirmation, and keep-monitoring-on-close | Out of scope. Alert preference is in the app menu; quitting stops monitors after cleanup. |
 

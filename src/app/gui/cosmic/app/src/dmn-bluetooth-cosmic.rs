@@ -7,6 +7,8 @@
 
 #[path = "dmn-app.rs"]
 mod app;
+#[path = "dmn-notifier.rs"]
+mod notifier;
 
 use std::process::ExitCode;
 use std::sync::Arc;

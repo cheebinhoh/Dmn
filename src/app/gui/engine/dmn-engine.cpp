@@ -89,6 +89,7 @@ auto notificationJson(const Dmn_BackendNotification &notification)
   json.set("uid", static_cast<std::uint64_t>(notification.m_uid));
   json.set("category", static_cast<int>(notification.m_category));
   json.set("flags", static_cast<int>(notification.m_flags));
+  json.set("category_count", static_cast<int>(notification.m_category_count));
   json.set("app_identifier", optionalString(notification.m_app_identifier));
   json.set("title", optionalString(notification.m_title));
   json.set("subtitle", optionalString(notification.m_subtitle));

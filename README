@@ -96,6 +96,8 @@ cmake -S . -B build-gtk-app \
 cmake --build build-gtk-app --target dmn-bluetooth-gtk --parallel 2
 cmake --install build-gtk-app --component Runtime
 "$HOME/.local/bin/dmn-bluetooth-gtk"
+# Hardware-free review: fake devices, no BlueZ, saved devices untouched
+"$HOME/.local/bin/dmn-bluetooth-gtk" --demo
 ```
 
 `Runtime` installs the executable and desktop assets. `Development` installs
@@ -291,7 +293,12 @@ interface for browsing BlueZ devices, saving a device selection, connecting
 and disconnecting, and explicitly starting or stopping ANCS monitoring. The
 GTK application and CLI are separate frontends to the same BlueZ/ANCS
 functionality; enabling the GTK build does not build or replace the CLI.
-Optional desktop alerts use GNotification.
+Optional desktop alerts use GNotification. All Bluetooth behavior comes from the
+shared GUI engine that the COSMIC app also uses; the GTK code only renders it.
+The window has a left device panel (search, **Selected only**, sorting, and the
+"Previous selected devices" and "Nearby devices" groups) and a notifications
+panel. Run `dmn-bluetooth-gtk --demo` to try it with fake devices and no
+Bluetooth hardware; demo mode never touches saved devices.
 
 The app never connects automatically. **Start monitoring** is an explicit
 choice saved per device, so the app can restore that intent on later launches.
@@ -302,11 +309,11 @@ the live monitor but preserves the intent, so monitoring can resume after
 reconnection or relaunch. The newest-first event feed contains only
 notifications received while the app process is running; it is not a
 persistent notification archive or a desktop notification-history reader.
-Search and device, event-kind, and category filters compose; activating a row
-shows available details. A single sidebar toggle at the left edge of the
-Notifications panel opens and closes the device sidebar; its visibility,
-viewed device, and All devices feed setting are remembered across launches.
-The feed is capped at 1,000 in-memory events, with older-event eviction
+Search and device, event-kind, and category filters compose; each
+notification has a Details button. A sidebar toggle at the left edge of the
+header bar opens and closes the device panel; its visibility and the Selected
+only setting are remembered across launches. The app scans for its whole
+lifetime, so there are no Scan buttons. The feed is capped at 1,000 in-memory events, with older-event eviction
 reported in the interface. Hovering over notification text shows its full
 value wrapped to the available feed width.
 The GTK app requires a running BlueZ system service and a graphical desktop
@@ -337,7 +344,8 @@ discarded. The device list and notification feed scroll independently.
 The app scans for devices for as long as it runs and the list updates as
 results arrive, so there are no Scan or Refresh buttons. The toolbar has a
 search box (half the device panel wide, always visible), the Selected only
-checkbox, and the Save and Discard buttons; the search box filters both groups
+checkbox, and the Save and Discard buttons; the header-bar menu has the
+Desktop alerts checkbox (on by default) and About; the search box filters both groups
 by any part of a device (name, address, status). Notification titles and
 messages can be highlighted and copied (right-click Copy / Select All), and
 hovering a notification shows its full text.

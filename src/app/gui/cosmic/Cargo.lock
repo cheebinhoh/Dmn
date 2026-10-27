@@ -1236,21 +1236,23 @@ dependencies = [
 
 [[package]]
 name = "dmn-bluetooth-cosmic"
-version = "0.1.0"
+version = "0.9.2"
 dependencies = [
  "dmn-bluetooth-sys",
  "dmn-cosmic-model",
+ "libc",
  "libcosmic",
  "tokio",
+ "zbus",
 ]
 
 [[package]]
 name = "dmn-bluetooth-sys"
-version = "0.1.0"
+version = "0.9.2"
 
 [[package]]
 name = "dmn-cosmic-model"
-version = "0.1.0"
+version = "0.9.2"
 dependencies = [
  "serde",
  "serde_json",

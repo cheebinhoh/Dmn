@@ -67,6 +67,7 @@ struct Dmn_BackendNotification {
   std::uint32_t m_uid{};
   std::uint8_t m_category{};
   std::uint8_t m_flags{};
+  std::uint8_t m_category_count{};
   std::optional<std::string> m_app_identifier;
   std::optional<std::string> m_title;
   std::optional<std::string> m_subtitle;
