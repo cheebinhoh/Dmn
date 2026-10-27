@@ -331,8 +331,16 @@ JSON-protocol engine; the UI contains no Bluetooth logic. Settings are stored
 in `$XDG_CONFIG_HOME/dmn-bluetooth-cosmic/settings.json`. The device panel can
 be hidden with the toggle in the header bar. The list has two groups:
 "Previous selected devices" (saved selection) and "Nearby devices" (nearby or
-unselected); a phone changes group only when its selection is saved or
+unselected); a device changes group only when its selection is saved or
 discarded. The device list and notification feed scroll independently.
+
+The app scans for devices for as long as it runs and the list updates as
+results arrive, so there are no Scan or Refresh buttons. The toolbar has a
+search box (half the device panel wide, always visible), the Selected only
+checkbox, and the Save and Discard buttons; the search box filters both groups
+by any part of a device (name, address, status). Notification titles and
+messages can be highlighted and copied (right-click Copy / Select All), and
+hovering a notification shows its full text.
 
 Cargo is the build entry point. Its build script (`dmn-build.rs`) runs CMake
 with `-DENABLE_APP_BLUETOOTH_COSMIC=ON`, so no manual CMake step is needed:

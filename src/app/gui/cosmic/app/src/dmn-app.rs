@@ -13,7 +13,7 @@
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use cosmic::iced::futures::{self, SinkExt};
 use cosmic::iced::{Alignment, Length, Subscription};
@@ -44,6 +44,15 @@ fn scaled_gap(scale: f32) -> u16 {
     (f32::from(cosmic::theme::spacing().space_xs) * scale).round() as u16
 }
 
+/// Minimum time between automatic scan requests.
+const SCAN_RETRY_INTERVAL: Duration = Duration::from_secs(10);
+
+/// Wrap width of the notification tooltip.
+const TOOLTIP_MAX_WIDTH: f32 = 480.0;
+
+/// Fixed so the width-aware toolbar does not claim the page height.
+const TOOLBAR_HEIGHT: f32 = 40.0;
+
 /// Engine poll period; also bounds how quickly the poll thread notices shutdown.
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
 
@@ -58,8 +67,10 @@ pub struct App {
     model: Model,
     settings: Settings,
     settings_path: Option<PathBuf>,
-    selected_event: Option<u64>,
     show_devices: bool,
+    /// Filters both device groups; UI-only, not persisted.
+    device_search: String,
+    last_scan_request: Option<Instant>,
 }
 
 #[derive(Clone, Debug)]
@@ -67,8 +78,6 @@ pub struct App {
 pub enum Message {
     Engine(String),
     Pump(Incoming),
-    Refresh,
-    Scan(bool),
     Select(Device, bool),
     Save,
     Discard,
@@ -79,13 +88,26 @@ pub enum Message {
     FilterDevice(Option<String>),
     FilterKind(KindFilter),
     Search(String),
+    DeviceSearch(String),
     SelectedOnly(bool),
     ClearFeed,
-    ShowEvent(u64),
     ToggleDevices,
 }
 
 impl App {
+    /// The app scans for its whole lifetime: request it whenever the engine
+    /// reports it idle. Retries are throttled so a failing adapter is not
+    /// hammered.
+    fn ensure_scanning(&mut self) {
+        let due = self
+            .last_scan_request
+            .map_or(true, |at| at.elapsed() >= SCAN_RETRY_INTERVAL);
+        if due && self.model.should_start_scan() {
+            self.last_scan_request = Some(Instant::now());
+            self.send(Command::Scan { enabled: true });
+        }
+    }
+
     /// Sends a command to the engine; a rejected command is only logged.
     fn send(&self, command: Command) {
         if let Some(engine) = ENGINE.get() {
@@ -130,8 +152,9 @@ impl cosmic::Application for App {
             model,
             settings,
             settings_path,
-            selected_event: None,
             show_devices: true,
+            device_search: String::new(),
+            last_scan_request: None,
         };
         app.send(Command::Hello);
         app.send(app.settings.configure_command());
@@ -193,9 +216,8 @@ impl cosmic::Application for App {
                         }
                     }
                 }
+                self.ensure_scanning();
             }
-            Message::Refresh => self.send(Command::Refresh),
-            Message::Scan(enabled) => self.send(Command::Scan { enabled }),
             Message::Select(device, selected) => self.send(Command::Select {
                 identity: device.identity(),
                 selected,
@@ -221,6 +243,7 @@ impl cosmic::Application for App {
             Message::FilterDevice(key) => self.model.filter.device = key,
             Message::FilterKind(kind) => self.model.filter.kind = kind,
             Message::Search(text) => self.model.filter.search = text,
+            Message::DeviceSearch(text) => self.device_search = text,
             Message::SelectedOnly(enabled) => {
                 self.settings.selected_only = enabled;
                 if let Some(path) = &self.settings_path {
@@ -231,9 +254,7 @@ impl cosmic::Application for App {
             }
             Message::ClearFeed => {
                 self.model.feed.clear();
-                self.selected_event = None;
             }
-            Message::ShowEvent(sequence) => self.selected_event = Some(sequence),
             Message::ToggleDevices => self.show_devices = !self.show_devices,
         }
         Task::none()
@@ -293,33 +314,41 @@ impl cosmic::Application for App {
 
 impl App {
     fn toolbar(&self) -> Element<'_, Message> {
-        let snapshot = &self.model.snapshot;
-        let idle = !snapshot.busy;
-        let mut save = widget::button::suggested("Save");
-        let mut discard = widget::button::standard("Discard");
-        if snapshot.unsaved_changes {
-            save = save.on_press(Message::Save);
-            discard = discard.on_press(Message::Discard);
-        }
-        let mut refresh = widget::button::standard("Refresh");
-        if idle {
-            refresh = refresh.on_press(Message::Refresh);
-        }
-        widget::row::with_children(vec![
-            refresh.into(),
-            widget::checkbox(snapshot.scanning)
-                .label("Scan for new phones")
-                .on_toggle(Message::Scan)
-                .into(),
-            save.into(),
-            discard.into(),
-            widget::checkbox(self.settings.selected_only)
-                .label("Selected only")
-                .on_toggle(Message::SelectedOnly)
-                .into(),
-        ])
-        .spacing(cosmic::theme::spacing().space_xs)
-        .align_y(Alignment::Center)
+        let unsaved = self.model.snapshot.unsaved_changes;
+        let selected_only = self.settings.selected_only;
+        let search_text = self.device_search.clone();
+        // The device search is half as wide as the device panel: the panel is
+        // half the window when side by side, the whole window when stacked.
+        // It stays visible, at the same width, while the panel is hidden.
+        let share = if !self.core.is_condensed() { 0.25 } else { 0.5 };
+        widget::responsive(move |size| {
+            let spacing = cosmic::theme::spacing();
+            let mut save = widget::button::suggested("Save");
+            let mut discard = widget::button::standard("Discard");
+            if unsaved {
+                save = save.on_press(Message::Save);
+                discard = discard.on_press(Message::Discard);
+            }
+            widget::row::with_capacity(4)
+                .spacing(spacing.space_xs)
+                .align_y(Alignment::Center)
+                .push(
+                    widget::search_input("Search devices", search_text.clone())
+                        .on_input(Message::DeviceSearch)
+                        .on_clear(Message::DeviceSearch(String::new()))
+                        .width(Length::Fixed(size.width * share)),
+                )
+                .push(
+                    widget::checkbox(selected_only)
+                        .label("Selected only")
+                        .on_toggle(Message::SelectedOnly),
+                )
+                .push(save)
+                .push(discard)
+                .into()
+        })
+        .width(Length::Fill)
+        .height(Length::Fixed(TOOLBAR_HEIGHT))
         .into()
     }
 
@@ -351,7 +380,7 @@ impl App {
         .align_y(Alignment::Center);
         // Grouping rules live in `Model::device_groups` (unit tested).
         let selected_only = self.settings.selected_only;
-        let (previous, nearby) = self.model.device_groups(selected_only);
+        let (previous, nearby) = self.model.device_groups(selected_only, &self.device_search);
         let card_gap = card_gap();
         let group = |devices: Vec<&'a Device>, empty: &'static str| {
             let mut cards = widget::column::with_capacity(devices.len().max(1)).spacing(card_gap);
@@ -370,17 +399,17 @@ impl App {
             .push(top_heading)
             .push(group(
                 previous,
-                "No saved phones yet. Select a phone and save to keep it here.",
+                "No saved devices yet. Select a device and save to keep it here.",
             ));
         let bottom = widget::column::with_capacity(2)
             .spacing(heading_gap)
             .push(widget::text::title4("Nearby devices"))
             .push(group(
                 nearby,
-                if selected_only {
-                    "No selected phones. Turn off Selected only to see all."
+                if selected_only || !self.device_search.trim().is_empty() {
+                    "No devices match. Clear the search or Selected only to see all."
                 } else {
-                    "No phones found yet."
+                    "Scanning for devices…"
                 },
             ));
         widget::column::with_capacity(2)
@@ -496,30 +525,34 @@ impl App {
             rows = rows.push(widget::text::body("Nothing to show."));
         }
         column = column.push(rows);
-        if let Some(event) = self
-            .selected_event
-            .and_then(|sequence| self.model.feed.get(sequence))
-        {
-            column = column.push(
-                widget::container(widget::text::body(event.summary()))
-                    .padding(spacing.space_xs)
-                    .class(cosmic::theme::Container::Card)
-                    .width(Length::Fill),
-            );
-        }
         column.into()
     }
 
     fn event_row<'a>(&'a self, event: &'a EventRecord) -> Element<'a, Message> {
-        widget::button::custom(
-            widget::column::with_children(vec![
-                widget::text::body(event.headline()).into(),
-                widget::text::caption(event.name.clone()).into(),
-            ])
-            .width(Length::Fill),
+        let mut lines: Vec<Element<'a, Message>> = vec![
+            widget::selectable_text::body(event.headline()).into(),
+            widget::text::caption(event.name.clone()).into(),
+        ];
+        // Title and message are selectable (drag to highlight, right-click for
+        // Copy / Select All); the tooltip shows the whole text.
+        let summary = event.summary();
+        if !summary.is_empty() {
+            lines.insert(1, widget::selectable_text::body(summary.clone()).into());
+        }
+        let row = widget::container(widget::column::with_children(lines).width(Length::Fill))
+            .padding(cosmic::theme::spacing().space_xs)
+            .class(cosmic::theme::Container::Card)
+            .width(Length::Fill);
+        let full = if summary.is_empty() {
+            event.headline()
+        } else {
+            format!("{}\n{}", event.headline(), summary)
+        };
+        widget::tooltip(
+            row,
+            widget::container(widget::text::body(full)).max_width(TOOLTIP_MAX_WIDTH),
+            widget::tooltip::Position::Bottom,
         )
-        .on_press(Message::ShowEvent(event.sequence))
-        .width(Length::Fill)
         .into()
     }
 }

@@ -212,26 +212,46 @@ COSMIC-specific applets use `com.system76.CosmicApplet` and the COSMIC Flatpak
 repository rather than treating app and applet as one package. Confirm current
 store submission requirements at implementation time.
 
-At wide widths, the first screen is a two-pane **Phones** and **Notifications**
-layout with header search/preferences, explicit Save/Monitor/Stop actions,
-newest-first events, and accessible states. At narrow widths, use a
-single-view navigation flow from the phone list to the selected event feed and
-details; preserve a visible Back action and do not require horizontal
-scrolling. Avoid custom shell chrome. Feature behavior, privacy policy,
-1,000-row cap, filters, event details, ANCS errors, and test gates match the
-shared [GTK app spec](dmn-bluetooth-gtk-app-spec.md) unless this document says
-otherwise.
+### Implemented layout
 
-The phone list has two groups. **Previous selected devices** (top) holds phones
-whose selection has been saved; **Nearby devices** (bottom) holds nearby or
-unselected phones. Grouping follows the saved state: ticking a phone in the
-bottom group moves it up only after Save, and unticking a top phone moves it
-down only after the unselection is saved. The device list and the notification feed scroll
-independently, each with its own scroll bar, and the device panel can be hidden
-with the header toggle. Device cards and notification rows share one
-vertical gap (half of the standard `space_xs` step). Each group heading sits
-56% of `space_xs` above its list, and the two groups are 130% of `space_xs`
-apart.
+**Toolbar** (always visible): a device search box, the **Selected only**
+checkbox, then **Save** and **Discard**. The search box is half as wide as the
+device panel (a quarter of the window when the panes are side by side) and
+filters both device groups case-insensitively by name, address, adapter,
+status, or monitor state. Save and Discard are enabled only while there are
+unsaved selection changes.
+
+**Panes.** At wide widths the window shows the device list and the
+notification feed side by side; at narrow widths they stack vertically. The
+header toggle hides the device panel (not persisted). Each pane scrolls
+independently with its own scroll bar. Device cards and notification rows are
+the same square cards and share one vertical gap (half of the standard
+`space_xs` step).
+
+**Device list.** Two groups: **Previous selected devices** (top, with the
+Name/Status sort buttons) holds devices whose selection has been saved, and
+**Nearby devices** (bottom) holds nearby or unselected devices. Grouping follows
+the saved state: ticking a device in the bottom group moves it up only after
+Save, and unticking a top device moves it down only after the unselection is
+saved. A group heading sits 56% of `space_xs` above its list, and the two
+groups are 130% of `space_xs` apart.
+
+**Scanning.** The app scans for its whole lifetime, so there are no Scan or
+Refresh controls. It sends `scan` with `enabled: true` whenever the engine
+reports an adapter, no scan running and no operation in flight (retried at most
+every 10 seconds), and the engine refreshes inventory as results arrive.
+
+**Notification feed.** Newest first, with kind, device and text filters and a
+search box. Each row is a card showing the title, the notification subtitle and
+message, and the device name. Hovering a row shows the whole message in a
+wrapped tooltip. The title and message can be highlighted with the mouse and
+copied with the right-click Copy / Select All menu, as in the GTK app. There is
+no separate detail view and rows are not clickable.
+
+Feature behavior, privacy policy, the 1,000-row cap, filters, ANCS errors, and
+test gates match the shared [GTK app spec](dmn-bluetooth-gtk-app-spec.md)
+unless this document says otherwise. The interaction requirements below that mention a first-run
+privacy explanation or an applet remain targets, not current behavior.
 
 ### Interaction requirements
 
@@ -246,7 +266,8 @@ apart.
   mislabel another device or implicitly stop it.
 - Event list has **Device**, **Received**, **Type/category**, and
   **Notification**; filters cover device, event kind/category, and search.
-  Activation shows a detail surface with only received attributes. Empty,
+  The COSMIC app has no detail surface; rows show the text and a hover
+  tooltip shows it in full. Empty,
   unavailable, no-results, overflow, and permission-needed states are
   explicit.
 - **Stop** ends the ANCS session only. Quit stops monitor and clears

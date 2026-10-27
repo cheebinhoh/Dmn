@@ -50,6 +50,22 @@ pub struct Device {
 }
 
 impl Device {
+    /// True when `needle` (already trimmed and lowercased; empty matches all)
+    /// appears in any displayed part of the device.
+    pub fn matches_search(&self, needle: &str) -> bool {
+        needle.is_empty()
+            || [
+                &self.name,
+                &self.device,
+                &self.adapter,
+                &self.status,
+                &self.monitor_state,
+                &self.monitor_detail,
+            ]
+            .iter()
+            .any(|part| part.to_lowercase().contains(needle))
+    }
+
     pub fn identity(&self) -> Identity {
         Identity {
             adapter: self.adapter.clone(),
