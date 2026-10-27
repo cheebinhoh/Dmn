@@ -1,0 +1,16 @@
+# Copyright © 2026 Chee Bin HOH. All rights reserved.
+
+[package]
+name = "dmn-bluetooth-sys"
+description = "Bindings to the Dmn Bluetooth C ABI; Cargo builds the C library through CMake"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+links = "dmn-bluetooth-cabi"
+build = "dmn-build.rs"
+
+[lib]
+path = "src/dmn-bluetooth-sys.rs"
+
+[dependencies]

@@ -26,6 +26,7 @@ was AI-generated:
 | Area | AI-assisted material | Approximate extent |
 | --- | --- | --- |
 | GTK Bluetooth application | Frontend implementation and feature-specific revisions | Substantial, iterative assistance; the maintainer defined requirements and design, then reviewed and tested the work. |
+| COSMIC Bluetooth application | C++ engine, C ABI, Rust libcosmic frontend, Cargo-driven build, Docker support, and specification | Substantial, iterative assistance; the maintainer defined requirements and design, then reviewed and tested the work. |
 | GUI core and tests | Feature-specific GUI core implementation and tests | Partial assistance; not every file or line in these areas was AI-generated. |
 | Bluetooth architecture documentation | Explanations and revisions in selected public headers | Targeted additions and revisions. |
 | Application specifications and build/test integration | GTK application specifications, CMake install-component changes, and related CI/test configuration | Targeted assistance across selected files. |

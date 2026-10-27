@@ -28,4 +28,49 @@ target_link_libraries(dmn-bluetooth-gui-core
                         PRIVATE PkgConfig::GLIB2
 )
 
-add_subdirectory(gtk)
+if (ENABLE_APP_BLUETOOTH_GTK)
+  add_subdirectory(gtk)
+endif()
+
+if (ENABLE_APP_BLUETOOTH_COSMIC)
+  # Static engine (GUI-independent orchestration over the Dmn Bluetooth layers)
+  add_library(dmn-bluetooth-gui-engine STATIC
+                engine/dmn-bluez-backend.cpp
+                engine/dmn-demo-backend.cpp
+                engine/dmn-engine.cpp
+                engine/dmn-json.cpp
+  )
+
+  target_include_directories(dmn-bluetooth-gui-engine
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+
+  target_compile_options(dmn-bluetooth-gui-engine
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+
+  target_link_libraries(dmn-bluetooth-gui-engine
+                          PUBLIC dmn-ancs-bluez-monitor dmn-bluetooth-gui-core
+  )
+
+  # Shared C ABI consumed by the Rust frontend, which Cargo builds through
+  # dmn-build.rs; CMake never invokes Cargo.
+  add_library(dmn-bluetooth-cabi SHARED cabi/dmn-bluetooth-cabi.cpp)
+
+  target_include_directories(dmn-bluetooth-cabi
+                               PUBLIC ${PROJECT_SOURCE_DIR}/include
+  )
+
+  target_compile_options(dmn-bluetooth-cabi
+                           PRIVATE -Wall -Wextra -Wpedantic
+  )
+
+  target_link_libraries(dmn-bluetooth-cabi
+                          PRIVATE dmn-bluetooth-gui-engine
+  )
+
+  install(TARGETS dmn-bluetooth-cabi
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT Runtime
+  )
+endif()

@@ -36,5 +36,15 @@
   </provides>
   <url type="homepage">https://github.com/cheebinhoh/Dmn</url>
   <url type="bugtracker">https://github.com/cheebinhoh/Dmn/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Select a paired iPhone and monitor its notifications</caption>
+      <image type="source">https://raw.githubusercontent.com/cheebinhoh/Dmn/main/packaging/flatpak/screenshots/dmn-bluetooth-gtk%2B-app.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>About Dmn Bluetooth</caption>
+      <image type="source">https://raw.githubusercontent.com/cheebinhoh/Dmn/main/packaging/flatpak/screenshots/dmn-bluetooth-gtk%2B-app-about.png</image>
+    </screenshot>
+  </screenshots>
   <icon type="stock">@DMN_BLUETOOTH_GTK_APP_ID@</icon>
 </component>

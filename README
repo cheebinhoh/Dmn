@@ -7,7 +7,10 @@ provides building blocks for networking, message exchange, concurrency control,
 and conflict resolution, with an emphasis on delegation and integration into
 existing applications.
 
-On Linux, Dmn also provides `dmn-bluetooth-gtk`, an optional GTK 4/libadwaita
+On Linux, Dmn also provides `dmn-bluetooth-cosmic`, an optional Rust/libcosmic
+desktop app for COSMIC with the same workflow (see
+[COSMIC Bluetooth application](#cosmic-bluetooth-application)), and
+`dmn-bluetooth-gtk`, an optional GTK 4/libadwaita
 desktop app for browsing BlueZ devices and explicitly managing Bluetooth
 connections and ANCS notification monitoring. It is a separate frontend from
 the `dmn-bluez-cli` discovery tool and `dmn-bluetooth-cli` ANCS monitor.
@@ -318,6 +321,55 @@ For the implemented UI, remaining features, and current design details, see
 the [GTK application specification](docs/specs/dmn-bluetooth-gtk-app-spec.md)
 and its [UI storyboard](docs/specs/dmn-bluetooth-gtk-ui-storyboard.md).
 
+### COSMIC Bluetooth application
+
+`dmn-bluetooth-cosmic` is a native COSMIC (Rust, libcosmic) frontend with the
+same workflow as the GTK app: browse BlueZ devices, save a selection, connect,
+disconnect, and explicitly start or stop ANCS monitoring. It reuses Dmn's C++
+BlueZ/ANCS/D-Bus code through a C library (`dmn-bluetooth-cabi`) and a
+JSON-protocol engine; the UI contains no Bluetooth logic. Settings are stored
+in `$XDG_CONFIG_HOME/dmn-bluetooth-cosmic/settings.json`. The device panel can
+be hidden with the toggle in the header bar. The list has two groups:
+"Previous selected devices" (saved selection) and "Nearby devices" (nearby or
+unselected); a device changes group only when its selection is saved or
+discarded. The device list and notification feed scroll independently.
+
+The app scans for devices for as long as it runs and the list updates as
+results arrive, so there are no Scan or Refresh buttons. The toolbar has a
+search box (half the device panel wide, always visible), the Selected only
+checkbox, and the Save and Discard buttons; the search box filters both groups
+by any part of a device (name, address, status). Notification titles and
+messages can be highlighted and copied (right-click Copy / Select All), and
+hovering a notification shows its full text.
+
+Cargo is the build entry point. Its build script (`dmn-build.rs`) runs CMake
+with `-DENABLE_APP_BLUETOOTH_COSMIC=ON`, so no manual CMake step is needed:
+
+```bash
+sudo apt install build-essential cmake pkg-config libdbus-1-dev \
+  libfontconfig-dev libfreetype-dev libexpat1-dev libwayland-dev \
+  libxkbcommon-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cd src/app/gui/cosmic
+cargo build --release --locked
+cargo test --workspace --locked     # no Bluetooth hardware needed
+cargo fmt --all --check
+./target/release/dmn-bluetooth-cosmic --demo   # fake devices, no BlueZ
+```
+
+The binary loads `libdmn-bluetooth-cabi.so` through an rpath emitted by the
+build script; when copying the binary elsewhere, copy the library next to it
+and set the rpath to `$ORIGIN` (for example with `patchelf`). Desktop entry,
+AppStream metadata, and icons are in `src/app/gui/cosmic/data/`. Optional
+environment variables: `DMN_SOURCE_DIR`, `DMN_CMAKE_GENERATOR`, and
+`DMN_CMAKE_ARGS`.
+
+Running CMake directly with `-DENABLE_APP_BLUETOOTH_COSMIC=ON` builds only the
+C library and its tests (`ctest -L dmn-gui`); the option is off by default and
+the default build never requires Rust. The Docker image builds and tests the
+app; pass `--build-arg ENABLE_APP_BLUETOOTH_COSMIC=OFF` to skip it. See the
+[COSMIC specification](docs/specs/dmn-bluetooth-cosmic-spec.md).
+
 ### Fault-injection tests
 
 Fault-injection support is optional and disabled by default. Enabling it links
@@ -362,10 +414,12 @@ Start it interactively with its normal entrypoint:
 docker run -it --rm dmn
 ```
 
-The image installs GTK 4/libadwaita development packages, enables all three
+The image installs GTK 4/libadwaita development packages and the Rust
+toolchain, enables all three
 applications plus Kafka, Valgrind, and fault-injection tests, and builds all
 configured targets. On startup, the entrypoint bootstraps Kafka and runs the
-regular, CLI, GTK, Kafka, Valgrind, and fault-injection tests. These tests do
+regular, CLI, GTK, COSMIC (`cargo test`), Kafka, Valgrind, and
+fault-injection tests. These tests do
 not launch a graphical window; showing the app itself requires forwarding a
 host graphical session. If tests pass, the container opens a Bash prompt; if
 they fail, it exits. The run command removes the container on exit because it
@@ -404,6 +458,7 @@ docker rmi dmn
 | `ENABLE_APP_BLUEZ_DISCOVERY_CLI` | `OFF` | Build and install `dmn-bluez-cli`; automatically enables `ENABLE_BLUEZ` and `ENABLE_DBUS`. |
 | `ENABLE_APP_BLUETOOTH_CLI` | `OFF` | Build and install `dmn-bluetooth-cli`; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. |
 | `ENABLE_APP_BLUETOOTH_GTK` | `OFF` | Build and install the Linux GTK 4/libadwaita `dmn-bluetooth-gtk` desktop app; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. Requires GTK 4 4.14+, libadwaita 1.5+, and GLib schema tools. |
+| `ENABLE_APP_BLUETOOTH_COSMIC` | `OFF` | Build the `dmn-bluetooth-cabi` C library and tests used by the Rust COSMIC app; automatically enables `ENABLE_ANCS`, `ENABLE_BLUEZ`, and `ENABLE_DBUS`. Normally driven by Cargo, not set by hand. |
 | `ENABLE_ANCS_HARDWARE_TESTS` | `OFF` | Register the opt-in physical-iPhone test; requires `ENABLE_APP_BLUETOOTH_CLI=ON`. |
 | `ENABLE_VALGRIND` | `OFF` | Register Valgrind test variants; requires Valgrind. |
 | `ENABLE_FAULT_INJECTION` | `OFF` | Build libfiu support and register tests run through `fiu-run`. |

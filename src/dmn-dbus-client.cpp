@@ -652,6 +652,12 @@ auto decodeArguments(DBusMessage *message, const CodecLimits &limits)
 
 class Dmn_DbusClient::Impl : public std::enable_shared_from_this<Impl> {
 public:
+  /** Grace period for in-flight calls to finish during shutdown. */
+  static constexpr std::chrono::milliseconds kShutdownPendingDrainTimeout{250};
+
+  /** Per-iteration libdbus read/write/dispatch wait in the dispatch loop. */
+  static constexpr int kDispatchPollTimeoutMs{25};
+
   struct CallRequest {
     std::promise<Dmn_DbusResult<Arguments>> promise;
     std::shared_ptr<Impl> keep_alive;
@@ -1125,7 +1131,7 @@ public:
     {
       std::unique_lock lock{m_mutex};
 
-      m_pendingCondition.wait_for(lock, std::chrono::milliseconds{250},
+      m_pendingCondition.wait_for(lock, kShutdownPendingDrainTimeout,
                                   [this] { return m_pending.empty(); });
     }
 
@@ -1551,8 +1557,8 @@ private:
     m_dispatchCondition.notify_all();
 
     while (!m_stopping.load()) {
-      const bool dispatched =
-          dbus_connection_read_write_dispatch(m_connection.get(), 25);
+      const bool dispatched = dbus_connection_read_write_dispatch(
+          m_connection.get(), kDispatchPollTimeoutMs);
       expireCalls();
 
       if (!dispatched) {

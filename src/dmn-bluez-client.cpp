@@ -120,10 +120,10 @@ auto normalizedAddress(std::string_view address) -> std::string {
 class Dmn_BluezClient::Impl {
 public:
   enum class DeviceAction {
+    CancelConnection,
     Connect,
     ConnectProfiles,
     Disconnect,
-    CancelConnection,
     Pair
   };
 

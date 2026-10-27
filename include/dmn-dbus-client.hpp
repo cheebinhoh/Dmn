@@ -34,6 +34,16 @@ namespace dmn {
  */
 enum class Dmn_DbusBusKind {
   /**
+   * @brief Connect to the bus daemon at the exact caller-supplied address.
+   *
+   * Use this for an explicitly addressed system/session bus or a separately
+   * started private bus instance. The address must identify a bus daemon, not
+   * a service process accepting a direct peer-to-peer connection. No
+   * session/system fallback is attempted.
+   */
+  Address,
+
+  /**
    * @brief Open a dedicated client connection to the current user's session
    * bus.
    *
@@ -46,23 +56,23 @@ enum class Dmn_DbusBusKind {
    *
    * This uses the shared system bus; it does not start a separate bus.
    */
-  System,
-
-  /**
-   * @brief Connect to the bus daemon at the exact caller-supplied address.
-   *
-   * Use this for an explicitly addressed system/session bus or a separately
-   * started private bus instance. The address must identify a bus daemon, not
-   * a service process accepting a direct peer-to-peer connection. No
-   * session/system fallback is attempted.
-   */
-  Address
+  System
 };
 
 /**
  * @brief Local error category for a failed D-Bus operation.
  */
 enum class Dmn_DbusErrorKind {
+  /**
+   * @brief The caller cancelled the operation.
+   */
+  Cancelled,
+
+  /**
+   * @brief A D-Bus value could not be encoded or decoded.
+   */
+  Codec,
+
   /**
    * @brief Input or configuration did not satisfy the D-Bus API contract.
    */
@@ -74,24 +84,9 @@ enum class Dmn_DbusErrorKind {
   NotConnected,
 
   /**
-   * @brief A local transport or connection failure occurred.
+   * @brief The remote service returned a named D-Bus error.
    */
-  Transport,
-
-  /**
-   * @brief The finite method-call deadline expired.
-   */
-  Timeout,
-
-  /**
-   * @brief The caller cancelled the operation.
-   */
-  Cancelled,
-
-  /**
-   * @brief The client is shutting down or has already shut down.
-   */
-  Shutdown,
+  Remote,
 
   /**
    * @brief A configured resource bound rejected the operation.
@@ -99,14 +94,19 @@ enum class Dmn_DbusErrorKind {
   ResourceLimit,
 
   /**
-   * @brief The remote service returned a named D-Bus error.
+   * @brief The client is shutting down or has already shut down.
    */
-  Remote,
+  Shutdown,
 
   /**
-   * @brief A D-Bus value could not be encoded or decoded.
+   * @brief The finite method-call deadline expired.
    */
-  Codec
+  Timeout,
+
+  /**
+   * @brief A local transport or connection failure occurred.
+   */
+  Transport
 };
 
 /**

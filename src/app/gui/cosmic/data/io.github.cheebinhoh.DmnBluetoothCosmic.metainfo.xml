@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © 2026 Chee Bin HOH. All rights reserved. -->
+<component type="desktop-application">
+  <id>io.github.cheebinhoh.DmnBluetoothCosmic</id>
+  <name>Dmn Bluetooth (COSMIC)</name>
+  <summary>Monitor iPhone notifications over Bluetooth ANCS</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <description>
+    <p>Native COSMIC frontend for Dmn's BlueZ and Apple Notification Center Service monitoring.</p>
+  </description>
+  <icon type="stock">io.github.cheebinhoh.DmnBluetoothCosmic</icon>
+  <launchable type="desktop-id">io.github.cheebinhoh.DmnBluetoothCosmic.desktop</launchable>
+  <provides>
+    <binary>dmn-bluetooth-cosmic</binary>
+  </provides>
+</component>

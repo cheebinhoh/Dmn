@@ -71,7 +71,7 @@ history or embed an application feed into the notification center.
 | --- | --- | --- |
 | Standalone GTK 4 app with optional GIO desktop alerts | Full device manager and live event reader; can send passive alerts while the process and monitor remain running | GTK application and generic opt-in GNotification submission are implemented. Target-shell presentation and release qualification remain; Preferences and hidden-window monitoring are out of scope. See [GTK application spec](dmn-bluetooth-gtk-app-spec.md). |
 | GNOME Shell extension | GNOME-only panel menu/quick actions that may activate the app or, later, call a service | Optional companion only; it cannot run on COSMIC and is not a plug-in for the GNOME notification center. See [GNOME extension spec](dmn-bluetooth-gnome-extension-spec.md). |
-| Native COSMIC app and COSMIC applet | Rust/`libcosmic` native window and optional panel surface | Alternative if COSMIC integration is the priority; requires a maintained C++ boundary. See [COSMIC spec](dmn-bluetooth-cosmic-spec.md). |
+| Native COSMIC app and COSMIC applet | Rust/`libcosmic` native window and optional panel surface | Native app implemented as `dmn-bluetooth-cosmic` (Cargo drives CMake to build a C ABI library; see [COSMIC spec](dmn-bluetooth-cosmic-spec.md)); applet remains a proposal. |
 | User-session D-Bus monitor service | Owns monitor lifetime/state for multiple frontends or after a window/process exits | Optional independent topic, not a default dependency; see [service spec](dmn-bluetooth-session-service-spec.md). |
 
 ## Feasibility for test-driven, spec-driven implementation

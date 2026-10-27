@@ -1,0 +1,32 @@
+<!-- Copyright © 2025 - 2026 Chee Bin HOH. All rights reserved. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Dmn Bluetooth</title>
+  <desc id="desc">A Bluetooth greater-than and B mark sits inside a capital D, followed by the letters mn.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b8ff7"/>
+      <stop offset="1" stop-color="#5639b8"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e4f4ff"/>
+      <stop offset="1" stop-color="#91d5ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="116" height="116" rx="28" fill="#14294a"/>
+  <rect x="10" y="10" width="108" height="108" rx="25" fill="url(#background)"/>
+  <path d="M22 31v66h15c22 0 35-12 35-33S59 31 37 31H22Z"
+        fill="none" stroke="url(#mark)" stroke-linecap="round"
+        stroke-linejoin="round" stroke-width="7"/>
+  <path d="M30 54l6 10-6 10"
+        fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="4.5"/>
+  <path d="M40 41v46m0-46 15 12-15 11 15 12-15 11"
+        fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="4.5"/>
+  <path d="M75 83V62m0 10c0-13 12-13 12 0v11m1-11c0-13 12-13 12 0v11"
+        fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="7"/>
+  <path d="M103 62v21m0-11c0-13 13-13 13 0v11"
+        fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"
+        stroke-width="7"/>
+</svg>
