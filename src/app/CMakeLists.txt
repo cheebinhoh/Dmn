@@ -80,6 +80,13 @@ if (ENABLE_APP_BLUEZ_DISCOVERY_CLI)
   )
 endif()
 
+# The engine (and the GUI-independent core it builds on) is shared by the
+# Bluetooth CLI and every GUI frontend.
+if (ENABLE_ANCS AND ENABLE_BLUEZ)
+  add_subdirectory(gui/core)
+  add_subdirectory(engine)
+endif()
+
 if (ENABLE_APP_BLUETOOTH_CLI)
   add_executable(dmn-bluetooth-cli
                    dmn-bluetooth-cli.cpp
@@ -94,7 +101,7 @@ if (ENABLE_APP_BLUETOOTH_CLI)
   )
 
   target_link_libraries(dmn-bluetooth-cli
-                          PRIVATE dmn-ancs-bluez-monitor
+                          PRIVATE dmn-bluetooth-engine dmn-ancs-bluez-monitor
   )
 
   install(TARGETS dmn-bluetooth-cli

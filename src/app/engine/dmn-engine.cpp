@@ -5,11 +5,11 @@
  * @brief GUI-independent Bluetooth monitor engine driven by JSON messages.
  */
 
-#include "app/gui/engine/dmn-engine.hpp"
+#include "app/engine/dmn-engine.hpp"
 
-#include "app/gui/core/device-monitor-controller.hpp"
-#include "app/gui/core/device-selection-model.hpp"
-#include "app/gui/engine/dmn-json.hpp"
+#include "app/engine/dmn-json.hpp"
+#include "app/gui/core/dmn-device-monitor-controller.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 #include "dmn-proc.hpp"
 
 #include <algorithm>
@@ -96,6 +96,8 @@ auto notificationJson(const Dmn_BackendNotification &notification)
   json.set("subtitle", optionalString(notification.m_subtitle));
   json.set("message", optionalString(notification.m_message));
   json.set("date", optionalString(notification.m_date));
+  json.set("event", notification.m_event.empty() ? notification.m_kind
+                                                 : notification.m_event);
 
   return json;
 }
@@ -303,6 +305,10 @@ private:
       }
     }
 
+    if (m_direct_cancel) {
+      m_direct_cancel->store(true, std::memory_order_release);
+    }
+
     if (m_scanning) {
       (void)m_backend->setScanning(false, {});
     }
@@ -312,6 +318,10 @@ private:
     }
 
     m_tasks.clear();
+
+    if (m_direct && m_direct_phase == Phase::kActive) {
+      (void)m_backend->stopMonitor(*m_direct);
+    }
 
     for (const auto &entry : m_selection.devices()) {
       const auto found = m_sessions.find(identityKey(entry.m_identity));
@@ -487,7 +497,7 @@ private:
   // At most one snapshot runs at a time; requests arriving meanwhile are
   // dropped because the running snapshot is at least as fresh.
   void refreshInventory() {
-    if (m_inventory_busy || m_shutting_down) {
+    if (!m_options.m_inventory_enabled || m_inventory_busy || m_shutting_down) {
       return;
     }
 
@@ -636,10 +646,12 @@ private:
       emitEvent(identity, "notification", {}, {}, notification);
       break;
     case Dmn_BackendMonitorEvent::Kind::kState:
-      emitEvent(identity, "state", event.m_state, {}, nullptr);
+      emitEvent(identity, "state", event.m_state, {}, nullptr,
+                event.m_terminal);
       break;
     case Dmn_BackendMonitorEvent::Kind::kError:
-      emitEvent(identity, "error", {}, event.m_error, nullptr);
+      emitEvent(identity, "error", {}, event.m_error, nullptr,
+                event.m_terminal);
       break;
     }
 
@@ -662,7 +674,8 @@ private:
 
   void emitEvent(const Dmn_DeviceIdentity &identity, const std::string &kind,
                  const std::string &state, const std::string &error,
-                 const Dmn_BackendNotification *notification) {
+                 const Dmn_BackendNotification *notification,
+                 const bool terminal = false) {
     auto message = Dmn_JsonValue::object();
     message.set("type", "event");
     message.set("sequence", m_sequence++);
@@ -673,6 +686,7 @@ private:
     message.set("name", entry != nullptr ? deviceDisplayName(*entry)
                                          : identity.m_device_address);
     message.set("kind", kind);
+    message.set("terminal", terminal);
     if (!state.empty()) {
       message.set("state", state);
     }
@@ -728,6 +742,10 @@ private:
       handleDisconnect(requested);
     } else if (type == "monitor") {
       handleMonitor(requested, command.getBool("enabled", false));
+    } else if (type == "monitor_direct") {
+      handleDirectStart(command);
+    } else if (type == "stop_direct") {
+      handleDirectStop();
     } else if (type == "shutdown") {
       m_shutdown_requested = true;
     }
@@ -1007,6 +1025,94 @@ private:
     markDirty();
   }
 
+  // Direct monitor: one device named by address or exact name, resolved,
+  // discovered, paired and connected by the backend itself. It bypasses the
+  // saved selection and the retry policy; the CLI uses it. Progress is
+  // reported as `direct_monitor` messages (state: progress, ready, failed or
+  // stopped).
+  void emitDirect(const std::string &state, Dmn_JsonValue fields) {
+    fields.set("type", "direct_monitor");
+    fields.set("state", state);
+    emit(fields);
+  }
+
+  void handleDirectStart(const Dmn_JsonValue &command) {
+    if (m_direct || m_shutting_down) {
+      return;
+    }
+
+    const Dmn_DeviceIdentity identity{command.getString("adapter"),
+                                      command.getString("device")};
+    m_direct = identity;
+    m_direct_phase = Phase::kStarting;
+    m_direct_cancel = std::make_shared<std::atomic<bool>>(false);
+    spawn([this, identity, cancel = m_direct_cancel] {
+      auto result = m_backend->startMonitor(
+          identity, *cancel, [this](const std::string &progress) {
+            post([this, progress] {
+              auto fields = Dmn_JsonValue::object();
+              fields.set("stage", progress);
+              emitDirect("progress", std::move(fields));
+            });
+          });
+      post([this, result = std::move(result)] { finishDirectStart(result); });
+    });
+  }
+
+  void finishDirectStart(const Dmn_BackendResult &result) {
+    auto fields = Dmn_JsonValue::object();
+    if (result) {
+      m_direct_phase = Phase::kActive;
+      emitDirect("ready", std::move(fields));
+
+      return;
+    }
+
+    const auto &error = result.error();
+    fields.set("message", error.m_message);
+    fields.set("code", error.m_code);
+    fields.set("detail", error.m_detail);
+    fields.set("remote_name", error.m_remote_name);
+    fields.set("cancelled", error.m_cancelled);
+    m_direct.reset();
+    m_direct_phase = Phase::kIdle;
+    emitDirect("failed", std::move(fields));
+  }
+
+  void handleDirectStop() {
+    if (!m_direct) {
+      emitDirect("stopped", Dmn_JsonValue::object());
+
+      return;
+    }
+
+    if (m_direct_phase == Phase::kStarting) {
+      // finishDirectStart() reports the cancelled start.
+      m_direct_cancel->store(true, std::memory_order_release);
+
+      return;
+    }
+
+    if (m_direct_phase != Phase::kActive) {
+      return;
+    }
+
+    m_direct_phase = Phase::kStopping;
+    spawn([this, identity = *m_direct] {
+      auto result = m_backend->stopMonitor(identity);
+      post([this, result = std::move(result)] {
+        auto fields = Dmn_JsonValue::object();
+        if (!result) {
+          fields.set("message", result.error().m_message);
+        }
+
+        m_direct.reset();
+        m_direct_phase = Phase::kIdle;
+        emitDirect("stopped", std::move(fields));
+      });
+    });
+  }
+
   Dmn_EngineOptions m_options;
 
   std::mutex m_in_mutex;
@@ -1027,6 +1133,9 @@ private:
   std::list<std::unique_ptr<Task>> m_tasks;
   std::optional<Dmn_DeviceIdentity> m_pending_connect;
   std::optional<Dmn_DeviceIdentity> m_pending_disconnect;
+  std::optional<Dmn_DeviceIdentity> m_direct;
+  std::shared_ptr<std::atomic<bool>> m_direct_cancel;
+  Phase m_direct_phase{Phase::kIdle};
   std::string m_status;
   std::mt19937 m_random;
   std::uint64_t m_sequence{1};

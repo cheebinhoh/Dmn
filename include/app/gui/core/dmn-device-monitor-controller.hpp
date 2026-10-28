@@ -1,7 +1,7 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-monitor-controller.hpp
+ * @file dmn-device-monitor-controller.hpp
  * @brief GTK-independent monitor lifecycle decisions and retry policy.
  *
  * The frontend supplies current device and operation state; this controller
@@ -12,7 +12,7 @@
 #ifndef DMN_BLUETOOTH_GUI_DEVICE_MONITOR_CONTROLLER_HPP_
 #define DMN_BLUETOOTH_GUI_DEVICE_MONITOR_CONTROLLER_HPP_
 
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include <chrono>
 #include <vector>

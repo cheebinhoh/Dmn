@@ -15,7 +15,7 @@ unexpected ANCS Failed/Stopped events are cleaned up and retried with jittered
 exponential backoff, starting at about 5 seconds and capped at about 60
 seconds; intent is preserved until the user stops monitoring. The GTK
 frontend delegates platform-independent lifecycle decisions and retry
-scheduling to the `dmn-bluetooth-gui-core` controller.
+scheduling to the shared engine (`dmn-bluetooth-device-core` controller).
 The live event feed supports composed device, event-kind, category, and
 case-insensitive text filters, row details, clearing, stable arrival ordering,
 and bounded retention. Generic desktop alerts are implemented as an opt-in
@@ -33,7 +33,7 @@ are not a durable feed.
 ## 0.1 Frontend architecture (0.9.2)
 
 The GTK app is a thin client of the shared GUI engine
-(`dmn::gui::Dmn_Engine`, `dmn-bluetooth-gui-engine`), the same engine the COSMIC
+(`dmn::gui::Dmn_Engine`, `dmn-bluetooth-engine`), the same engine the COSMIC
 frontend uses through its C ABI. GTK links the static engine library directly;
 it no longer calls BlueZ, the ANCS monitor, or the GUI-core controller itself.
 Inventory, selection drafts, connect/disconnect, monitor intent, and retry

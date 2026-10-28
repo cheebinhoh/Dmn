@@ -5,10 +5,10 @@
  * @brief GTK-independent tests for Bluetooth GUI selection and event state.
  */
 
-#include "app/gui/core/desktop-alert-policy.hpp"
-#include "app/gui/core/device-monitor-controller.hpp"
-#include "app/gui/core/device-monitor-event-store.hpp"
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-desktop-alert-policy.hpp"
+#include "app/gui/core/dmn-device-monitor-controller.hpp"
+#include "app/gui/core/dmn-device-monitor-event-store.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include <gtest/gtest.h>
 

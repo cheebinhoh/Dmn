@@ -71,14 +71,15 @@ cargo build / cargo test
 | --- | --- | --- |
 | BlueZ inventory/connect/discovery | `Dmn_BluezClient` | Linked unchanged |
 | ANCS monitor lifecycle | `Dmn_AncsBluezMonitor` | Linked unchanged |
-| Selection, draft/save, sorting, action availability | `dmn-bluetooth-gui-core` | Linked unchanged |
+| Selection, draft/save, sorting, action availability | `dmn-bluetooth-device-core` | Linked unchanged (GLib-free) |
 | Retry/backoff and monitor reconciliation | `Dmn_DeviceMonitorController` | Linked unchanged |
-| Engine (orchestration without GTK) | `src/app/gui/engine/` | New; mirrors GTK behavior without GLib/GTask |
-| JSON protocol | `include/app/gui/engine/` | New |
+| Engine (orchestration, no GTK/GLib) | `src/app/engine/` | Shared by the CLI, GTK and COSMIC apps |
+| JSON protocol | `include/app/engine/` | New |
 | Presentation and persistence | `src/app/gui/cosmic/` | New (Rust) |
 
-`src/app/gui/gtk/main.cpp` interleaves orchestration with GTK/GTask and is not
-modified. Folding the GTK app onto the engine is possible future work.
+The GTK app and `dmn-bluetooth-cli` also run on this engine. The engine lives
+outside `src/app/gui` because it is not GUI-specific; `dmn-bluetooth-gui-core`
+holds only GLib-based GUI helpers (alert policy, event store).
 
 ### C ABI (`include/app/gui/cabi/dmn-bluetooth-cabi.h`)
 
@@ -111,7 +112,9 @@ const char *dmn_bt_version(void);
 Frontend to engine (`type`): `hello`, `configure` (restore saved selection,
 monitoring intents, sort), `refresh`, `scan` (`enabled`, optional `adapter`),
 `select` (draft), `save_selection`, `discard_selection`, `sort`, `connect`,
-`disconnect`, `monitor` (`enabled`), `shutdown`. Device commands carry stable
+`disconnect`, `monitor` (`enabled`), `monitor_direct` (`device`, optional
+`adapter`; CLI one-device monitor that discovers, pairs and connects), `stop_direct`,
+`shutdown`. Device commands carry stable
 `adapter` and `device` Bluetooth addresses, never object paths.
 
 Engine to frontend (`type`): `ready` (protocol and engine version), `state`
@@ -120,7 +123,9 @@ device identity/name/status text/paired/connected/present/saved/selected,
 monitor requested/state/detail, and action availability computed by the shared
 GUI core), `event` (sequence, receive time, device identity, kind, optional
 state/notification/error), `persist` (saved selection and monitoring intents to
-store), `error` (message), `bye`.
+store), `direct_monitor` (`state`: progress, ready, failed, stopped; failure
+adds `code`, `detail`, `remote_name`, `cancelled`), `error` (message), `bye`.
+`event` messages carry a `terminal` flag and notifications an `event` name.
 
 Unknown fields and unknown `type`/`kind` values must be ignored by both sides
 so v1 can grow compatibly. A protocol major-version mismatch is reported in

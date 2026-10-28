@@ -1,11 +1,11 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-selection-model.cpp
+ * @file dmn-device-selection-model.cpp
  * @brief GTK-independent device inventory and selection state.
  */
 
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include <algorithm>
 #include <cctype>

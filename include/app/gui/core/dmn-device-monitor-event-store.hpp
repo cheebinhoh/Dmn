@@ -1,7 +1,7 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-monitor-event-store.hpp
+ * @file dmn-device-monitor-event-store.hpp
  * @brief Bounded, process-local ANCS events associated with device identities.
  *
  * The store keeps event payloads in memory only. Its identity filter lets the
@@ -12,7 +12,7 @@
 #ifndef DMN_BLUETOOTH_GUI_DEVICE_MONITOR_EVENT_STORE_HPP_
 #define DMN_BLUETOOTH_GUI_DEVICE_MONITOR_EVENT_STORE_HPP_
 
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include "dmn-ancs-client.hpp"
 

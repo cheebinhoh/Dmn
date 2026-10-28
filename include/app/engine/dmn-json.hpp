@@ -10,11 +10,12 @@
  * This value type covers exactly that need: null, booleans, numbers, strings,
  * arrays and insertion-ordered objects. Parsing is bounded in nesting depth and
  * serialization replaces invalid UTF-8 so untrusted notification text can never
- * produce an invalid document.
+ * produce an invalid document. It is part of the shared engine library and
+ * has no GTK, GLib or other UI dependency, so the CLI and GUIs use it alike.
  */
 
-#ifndef DMN_BLUETOOTH_GUI_ENGINE_JSON_HPP_
-#define DMN_BLUETOOTH_GUI_ENGINE_JSON_HPP_
+#ifndef DMN_BLUETOOTH_ENGINE_JSON_HPP_
+#define DMN_BLUETOOTH_ENGINE_JSON_HPP_
 
 #include <cstdint>
 #include <optional>
@@ -116,4 +117,4 @@ private:
 
 } // namespace dmn::gui
 
-#endif // DMN_BLUETOOTH_GUI_ENGINE_JSON_HPP_
+#endif // DMN_BLUETOOTH_ENGINE_JSON_HPP_

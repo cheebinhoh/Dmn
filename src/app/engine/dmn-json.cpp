@@ -9,7 +9,7 @@
  * (invalid bytes become U+FFFD), and escaped control characters on output.
  */
 
-#include "app/gui/engine/dmn-json.hpp"
+#include "app/engine/dmn-json.hpp"
 
 #include <array>
 #include <cctype>

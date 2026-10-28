@@ -1,7 +1,7 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-selection-model.hpp
+ * @file dmn-device-selection-model.hpp
  * @brief Public GTK-independent device inventory and selection state.
  *
  * The model separates durable selection rules from GTK widgets and BlueZ

@@ -5,10 +5,10 @@
  * @brief Tests for the JSON protocol, engine and C ABI used by the COSMIC app.
  */
 
+#include "app/engine/dmn-engine-backend.hpp"
+#include "app/engine/dmn-engine.hpp"
+#include "app/engine/dmn-json.hpp"
 #include "app/gui/cabi/dmn-bluetooth-cabi.h"
-#include "app/gui/engine/dmn-engine-backend.hpp"
-#include "app/gui/engine/dmn-engine.hpp"
-#include "app/gui/engine/dmn-json.hpp"
 
 #include <gtest/gtest.h>
 

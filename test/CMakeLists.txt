@@ -230,7 +230,7 @@ if (ENABLE_ANCS AND ENABLE_BLUEZ)
   )
 
   target_link_libraries(dmn-bluetooth-cli-test
-                        PRIVATE dmn-ancs-bluez-monitor
+                        PRIVATE dmn-bluetooth-engine dmn-ancs-bluez-monitor
   )
 
   target_compile_definitions(dmn-bluetooth-cli-test
@@ -316,7 +316,7 @@ if (ENABLE_APP_BLUETOOTH_COSMIC)
   ADD_TEST_EXECUTABLE(dmn-gui dmn-test-bluetooth-cosmic-engine)
 
   target_link_libraries(dmn-test-bluetooth-cosmic-engine
-                          PRIVATE dmn-bluetooth-cabi dmn-bluetooth-gui-engine
+                          PRIVATE dmn-bluetooth-cabi dmn-bluetooth-engine
   )
 endif()
 

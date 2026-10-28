@@ -1,7 +1,7 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file main.cpp
+ * @file dmn-bluetooth-gtk.cpp
  * @brief GTK 4 / libadwaita frontend over the shared Dmn Bluetooth GUI engine.
  *
  * Overview
@@ -26,9 +26,9 @@
 
 #define G_LOG_DOMAIN "dmn-bluetooth-gtk"
 
-#include "app/gui/core/desktop-alert-policy.hpp"
-#include "app/gui/engine/dmn-engine.hpp"
-#include "app/gui/engine/dmn-json.hpp"
+#include "app/engine/dmn-engine.hpp"
+#include "app/engine/dmn-json.hpp"
+#include "app/gui/core/dmn-desktop-alert-policy.hpp"
 #include "dmn-proc.hpp"
 
 #include <adwaita.h>

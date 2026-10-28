@@ -7,7 +7,7 @@
 
 #include "app/gui/cabi/dmn-bluetooth-cabi.h"
 
-#include "app/gui/engine/dmn-engine.hpp"
+#include "app/engine/dmn-engine.hpp"
 
 #include <cstdlib>
 #include <cstring>

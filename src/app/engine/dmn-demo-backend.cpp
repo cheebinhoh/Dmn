@@ -9,7 +9,7 @@
  * tests exercise the full engine workflow without BlueZ or hardware.
  */
 
-#include "app/gui/engine/dmn-engine-backend.hpp"
+#include "app/engine/dmn-engine-backend.hpp"
 
 #include "dmn-proc.hpp"
 #include <algorithm>

@@ -1,11 +1,11 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file desktop-alert-policy.cpp
+ * @file dmn-desktop-alert-policy.cpp
  * @brief Privacy-safe aggregation policy for optional desktop alerts.
  */
 
-#include "app/gui/core/desktop-alert-policy.hpp"
+#include "app/gui/core/dmn-desktop-alert-policy.hpp"
 
 namespace dmn::gui {
 

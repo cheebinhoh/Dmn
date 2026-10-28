@@ -11,6 +11,15 @@
  * Dmn_AncsBluezMonitor, a deterministic demo implementation for UI development
  * and hardware-free runs, and fakes in unit tests.
  *
+ * Implementations
+ * ---------------
+ * - makeBluezBackend(): production transport over BlueZ and ANCS; see
+ *   Dmn_BluezBackendOptions for its managed (GUI) and direct (CLI) modes.
+ * - makeDemoBackend(): synthetic, hardware-free transport for development,
+ *   CI and demo runs; it simulates connect, monitor and notifications.
+ * The engine (dmn-engine.hpp) documents how they fit under the frontends.
+ * This header and the engine library have no GTK or GLib dependency.
+ *
  * Thread-Safety
  * -------------
  * Blocking calls are made from engine worker threads, possibly concurrently for
@@ -18,10 +27,10 @@
  * with setHandlers() may be invoked from any thread and must not block.
  */
 
-#ifndef DMN_BLUETOOTH_GUI_ENGINE_BACKEND_HPP_
-#define DMN_BLUETOOTH_GUI_ENGINE_BACKEND_HPP_
+#ifndef DMN_BLUETOOTH_ENGINE_BACKEND_HPP_
+#define DMN_BLUETOOTH_ENGINE_BACKEND_HPP_
 
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -31,6 +40,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace dmn::gui {
@@ -48,12 +58,39 @@ struct Dmn_BackendInventory {
 };
 
 struct Dmn_BackendError {
+  explicit Dmn_BackendError(std::string message, bool cancelled = false,
+                            std::string code = {}, std::string detail = {},
+                            std::string remoteName = {})
+      : m_message{std::move(message)}, m_cancelled{cancelled},
+        m_code{std::move(code)}, m_detail{std::move(detail)},
+        m_remote_name{std::move(remoteName)} {}
+
   std::string m_message;
 
   /**
    * @brief True when the operation ended because the caller cancelled it.
    */
   bool m_cancelled{};
+
+  /**
+   * @brief Stable machine-readable failure class (empty when unclassified).
+   *
+   * One of "bluez_unavailable", "invalid_argument", "not_ready", "inventory",
+   * "discovery", "device_not_found", "pairing", "connection",
+   * "ancs_unsupported", "ancs_startup", "cancelled" or "cleanup". Frontends
+   * such as the CLI map it to exit statuses and wording.
+   */
+  std::string m_code;
+
+  /**
+   * @brief Underlying message without the stage prefix of m_message.
+   */
+  std::string m_detail;
+
+  /**
+   * @brief Remote device name reported with the failure, when known.
+   */
+  std::string m_remote_name;
 };
 
 using Dmn_BackendResult = std::expected<void, Dmn_BackendError>;
@@ -73,6 +110,13 @@ struct Dmn_BackendNotification {
   std::optional<std::string> m_subtitle;
   std::optional<std::string> m_message;
   std::optional<std::string> m_date;
+
+  /**
+   * @brief The ANCS event that carried the notification: "added", "updated",
+   *        "removed" or "attributes_unavailable". For the last one, m_kind
+   *        still names the notification event whose attributes were missing.
+   */
+  std::string m_event;
 };
 
 struct Dmn_BackendMonitorEvent {
@@ -158,9 +202,50 @@ public:
 };
 
 /**
+ * @brief Tunables of the BlueZ backend.
+ *
+ * The defaults give the "managed" behavior used by the GUIs: a monitor starts
+ * only for a device that is already connected, and only notifications newer
+ * than the backend's creation are reported. `m_direct_monitor` selects the
+ * behavior of the CLI instead.
+ */
+struct Dmn_BluezBackendOptions {
+  /**
+   * @brief When true, startMonitor() resolves the device by address or exact
+   *        name and discovers, pairs and connects it as needed. In this mode
+   *        the progress handler receives stable keys ("inventory",
+   *        "discovery", "pairing", "connection", "ancs_startup" and
+   *        "remaining_profiles:<device name>") instead of display text.
+   */
+  bool m_direct_monitor{};
+
+  /**
+   * @brief Direct mode only: when set, notifications dated before it are
+   *        dropped. Managed mode always uses the backend creation time.
+   */
+  std::optional<std::chrono::system_clock::time_point> m_notification_cutoff;
+
+  /**
+   * @brief Direct mode only: do not cap queued ANCS notifications.
+   */
+  bool m_unlimited_notifications{};
+
+  std::chrono::seconds m_discovery_timeout{30};
+  std::chrono::seconds m_pairing_timeout{120};
+  std::chrono::seconds m_connection_timeout{30};
+  std::chrono::seconds m_services_timeout{30};
+
+  /**
+   * @brief Private D-Bus address for isolated integration tests.
+   */
+  std::string m_test_bus_address;
+};
+
+/**
  * @brief Backend over BlueZ and ANCS; requires a system D-Bus with BlueZ.
  */
-[[nodiscard]] auto makeBluezBackend() -> std::unique_ptr<Dmn_EngineBackend>;
+[[nodiscard]] auto makeBluezBackend(const Dmn_BluezBackendOptions &options = {})
+    -> std::unique_ptr<Dmn_EngineBackend>;
 
 /**
  * @brief Deterministic synthetic backend that needs no Bluetooth hardware.
@@ -174,4 +259,4 @@ public:
 
 } // namespace dmn::gui
 
-#endif // DMN_BLUETOOTH_GUI_ENGINE_BACKEND_HPP_
+#endif // DMN_BLUETOOTH_ENGINE_BACKEND_HPP_
