@@ -603,12 +603,14 @@ impl App {
             device.name.clone()
         };
         let mut lines = vec![
-            widget::checkbox(device.selected)
-                .label(name)
-                .on_toggle({
+            widget::row::with_capacity(2)
+                .spacing(spacing.space_xs)
+                .align_y(Alignment::Center)
+                .push(widget::checkbox(device.selected).on_toggle({
                     let device = device.clone();
                     move |selected| Message::Select(device.clone(), selected)
-                })
+                }))
+                .push(widget::text(name))
                 .into(),
             widget::text::caption(format!("{} · {}", device.device, device.status)).into(),
         ];

@@ -10,6 +10,7 @@
 #include "app/gui/core/device-monitor-controller.hpp"
 #include "app/gui/core/device-selection-model.hpp"
 #include "app/gui/engine/dmn-json.hpp"
+#include "dmn-proc.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -136,14 +137,14 @@ public:
     ready.set("backend", m_backend->name());
     emit(ready);
 
-    m_thread = std::thread{[this] { run(); }};
+    m_thread.exec([this] { run(); });
   }
 
   ~Impl() {
     // Joining the control thread runs shutdown(), which cancels monitor starts
     // and waits for every worker, so no backend call outlives the engine.
     post([this] { m_shutdown_requested = true; });
-    m_thread.join();
+    m_thread.wait();
     m_backend->setHandlers({}, {});
   }
 
@@ -197,8 +198,13 @@ private:
     bool m_disconnect_after_stop{};
   };
 
+  // Dmn_Proc stops a running worker with pthread cancellation, which must not
+  // unwind through the engine's locks. Every Task is therefore finished
+  // cooperatively and wait()ed before it is destroyed, never cancelled.
   struct Task {
-    std::thread m_thread;
+    Task() : m_proc{"dmn-engine-worker"} {}
+
+    Dmn_Proc m_proc;
     std::atomic<bool> m_done{false};
   };
 
@@ -223,10 +229,10 @@ private:
   void spawn(std::function<void()> work) {
     auto task = std::make_unique<Task>();
     auto *raw = task.get();
-    task->m_thread = std::thread{[raw, work = std::move(work)] {
+    task->m_proc.exec([raw, work = std::move(work)] {
       work();
       raw->m_done.store(true, std::memory_order_release);
-    }};
+    });
     m_tasks.push_back(std::move(task));
   }
 
@@ -239,7 +245,7 @@ private:
         return false;
       }
 
-      task->m_thread.join();
+      task->m_proc.wait();
 
       return true;
     });
@@ -302,7 +308,7 @@ private:
     }
 
     for (auto &task : m_tasks) {
-      task->m_thread.join();
+      task->m_proc.wait();
     }
 
     m_tasks.clear();
@@ -1034,7 +1040,7 @@ private:
   bool m_shutting_down{};
 
   std::unique_ptr<Dmn_EngineBackend> m_backend;
-  std::thread m_thread;
+  Dmn_Proc m_thread{"dmn-engine-control"};
 };
 
 Dmn_Engine::Dmn_Engine(std::unique_ptr<Dmn_EngineBackend> backend,

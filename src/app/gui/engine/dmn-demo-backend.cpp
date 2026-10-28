@@ -11,6 +11,7 @@
 
 #include "app/gui/engine/dmn-engine-backend.hpp"
 
+#include "dmn-proc.hpp"
 #include <algorithm>
 #include <condition_variable>
 #include <map>
@@ -146,8 +147,8 @@ public:
     }
 
     emit(identity, state("ready"));
-    raw->m_thread =
-        std::thread{[this, identity, raw] { feedLoop(identity, *raw); }};
+    raw->m_started = true;
+    raw->m_thread.exec([this, identity, raw] { feedLoop(identity, *raw); });
 
     return {};
   }
@@ -172,8 +173,12 @@ public:
   }
 
 private:
+  // The feed thread ends through m_stop and is wait()ed, never cancelled.
   struct Feed {
-    std::thread m_thread;
+    Feed() : m_thread{"dmn-demo-feed"} {}
+
+    Dmn_Proc m_thread;
+    bool m_started{};
     std::mutex m_mutex;
     std::condition_variable m_cv;
     bool m_stop{};
@@ -194,8 +199,9 @@ private:
     }
 
     feed.m_cv.notify_all();
-    if (feed.m_thread.joinable()) {
-      feed.m_thread.join();
+    if (feed.m_started) {
+      feed.m_thread.wait();
+      feed.m_started = false;
     }
   }
 

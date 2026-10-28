@@ -29,6 +29,7 @@
 #include "app/gui/core/desktop-alert-policy.hpp"
 #include "app/gui/engine/dmn-engine.hpp"
 #include "app/gui/engine/dmn-json.hpp"
+#include "dmn-proc.hpp"
 
 #include <adwaita.h>
 
@@ -108,7 +109,9 @@ struct AppState {
   bool m_demo{};
 
   std::unique_ptr<dmn::gui::Dmn_Engine> m_engine;
-  std::thread m_reader;
+  // Ends through m_stop_reader and is wait()ed, never cancelled.
+  dmn::Dmn_Proc m_reader{"dmn-gtk-reader"};
+  bool m_reader_started{};
   std::atomic<bool> m_stop_reader{false};
 
   bool m_ready{};
@@ -601,14 +604,19 @@ auto makeDeviceCard(AppState *state, const Device &device) -> GtkWidget * {
   gtk_widget_set_margin_start(inner, 10);
   gtk_widget_set_margin_end(inner, 10);
 
-  auto *check = gtk_check_button_new_with_label(device.displayName().c_str());
+  auto *check = gtk_check_button_new();
   gtk_check_button_set_active(GTK_CHECK_BUTTON(check), device.m_selected);
   connectVoid(check, "toggled", [state, device, check] {
     auto json = deviceCommand("select", device);
     json.set("selected", gtk_check_button_get_active(GTK_CHECK_BUTTON(check)));
     sendCommand(state, json);
   });
-  gtk_box_append(GTK_BOX(inner), check);
+  auto *titleRow = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+  gtk_box_append(GTK_BOX(titleRow), check);
+  auto *nameLabel = gtk_label_new(device.displayName().c_str());
+  gtk_label_set_xalign(GTK_LABEL(nameLabel), 0.0F);
+  gtk_box_append(GTK_BOX(titleRow), nameLabel);
+  gtk_box_append(GTK_BOX(inner), titleRow);
   gtk_box_append(
       GTK_BOX(inner),
       makeLabel(device.m_address + " · " + device.m_status, "caption"));
@@ -849,7 +857,8 @@ struct Delivery {
 };
 
 void startReader(AppState *state) {
-  state->m_reader = std::thread{[state] {
+  state->m_reader_started = true;
+  state->m_reader.exec([state] {
     while (!state->m_stop_reader.load(std::memory_order_acquire)) {
       auto text = state->m_engine->nextMessage(kPollInterval);
       if (!text) {
@@ -867,14 +876,15 @@ void startReader(AppState *state) {
           },
           delivery, nullptr);
     }
-  }};
+  });
 }
 
 // Joins the reader, then the engine, which stops monitors and its workers.
 void stopEngine(AppState *state) {
   state->m_stop_reader.store(true, std::memory_order_release);
-  if (state->m_reader.joinable()) {
-    state->m_reader.join();
+  if (state->m_reader_started) {
+    state->m_reader.wait();
+    state->m_reader_started = false;
   }
 
   state->m_engine.reset();
