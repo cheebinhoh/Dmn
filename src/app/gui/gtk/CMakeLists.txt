@@ -66,7 +66,7 @@ add_custom_target(dmn-bluetooth-gtk-schemas
 )
 
 add_executable(dmn-bluetooth-gtk
-                 main.cpp
+                 dmn-bluetooth-gtk.cpp
 )
 
 add_dependencies(dmn-bluetooth-gtk dmn-bluetooth-gtk-schemas)
@@ -87,9 +87,8 @@ set_target_properties(dmn-bluetooth-gtk PROPERTIES INSTALL_RPATH "")
 
 target_link_libraries(dmn-bluetooth-gtk
                         PRIVATE
+                        dmn-bluetooth-engine
                         dmn-bluetooth-gui-core
-                        dmn-bluez
-                        dmn-ancs-bluez-monitor
                         PkgConfig::GTK4
                         PkgConfig::ADWAITA
 )

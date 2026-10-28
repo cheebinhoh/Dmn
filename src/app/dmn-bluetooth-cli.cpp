@@ -3,9 +3,17 @@
  *
  * @file dmn-bluetooth-cli.cpp
  * @brief Command-line application for the selected-iPhone ANCS monitor.
+ *
+ * The CLI is a frontend of the shared Dmn_Engine (src/app/engine), like the GTK
+ * and COSMIC apps. It sends one "monitor_direct" command to the engine's BlueZ
+ * backend (direct mode), prints the engine's notification events as text, and
+ * maps the engine's failure codes to exit statuses. Device resolution,
+ * discovery, pairing, connection and ANCS startup all happen in the backend.
  */
 
-#include "dmn-ancs-bluez-monitor.hpp"
+#include "app/engine/dmn-engine-backend.hpp"
+#include "app/engine/dmn-engine.hpp"
+#include "app/engine/dmn-json.hpp"
 #include "dmn-pipe.hpp"
 #include "dmn-runtime.hpp"
 
@@ -301,59 +309,79 @@ auto categoryName(std::uint8_t category) -> std::string {
   return "unknown(" + std::to_string(category) + ")";
 }
 
-auto eventKindName(dmn::Dmn_AncsNotificationKind kind) -> std::string_view {
-  switch (kind) {
-  case dmn::Dmn_AncsNotificationKind::Added:
-    return "added";
-  case dmn::Dmn_AncsNotificationKind::Updated:
-    return "updated";
-  case dmn::Dmn_AncsNotificationKind::Removed:
-    return "removed";
-  case dmn::Dmn_AncsNotificationKind::AttributesUnavailable:
-    return "attributes unavailable";
+struct Notification {
+  std::string event;
+  std::string kind;
+  std::uint32_t uid{};
+  std::uint8_t category{};
+  std::uint8_t categoryCount{};
+  std::uint8_t flags{};
+  std::optional<std::string> appIdentifier;
+  std::optional<std::string> title;
+  std::optional<std::string> subtitle;
+  std::optional<std::string> message;
+  std::optional<std::string> date;
+};
+
+auto optionalField(const dmn::gui::Dmn_JsonValue &object,
+                   std::string_view key) -> std::optional<std::string> {
+  const auto *value = object.find(key);
+  if (value == nullptr || value->isNull()) {
+    return std::nullopt;
   }
 
-  return "unknown";
+  return value->stringOr();
 }
 
-auto printNotification(const dmn::Dmn_AncsEvent &event) -> bool {
-  if (!event.notification) {
-    return true;
-  }
+auto parseNotification(const dmn::gui::Dmn_JsonValue &json) -> Notification {
+  Notification notification;
+  notification.event = json.getString("event");
+  notification.kind = json.getString("kind");
+  notification.uid = static_cast<std::uint32_t>(json.getNumber("uid", 0));
+  notification.category =
+      static_cast<std::uint8_t>(json.getNumber("category", 0));
+  notification.categoryCount =
+      static_cast<std::uint8_t>(json.getNumber("category_count", 0));
+  notification.flags = static_cast<std::uint8_t>(json.getNumber("flags", 0));
+  notification.appIdentifier = optionalField(json, "app_identifier");
+  notification.title = optionalField(json, "title");
+  notification.subtitle = optionalField(json, "subtitle");
+  notification.message = optionalField(json, "message");
+  notification.date = optionalField(json, "date");
 
-  const auto &notification = *event.notification;
+  return notification;
+}
+
+auto printNotification(const Notification &notification) -> bool {
   std::string header;
-  switch (event.kind) {
-  case dmn::Dmn_AncsEvent::Kind::NotificationAdded:
+  if (notification.event == "added") {
     header = "notification added";
-    break;
-  case dmn::Dmn_AncsEvent::Kind::NotificationUpdated:
+  } else if (notification.event == "updated") {
     header = "notification updated";
-    break;
-  case dmn::Dmn_AncsEvent::Kind::NotificationRemoved:
+  } else if (notification.event == "removed") {
     header = "notification removed";
-    break;
-  case dmn::Dmn_AncsEvent::Kind::AttributesUnavailable:
+  } else if (notification.event == "attributes_unavailable") {
     header = "notification attributes unavailable event=";
-    header += eventKindName(notification.kind);
-    break;
-  default:
+    header += notification.kind == "attributes_unavailable"
+                  ? std::string{"attributes unavailable"}
+                  : notification.kind;
+  } else {
     return true;
   }
 
   std::cout << header << " uid=0x" << encodeHex(notification.uid, 8)
             << " category=" << categoryName(notification.category) << " count="
-            << static_cast<unsigned int>(notification.category_count)
+            << static_cast<unsigned int>(notification.categoryCount)
             << " flags=0x" << encodeHex(notification.flags, 2) << '\n';
-  if (event.kind != dmn::Dmn_AncsEvent::Kind::NotificationRemoved &&
-      event.kind != dmn::Dmn_AncsEvent::Kind::AttributesUnavailable) {
+  if (notification.event != "removed" &&
+      notification.event != "attributes_unavailable") {
     const auto printField = [](std::string_view label,
                                const std::optional<std::string> &value) {
       if (value && !value->empty()) {
         std::cout << label << ": " << escapedText(*value) << '\n';
       }
     };
-    printField("app_identifier", notification.app_identifier);
+    printField("app_identifier", notification.appIdentifier);
     printField("title", notification.title);
     printField("subtitle", notification.subtitle);
     printField("message", notification.message);
@@ -394,8 +422,103 @@ struct CountRelease {
 };
 
 struct OutputRecord {
-  dmn::Dmn_AncsEvent event;
+  Notification notification;
 };
+
+// Outcome of the engine's direct monitor, filled by the reader thread.
+struct DirectState {
+  enum class Phase { Starting, Ready, Failed };
+
+  std::mutex mutex;
+  std::condition_variable changed;
+  Phase phase{Phase::Starting};
+  bool stopped{};
+  std::string stopError;
+  std::string code;
+  std::string detail;
+  std::string remoteName;
+  bool cancelled{};
+};
+
+auto progressMessage(std::string_view stage,
+                     std::string_view device) -> std::string {
+  constexpr std::string_view kRemainingProfiles{"remaining_profiles:"};
+  if (stage.starts_with(kRemainingProfiles)) {
+    return "requesting BlueZ to connect the GATT-capable bearer and "
+           "remaining profiles for " +
+           escapedText(stage.substr(kRemainingProfiles.size()));
+  }
+
+  std::string_view message;
+  if (stage == "inventory") {
+    message = "checking BlueZ inventory for ";
+  } else if (stage == "discovery") {
+    message = "discovering ";
+  } else if (stage == "pairing") {
+    message = "pairing ";
+  } else if (stage == "connection") {
+    message = "connecting ";
+  } else if (stage == "ancs_startup") {
+    message = "starting ANCS session for ";
+  } else {
+    return escapedText(stage);
+  }
+
+  return std::string{message} + escapedText(device);
+}
+
+struct StartFailure {
+  std::string_view prefix;
+  ExitStatus status;
+};
+
+auto startFailure(std::string_view code) -> StartFailure {
+  if (code == "invalid_argument") {
+    return {"invalid monitor configuration", ExitStatus::InvalidCommandLine};
+  }
+
+  if (code == "not_ready") {
+    return {"monitor startup failed", ExitStatus::RuntimeFailure};
+  }
+
+  if (code == "inventory") {
+    return {"BlueZ inventory unavailable", ExitStatus::BluezUnavailable};
+  }
+
+  if (code == "discovery") {
+    return {"Bluetooth discovery failed", ExitStatus::BluezUnavailable};
+  }
+
+  if (code == "device_not_found") {
+    return {"device was not found", ExitStatus::DeviceNotFound};
+  }
+
+  if (code == "pairing") {
+    return {"device pairing failed", ExitStatus::PairOrConnectFailure};
+  }
+
+  if (code == "connection") {
+    return {"device connection failed", ExitStatus::PairOrConnectFailure};
+  }
+
+  if (code == "ancs_unsupported") {
+    return {"ANCS startup failed", ExitStatus::AncsUnavailable};
+  }
+
+  if (code == "ancs_startup") {
+    return {"ANCS startup failed", ExitStatus::AncsStartupFailure};
+  }
+
+  if (code == "cancelled") {
+    return {"monitor startup canceled", ExitStatus::RuntimeFailure};
+  }
+
+  if (code == "cleanup") {
+    return {"ANCS cleanup failed", ExitStatus::RuntimeFailure};
+  }
+
+  return {"BlueZ unavailable", ExitStatus::BluezUnavailable};
+}
 
 auto runMonitor(const Options &options) -> int {
   auto runtime = dmn::Dmn_Runtime_Manager<>::createInstance();
@@ -410,7 +533,17 @@ auto runMonitor(const Options &options) -> int {
   sigemptyset(&ignorePipe.sa_mask);
   (void)sigaction(SIGPIPE, &ignorePipe, nullptr);
 
-  dmn::Dmn_BluezClientConfig bluezConfig;
+  dmn::gui::Dmn_BluezBackendOptions backendOptions;
+  backendOptions.m_direct_monitor = true;
+  backendOptions.m_discovery_timeout = options.discoveryTimeout;
+  backendOptions.m_pairing_timeout = options.pairTimeout;
+  backendOptions.m_connection_timeout = options.connectTimeout;
+  backendOptions.m_services_timeout = options.servicesTimeout;
+  backendOptions.m_unlimited_notifications = options.unlimitedNotifications;
+  if (options.ignoreExistingNotifications) {
+    backendOptions.m_notification_cutoff = options.applicationStartedAt;
+  }
+
 #if defined(DMN_BLUETOOTH_TESTING)
   const char *testBusAddress = std::getenv("DMN_BLUETOOTH_TEST_BUS_ADDRESS");
   if (testBusAddress == nullptr || *testBusAddress == '\0') {
@@ -419,19 +552,16 @@ auto runMonitor(const Options &options) -> int {
     return exitCode(ExitStatus::BluezUnavailable);
   }
 
-  bluezConfig.test_bus_address = testBusAddress;
+  backendOptions.m_test_bus_address = testBusAddress;
 #endif
 
-  std::unique_ptr<dmn::Dmn_AncsBluezMonitor> monitor;
-  try {
-    monitor = std::make_unique<dmn::Dmn_AncsBluezMonitor>(bluezConfig);
-  } catch (const std::exception &error) {
-    std::cerr << "BlueZ unavailable: " << escapedText(error.what()) << '\n';
-
-    return exitCode(ExitStatus::BluezUnavailable);
-  }
+  dmn::gui::Dmn_EngineOptions engineOptions;
+  engineOptions.m_inventory_enabled = false;
+  dmn::gui::Dmn_Engine engine{dmn::gui::makeBluezBackend(backendOptions),
+                              engineOptions};
 
   FailureState failure;
+  DirectState direct;
   std::atomic_bool outputFailed{};
   std::atomic_bool mainLoopActive{};
   std::atomic<std::size_t> queuedOutputEvents{};
@@ -458,7 +588,7 @@ auto runMonitor(const Options &options) -> int {
           return;
         }
 
-        if (!printNotification(record.event)) {
+        if (!printNotification(record.notification)) {
           outputFailed = true;
           failure.set(ExitStatus::RuntimeFailure,
                       "failed to write notification output");
@@ -468,183 +598,207 @@ auto runMonitor(const Options &options) -> int {
         }
       }};
 
-  auto handlerSet =
-      monitor->setEventHandler([&](const dmn::Dmn_AncsEvent &event) {
-        const auto count = queuedOutputEvents.fetch_add(1) + 1;
-        if (count > kMaximumQueuedOutputEvents) {
-          queuedOutputEvents.fetch_sub(1);
-          failure.set(ExitStatus::RuntimeFailure,
-                      "monitor output queue exceeded its " +
-                          std::to_string(kMaximumQueuedOutputEvents) +
-                          "-event limit");
+  // Engine events arrive on the reader thread; the bounded queue and the
+  // runtime job hop keep printing off that thread and detect a stalled stdout.
+  const auto handleEvent = [&](const dmn::gui::Dmn_JsonValue &message) {
+    const auto kind = message.getString("kind");
+    const auto count = queuedOutputEvents.fetch_add(1) + 1;
+    if (count > kMaximumQueuedOutputEvents) {
+      queuedOutputEvents.fetch_sub(1);
+      failure.set(ExitStatus::RuntimeFailure,
+                  "monitor output queue exceeded its " +
+                      std::to_string(kMaximumQueuedOutputEvents) +
+                      "-event limit");
 #if defined(DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE)
-          if (testBackpressureGate) {
-            {
-              std::lock_guard lock{testOutputMutex};
+      if (testBackpressureGate) {
+        {
+          std::lock_guard lock{testOutputMutex};
 
-              releaseTestOutput = true;
-            }
+          releaseTestOutput = true;
+        }
 
-            testOutputCondition.notify_all();
-            std::cerr << "DMN_TEST_QUEUE_OVERFLOW\n" << std::flush;
-          }
+        testOutputCondition.notify_all();
+        std::cerr << "DMN_TEST_QUEUE_OVERFLOW\n" << std::flush;
+      }
 #endif
-          if (mainLoopActive) {
-            runtime->exitMainLoop();
+      if (mainLoopActive) {
+        runtime->exitMainLoop();
+      }
+
+      return;
+    }
+
+    // State events carry no notification; they still pass through the bounded
+    // output queue so backpressure accounting covers every engine event.
+    Notification notification;
+    if (kind == "notification") {
+      if (const auto *json = message.find("notification"); json != nullptr) {
+        notification = parseNotification(*json);
+      }
+    }
+
+    const auto errorText = message.getString("error");
+    const auto fatal = message.getBool("terminal", false);
+    try {
+      runtime->addJob([&, notification = std::move(notification), kind,
+                       errorText, fatal](const dmn::Dmn_Runtime_Job &) {
+        if (outputFailed) {
+          queuedOutputEvents.fetch_sub(1);
+
+          return;
+        }
+
+        if (kind == "error") {
+          std::cerr << "ANCS: " << escapedText(errorText) << '\n';
+          if (fatal) {
+            failure.set(ExitStatus::RuntimeFailure, errorText);
+            if (mainLoopActive) {
+              runtime->exitMainLoop();
+            }
           }
+
+          queuedOutputEvents.fetch_sub(1);
 
           return;
         }
 
         try {
-          runtime->addJob([&, event](const dmn::Dmn_Runtime_Job &) {
-            if (outputFailed) {
-              queuedOutputEvents.fetch_sub(1);
-
-              return;
-            }
-
-            if (event.kind == dmn::Dmn_AncsEvent::Kind::Error && event.error) {
-              std::cerr << "ANCS: " << escapedText(event.error->message)
-                        << '\n';
-              if (event.error->fatal) {
-                failure.set(ExitStatus::RuntimeFailure, event.error->message);
-                if (mainLoopActive) {
-                  runtime->exitMainLoop();
-                }
-              }
-
-              queuedOutputEvents.fetch_sub(1);
-
-              return;
-            }
-
-            try {
-              outputPipe.write(OutputRecord{event});
-            } catch (const std::exception &error) {
-              queuedOutputEvents.fetch_sub(1);
-              outputFailed = true;
-              failure.set(ExitStatus::RuntimeFailure, error.what());
-              if (mainLoopActive) {
-                runtime->exitMainLoop();
-              }
-            }
-          });
+          outputPipe.write(OutputRecord{notification});
         } catch (const std::exception &error) {
           queuedOutputEvents.fetch_sub(1);
+          outputFailed = true;
           failure.set(ExitStatus::RuntimeFailure, error.what());
           if (mainLoopActive) {
             runtime->exitMainLoop();
           }
         }
       });
-  if (!handlerSet) {
+    } catch (const std::exception &error) {
+      queuedOutputEvents.fetch_sub(1);
+      failure.set(ExitStatus::RuntimeFailure, error.what());
+      if (mainLoopActive) {
+        runtime->exitMainLoop();
+      }
+    }
+  };
+
+  const auto handleDirect = [&](const dmn::gui::Dmn_JsonValue &message) {
+    const auto state = message.getString("state");
+    if (state == "progress") {
+      std::cerr << progressMessage(message.getString("stage"), options.device)
+                << '\n';
+
+      return;
+    }
+
+    {
+      std::lock_guard lock{direct.mutex};
+      if (state == "ready") {
+        direct.phase = DirectState::Phase::Ready;
+      } else if (state == "failed") {
+        direct.phase = DirectState::Phase::Failed;
+        direct.code = message.getString("code");
+        direct.detail = message.getString("detail");
+        direct.remoteName = message.getString("remote_name");
+        direct.cancelled = message.getBool("cancelled", false);
+      } else if (state == "stopped") {
+        direct.stopped = true;
+        direct.stopError = message.getString("message");
+      }
+    }
+
+    direct.changed.notify_all();
+  };
+
+  // nextMessage() returns nothing on timeout, so the reader runs until the
+  // engine's final "bye" message.
+  std::thread reader{[&] {
+    for (;;) {
+      const auto text = engine.nextMessage(100ms);
+      if (!text) {
+        continue;
+      }
+
+      const auto message = dmn::gui::Dmn_JsonValue::parse(*text);
+      if (!message || !message->isObject()) {
+        continue;
+      }
+
+      const auto type = message->getString("type");
+      if (type == "event") {
+        handleEvent(*message);
+      } else if (type == "direct_monitor") {
+        handleDirect(*message);
+      } else if (type == "bye") {
+        return;
+      }
+    }
+  }};
+
+  const auto stopMonitor = [&]() -> std::string {
+    (void)engine.send(R"({"type":"stop_direct"})");
+    std::unique_lock lock{direct.mutex};
+    direct.changed.wait(lock, [&] { return direct.stopped; });
+
+    return direct.stopError;
+  };
+
+  const auto finish = [&] {
+    (void)engine.send(R"({"type":"shutdown"})");
+    reader.join();
+  };
+
+  auto command = dmn::gui::Dmn_JsonValue::object();
+  command.set("type", "monitor_direct");
+  command.set("device", options.device);
+  if (options.adapter) {
+    command.set("adapter", *options.adapter);
+  }
+
+  if (!engine.send(command.dump())) {
+    finish();
     std::cerr << "unable to configure ANCS event delivery\n";
 
     return exitCode(ExitStatus::AncsStartupFailure);
   }
 
-  dmn::Dmn_AncsMonitorConfig monitorConfig;
-  monitorConfig.adapter_selector = options.adapter;
-  monitorConfig.discovery_timeout = options.discoveryTimeout;
-  monitorConfig.pairing_timeout = options.pairTimeout;
-  monitorConfig.connection_timeout = options.connectTimeout;
-  monitorConfig.ancs.service_resolution_timeout = options.servicesTimeout;
-  if (options.unlimitedNotifications) {
-    monitorConfig.ancs.maximum_pending_notifications = 0;
+  bool cancelSent{};
+  {
+    std::unique_lock lock{direct.mutex};
+    while (direct.phase == DirectState::Phase::Starting) {
+      direct.changed.wait_for(lock, 50ms);
+      if (!cancelSent && signalSeen.load(std::memory_order_acquire)) {
+        cancelSent = true;
+        (void)engine.send(R"({"type":"stop_direct"})");
+      }
+    }
   }
 
-  if (options.ignoreExistingNotifications) {
-    monitorConfig.ancs.notification_date_cutoff = options.applicationStartedAt;
-  }
-
-  monitorConfig.progress_handler = [&options](const auto progress) {
-    std::string_view message;
-    switch (progress) {
-    case dmn::Dmn_AncsMonitorProgress::Inventory:
-      message = "checking BlueZ inventory for ";
-      break;
-    case dmn::Dmn_AncsMonitorProgress::Discovery:
-      message = "discovering ";
-      break;
-    case dmn::Dmn_AncsMonitorProgress::Pairing:
-      message = "pairing ";
-      break;
-    case dmn::Dmn_AncsMonitorProgress::Connection:
-      message = "connecting ";
-      break;
-    case dmn::Dmn_AncsMonitorProgress::AncsStartup:
-      message = "starting ANCS session for ";
-      break;
+  if (direct.phase == DirectState::Phase::Failed) {
+    const auto interrupted =
+        direct.cancelled && signalSeen.load(std::memory_order_acquire);
+    finish();
+    if (interrupted) {
+      return exitCode(ExitStatus::Success);
     }
 
-    std::cerr << message << escapedText(options.device) << '\n';
-  };
-  auto started = monitor->start(options.device, monitorConfig);
-  if (!started) {
-    const auto &error = started.error();
-    std::string_view prefix;
-    ExitStatus status{ExitStatus::BluezUnavailable};
-    switch (error.stage) {
-    case dmn::Dmn_AncsMonitorStage::InvalidArgument:
-      prefix = "invalid monitor configuration";
-      status = ExitStatus::InvalidCommandLine;
-      break;
-    case dmn::Dmn_AncsMonitorStage::NotReady:
-      prefix = "monitor startup failed";
-      status = ExitStatus::RuntimeFailure;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Inventory:
-      prefix = "BlueZ inventory unavailable";
-      status = ExitStatus::BluezUnavailable;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Discovery:
-      prefix = "Bluetooth discovery failed";
-      status = ExitStatus::BluezUnavailable;
-      break;
-    case dmn::Dmn_AncsMonitorStage::DeviceNotFound:
-      prefix = "device was not found";
-      status = ExitStatus::DeviceNotFound;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Pairing:
-      prefix = "device pairing failed";
-      status = ExitStatus::PairOrConnectFailure;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Connection:
-      prefix = "device connection failed";
-      status = ExitStatus::PairOrConnectFailure;
-      break;
-    case dmn::Dmn_AncsMonitorStage::AncsStartup:
-      prefix = "ANCS startup failed";
-      status = error.ancs_error_kind == dmn::Dmn_AncsErrorKind::Unsupported
-                   ? ExitStatus::AncsUnavailable
-                   : ExitStatus::AncsStartupFailure;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Cancelled:
-      prefix = "monitor startup canceled";
-      status = ExitStatus::RuntimeFailure;
-      break;
-    case dmn::Dmn_AncsMonitorStage::Cleanup:
-      prefix = "ANCS cleanup failed";
-      status = ExitStatus::RuntimeFailure;
-      break;
-    }
-
-    std::cerr << prefix << ": " << escapedText(error.message);
-    if (!error.remote_name.empty()) {
-      std::cerr << " (" << escapedText(error.remote_name) << ")";
+    const auto reported = startFailure(direct.code);
+    std::cerr << reported.prefix << ": " << escapedText(direct.detail);
+    if (!direct.remoteName.empty()) {
+      std::cerr << " (" << escapedText(direct.remoteName) << ")";
     }
 
     std::cerr << '\n';
 
-    return exitCode(status);
+    return exitCode(reported.status);
   }
 
   auto stopBeforeMainLoop = [&] {
-    auto stopped = monitor->stop();
-    if (!stopped) {
+    const auto stopError = stopMonitor();
+    finish();
+    if (!stopError.empty()) {
       std::cerr << "ANCS subscription cleanup failed: "
-                << escapedText(stopped.error().message) << '\n';
+                << escapedText(stopError) << '\n';
 
       return exitCode(ExitStatus::RuntimeFailure);
     }
@@ -678,12 +832,6 @@ auto runMonitor(const Options &options) -> int {
     return stopBeforeMainLoop();
   }
 
-  if (started->requested_remaining_profiles) {
-    std::cerr << "requesting BlueZ to connect the GATT-capable bearer and "
-                 "remaining profiles for "
-              << escapedText(started->device.name) << '\n';
-  }
-
   std::cerr << "monitor ready; press Ctrl-C to stop\n";
   mainLoopActive = true;
   try {
@@ -694,11 +842,13 @@ auto runMonitor(const Options &options) -> int {
 
   mainLoopActive = false;
 
-  auto stopped = monitor->stop();
-  if (!stopped) {
+  const auto stopError = stopMonitor();
+  if (!stopError.empty()) {
     failure.set(ExitStatus::RuntimeFailure,
-                "ANCS subscription cleanup failed: " + stopped.error().message);
+                "ANCS subscription cleanup failed: " + stopError);
   }
+
+  finish();
 
   const auto [currentStatus, currentDiagnostic] = failure.get();
   if (currentStatus != exitCode(ExitStatus::Success) &&

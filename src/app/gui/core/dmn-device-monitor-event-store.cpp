@@ -1,11 +1,11 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-monitor-event-store.cpp
+ * @file dmn-device-monitor-event-store.cpp
  * @brief Bounded, process-local ANCS events associated with device identities.
  */
 
-#include "app/gui/core/device-monitor-event-store.hpp"
+#include "app/gui/core/dmn-device-monitor-event-store.hpp"
 
 #include <glib.h>
 

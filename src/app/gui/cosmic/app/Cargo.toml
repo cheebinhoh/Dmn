@@ -16,10 +16,12 @@ path = "src/dmn-bluetooth-cosmic.rs"
 [dependencies]
 dmn-bluetooth-sys = { path = "../crates/dmn-bluetooth-sys" }
 dmn-cosmic-model = { path = "../crates/dmn-cosmic-model" }
+libc = "0.2"
 tokio = { version = "1", features = ["rt", "time", "sync"] }
+zbus = "5"
 
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic.git"
 rev = "8990a058e1deb8f9f7f4c0a42f6b1362fa1437ec"
 default-features = false
-features = ["a11y", "multi-window", "tokio", "wayland", "winit"]
+features = ["a11y", "about", "multi-window", "tokio", "wayland", "winit"]

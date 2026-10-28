@@ -118,6 +118,7 @@ pub struct Notification {
     pub uid: u32,
     pub category: u32,
     pub flags: u32,
+    pub category_count: u32,
     pub app_identifier: Option<String>,
     pub title: Option<String>,
     pub subtitle: Option<String>,

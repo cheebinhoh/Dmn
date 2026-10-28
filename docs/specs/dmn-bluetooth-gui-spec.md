@@ -180,24 +180,25 @@ the frontends that use different languages, toolchains, and packaging:
 ```text
 src/
   app/
-    dmn-bluetooth-cli.cpp              # existing terminal app; unchanged
+    dmn-bluetooth-cli.cpp              # terminal app; runs on the shared engine
+    engine/                            # shared GUI-independent engine (dmn-bluetooth-engine)
     gui/
       CMakeLists.txt                   # only entered for GTK app option
       core/                            # private C++ UI-independent logic
-        event-model.hpp/.cpp
-        event-store.hpp/.cpp
-        filter-state.hpp/.cpp
-        monitor-controller.hpp/.cpp
-        settings-model.hpp
+        dmn-event-model.hpp/.cpp
+        dmn-event-store.hpp/.cpp
+        dmn-filter-state.hpp/.cpp
+        dmn-monitor-controller.hpp/.cpp
+        dmn-settings-model.hpp
       gtk/                             # GTK/libadwaita C API views and adapters
-        main.cpp
-        bluetooth-gtk-application.hpp/.cpp
-        main-window.hpp/.cpp
-        device-list-view.hpp/.cpp
-        notification-view.hpp/.cpp
-        notification-detail-view.hpp/.cpp
-        gnotification-sink.hpp/.cpp
-        settings-store.hpp/.cpp
+        dmn-bluetooth-gtk.cpp
+        dmn-bluetooth-gtk-application.hpp/.cpp
+        dmn-main-window.hpp/.cpp
+        dmn-device-list-view.hpp/.cpp
+        dmn-notification-view.hpp/.cpp
+        dmn-notification-detail-view.hpp/.cpp
+        dmn-gnotification-sink.hpp/.cpp
+        dmn-settings-store.hpp/.cpp
   service/
     bluetooth/                         # only if optional D-Bus service is built
       main.cpp

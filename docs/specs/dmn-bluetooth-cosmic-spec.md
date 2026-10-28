@@ -71,14 +71,15 @@ cargo build / cargo test
 | --- | --- | --- |
 | BlueZ inventory/connect/discovery | `Dmn_BluezClient` | Linked unchanged |
 | ANCS monitor lifecycle | `Dmn_AncsBluezMonitor` | Linked unchanged |
-| Selection, draft/save, sorting, action availability | `dmn-bluetooth-gui-core` | Linked unchanged |
+| Selection, draft/save, sorting, action availability | `dmn-bluetooth-device-core` | Linked unchanged (GLib-free) |
 | Retry/backoff and monitor reconciliation | `Dmn_DeviceMonitorController` | Linked unchanged |
-| Engine (orchestration without GTK) | `src/app/gui/engine/` | New; mirrors GTK behavior without GLib/GTask |
-| JSON protocol | `include/app/gui/engine/` | New |
+| Engine (orchestration, no GTK/GLib) | `src/app/engine/` | Shared by the CLI, GTK and COSMIC apps |
+| JSON protocol | `include/app/engine/` | New |
 | Presentation and persistence | `src/app/gui/cosmic/` | New (Rust) |
 
-`src/app/gui/gtk/main.cpp` interleaves orchestration with GTK/GTask and is not
-modified. Folding the GTK app onto the engine is possible future work.
+The GTK app and `dmn-bluetooth-cli` also run on this engine. The engine lives
+outside `src/app/gui` because it is not GUI-specific; `dmn-bluetooth-gui-core`
+holds only GLib-based GUI helpers (alert policy, event store).
 
 ### C ABI (`include/app/gui/cabi/dmn-bluetooth-cabi.h`)
 
@@ -111,7 +112,9 @@ const char *dmn_bt_version(void);
 Frontend to engine (`type`): `hello`, `configure` (restore saved selection,
 monitoring intents, sort), `refresh`, `scan` (`enabled`, optional `adapter`),
 `select` (draft), `save_selection`, `discard_selection`, `sort`, `connect`,
-`disconnect`, `monitor` (`enabled`), `shutdown`. Device commands carry stable
+`disconnect`, `monitor` (`enabled`), `monitor_direct` (`device`, optional
+`adapter`; CLI one-device monitor that discovers, pairs and connects), `stop_direct`,
+`shutdown`. Device commands carry stable
 `adapter` and `device` Bluetooth addresses, never object paths.
 
 Engine to frontend (`type`): `ready` (protocol and engine version), `state`
@@ -120,7 +123,9 @@ device identity/name/status text/paired/connected/present/saved/selected,
 monitor requested/state/detail, and action availability computed by the shared
 GUI core), `event` (sequence, receive time, device identity, kind, optional
 state/notification/error), `persist` (saved selection and monitoring intents to
-store), `error` (message), `bye`.
+store), `direct_monitor` (`state`: progress, ready, failed, stopped; failure
+adds `code`, `detail`, `remote_name`, `cancelled`), `error` (message), `bye`.
+`event` messages carry a `terminal` flag and notifications an `event` name.
 
 Unknown fields and unknown `type`/`kind` values must be ignored by both sides
 so v1 can grow compatibly. A protocol major-version mismatch is reported in
@@ -175,8 +180,8 @@ image is unchanged and does not enable `ENABLE_APP_BLUETOOTH_COSMIC`.
 - **COSMIC-IMPL-05:** The app starts in `--demo` mode on a Wayland COSMIC
   session; real iPhone/BlueZ behavior is a separate manual hardware gate.
 
-Out of scope for this implementation: the applet, desktop alerts, hidden-window
-monitoring, and the session D-Bus service.
+Out of scope for this implementation: the applet, hidden-window monitoring, and
+the session D-Bus service. Generic desktop alerts are implemented (see below).
 
 ### Toolkit and package layout
 
@@ -215,7 +220,9 @@ store submission requirements at implementation time.
 ### Implemented layout
 
 **Toolbar** (always visible): a device search box, the **Selected only**
-checkbox, then **Save** and **Discard**. The search box is half as wide as the
+checkbox, then **Save** and **Discard**. A header-bar menu holds the **Desktop
+alerts** checkbox and **About Dmn Bluetooth**, which opens libcosmic's About
+panel in the context drawer. The search box is half as wide as the
 device panel (a quarter of the window when the panes are side by side) and
 filters both device groups case-insensitively by name, address, adapter,
 status, or monitor state. Save and Discard are enabled only while there are
@@ -271,9 +278,11 @@ privacy explanation or an applet remain targets, not current behavior.
   unavailable, no-results, overflow, and permission-needed states are
   explicit.
 - **Stop** ends the ANCS session only. Quit stops monitor and clears
-  in-memory content; bonds/links remain. Optional generic desktop alerts and
-  hidden-window monitoring follow the GTK spec only if the selected platform
-  integration is actually available.
+  in-memory content; bonds/links remain. Generic desktop alerts (on by default,
+  toggled in the header menu) are sent over `org.freedesktop.Notifications`
+  with the same text and per-device replacement ids as the GTK app; clicking an
+  alert does not raise the window. Hidden-window monitoring follows the GTK
+  spec only if the selected platform integration is actually available.
 - Persist UI preferences and selected stable identities only. Never persist,
   log, or export ANCS notification text by default.
 

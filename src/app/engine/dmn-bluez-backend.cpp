@@ -9,7 +9,7 @@
  * and D-Bus layers). This file only adapts them to Dmn_EngineBackend.
  */
 
-#include "app/gui/engine/dmn-engine-backend.hpp"
+#include "app/engine/dmn-engine-backend.hpp"
 
 #include "dmn-ancs-bluez-monitor.hpp"
 #include "dmn-bluez-client.hpp"
@@ -76,6 +76,52 @@ auto progressText(const Dmn_AncsMonitorProgress progress) -> const char * {
   return "Starting";
 }
 
+auto progressKey(const Dmn_AncsMonitorProgress progress) -> const char * {
+  switch (progress) {
+  case Dmn_AncsMonitorProgress::Inventory:
+    return "inventory";
+  case Dmn_AncsMonitorProgress::Discovery:
+    return "discovery";
+  case Dmn_AncsMonitorProgress::Pairing:
+    return "pairing";
+  case Dmn_AncsMonitorProgress::Connection:
+    return "connection";
+  case Dmn_AncsMonitorProgress::AncsStartup:
+    return "ancs_startup";
+  }
+
+  return "unknown";
+}
+
+auto stageCode(const Dmn_AncsMonitorError &error) -> const char * {
+  switch (error.stage) {
+  case Dmn_AncsMonitorStage::AncsStartup:
+    return error.ancs_error_kind == Dmn_AncsErrorKind::Unsupported
+               ? "ancs_unsupported"
+               : "ancs_startup";
+  case Dmn_AncsMonitorStage::Cancelled:
+    return "cancelled";
+  case Dmn_AncsMonitorStage::Cleanup:
+    return "cleanup";
+  case Dmn_AncsMonitorStage::Connection:
+    return "connection";
+  case Dmn_AncsMonitorStage::DeviceNotFound:
+    return "device_not_found";
+  case Dmn_AncsMonitorStage::Discovery:
+    return "discovery";
+  case Dmn_AncsMonitorStage::InvalidArgument:
+    return "invalid_argument";
+  case Dmn_AncsMonitorStage::Inventory:
+    return "inventory";
+  case Dmn_AncsMonitorStage::NotReady:
+    return "not_ready";
+  case Dmn_AncsMonitorStage::Pairing:
+    return "pairing";
+  }
+
+  return "";
+}
+
 auto stageName(const Dmn_AncsMonitorStage stage) -> const char * {
   switch (stage) {
   case Dmn_AncsMonitorStage::AncsStartup:
@@ -103,6 +149,23 @@ auto stageName(const Dmn_AncsMonitorStage stage) -> const char * {
   return "Monitor";
 }
 
+auto eventName(const Dmn_AncsEvent::Kind kind) -> const char * {
+  switch (kind) {
+  case Dmn_AncsEvent::Kind::NotificationAdded:
+    return "added";
+  case Dmn_AncsEvent::Kind::NotificationUpdated:
+    return "updated";
+  case Dmn_AncsEvent::Kind::NotificationRemoved:
+    return "removed";
+  case Dmn_AncsEvent::Kind::AttributesUnavailable:
+    return "attributes_unavailable";
+  default:
+    break;
+  }
+
+  return "";
+}
+
 auto notificationFrom(const Dmn_AncsNotification &source)
     -> Dmn_BackendNotification {
   Dmn_BackendNotification notification;
@@ -124,6 +187,7 @@ auto notificationFrom(const Dmn_AncsNotification &source)
   notification.m_uid = source.uid;
   notification.m_category = source.category;
   notification.m_flags = source.flags;
+  notification.m_category_count = source.category_count;
   notification.m_app_identifier = source.app_identifier;
   notification.m_title = source.title;
   notification.m_subtitle = source.subtitle;
@@ -157,12 +221,14 @@ auto toEvent(const Dmn_AncsEvent &event) -> Dmn_BackendMonitorEvent {
     result.m_kind = Dmn_BackendMonitorEvent::Kind::kNotification;
     if (event.notification) {
       result.m_notification = notificationFrom(*event.notification);
+      result.m_notification->m_event = eventName(event.kind);
     }
 
     if (event.kind == Dmn_AncsEvent::Kind::AttributesUnavailable &&
         !result.m_notification) {
       result.m_notification = Dmn_BackendNotification{};
       result.m_notification->m_kind = "attributes_unavailable";
+      result.m_notification->m_event = "attributes_unavailable";
     }
 
     break;
@@ -173,8 +239,12 @@ auto toEvent(const Dmn_AncsEvent &event) -> Dmn_BackendMonitorEvent {
 
 class Dmn_BluezEngineBackend final : public Dmn_EngineBackend {
 public:
-  Dmn_BluezEngineBackend()
-      : m_notification_cutoff{std::chrono::system_clock::now()} {}
+  explicit Dmn_BluezEngineBackend(const Dmn_BluezBackendOptions &options)
+      : m_options{options},
+        m_notification_cutoff{
+            options.m_direct_monitor
+                ? options.m_notification_cutoff
+                : std::optional{std::chrono::system_clock::now()}} {}
 
   ~Dmn_BluezEngineBackend() override {
     std::map<std::string, std::unique_ptr<Dmn_AncsBluezMonitor>> monitors;
@@ -247,7 +317,7 @@ public:
                const std::atomic<bool> &cancel,
                const ProgressHandler &progress) -> Dmn_BackendResult override {
     try {
-      auto monitor = std::make_unique<Dmn_AncsBluezMonitor>();
+      auto monitor = std::make_unique<Dmn_AncsBluezMonitor>(bluezConfig());
       const auto handlerResult = monitor->setEventHandler(
           [this, identity](const Dmn_AncsEvent &event) {
             MonitorEventHandler handler;
@@ -261,33 +331,27 @@ public:
             }
           });
       if (!handlerResult) {
-        return std::unexpected(Dmn_BackendError{handlerResult.error().message});
+        return std::unexpected(Dmn_BackendError{handlerResult.error().message,
+                                                false, "ancs_startup",
+                                                handlerResult.error().message});
       }
 
-      Dmn_AncsMonitorConfig config;
-      config.adapter_selector = identity.m_adapter_address;
-      config.require_existing_connection = true;
-      config.request_remaining_profiles_when_connected = true;
-      config.ancs.notification_date_cutoff = m_notification_cutoff;
-      config.cancellation_requested = [&cancel] {
-        return cancel.load(std::memory_order_acquire);
-      };
-      config.progress_handler =
-          [&progress](const Dmn_AncsMonitorProgress step) {
-            if (progress) {
-              progress(progressText(step));
-            }
-          };
-
+      const auto config = monitorConfig(identity, cancel, progress);
       auto started = monitor->start(identity.m_device_address, config);
       if (!started) {
         const auto cancelled =
             started.error().stage == Dmn_AncsMonitorStage::Cancelled;
 
-        return std::unexpected(
-            Dmn_BackendError{std::string{stageName(started.error().stage)} +
-                                 ": " + started.error().message,
-                             cancelled});
+        return std::unexpected(Dmn_BackendError{
+            std::string{stageName(started.error().stage)} + ": " +
+                started.error().message,
+            cancelled, stageCode(started.error()), started.error().message,
+            started.error().remote_name});
+      }
+
+      if (m_options.m_direct_monitor && started->requested_remaining_profiles &&
+          progress) {
+        progress("remaining_profiles:" + started->device.name);
       }
 
       if (cancel.load(std::memory_order_acquire)) {
@@ -299,7 +363,8 @@ public:
       std::lock_guard lock{m_monitor_mutex};
       m_monitors[key(identity)] = std::move(monitor);
     } catch (const std::exception &exception) {
-      return std::unexpected(Dmn_BackendError{exception.what()});
+      return std::unexpected(Dmn_BackendError{
+          exception.what(), false, "bluez_unavailable", exception.what()});
     }
 
     return {};
@@ -332,6 +397,55 @@ public:
   }
 
 private:
+  auto bluezConfig() const -> Dmn_BluezClientConfig {
+    Dmn_BluezClientConfig config;
+    config.test_bus_address = m_options.m_test_bus_address;
+
+    return config;
+  }
+
+  auto monitorConfig(
+      const Dmn_DeviceIdentity &identity, const std::atomic<bool> &cancel,
+      const ProgressHandler &progress) const -> Dmn_AncsMonitorConfig {
+    Dmn_AncsMonitorConfig config;
+    if (!identity.m_adapter_address.empty()) {
+      config.adapter_selector = identity.m_adapter_address;
+    }
+
+    config.ancs.notification_date_cutoff = m_notification_cutoff;
+    config.cancellation_requested = [&cancel] {
+      return cancel.load(std::memory_order_acquire);
+    };
+
+    if (m_options.m_direct_monitor) {
+      config.discovery_timeout = m_options.m_discovery_timeout;
+      config.pairing_timeout = m_options.m_pairing_timeout;
+      config.connection_timeout = m_options.m_connection_timeout;
+      config.ancs.service_resolution_timeout = m_options.m_services_timeout;
+      if (m_options.m_unlimited_notifications) {
+        config.ancs.maximum_pending_notifications = 0;
+      }
+
+      config.progress_handler =
+          [&progress](const Dmn_AncsMonitorProgress step) {
+            if (progress) {
+              progress(progressKey(step));
+            }
+          };
+    } else {
+      config.require_existing_connection = true;
+      config.request_remaining_profiles_when_connected = true;
+      config.progress_handler =
+          [&progress](const Dmn_AncsMonitorProgress step) {
+            if (progress) {
+              progress(progressText(step));
+            }
+          };
+    }
+
+    return config;
+  }
+
   static auto key(const Dmn_DeviceIdentity &identity) -> std::string {
     return lower(identity.m_adapter_address) + "/" +
            lower(identity.m_device_address);
@@ -340,7 +454,7 @@ private:
   auto client() -> Dmn_BluezClient & {
     std::lock_guard lock{m_client_mutex};
     if (!m_client) {
-      m_client = std::make_unique<Dmn_BluezClient>();
+      m_client = std::make_unique<Dmn_BluezClient>(bluezConfig());
       m_client->setEventHandler([this](const Dmn_BluezEvent &event) {
         if (event.kind == Dmn_BluezEventKind::Error) {
           return;
@@ -478,7 +592,9 @@ private:
     }
   }
 
-  const std::chrono::system_clock::time_point m_notification_cutoff;
+  const Dmn_BluezBackendOptions m_options;
+  const std::optional<std::chrono::system_clock::time_point>
+      m_notification_cutoff;
   std::mutex m_mutex;
   std::mutex m_client_mutex;
   std::unique_ptr<Dmn_BluezClient> m_client;
@@ -492,8 +608,9 @@ private:
 
 } // namespace
 
-auto makeBluezBackend() -> std::unique_ptr<Dmn_EngineBackend> {
-  return std::make_unique<Dmn_BluezEngineBackend>();
+auto makeBluezBackend(const Dmn_BluezBackendOptions &options)
+    -> std::unique_ptr<Dmn_EngineBackend> {
+  return std::make_unique<Dmn_BluezEngineBackend>(options);
 }
 
 } // namespace dmn::gui

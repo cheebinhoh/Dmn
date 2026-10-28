@@ -5,6 +5,8 @@
 //! Everything here is plain data and pure functions so it is tested with
 //! `cargo test -p dmn-cosmic-model` without a shell, a display or the C++ core.
 
+#[path = "dmn-alert.rs"]
+pub mod alert;
 #[path = "dmn-feed.rs"]
 pub mod feed;
 #[path = "dmn-protocol.rs"]
@@ -12,6 +14,7 @@ pub mod protocol;
 #[path = "dmn-settings.rs"]
 pub mod settings;
 
+pub use alert::{alert_device, make_alert, DesktopAlert};
 pub use feed::{device_key, Feed, FeedFilter, KindFilter, FEED_LIMIT};
 pub use protocol::{
     parse_incoming, Command, Device, EventRecord, Identity, Incoming, Persist, Snapshot, Sort,

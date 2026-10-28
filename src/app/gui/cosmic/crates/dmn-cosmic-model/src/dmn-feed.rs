@@ -71,6 +71,62 @@ impl EventRecord {
         self.error.clone().unwrap_or_default()
     }
 
+    /// Multi-line text for the detail dialog: every field the phone provided.
+    /// `received` is the already formatted local receipt time.
+    pub fn details(&self, received: &str) -> String {
+        let value = |text: &Option<String>| match text.as_deref() {
+            Some(text) if !text.is_empty() => text.to_owned(),
+            _ => "Unavailable".to_owned(),
+        };
+        let event = match (&self.notification, self.kind.as_str()) {
+            (Some(n), _) => match n.kind.as_str() {
+                "added" => "Added",
+                "updated" => "Updated",
+                "removed" => "Removed",
+                "attributes_unavailable" => "Attributes unavailable",
+                _ => "Notification",
+            },
+            (None, "state") => "Monitor state",
+            (None, _) => "Monitor error",
+        };
+        let mut lines = vec![
+            format!("Device: {}", self.name),
+            format!("Adapter: {}", self.adapter),
+            format!("Device address: {}", self.device),
+            format!("Received: {received}"),
+            format!("Event: {event}"),
+        ];
+        if let Some(n) = &self.notification {
+            lines.push(format!("Notification UID: {}", n.uid));
+            lines.push(format!(
+                "Category: {} ({})",
+                category_name(n.category),
+                n.category
+            ));
+            if n.kind == "removed" {
+                lines.push(
+                    "Notification was removed; ANCS provides no current attributes for this event."
+                        .to_owned(),
+                );
+            } else {
+                lines.push(format!("App identifier: {}", value(&n.app_identifier)));
+                lines.push(format!("Title: {}", value(&n.title)));
+                lines.push(format!("Subtitle: {}", value(&n.subtitle)));
+                lines.push(format!("Message: {}", value(&n.message)));
+                lines.push(format!("Phone-provided date: {}", value(&n.date)));
+                lines.push(format!("Category count: {}", n.category_count));
+                lines.push(format!("Flags: {}", n.flags));
+            }
+        }
+        if let Some(state) = &self.state {
+            lines.push(format!("Monitor state: {state}"));
+        }
+        if let Some(error) = &self.error {
+            lines.push(format!("Error: {error}"));
+        }
+        lines.join("\n")
+    }
+
     fn matches(&self, filter: &FeedFilter) -> bool {
         if let Some(key) = &filter.device {
             if device_key(&self.adapter, &self.device) != *key {
@@ -97,6 +153,25 @@ impl EventRecord {
             haystack.push_str(app);
         }
         haystack.to_lowercase().contains(&needle)
+    }
+}
+
+/// ANCS category names, as shown by the GTK frontend.
+fn category_name(category: u32) -> &'static str {
+    match category {
+        0 => "Other",
+        1 => "Incoming call",
+        2 => "Missed call",
+        3 => "Voicemail",
+        4 => "Social",
+        5 => "Schedule",
+        6 => "Email",
+        7 => "News",
+        8 => "Health and fitness",
+        9 => "Business and finance",
+        10 => "Location",
+        11 => "Entertainment",
+        _ => "Unknown category",
     }
 }
 
@@ -221,5 +296,29 @@ mod tests {
         };
         assert_eq!(removed.headline(), "Notification");
         assert_eq!(removed.summary(), "Dismissed on the phone");
+    }
+
+    #[test]
+    fn details_list_every_notification_field() {
+        let mut event = note(1, "D", "Title", "Body");
+        let n = event.notification.as_mut().unwrap();
+        n.uid = 42;
+        n.category = 4;
+        n.category_count = 3;
+        let text = event.details("now");
+        for expected in [
+            "Device: Phone D",
+            "Device address: D",
+            "Received: now",
+            "Event: Added",
+            "Notification UID: 42",
+            "Category: Social (4)",
+            "Title: Title",
+            "Subtitle: Unavailable",
+            "Message: Body",
+            "Category count: 3",
+        ] {
+            assert!(text.contains(expected), "missing {expected:?} in {text}");
+        }
     }
 }

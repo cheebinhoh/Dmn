@@ -11,18 +11,25 @@
 //! monitoring intent are persisted to `settings.json` by this module only; the
 //! engine never writes to disk.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 
+use crate::notifier::Notifier;
+use cosmic::app::context_drawer::{self, ContextDrawer};
 use cosmic::iced::futures::{self, SinkExt};
 use cosmic::iced::{Alignment, Length, Subscription};
 use cosmic::prelude::*;
 use cosmic::widget;
+use cosmic::widget::about::About;
+use cosmic::widget::menu::action::MenuAction;
+use cosmic::widget::menu::{self, ItemHeight, ItemWidth};
+use cosmic::widget::RcElementWrapper;
 use dmn_bluetooth_sys::Engine;
 use dmn_cosmic_model::{
-    device_key, parse_incoming, Command, Device, EventRecord, Incoming, KindFilter, Model,
-    Settings, Sort, SortColumn,
+    alert_device, device_key, parse_incoming, Command, Device, EventRecord, Incoming, KindFilter,
+    Model, Settings, Sort, SortColumn,
 };
 
 /// Set once by `main`; the subscription stream is a plain `fn` so it reaches
@@ -71,6 +78,59 @@ pub struct App {
     /// Filters both device groups; UI-only, not persisted.
     device_search: String,
     last_scan_request: Option<Instant>,
+    /// Posts and withdraws desktop alerts.
+    notifier: Notifier,
+    about: About,
+    /// Whether the About context drawer is open.
+    show_about: bool,
+    /// Sequence of the event whose detail dialog is open.
+    detail_sequence: Option<u64>,
+}
+
+/// Entries of the header menu.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MenuEntry {
+    DesktopAlerts,
+    About,
+}
+
+impl MenuAction for MenuEntry {
+    type Message = Message;
+
+    fn message(&self) -> Message {
+        match self {
+            MenuEntry::DesktopAlerts => Message::ToggleDesktopAlerts,
+            MenuEntry::About => Message::ToggleAbout,
+        }
+    }
+}
+
+/// Formats a receipt time (Unix milliseconds) in the local time zone.
+fn format_received(received_ms: i64) -> String {
+    let seconds = (received_ms / 1000) as libc::time_t;
+    let mut buffer = [0u8; 64];
+    // SAFETY: `local` is zeroed storage `localtime_r` fills in, and `strftime`
+    // writes at most `buffer.len()` bytes and returns the length it wrote.
+    unsafe {
+        let mut local: libc::tm = std::mem::zeroed();
+        if libc::localtime_r(&seconds, &mut local).is_null() {
+            return String::new();
+        }
+        let written = libc::strftime(
+            buffer.as_mut_ptr().cast(),
+            buffer.len(),
+            c"%Y-%m-%d %H:%M:%S %Z".as_ptr(),
+            &local,
+        );
+        String::from_utf8_lossy(&buffer[..written]).into_owned()
+    }
+}
+
+/// Opens a link from the About page in the default browser.
+fn open_url(url: &str) {
+    if let Err(error) = std::process::Command::new("xdg-open").arg(url).spawn() {
+        eprintln!("could not open {url}: {error}");
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -90,6 +150,12 @@ pub enum Message {
     Search(String),
     DeviceSearch(String),
     SelectedOnly(bool),
+    DesktopAlerts(bool),
+    ToggleDesktopAlerts,
+    ToggleAbout,
+    OpenUrl(String),
+    ShowDetails(u64),
+    CloseDetails,
     ClearFeed,
     ToggleDevices,
 }
@@ -155,6 +221,24 @@ impl cosmic::Application for App {
             show_devices: true,
             device_search: String::new(),
             last_scan_request: None,
+            notifier: Notifier::new(),
+            about: About::default()
+                .name("Dmn Bluetooth")
+                .icon(widget::icon::from_name(Self::APP_ID))
+                .version(env!("CARGO_PKG_VERSION"))
+                .author("Chee Bin Hoh")
+                .comments("Bluetooth device and ANCS notification monitor.")
+                .copyright("© 2026 Chee Bin Hoh")
+                .license("GPL-3.0-only")
+                .license_url("https://github.com/cheebinhoh/Dmn?tab=GPL-3.0-1-ov-file")
+                .developers([("Chee Bin Hoh", "https://github.com/cheebinhoh")])
+                .links([
+                    ("Repository", "https://github.com/cheebinhoh/Dmn"),
+                    ("Issues", "https://github.com/cheebinhoh/Dmn/issues"),
+                    ("Email", "mailto:CheeBin.Hoh@gmail.com"),
+                ]),
+            show_about: false,
+            detail_sequence: None,
         };
         app.send(Command::Hello);
         app.send(app.settings.configure_command());
@@ -170,6 +254,58 @@ impl cosmic::Application for App {
                 .into(),
             widget::text::heading("Dmn Bluetooth").into(),
         ]
+    }
+
+    /// Header-bar menu: desktop alerts toggle and About.
+    fn header_end(&self) -> Vec<Element<'_, Message>> {
+        let key_binds = HashMap::new();
+        let menu = menu::bar(vec![menu::Tree::with_children(
+            RcElementWrapper::new(Element::from(
+                widget::button::icon(widget::icon::from_name("open-menu-symbolic"))
+                    .padding(8)
+                    .class(cosmic::theme::Button::MenuRoot),
+            )),
+            menu::items(
+                &key_binds,
+                vec![
+                    menu::Item::CheckBox(
+                        "Desktop alerts",
+                        None,
+                        self.settings.desktop_alerts,
+                        MenuEntry::DesktopAlerts,
+                    ),
+                    menu::Item::Divider,
+                    menu::Item::Button("About Dmn Bluetooth", None, MenuEntry::About),
+                ],
+            ),
+        )])
+        .item_height(ItemHeight::Dynamic(40))
+        .item_width(ItemWidth::Uniform(240))
+        .spacing(4.0);
+        vec![menu.into()]
+    }
+
+    /// Detail dialog for one feed event.
+    fn dialog(&self) -> Option<Element<'_, Message>> {
+        let event = self.model.feed.get(self.detail_sequence?)?;
+        let details = event.details(&format_received(event.received_ms));
+        Some(
+            widget::dialog()
+                .title("Notification details")
+                .control(widget::selectable_text::body(details))
+                .primary_action(widget::button::standard("Close").on_press(Message::CloseDetails))
+                .into(),
+        )
+    }
+
+    fn context_drawer(&self) -> Option<ContextDrawer<'_, Message>> {
+        self.show_about.then(|| {
+            context_drawer::about(
+                &self.about,
+                |url| Message::OpenUrl(url.to_owned()),
+                Message::ToggleAbout,
+            )
+        })
     }
 
     fn subscription(&self) -> Subscription<Message> {
@@ -208,6 +344,13 @@ impl cosmic::Application for App {
                 Err(error) => self.model.notice = Some(format!("Bad engine message: {error}")),
             },
             Message::Pump(incoming) => {
+                if let Incoming::Event(event) = &incoming {
+                    if self.settings.desktop_alerts {
+                        if let Some(device) = alert_device(event) {
+                            self.notifier.notify(&device);
+                        }
+                    }
+                }
                 if let Some(persist) = Model::apply(&mut self.model, incoming) {
                     self.settings.apply_persist(persist);
                     if let Some(path) = &self.settings_path {
@@ -235,11 +378,21 @@ impl cosmic::Application for App {
                 self.send(Command::SortBy(self.settings.sort.clone()));
             }
             Message::Connect(device) => self.send(Command::Connect(device.identity())),
-            Message::Disconnect(device) => self.send(Command::Disconnect(device.identity())),
-            Message::Monitor(device, enabled) => self.send(Command::Monitor {
-                identity: device.identity(),
-                enabled,
-            }),
+            Message::Disconnect(device) => {
+                self.notifier
+                    .withdraw(&device_key(&device.adapter, &device.device));
+                self.send(Command::Disconnect(device.identity()))
+            }
+            Message::Monitor(device, enabled) => {
+                if !enabled {
+                    self.notifier
+                        .withdraw(&device_key(&device.adapter, &device.device));
+                }
+                self.send(Command::Monitor {
+                    identity: device.identity(),
+                    enabled,
+                })
+            }
             Message::FilterDevice(key) => self.model.filter.device = key,
             Message::FilterKind(kind) => self.model.filter.kind = kind,
             Message::Search(text) => self.model.filter.search = text,
@@ -252,8 +405,31 @@ impl cosmic::Application for App {
                     }
                 }
             }
+            Message::DesktopAlerts(enabled) => {
+                self.settings.desktop_alerts = enabled;
+                if !enabled {
+                    self.notifier.withdraw_all();
+                }
+                if let Some(path) = &self.settings_path {
+                    if let Err(error) = self.settings.save(path) {
+                        self.model.notice = Some(format!("Could not save settings: {error}"));
+                    }
+                }
+            }
+            Message::ToggleDesktopAlerts => {
+                return self.update(Message::DesktopAlerts(!self.settings.desktop_alerts));
+            }
+            Message::ToggleAbout => {
+                self.show_about = !self.show_about;
+                self.set_show_context(self.show_about);
+            }
+            Message::OpenUrl(url) => open_url(&url),
+            Message::ShowDetails(sequence) => self.detail_sequence = Some(sequence),
+            Message::CloseDetails => self.detail_sequence = None,
             Message::ClearFeed => {
+                self.notifier.withdraw_all();
                 self.model.feed.clear();
+                self.detail_sequence = None;
             }
             Message::ToggleDevices => self.show_devices = !self.show_devices,
         }
@@ -427,12 +603,14 @@ impl App {
             device.name.clone()
         };
         let mut lines = vec![
-            widget::checkbox(device.selected)
-                .label(name)
-                .on_toggle({
+            widget::row::with_capacity(2)
+                .spacing(spacing.space_xs)
+                .align_y(Alignment::Center)
+                .push(widget::checkbox(device.selected).on_toggle({
                     let device = device.clone();
                     move |selected| Message::Select(device.clone(), selected)
-                })
+                }))
+                .push(widget::text(name))
                 .into(),
             widget::text::caption(format!("{} · {}", device.device, device.status)).into(),
         ];
@@ -533,6 +711,13 @@ impl App {
             widget::selectable_text::body(event.headline()).into(),
             widget::text::caption(event.name.clone()).into(),
         ];
+        if event.notification.is_some() {
+            lines.push(
+                widget::button::text("Details")
+                    .on_press(Message::ShowDetails(event.sequence))
+                    .into(),
+            );
+        }
         // Title and message are selectable (drag to highlight, right-click for
         // Copy / Select All); the tooltip shows the whole text.
         let summary = event.summary();

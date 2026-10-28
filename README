@@ -41,7 +41,7 @@ sudo apt-get install build-essential cmake git pkg-config libicu-dev \
 ```
 
 Configure and build all supported software features. This enables the two
-Bluetooth CLIs, GTK desktop app, Kafka integration tests, Valgrind test
+Bluetooth CLIs, GTK desktop app, the COSMIC C library, Kafka integration tests, Valgrind test
 variants, and fault-injection tests; physical-device tests remain opt-in.
 The optional application flags are the only flags needed to select the apps:
 their ANCS, BlueZ, and D-Bus dependencies are enabled automatically.
@@ -54,6 +54,7 @@ cmake -S . -B build-all -DCMAKE_BUILD_TYPE=Debug \
   -DENABLE_APP_BLUEZ_DISCOVERY_CLI=ON \
   -DENABLE_APP_BLUETOOTH_CLI=ON \
   -DENABLE_APP_BLUETOOTH_GTK=ON \
+  -DENABLE_APP_BLUETOOTH_COSMIC=ON \
   -DENABLE_VALGRIND=ON \
   -DENABLE_FAULT_INJECTION=ON
 cmake --build build-all --parallel 2
@@ -63,7 +64,9 @@ ctest --test-dir build-all --output-on-failure
 ```
 
 CTest runs every test registered by this configuration, including the GTK
-headless smoke/metadata tests. Kafka tests need Java and a first-run download;
+headless smoke/metadata tests and the COSMIC engine/C ABI test (the Rust app
+itself is built by Cargo; see
+[COSMIC Bluetooth application](#cosmic-bluetooth-application)). Kafka tests need Java and a first-run download;
 the helper starts a local broker and creates the required topic. The GUI is
 compiled and tested without opening a desktop window. To build and run the
 same full Linux configuration in the project's Docker image, see
@@ -96,6 +99,8 @@ cmake -S . -B build-gtk-app \
 cmake --build build-gtk-app --target dmn-bluetooth-gtk --parallel 2
 cmake --install build-gtk-app --component Runtime
 "$HOME/.local/bin/dmn-bluetooth-gtk"
+# Hardware-free review: fake devices, no BlueZ, saved devices untouched
+"$HOME/.local/bin/dmn-bluetooth-gtk" --demo
 ```
 
 `Runtime` installs the executable and desktop assets. `Development` installs
@@ -271,10 +276,24 @@ ctest --test-dir build-cli -R '^dmn-test-bluez-device-list$' \
   --output-on-failure
 ```
 
+### Shared Bluetooth engine
+
+`dmn-bluetooth-cli`, `dmn-bluetooth-gtk` and `dmn-bluetooth-cosmic` all drive
+the same GUI-independent engine (`dmn::gui::Dmn_Engine`, static library
+`dmn-bluetooth-engine`, sources in `src/app/engine` and `include/app/engine`).
+It has no GTK or GLib dependency and is built automatically whenever any of
+`ENABLE_APP_BLUETOOTH_CLI`, `ENABLE_APP_BLUETOOTH_GTK` or
+`ENABLE_APP_BLUETOOTH_COSMIC` is on, so each app can be built on its own or
+together with the others. The engine has two backends: the BlueZ backend
+(real hardware over BlueZ/ANCS) and a demo backend (synthetic phones, no
+hardware, used by `--demo`). Only the GTK and COSMIC apps need GLib, through
+`dmn-bluetooth-gui-core`; the CLI does not. See the header comment in
+`include/app/engine/dmn-engine.hpp` for the architecture.
+
 ### Bluetooth ANCS monitor CLI
 
 The optional `dmn-bluetooth-cli` command pairs/connects one selected device as
-needed and monitors its ANCS notifications:
+needed and monitors its ANCS notifications through the shared engine:
 
 ```bash
 ./build-cli/src/app/dmn-bluetooth-cli monitor "iPhone Genghis"
@@ -289,9 +308,14 @@ not provide a graphical interface.
 On Linux desktops, the optional `dmn-bluetooth-gtk` app provides a graphical
 interface for browsing BlueZ devices, saving a device selection, connecting
 and disconnecting, and explicitly starting or stopping ANCS monitoring. The
-GTK application and CLI are separate frontends to the same BlueZ/ANCS
-functionality; enabling the GTK build does not build or replace the CLI.
-Optional desktop alerts use GNotification.
+GTK application and CLI are separate frontends to the same shared engine;
+enabling the GTK build does not build or replace the CLI.
+Optional desktop alerts use GNotification. All Bluetooth behavior comes from the
+shared engine that the CLI and COSMIC app also use; the GTK code only renders it.
+The window has a left device panel (search, **Selected only**, sorting, and the
+"Previous selected devices" and "Nearby devices" groups) and a notifications
+panel. Run `dmn-bluetooth-gtk --demo` to try it with fake devices and no
+Bluetooth hardware; demo mode never touches saved devices.
 
 The app never connects automatically. **Start monitoring** is an explicit
 choice saved per device, so the app can restore that intent on later launches.
@@ -302,11 +326,11 @@ the live monitor but preserves the intent, so monitoring can resume after
 reconnection or relaunch. The newest-first event feed contains only
 notifications received while the app process is running; it is not a
 persistent notification archive or a desktop notification-history reader.
-Search and device, event-kind, and category filters compose; activating a row
-shows available details. A single sidebar toggle at the left edge of the
-Notifications panel opens and closes the device sidebar; its visibility,
-viewed device, and All devices feed setting are remembered across launches.
-The feed is capped at 1,000 in-memory events, with older-event eviction
+Search and device, event-kind, and category filters compose; each
+notification has a Details button. A sidebar toggle at the left edge of the
+header bar opens and closes the device panel; its visibility and the Selected
+only setting are remembered across launches. The app scans for its whole
+lifetime, so there are no Scan buttons. The feed is capped at 1,000 in-memory events, with older-event eviction
 reported in the interface. Hovering over notification text shows its full
 value wrapped to the available feed width.
 The GTK app requires a running BlueZ system service and a graphical desktop
@@ -337,7 +361,8 @@ discarded. The device list and notification feed scroll independently.
 The app scans for devices for as long as it runs and the list updates as
 results arrive, so there are no Scan or Refresh buttons. The toolbar has a
 search box (half the device panel wide, always visible), the Selected only
-checkbox, and the Save and Discard buttons; the search box filters both groups
+checkbox, and the Save and Discard buttons; the header-bar menu has the
+Desktop alerts checkbox (on by default) and About; the search box filters both groups
 by any part of a device (name, address, status). Notification titles and
 messages can be highlighted and copied (right-click Copy / Select All), and
 hovering a notification shows its full text.

@@ -1,14 +1,14 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file desktop-alert-policy.hpp
+ * @file dmn-desktop-alert-policy.hpp
  * @brief Privacy-safe aggregation policy for optional desktop alerts.
  */
 
 #ifndef DMN_BLUETOOTH_GUI_DESKTOP_ALERT_POLICY_HPP_
 #define DMN_BLUETOOTH_GUI_DESKTOP_ALERT_POLICY_HPP_
 
-#include "app/gui/core/device-selection-model.hpp"
+#include "app/gui/core/dmn-device-selection-model.hpp"
 
 #include "dmn-ancs-client.hpp"
 

@@ -1,11 +1,11 @@
 /**
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
- * @file device-monitor-controller.cpp
+ * @file dmn-device-monitor-controller.cpp
  * @brief GTK-independent monitor lifecycle decisions and retry policy.
  */
 
-#include "app/gui/core/device-monitor-controller.hpp"
+#include "app/gui/core/dmn-device-monitor-controller.hpp"
 
 #include <algorithm>
 #include <cstdint>

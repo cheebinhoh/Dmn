@@ -5,10 +5,10 @@
  * @brief Tests for the JSON protocol, engine and C ABI used by the COSMIC app.
  */
 
+#include "app/engine/dmn-engine-backend.hpp"
+#include "app/engine/dmn-engine.hpp"
+#include "app/engine/dmn-json.hpp"
 #include "app/gui/cabi/dmn-bluetooth-cabi.h"
-#include "app/gui/engine/dmn-engine-backend.hpp"
-#include "app/gui/engine/dmn-engine.hpp"
-#include "app/gui/engine/dmn-json.hpp"
 
 #include <gtest/gtest.h>
 
@@ -182,6 +182,58 @@ public:
   }
 };
 
+// Phone that starts out of range and later reconnects (BlueZ reports
+// Connected again), mirroring a user arriving back home.
+class ReconnectingBackend final : public Dmn_EngineBackend {
+public:
+  [[nodiscard]] auto name() const -> std::string override { return "fake"; }
+
+  void setHandlers(InventoryChangedHandler, MonitorEventHandler) override {}
+
+  auto
+  snapshot() -> std::expected<Dmn_BackendInventory, Dmn_BackendError> override {
+    Dmn_BackendInventory inventory;
+    inventory.m_adapters.push_back({"/hci0", kAdapter, "Adapter", true});
+    Dmn_DeviceEntry entry;
+    entry.m_identity = {kAdapter, kDevice};
+    entry.m_display_name = "Phone";
+    entry.m_paired = true;
+    entry.m_connected = m_in_range.load();
+    entry.m_present = true;
+    inventory.m_devices.push_back(entry);
+
+    return inventory;
+  }
+
+  auto setScanning(bool, const std::string &) -> Dmn_BackendResult override {
+    return {};
+  }
+
+  auto connect(const Dmn_DeviceIdentity &) -> Dmn_BackendResult override {
+    return {};
+  }
+
+  auto disconnect(const Dmn_DeviceIdentity &) -> Dmn_BackendResult override {
+    return {};
+  }
+
+  void cancelConnect(const Dmn_DeviceIdentity &) override {}
+
+  auto startMonitor(const Dmn_DeviceIdentity &, const std::atomic<bool> &,
+                    const ProgressHandler &) -> Dmn_BackendResult override {
+    m_started.store(true);
+
+    return {};
+  }
+
+  auto stopMonitor(const Dmn_DeviceIdentity &) -> Dmn_BackendResult override {
+    return {};
+  }
+
+  std::atomic<bool> m_in_range{false};
+  std::atomic<bool> m_started{false};
+};
+
 TEST(CosmicJsonTest, RoundTripsEscapesAndSurrogatePairs) {
   const auto parsed = Dmn_JsonValue::parse(
       R"({"a":"line\nquote\" \u00e9 \ud83d\ude00","b":[1,2.5,true,null]})");
@@ -334,6 +386,40 @@ TEST(CosmicEngineTest, ConfigureRestoresIntentAndFailedStartIsReported) {
                   ->getBool("monitoring_requested", false));
   ASSERT_FALSE(pump.m_events.empty());
   EXPECT_EQ(pump.m_events.front().getString("kind"), "monitor_error");
+}
+
+TEST(CosmicEngineTest, ResumesMonitoringWhenSavedDeviceReconnects) {
+  dmn::gui::Dmn_EngineOptions options;
+  options.m_tick_interval = std::chrono::milliseconds{20};
+  options.m_inventory_refresh_interval = std::chrono::milliseconds{50};
+  auto backend = std::make_unique<ReconnectingBackend>();
+  auto *raw = backend.get();
+  Dmn_Engine engine{std::move(backend), options};
+  Pump pump{engine};
+
+  auto configure = Dmn_JsonValue::object();
+  configure.set("type", "configure");
+  auto identity = Dmn_JsonValue::object();
+  identity.set("adapter", kAdapter);
+  identity.set("device", kDevice);
+  configure.set("saved", Dmn_JsonValue::array().push(identity));
+  configure.set("monitoring", Dmn_JsonValue::array().push(identity));
+  pump.send(configure.dump());
+
+  ASSERT_TRUE(pump.waitState([](const Dmn_JsonValue &state) {
+    const auto *entry = device(state, kDevice);
+
+    return entry != nullptr && !entry->getBool("connected", true);
+  }));
+  EXPECT_FALSE(raw->m_started.load());
+
+  raw->m_in_range.store(true);
+  ASSERT_TRUE(pump.waitState([](const Dmn_JsonValue &state) {
+    const auto *entry = device(state, kDevice);
+
+    return entry != nullptr && entry->getString("monitor_state") == "active";
+  }));
+  EXPECT_TRUE(raw->m_started.load());
 }
 
 TEST(CosmicCabiTest, DemoEngineLifecycleAndNullSafety) {

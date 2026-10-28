@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::protocol::{Command, Identity, Persist, Sort};
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
     pub saved: Vec<Identity>,
@@ -19,6 +19,20 @@ pub struct Settings {
     pub sort: Sort,
     /// Show only devices in the current draft selection.
     pub selected_only: bool,
+    /// Show generic desktop alerts for new notifications.
+    pub desktop_alerts: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            saved: Vec::new(),
+            monitoring: Vec::new(),
+            sort: Sort::default(),
+            selected_only: false,
+            desktop_alerts: true,
+        }
+    }
 }
 
 impl Settings {
@@ -99,6 +113,7 @@ mod tests {
                 ascending: false,
             },
             selected_only: true,
+            desktop_alerts: false,
         };
         settings.save(&path).unwrap();
         let (loaded, warning) = Settings::load(&path);
