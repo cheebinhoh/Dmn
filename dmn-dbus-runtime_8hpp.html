@@ -109,7 +109,15 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Internal process-wide libdbus initialization. </p>
-<p>Copyright © 2026 Chee Bin HOH. All rights reserved. </p>
+<p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
+<h2><a class="anchor" id="autotoc_md20"></a>
+Architecture: two independent D-Bus stacks on one runtime</h2>
+<p>Every libdbus user in Dmn calls initializeDbusRuntime() first. Above this shared layer sit two stacks that do not depend on each other:</p>
+<p>Dmn_DMesgNet (<a class="el" href="dmn-dmesgnet-dbus_8cpp.html" title="Composition facade joining DMesgNet to D-Bus byte-signal endpoints.">dmn-dmesgnet-dbus.cpp</a>) Dmn_BluezClient, GATT client, | ANCS monitor Dmn_DbusInput / Dmn_DbusOutput | (<a class="el" href="dmn-dbus-io_8hpp.html" title="Byte-oriented D-Bus signal input and output adapters.">dmn-dbus-io.hpp</a>, <a class="el" href="dmn-dbus-config_8hpp.html" title="Shared configuration for optional D-Bus signal I/O.">dmn-dbus-config.hpp</a>) Dmn_DbusClient | (<a class="el" href="dmn-dbus-client_8hpp.html" title="Optional generic D-Bus client API.">dmn-dbus-client.hpp</a>) +------------&mdash;+------------&mdash;+ <a class="el" href="dmn-dbus-runtime_8hpp.html" title="Internal process-wide libdbus initialization.">dmn-dbus-runtime.hpp</a> | libdbus</p>
+<ul>
+<li>Dmn_DbusInput/Dmn_DbusOutput are Dmn's own message transport: opaque byte payloads broadcast as one signal tuple (default path /org/dmn/DMesg1, interface org.dmn.DMesg1.Transport, member Message, body <code>ay</code>) routed by the bus daemon between matching Dmn participants. Only Dmn_DMesgNet uses them.</li>
+<li>Dmn_DbusClient is a general D-Bus client for method calls, property access and signal matching against other services. The BlueZ and GATT clients use it to talk to org.bluez (org.freedesktop.DBus.Properties, ObjectManager, org.bluez.Adapter1/Device1/GattService1/ GattCharacteristic1, PropertiesChanged, InterfacesAdded). BlueZ traffic never uses the Dmn signal tuple, and Dmn_DbusClient does not use Dmn_DbusInput/Dmn_DbusOutput. </li>
+</ul>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a9b764a8d643f986266076368ff6bf2bc" name="a9b764a8d643f986266076368ff6bf2bc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9b764a8d643f986266076368ff6bf2bc">&#9670;&#160;</a></span>initializeDbusRuntime()</h2>

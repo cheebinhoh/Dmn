@@ -204,13 +204,13 @@ Enumerations</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Prototype DLock values and local acquisition API. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 Overview</h2>
 <p>This header currently provides DLock value types, snapshot/protobuf conversion helpers, a lightweight DMesg-handler wrapper, and a basic instance-local mutex/condition-variable acquisition prototype. Despite the design target described by the companion spec, this implementation does not publish snapshots, synchronize independent handlers, or implement a distributed lock protocol.</p>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Phase boundary</h2>
 <p>The template is restricted to <code>Dmn_DMesg</code>, but this type constraint is not evidence that publisher-serialized v1 is implemented. <code>Dmn_DMesgNet</code> and its election state are not used as a lock authority.</p>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Key responsibilities</h2>
 <ul>
 <li>Define the public DLock result and lifecycle contract (<code>Dmn_DLock_Result</code>, <code>Dmn_DLock_ResultCode</code>, and <code>Dmn_DLock_LifecycleEvent</code>).</li>
@@ -219,7 +219,7 @@ Key responsibilities</h2>
 <li>Provide a local-only <code>Dmn_DLock</code> acquire/release prototype; no transport commit or cross-handler synchronization is performed.</li>
 <li>Use the additive <code>DMesgBodyPb</code> protobuf payload shape for snapshot values.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Thread safety and execution model</h2>
 <p>The current acquire/release operations synchronize a single in-memory table with a mutex and condition variable. They do not run in a DMesg handler context or publish state. <code>acquireLockAsync()</code> uses workers owned by the lock; destruction wakes blocked acquisitions, completes them with <code>kShutdown</code>, and joins all workers. This prototype is not safe to use as a distributed lock.</p>
 <p>See also</p><ul>

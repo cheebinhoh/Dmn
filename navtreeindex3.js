@@ -8,8 +8,8 @@ var NAVTREEINDEX3 =
 "dmn_8hpp.html":[3,0,0,36],
 "dmn_8hpp_source.html":[3,0,0,36],
 "files.html":[3,0],
-"functions.html":[2,3,0],
 "functions.html":[2,3,0,0],
+"functions.html":[2,3,0],
 "functions_b.html":[2,3,0,1],
 "functions_c.html":[2,3,0,2],
 "functions_d.html":[2,3,0,3],
@@ -220,6 +220,7 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__DbusError.html#a1a6277d221ed6f7840aca142f7a13eca":[2,0,0,27,2],
 "structdmn_1_1Dmn__DbusError.html#a916950ac58a8d42d29811011e64699c0":[2,0,0,27,0],
 "structdmn_1_1Dmn__DbusIoStatus.html":[2,0,0,29],
+"structdmn_1_1Dmn__DbusIoStatus.html#ad83fcfd49d8337e5193f044dbf35b571":[2,0,0,29,0],
 "structdmn_1_1Dmn__DbusSignalMatch.html":[2,0,0,31],
 "structdmn_1_1Dmn__DbusSignalMatch.html#a37495cd0edb81b195b185cd741d83db3":[2,0,0,31,3],
 "structdmn_1_1Dmn__DbusSignalMatch.html#a8f381e6e84e445975f15978c5a4f7108":[2,0,0,31,1],
@@ -248,6 +249,5 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__GattError.html":[2,0,0,52],
 "structdmn_1_1Dmn__GattError.html#a8b95181f3640d5b37190b4001aad50b8":[2,0,0,52,1],
 "structdmn_1_1Dmn__GattError.html#abd54ac0fb97c7c874037a3e46c2b6d01":[2,0,0,52,0],
-"structdmn_1_1Dmn__GattError.html#ad71c2af5ac85754efdd4c7321dd5c85f":[2,0,0,52,2],
-"structdmn_1_1Dmn__GattEvent.html":[2,0,0,53]
+"structdmn_1_1Dmn__GattError.html#ad71c2af5ac85754efdd4c7321dd5c85f":[2,0,0,52,2]
 };

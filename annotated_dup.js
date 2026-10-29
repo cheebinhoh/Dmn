@@ -33,7 +33,7 @@ var annotated_dup =
       [ "Dmn_DbusConfig", "structdmn_1_1Dmn__DbusConfig.html", "structdmn_1_1Dmn__DbusConfig" ],
       [ "Dmn_DbusError", "structdmn_1_1Dmn__DbusError.html", "structdmn_1_1Dmn__DbusError" ],
       [ "Dmn_DbusInput", "classdmn_1_1Dmn__DbusInput.html", "classdmn_1_1Dmn__DbusInput" ],
-      [ "Dmn_DbusIoStatus", "structdmn_1_1Dmn__DbusIoStatus.html", null ],
+      [ "Dmn_DbusIoStatus", "structdmn_1_1Dmn__DbusIoStatus.html", "structdmn_1_1Dmn__DbusIoStatus" ],
       [ "Dmn_DbusOutput", "classdmn_1_1Dmn__DbusOutput.html", "classdmn_1_1Dmn__DbusOutput" ],
       [ "Dmn_DbusSignalMatch", "structdmn_1_1Dmn__DbusSignalMatch.html", "structdmn_1_1Dmn__DbusSignalMatch" ],
       [ "Dmn_DbusSubscription", "classdmn_1_1Dmn__DbusSubscription.html", "classdmn_1_1Dmn__DbusSubscription" ],

@@ -138,7 +138,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac237d534732ec6a46243041553ca4f62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reject reads because this endpoint is output-only.  <br /></td></tr>
 <tr class="separator:ac237d534732ec6a46243041553ca4f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e19c1d383be22b5202b43277030efde" id="r_a4e19c1d383be22b5202b43277030efde"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a4e19c1d383be22b5202b43277030efde">write</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">item</a>) <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
-<tr class="memdesc:a4e19c1d383be22b5202b43277030efde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue a payload, or throw if invalid, full, shut down, or failed.  <br /></td></tr>
+<tr class="memdesc:a4e19c1d383be22b5202b43277030efde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue a payload, blocking only while the queue is full.  <br /></td></tr>
 <tr class="separator:a4e19c1d383be22b5202b43277030efde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a395926741994f238f3bde3dee4b36867" id="r_a395926741994f238f3bde3dee4b36867"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a395926741994f238f3bde3dee4b36867">write</a> (std::string &amp;&amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">item</a>) <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
 <tr class="memdesc:a395926741994f238f3bde3dee4b36867"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue a payload, moving its storage when possible.  <br /></td></tr>
@@ -157,7 +157,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Bounded output endpoint for the configured D-Bus byte signal. </p>
-<p>The endpoint emits broadcast signals on its configured bus daemon. The bus routes each signal to connections whose installed matches accept it. <a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a4e19c1d383be22b5202b43277030efde" title="Enqueue a payload, or throw if invalid, full, shut down, or failed.">write()</a> validates and admits the payload to a bounded local FIFO; its worker turns each dequeued payload into an <code>ay</code> signal and submits it to libdbus. The worker also pumps connection I/O and monitors disconnects, and it applies backpressure based on libdbus's pending outgoing bytes. Successful writes mean local queue admission only; they do not acknowledge libdbus submission, daemon routing, or subscriber receipt. </p>
+<p>The endpoint emits broadcast signals on its configured bus daemon. The bus routes each signal to connections whose installed matches accept it. <a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a4e19c1d383be22b5202b43277030efde" title="Enqueue a payload, blocking only while the queue is full.">write()</a> validates the payload and admits it to a bounded local FIFO, blocking only while the FIFO is full, in ticket (arrival) order, until the worker drains space (or the endpoint shuts down or fails); its worker turns each dequeued payload into an <code>ay</code> signal and submits it to libdbus. The worker also pumps connection I/O and monitors disconnects, and it applies backpressure based on libdbus's pending outgoing bytes. Successful writes mean local queue admission only; they do not acknowledge libdbus submission, daemon routing, or subscriber receipt. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae0399f3a262babc710aeb04341c92b0e" name="ae0399f3a262babc710aeb04341c92b0e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae0399f3a262babc710aeb04341c92b0e">&#9670;&#160;</a></span>Dmn_DbusOutput()</h2>
@@ -277,10 +277,19 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Enqueue a payload, or throw if invalid, full, shut down, or failed. </p>
+<p>Enqueue a payload, blocking only while the queue is full. </p>
+<p>With queue space available and no earlier blocked writer, the payload is admitted immediately and the call returns without waiting. Otherwise the writer takes a ticket and blocks; as the worker frees space, blocked writers are admitted strictly in ticket (arrival) order, so a later payload never overtakes an earlier one. Shutdown or worker failure wakes every blocked writer regardless of ticket. Returning means local queue admission only, not libdbus submission or subscriber receipt.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>Serialized payload copied into the application queue. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::system_error</td><td>with std::errc::message_size if the payload exceeds the configured message limit. </td></tr>
+    <tr><td class="paramname">std::system_error</td><td>with std::errc::operation_canceled if the endpoint is shut down, including while the writer is blocked. </td></tr>
+    <tr><td class="paramname">std::system_error</td><td>carrying the terminal error if the worker has failed, including while the writer is blocked. </td></tr>
   </table>
   </dd>
 </dl>
@@ -314,9 +323,16 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Enqueue a payload, moving its storage when possible. </p>
+<p>Blocking, ordering, and error behavior are identical to the const overload.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">item</td><td>Serialized payload moved into the application queue. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::system_error</td><td>See <a class="el" href="classdmn_1_1Dmn__DbusOutput.html#a4e19c1d383be22b5202b43277030efde" title="Enqueue a payload, blocking only while the queue is full.">write(const std::string &amp;)</a>. </td></tr>
   </table>
   </dd>
 </dl>
