@@ -195,7 +195,9 @@ Create a separate private connection and one output worker. `write()` applies
 the size limit and enqueues into a finite queue; the worker serializes one
 D-Bus signal per accepted write, preserving the exact byte range. Use
 `std::system_error` for oversize, shutdown, and already-known failed-state
-errors; a full queue blocks `write()` until space frees. Worker-side errors update status and
+errors; `write()` waits only when the queue is full, then admits waiters in
+ticket (arrival) order as space frees, while shutdown or failure wakes all.
+Worker-side errors update status and
 produce a rate-limited diagnostic using the existing `Dmn_DMesgNet`
 stderr-reporting convention. Do not silently discard accepted items.
 
@@ -204,8 +206,10 @@ stderr-reporting convention. Do not silently discard accepted items.
 - Every accepted write emits one exact signal payload; lvalue and rvalue
   overloads follow the documented ownership behavior.
 - Embedded NUL is preserved.
-- Oversize writes throw; a full-queue write blocks until space frees; known
-  failed/shutdown endpoints reject writes (also waking blocked writers).
+- Oversize writes throw; a write with queue space never waits; a full-queue
+  write blocks until space frees and blocked writers are admitted in ticket
+  order; known failed/shutdown endpoints reject writes (waking all blocked
+  writers).
 - The message-count and byte-count caps are tested; pending queue depth and
   bytes never exceed them.
 - Worker-side connection/send failure marks the endpoint failed, increments

@@ -17,9 +17,12 @@
  * Data flow
  * ---------
  * Dmn_DbusOutput::write() is a blocking call, like the other Dmn_Io writers:
- * it admits a byte payload to a bounded local queue, waiting while the queue
- * is full until the worker frees space, the endpoint shuts down, or it
- * fails, and wakes its output worker. The worker encodes the payload as one
+ * it admits a byte payload to a bounded local queue and wakes its output
+ * worker. It waits only when the queue is full (or earlier writers are
+ * already blocked); with space available it returns at once. A blocked writer
+ * takes a ticket and is admitted in ticket (arrival) order as the worker frees
+ * space, while shutdown or failure wakes every blocked writer. The worker
+ * encodes the payload as one
  * D-Bus byte array signal using the configured path/interface/member tuple. It
  * submits queued signals to libdbus only while the connection's outgoing queue
  * is below the configured byte threshold, then calls the read/write/dispatch
@@ -67,7 +70,7 @@ struct Dmn_DbusIoStatus {
   std::uint64_t input_queue_drops{};
   std::size_t pending_input_messages{};
   std::size_t pending_input_bytes{};
-  std::uint64_t output_write_waits{};
+  std::uint64_t output_write_waits{}; ///< Writes that blocked on a full queue.
   std::uint64_t output_worker_errors{};
   std::size_t pending_output_messages{};
   std::size_t pending_output_bytes{};
@@ -148,8 +151,8 @@ private:
  * The endpoint emits broadcast signals on its configured bus daemon. The bus
  * routes each signal to connections whose installed matches accept it.
  * write() validates the payload and admits it to a bounded local FIFO,
- * blocking while the FIFO is full until the worker drains space (or the
- * endpoint shuts down or fails); its worker
+ * blocking only while the FIFO is full, in ticket (arrival) order, until the
+ * worker drains space (or the endpoint shuts down or fails); its worker
  * turns each dequeued payload into an `ay` signal and submits it to libdbus.
  * The worker also pumps connection I/O and monitors disconnects, and it
  * applies backpressure based on libdbus's pending outgoing bytes. Successful
@@ -179,19 +182,34 @@ public:
   auto read() -> std::optional<std::string> override;
 
   /**
-   * @brief Enqueue a payload, blocking while the queue is full.
+   * @brief Enqueue a payload, blocking only while the queue is full.
    *
-   * Throws std::system_error if the payload exceeds the message byte limit, or
-   * the endpoint is shut down (including while waiting) or failed.
+   * With queue space available and no earlier blocked writer, the payload is
+   * admitted immediately and the call returns without waiting. Otherwise the
+   * writer takes a ticket and blocks; as the worker frees space, blocked
+   * writers are admitted strictly in ticket (arrival) order, so a later
+   * payload never overtakes an earlier one. Shutdown or worker failure wakes
+   * every blocked writer regardless of ticket. Returning means local queue
+   * admission only, not libdbus submission or subscriber receipt.
    *
    * @param item Serialized payload copied into the application queue.
+   * @throws std::system_error with std::errc::message_size if the payload
+   * exceeds the configured message limit.
+   * @throws std::system_error with std::errc::operation_canceled if the
+   * endpoint is shut down, including while the writer is blocked.
+   * @throws std::system_error carrying the terminal error if the worker has
+   * failed, including while the writer is blocked.
    */
   void write(const std::string &item) override;
 
   /**
    * @brief Enqueue a payload, moving its storage when possible.
    *
+   * Blocking, ordering, and error behavior are identical to the const
+   * overload.
+   *
    * @param item Serialized payload moved into the application queue.
+   * @throws std::system_error See write(const std::string &).
    */
   void write(std::string &&item) override;
 

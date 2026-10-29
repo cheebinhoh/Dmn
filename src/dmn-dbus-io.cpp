@@ -154,6 +154,7 @@ void reportDiagnostic(std::mutex &mutex,
                       const std::string &message) noexcept {
   try {
     const auto now{std::chrono::steady_clock::now()};
+
     {
       std::lock_guard lock{mutex};
 
@@ -319,6 +320,7 @@ private:
     dbus_message_iter_recurse(&iterator, &array);
     unsigned char *bytes{};
     int length{};
+
     dbus_message_iter_get_fixed_array(&array, &bytes, &length);
     if (length < 0) {
       recordMalformedSignal();
@@ -343,6 +345,7 @@ private:
     // Admission is bounded by both item count and total payload bytes. Copying
     // here gives public readers owned storage independent of DBusMessage life.
     bool queueFull{};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -515,13 +518,26 @@ public:
              size <= m_config.max_queued_bytes - m_pending_bytes;
     };
 
-    if (!m_stopping && !m_status.terminal_error && !hasSpace()) {
+    // Fast path: with space and no earlier blocked writer, admit immediately;
+    // tickets are irrelevant and the writer never waits. Only when the queue
+    // is full (or earlier writers are already blocked) does the writer take a
+    // ticket and wait. Blocked writers are admitted strictly in ticket order
+    // so a small later payload cannot overtake a larger waiting one.
+    // Shutdown or failure wakes every blocked writer regardless of ticket.
+    if (!m_stopping && !m_status.terminal_error &&
+        (m_next_ticket != m_serving_ticket || !hasSpace())) {
+      const auto ticket{m_next_ticket++};
       ++m_status.output_write_waits;
-    }
 
-    m_space.wait(lock, [this, &hasSpace] {
-      return m_stopping || m_status.terminal_error || hasSpace();
-    });
+      m_space.wait(lock, [this, ticket, &hasSpace] {
+        return m_stopping || m_status.terminal_error ||
+               (ticket == m_serving_ticket && hasSpace());
+      });
+
+      // Admitted or aborted, this ticket is done; let the next waiter proceed.
+      ++m_serving_ticket;
+      m_space.notify_all();
+    }
 
     if (m_status.terminal_error) {
       throw std::system_error(m_status.terminal_error,
@@ -762,6 +778,8 @@ private:
   mutable std::mutex m_mutex;
   std::condition_variable m_ready;
   std::condition_variable m_space;
+  std::uint64_t m_next_ticket{};
+  std::uint64_t m_serving_ticket{};
   std::deque<std::string> m_queue;
   std::size_t m_pending_bytes{};
   bool m_stopping{};

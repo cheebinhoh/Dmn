@@ -112,8 +112,9 @@ the output connection prematurely.
   must increment an observable error counter and produce a rate-limited
   diagnostic using the existing stderr-reporting convention; it cannot
   retroactively throw from `write()`.
-  A full queue blocks `write()` until space frees; already-known-failed and
-  shut-down states (including during a wait) throw from `write()`.
+  `write()` waits only when the queue is full; blocked writers are admitted in
+  ticket (arrival) order as space frees. Already-known-failed and shut-down
+  states (including during a wait) throw from `write()` and wake all waiters.
 - The current Dmn `Dmn_Io` API does not provide generic asynchronous error
   reporting or metrics. Therefore the public Option A endpoint types expose a
   thread-safe, read-only `Dmn_DbusIoStatus` snapshot and use the existing

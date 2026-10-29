@@ -264,9 +264,14 @@ for local bus policy/diagnostics.
   `ay` bytes;
   embedded NUL bytes are valid and must not be treated as a C-string
   terminator.
-- Enforce `max_message_bytes` before queue admission. A full output queue
-  blocks `write()` until the worker frees space; shutdown (including while
-  waiting) and terminal worker failures throw `std::system_error`;
+- Enforce `max_message_bytes` before queue admission. `write()` waits only
+  when the output queue is full (or earlier writers are already blocked); with
+  space available it admits the payload immediately and tickets are irrelevant.
+  A writer that must wait takes a ticket and is admitted strictly in ticket
+  (arrival) order once space frees, so a later payload never overtakes an
+  earlier blocked one. Shutdown and terminal worker failures wake every blocked
+  writer regardless of ticket and make it throw `std::system_error` (including
+  while waiting);
   oversized writes throw `std::system_error` with
   `std::errc::message_size`. Do not silently fragment.
 - A successful write means only that the local endpoint queue accepted the
@@ -332,7 +337,7 @@ snapshot with these proposed fields:
 | `input_queue_drops`                   | Valid matching signals dropped because the input queue was full.                                        |
 | `pending_input_messages`              | Items currently waiting in the bounded input queue.                                                     |
 | `pending_input_bytes`                 | Payload bytes currently waiting in the bounded input queue.                                             |
-| `output_write_waits`                  | Writes that had to block because the output queue's message-count or byte cap was full.                 |
+| `output_write_waits`                  | Writes that had to block (and take a ticket) because the output queue's message-count or byte cap was full or earlier writers were already blocked. |
 | `output_worker_errors`                | Worker-level libdbus/send/disconnect failures; not a count of messages lost inside libdbus.             |
 | `pending_output_messages`             | Items waiting in the adapter's bounded output queue, excluding libdbus's internal queue.                |
 | `pending_output_bytes`                | Payload bytes waiting in the adapter's bounded output queue.                                            |

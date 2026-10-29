@@ -25,6 +25,7 @@
 #include <system_error>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -411,6 +412,45 @@ TEST(DmnDbusIoTest, OutputWriteBlocksWhenQueueFullAndStaysBounded) {
   EXPECT_EQ(countLimited.status().messages_written, kWrites);
   EXPECT_GT(countLimited.status().output_write_waits, 0U);
   countLimited.shutdown();
+}
+
+TEST(DmnDbusIoTest, BlockedOutputWritersAreAdmittedInArrivalOrder) {
+  constexpr int kWriters{12};
+  auto config = makeConfig();
+  config.max_message_bytes = 64 * 1024;
+  config.max_queued_messages = 1;
+  config.max_queued_bytes = 64 * 1024;
+
+  // Only the output is constrained; the input must retain every message.
+  auto inputConfig = config;
+  inputConfig.max_queued_messages = kWriters * 2;
+  inputConfig.max_queued_bytes = 2 * 1024 * 1024;
+
+  dmn::Dmn_DbusInput input{inputConfig};
+  dmn::Dmn_DbusOutput output{config};
+
+  // Alternate large and tiny payloads: without ticket ordering a tiny payload
+  // could overtake a larger waiting one.
+  std::vector<std::thread> writers;
+  for (int index = 0; index < kWriters; ++index) {
+    std::string payload(index % 2 == 0 ? 60 * 1024 : 4, 'x');
+    payload[0] = static_cast<char>('A' + index);
+    writers.emplace_back([&output, payload] { output.write(payload); });
+    std::this_thread::sleep_for(20ms);
+  }
+
+  for (int index = 0; index < kWriters; ++index) {
+    const auto received = input.read();
+    ASSERT_TRUE(received.has_value());
+    EXPECT_EQ((*received)[0], static_cast<char>('A' + index));
+  }
+
+  for (auto &writer : writers) {
+    writer.join();
+  }
+
+  output.shutdown();
+  input.shutdown();
 }
 
 TEST(DmnDbusIoTest, ShutdownDrainsQueuedInputThenCancelsBlockedRead) {
