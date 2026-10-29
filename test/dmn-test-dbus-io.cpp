@@ -380,8 +380,9 @@ TEST(DmnDbusIoTest, EnforcesInputByteLimitIndependentlyOfMessageCount) {
   EXPECT_EQ(input.status().pending_input_bytes, 0U);
 }
 
-TEST(DmnDbusIoTest, OutputQueueLimitsRejectSynchronouslyAndStayBounded) {
+TEST(DmnDbusIoTest, OutputWriteBlocksWhenQueueFullAndStaysBounded) {
   constexpr std::size_t kPayloadBytes{256 * 1024};
+  constexpr int kWrites{200};
   const std::string payload(kPayloadBytes, 'x');
 
   auto byteConfig = makeConfig();
@@ -389,38 +390,26 @@ TEST(DmnDbusIoTest, OutputQueueLimitsRejectSynchronouslyAndStayBounded) {
   byteConfig.max_queued_messages = 16;
   byteConfig.max_queued_bytes = kPayloadBytes;
   dmn::Dmn_DbusOutput byteLimited{byteConfig};
-  std::uint64_t byteRejections{};
-  for (int index = 0; index < 200; ++index) {
-    try {
-      byteLimited.write(payload);
-    } catch (const std::system_error &error) {
-      ASSERT_EQ(error.code(), std::make_error_code(std::errc::no_buffer_space));
-      ++byteRejections;
-    }
+  for (int index = 0; index < kWrites; ++index) {
+    ASSERT_NO_THROW(byteLimited.write(payload));
+    EXPECT_LE(byteLimited.status().pending_output_bytes, kPayloadBytes);
   }
 
-  EXPECT_GT(byteRejections, 0U);
-  EXPECT_EQ(byteLimited.status().output_queue_rejections, byteRejections);
-  EXPECT_LE(byteLimited.status().pending_output_bytes, kPayloadBytes);
+  EXPECT_EQ(byteLimited.status().messages_written, kWrites);
+  EXPECT_GT(byteLimited.status().output_write_waits, 0U);
   byteLimited.shutdown();
 
   auto countConfig = byteConfig;
   countConfig.max_queued_messages = 1;
   countConfig.max_queued_bytes = 2 * kPayloadBytes;
   dmn::Dmn_DbusOutput countLimited{countConfig};
-  std::uint64_t countRejections{};
-  for (int index = 0; index < 200; ++index) {
-    try {
-      countLimited.write(std::string{"x"});
-    } catch (const std::system_error &error) {
-      ASSERT_EQ(error.code(), std::make_error_code(std::errc::no_buffer_space));
-      ++countRejections;
-    }
+  for (int index = 0; index < kWrites; ++index) {
+    ASSERT_NO_THROW(countLimited.write(payload));
+    EXPECT_LE(countLimited.status().pending_output_messages, 1U);
   }
 
-  EXPECT_GT(countRejections, 0U);
-  EXPECT_EQ(countLimited.status().output_queue_rejections, countRejections);
-  EXPECT_LE(countLimited.status().pending_output_messages, 1U);
+  EXPECT_EQ(countLimited.status().messages_written, kWrites);
+  EXPECT_GT(countLimited.status().output_write_waits, 0U);
   countLimited.shutdown();
 }
 

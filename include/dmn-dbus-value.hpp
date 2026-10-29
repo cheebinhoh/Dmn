@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-dbus-value.hpp
- * @brief Owned, type-preserving values for the optional D-Bus client.
+ * @brief Owned, type-preserving values for the D-Bus client.
  */
 
 #ifndef DMN_DBUS_VALUE_HPP_

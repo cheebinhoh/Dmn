@@ -21,8 +21,8 @@ are separate; the first implementation milestone is specified in
 and ANCS behavior is covered by
 [`ancs-bluez-client-spec.md`](ancs-bluez-client-spec.md).
 
-Option A consists of `include/dmn-dbus-config.hpp`,
-`include/dmn-dbus-io.hpp`, and `src/dmn-dbus-io.cpp`, built by the
+Option A consists of `include/dmn-dbus-config.hpp` (configuration),
+`include/dmn-dbus-io.hpp` (endpoints and `Dmn_DbusIoStatus`), and `src/dmn-dbus-io.cpp`, built by the
 optional `dmn-dbus` target. The checked-in `dmn-test-dbus-io` and
 `dmn-test-dbus-facade` executables are registered through the existing
 `ADD_TEST_EXECUTABLE(dmn ...)` mechanism. Each starts a private session daemon
@@ -194,8 +194,8 @@ policy correctness.
 Create a separate private connection and one output worker. `write()` applies
 the size limit and enqueues into a finite queue; the worker serializes one
 D-Bus signal per accepted write, preserving the exact byte range. Use
-`std::system_error` for synchronous queue-full, oversize, shutdown, and
-already-known failed-state errors. Worker-side errors update status and
+`std::system_error` for oversize, shutdown, and already-known failed-state
+errors; a full queue blocks `write()` until space frees. Worker-side errors update status and
 produce a rate-limited diagnostic using the existing `Dmn_DMesgNet`
 stderr-reporting convention. Do not silently discard accepted items.
 
@@ -204,10 +204,10 @@ stderr-reporting convention. Do not silently discard accepted items.
 - Every accepted write emits one exact signal payload; lvalue and rvalue
   overloads follow the documented ownership behavior.
 - Embedded NUL is preserved.
-- Oversize and full-queue writes throw; known failed/shutdown endpoints reject
-  writes.
-- Both the message-count and byte-count caps are tested; rejected writes do
-  not increase pending queue depth or bytes.
+- Oversize writes throw; a full-queue write blocks until space frees; known
+  failed/shutdown endpoints reject writes (also waking blocked writers).
+- The message-count and byte-count caps are tested; pending queue depth and
+  bytes never exceed them.
 - Worker-side connection/send failure marks the endpoint failed, increments
   status/error counts, reports a rate-limited diagnostic, and
   causes later writes to fail. No accepted queued item disappears silently.

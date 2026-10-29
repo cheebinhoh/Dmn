@@ -495,50 +495,33 @@ public:
 
   ~Impl() noexcept { shutdown(); }
 
-  void write(const std::string &payload) {
-    if (payload.size() > m_config.max_message_bytes) {
-      throw std::system_error(std::make_error_code(std::errc::message_size),
-                              "Dmn_DbusOutput: payload exceeds limit");
-    }
-
-    // This operation ends at bounded local queue admission. The worker owns
-    // all libdbus sends, so transport progress or peer receipt is not implied.
-    std::lock_guard lock{m_mutex};
-
-    if (m_status.terminal_error) {
-      throw std::system_error(m_status.terminal_error,
-                              "Dmn_DbusOutput: bus worker failed");
-    }
-
-    if (m_stopping) {
-      throw std::system_error(
-          std::make_error_code(std::errc::operation_canceled),
-          "Dmn_DbusOutput: output is shut down");
-    }
-
-    if (m_queue.size() >= m_config.max_queued_messages ||
-        payload.size() > m_config.max_queued_bytes - m_pending_bytes) {
-      ++m_status.output_queue_rejections;
-
-      throw std::system_error(std::make_error_code(std::errc::no_buffer_space),
-                              "Dmn_DbusOutput: output queue is full");
-    }
-
-    m_queue.push_back(payload);
-    m_pending_bytes += payload.size();
-    ++m_status.messages_written;
-    m_status.pending_output_messages = m_queue.size();
-    m_status.pending_output_bytes = m_pending_bytes;
-    m_ready.notify_one();
-  }
+  void write(const std::string &payload) { write(std::string{payload}); }
 
   void write(std::string &&payload) {
+    // Config validation guarantees max_queued_bytes >= max_message_bytes, so
+    // an accepted payload always fits an empty queue and cannot wait forever.
     if (payload.size() > m_config.max_message_bytes) {
       throw std::system_error(std::make_error_code(std::errc::message_size),
                               "Dmn_DbusOutput: payload exceeds limit");
     }
 
-    std::lock_guard lock{m_mutex};
+    // Blocks until the bounded local queue admits the payload, the endpoint
+    // shuts down, or the worker fails. The worker owns all libdbus sends, so
+    // transport progress or peer receipt is not implied.
+    std::unique_lock lock{m_mutex};
+
+    const auto hasSpace = [this, size = payload.size()] {
+      return m_queue.size() < m_config.max_queued_messages &&
+             size <= m_config.max_queued_bytes - m_pending_bytes;
+    };
+
+    if (!m_stopping && !m_status.terminal_error && !hasSpace()) {
+      ++m_status.output_write_waits;
+    }
+
+    m_space.wait(lock, [this, &hasSpace] {
+      return m_stopping || m_status.terminal_error || hasSpace();
+    });
 
     if (m_status.terminal_error) {
       throw std::system_error(m_status.terminal_error,
@@ -551,16 +534,8 @@ public:
           "Dmn_DbusOutput: output is shut down");
     }
 
-    if (m_queue.size() >= m_config.max_queued_messages ||
-        payload.size() > m_config.max_queued_bytes - m_pending_bytes) {
-      ++m_status.output_queue_rejections;
-
-      throw std::system_error(std::make_error_code(std::errc::no_buffer_space),
-                              "Dmn_DbusOutput: output queue is full");
-    }
-
+    m_pending_bytes += payload.size();
     m_queue.push_back(std::move(payload));
-    m_pending_bytes += m_queue.back().size();
     ++m_status.messages_written;
     m_status.pending_output_messages = m_queue.size();
     m_status.pending_output_bytes = m_pending_bytes;
@@ -581,6 +556,7 @@ public:
 
       m_worker_stop.store(true, std::memory_order_release);
       m_ready.notify_all();
+      m_space.notify_all();
       m_worker.wait();
 
       if (m_connection != nullptr) {
@@ -727,6 +703,8 @@ private:
             m_status.pending_output_messages = m_queue.size();
             m_status.pending_output_bytes = m_pending_bytes;
           }
+
+          m_space.notify_all();
         }
 
         // Pump both directions even if there was no payload to submit: this
@@ -762,6 +740,7 @@ private:
                       const std::string &message) noexcept {
     const auto pendingBytes{static_cast<std::size_t>(
         std::max(dbus_connection_get_outgoing_size(m_connection.get()), 0L))};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -774,6 +753,7 @@ private:
       m_status.libdbus_outgoing_bytes = pendingBytes;
     }
 
+    m_space.notify_all();
     reportDiagnostic(m_mutex, m_last_diagnostic, message);
   }
 
@@ -781,6 +761,7 @@ private:
   DbusConnectionPtr m_connection;
   mutable std::mutex m_mutex;
   std::condition_variable m_ready;
+  std::condition_variable m_space;
   std::deque<std::string> m_queue;
   std::size_t m_pending_bytes{};
   bool m_stopping{};
@@ -829,6 +810,7 @@ auto Dmn_DbusInput::status() const -> Dmn_DbusIoStatus {
 }
 
 Dmn_DbusOutput::Dmn_DbusOutput(const Dmn_DbusConfig &config) {
+  // Initialize libdbus threading before any other libdbus API is called.
   detail::initializeDbusRuntime();
   validateConfig(config);
 

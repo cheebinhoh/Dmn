@@ -16,13 +16,15 @@
  *
  * Data flow
  * ---------
- * Dmn_DbusOutput::write() admits a byte payload to a bounded local queue and
- * wakes its output worker. The worker encodes the payload as one D-Bus byte
- * array signal using the configured path/interface/member tuple. It submits
- * queued signals to libdbus only while the connection's outgoing queue is
- * below the configured byte threshold, then calls the read/write/dispatch API
- * to progress pending transport I/O and observe connection failure. Thus the
- * worker does more than dequeue and send: it also pumps and monitors the
+ * Dmn_DbusOutput::write() is a blocking call, like the other Dmn_Io writers:
+ * it admits a byte payload to a bounded local queue, waiting while the queue
+ * is full until the worker frees space, the endpoint shuts down, or it
+ * fails, and wakes its output worker. The worker encodes the payload as one
+ * D-Bus byte array signal using the configured path/interface/member tuple. It
+ * submits queued signals to libdbus only while the connection's outgoing queue
+ * is below the configured byte threshold, then calls the read/write/dispatch
+ * API to progress pending transport I/O and observe connection failure. Thus
+ * the worker does more than dequeue and send: it also pumps and monitors the
  * libdbus connection while idle. A successful write reports local queue
  * admission only; neither libdbus submission nor signal routing confirms
  * receipt by a subscriber.
@@ -41,11 +43,40 @@
 #include "dmn-dbus-config.hpp"
 #include "dmn-io.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <system_error>
 
 namespace dmn {
+
+/**
+ * @brief Thread-safe snapshot of endpoint counters and queue state.
+ *
+ * Counters describe local endpoint activity only; none indicate peer delivery.
+ */
+struct Dmn_DbusIoStatus {
+  std::uint64_t messages_received{};
+  std::uint64_t messages_written{};
+  std::uint64_t messages_queued_to_libdbus{};
+  std::uint64_t malformed_received{};
+  std::uint64_t oversized_received{};
+  std::uint64_t input_allocation_errors{};
+  std::uint64_t input_queue_drops{};
+  std::size_t pending_input_messages{};
+  std::size_t pending_input_bytes{};
+  std::uint64_t output_write_waits{};
+  std::uint64_t output_worker_errors{};
+  std::size_t pending_output_messages{};
+  std::size_t pending_output_bytes{};
+  std::size_t libdbus_outgoing_bytes{};
+  std::uint64_t shutdown_unsent_messages{};
+  std::size_t shutdown_unsent_bytes{};
+  std::size_t libdbus_bytes_discarded_on_shutdown{};
+  std::error_code terminal_error{};
+};
 
 /**
  * @brief Blocking input endpoint for the configured D-Bus byte signal.
@@ -116,7 +147,9 @@ private:
  *
  * The endpoint emits broadcast signals on its configured bus daemon. The bus
  * routes each signal to connections whose installed matches accept it.
- * write() validates and admits the payload to a bounded local FIFO; its worker
+ * write() validates the payload and admits it to a bounded local FIFO,
+ * blocking while the FIFO is full until the worker drains space (or the
+ * endpoint shuts down or fails); its worker
  * turns each dequeued payload into an `ay` signal and submits it to libdbus.
  * The worker also pumps connection I/O and monitors disconnects, and it
  * applies backpressure based on libdbus's pending outgoing bytes. Successful
@@ -146,7 +179,10 @@ public:
   auto read() -> std::optional<std::string> override;
 
   /**
-   * @brief Enqueue a payload, or throw if invalid, full, shut down, or failed.
+   * @brief Enqueue a payload, blocking while the queue is full.
+   *
+   * Throws std::system_error if the payload exceeds the message byte limit, or
+   * the endpoint is shut down (including while waiting) or failed.
    *
    * @param item Serialized payload copied into the application queue.
    */

@@ -49,9 +49,10 @@ daemon-owned node serving many local applications is required.
 
 The public header is `include/dmn-dmesgnet-dbus.hpp`, in namespace `dmn`. It
 includes `dmn-dmesg.hpp` for the DMesg message and handler types and
-`dmn-dbus-config.hpp` for the shared configuration/status types. It does not
-include or expose `Dmn_DbusInput`, `Dmn_DbusOutput`, `Dmn_DMesgNet`, or any
-libdbus type.
+`dmn-dbus-config.hpp` for the shared configuration types and `dmn-dbus-io.hpp`
+for `Dmn_DbusIoStatus`. Its API does not expose `Dmn_DbusInput`,
+`Dmn_DbusOutput`, `Dmn_DMesgNet`, or any libdbus type, although the status
+include makes the endpoint class declarations visible transitively.
 
 ```cpp
 struct Dmn_DMesgDbusStatus {
