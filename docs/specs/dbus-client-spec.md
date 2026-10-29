@@ -82,10 +82,12 @@ The public header dependencies are:
 dmn-dbus-client.hpp ───────> dmn-dbus-value.hpp
 dmn-dbus-io.hpp ───────────> dmn-dbus-config.hpp
                          └─> dmn-io.hpp
+                         (also defines Dmn_DbusIoStatus)
 dmn-dmesgnet-dbus.hpp ─────> dmn-dbus-config.hpp
+                         └─> dmn-dbus-io.hpp (for Dmn_DbusIoStatus)
                          └─> dmn-dmesg.hpp
 
-dmn-dbus-config.hpp          (standalone configuration/status types)
+dmn-dbus-config.hpp          (standalone configuration types)
 dmn-dbus-value.hpp           (standalone value model)
 dmn-dbus-runtime.hpp         (internal initialization declaration)
 ```

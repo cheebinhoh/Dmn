@@ -264,8 +264,14 @@ for local bus policy/diagnostics.
   `ay` bytes;
   embedded NUL bytes are valid and must not be treated as a C-string
   terminator.
-- Enforce `max_message_bytes` before queue admission. Queue-full, shutdown,
-  and already-known terminal worker failures throw `std::system_error`;
+- Enforce `max_message_bytes` before queue admission. `write()` waits only
+  when the output queue is full (or earlier writers are already blocked); with
+  space available it admits the payload immediately and tickets are irrelevant.
+  A writer that must wait takes a ticket and is admitted strictly in ticket
+  (arrival) order once space frees, so a later payload never overtakes an
+  earlier blocked one. Shutdown and terminal worker failures wake every blocked
+  writer regardless of ticket and make it throw `std::system_error` (including
+  while waiting);
   oversized writes throw `std::system_error` with
   `std::errc::message_size`. Do not silently fragment.
 - A successful write means only that the local endpoint queue accepted the
@@ -331,7 +337,7 @@ snapshot with these proposed fields:
 | `input_queue_drops`                   | Valid matching signals dropped because the input queue was full.                                        |
 | `pending_input_messages`              | Items currently waiting in the bounded input queue.                                                     |
 | `pending_input_bytes`                 | Payload bytes currently waiting in the bounded input queue.                                             |
-| `output_queue_rejections`             | Writes rejected because the output queue's message-count or byte cap was full.                          |
+| `output_write_waits`                  | Writes that had to block (and take a ticket) because the output queue's message-count or byte cap was full or earlier writers were already blocked. |
 | `output_worker_errors`                | Worker-level libdbus/send/disconnect failures; not a count of messages lost inside libdbus.             |
 | `pending_output_messages`             | Items waiting in the adapter's bounded output queue, excluding libdbus's internal queue.                |
 | `pending_output_bytes`                | Payload bytes waiting in the adapter's bounded output queue.                                            |
@@ -396,7 +402,7 @@ V1 endpoint defaults are:
 | Payload                | 1 MiB                                                      | Reject before send/copy; configured values must also fit the libdbus `int` array-length API. |
 | Input queue            | 1,024 messages or 16 MiB, whichever is reached first       | Drop newest on full; increment counter and rate-limit diagnostics.                           |
 | D-Bus connection count | 2 per Dmn_DMesgNet instance                                | Separate input and output lifetimes.                                                         |
-| Output queue           | 1,024 messages or 16 MiB, whichever is reached first       | Reject new writes synchronously on full; no silent loss.                                     |
+| Output queue           | 1,024 messages or 16 MiB, whichever is reached first       | Block `write()` while full until space frees; no silent loss.                                   |
 | libdbus outgoing queue | 16 MiB plus at most one maximum-size message               | Stop submitting while the outgoing byte cap is reached.                                      |
 | Worker I/O wait        | At most 50 ms per loop iteration (proposed internal bound) | Let shutdown/disconnect state be observed promptly; do not expose as config in v1.           |
 | Shutdown drain         | 1 second                                                   | Stop submitting at deadline and report unsent queue count/bytes and pending libdbus bytes.   |

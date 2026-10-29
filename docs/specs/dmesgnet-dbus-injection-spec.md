@@ -112,8 +112,9 @@ the output connection prematurely.
   must increment an observable error counter and produce a rate-limited
   diagnostic using the existing stderr-reporting convention; it cannot
   retroactively throw from `write()`.
-  Queue-full and already-known-failed states must throw synchronously from
-  `write()`.
+  `write()` waits only when the queue is full; blocked writers are admitted in
+  ticket (arrival) order as space frees. Already-known-failed and shut-down
+  states (including during a wait) throw from `write()` and wake all waiters.
 - The current Dmn `Dmn_Io` API does not provide generic asynchronous error
   reporting or metrics. Therefore the public Option A endpoint types expose a
   thread-safe, read-only `Dmn_DbusIoStatus` snapshot and use the existing
@@ -164,8 +165,8 @@ types in the optional D-Bus public headers. Do not expose `DBusConnection *`,
 libdbus message objects, or callback/filter registration that can bypass the
 configured byte-signal contract.
 
-The shared config/status types are in `include/dmn-dbus-config.hpp`; endpoint
-classes are in `include/dmn-dbus-io.hpp`:
+The shared configuration type is in `include/dmn-dbus-config.hpp`; the endpoint
+classes and `Dmn_DbusIoStatus` are in `include/dmn-dbus-io.hpp`:
 
 ```cpp
 struct Dmn_DbusConfig {

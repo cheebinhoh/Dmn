@@ -9,6 +9,7 @@
 #define DMN_DMESGNET_DBUS_HPP_
 
 #include "dmn-dbus-config.hpp"
+#include "dmn-dbus-io.hpp"
 #include "dmn-dmesg.hpp"
 
 #include <memory>
