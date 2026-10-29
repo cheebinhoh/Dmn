@@ -180,23 +180,60 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
                  const CodecLimits &limits, std::size_t depth,
                  std::size_t &count);
 
+// libdbus keeps a container's buffers until it is closed or abandoned, so any
+// exception between open and close must abandon it or the memory leaks.
+class ContainerGuard {
+public:
+  ContainerGuard(DBusMessageIter &parent, int type, const char *signature,
+                 const char *failure)
+      : m_parent(parent) {
+    if (!dbus_message_iter_open_container(&m_parent, type, signature,
+                                          &m_child)) {
+      throw std::runtime_error(failure);
+    }
+
+    m_open = true;
+  }
+
+  ContainerGuard(const ContainerGuard &) = delete;
+  auto operator=(const ContainerGuard &) -> ContainerGuard & = delete;
+  ContainerGuard(ContainerGuard &&) = delete;
+  auto operator=(ContainerGuard &&) -> ContainerGuard & = delete;
+
+  ~ContainerGuard() {
+    if (m_open) {
+      dbus_message_iter_abandon_container(&m_parent, &m_child);
+    }
+  }
+
+  auto iter() -> DBusMessageIter & { return m_child; }
+
+  void close(const char *failure) {
+    m_open = false;
+
+    if (!dbus_message_iter_close_container(&m_parent, &m_child)) {
+      throw std::runtime_error(failure);
+    }
+  }
+
+private:
+  DBusMessageIter &m_parent;
+  DBusMessageIter m_child{};
+  bool m_open{false};
+};
+
 void encodeContainer(DBusMessageIter &parent, int type, const char *signature,
                      const std::vector<Dmn_DbusValue> &values,
                      const CodecLimits &limits, std::size_t depth,
                      std::size_t &count) {
-  DBusMessageIter child;
-
-  if (!dbus_message_iter_open_container(&parent, type, signature, &child)) {
-    throw std::runtime_error("unable to open D-Bus container");
-  }
+  ContainerGuard container{parent, type, signature,
+                           "unable to open D-Bus container"};
 
   for (const auto &value : values) {
-    encodeValue(child, value, limits, depth + 1, count);
+    encodeValue(container.iter(), value, limits, depth + 1, count);
   }
 
-  if (!dbus_message_iter_close_container(&parent, &child)) {
-    throw std::runtime_error("unable to close D-Bus container");
-  }
+  container.close("unable to close D-Bus container");
 }
 
 template <typename T>
@@ -281,24 +318,19 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       throw std::length_error("D-Bus byte array exceeds configured limit");
     }
 
-    DBusMessageIter array;
-    if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-                                          DBUS_TYPE_BYTE_AS_STRING, &array)) {
-      throw std::runtime_error("unable to encode D-Bus byte array");
-    }
+    ContainerGuard array{iter, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE_AS_STRING,
+                         "unable to encode D-Bus byte array"};
 
     if (!bytes.empty()) {
       const auto *data = bytes.data();
       const int length = static_cast<int>(bytes.size());
-      if (!dbus_message_iter_append_fixed_array(&array, DBUS_TYPE_BYTE, &data,
-                                                length)) {
+      if (!dbus_message_iter_append_fixed_array(&array.iter(), DBUS_TYPE_BYTE,
+                                                &data, length)) {
         throw std::runtime_error("unable to encode D-Bus byte array");
       }
     }
 
-    if (!dbus_message_iter_close_container(&iter, &array)) {
-      throw std::runtime_error("unable to encode D-Bus byte array");
-    }
+    array.close("unable to encode D-Bus byte array");
   } else if (signature.front() == 'a' && signature.size() > 2 &&
              signature[1] == '{') {
     const auto &dictionary = value.asDictionary();
@@ -311,14 +343,10 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       throw std::invalid_argument("invalid D-Bus dictionary signature");
     }
 
-    DBusMessageIter array;
     const auto entrySignature =
         "{" + dictionary.key_signature + dictionary.value_signature + "}";
-
-    if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-                                          entrySignature.c_str(), &array)) {
-      throw std::runtime_error("unable to encode D-Bus dictionary");
-    }
+    ContainerGuard array{iter, DBUS_TYPE_ARRAY, entrySignature.c_str(),
+                         "unable to encode D-Bus dictionary"};
 
     for (const auto &[key, item] : dictionary.entries) {
       if (key.signature() != dictionary.key_signature ||
@@ -326,24 +354,15 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
         throw std::invalid_argument("D-Bus dictionary entry type mismatch");
       }
 
-      DBusMessageIter entry;
+      ContainerGuard entry{array.iter(), DBUS_TYPE_DICT_ENTRY, nullptr,
+                           "unable to encode D-Bus dictionary entry"};
 
-      if (!dbus_message_iter_open_container(&array, DBUS_TYPE_DICT_ENTRY,
-                                            nullptr, &entry)) {
-        throw std::runtime_error("unable to encode D-Bus dictionary entry");
-      }
-
-      encodeValue(entry, key, limits, depth + 1, count);
-      encodeValue(entry, item, limits, depth + 1, count);
-
-      if (!dbus_message_iter_close_container(&array, &entry)) {
-        throw std::runtime_error("unable to close D-Bus dictionary entry");
-      }
+      encodeValue(entry.iter(), key, limits, depth + 1, count);
+      encodeValue(entry.iter(), item, limits, depth + 1, count);
+      entry.close("unable to close D-Bus dictionary entry");
     }
 
-    if (!dbus_message_iter_close_container(&iter, &array)) {
-      throw std::runtime_error("unable to close D-Bus dictionary");
-    }
+    array.close("unable to close D-Bus dictionary");
   } else if (signature.front() == 'a') {
     const auto &arrayValue = value.asArray();
 
@@ -361,20 +380,14 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
                     arrayValue.values, limits, depth, count);
   } else if (signature.front() == '(') {
     const auto &fields = value.asStruct().fields;
-    DBusMessageIter structure;
-
-    if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, nullptr,
-                                          &structure)) {
-      throw std::runtime_error("unable to encode D-Bus struct");
-    }
+    ContainerGuard structure{iter, DBUS_TYPE_STRUCT, nullptr,
+                             "unable to encode D-Bus struct"};
 
     for (const auto &field : fields) {
-      encodeValue(structure, field, limits, depth + 1, count);
+      encodeValue(structure.iter(), field, limits, depth + 1, count);
     }
 
-    if (!dbus_message_iter_close_container(&iter, &structure)) {
-      throw std::runtime_error("unable to close D-Bus struct");
-    }
+    structure.close("unable to close D-Bus struct");
   } else if (signature == "v") {
     const auto &inner = value.asVariant();
 
@@ -382,19 +395,12 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       throw std::invalid_argument("invalid D-Bus variant value");
     }
 
-    DBusMessageIter variant;
     const auto contained = inner.signature();
+    ContainerGuard variant{iter, DBUS_TYPE_VARIANT, contained.c_str(),
+                           "unable to encode D-Bus variant"};
 
-    if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
-                                          contained.c_str(), &variant)) {
-      throw std::runtime_error("unable to encode D-Bus variant");
-    }
-
-    encodeValue(variant, inner, limits, depth + 1, count);
-
-    if (!dbus_message_iter_close_container(&iter, &variant)) {
-      throw std::runtime_error("unable to close D-Bus variant");
-    }
+    encodeValue(variant.iter(), inner, limits, depth + 1, count);
+    variant.close("unable to close D-Bus variant");
   } else {
     throw std::invalid_argument("unsupported D-Bus value signature");
   }

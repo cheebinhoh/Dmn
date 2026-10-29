@@ -14,6 +14,14 @@
  * connection. These endpoints neither create a bus daemon nor export or call
  * a Dmn D-Bus service.
  *
+ * Direction
+ * ---------
+ * Both classes derive from Dmn_Io<std::string> but are unidirectional:
+ * Dmn_DbusInput supports only read() and Dmn_DbusOutput only write(). The
+ * unsupported method of each is private, so calling it on the concrete type
+ * fails to compile; if reached through a Dmn_Io<std::string> reference it
+ * still throws std::system_error with std::errc::operation_not_supported.
+ *
  * Data flow
  * ---------
  * Dmn_DbusOutput::write() is a blocking call, like the other Dmn_Io writers:
@@ -22,15 +30,14 @@
  * already blocked); with space available it returns at once. A blocked writer
  * takes a ticket and is admitted in ticket (arrival) order as the worker frees
  * space, while shutdown or failure wakes every blocked writer. The worker
- * encodes the payload as one
- * D-Bus byte array signal using the configured path/interface/member tuple. It
- * submits queued signals to libdbus only while the connection's outgoing queue
- * is below the configured byte threshold, then calls the read/write/dispatch
- * API to progress pending transport I/O and observe connection failure. Thus
- * the worker does more than dequeue and send: it also pumps and monitors the
- * libdbus connection while idle. A successful write reports local queue
- * admission only; neither libdbus submission nor signal routing confirms
- * receipt by a subscriber.
+ * encodes the payload as one D-Bus byte array signal using the configured
+ * path/interface/member tuple. It submits queued signals to libdbus only while
+ * the connection's outgoing queue is below the configured byte threshold, then
+ * calls the read/write/dispatch API to progress pending transport I/O and
+ * observe connection failure. Thus the worker does more than dequeue and send:
+ * it also pumps and monitors the libdbus connection while idle. A successful
+ * write reports local queue admission only; neither libdbus submission nor
+ * signal routing confirms receipt by a subscriber.
  *
  * Dmn_DbusInput's worker dispatches its connection and receives signals through
  * an installed daemon-side match. The input filter accepts only the configured
@@ -93,6 +100,9 @@ struct Dmn_DbusIoStatus {
  * for reads; after they are consumed, read() throws operation_canceled. This
  * class is thread-safe; concurrent destruction with active method calls is
  * not supported.
+ *
+ * Input-only: write() is private and throws operation_not_supported when
+ * reached through the Dmn_Io<std::string> interface.
  */
 class Dmn_DbusInput final : public Dmn_Io<std::string> {
 public:
@@ -117,6 +127,20 @@ public:
   auto read() -> std::optional<std::string> override;
 
   /**
+   * @brief Stop dispatch and wake readers; safe to call repeatedly.
+   */
+  void shutdown() noexcept override;
+
+  /**
+   * @brief Return a thread-safe snapshot of input counters and state.
+   */
+  [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
+
+private:
+  // Unsupported direction: private so concrete-typed callers fail to
+  // compile; calls through Dmn_Io<std::string> still throw
+  // std::errc::operation_not_supported.
+  /**
    * @brief Reject writes because this endpoint is input-only.
    *
    * @param item Unused input value.
@@ -130,17 +154,6 @@ public:
    */
   void write(std::string &&item) override;
 
-  /**
-   * @brief Stop dispatch and wake readers; safe to call repeatedly.
-   */
-  void shutdown() noexcept override;
-
-  /**
-   * @brief Return a thread-safe snapshot of input counters and state.
-   */
-  [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
-
-private:
   class Impl;
   std::unique_ptr<Impl> m_impl;
 };
@@ -158,6 +171,9 @@ private:
  * applies backpressure based on libdbus's pending outgoing bytes. Successful
  * writes mean local queue admission only; they do not acknowledge libdbus
  * submission, daemon routing, or subscriber receipt.
+ *
+ * Output-only: read() is private and throws operation_not_supported when
+ * reached through the Dmn_Io<std::string> interface.
  */
 class Dmn_DbusOutput final : public Dmn_Io<std::string> {
 public:
@@ -173,13 +189,6 @@ public:
   auto operator=(const Dmn_DbusOutput &) -> Dmn_DbusOutput & = delete;
   Dmn_DbusOutput(Dmn_DbusOutput &&) = delete;
   auto operator=(Dmn_DbusOutput &&) -> Dmn_DbusOutput & = delete;
-
-  /**
-   * @brief Reject reads because this endpoint is output-only.
-   *
-   * @return No value; this method always throws operation_not_supported.
-   */
-  auto read() -> std::optional<std::string> override;
 
   /**
    * @brief Enqueue a payload, blocking only while the queue is full.
@@ -224,6 +233,16 @@ public:
   [[nodiscard]] auto status() const -> Dmn_DbusIoStatus;
 
 private:
+  // Unsupported direction: private so concrete-typed callers fail to
+  // compile; calls through Dmn_Io<std::string> still throw
+  // std::errc::operation_not_supported.
+  /**
+   * @brief Reject reads because this endpoint is output-only.
+   *
+   * @return No value; this method always throws operation_not_supported.
+   */
+  auto read() -> std::optional<std::string> override;
+
   class Impl;
   std::unique_ptr<Impl> m_impl;
 };

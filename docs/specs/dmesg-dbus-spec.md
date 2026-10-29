@@ -229,6 +229,10 @@ for local bus policy/diagnostics.
 
 ### 4.2 Input endpoint contract
 
+- `Dmn_DbusInput` is input-only: its `write()` overloads are private, so
+  concrete-typed calls fail to compile; through `Dmn_Io<std::string>` they
+  throw `std::errc::operation_not_supported`. Symmetrically, `Dmn_DbusOutput`
+  keeps `read()` private with the same fallback behavior.
 - `read()` blocks until a matching signal payload has been queued, shutdown
   has been requested, or a terminal I/O error occurs. It returns an engaged
   string, including for a valid zero-length payload (which `Dmn_DMesgNet` will
