@@ -1,8 +1,5 @@
 var NAVTREEINDEX4 =
 {
-"structdmn_1_1Dmn__GattEvent.html":[2,0,0,53],
-"structdmn_1_1Dmn__GattEvent.html#a28d23a2c6c02e14fa2f59c65f31a872a":[2,0,0,53,2],
-"structdmn_1_1Dmn__GattEvent.html#a357a6faa5219d95221da1c24815cd7cb":[2,0,0,53,3],
 "structdmn_1_1Dmn__GattEvent.html#a7cf4e6e86ef508381feb2fe585f92baa":[2,0,0,53,1],
 "structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68db":[2,0,0,53,0],
 "structdmn_1_1Dmn__GattEvent.html#ae36149c938f4191ee09276e211ec68dba29a29047cd211a4eb34dd1129b3db135":[2,0,0,53,0,1],

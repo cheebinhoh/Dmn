@@ -4,7 +4,7 @@ var searchData=
   ['unicodecasefoldnfd_1',['unicodeCaseFoldNfd',['../dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b',1,'dmn::detail']]],
   ['unregisterstatecallback_2',['unregisterStateCallback',['../classdmn_1_1Dmn__IntervalBTree.html#ad4c20d5abf1a6db8abe7561e942a8699',1,'dmn::Dmn_IntervalBTree']]],
   ['unregistersubscriber_3',['unregisterSubscriber',['../classdmn_1_1Dmn__Pub.html#a9bbf3609dbd2726eccee295b5b6604da',1,'dmn::Dmn_Pub']]],
-  ['usage_20guidelines_4',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md31',1,'']]],
-  ['usage_20summary_5',['usage summary',['../dmn-async_8hpp.html#autotoc_md5',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md53',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md61',1,'Usage Summary']]],
+  ['usage_20guidelines_4',['Usage guidelines',['../dmn-inflight-guard_8hpp.html#autotoc_md32',1,'']]],
+  ['usage_20summary_5',['usage summary',['../dmn-async_8hpp.html#autotoc_md5',1,'Usage summary'],['../dmn-pub-sub_8hpp.html#autotoc_md54',1,'Usage summary'],['../dmn-runtime_8hpp.html#autotoc_md62',1,'Usage Summary']]],
   ['uuid_6',['uuid',['../structdmn_1_1Dmn__GattCharacteristic.html#a31d62b4cac542401708c168fa0fcee6b',1,'dmn::Dmn_GattCharacteristic::uuid'],['../structdmn_1_1Dmn__GattService.html#aafed2e6e09f2e5b2d3a61123bd365f97',1,'dmn::Dmn_GattService::uuid']]]
 ];

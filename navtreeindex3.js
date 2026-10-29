@@ -1,8 +1,5 @@
 var NAVTREEINDEX3 =
 {
-"dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b":[3,0,0,35,1],
-"dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e":[3,0,0,35,4],
-"dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7":[3,0,0,35,3],
 "dmn-util_8hpp.html#ae20c00ac25ccc7527fb0dd05a7defb4f":[3,0,0,35,5],
 "dmn-util_8hpp_source.html":[3,0,0,35],
 "dmn_8hpp.html":[3,0,0,36],
@@ -249,5 +246,8 @@ var NAVTREEINDEX3 =
 "structdmn_1_1Dmn__GattError.html":[2,0,0,52],
 "structdmn_1_1Dmn__GattError.html#a8b95181f3640d5b37190b4001aad50b8":[2,0,0,52,1],
 "structdmn_1_1Dmn__GattError.html#abd54ac0fb97c7c874037a3e46c2b6d01":[2,0,0,52,0],
-"structdmn_1_1Dmn__GattError.html#ad71c2af5ac85754efdd4c7321dd5c85f":[2,0,0,52,2]
+"structdmn_1_1Dmn__GattError.html#ad71c2af5ac85754efdd4c7321dd5c85f":[2,0,0,52,2],
+"structdmn_1_1Dmn__GattEvent.html":[2,0,0,53],
+"structdmn_1_1Dmn__GattEvent.html#a28d23a2c6c02e14fa2f59c65f31a872a":[2,0,0,53,2],
+"structdmn_1_1Dmn__GattEvent.html#a357a6faa5219d95221da1c24815cd7cb":[2,0,0,53,3]
 };

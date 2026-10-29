@@ -137,12 +137,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5db765f315562948add8b1ce883ad57d" id="r_a5db765f315562948add8b1ce883ad57d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d">read</a> () -&gt; std::optional&lt; std::string &gt; <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
 <tr class="memdesc:a5db765f315562948add8b1ce883ad57d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the next queued payload, blocking until data or termination.  <br /></td></tr>
 <tr class="separator:a5db765f315562948add8b1ce883ad57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a69ceaa4d56390887c70eb784c04a1cee" id="r_a69ceaa4d56390887c70eb784c04a1cee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusInput.html#a69ceaa4d56390887c70eb784c04a1cee">write</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">item</a>) <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
-<tr class="memdesc:a69ceaa4d56390887c70eb784c04a1cee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reject writes because this endpoint is input-only.  <br /></td></tr>
-<tr class="separator:a69ceaa4d56390887c70eb784c04a1cee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a226c2ac8b359d950604fc467331d1c07" id="r_a226c2ac8b359d950604fc467331d1c07"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusInput.html#a226c2ac8b359d950604fc467331d1c07">write</a> (std::string &amp;&amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">item</a>) <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
-<tr class="memdesc:a226c2ac8b359d950604fc467331d1c07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reject writes because this endpoint is input-only.  <br /></td></tr>
-<tr class="separator:a226c2ac8b359d950604fc467331d1c07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c3998a5770ad9c3c53b080ff1468795" id="r_a7c3998a5770ad9c3c53b080ff1468795"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__DbusInput.html#a7c3998a5770ad9c3c53b080ff1468795">shutdown</a> () <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">noexcept</a> <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
 <tr class="memdesc:a7c3998a5770ad9c3c53b080ff1468795"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop dispatch and wake readers; safe to call repeatedly.  <br /></td></tr>
 <tr class="separator:a7c3998a5770ad9c3c53b080ff1468795"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,7 +151,8 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Blocking input endpoint for the configured D-Bus byte signal. </p>
-<p>The endpoint installs a signal match on its configured bus daemon; its dispatch worker filters incoming messages for the configured signal tuple. Valid <code>ay</code> payloads within size and queue limits are copied to a bounded local FIFO and wake blocked readers; <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> returns from that FIFO, not directly from libdbus. It does not subscribe to a direct connection with a sender process. Explicit shutdown preserves already queued payloads for reads; after they are consumed, <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> throws operation_canceled. This class is thread-safe; concurrent destruction with active method calls is not supported. </p>
+<p>The endpoint installs a signal match on its configured bus daemon; its dispatch worker filters incoming messages for the configured signal tuple. Valid <code>ay</code> payloads within size and queue limits are copied to a bounded local FIFO and wake blocked readers; <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> returns from that FIFO, not directly from libdbus. It does not subscribe to a direct connection with a sender process. Explicit shutdown preserves already queued payloads for reads; after they are consumed, <a class="el" href="classdmn_1_1Dmn__DbusInput.html#a5db765f315562948add8b1ce883ad57d" title="Read the next queued payload, blocking until data or termination.">read()</a> throws operation_canceled. This class is thread-safe; concurrent destruction with active method calls is not supported.</p>
+<p>Input-only: write() is private and throws operation_not_supported when reached through the <a class="el" href="classdmn_1_1Dmn__Io.html">Dmn_Io&lt;std::string&gt;</a> interface. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a658a9458454865b61044ac21f6fbb117" name="a658a9458454865b61044ac21f6fbb117"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a658a9458454865b61044ac21f6fbb117">&#9670;&#160;</a></span>Dmn_DbusInput()</h2>
@@ -255,78 +250,6 @@ Public Member Functions</h2></td></tr>
 <p>Stop dispatch and wake readers; safe to call repeatedly. </p>
 
 <p>Reimplemented from <a class="el" href="classdmn_1_1Dmn__Io.html#a896ac8daec7de1fce18a6ea889dde079">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a69ceaa4d56390887c70eb784c04a1cee" name="a69ceaa4d56390887c70eb784c04a1cee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69ceaa4d56390887c70eb784c04a1cee">&#9670;&#160;</a></span>write() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a> dmn::Dmn_DbusInput::write </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> std::string &amp;&#160;</td>
-          <td class="paramname"><em>item</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reject writes because this endpoint is input-only. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">item</td><td>Unused input value. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a1c8cb56964ecbbd7c4cb4cb88098aa5e">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a226c2ac8b359d950604fc467331d1c07" name="a226c2ac8b359d950604fc467331d1c07"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a226c2ac8b359d950604fc467331d1c07">&#9670;&#160;</a></span>write() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">void</a> dmn::Dmn_DbusInput::write </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&amp;&#160;</td>
-          <td class="paramname"><em>item</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reject writes because this endpoint is input-only. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">item</td><td>Unused input value. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Implements <a class="el" href="classdmn_1_1Dmn__Io.html#a0439d9ebdf6bbbec7df53503a2fdb9bb">dmn::Dmn_Io&lt; std::string &gt;</a>.</p>
 
 </div>
 </div>

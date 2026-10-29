@@ -110,7 +110,7 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Internal process-wide libdbus initialization. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 Architecture: two independent D-Bus stacks on one runtime</h2>
 <p>Every libdbus user in Dmn calls initializeDbusRuntime() first. Above this shared layer sit two stacks that do not depend on each other:</p>
 <p>Dmn_DMesgNet (<a class="el" href="dmn-dmesgnet-dbus_8cpp.html" title="Composition facade joining DMesgNet to D-Bus byte-signal endpoints.">dmn-dmesgnet-dbus.cpp</a>) Dmn_BluezClient, GATT client, | ANCS monitor Dmn_DbusInput / Dmn_DbusOutput | (<a class="el" href="dmn-dbus-io_8hpp.html" title="Byte-oriented D-Bus signal input and output adapters.">dmn-dbus-io.hpp</a>, <a class="el" href="dmn-dbus-config_8hpp.html" title="Shared configuration for optional D-Bus signal I/O.">dmn-dbus-config.hpp</a>) Dmn_DbusClient | (<a class="el" href="dmn-dbus-client_8hpp.html" title="Optional generic D-Bus client API.">dmn-dbus-client.hpp</a>) +------------&mdash;+------------&mdash;+ <a class="el" href="dmn-dbus-runtime_8hpp.html" title="Internal process-wide libdbus initialization.">dmn-dbus-runtime.hpp</a> | libdbus</p>

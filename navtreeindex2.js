@@ -1,8 +1,5 @@
 var NAVTREEINDEX2 =
 {
-"concepts.html":[1],
-"dir_4686ca24dd046c131774f5a6c51fabc1.html":[3,0,0,0],
-"dir_68267d1309a1af8e8297ef4c3efbcdba.html":[3,0,1],
 "dir_b1f85b4500d4f866a4815ca77f1375fe.html":[3,0,1,0],
 "dir_d44c64559bbebec7f509842c48db8b23.html":[3,0,0],
 "dmn-ancs-bluez-monitor_8cpp.html":[3,0,1,1],
@@ -249,5 +246,8 @@ var NAVTREEINDEX2 =
 "dmn-util_8hpp.html":[3,0,0,35],
 "dmn-util_8hpp.html#a1b5c2260f4d5ffd67429f76df004b17b":[3,0,0,35,7],
 "dmn-util_8hpp.html#a2995881e7aa91bf1992c9f8150315d01":[3,0,0,35,2],
-"dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64":[3,0,0,35,6]
+"dmn-util_8hpp.html#a3e60e630f1b9041ed0509ffec151bd64":[3,0,0,35,6],
+"dmn-util_8hpp.html#a472f895482fc372c40498d10c27b4c0b":[3,0,0,35,1],
+"dmn-util_8hpp.html#a625b2c555a99e3ef0e29355c32f41d6e":[3,0,0,35,4],
+"dmn-util_8hpp.html#a9124a03c850ad2c0d69af8a43e7101c7":[3,0,0,35,3]
 };

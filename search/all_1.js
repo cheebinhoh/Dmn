@@ -9,11 +9,11 @@ var searchData=
   ['blocking_20and_20timeout_20semantics_6',['Blocking and timeout semantics',['../dmn-blockingqueue-mt_8hpp.html#autotoc_md10',1,'']]],
   ['blocking_20model_7',['Blocking model',['../dmn-blockingqueue-lf_8hpp.html#autotoc_md6',1,'']]],
   ['body_20setters_8',['DMesgPb message body setters',['../group__dmesg__pb__body.html',1,'']]],
-  ['boundary_9',['Phase boundary',['../dmn-dlock_8hpp.html#autotoc_md22',1,'']]],
-  ['buffering_20and_20replay_10',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md49',1,'']]],
+  ['boundary_9',['Phase boundary',['../dmn-dlock_8hpp.html#autotoc_md23',1,'']]],
+  ['buffering_20and_20replay_10',['Buffering and replay',['../dmn-pub-sub_8hpp.html#autotoc_md50',1,'']]],
   ['bus_20selection_20and_20security_11',['Bus selection and security',['../classdmn_1_1Dmn__DbusClient.html#autotoc_md18',1,'']]],
-  ['bus_20stacks_20on_20one_20runtime_12',['Architecture: two independent D-Bus stacks on one runtime',['../dmn-dbus-runtime_8hpp.html#autotoc_md20',1,'']]],
+  ['bus_20stacks_20on_20one_20runtime_12',['Architecture: two independent D-Bus stacks on one runtime',['../dmn-dbus-runtime_8hpp.html#autotoc_md21',1,'']]],
   ['bus_5faddress_13',['bus_address',['../structdmn_1_1Dmn__DbusClientConfig.html#a5babaeae7823ca03a6a1f0978ceb3904',1,'dmn::Dmn_DbusClientConfig::bus_address'],['../structdmn_1_1Dmn__DbusConfig.html#aca6e334e44e6d7605df65dd5d817a96a',1,'dmn::Dmn_DbusConfig::bus_address']]],
   ['bus_5fkind_14',['bus_kind',['../structdmn_1_1Dmn__DbusClientConfig.html#a063dbf0092f186ce7550ee912d1ec8ad',1,'dmn::Dmn_DbusClientConfig']]],
-  ['bytearray_15',['bytearray',['../classdmn_1_1Dmn__DbusValue.html#a627532e32fd35b1b19e87c3b8b5829a0',1,'dmn::Dmn_DbusValue::byteArray(ByteArray value) -&gt; Dmn_DbusValue'],['../classdmn_1_1Dmn__DbusValue.html#aae071b3ceea9f2faca745ada5553f645',1,'dmn::Dmn_DbusValue::ByteArray']]]
+  ['bytearray_15',['bytearray',['../classdmn_1_1Dmn__DbusValue.html#aae071b3ceea9f2faca745ada5553f645',1,'dmn::Dmn_DbusValue::ByteArray'],['../classdmn_1_1Dmn__DbusValue.html#a627532e32fd35b1b19e87c3b8b5829a0',1,'dmn::Dmn_DbusValue::byteArray(ByteArray value) -&gt; Dmn_DbusValue']]]
 ];
