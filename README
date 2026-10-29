@@ -148,7 +148,10 @@ ctest --test-dir build-valgrind -L 'dmn|valgrind' --output-on-failure
 ```
 
 This runs regular tests plus their Valgrind variants. The `valgrind` variants
-are registered only when `ENABLE_VALGRIND=ON`.
+are registered only when `ENABLE_VALGRIND=ON`. They cover the library tests
+that do not link GUI code (including the ANCS, D-Bus and BlueZ GATT suites
+when enabled); GTK/COSMIC tests and `dmn-test-bluez-device-list` (too slow
+under Valgrind) are excluded.
 
 ### Kafka integration tests
 

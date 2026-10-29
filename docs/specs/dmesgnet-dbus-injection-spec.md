@@ -193,7 +193,7 @@ Linux when selected.
 Each configured maximum payload must be positive and no greater than
 `INT_MAX`, because libdbus's fixed-array API accepts an `int` length.
 
-`Dmn_DbusIoStatus` is defined in that shared config header with the status
+`Dmn_DbusIoStatus` is defined in `include/dmn-dbus-io.hpp` with the status
 fields specified in `dmesg-dbus-spec.md`. The signal tuple is validated as
 D-Bus path/interface/member syntax before opening a connection.
 
@@ -226,10 +226,9 @@ connections and worker lifetimes. Each concrete destructor must call its
 idempotent `shutdown()` while its dynamic type is still active; relying on
 `Dmn_Io<T>`'s base destructor is insufficient because virtual dispatch during
 base destruction does not invoke the derived shutdown override.
-`Dmn_DbusConfig` and
-`Dmn_DbusIoStatus` are shared by Options A and B, declared once in the
-optional public config header, and included by both API headers. The facade
-header does not include the endpoint header.
+`Dmn_DbusConfig` is shared by Options A and B and declared once in the
+optional public config header. `Dmn_DbusIoStatus` is declared in
+`dmn-dbus-io.hpp`; the facade header includes it for its status type.
 All configured size/count limits must be positive, and
 `max_queued_bytes >= max_message_bytes` so any individually valid maximum-size
 payload can fit in an empty queue. Invalid limits throw `std::invalid_argument`
@@ -238,7 +237,9 @@ never fall back to the session/system bus.
 Because `Dmn_Io<T>` requires both directions, input `write()` overloads and
 output `read()` must throw `std::system_error` with
 `std::errc::operation_not_supported`; never silently discard a call to an
-unsupported direction.
+unsupported direction. Those methods are declared private on the concrete
+classes, so concrete-typed calls fail to compile and only calls through
+`Dmn_Io<std::string>` reach the throwing implementation.
 `shutdown()` is `noexcept`, idempotent, and records/report errors through the
 status and diagnostic contract rather than throwing during teardown.
 
@@ -296,9 +297,11 @@ Each `write()` accepts one item into a finite output queue; one writer worker
 creates one broadcast signal on the configured tuple whose `ay` argument is
 byte-for-byte equal to the string. Embedded NUL bytes are ordinary payload
 bytes. Enforce the payload,
-message-count, and queued-byte limits before queueing. If any queue cap is
-reached, shutdown has begun, or the worker has entered a known failed state,
-throw `std::system_error`. `write()` success means only that the adapter's
+message-count, and queued-byte limits before queueing. An oversized payload
+throws `std::system_error`; if a queue cap is reached `write()` blocks (blocked
+writers are admitted in ticket order). If shutdown has begun or the worker has
+entered a known failed state, `write()` throws `std::system_error`, including
+for writers already blocked. `write()` success means only that the adapter's
 local queue accepted the item. It does not guarantee libdbus accepted it, the
 daemon sent it, or any peer received it.
 

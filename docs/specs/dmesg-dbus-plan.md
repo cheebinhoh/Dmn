@@ -215,8 +215,9 @@ stderr-reporting convention. Do not silently discard accepted items.
 - Worker-side connection/send failure marks the endpoint failed, increments
   status/error counts, reports a rate-limited diagnostic, and
   causes later writes to fail. No accepted queued item disappears silently.
-- A stalled/non-writable output connection does not block `write()` or
-  destruction; shutdown stops at its finite deadline and reports unsent
+- A stalled/non-writable output connection never blocks destruction, and
+  `write()` blocks only while the bounded queue is full (released by shutdown
+  or failure); shutdown stops at its finite deadline and reports unsent
   application-queue count/bytes and remaining libdbus outgoing bytes in the
   final status snapshot and diagnostic.
 - The output worker never calls blocking `dbus_connection_flush()`; a

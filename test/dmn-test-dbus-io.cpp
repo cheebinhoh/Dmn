@@ -308,9 +308,13 @@ TEST(DmnDbusIoTest, EnforcesPayloadLimitAndUnsupportedDirections) {
   dmn::Dmn_DbusOutput output{config};
 
   const std::string inputWrite{"x"};
-  EXPECT_THROW(input.write(inputWrite), std::system_error);
-  EXPECT_THROW(input.write(std::string{"x"}), std::system_error);
-  EXPECT_THROW(output.read(), std::system_error);
+  // read()/write() of the unsupported direction are private on the concrete
+  // types; they must still throw when reached through the Dmn_Io interface.
+  dmn::Dmn_Io<std::string> &inputIo = input;
+  dmn::Dmn_Io<std::string> &outputIo = output;
+  EXPECT_THROW(inputIo.write(inputWrite), std::system_error);
+  EXPECT_THROW(inputIo.write(std::string{"x"}), std::system_error);
+  EXPECT_THROW(outputIo.read(), std::system_error);
   EXPECT_THROW(output.write("12345"), std::system_error);
 
   std::string lvalue{"1234"};

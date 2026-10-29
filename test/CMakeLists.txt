@@ -575,6 +575,7 @@ if (ENABLE_VALGRIND)
         dmn-test-inflight-guard
         dmn-test-interval-btree
         dmn-test-io
+        dmn-test-io-contract
         dmn-test-pipe
         dmn-test-pipe-2
         dmn-test-pipe-3
@@ -623,6 +624,7 @@ if (ENABLE_VALGRIND)
            dmn-test-dmesg-7
            dmn-test-dmesg-8
            dmn-test-dmesg-9
+           dmn-test-dmesg-conflict
            dmn-test-dmesg-pb
            dmn-test-dmesg-pb-util
            dmn-test-dmesgnet-1
@@ -632,6 +634,38 @@ if (ENABLE_VALGRIND)
            dmn-test-dmesgnet-5
            dmn-test-dmesgnet-6
            dmn-test-dmesgnet-shutdown
+           dmn-test-kafka-config
+    )
+  endif()
+
+  # Library tests that do not link GUI code (GTK/GLib/COSMIC) also run under
+  # Valgrind. GUI engine/selection tests are intentionally excluded.
+  if (ENABLE_ANCS)
+    list(APPEND DMN_VALGRIND_TESTS
+           dmn-test-ancs-client
+           dmn-test-ancs-parser
+    )
+  endif()
+
+  if (ENABLE_DBUS)
+    list(APPEND DMN_VALGRIND_TESTS
+           dmn-test-dbus-client
+           dmn-test-dbus-client-session
+    )
+
+    if (ENABLE_DMN_DMESGNET)
+      list(APPEND DMN_VALGRIND_TESTS
+             dmn-test-dbus-facade
+             dmn-test-dbus-io
+      )
+    endif()
+  endif()
+
+  if (ENABLE_BLUEZ)
+    # dmn-test-bluez-device-list spawns CLI subprocesses and does not finish
+    # in reasonable time under Valgrind, so it stays a regular test only.
+    list(APPEND DMN_VALGRIND_TESTS
+           dmn-test-bluez-gatt-client
     )
   endif()
 

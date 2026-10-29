@@ -149,6 +149,9 @@ includes:
   validate replies and distinguish an object path from a string. Recursive
   containers must be bounded by documented depth, element, and encoded-size
   limits.
+  Encoding must be exception-safe: every container opened with libdbus is
+  closed explicitly on success and abandoned (`dbus_message_iter_abandon_container`)
+  when encoding fails part-way, so rejected values never leak libdbus buffers.
 - A method-call operation accepting a destination, object path, interface,
   member, and typed arguments; it returns a typed reply or a Dmn error that
   preserves a remote D-Bus error name/message separately from local transport,
