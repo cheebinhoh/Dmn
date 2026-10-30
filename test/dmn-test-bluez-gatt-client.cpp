@@ -387,7 +387,27 @@ private:
     std::lock_guard lock{m_sendMutex};
 
     dbus_connection_send(m_connection.get(), signal, nullptr);
-    dbus_connection_flush(m_connection.get());
+
+    // NOTE:
+    // Do not call dbus_connection_flush() here.
+    //
+    // This fake BlueZ service owns a dedicated dispatch thread that
+    // continuously services the same DBus connection via:
+    //
+    // dbus_connection_read_write_dispatch()
+    //
+    // Calling dbus_connection_flush() from another thread can block waiting for
+    // libdbus internal state changes while the dispatch thread is
+    // simultaneously operating on the same connection. Under normal execution
+    // this usually completes quickly, but under Valgrind the additional
+    // scheduling latency makes the lock ordering much more likely to deadlock.
+    //
+    // The signal only needs to be queued for delivery. The dispatch thread will
+    // perform the actual transport work, so dbus_connection_send() is
+    // sufficient and avoids a cross-thread flush deadlock observed under
+    // Valgrind.
+    //
+    // dbus_connection_flush(m_connection.get());
   }
 
   auto managedObjectsReply(DBusMessage *request) -> DBusMessage * {
