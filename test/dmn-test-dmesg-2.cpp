@@ -25,16 +25,16 @@ int main(int argc, char *argv[]) {
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
 
-    auto dmesg_handle1 = dmesg.openHandler("handler1");
+    auto dmesg_handle1{dmesg.openHandler("handler1")};
     EXPECT_TRUE(dmesg_handle1);
 
-    auto dmesg_handle2 = dmesg.openHandler("handler2");
+    auto dmesg_handle2{dmesg.openHandler("handler2")};
     EXPECT_TRUE(dmesg_handle2);
 
     dmn::Dmn_Proc proc1{
         "proc1", [&dmesg_handle1]() -> void {
           while (true) {
-            auto dmesgpb = dmesg_handle1->read();
+            auto dmesgpb{dmesg_handle1->read()};
             if (!dmesgpb) {
               break;
             }
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
               break;
             }
 
-            auto dmesgpb_ret = dmesg_handle2->read();
+            auto dmesgpb_ret{dmesg_handle2->read()};
             if (!dmesgpb_ret) {
               break;
             }

@@ -22,7 +22,7 @@ namespace {
 auto makeHandle(std::unique_ptr<dmn::gui::Dmn_EngineBackend> backend)
     -> dmn_bt_engine * {
   try {
-    auto handle = std::make_unique<dmn_bt_engine>();
+    auto handle{std::make_unique<dmn_bt_engine>()};
     handle->m_engine =
         std::make_unique<dmn::gui::Dmn_Engine>(std::move(backend));
 
@@ -77,8 +77,8 @@ char *dmn_bt_engine_next_message(dmn_bt_engine *engine, int timeout_ms) {
   }
 
   try {
-    auto message = engine->m_engine->nextMessage(
-        std::chrono::milliseconds{timeout_ms < 0 ? 0 : timeout_ms});
+    auto message { engine->m_engine->nextMessage(
+        std::chrono::milliseconds{timeout_ms < 0 ? 0 : timeout_ms})};
     if (!message) {
       return nullptr;
     }

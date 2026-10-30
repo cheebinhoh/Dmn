@@ -27,7 +27,7 @@
 
 namespace dmn {
 
-constexpr size_t kKafkaErrorStringLength = 512;
+constexpr size_t kKafkaErrorStringLength{512};
 
 /**
  * @brief Set a single configuration key/value pair on an @c rd_kafka_conf_t

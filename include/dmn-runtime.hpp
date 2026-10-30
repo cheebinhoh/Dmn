@@ -631,12 +631,12 @@ void Dmn_Runtime_Manager<QueueType>::addRuntimeJobToCoroutineSchedulerContext(
   assert(this->m_sched_job.size() == this->m_sched_task.size());
 
   try {
-    auto task = job.m_fnc(job);
+    auto task{job.m_fnc(job)};
     this->m_sched_task.push(std::move(task));
     this->m_sched_job.push(std::move(job));
   } catch (...) {
     if (job.m_onErrorFnc) {
-      std::exception_ptr ep = std::current_exception();
+      std::exception_ptr ep{std::current_exception()};
 
       job.m_onErrorFnc(ep);
     }
@@ -650,14 +650,14 @@ void Dmn_Runtime_Manager<QueueType>::addRuntimeJobToCoroutineSchedulerContext(
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::clearSignalHandlerHook(int signo) {
   this->addExecTask(
-      [this, signo]() mutable { this->clearSignalHandlerHookInternal(signo); });
+      [this, signo]() { this->clearSignalHandlerHookInternal(signo); });
 }
 
 template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::clearSignalHandlerHookInternal(int signo) {
   assert(isRunInAsyncThread());
 
-  auto it = m_signal_handler_hooks_external.find(signo);
+  auto it{m_signal_handler_hooks_external.find(signo)};
   if (m_signal_handler_hooks_external.end() != it) {
     it->second.clear();
   }
@@ -714,7 +714,7 @@ void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
 
   try {
     if (state != Dmn_Runtime_Job::Priority::kHigh) {
-      auto item = m_highQueue.popNoWait();
+      auto item{m_highQueue.popNoWait()};
 
       if (item) {
         this->addRuntimeJobToCoroutineSchedulerContext(std::move(*item));
@@ -735,10 +735,10 @@ void Dmn_Runtime_Manager<QueueType>::execRuntimeJobInternal() {
 
     assert(this->m_sched_job.size() == this->m_sched_task.size());
 
-    auto jobsCountInScheduler = this->m_sched_job.size();
+    auto jobsCountInScheduler{this->m_sched_job.size()};
 
     if (jobsCountInScheduler > 0) {
-      bool done = this->runRuntimeCoroutineScheduler();
+      bool done{this->runRuntimeCoroutineScheduler()};
 
       if (!done) {
         assert(!this->m_sched_job.empty());
@@ -804,7 +804,7 @@ template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::enterMainLoop() {
   // If there are already pending jobs (e.g., from a prior run), ensure the
   // runtime job executor is started so the system does not remain idle.
-  bool startJobExecutor = m_jobs_count.load(std::memory_order_acquire) > 0;
+  bool startJobExecutor{m_jobs_count.load(std::memory_order_acquire) > 0};
 
   if (m_main_enter_flag.test_and_set(std::memory_order_acquire)) {
     assert(false && "Error: enter main loop twice without exit");
@@ -862,14 +862,14 @@ template <template <class> class QueueType>
 void Dmn_Runtime_Manager<QueueType>::execSignalHandlerHookInternal(int signo) {
   assert(isRunInAsyncThread());
 
-  auto ext_hooks = m_signal_handler_hooks_external.find(signo);
+  auto ext_hooks{m_signal_handler_hooks_external.find(signo)};
   if (m_signal_handler_hooks_external.end() != ext_hooks) {
     for (auto &fnc : ext_hooks->second) {
       fnc(signo);
     }
   }
 
-  auto hook = m_signal_handler_hooks.find(signo);
+  auto hook{m_signal_handler_hooks.find(signo)};
   if (m_signal_handler_hooks.end() != hook) {
     hook->second(signo);
   }
@@ -990,7 +990,7 @@ auto Dmn_Runtime_Manager<QueueType>::runRuntimeCoroutineScheduler() -> bool {
   } catch (...) {
     try {
       if (runningJob.m_onErrorFnc) {
-        std::exception_ptr ep = std::current_exception();
+        std::exception_ptr ep{std::current_exception()};
 
         runningJob.m_onErrorFnc(ep);
       }

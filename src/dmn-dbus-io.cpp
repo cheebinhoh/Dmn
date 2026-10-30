@@ -513,10 +513,10 @@ public:
     // transport progress or peer receipt is not implied.
     std::unique_lock lock{m_mutex};
 
-    const auto hasSpace = [this, size = payload.size()] {
+    const auto hasSpace{[this, size = payload.size()] {
       return m_queue.size() < m_config.max_queued_messages &&
              size <= m_config.max_queued_bytes - m_pending_bytes;
-    };
+    }};
 
     // Fast path: with space and no earlier blocked writer, admit immediately;
     // tickets are irrelevant and the writer never waits. Only when the queue

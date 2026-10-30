@@ -25,25 +25,25 @@ int main(int argc, char *argv[]) {
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
     std::promise<std::string> received1;
-    auto received1_future = received1.get_future();
+    auto received1_future{received1.get_future()};
 
-    auto dmesg_handle1 = dmesg.openHandler(
+    auto dmesg_handle1{dmesg.openHandler(
         "handler1", nullptr, [&received1](const dmn::DMesgPb &dmesgpb) -> void {
           received1.set_value(dmesgpb.body().message());
-        });
+        })};
 
     EXPECT_TRUE(dmesg_handle1);
 
     std::promise<std::string> received2;
-    auto received2_future = received2.get_future();
-    auto dmesg_handle2 = dmesg.openHandler(
+    auto received2_future{received2.get_future()};
+    auto dmesg_handle2{dmesg.openHandler(
         "handler2", nullptr, [&received2](const dmn::DMesgPb &dmesgpb) -> void {
           received2.set_value(dmesgpb.body().message());
-        });
+        })};
 
     EXPECT_TRUE(dmesg_handle2);
 
-    auto dmesg_handle3 = dmesg.openHandler("handler3");
+    auto dmesg_handle3{dmesg.openHandler("handler3")};
     EXPECT_TRUE(dmesg_handle3);
 
     dmn::DMesgPb dmesgpb{};
@@ -56,13 +56,13 @@ int main(int argc, char *argv[]) {
 
     dmesg_handle3->write(dmesgpb);
 
-    auto received1_status = received1_future.wait_for(std::chrono::seconds(30));
+    auto received1_status{received1_future.wait_for(std::chrono::seconds(30))};
     EXPECT_EQ(received1_status, std::future_status::ready);
     if (received1_status == std::future_status::ready) {
       EXPECT_EQ(data, received1_future.get());
     }
 
-    auto received2_status = received2_future.wait_for(std::chrono::seconds(30));
+    auto received2_status{received2_future.wait_for(std::chrono::seconds(30))};
     EXPECT_EQ(received2_status, std::future_status::ready);
     if (received2_status == std::future_status::ready) {
       EXPECT_EQ(data, received2_future.get());

@@ -22,15 +22,15 @@ int main(int argc, char *argv[]) {
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
 
-    auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+    auto dmesg_write_handle{dmesg.openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_write_handle);
 
-    auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
+    auto dmesg_read_handle1{dmesg.openHandler("readHandler1")};
 
-    auto dmesg_read_handle2 = dmesg.openHandler(
+    auto dmesg_read_handle2{dmesg.openHandler(
         "readHandler2", [](const dmn::DMesgPb &dmesgpb) -> bool {
           return dmesgpb.body().message() != "message string 1";
-        });
+        })};
 
     dmn::DMesgPb dmesgpb1{};
     dmesgpb1.set_topic("id1");
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_Proc proc_read1{
         "read1", [&dmesg_read_handle1, &dmesgpb1]() -> void {
           std::cout << "before read1\n";
-          auto dmesgpb_read = dmesg_read_handle1->read();
+          auto dmesgpb_read{dmesg_read_handle1->read()};
           std::cout << "after read1, and proceed to validate read\n";
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb1.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_Proc proc_read2{
         "read2", [&dmesg_read_handle2, &dmesgpb2]() -> void {
           std::cout << "before read2\n";
-          auto dmesgpb_read = dmesg_read_handle2->read();
+          auto dmesgpb_read{dmesg_read_handle2->read()};
           std::cout << "after read2, and proceed to validate read\n";
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb2.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==

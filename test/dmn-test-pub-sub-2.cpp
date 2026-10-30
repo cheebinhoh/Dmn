@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
   // auto rec1 = pub.registerSubscriber<Dmn_Msg_Receiver>(new
   // Dmn_Msg_Receiver{"receiver 1"});
-  auto rec1 = pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 1"sv);
+  auto rec1{pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 1"sv)};
   pub2.registerSubscriber(rec1);
 
   pub.publish("hello pub sub");

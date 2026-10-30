@@ -68,13 +68,13 @@ int main(int argc, char *argv[]) {
     std::map<std::string, std::string> master_list{};
     int n{};
     while (n < 10000) {
-      auto data_read = consumer_other.read();
+      auto data_read{consumer_other.read()};
       if (data_read) {
         dmesgpb_read.ParseFromString(*data_read);
 
-        int i = 0;
+        int i{0};
         while (i < dmesgpb_read.body().sys().nodelist().size()) {
-          auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+          auto id{dmesgpb_read.body().sys().nodelist().Get(i).identifier()};
           node_list[dmesgpb_read.body().sys().self().identifier()] = id;
           i++;
         }
@@ -117,21 +117,19 @@ int main(int argc, char *argv[]) {
     const std::string subscribed_topic{"counter sync 1"};
 
     int cnt{0};
-    auto dmesg_handle =
+    auto dmesg_handle{
         dmesgnet1.openHandler("handler1", subscribed_topic, nullptr,
-                              [&cnt](const dmn::DMesgPb &msg) mutable -> void {
+                              [&cnt](const dmn::DMesgPb &msg) -> void {
                                 std::cout << "read\n";
                                 EXPECT_TRUE("counter sync 1" == msg.topic());
                                 cnt++;
-                              });
+                              })};
     EXPECT_TRUE(dmesg_handle);
 
-    auto dmesg_write_handle1 =
-        dmesgnet2.openHandler("writeHandler1", topics[0]);
+    auto dmesg_write_handle1{dmesgnet2.openHandler("writeHandler1", topics[0])};
     EXPECT_TRUE(dmesg_write_handle1);
 
-    auto dmesg_write_handle2 =
-        dmesgnet2.openHandler("writeHandler2", topics[1]);
+    auto dmesg_write_handle2{dmesgnet2.openHandler("writeHandler2", topics[1])};
     EXPECT_TRUE(dmesg_write_handle2);
 
     std::this_thread::sleep_for(std::chrono::seconds(3));

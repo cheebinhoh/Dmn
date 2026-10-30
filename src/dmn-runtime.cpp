@@ -53,7 +53,7 @@ auto Dmn_Runtime_Manager_Impl_create() -> Dmn_Runtime_Manager_Impl * {
   // 1. Setup signal delivery
   sev.sigev_notify = SIGEV_SIGNAL;
   sev.sigev_signo = SIGALRM;
-  int err = timer_create(CLOCK_MONOTONIC, &sev, &(impl->m_timerid));
+  int err{timer_create(CLOCK_MONOTONIC, &sev, &(impl->m_timerid))};
   if (-1 == err) {
     delete impl;
 
@@ -119,21 +119,21 @@ void Dmn_Runtime_Manager_Impl_setNextTimerAt(Dmn_Runtime_Manager_Impl *impl,
     return;
   }
 
-  TimePoint tpNow = std::chrono::steady_clock::now();
+  TimePoint tpNow{std::chrono::steady_clock::now()};
 
   // 1. Subtract to get the total duration
-  auto diff = tp - tpNow;
+  auto diff{tp - tpNow};
 
   if (diff <= std::chrono::nanoseconds::zero()) {
     Dmn_Runtime_Manager_Impl_setNextTimer(
         impl, 0, 10000); // run it in next 10 microseconds
   } else {
     // 2. Extract the whole seconds
-    auto secs = std::chrono::duration_cast<std::chrono::seconds>(diff);
+    auto secs{std::chrono::duration_cast<std::chrono::seconds>(diff)};
 
     // 3. Extract the remaining nanoseconds (the "remainder")
-    auto nsecs =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(diff - secs);
+    auto nsecs{
+        std::chrono::duration_cast<std::chrono::nanoseconds>(diff - secs)};
 
     Dmn_Runtime_Manager_Impl_setNextTimer(impl, secs.count(), nsecs.count());
   }
@@ -159,7 +159,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *impl,
   its.it_interval.tv_sec = 0;
   its.it_interval.tv_nsec = 0;
 
-  int err = timer_settime(impl->m_timerid, 0, &its, nullptr);
+  int err{timer_settime(impl->m_timerid, 0, &its, nullptr)};
   if (-1 == err) {
     throw std::runtime_error("Error in timer_settime: " +
                              std::system_category().message(errno));
@@ -173,7 +173,7 @@ void Dmn_Runtime_Manager_Impl_setNextTimer(Dmn_Runtime_Manager_Impl *impl,
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 0;
 
-  int err = setitimer(ITIMER_REAL, &timer, nullptr);
+  int err{setitimer(ITIMER_REAL, &timer, nullptr)};
   if (-1 == err) {
     throw std::runtime_error("Error in setitimer: " +
                              std::system_category().message(errno));

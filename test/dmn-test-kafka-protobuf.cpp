@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   // consume prior messages from topic.
   while (true) {
-    auto data_read = consumer.read();
+    auto data_read{consumer.read()};
     if (!data_read) {
       break; // no data
     }
@@ -73,10 +73,10 @@ int main(int argc, char *argv[]) {
 
   // sleep and wait for data to sync to reader
   std::this_thread::sleep_for(std::chrono::seconds(7));
-  size_t index = 0;
+  size_t index{0};
 
   while (true) {
-    auto data_read = consumer.read();
+    auto data_read{consumer.read()};
     if (!data_read) {
       break; // no data
     }
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
 
-  auto data_read = consumer2.read();
+  auto data_read{consumer2.read()};
   struct timeval tv_after;
   gettimeofday(&tv_after, nullptr);
 

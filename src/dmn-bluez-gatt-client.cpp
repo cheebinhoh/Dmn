@@ -39,13 +39,13 @@ auto error(Dmn_GattErrorKind kind, std::string message,
 }
 
 auto mapError(const Dmn_DbusError &source) -> Dmn_GattError {
-  const auto kind =
+  const auto kind{
       source.kind == Dmn_DbusErrorKind::InvalidArgument
           ? Dmn_GattErrorKind::InvalidArgument
       : source.kind == Dmn_DbusErrorKind::Timeout ? Dmn_GattErrorKind::Timeout
       : source.kind == Dmn_DbusErrorKind::Remote  ? Dmn_GattErrorKind::Remote
       : source.kind == Dmn_DbusErrorKind::Codec   ? Dmn_GattErrorKind::Decode
-                                                  : Dmn_GattErrorKind::Backend;
+                                                  : Dmn_GattErrorKind::Backend};
 
   return error(kind, source.message, source.remote_name);
 }
@@ -56,7 +56,7 @@ auto timeoutError(std::string message) -> Dmn_GattError {
 
 auto remainingTimeout(std::chrono::steady_clock::time_point deadline)
     -> std::chrono::milliseconds {
-  const auto now = std::chrono::steady_clock::now();
+  const auto now{std::chrono::steady_clock::now()};
   if (now >= deadline) {
     return std::chrono::milliseconds::zero();
   }
@@ -183,19 +183,19 @@ public:
           "GATT operation deadline expired while reading device state"));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    const auto remaining = [&] { return remainingTimeout(deadline); };
-    const auto servicesTimeout = remaining();
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
+    const auto remaining{[&] { return remainingTimeout(deadline); }};
+    const auto servicesTimeout{remaining()};
     if (servicesTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "GATT operation deadline expired while reading device state"));
     }
 
-    auto result = m_dbus.call(std::string{kBluez}, deviceId,
-                              std::string{kProperties}, "Get",
-                              {Dmn_DbusValue{std::string{kDevice}},
-                               Dmn_DbusValue{"ServicesResolved"}},
-                              servicesTimeout);
+    auto result{m_dbus.call(std::string{kBluez}, deviceId,
+                            std::string{kProperties}, "Get",
+                            {Dmn_DbusValue{std::string{kDevice}},
+                             Dmn_DbusValue{"ServicesResolved"}},
+                            servicesTimeout)};
     if (!result) {
       return std::unexpected(mapError(result.error()));
     }
@@ -207,22 +207,22 @@ public:
                 "BlueZ returned invalid ServicesResolved property"));
     }
 
-    const auto resolved = result->front().asVariant().asBool();
+    const auto resolved{result->front().asVariant().asBool()};
     if (remaining() <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "GATT operation deadline expired while reading device state"));
     }
 
-    const auto connectedTimeout = remaining();
+    const auto connectedTimeout{remaining()};
     if (connectedTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "GATT operation deadline expired while reading device state"));
     }
 
-    auto connectedResult = m_dbus.call(
+    auto connectedResult{m_dbus.call(
         std::string{kBluez}, deviceId, std::string{kProperties}, "Get",
         {Dmn_DbusValue{std::string{kDevice}}, Dmn_DbusValue{"Connected"}},
-        connectedTimeout);
+        connectedTimeout)};
     if (!connectedResult) {
       return std::unexpected(mapError(connectedResult.error()));
     }
@@ -246,7 +246,7 @@ public:
   auto
   waitForServicesResolved(const std::string &deviceId,
                           std::chrono::milliseconds timeout) -> Dmn_GattResult {
-    auto valid = validateDeviceId(deviceId);
+    auto valid{validateDeviceId(deviceId)};
     if (!valid) {
       return valid;
     }
@@ -256,8 +256,8 @@ public:
                                    "GATT wait timeout must be positive"));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    const auto remaining = [&] { return remainingTimeout(deadline); };
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
+    const auto remaining{[&] { return remainingTimeout(deadline); }};
     struct WaitState {
       std::mutex mutex;
       std::condition_variable condition;
@@ -266,14 +266,14 @@ public:
       std::optional<Dmn_GattError> failure;
       bool observedConnectionChange{};
     };
-    auto state = std::make_shared<WaitState>();
-    const auto propertiesTimeout = remaining();
+    auto state{std::make_shared<WaitState>()};
+    const auto propertiesTimeout{remaining()};
     if (propertiesTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "service-resolution wait deadline expired before subscribing"));
     }
 
-    auto properties = m_dbus.subscribeWithPath(
+    auto properties{m_dbus.subscribeWithPath(
         {"org.bluez", std::string{kProperties}, "PropertiesChanged", {}, {}},
         [state, deviceId](std::string path,
                           Dmn_DbusClient::Arguments arguments) {
@@ -298,19 +298,19 @@ public:
 
           state->condition.notify_all();
         },
-        propertiesTimeout);
+        propertiesTimeout)};
 
     if (!properties) {
       return std::unexpected(mapError(properties.error()));
     }
 
-    const auto ownerTimeout = remaining();
+    const auto ownerTimeout{remaining()};
     if (ownerTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "service-resolution wait deadline expired while subscribing"));
     }
 
-    auto owner = m_dbus.subscribe(
+    auto owner{m_dbus.subscribe(
         {"org.freedesktop.DBus",
          "org.freedesktop.DBus",
          "NameOwnerChanged",
@@ -334,18 +334,18 @@ public:
                     "BlueZ service owner changed during service wait");
           state->condition.notify_all();
         },
-        ownerTimeout);
+        ownerTimeout)};
     if (!owner) {
       return std::unexpected(mapError(owner.error()));
     }
 
-    const auto objectsTimeout = remaining();
+    const auto objectsTimeout{remaining()};
     if (objectsTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "service-resolution wait deadline expired while subscribing"));
     }
 
-    auto objects = m_dbus.subscribe(
+    auto objects{m_dbus.subscribe(
         {"org.bluez",
          std::string{kObjectManager},
          "InterfacesRemoved",
@@ -358,11 +358,11 @@ public:
             return;
           }
 
-          const auto removedDevice = std::any_of(
+          const auto removedDevice{std::any_of(
               arguments[1].asArray().values.begin(),
               arguments[1].asArray().values.end(), [](const auto &value) {
                 return value.signature() == "s" && value.asString() == kDevice;
-              });
+              })};
           if (!removedDevice) {
             return;
           }
@@ -375,7 +375,7 @@ public:
 
           state->condition.notify_all();
         },
-        objectsTimeout);
+        objectsTimeout)};
 
     if (!objects) {
       return std::unexpected(mapError(objects.error()));
@@ -386,7 +386,7 @@ public:
           "service-resolution wait deadline expired while subscribing"));
     }
 
-    auto initial = getDeviceState(deviceId, remaining());
+    auto initial{getDeviceState(deviceId, remaining())};
     if (!initial) {
       return std::unexpected(initial.error());
     }
@@ -432,7 +432,7 @@ public:
 
   auto discover(const std::string &deviceId, std::chrono::milliseconds timeout)
       -> Dmn_GattValueResult<std::vector<Dmn_GattService>> {
-    auto valid = validateDeviceId(deviceId);
+    auto valid{validateDeviceId(deviceId)};
     if (!valid) {
       return std::unexpected(valid.error());
     }
@@ -442,9 +442,9 @@ public:
                                    "GATT discovery timeout must be positive"));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    const auto remaining = [&] { return remainingTimeout(deadline); };
-    auto state = getDeviceState(deviceId, remaining());
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
+    const auto remaining{[&] { return remainingTimeout(deadline); }};
+    auto state{getDeviceState(deviceId, remaining())};
     if (!state) {
       return std::unexpected(state.error());
     }
@@ -460,16 +460,16 @@ public:
                                    "resolved before GATT discovery"));
     }
 
-    const auto objectTreeTimeout = remaining();
+    const auto objectTreeTimeout{remaining()};
     if (objectTreeTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(
           timeoutError("GATT discovery deadline expired before reading the "
                        "object tree"));
     }
 
-    auto objects =
-        m_dbus.call(std::string{kBluez}, "/", std::string{kObjectManager},
-                    "GetManagedObjects", {}, objectTreeTimeout);
+    auto objects{m_dbus.call(std::string{kBluez}, "/",
+                             std::string{kObjectManager}, "GetManagedObjects",
+                             {}, objectTreeTimeout)};
     if (!objects) {
       return std::unexpected(mapError(objects.error()));
     }
@@ -501,7 +501,7 @@ public:
 
         const auto &path = pathValue.asObjectPath();
         if (const auto *props = interface(interfaces, kGattService)) {
-          const auto parent = property(*props, "Device");
+          const auto parent{property(*props, "Device")};
           if (parent == nullptr || parent->signature() != "o") {
             return std::unexpected(
                 error(Dmn_GattErrorKind::Decode,
@@ -512,8 +512,8 @@ public:
             continue;
           }
 
-          const auto uuid = stringProperty(*props, "UUID");
-          const auto primary = boolProperty(*props, "Primary");
+          const auto uuid{stringProperty(*props, "UUID")};
+          const auto primary{boolProperty(*props, "Primary")};
           if (!uuid || !primary) {
             return std::unexpected(
                 error(Dmn_GattErrorKind::Decode,
@@ -525,7 +525,7 @@ public:
         }
 
         if (const auto *props = interface(interfaces, kGattCharacteristic)) {
-          const auto parent = property(*props, "Service");
+          const auto parent{property(*props, "Service")};
           if (parent == nullptr || parent->signature() != "o") {
             return std::unexpected(
                 error(Dmn_GattErrorKind::Decode,
@@ -536,7 +536,7 @@ public:
             continue;
           }
 
-          const auto uuid = stringProperty(*props, "UUID");
+          const auto uuid{stringProperty(*props, "UUID")};
           const auto *flagsValue = property(*props, "Flags");
           if (!uuid || flagsValue == nullptr ||
               flagsValue->signature() != "as") {
@@ -561,7 +561,7 @@ public:
       }
 
       for (auto &[servicePath, characteristic] : chars) {
-        const auto parent = services.find(servicePath);
+        const auto parent{services.find(servicePath)};
         if (parent != services.end()) {
           parent->second.characteristics.push_back(std::move(characteristic));
         }
@@ -609,15 +609,15 @@ public:
                                    "StartNotify timeout must be positive"));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    const auto remaining = [&] { return remainingTimeout(deadline); };
-    const auto discoveryTimeout = remaining();
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
+    const auto remaining{[&] { return remainingTimeout(deadline); }};
+    const auto discoveryTimeout{remaining()};
     if (discoveryTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "StartNotify deadline expired before discovering the GATT tree"));
     }
 
-    auto services = discover(deviceId, discoveryTimeout);
+    auto services{discover(deviceId, discoveryTimeout)};
     if (!services) {
       return std::unexpected(services.error());
     }
@@ -627,7 +627,7 @@ public:
           "StartNotify deadline expired before enabling notifications"));
     }
 
-    const auto characteristic = std::find_if(
+    const auto characteristic{std::find_if(
         services->begin(), services->end(),
         [&characteristicId](const auto &service) {
           return std::any_of(service.characteristics.begin(),
@@ -635,7 +635,7 @@ public:
                              [&characteristicId](const auto &candidate) {
                                return candidate.id == characteristicId;
                              });
-        });
+        })};
 
     if (characteristic == services->end()) {
       return std::unexpected(error(
@@ -643,12 +643,12 @@ public:
           "characteristic is not in the selected device's current GATT tree"));
     }
 
-    const auto capability =
+    const auto capability{
         std::find_if(characteristic->characteristics.begin(),
                      characteristic->characteristics.end(),
                      [&characteristicId](const auto &candidate) {
                        return candidate.id == characteristicId;
-                     });
+                     })};
 
     if (!hasFlag(*capability, "notify") && !hasFlag(*capability, "indicate")) {
       return std::unexpected(
@@ -656,23 +656,23 @@ public:
                 "characteristic does not support notifications"));
     }
 
-    auto state = std::make_shared<NotificationState>();
+    auto state{std::make_shared<NotificationState>()};
     state->handler = std::move(handler);
     state->path = characteristicId;
-    std::weak_ptr<NotificationState> weakState = state;
+    std::weak_ptr<NotificationState> weakState{state};
 
     // Install every observer before StartNotify can produce an immediate value.
-    const auto propertyTimeout = remaining();
+    const auto propertyTimeout{remaining()};
     if (propertyTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "StartNotify deadline expired before installing signal observers"));
     }
 
-    auto propertySubscription = m_dbus.subscribeWithPath(
+    auto propertySubscription{m_dbus.subscribeWithPath(
         {"org.bluez", std::string{kProperties}, "PropertiesChanged", {}, {}},
         [weakState, deviceId, characteristicId](
             std::string path, Dmn_DbusClient::Arguments arguments) {
-          const auto state = weakState.lock();
+          const auto state{weakState.lock()};
           if (state == nullptr) {
             return;
           }
@@ -701,9 +701,9 @@ public:
                 deliver = true;
               }
             } else if (path == deviceId && arguments[0].asString() == kDevice) {
-              const auto connected = boolProperty(arguments[1], "Connected");
-              const auto resolved =
-                  boolProperty(arguments[1], "ServicesResolved");
+              const auto connected{boolProperty(arguments[1], "Connected")};
+              const auto resolved{
+                  boolProperty(arguments[1], "ServicesResolved")};
               if ((connected && !*connected) || (resolved && !*resolved)) {
                 state->invalidated = true;
                 event.kind = Dmn_GattEvent::Kind::Invalidated;
@@ -718,7 +718,7 @@ public:
             state->handler(event);
           }
         },
-        propertyTimeout);
+        propertyTimeout)};
 
     if (!propertySubscription) {
       return std::unexpected(mapError(propertySubscription.error()));
@@ -726,7 +726,7 @@ public:
 
     state->property_subscription = std::move(*propertySubscription);
 
-    const auto ownerTimeout = remaining();
+    const auto ownerTimeout{remaining()};
     if (ownerTimeout <= std::chrono::milliseconds::zero()) {
       state->property_subscription.cancel();
 
@@ -734,14 +734,14 @@ public:
           "StartNotify deadline expired before installing signal observers"));
     }
 
-    auto ownerSubscription = m_dbus.subscribe(
+    auto ownerSubscription{m_dbus.subscribe(
         {"org.freedesktop.DBus",
          "org.freedesktop.DBus",
          "NameOwnerChanged",
          "/org/freedesktop/DBus",
          {}},
         [weakState](Dmn_DbusClient::Arguments arguments) {
-          const auto state = weakState.lock();
+          const auto state{weakState.lock()};
           if (state == nullptr) {
             return;
           }
@@ -768,7 +768,7 @@ public:
             }
           }
         },
-        ownerTimeout);
+        ownerTimeout)};
 
     if (!ownerSubscription) {
       state->property_subscription.cancel();
@@ -778,7 +778,7 @@ public:
 
     state->owner_subscription = std::move(*ownerSubscription);
 
-    const auto objectTimeout = remaining();
+    const auto objectTimeout{remaining()};
     if (objectTimeout <= std::chrono::milliseconds::zero()) {
       state->property_subscription.cancel();
       state->owner_subscription.cancel();
@@ -787,7 +787,7 @@ public:
           "StartNotify deadline expired before installing signal observers"));
     }
 
-    auto objectSubscription = m_dbus.subscribe(
+    auto objectSubscription{m_dbus.subscribe(
         {"org.bluez",
          std::string{kObjectManager},
          "InterfacesRemoved",
@@ -795,7 +795,7 @@ public:
          {}},
         [weakState, deviceId,
          characteristicId](Dmn_DbusClient::Arguments arguments) {
-          const auto state = weakState.lock();
+          const auto state{weakState.lock()};
           if (state == nullptr) {
             return;
           }
@@ -825,7 +825,7 @@ public:
                             "BlueZ removed the selected GATT object"});
           }
         },
-        objectTimeout);
+        objectTimeout)};
 
     if (!objectSubscription) {
       state->property_subscription.cancel();
@@ -845,7 +845,7 @@ public:
           "StartNotify deadline expired before enabling notifications"));
     }
 
-    const auto startTimeout = remaining();
+    const auto startTimeout{remaining()};
     if (startTimeout <= std::chrono::milliseconds::zero()) {
       state->property_subscription.cancel();
       state->owner_subscription.cancel();
@@ -855,9 +855,9 @@ public:
           "StartNotify deadline expired before enabling notifications"));
     }
 
-    auto called = m_dbus.call(std::string{kBluez}, characteristicId,
-                              std::string{kGattCharacteristic}, "StartNotify",
-                              {}, startTimeout);
+    auto called{m_dbus.call(std::string{kBluez}, characteristicId,
+                            std::string{kGattCharacteristic}, "StartNotify", {},
+                            startTimeout)};
     if (!called) {
       state->property_subscription.cancel();
       state->owner_subscription.cancel();
@@ -872,16 +872,16 @@ public:
       state->started = !state->invalidated;
     }
 
-    const auto rollback = [this, &state](Dmn_GattError failure)
-        -> Dmn_GattValueResult<Dmn_GattNotification> {
-      auto stopped = stopNotify(state);
+    const auto rollback{[this, &state](Dmn_GattError failure)
+                            -> Dmn_GattValueResult<Dmn_GattNotification> {
+      auto stopped{stopNotify(state)};
       if (!stopped) {
         failure.message +=
             "; notification cleanup failed: " + stopped.error().message;
       }
 
       return std::unexpected(std::move(failure));
-    };
+    }};
 
     bool invalidated{};
     {
@@ -896,17 +896,17 @@ public:
                             "StartNotify"));
     }
 
-    const auto notifyingTimeout = remaining();
+    const auto notifyingTimeout{remaining()};
     if (notifyingTimeout <= std::chrono::milliseconds::zero()) {
       return rollback(timeoutError(
           "StartNotify deadline expired while verifying notification state"));
     }
 
-    auto notifying = m_dbus.call(
-        std::string{kBluez}, characteristicId, std::string{kProperties}, "Get",
-        {Dmn_DbusValue{std::string{kGattCharacteristic}},
-         Dmn_DbusValue{"Notifying"}},
-        notifyingTimeout);
+    auto notifying{m_dbus.call(std::string{kBluez}, characteristicId,
+                               std::string{kProperties}, "Get",
+                               {Dmn_DbusValue{std::string{kGattCharacteristic}},
+                                Dmn_DbusValue{"Notifying"}},
+                               notifyingTimeout)};
     if (!notifying) {
       return rollback(mapError(notifying.error()));
     }
@@ -937,7 +937,7 @@ public:
                             "StartNotify"));
     }
 
-    auto self = shared_from_this();
+    auto self{shared_from_this()};
 
     return Dmn_GattNotification{
         [self = std::move(self), state] { return self->stopNotify(state); }};
@@ -956,9 +956,9 @@ public:
     }
 
     if (started && !invalidated) {
-      auto result =
-          m_dbus.call(std::string{kBluez}, state->path,
-                      std::string{kGattCharacteristic}, "StopNotify", {});
+      auto result{m_dbus.call(std::string{kBluez}, state->path,
+                              std::string{kGattCharacteristic}, "StopNotify",
+                              {})};
       if (!result) {
         return std::unexpected(mapError(result.error()));
       }
@@ -992,16 +992,16 @@ public:
                                    "WriteValue timeout must be positive"));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    const auto remaining = [&] { return remainingTimeout(deadline); };
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
+    const auto remaining{[&] { return remainingTimeout(deadline); }};
 
-    const auto discoveryTimeout = remaining();
+    const auto discoveryTimeout{remaining()};
     if (discoveryTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "WriteValue deadline expired before discovering the GATT tree"));
     }
 
-    auto services = discover(deviceId, discoveryTimeout);
+    auto services{discover(deviceId, discoveryTimeout)};
     if (!services) {
       return std::unexpected(services.error());
     }
@@ -1011,7 +1011,7 @@ public:
           "WriteValue deadline expired before writing the characteristic"));
     }
 
-    const auto present = std::any_of(
+    const auto present{std::any_of(
         services->begin(), services->end(),
         [&characteristicId](const auto &service) {
           return std::any_of(service.characteristics.begin(),
@@ -1020,7 +1020,7 @@ public:
                                return candidate.id == characteristicId &&
                                       hasFlag(candidate, "write");
                              });
-        });
+        })};
     if (!present) {
       return std::unexpected(error(
           Dmn_GattErrorKind::InvalidArgument,
@@ -1031,18 +1031,18 @@ public:
     options.emplace_back(Dmn_DbusValue{"type"},
                          Dmn_DbusValue::variant(Dmn_DbusValue{"request"}));
 
-    const auto writeTimeout = remaining();
+    const auto writeTimeout{remaining()};
     if (writeTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "WriteValue deadline expired before writing the characteristic"));
     }
 
-    const auto result =
+    const auto result{
         m_dbus.call(std::string{kBluez}, characteristicId,
                     std::string{kGattCharacteristic}, "WriteValue",
                     {Dmn_DbusValue::byteArray(value),
                      Dmn_DbusValue::dictionary("s", "v", std::move(options))},
-                    writeTimeout);
+                    writeTimeout)};
     if (!result) {
       return std::unexpected(mapError(result.error()));
     }

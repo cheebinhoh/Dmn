@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_DMesg::HandlerType dmesg_handle{};
     dmesg_handle = dmesg.openHandler(
         "handler", false, [](const dmn::DMesgPb &msg) { return true; },
-        [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) mutable {
+        [&dmesg_handle, &cnt](const dmn::DMesgPb &msg) {
           std::cout << msg.ShortDebugString() << "\n";
 
           dmn::DMesgPb ret{msg};
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         });
     EXPECT_TRUE(dmesg_handle);
 
-    auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+    auto dmesg_write_handle{dmesg.openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_write_handle);
 
     std::this_thread::sleep_for(std::chrono::seconds(3));

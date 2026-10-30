@@ -305,8 +305,8 @@ template <typename T> void Dmn_BlockingQueue_Mt<T>::pushMove(T &&item) {
 template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Mt<T>::pushImpl(U &&item) {
-  auto inflightTicket = this->enterInflightGate();
-  auto failure = std::exception_ptr{};
+  auto inflightTicket{this->enterInflightGate()};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -375,10 +375,10 @@ auto Dmn_BlockingQueue_Mt<T>::pop(size_t count,
 
   assert(count > 0);
 
-  auto inflightTicket = this->enterInflightGate();
+  auto inflightTicket{this->enterInflightGate()};
 
   std::unique_lock<std::mutex> lock(m_mutex);
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -416,7 +416,7 @@ auto Dmn_BlockingQueue_Mt<T>::pop(size_t count,
 
     // If queue became empty as a result of this pop, notify waitForEmpty()
     // waiters.
-    bool empty = m_queue.empty();
+    bool empty{m_queue.empty()};
     lock.unlock();
 
     if (empty) {
@@ -448,8 +448,8 @@ auto Dmn_BlockingQueue_Mt<T>::popOptional(bool wait) -> std::optional<T> {
 
   std::optional<T> ret{};
 
-  auto inflightTicket = this->enterInflightGate();
-  auto failure = std::exception_ptr{};
+  auto inflightTicket{this->enterInflightGate()};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Mt<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -476,7 +476,7 @@ auto Dmn_BlockingQueue_Mt<T>::popOptional(bool wait) -> std::optional<T> {
       ++m_pop_count;
     }
 
-    bool empty = m_queue.empty();
+    bool empty{m_queue.empty()};
 
     lock.unlock();
 

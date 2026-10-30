@@ -387,7 +387,27 @@ private:
     std::lock_guard lock{m_sendMutex};
 
     dbus_connection_send(m_connection.get(), signal, nullptr);
-    dbus_connection_flush(m_connection.get());
+
+    // NOTE:
+    // Do not call dbus_connection_flush() here.
+    //
+    // This fake BlueZ service owns a dedicated dispatch thread that
+    // continuously services the same DBus connection via:
+    //
+    // dbus_connection_read_write_dispatch()
+    //
+    // Calling dbus_connection_flush() from another thread can block waiting for
+    // libdbus internal state changes while the dispatch thread is
+    // simultaneously operating on the same connection. Under normal execution
+    // this usually completes quickly, but under Valgrind the additional
+    // scheduling latency makes the lock ordering much more likely to deadlock.
+    //
+    // The signal only needs to be queued for delivery. The dispatch thread will
+    // perform the actual transport work, so dbus_connection_send() is
+    // sufficient and avoids a cross-thread flush deadlock observed under
+    // Valgrind.
+    //
+    // dbus_connection_flush(m_connection.get());
   }
 
   auto managedObjectsReply(DBusMessage *request) -> DBusMessage * {
@@ -452,7 +472,7 @@ private:
       dbus_message_iter_get_basic(&args, &interfaceName);
       dbus_message_iter_next(&args);
       dbus_message_iter_get_basic(&args, &propertyName);
-      const auto path = dbus_message_get_path(message);
+      const auto path{dbus_message_get_path(message)};
       bool value{};
       bool found{};
       if (interfaceName == nullptr || propertyName == nullptr ||
@@ -640,7 +660,7 @@ TEST(DmnBluezGattClient, DiscoversServicesAndCharacteristicsForSelectedDevice) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto discovered = client.discover(kDevicePath, 1s);
+  const auto discovered{client.discover(kDevicePath, 1s)};
   ASSERT_TRUE(discovered) << discovered.error().message;
   ASSERT_EQ(discovered->size(), 1U);
   EXPECT_EQ(discovered->front().id, kServicePath);
@@ -658,17 +678,17 @@ TEST(DmnBluezGattClient, WaitsForServiceResolutionWithFiniteDeadline) {
   FakeBluez service{bus.address(), true, false};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  auto waiting = std::async(std::launch::async, [&] {
+  auto waiting{std::async(std::launch::async, [&] {
     return client.waitForServicesResolved(kDevicePath, 2s);
-  });
+  })};
   ASSERT_TRUE(dmn_test_dbus::waitUntil(
       [&] { return waiting.wait_for(0ms) == std::future_status::timeout; }));
   service.setResolved(true);
-  const auto result = waiting.get();
+  const auto result{waiting.get()};
   ASSERT_TRUE(result) << result.error().message;
 
   service.setResolved(false);
-  const auto timedOut = client.waitForServicesResolved(kDevicePath, 40ms);
+  const auto timedOut{client.waitForServicesResolved(kDevicePath, 40ms)};
   ASSERT_FALSE(timedOut);
   EXPECT_EQ(timedOut.error().kind, dmn::Dmn_GattErrorKind::Timeout);
 }
@@ -679,15 +699,15 @@ TEST(DmnBluezGattClient, ServiceWaitFailsWhenDeviceIsRemoved) {
   FakeBluez service{bus.address(), true, false};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  auto waiting = std::async(std::launch::async, [&] {
+  auto waiting{std::async(std::launch::async, [&] {
     return client.waitForServicesResolved(kDevicePath, 2s);
-  });
+  })};
   ASSERT_TRUE(dmn_test_dbus::waitUntil(
       [&] { return service.propertyGetCount() >= 2; }));
 
   service.emitObjectRemoved(kDevicePath, "org.bluez.Device1");
   ASSERT_EQ(waiting.wait_for(1s), std::future_status::ready);
-  const auto result = waiting.get();
+  const auto result{waiting.get()};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::NotReady);
   EXPECT_EQ(result.error().message,
@@ -697,18 +717,18 @@ TEST(DmnBluezGattClient, ServiceWaitFailsWhenDeviceIsRemoved) {
 TEST(DmnBluezGattClient, ServiceWaitFailsWhenBluezOwnerIsLost) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
-  auto service = std::make_unique<FakeBluez>(bus.address(), true, false);
+  auto service{std::make_unique<FakeBluez>(bus.address(), true, false)};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  auto waiting = std::async(std::launch::async, [&] {
+  auto waiting{std::async(std::launch::async, [&] {
     return client.waitForServicesResolved(kDevicePath, 2s);
-  });
+  })};
   ASSERT_TRUE(dmn_test_dbus::waitUntil(
       [&] { return service->propertyGetCount() >= 2; }));
 
   service.reset();
   ASSERT_EQ(waiting.wait_for(1s), std::future_status::ready);
-  const auto result = waiting.get();
+  const auto result{waiting.get()};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::Backend);
 }
@@ -719,7 +739,7 @@ TEST(DmnBluezGattClient, RejectsDiscoveryUntilConnectedAndResolved) {
   FakeBluez service{bus.address(), true, false};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto result = client.discover(kDevicePath, 1s);
+  const auto result{client.discover(kDevicePath, 1s)};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::NotReady);
 }
@@ -734,7 +754,7 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
   std::condition_variable condition;
   std::vector<dmn::Dmn_GattEvent> events;
 
-  auto notification = client.startNotify(
+  auto notification{client.startNotify(
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
@@ -742,7 +762,7 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
         events.push_back(event);
         condition.notify_all();
       },
-      1s);
+      1s)};
   ASSERT_TRUE(notification) << notification.error().message;
   EXPECT_EQ(service.counts().first, 1);
 
@@ -756,7 +776,7 @@ TEST(DmnBluezGattClient, StartsNotifyBeforeDeliveringValuesAndStopsExplicitly) {
   EXPECT_EQ(events.front().kind, dmn::Dmn_GattEvent::Kind::ValueChanged);
   EXPECT_EQ(events.front().value, (std::vector<std::uint8_t>{0xA1, 0xB2}));
 
-  const auto stopped = notification->stop();
+  const auto stopped{notification->stop()};
   ASSERT_TRUE(stopped) << stopped.error().message;
   EXPECT_EQ(service.counts(), (std::pair{1, 1}));
 }
@@ -768,8 +788,8 @@ TEST(DmnBluezGattClient, RejectsStartNotifyWhenBluezDoesNotEnableDelivery) {
   service.setStartNotifyInactive(true);
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto notification = client.startNotify(
-      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+  const auto notification{client.startNotify(
+      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s)};
   ASSERT_FALSE(notification);
   EXPECT_EQ(notification.error().kind, dmn::Dmn_GattErrorKind::NotReady);
   EXPECT_NE(
@@ -787,7 +807,7 @@ TEST(DmnBluezGattClient, ReportsDisconnectAndStopsWithoutCallingBluezAgain) {
   std::condition_variable condition;
   std::vector<dmn::Dmn_GattEvent> events;
 
-  auto notification = client.startNotify(
+  auto notification{client.startNotify(
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
@@ -795,7 +815,7 @@ TEST(DmnBluezGattClient, ReportsDisconnectAndStopsWithoutCallingBluezAgain) {
         events.push_back(event);
         condition.notify_all();
       },
-      1s);
+      1s)};
   ASSERT_TRUE(notification) << notification.error().message;
 
   service.emitDeviceState(false, false);
@@ -818,7 +838,7 @@ TEST(DmnBluezGattClient, ReportsCharacteristicRemovalAsInvalidation) {
   std::condition_variable condition;
   std::vector<dmn::Dmn_GattEvent> events;
 
-  auto notification = client.startNotify(
+  auto notification{client.startNotify(
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
@@ -826,7 +846,7 @@ TEST(DmnBluezGattClient, ReportsCharacteristicRemovalAsInvalidation) {
         events.push_back(event);
         condition.notify_all();
       },
-      1s);
+      1s)};
   ASSERT_TRUE(notification) << notification.error().message;
 
   service.emitObjectRemoved(kCharacteristicPath);
@@ -843,13 +863,13 @@ TEST(DmnBluezGattClient, ReportsCharacteristicRemovalAsInvalidation) {
 TEST(DmnBluezGattClient, ReportsBluezOwnerLossAsInvalidation) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
-  auto service = std::make_unique<FakeBluez>(bus.address());
+  auto service{std::make_unique<FakeBluez>(bus.address())};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
   std::mutex mutex;
   std::condition_variable condition;
   std::vector<dmn::Dmn_GattEvent> events;
 
-  auto notification = client.startNotify(
+  auto notification{client.startNotify(
       kDevicePath, kCharacteristicPath,
       [&](const auto &event) {
         std::lock_guard lock{mutex};
@@ -857,7 +877,7 @@ TEST(DmnBluezGattClient, ReportsBluezOwnerLossAsInvalidation) {
         events.push_back(event);
         condition.notify_all();
       },
-      1s);
+      1s)};
   ASSERT_TRUE(notification) << notification.error().message;
 
   service.reset();
@@ -877,12 +897,12 @@ TEST(DmnBluezGattClient, StopNotifyFailureCanBeReportedAndRetried) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  auto notification = client.startNotify(
-      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+  auto notification{client.startNotify(
+      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s)};
   ASSERT_TRUE(notification) << notification.error().message;
   service.setStopFailure(true);
 
-  const auto failedStop = notification->stop();
+  const auto failedStop{notification->stop()};
   ASSERT_FALSE(failedStop);
   EXPECT_EQ(failedStop.error().kind, dmn::Dmn_GattErrorKind::Remote);
   EXPECT_EQ(failedStop.error().remote_name, "org.bluez.Error.Failed");
@@ -899,8 +919,8 @@ TEST(DmnBluezGattClient, NotificationTokenKeepsBackendAliveForCleanup) {
   std::optional<dmn::Dmn_GattNotification> notification;
   {
     dmn::Dmn_BluezGattClient client{configFor(bus.address())};
-    auto started = client.startNotify(
-        kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+    auto started{client.startNotify(
+        kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s)};
     ASSERT_TRUE(started) << started.error().message;
     notification.emplace(std::move(*started));
   }
@@ -914,7 +934,7 @@ TEST(DmnGattNotification, ConvertsCleanupExceptionToTypedError) {
     throw std::runtime_error{"injected cleanup exception"};
   }};
 
-  const auto result = notification.stop();
+  const auto result{notification.stop()};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::Backend);
   EXPECT_EQ(result.error().message, "injected cleanup exception");
@@ -927,8 +947,8 @@ TEST(DmnBluezGattClient, RejectsNotificationForNonNotifiableCharacteristic) {
   service.setCharacteristicFlags({"read", "write"});
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto notification = client.startNotify(
-      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+  const auto notification{client.startNotify(
+      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s)};
   ASSERT_FALSE(notification);
   EXPECT_EQ(notification.error().kind, dmn::Dmn_GattErrorKind::InvalidArgument);
   EXPECT_EQ(service.counts(), (std::pair{0, 0}));
@@ -941,8 +961,8 @@ TEST(DmnBluezGattClient, PropagatesNotificationAuthorizationFailure) {
   service.setStartFailure(true);
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  auto notification = client.startNotify(
-      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s);
+  auto notification{client.startNotify(
+      kDevicePath, kCharacteristicPath, [](const auto &) {}, 1s)};
   ASSERT_FALSE(notification);
   EXPECT_EQ(notification.error().kind, dmn::Dmn_GattErrorKind::Remote);
   EXPECT_EQ(notification.error().remote_name, "org.bluez.Error.NotAuthorized");
@@ -953,15 +973,15 @@ TEST(DmnBluezGattClient, WritesWithResponseAndPreservesRemotePermissionError) {
   ASSERT_TRUE(bus.valid());
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
-  const auto written =
-      client.writeWithResponse(kDevicePath, kCharacteristicPath, {9, 8, 7}, 1s);
+  const auto written{client.writeWithResponse(kDevicePath, kCharacteristicPath,
+                                              {9, 8, 7}, 1s)};
   ASSERT_TRUE(written) << written.error().message;
   EXPECT_EQ(service.writeType(), "request");
   EXPECT_EQ(service.writtenBytes(), (std::vector<std::uint8_t>{9, 8, 7}));
 
   service.setWriteError("org.bluez.Error.NotPermitted");
-  const auto result =
-      client.writeWithResponse(kDevicePath, kCharacteristicPath, {9, 8, 7}, 1s);
+  const auto result{client.writeWithResponse(kDevicePath, kCharacteristicPath,
+                                             {9, 8, 7}, 1s)};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::Remote);
   EXPECT_EQ(result.error().remote_name, "org.bluez.Error.NotPermitted");
@@ -972,9 +992,9 @@ TEST(DmnBluezGattClient, RejectsForeignCharacteristicPath) {
   ASSERT_TRUE(bus.valid());
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
-  const auto result = client.writeWithResponse(
+  const auto result{client.writeWithResponse(
       kDevicePath, "/org/bluez/hci0/dev_11_22_33_44_55_66/service001/char001",
-      {1}, 1s);
+      {1}, 1s)};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::InvalidArgument);
 }

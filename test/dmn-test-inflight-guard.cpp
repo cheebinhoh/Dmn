@@ -18,7 +18,7 @@ public:
   ~InflightTest() {}
 
   void doMethod1() {
-    auto ticket = this->enterInflightGate();
+    auto ticket{this->enterInflightGate()};
 
     EXPECT_TRUE((this->inflight_count() == 1));
 
@@ -28,7 +28,7 @@ public:
   }
 
   void doMethod2_from_1() {
-    auto ticket = this->enterInflightGate();
+    auto ticket{this->enterInflightGate()};
 
     EXPECT_TRUE((this->inflight_count() == 2));
   }

@@ -24,8 +24,8 @@ TEST(DmnTimerFaultInjection, RescheduleFailurePausesAndCanBeReported) {
                          callback_count.fetch_add(1, std::memory_order_release);
                        }};
 
-  const auto failure_deadline =
-      std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  const auto failure_deadline{std::chrono::steady_clock::now() +
+                              std::chrono::seconds(2)};
   bool failure_observed{};
   while (std::chrono::steady_clock::now() < failure_deadline) {
     try {

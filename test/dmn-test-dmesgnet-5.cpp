@@ -48,21 +48,21 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1")};
 
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2")};
 
-    auto read_from_write_1 = write_1;
-    auto write_to_read_1 = read_1;
+    auto read_from_write_1{write_1};
+    auto write_to_read_1{read_1};
 
-    auto read_from_write_2 = write_2;
-    auto write_to_read_2 = read_2;
+    auto read_from_write_2{write_2};
+    auto write_to_read_2{read_2};
 
     dmn::DMesgPb dmesgpb1{};
     dmn::DMesgPb dmesgpb1_body{};
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
           bool sendConflict{};
 
           while (true) {
-            auto data = read_from_write_1->read();
+            auto data{read_from_write_1->read()};
             if (!data) {
               break;
             }
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
             } else if (!sendConflict) {
               dmesgpb1_body = dmesgpb1;
 
-              dmn::DMesgPb dmesgpbWritten = dmesgpb1;
+              dmn::DMesgPb dmesgpbWritten{dmesgpb1};
               dmesgpbWritten.set_topic("counter sync");
               dmesgpbWritten.set_runningcounter(1);
               dmesgpbWritten.set_type(dmn::DMesgTypePb::message);
@@ -113,16 +113,16 @@ int main(int argc, char *argv[]) {
 
     dmesg1_to_dmesg2.exec();
 
-    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1))};
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    auto dmesg_handleRead =
-        dmesgnet1->openHandler("readHandler1", "counter sync");
+    auto dmesg_handleRead{
+        dmesgnet1->openHandler("readHandler1", "counter sync")};
 
     std::this_thread::sleep_for(std::chrono::seconds(15));
-    auto sys1 = dmesgpb1_sys.body().sys().self();
+    auto sys1{dmesgpb1_sys.body().sys().self()};
 
     EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
     EXPECT_TRUE(("dmesg1" == sys1.masteridentifier()));
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     dmesgpb.set_sourceidentifier("writehandler");
 
     std::cout << "before write\n";
-    auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
+    auto dmesg_handle{dmesgnet1->openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_handle);
     dmesg_handle->write(dmesgpb);
 
@@ -141,14 +141,14 @@ int main(int argc, char *argv[]) {
     EXPECT_TRUE(("counter sync" == dmesgpb1_body.topic()));
     EXPECT_TRUE((dmn::DMesgTypePb::message == dmesgpb1_body.type()));
 
-    auto dmesgpbRead = dmesg_handleRead->read();
+    auto dmesgpbRead{dmesg_handleRead->read()};
     EXPECT_TRUE((dmesgpbRead));
     EXPECT_TRUE(("counter sync" == dmesgpbRead->topic()));
 
     std::cout << "after read: " << dmesgpbRead->ShortDebugString() << "\n";
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto inConflict = dmesg_handle->isInConflict();
+    auto inConflict{dmesg_handle->isInConflict()};
     EXPECT_TRUE((inConflict));
 
     dmesgnet1 = {};

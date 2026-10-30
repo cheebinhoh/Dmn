@@ -386,13 +386,13 @@ Dmn_Pub<T, QueueType>::Dmn_Pub(std::string_view name, size_t capacity,
 
 template <typename T, template <class> class QueueType>
 Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
-  auto waitHandler = this->addExecTaskWithWait([this]() -> void {
+  auto waitHandler{this->addExecTaskWithWait([this]() -> void {
     for (auto &sub : m_subscribers) {
-      auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+      auto it{std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this)};
       assert(sub->m_pubs.end() != it);
       sub->m_pubs.erase(it);
     }
-  });
+  })};
 
   waitHandler->wait();
 
@@ -405,8 +405,8 @@ Dmn_Pub<T, QueueType>::~Dmn_Pub() noexcept try {
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::publish(const T &item, bool block) {
   if (block) {
-    auto waitHandler = this->addExecTaskWithWait(
-        [this, &item]() -> void { this->publishInternal(item); });
+    auto waitHandler{this->addExecTaskWithWait(
+        [this, &item]() -> void { this->publishInternal(item); })};
 
     waitHandler->wait();
   } else {
@@ -443,8 +443,8 @@ auto Dmn_Pub<T, QueueType>::takeCallbackFailures()
     -> std::vector<CallbackFailure> {
   std::vector<CallbackFailure> failures{};
 
-  auto waitHandler = this->addExecTaskWithWait(
-      [this, &failures]() -> void { failures.swap(m_callbackFailures); });
+  auto waitHandler{this->addExecTaskWithWait(
+      [this, &failures]() -> void { failures.swap(m_callbackFailures); })};
 
   waitHandler->wait();
 
@@ -475,13 +475,13 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 
   std::exception_ptr firstFailure{};
   for (auto &sub : m_subscribers) {
-    bool accepted = true;
+    bool accepted{true};
 
     if (m_filter_fn) {
       try {
         accepted = m_filter_fn(sub.get(), item);
       } catch (...) {
-        auto failure = std::current_exception();
+        auto failure{std::current_exception()};
         recordCallbackFailure(CallbackFailureKind::kFilter, *sub, failure);
 
         if (!firstFailure) {
@@ -496,7 +496,7 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
       try {
         sub->notify(item, this);
       } catch (...) {
-        auto failure = std::current_exception();
+        auto failure{std::current_exception()};
         recordCallbackFailure(CallbackFailureKind::kNotify, *sub, failure);
 
         if (!firstFailure) {
@@ -513,8 +513,8 @@ void Dmn_Pub<T, QueueType>::publishInternal(const T &item) {
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
-  auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
-    auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+  auto waitHandler{this->addExecTaskWithWait([this, sub]() -> void {
+    auto it{std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this)};
     if (it != sub->m_pubs.end()) {
       return;
     }
@@ -524,7 +524,7 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
 
     // resend the data items that the registered subscriber
     // miss.
-    size_t numberOfItemsToBeSkipped = 0;
+    size_t numberOfItemsToBeSkipped{0};
     if (sub->m_replayQuantity == 0) {
       numberOfItemsToBeSkipped = m_buffer.size();
     } else if (sub->m_replayQuantity > 0 &&
@@ -533,7 +533,7 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
           m_buffer.size() - static_cast<size_t>(sub->m_replayQuantity);
     }
 
-    auto startIt = std::next(m_buffer.begin(), numberOfItemsToBeSkipped);
+    auto startIt{std::next(m_buffer.begin(), numberOfItemsToBeSkipped)};
     for (auto it = startIt; it != m_buffer.end(); it++) {
       try {
         sub->notify(*it, this);
@@ -542,7 +542,7 @@ void Dmn_Pub<T, QueueType>::registerSubscriber(std::shared_ptr<Dmn_Sub> sub) {
                               std::current_exception());
       }
     }
-  });
+  })};
 
   waitHandler->wait();
 }
@@ -554,7 +554,7 @@ template <typename U, class... X>
                          std::shared_ptr<U>>)
 auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
     -> std::shared_ptr<U> {
-  auto subSp = std::make_shared<U>(std::forward<X>(arg)...);
+  auto subSp{std::make_shared<U>(std::forward<X>(arg)...)};
 
   registerSubscriber(subSp);
 
@@ -563,8 +563,8 @@ auto Dmn_Pub<T, QueueType>::registerSubscriber(X &&...arg)
 
 template <typename T, template <class> class QueueType>
 void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
-  auto waitHandler = this->addExecTaskWithWait([this, sub]() -> void {
-    auto it = std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this);
+  auto waitHandler{this->addExecTaskWithWait([this, sub]() -> void {
+    auto it{std::find(sub->m_pubs.begin(), sub->m_pubs.end(), this)};
     assert(it != sub->m_pubs.end());
 
     sub->m_pubs.erase(it);
@@ -573,7 +573,7 @@ void Dmn_Pub<T, QueueType>::unregisterSubscriber(Dmn_Sub *sub) {
         std::remove_if(m_subscribers.begin(), m_subscribers.end(),
                        [sub](auto &sp) { return sp.get() == sub; }),
         m_subscribers.end());
-  });
+  })};
 
   waitHandler->wait();
 }

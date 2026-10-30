@@ -24,12 +24,12 @@ using Pipe = dmn::Dmn_Pipe<int>;
 using PipeLf = dmn::Dmn_Pipe<int, dmn::Dmn_BlockingQueue_Lf<int>>;
 using Clock = std::chrono::steady_clock;
 
-constexpr bool kEnableScheduledWrites = true;
+constexpr bool kEnableScheduledWrites{true};
 
 template <typename PipeType> void expectShutdownDrainsScheduledWrite() {
   std::atomic_bool processed{};
   Clock::time_point processed_at{};
-  const auto deadline = Clock::now() + std::chrono::milliseconds(60);
+  const auto deadline{Clock::now() + std::chrono::milliseconds(60)};
 
   {
     PipeType pipe{"scheduled",
@@ -50,7 +50,7 @@ template <typename PipeType> void expectShutdownDrainsScheduledWrite() {
 TEST(DmnPipeScheduledTest, RunsScheduledItemNoEarlierThanDeadline) {
   std::mutex mutex;
   Clock::time_point processed_at{};
-  const auto deadline = Clock::now() + std::chrono::milliseconds(60);
+  const auto deadline{Clock::now() + std::chrono::milliseconds(60)};
 
   Pipe pipe{"scheduled",
             [&mutex, &processed_at](int) {
@@ -72,7 +72,7 @@ TEST(DmnPipeScheduledTest, EarlierScheduledWriteWakesWorkerForNewDeadline) {
   std::mutex mutex;
   std::vector<int> processed;
   Clock::time_point earlier_processed_at{};
-  const auto later_deadline = Clock::now() + std::chrono::milliseconds(600);
+  const auto later_deadline{Clock::now() + std::chrono::milliseconds(600)};
 
   Pipe pipe{"scheduled",
             [&mutex, &processed, &earlier_processed_at](int item) {
@@ -87,7 +87,7 @@ TEST(DmnPipeScheduledTest, EarlierScheduledWriteWakesWorkerForNewDeadline) {
 
   pipe.writeAt(later_deadline, 1);
   std::this_thread::sleep_for(std::chrono::milliseconds(25));
-  const auto earlier_deadline = Clock::now() + std::chrono::milliseconds(120);
+  const auto earlier_deadline{Clock::now() + std::chrono::milliseconds(120)};
   pipe.writeAt(earlier_deadline, 2);
 
   EXPECT_EQ(pipe.waitForEmpty(), 2);
@@ -105,7 +105,7 @@ TEST(DmnPipeScheduledTest, ImmediateWritesRunBeforeFutureScheduledWrites) {
   std::mutex mutex;
   std::vector<int> processed;
   Clock::time_point immediate_processed_at{};
-  const auto scheduled_deadline = Clock::now() + std::chrono::milliseconds(300);
+  const auto scheduled_deadline{Clock::now() + std::chrono::milliseconds(300)};
 
   Pipe pipe{"scheduled",
             [&mutex, &processed, &immediate_processed_at](int item) {
@@ -135,7 +135,7 @@ TEST(DmnPipeScheduledTest, ImmediateWritesRunBeforeFutureScheduledWrites) {
 TEST(DmnPipeScheduledTest, EqualDeadlinesRetainSubmissionOrder) {
   std::mutex mutex;
   std::vector<int> processed;
-  const auto deadline = Clock::now() + std::chrono::milliseconds(40);
+  const auto deadline{Clock::now() + std::chrono::milliseconds(40)};
 
   Pipe pipe{"scheduled",
             [&mutex, &processed](int item) {

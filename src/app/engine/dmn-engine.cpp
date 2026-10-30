@@ -29,9 +29,9 @@ namespace {
 
 // Retry delays are scaled by a random 80-100% so several phones that fail
 // together do not retry in lockstep.
-constexpr unsigned int kRetryJitterMinimumPercent = 80;
-constexpr unsigned int kRetryJitterMaximumPercent = 100;
-constexpr std::string_view kEngineVersion = "1";
+constexpr unsigned int kRetryJitterMinimumPercent{80};
+constexpr unsigned int kRetryJitterMaximumPercent{100};
+constexpr std::string_view kEngineVersion{"1"};
 
 // BlueZ reports addresses in upper case but a persisted or hand-written
 // identity may not, so every identity comparison is case-insensitive.
@@ -66,7 +66,7 @@ auto optionalBool(const std::optional<bool> &value) -> Dmn_JsonValue {
 }
 
 auto identityJson(const Dmn_DeviceIdentity &identity) -> Dmn_JsonValue {
-  auto json = Dmn_JsonValue::object();
+  auto json{Dmn_JsonValue::object()};
   json.set("adapter", identity.m_adapter_address);
   json.set("device", identity.m_device_address);
 
@@ -85,7 +85,7 @@ auto optionalString(const std::optional<std::string> &value) -> Dmn_JsonValue {
 
 auto notificationJson(const Dmn_BackendNotification &notification)
     -> Dmn_JsonValue {
-  auto json = Dmn_JsonValue::object();
+  auto json{Dmn_JsonValue::object()};
   json.set("kind", notification.m_kind);
   json.set("uid", static_cast<std::uint64_t>(notification.m_uid));
   json.set("category", static_cast<int>(notification.m_category));
@@ -132,7 +132,7 @@ public:
                              });
                            });
 
-    auto ready = Dmn_JsonValue::object();
+    auto ready{Dmn_JsonValue::object()};
     ready.set("type", "ready");
     ready.set("protocol", kEngineProtocolVersion);
     ready.set("engine", std::string{kEngineVersion});
@@ -159,7 +159,7 @@ public:
   // "type") or after shutdown. Unknown command types are accepted and ignored
   // so a newer frontend can talk to an older engine.
   auto send(std::string_view commandJson) -> bool {
-    auto command = Dmn_JsonValue::parse(commandJson);
+    auto command{Dmn_JsonValue::parse(commandJson)};
     if (!command || !command->isObject() || command->find("type") == nullptr ||
         m_closed.load(std::memory_order_acquire)) {
       return false;
@@ -179,7 +179,7 @@ public:
       return std::nullopt;
     }
 
-    auto message = std::move(m_outbox.front());
+    auto message{std::move(m_outbox.front())};
     m_outbox.pop_front();
 
     return message;
@@ -229,7 +229,7 @@ private:
   }
 
   void spawn(std::function<void()> work) {
-    auto task = std::make_unique<Task>();
+    auto task{std::make_unique<Task>()};
     auto *raw = task.get();
     task->m_proc.exec([raw, work = std::move(work)] {
       work();
@@ -257,8 +257,8 @@ private:
   // timer, reconcile monitors against intent, then flush coalesced output.
   void run() {
     refreshInventory();
-    auto nextRefresh = Dmn_DeviceMonitorController::Clock::now() +
-                       m_options.m_inventory_refresh_interval;
+    auto nextRefresh { Dmn_DeviceMonitorController::Clock::now() +
+                       m_options.m_inventory_refresh_interval};
 
     while (!m_shutdown_requested) {
       std::deque<std::function<void()>> batch;
@@ -281,7 +281,7 @@ private:
       }
 
       reapTasks();
-      const auto now = Dmn_DeviceMonitorController::Clock::now();
+      const auto now{Dmn_DeviceMonitorController::Clock::now()};
       if (now >= nextRefresh) {
         refreshInventory();
         nextRefresh = now + m_options.m_inventory_refresh_interval;
@@ -324,13 +324,13 @@ private:
     }
 
     for (const auto &entry : m_selection.devices()) {
-      const auto found = m_sessions.find(identityKey(entry.m_identity));
+      const auto found{m_sessions.find(identityKey(entry.m_identity))};
       if (found != m_sessions.end() && found->second.m_phase != Phase::kIdle) {
         (void)m_backend->stopMonitor(entry.m_identity);
       }
     }
 
-    auto bye = Dmn_JsonValue::object();
+    auto bye{Dmn_JsonValue::object()};
     bye.set("type", "bye");
     emit(bye);
     m_closed.store(true, std::memory_order_release);
@@ -359,14 +359,14 @@ private:
   }
 
   void emitPersist() {
-    auto message = Dmn_JsonValue::object();
+    auto message{Dmn_JsonValue::object()};
     message.set("type", "persist");
-    auto saved = Dmn_JsonValue::array();
+    auto saved{Dmn_JsonValue::array()};
     for (const auto &identity : m_selection.savedSelection()) {
       saved.push(identityJson(identity));
     }
 
-    auto monitoring = Dmn_JsonValue::array();
+    auto monitoring{Dmn_JsonValue::array()};
     for (const auto &identity : m_intents) {
       monitoring.push(identityJson(identity));
     }
@@ -434,12 +434,12 @@ private:
   }
 
   void emitState() {
-    auto message = Dmn_JsonValue::object();
+    auto message{Dmn_JsonValue::object()};
     message.set("type", "state");
 
-    auto adapters = Dmn_JsonValue::array();
+    auto adapters{Dmn_JsonValue::array()};
     for (const auto &adapter : m_adapters) {
-      auto json = Dmn_JsonValue::object();
+      auto json{Dmn_JsonValue::object()};
       json.set("address", adapter.m_address);
       json.set("name", adapter.m_name);
       json.set("powered", adapter.m_powered);
@@ -452,19 +452,19 @@ private:
     message.set("status", m_status);
     message.set("unsaved_changes", m_selection.hasUnsavedChanges());
 
-    auto sort = Dmn_JsonValue::object();
+    auto sort{Dmn_JsonValue::object()};
     sort.set("column", m_selection.sortColumn() == Dmn_DeviceSortColumn::kName
                            ? "name"
                            : "status");
     sort.set("ascending", m_selection.sortAscending());
     message.set("sort", std::move(sort));
 
-    auto devices = Dmn_JsonValue::array();
+    auto devices{Dmn_JsonValue::array()};
     for (const auto &entry : m_selection.devices()) {
-      const auto context = actionContext(entry);
-      const auto availability = deviceActionAvailability(entry, context);
+      const auto context{actionContext(entry)};
+      const auto availability{deviceActionAvailability(entry, context)};
       const auto &session = sessionFor(entry.m_identity);
-      auto json = identityJson(entry.m_identity);
+      auto json{identityJson(entry.m_identity)};
       json.set("name", deviceDisplayName(entry));
       json.set("status", deviceDisplayStatus(entry));
       json.set("paired", optionalBool(entry.m_paired));
@@ -503,7 +503,7 @@ private:
 
     m_inventory_busy = true;
     spawn([this] {
-      auto inventory = m_backend->snapshot();
+      auto inventory{m_backend->snapshot()};
       post([this, inventory = std::move(inventory)]() mutable {
         m_inventory_busy = false;
         if (!inventory) {
@@ -557,7 +557,7 @@ private:
     markDirty();
 
     spawn([this, identity, cancel = session.m_cancel] {
-      auto result = m_backend->startMonitor(
+      auto result { m_backend->startMonitor(
           identity, *cancel, [this, identity](const std::string &progress) {
             post([this, identity, progress] {
               auto &current = sessionFor(identity);
@@ -566,7 +566,7 @@ private:
                 markDirty();
               }
             });
-          });
+          })};
       post([this, identity, result = std::move(result)] {
         finishStart(identity, result);
       });
@@ -676,7 +676,7 @@ private:
                  const std::string &state, const std::string &error,
                  const Dmn_BackendNotification *notification,
                  const bool terminal = false) {
-    auto message = Dmn_JsonValue::object();
+    auto message{Dmn_JsonValue::object()};
     message.set("type", "event");
     message.set("sequence", m_sequence++);
     message.set("received_ms", nowMilliseconds());
@@ -706,11 +706,11 @@ private:
   // (empty address, selected=false, enabled=false) rather than failing, and a
   // device command naming an unknown device is ignored by its handler.
   void handleCommand(const Dmn_JsonValue &command) {
-    const auto type = command.getString("type");
+    const auto type{command.getString("type")};
     const Dmn_DeviceIdentity requested{command.getString("adapter"),
                                        command.getString("device")};
     if (type == "hello") {
-      auto ready = Dmn_JsonValue::object();
+      auto ready{Dmn_JsonValue::object()};
       ready.set("type", "ready");
       ready.set("protocol", kEngineProtocolVersion);
       ready.set("engine", std::string{kEngineVersion});
@@ -790,12 +790,12 @@ private:
   }
 
   void handleScan(const Dmn_JsonValue &command) {
-    const auto enabled = command.getBool("enabled", false);
+    const auto enabled{command.getBool("enabled", false)};
     if (m_scan_busy || m_scanning == enabled) {
       return;
     }
 
-    const auto selector = lower(command.getString("adapter"));
+    const auto selector{lower(command.getString("adapter"))};
     std::string path;
     for (const auto &adapter : m_adapters) {
       if (selector.empty() || lower(adapter.m_address) == selector) {
@@ -814,7 +814,7 @@ private:
     m_scan_busy = true;
     markDirty();
     spawn([this, enabled, path] {
-      auto result = m_backend->setScanning(enabled, path);
+      auto result{m_backend->setScanning(enabled, path)};
       post([this, enabled, result = std::move(result)] {
         m_scan_busy = false;
         if (result) {
@@ -846,7 +846,7 @@ private:
   void handleSave() {
     m_selection.saveSelection();
     std::erase_if(m_intents, [this](const auto &identity) {
-      const bool keep = contains(m_selection.savedSelection(), identity);
+      const bool keep{contains(m_selection.savedSelection(), identity)};
       if (!keep) {
         m_controller.resetRetries(identity);
       }
@@ -863,7 +863,7 @@ private:
       return;
     }
 
-    const auto identity = entry->m_identity;
+    const auto identity{entry->m_identity};
     if (m_connection_busy) {
       setStatus("Wait for the current connection operation to finish.");
 
@@ -881,7 +881,7 @@ private:
     m_pending_connect = identity;
     setStatus("Connecting…");
     spawn([this, identity] {
-      auto result = m_backend->connect(identity);
+      auto result{m_backend->connect(identity)};
       post([this, result = std::move(result)] {
         m_connection_busy = false;
         m_pending_connect.reset();
@@ -904,7 +904,7 @@ private:
       return;
     }
 
-    const auto identity = entry->m_identity;
+    const auto identity{entry->m_identity};
     if (m_pending_connect && sameIdentity(*m_pending_connect, identity)) {
       setStatus("Canceling connection…");
       spawn([this, identity] { m_backend->cancelConnect(identity); });
@@ -971,7 +971,7 @@ private:
         (void)m_backend->stopMonitor(identity);
       }
 
-      auto result = m_backend->disconnect(identity);
+      auto result{m_backend->disconnect(identity)};
       post([this, identity, stopFirst, result = std::move(result)] {
         m_connection_busy = false;
         m_pending_disconnect.reset();
@@ -994,7 +994,7 @@ private:
       return;
     }
 
-    const auto identity = entry->m_identity;
+    const auto identity{entry->m_identity};
     if (enabled) {
       if (contains(m_intents, identity)) {
         return;
@@ -1047,20 +1047,20 @@ private:
     m_direct_phase = Phase::kStarting;
     m_direct_cancel = std::make_shared<std::atomic<bool>>(false);
     spawn([this, identity, cancel = m_direct_cancel] {
-      auto result = m_backend->startMonitor(
+      auto result { m_backend->startMonitor(
           identity, *cancel, [this](const std::string &progress) {
             post([this, progress] {
-              auto fields = Dmn_JsonValue::object();
+              auto fields{Dmn_JsonValue::object()};
               fields.set("stage", progress);
               emitDirect("progress", std::move(fields));
             });
-          });
+          })};
       post([this, result = std::move(result)] { finishDirectStart(result); });
     });
   }
 
   void finishDirectStart(const Dmn_BackendResult &result) {
-    auto fields = Dmn_JsonValue::object();
+    auto fields{Dmn_JsonValue::object()};
     if (result) {
       m_direct_phase = Phase::kActive;
       emitDirect("ready", std::move(fields));
@@ -1099,9 +1099,9 @@ private:
 
     m_direct_phase = Phase::kStopping;
     spawn([this, identity = *m_direct] {
-      auto result = m_backend->stopMonitor(identity);
+      auto result{m_backend->stopMonitor(identity)};
       post([this, result = std::move(result)] {
-        auto fields = Dmn_JsonValue::object();
+        auto fields{Dmn_JsonValue::object()};
         if (!result) {
           fields.set("message", result.error().m_message);
         }

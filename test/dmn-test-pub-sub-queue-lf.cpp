@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
   // auto rec1 = pub.registerSubscriber<Dmn_Msg_Receiver>(new
   // Dmn_Msg_Receiver{"receiver 1"});
-  auto rec1 = pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 1"sv);
+  auto rec1{pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 1"sv)};
   pub.publish("hello pub sub");
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   std::this_thread::sleep_for(std::chrono::seconds(5));
   pub.unregisterSubscriber(rec1.get());
 
-  auto rec2 = pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 2"sv, 2);
+  auto rec2{pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 2"sv, 2)};
   std::this_thread::sleep_for(std::chrono::seconds(5));
   pub.unregisterSubscriber(rec2.get());
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(rec2->m_notifiedList[0] == "hello world 3");
   EXPECT_TRUE(rec2->m_notifiedList[1] == "string 1");
 
-  auto rec3 = pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 3"sv);
+  auto rec3{pub.registerSubscriber<Dmn_Msg_Receiver>("receiver 3"sv)};
   std::this_thread::sleep_for(std::chrono::seconds(5));
   pub.unregisterSubscriber(rec3.get());
 

@@ -22,8 +22,8 @@ TEST(DbusClientSessionTest, DefaultSessionSelectionUsesPrivateDaemon) {
   dmn::Dmn_DbusClient client{config};
   ASSERT_TRUE(client.status().connected);
 
-  const auto id = client.call("org.freedesktop.DBus", "/org/freedesktop/DBus",
-                              "org.freedesktop.DBus", "GetId");
+  const auto id{client.call("org.freedesktop.DBus", "/org/freedesktop/DBus",
+                            "org.freedesktop.DBus", "GetId")};
   ASSERT_TRUE(id) << id.error().message;
   ASSERT_EQ(id->size(), 1U);
   EXPECT_FALSE(id->front().asString().empty());
@@ -39,8 +39,8 @@ TEST(DbusClientSessionTest, ExplicitAddressSelectsPrivateBusDaemon) {
   dmn::Dmn_DbusClient client{config};
   ASSERT_TRUE(client.status().connected);
 
-  const auto id = client.call("org.freedesktop.DBus", "/org/freedesktop/DBus",
-                              "org.freedesktop.DBus", "GetId");
+  const auto id{client.call("org.freedesktop.DBus", "/org/freedesktop/DBus",
+                            "org.freedesktop.DBus", "GetId")};
   ASSERT_TRUE(id) << id.error().message;
   ASSERT_EQ(id->size(), 1U);
   EXPECT_FALSE(id->front().asString().empty());

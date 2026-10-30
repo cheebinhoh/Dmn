@@ -25,29 +25,29 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    auto dmesg = std::make_unique<dmn::Dmn_DMesg>("dmesg");
-    auto topic1_write_handler =
-        dmesg->openHandler("topic1_write_handler", "topic1");
-    auto topic2_write_handler =
-        dmesg->openHandler("topic2_write_handler", "topic2");
+    auto dmesg{std::make_unique<dmn::Dmn_DMesg>("dmesg")};
+    auto topic1_write_handler{
+        dmesg->openHandler("topic1_write_handler", "topic1")};
+    auto topic2_write_handler{
+        dmesg->openHandler("topic2_write_handler", "topic2")};
 
     std::promise<dmn::DMesgPb> topic1_message;
-    auto topic1_message_future = topic1_message.get_future();
-    auto topic1_read_handler =
+    auto topic1_message_future{topic1_message.get_future()};
+    auto topic1_read_handler{
         dmesg->openHandler("topic1_read_handler", "topic1", nullptr,
                            [&topic1_message](dmn::DMesgPb dmesgpb) -> void {
                              std::cout << "read topic1\n";
                              topic1_message.set_value(std::move(dmesgpb));
-                           });
+                           })};
 
     std::promise<dmn::DMesgPb> topic2_message;
-    auto topic2_message_future = topic2_message.get_future();
-    auto topic2_read_handler =
+    auto topic2_message_future{topic2_message.get_future()};
+    auto topic2_read_handler{
         dmesg->openHandler("topic2_read_handler", "topic2", nullptr,
                            [&topic2_message](dmn::DMesgPb dmesgpb) -> void {
                              std::cout << "read topic2\n";
                              topic2_message.set_value(std::move(dmesgpb));
-                           });
+                           })};
     dmn::DMesgPb dmesgpb{};
     dmesgpb.set_type(dmn::DMesgTypePb::message);
 
@@ -57,11 +57,11 @@ int main(int argc, char *argv[]) {
 
     topic1_write_handler->write(dmesgpb);
 
-    auto topic1_status =
-        topic1_message_future.wait_for(std::chrono::seconds(30));
+    auto topic1_status{
+        topic1_message_future.wait_for(std::chrono::seconds(30))};
     EXPECT_EQ(topic1_status, std::future_status::ready);
     if (topic1_status == std::future_status::ready) {
-      auto dmesgpb_topic1_read = topic1_message_future.get();
+      auto dmesgpb_topic1_read{topic1_message_future.get()};
       EXPECT_EQ("topic1", dmesgpb_topic1_read.topic());
       EXPECT_EQ("Hello topic1", dmesgpb_topic1_read.body().message());
     }
@@ -79,11 +79,11 @@ int main(int argc, char *argv[]) {
 
     topic2_write_handler->write(dmesgpb2);
 
-    auto topic2_status =
-        topic2_message_future.wait_for(std::chrono::seconds(30));
+    auto topic2_status{
+        topic2_message_future.wait_for(std::chrono::seconds(30))};
     EXPECT_EQ(topic2_status, std::future_status::ready);
     if (topic2_status == std::future_status::ready) {
-      auto dmesgpb_topic2_read = topic2_message_future.get();
+      auto dmesgpb_topic2_read{topic2_message_future.get()};
       EXPECT_EQ("topic2", dmesgpb_topic2_read.topic());
       EXPECT_EQ("Hello topic2", dmesgpb_topic2_read.body().message());
     }

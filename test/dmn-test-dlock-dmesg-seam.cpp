@@ -44,19 +44,19 @@ TEST(DlockDmesgSeamCustomHandlerPostsInOwnContext, PostToOwnContext) {
   dmn::Dmn_DMesg::HandlerSpec spec{
       "custom-handler", "lock-topic", nullptr, nullptr, {}};
 
-  auto handler = dmesg.openHandlerWithFactory(
+  auto handler{dmesg.openHandlerWithFactory(
       spec,
       [](const dmn::Dmn_DMesg::HandlerSpec &cfg)
           -> std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> {
         return std::make_shared<TestCustomHandler>(
             cfg.m_name, cfg.m_topic, cfg.m_filter_fn, cfg.m_async_process_fn,
             cfg.m_configs);
-      });
+      })};
 
   EXPECT_TRUE(handler);
 
-  auto custom =
-      std::dynamic_pointer_cast<TestCustomHandler>(handler.operator->());
+  auto custom{
+      std::dynamic_pointer_cast<TestCustomHandler>(handler.operator->())};
   EXPECT_TRUE(custom);
 
   ASSERT_TRUE(custom);
@@ -69,7 +69,7 @@ TEST(DlockDmesgSeamCustomHandlerPostsInOwnContext, PostToOwnContext) {
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
 
   google::protobuf::ShutdownProtobufLibrary();
 

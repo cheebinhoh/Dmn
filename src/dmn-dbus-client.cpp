@@ -92,11 +92,11 @@ auto signatureTypeLength(std::string_view signature) -> std::size_t {
   }
 
   if (signature[index] == '(' || signature[index] == '{') {
-    const char close = signature[index] == '(' ? ')' : '}';
+    const char close{signature[index] == '(' ? ')' : '}'};
     ++index;
 
     while (index < signature.size() && signature[index] != close) {
-      const auto length = signatureTypeLength(signature.substr(index));
+      const auto length{signatureTypeLength(signature.substr(index))};
 
       if (length == 0) {
         return 0;
@@ -250,7 +250,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     throw std::length_error("D-Bus value resource limit exceeded");
   }
 
-  const auto signature = value.signature();
+  const auto signature{value.signature()};
 
   if (signature.empty()) {
     throw std::invalid_argument("D-Bus value has no wire type");
@@ -261,35 +261,35 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
 
     appendBasic(iter, DBUS_TYPE_BOOLEAN, data);
   } else if (signature == "n") {
-    const dbus_int16_t data = value.asInt16();
+    const dbus_int16_t data{value.asInt16()};
 
     appendBasic(iter, DBUS_TYPE_INT16, data);
   } else if (signature == "q") {
-    const dbus_uint16_t data = value.asUint16();
+    const dbus_uint16_t data{value.asUint16()};
 
     appendBasic(iter, DBUS_TYPE_UINT16, data);
   } else if (signature == "i") {
-    const dbus_int32_t data = value.asInt32();
+    const dbus_int32_t data{value.asInt32()};
 
     appendBasic(iter, DBUS_TYPE_INT32, data);
   } else if (signature == "u") {
-    const dbus_uint32_t data = value.asUint32();
+    const dbus_uint32_t data{value.asUint32()};
 
     appendBasic(iter, DBUS_TYPE_UINT32, data);
   } else if (signature == "x") {
-    const dbus_int64_t data = value.asInt64();
+    const dbus_int64_t data{value.asInt64()};
 
     appendBasic(iter, DBUS_TYPE_INT64, data);
   } else if (signature == "t") {
-    const dbus_uint64_t data = value.asUint64();
+    const dbus_uint64_t data{value.asUint64()};
 
     appendBasic(iter, DBUS_TYPE_UINT64, data);
   } else if (signature == "d") {
-    const double data = value.asDouble();
+    const double data{value.asDouble()};
 
     appendBasic(iter, DBUS_TYPE_DOUBLE, data);
   } else if (signature == "y") {
-    const unsigned char data = value.asByte();
+    const unsigned char data{value.asByte()};
 
     appendBasic(iter, DBUS_TYPE_BYTE, data);
   } else if (signature == "s" || signature == "o" || signature == "g") {
@@ -304,9 +304,9 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
     }
 
     const char *data = text.c_str();
-    const int type = signature == "s"   ? DBUS_TYPE_STRING
-                     : signature == "o" ? DBUS_TYPE_OBJECT_PATH
-                                        : DBUS_TYPE_SIGNATURE;
+    const int type{signature == "s"   ? DBUS_TYPE_STRING
+                   : signature == "o" ? DBUS_TYPE_OBJECT_PATH
+                                      : DBUS_TYPE_SIGNATURE};
 
     appendBasic(iter, type, data);
   } else if (signature == "ay") {
@@ -323,7 +323,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
 
     if (!bytes.empty()) {
       const auto *data = bytes.data();
-      const int length = static_cast<int>(bytes.size());
+      const int length{static_cast<int>(bytes.size())};
       if (!dbus_message_iter_append_fixed_array(&array.iter(), DBUS_TYPE_BYTE,
                                                 &data, length)) {
         throw std::runtime_error("unable to encode D-Bus byte array");
@@ -343,8 +343,8 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       throw std::invalid_argument("invalid D-Bus dictionary signature");
     }
 
-    const auto entrySignature =
-        "{" + dictionary.key_signature + dictionary.value_signature + "}";
+    const auto entrySignature{"{" + dictionary.key_signature +
+                              dictionary.value_signature + "}"};
     ContainerGuard array{iter, DBUS_TYPE_ARRAY, entrySignature.c_str(),
                          "unable to encode D-Bus dictionary"};
 
@@ -395,7 +395,7 @@ void encodeValue(DBusMessageIter &iter, const Dmn_DbusValue &value,
       throw std::invalid_argument("invalid D-Bus variant value");
     }
 
-    const auto contained = inner.signature();
+    const auto contained{inner.signature()};
     ContainerGuard variant{iter, DBUS_TYPE_VARIANT, contained.c_str(),
                            "unable to encode D-Bus variant"};
 
@@ -412,7 +412,7 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
     throw std::length_error("D-Bus value resource limit exceeded");
   }
 
-  const int type = dbus_message_iter_get_arg_type(&iter);
+  const int type{dbus_message_iter_get_arg_type(&iter)};
   switch (type) {
   case DBUS_TYPE_BOOLEAN: {
     dbus_bool_t value{};
@@ -521,13 +521,13 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
 
     DBusMessageIter contents;
     dbus_message_iter_recurse(&iter, &contents);
-    const auto elementSignature = signature.substr(1);
+    const auto elementSignature{signature.substr(1)};
 
     if (elementSignature.size() >= 2 && elementSignature.front() == '{' &&
         elementSignature.back() == '}') {
-      const auto inner = std::string_view{elementSignature}.substr(
-          1, elementSignature.size() - 2);
-      const auto keyLength = signatureTypeLength(inner);
+      const auto inner{std::string_view{elementSignature}.substr(
+          1, elementSignature.size() - 2)};
+      const auto keyLength{signatureTypeLength(inner)};
 
       if (keyLength == 0 || keyLength >= inner.size()) {
         throw std::runtime_error("invalid D-Bus dictionary signature");
@@ -538,13 +538,13 @@ auto decodeValue(DBusMessageIter &iter, const CodecLimits &limits,
       while (dbus_message_iter_get_arg_type(&contents) != DBUS_TYPE_INVALID) {
         DBusMessageIter entry;
         dbus_message_iter_recurse(&contents, &entry);
-        auto key = decodeValue(entry, limits, depth + 1, count);
+        auto key{decodeValue(entry, limits, depth + 1, count)};
 
         if (!dbus_message_iter_next(&entry)) {
           throw std::runtime_error("incomplete D-Bus dictionary entry");
         }
 
-        auto value = decodeValue(entry, limits, depth + 1, count);
+        auto value{decodeValue(entry, limits, depth + 1, count)};
         entries.emplace_back(std::move(key), std::move(value));
 
         if (!dbus_message_iter_next(&contents)) {
@@ -717,9 +717,9 @@ public:
               const std::string &interface, const std::string &member,
               const Arguments &arguments,
               std::chrono::milliseconds timeout) -> Dmn_DbusCall {
-    auto request = std::make_shared<CallRequest>();
-    auto future = request->promise.get_future();
-    const auto validation = validateCall(destination, path, interface, member);
+    auto request{std::make_shared<CallRequest>()};
+    auto future{request->promise.get_future()};
+    const auto validation{validateCall(destination, path, interface, member)};
 
     if (validation) {
       request->promise.set_value(std::unexpected(*validation));
@@ -760,7 +760,7 @@ public:
         return Dmn_DbusCall{std::move(future), {}};
       }
 
-      const auto active = m_in_flight.fetch_add(1);
+      const auto active{m_in_flight.fetch_add(1)};
       atCapacity = active >= std::min(m_config.limits.max_in_flight_calls,
                                       m_config.limits.max_queued_commands);
 
@@ -880,12 +880,12 @@ public:
       return Dmn_DbusCall{std::move(future), {}};
     }
 
-    std::weak_ptr<Impl> weakImpl = shared_from_this();
-    std::weak_ptr<CallRequest> weakRequest = request;
+    std::weak_ptr<Impl> weakImpl{shared_from_this()};
+    std::weak_ptr<CallRequest> weakRequest{request};
 
     return Dmn_DbusCall{std::move(future), [weakImpl, weakRequest] {
-                          const auto impl = weakImpl.lock();
-                          const auto pending = weakRequest.lock();
+                          const auto impl{weakImpl.lock()};
+                          const auto pending{weakRequest.lock()};
                           if (impl != nullptr && pending != nullptr) {
                             impl->cancelCall(pending);
                           }
@@ -943,7 +943,7 @@ public:
     }
 
     ErrorGuard error;
-    const bool valid =
+    const bool valid{
         dbus_validate_interface(match.interface.c_str(), error.get()) &&
         dbus_validate_member(match.member.c_str(), error.get()) &&
         (match.sender.empty() ||
@@ -951,14 +951,14 @@ public:
         (match.path.empty() ||
          dbus_validate_path(match.path.c_str(), error.get())) &&
         (match.path_namespace.empty() ||
-         dbus_validate_path(match.path_namespace.c_str(), error.get()));
+         dbus_validate_path(match.path_namespace.c_str(), error.get()))};
 
     if (!valid) {
       return std::unexpected(makeError(Dmn_DbusErrorKind::InvalidArgument,
                                        "invalid D-Bus signal match names"));
     }
 
-    const auto rule = makeMatchRule(match);
+    const auto rule{makeMatchRule(match)};
     std::uint64_t id{};
 
     {
@@ -975,9 +975,9 @@ public:
                               Subscription{match, rule, std::move(callback)});
     }
 
-    auto added = submit(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS,
-                        "AddMatch", {Dmn_DbusValue{rule}}, timeout)
-                     .get();
+    auto added{submit(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS,
+                      "AddMatch", {Dmn_DbusValue{rule}}, timeout)
+                   .get()};
     if (!added) {
       {
         std::lock_guard lock{m_mutex};
@@ -1011,7 +1011,7 @@ public:
     {
       std::lock_guard lock{m_mutex};
 
-      const auto found = m_subscriptions.find(id);
+      const auto found{m_subscriptions.find(id)};
 
       if (found == m_subscriptions.end()) {
         return;
@@ -1070,14 +1070,14 @@ public:
 
     std::lock_guard drainLock{m_callbackDrainMutex};
 
-    auto completion = std::make_shared<std::promise<void>>();
-    auto completed = completion->get_future();
+    auto completion{std::make_shared<std::promise<void>>()};
+    auto completed{completion->get_future()};
 
     {
       std::unique_lock lock{m_callbackMutex};
 
       m_callbackCondition.wait(lock, [this] {
-        const auto queued = queuedSignalCountLocked();
+        const auto queued{queuedSignalCountLocked()};
 
         return m_stopping.load() ||
                queued < m_config.limits.max_signal_messages ||
@@ -1181,15 +1181,15 @@ private:
   }
 
   static void pendingComplete(DBusPendingCall *pending, void *data) {
-    auto request = *static_cast<std::shared_ptr<CallRequest> *>(data);
-    auto impl = request->keep_alive;
+    auto request{*static_cast<std::shared_ptr<CallRequest> *>(data)};
+    auto impl{request->keep_alive};
 
     if (impl == nullptr) {
       return;
     }
 
-    Dmn_DbusResult<Arguments> result = std::unexpected(makeError(
-        Dmn_DbusErrorKind::Transport, "D-Bus call completed without a reply"));
+    Dmn_DbusResult<Arguments> result{std::unexpected(makeError(
+        Dmn_DbusErrorKind::Transport, "D-Bus call completed without a reply"))};
 
     try {
       MessagePtr reply{dbus_pending_call_steal_reply(pending)};
@@ -1205,14 +1205,14 @@ private:
           dbus_message_iter_get_basic(&iter, &text);
         }
 
-        const std::string remoteName = name == nullptr ? "" : name;
-        const std::string message =
-            text == nullptr ? "remote D-Bus method failed" : text;
-        const auto kind = remoteName == DBUS_ERROR_NO_REPLY
-                              ? Dmn_DbusErrorKind::Timeout
-                          : remoteName == DBUS_ERROR_DISCONNECTED
-                              ? Dmn_DbusErrorKind::Transport
-                              : Dmn_DbusErrorKind::Remote;
+        const std::string remoteName{name == nullptr ? "" : name};
+        const std::string message{text == nullptr ? "remote D-Bus method failed"
+                                                  : text};
+        const auto kind{remoteName == DBUS_ERROR_NO_REPLY
+                            ? Dmn_DbusErrorKind::Timeout
+                        : remoteName == DBUS_ERROR_DISCONNECTED
+                            ? Dmn_DbusErrorKind::Transport
+                            : Dmn_DbusErrorKind::Remote};
         result = std::unexpected(makeError(kind, message, remoteName));
       } else if (reply != nullptr) {
         result = decodeArguments(reply.get(), request->limits);
@@ -1282,9 +1282,9 @@ private:
 
   void validateConfig() {
     const auto &limits = m_config.limits;
-    const bool validBusKind = m_config.bus_kind == Dmn_DbusBusKind::Session ||
-                              m_config.bus_kind == Dmn_DbusBusKind::System ||
-                              m_config.bus_kind == Dmn_DbusBusKind::Address;
+    const bool validBusKind{m_config.bus_kind == Dmn_DbusBusKind::Session ||
+                            m_config.bus_kind == Dmn_DbusBusKind::System ||
+                            m_config.bus_kind == Dmn_DbusBusKind::Address};
 
     if (!validBusKind ||
         (m_config.bus_kind == Dmn_DbusBusKind::Address &&
@@ -1359,16 +1359,16 @@ private:
     } else {
       // Session and System choose the standard daemon by kind while libdbus
       // still gives this client its own dedicated connection.
-      const auto bus = m_config.bus_kind == Dmn_DbusBusKind::System
-                           ? DBUS_BUS_SYSTEM
-                           : DBUS_BUS_SESSION;
+      const auto bus{m_config.bus_kind == Dmn_DbusBusKind::System
+                         ? DBUS_BUS_SYSTEM
+                         : DBUS_BUS_SESSION};
       m_connection.reset(dbus_bus_get_private(bus, error.get()));
     }
 
     if (m_connection == nullptr) {
-      const auto message = error.value().message == nullptr
-                               ? "unable to connect to D-Bus"
-                               : error.value().message;
+      const auto message{error.value().message == nullptr
+                             ? "unable to connect to D-Bus"
+                             : error.value().message};
 
       throw std::system_error(std::make_error_code(std::errc::not_connected),
                               message);
@@ -1503,7 +1503,7 @@ private:
     const CodecLimits limits{self->m_config.limits.max_message_bytes,
                              self->m_config.limits.max_container_depth,
                              self->m_config.limits.max_values};
-    const auto decoded = decodeArguments(message, limits);
+    const auto decoded{decodeArguments(message, limits)};
 
     if (!decoded) {
       self->recordTerminalError(decoded.error().message);
@@ -1511,10 +1511,10 @@ private:
       return DBUS_HANDLER_RESULT_HANDLED;
     }
 
-    const auto bytes = messageSize(message);
+    const auto bytes{messageSize(message)};
     std::lock_guard lock{self->m_callbackMutex};
 
-    const auto queuedSignalCount = self->queuedSignalCountLocked();
+    const auto queuedSignalCount{self->queuedSignalCountLocked()};
 
     if (callbacks.size() >
             self->m_config.limits.max_signal_messages -
@@ -1563,8 +1563,9 @@ private:
     m_dispatchCondition.notify_all();
 
     while (!m_stopping.load()) {
-      const bool dispatched = dbus_connection_read_write_dispatch(
-          m_connection.get(), kDispatchPollTimeoutMs);
+      const bool dispatched{
+          dbus_connection_read_write_dispatch(m_connection.get(),
+                                              kDispatchPollTimeoutMs) == true};
       expireCalls();
 
       if (!dispatched) {
@@ -1584,7 +1585,7 @@ private:
   }
 
   void expireCalls() {
-    const auto now = std::chrono::steady_clock::now();
+    const auto now{std::chrono::steady_clock::now()};
     std::vector<std::shared_ptr<CallRequest>> expired;
 
     {
@@ -1743,7 +1744,7 @@ auto Dmn_DbusSubscription::operator=(Dmn_DbusSubscription &&other) noexcept
 
 void Dmn_DbusSubscription::cancel() noexcept {
   if (m_cancel) {
-    auto callback = std::move(m_cancel);
+    auto callback{std::move(m_cancel)};
 
     try {
       callback();
@@ -1760,7 +1761,7 @@ auto Dmn_DbusCall::get() -> Result { return m_future.get(); }
 
 void Dmn_DbusCall::cancel() noexcept {
   if (m_cancel) {
-    auto callback = std::move(m_cancel);
+    auto callback{std::move(m_cancel)};
 
     try {
       callback();
@@ -1805,9 +1806,8 @@ auto Dmn_DbusClient::getProperty(
     const std::string &destination, const std::string &path,
     const std::string &interface,
     const std::string &property) -> Dmn_DbusResult<Dmn_DbusValue> {
-  auto result =
-      call(destination, path, "org.freedesktop.DBus.Properties", "Get",
-           {Dmn_DbusValue{interface}, Dmn_DbusValue{property}});
+  auto result{call(destination, path, "org.freedesktop.DBus.Properties", "Get",
+                   {Dmn_DbusValue{interface}, Dmn_DbusValue{property}})};
 
   if (!result) {
     return std::unexpected(result.error());
@@ -1826,10 +1826,9 @@ auto Dmn_DbusClient::setProperty(const std::string &destination,
                                  const std::string &interface,
                                  const std::string &property,
                                  Dmn_DbusValue value) -> Dmn_DbusResult<void> {
-  auto result =
-      call(destination, path, "org.freedesktop.DBus.Properties", "Set",
-           {Dmn_DbusValue{interface}, Dmn_DbusValue{property},
-            Dmn_DbusValue::variant(std::move(value))});
+  auto result{call(destination, path, "org.freedesktop.DBus.Properties", "Set",
+                   {Dmn_DbusValue{interface}, Dmn_DbusValue{property},
+                    Dmn_DbusValue::variant(std::move(value))})};
 
   if (!result) {
     return std::unexpected(result.error());
@@ -1860,8 +1859,7 @@ auto Dmn_DbusClient::subscribe(
 
   return subscribeWithPath(
       match,
-      [callback = std::move(callback)](std::string,
-                                       Arguments arguments) mutable {
+      [callback = std::move(callback)](std::string, Arguments arguments) {
         callback(std::move(arguments));
       },
       timeout);
@@ -1877,14 +1875,14 @@ auto Dmn_DbusClient::subscribeWithPath(const Dmn_DbusSignalMatch &match,
 auto Dmn_DbusClient::subscribeWithPath(
     const Dmn_DbusSignalMatch &match, SignalCallbackWithPath callback,
     std::chrono::milliseconds timeout) -> Dmn_DbusResult<Dmn_DbusSubscription> {
-  auto subscribed = m_impl->subscribe(match, std::move(callback), timeout);
+  auto subscribed{m_impl->subscribe(match, std::move(callback), timeout)};
 
   if (!subscribed) {
     return std::unexpected(subscribed.error());
   }
 
-  std::weak_ptr<Impl> weak = m_impl;
-  const auto id = *subscribed;
+  std::weak_ptr<Impl> weak{m_impl};
+  const auto id{*subscribed};
 
   return Dmn_DbusSubscription{[weak, id] {
     if (const auto impl = weak.lock()) {

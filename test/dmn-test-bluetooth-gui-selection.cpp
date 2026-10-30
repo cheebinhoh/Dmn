@@ -47,10 +47,10 @@ TEST(DmnBluetoothGuiDeviceSelection, RequiresPositiveLimit) {
 
 TEST(DmnBluetoothGuiDeviceSelection,
      SavedConnectedDeviceOffersDisconnectAndMonitoring) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto actions = dmn::gui::deviceActionAvailability(
-      connected, Dmn_DeviceActionContext{.m_saved = true});
+  const auto actions{dmn::gui::deviceActionAvailability(
+      connected, Dmn_DeviceActionContext{.m_saved = true})};
 
   EXPECT_FALSE(actions.m_can_connect);
   EXPECT_TRUE(actions.m_can_disconnect);
@@ -60,11 +60,11 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      DisconnectedDeviceDoesNotOfferMonitoringActionEvenWithSavedIntent) {
-  auto disconnected = device("AA:00", "BB:01", "iPhone One");
+  auto disconnected{device("AA:00", "BB:01", "iPhone One")};
   disconnected.m_connected = false;
-  const auto actions = dmn::gui::deviceActionAvailability(
+  const auto actions{dmn::gui::deviceActionAvailability(
       disconnected,
-      Dmn_DeviceActionContext{.m_saved = true, .m_monitor_requested = true});
+      Dmn_DeviceActionContext{.m_saved = true, .m_monitor_requested = true})};
 
   EXPECT_FALSE(actions.m_can_start_monitoring);
   EXPECT_FALSE(actions.m_can_stop_monitoring);
@@ -72,9 +72,9 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      ConnectionActionsRequirePairingAndMonitoringRequiresConnection) {
-  auto unpaired = device("AA:00", "BB:01", "iPhone One", false);
+  auto unpaired{device("AA:00", "BB:01", "iPhone One", false)};
   unpaired.m_connected = true;
-  auto disconnected = device("AA:00", "BB:02", "iPhone Two");
+  auto disconnected{device("AA:00", "BB:02", "iPhone Two")};
   disconnected.m_connected = false;
   const Dmn_DeviceActionContext saved{.m_saved = true};
 
@@ -90,28 +90,28 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      ConnectionAndMonitorActionsFollowDisconnectedAndConnectedStates) {
-  auto disconnected = device("AA:00", "BB:01", "iPhone One");
+  auto disconnected{device("AA:00", "BB:01", "iPhone One")};
   disconnected.m_connected = false;
-  const auto disconnectedActions = dmn::gui::deviceActionAvailability(
-      disconnected, Dmn_DeviceActionContext{.m_saved = true});
+  const auto disconnectedActions{dmn::gui::deviceActionAvailability(
+      disconnected, Dmn_DeviceActionContext{.m_saved = true})};
   EXPECT_TRUE(disconnectedActions.m_can_connect);
   EXPECT_FALSE(disconnectedActions.m_can_disconnect);
   EXPECT_FALSE(disconnectedActions.m_can_start_monitoring);
   EXPECT_FALSE(disconnectedActions.m_can_stop_monitoring);
 
-  auto connected = disconnected;
+  auto connected{disconnected};
   connected.m_connected = true;
-  const auto connectedActions = dmn::gui::deviceActionAvailability(
-      connected, Dmn_DeviceActionContext{.m_saved = true});
+  const auto connectedActions{dmn::gui::deviceActionAvailability(
+      connected, Dmn_DeviceActionContext{.m_saved = true})};
   EXPECT_FALSE(connectedActions.m_can_connect);
   EXPECT_TRUE(connectedActions.m_can_disconnect);
   EXPECT_TRUE(connectedActions.m_can_start_monitoring);
   EXPECT_FALSE(connectedActions.m_can_stop_monitoring);
 
-  const auto monitoringActions = dmn::gui::deviceActionAvailability(
+  const auto monitoringActions{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
-                                         .m_monitor_requested = true});
+                                         .m_monitor_requested = true})};
   EXPECT_TRUE(monitoringActions.m_can_disconnect);
   EXPECT_FALSE(monitoringActions.m_can_start_monitoring);
   EXPECT_TRUE(monitoringActions.m_can_stop_monitoring);
@@ -119,7 +119,7 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      MonitoringRequiresConfirmedConnectedStatus) {
-  auto deviceEntry = device("AA:00", "BB:01", "iPhone One");
+  auto deviceEntry{device("AA:00", "BB:01", "iPhone One")};
   deviceEntry.m_connected.reset();
   const Dmn_DeviceActionContext saved{.m_saved = true};
 
@@ -133,18 +133,18 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      BusyRowsKeepActionsAvailableButClosingRowsDoNot) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto busy = dmn::gui::deviceActionAvailability(
+  const auto busy{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
                                          .m_monitor_requested = true,
-                                         .m_operation_busy = true});
-  const auto closing = dmn::gui::deviceActionAvailability(
+                                         .m_operation_busy = true})};
+  const auto closing{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
                                          .m_monitor_requested = true,
-                                         .m_close_requested = true});
+                                         .m_close_requested = true})};
 
   EXPECT_TRUE(busy.m_can_disconnect);
   EXPECT_FALSE(busy.m_can_start_monitoring);
@@ -156,14 +156,14 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      ConnectedMonitorTransitionKeepsDisconnectAvailable) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto actions = dmn::gui::deviceActionAvailability(
+  const auto actions{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
                                          .m_monitor_requested = true,
                                          .m_monitor_busy = true,
-                                         .m_operation_busy = true});
+                                         .m_operation_busy = true})};
 
   EXPECT_TRUE(actions.m_can_disconnect);
   EXPECT_FALSE(actions.m_can_connect);
@@ -171,11 +171,11 @@ TEST(DmnBluetoothGuiDeviceSelection,
   EXPECT_FALSE(actions.m_can_start_monitoring);
   EXPECT_TRUE(actions.m_can_stop_monitoring);
 
-  auto disconnected = connected;
+  auto disconnected{connected};
   disconnected.m_connected = false;
-  const auto disconnectedActions = dmn::gui::deviceActionAvailability(
+  const auto disconnectedActions{dmn::gui::deviceActionAvailability(
       disconnected,
-      Dmn_DeviceActionContext{.m_saved = true, .m_selection_dirty = true});
+      Dmn_DeviceActionContext{.m_saved = true, .m_selection_dirty = true})};
   EXPECT_TRUE(disconnectedActions.m_can_connect);
   EXPECT_FALSE(disconnectedActions.m_can_disconnect);
   EXPECT_FALSE(disconnectedActions.m_can_start_monitoring);
@@ -184,12 +184,12 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      PendingConnectionCanBeCanceledWithoutStartingOrStoppingMonitoring) {
-  auto disconnected = device("AA:00", "BB:01", "iPhone One");
+  auto disconnected{device("AA:00", "BB:01", "iPhone One")};
   disconnected.m_connected = false;
-  const auto actions = dmn::gui::deviceActionAvailability(
+  const auto actions{dmn::gui::deviceActionAvailability(
       disconnected, Dmn_DeviceActionContext{.m_saved = true,
                                             .m_connection_pending = true,
-                                            .m_operation_busy = true});
+                                            .m_operation_busy = true})};
 
   EXPECT_FALSE(actions.m_can_connect);
   EXPECT_TRUE(actions.m_can_disconnect);
@@ -199,12 +199,12 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      QueuedDisconnectShowsConnectAsTheAvailableConnectionAction) {
-  auto disconnected = device("AA:00", "BB:01", "iPhone One");
+  auto disconnected{device("AA:00", "BB:01", "iPhone One")};
   disconnected.m_connected = false;
-  const auto actions = dmn::gui::deviceActionAvailability(
+  const auto actions{dmn::gui::deviceActionAvailability(
       disconnected, Dmn_DeviceActionContext{.m_saved = true,
                                             .m_disconnect_pending = true,
-                                            .m_operation_busy = true});
+                                            .m_operation_busy = true})};
 
   EXPECT_TRUE(actions.m_can_connect);
   EXPECT_FALSE(actions.m_can_disconnect);
@@ -214,34 +214,34 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      PendingMonitorStartOffersStopButDisablesItAfterCancelRequest) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto pending = dmn::gui::deviceActionAvailability(
+  const auto pending{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_requested = true,
                                          .m_monitor_busy = true,
-                                         .m_monitor_start_pending = true});
+                                         .m_monitor_start_pending = true})};
   EXPECT_FALSE(pending.m_can_start_monitoring);
   EXPECT_TRUE(pending.m_can_stop_monitoring);
 
-  const auto canceling = dmn::gui::deviceActionAvailability(
+  const auto canceling{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_busy = true,
                                          .m_monitor_start_pending = true,
-                                         .m_monitor_cancel_requested = true});
+                                         .m_monitor_cancel_requested = true})};
   EXPECT_TRUE(canceling.m_can_start_monitoring);
   EXPECT_FALSE(canceling.m_can_stop_monitoring);
 }
 
 TEST(DmnBluetoothGuiDeviceSelection,
      DirtySelectionBlocksStartsButAllowsActiveMonitorStop) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto actions = dmn::gui::deviceActionAvailability(
+  const auto actions{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_selection_dirty = true,
                                          .m_monitor_active = true,
-                                         .m_monitor_requested = true});
+                                         .m_monitor_requested = true})};
 
   EXPECT_FALSE(actions.m_can_connect);
   EXPECT_FALSE(actions.m_can_start_monitoring);
@@ -250,22 +250,22 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      MonitorFailuresDoNotChangeIntentDrivenActionAvailability) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
-  const auto failed = dmn::gui::deviceActionAvailability(
+  const auto failed{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
                                          .m_monitor_requested = true,
                                          .m_monitor_busy = true,
-                                         .m_operation_busy = true});
+                                         .m_operation_busy = true})};
   EXPECT_TRUE(failed.m_can_disconnect);
   EXPECT_FALSE(failed.m_can_start_monitoring);
   EXPECT_TRUE(failed.m_can_stop_monitoring);
 
-  const auto stoppedWithoutIntent = dmn::gui::deviceActionAvailability(
+  const auto stoppedWithoutIntent{dmn::gui::deviceActionAvailability(
       connected, Dmn_DeviceActionContext{.m_saved = true,
                                          .m_monitor_active = true,
-                                         .m_monitor_busy = true});
+                                         .m_monitor_busy = true})};
   EXPECT_TRUE(stoppedWithoutIntent.m_can_disconnect);
   EXPECT_TRUE(stoppedWithoutIntent.m_can_start_monitoring);
   EXPECT_FALSE(stoppedWithoutIntent.m_can_stop_monitoring);
@@ -273,17 +273,17 @@ TEST(DmnBluetoothGuiDeviceSelection,
 
 TEST(DmnBluetoothGuiDeviceSelection,
      ConnectedSavedRowsAlwaysExposeOneConnectionAndMonitorAction) {
-  auto connected = device("AA:00", "BB:01", "iPhone One");
+  auto connected{device("AA:00", "BB:01", "iPhone One")};
   connected.m_connected = true;
   for (const bool requested : {false, true}) {
     for (const bool monitorBusy : {false, true}) {
       for (const bool operationBusy : {false, true}) {
-        const auto actions = dmn::gui::deviceActionAvailability(
+        const auto actions{dmn::gui::deviceActionAvailability(
             connected,
             Dmn_DeviceActionContext{.m_saved = true,
                                     .m_monitor_requested = requested,
                                     .m_monitor_busy = monitorBusy,
-                                    .m_operation_busy = operationBusy});
+                                    .m_operation_busy = operationBusy})};
         EXPECT_TRUE(actions.m_can_disconnect);
         EXPECT_NE(actions.m_can_start_monitoring,
                   actions.m_can_stop_monitoring);
@@ -302,8 +302,8 @@ TEST(DmnBluetoothGuiMonitorController,
                                                .m_paired = true,
                                                .m_connected = true};
 
-  const auto commands = controller.reconcile(
-      {ready}, true, Dmn_DeviceMonitorController::Clock::time_point{});
+  const auto commands{controller.reconcile(
+      {ready}, true, Dmn_DeviceMonitorController::Clock::time_point{})};
 
   ASSERT_EQ(commands.size(), 1U);
   EXPECT_EQ(commands.front().m_action,
@@ -313,28 +313,28 @@ TEST(DmnBluetoothGuiMonitorController,
                   .reconcile({ready}, false,
                              Dmn_DeviceMonitorController::Clock::time_point{})
                   .empty());
-  auto busy = ready;
+  auto busy{ready};
   busy.m_monitor_busy = true;
   EXPECT_TRUE(controller
                   .reconcile({busy}, true,
                              Dmn_DeviceMonitorController::Clock::time_point{})
                   .empty());
 
-  auto noIntent = ready;
+  auto noIntent{ready};
   noIntent.m_monitoring_requested = false;
   EXPECT_TRUE(controller
                   .reconcile({noIntent}, true,
                              Dmn_DeviceMonitorController::Clock::time_point{})
                   .empty());
 
-  auto unsaved = ready;
+  auto unsaved{ready};
   unsaved.m_saved = false;
   EXPECT_TRUE(controller
                   .reconcile({unsaved}, true,
                              Dmn_DeviceMonitorController::Clock::time_point{})
                   .empty());
 
-  auto disconnected = ready;
+  auto disconnected{ready};
   disconnected.m_connected = false;
   EXPECT_TRUE(controller
                   .reconcile({disconnected}, true,
@@ -345,16 +345,15 @@ TEST(DmnBluetoothGuiMonitorController,
 TEST(DmnBluetoothGuiMonitorController,
      StopsActiveMonitorWhenDeviceIsDisconnectedOrNoLongerSaved) {
   Dmn_DeviceMonitorController controller;
-  auto active =
-      Dmn_MonitorControllerDeviceState{.m_identity = {"AA:00", "BB:01"},
-                                       .m_saved = true,
-                                       .m_present = true,
-                                       .m_paired = true,
-                                       .m_connected = false,
-                                       .m_monitor_active = true};
+  auto active{Dmn_MonitorControllerDeviceState{.m_identity = {"AA:00", "BB:01"},
+                                               .m_saved = true,
+                                               .m_present = true,
+                                               .m_paired = true,
+                                               .m_connected = false,
+                                               .m_monitor_active = true}};
 
-  auto commands = controller.reconcile(
-      {active}, true, Dmn_DeviceMonitorController::Clock::time_point{});
+  auto commands{controller.reconcile(
+      {active}, true, Dmn_DeviceMonitorController::Clock::time_point{})};
 
   ASSERT_EQ(commands.size(), 1U);
   EXPECT_EQ(commands.front().m_action,
@@ -386,7 +385,7 @@ TEST(DmnBluetoothGuiMonitorController,
 TEST(DmnBluetoothGuiMonitorController,
      RestartsStoppedMonitorWhileConnectedIntentRemainsEnabled) {
   Dmn_DeviceMonitorController controller;
-  const auto now = Dmn_DeviceMonitorController::Clock::time_point{};
+  const auto now{Dmn_DeviceMonitorController::Clock::time_point{}};
   const Dmn_MonitorControllerDeviceState stopped{
       .m_identity = {"AA:00", "BB:01"},
       .m_saved = true,
@@ -399,12 +398,12 @@ TEST(DmnBluetoothGuiMonitorController,
 
   EXPECT_EQ(controller.recordStartFailure(stopped.m_identity, now, 100),
             std::chrono::seconds{5});
-  const auto cleanup = controller.reconcile({stopped}, true, now);
+  const auto cleanup{controller.reconcile({stopped}, true, now)};
   ASSERT_EQ(cleanup.size(), 1U);
   EXPECT_EQ(cleanup.front().m_action,
             Dmn_MonitorControllerCommand::Action::kStop);
 
-  auto stoppedSession = stopped;
+  auto stoppedSession{stopped};
   stoppedSession.m_monitor_active = false;
   stoppedSession.m_monitor_restart_required = false;
   EXPECT_TRUE(controller.reconcile({stoppedSession}, true, now).empty());
@@ -420,13 +419,13 @@ TEST(DmnBluetoothGuiMonitorController,
      RetriesFailedStartsWithCappedBackoffAndResetsAfterSuccess) {
   Dmn_DeviceMonitorController controller;
   const Dmn_DeviceIdentity identity{"AA:00", "BB:01"};
-  const auto start = Dmn_DeviceMonitorController::Clock::time_point{};
-  auto ready = Dmn_MonitorControllerDeviceState{.m_identity = identity,
-                                                .m_saved = true,
-                                                .m_monitoring_requested = true,
-                                                .m_present = true,
-                                                .m_paired = true,
-                                                .m_connected = true};
+  const auto start{Dmn_DeviceMonitorController::Clock::time_point{}};
+  auto ready{Dmn_MonitorControllerDeviceState{.m_identity = identity,
+                                              .m_saved = true,
+                                              .m_monitoring_requested = true,
+                                              .m_present = true,
+                                              .m_paired = true,
+                                              .m_connected = true}};
 
   EXPECT_EQ(controller.recordStartFailure(identity, start, 100),
             std::chrono::seconds{5});
@@ -438,7 +437,7 @@ TEST(DmnBluetoothGuiMonitorController,
                 .m_action,
             Dmn_MonitorControllerCommand::Action::kStart);
 
-  auto failureTime = start + std::chrono::seconds{5};
+  auto failureTime{start + std::chrono::seconds{5}};
   EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
             std::chrono::seconds{10});
   EXPECT_EQ(controller.recordStartFailure(identity, failureTime, 100),
@@ -453,7 +452,7 @@ TEST(DmnBluetoothGuiMonitorController,
                std::invalid_argument);
 
   controller.recordStartSuccess(identity);
-  auto commands = controller.reconcile({ready}, true, start);
+  auto commands{controller.reconcile({ready}, true, start)};
   ASSERT_EQ(commands.size(), 1U);
   EXPECT_EQ(commands.front().m_action,
             Dmn_MonitorControllerCommand::Action::kStart);
@@ -473,24 +472,24 @@ TEST(DmnBluetoothGuiMonitorEventStore,
   const Dmn_DeviceIdentity first{"AA:00", "BB:01"};
   const Dmn_DeviceIdentity second{"AA:00", "BB:02"};
   Dmn_DeviceMonitorEventStore store{3};
-  const auto received = std::chrono::system_clock::time_point{};
+  const auto received{std::chrono::system_clock::time_point{}};
 
-  auto makeEvent = [received](const Dmn_DeviceIdentity &identity,
-                              const std::uint32_t uid) {
-    dmn::Dmn_AncsEvent event;
-    event.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
-    dmn::Dmn_AncsNotification notification;
-    notification.kind = dmn::Dmn_AncsNotificationKind::Added;
-    notification.uid = uid;
-    event.notification = std::move(notification);
+  auto makeEvent{
+      [received](const Dmn_DeviceIdentity &identity, const std::uint32_t uid) {
+        dmn::Dmn_AncsEvent event;
+        event.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
+        dmn::Dmn_AncsNotification notification;
+        notification.kind = dmn::Dmn_AncsNotificationKind::Added;
+        notification.uid = uid;
+        event.notification = std::move(notification);
 
-    return Dmn_DeviceMonitorEvent{identity, 0, received, std::move(event)};
-  };
+        return Dmn_DeviceMonitorEvent{identity, 0, received, std::move(event)};
+      }};
   store.append(makeEvent(first, 1));
   store.append(makeEvent(second, 2));
   store.append(makeEvent(first, 3));
 
-  auto firstEvents = store.eventsFor(first);
+  auto firstEvents{store.eventsFor(first)};
   ASSERT_EQ(firstEvents.size(), 2U);
   EXPECT_EQ(firstEvents[0]->m_event.notification->uid, 1U);
   EXPECT_EQ(firstEvents[1]->m_event.notification->uid, 3U);
@@ -511,10 +510,10 @@ TEST(DmnBluetoothGuiMonitorEventStore,
      PreservesArrivalSequenceWhenWallClockMovesBackwards) {
   const Dmn_DeviceIdentity identity{"AA:00", "BB:01"};
   Dmn_DeviceMonitorEventStore store{3};
-  const auto later =
-      std::chrono::system_clock::time_point{std::chrono::seconds{200}};
-  const auto earlier =
-      std::chrono::system_clock::time_point{std::chrono::seconds{100}};
+  const auto later{
+      std::chrono::system_clock::time_point{std::chrono::seconds{200}}};
+  const auto earlier{
+      std::chrono::system_clock::time_point{std::chrono::seconds{100}}};
   dmn::Dmn_AncsEvent first;
   first.kind = dmn::Dmn_AncsEvent::Kind::NotificationAdded;
   dmn::Dmn_AncsEvent second;
@@ -523,7 +522,7 @@ TEST(DmnBluetoothGuiMonitorEventStore,
   store.append({identity, 0, later, std::move(first)});
   store.append({identity, 0, earlier, std::move(second)});
 
-  const auto events = store.eventsFor(identity);
+  const auto events{store.eventsFor(identity)};
   ASSERT_EQ(events.size(), 2U);
   EXPECT_LT(events[0]->m_sequence, events[1]->m_sequence);
   EXPECT_GT(events[0]->m_received, events[1]->m_received);
@@ -542,7 +541,7 @@ TEST(DmnBluetoothGuiMonitorEventStore,
   store.append({identity, 2, {}, std::move(laterCallback)});
   store.append({identity, 1, {}, std::move(earlierCallback)});
 
-  const auto events = store.events();
+  const auto events{store.events()};
   ASSERT_EQ(events.size(), 2U);
   EXPECT_EQ(events[0]->m_sequence, 1U);
   EXPECT_EQ(events[1]->m_sequence, 2U);
@@ -633,9 +632,9 @@ TEST(DmnBluetoothGuiDesktopAlertPolicy,
   const dmn::gui::Dmn_DeviceIdentity first{"ADAPTER-PRIVATE", "DEVICE-PRIVATE"};
   const dmn::gui::Dmn_DeviceIdentity second{"ADAPTER-PRIVATE", "DEVICE-OTHER"};
 
-  const auto firstAlert = dmn::gui::makeDesktopAlert(first, 1);
-  const auto updatedAlert = dmn::gui::makeDesktopAlert(first, 3);
-  const auto otherAlert = dmn::gui::makeDesktopAlert(second, 1);
+  const auto firstAlert{dmn::gui::makeDesktopAlert(first, 1)};
+  const auto updatedAlert{dmn::gui::makeDesktopAlert(first, 3)};
+  const auto otherAlert{dmn::gui::makeDesktopAlert(second, 1)};
 
   EXPECT_EQ(firstAlert.m_id, updatedAlert.m_id);
   EXPECT_NE(firstAlert.m_id, otherAlert.m_id);
@@ -720,9 +719,9 @@ TEST(DmnBluetoothGuiDeviceSelection, SortsByDisplayNameInBothDirections) {
 
 TEST(DmnBluetoothGuiDeviceSelection, SortsByVisibleStatus) {
   Dmn_DeviceSelectionModel model;
-  auto connected = device("AA:00", "BB:01", "Connected");
+  auto connected{device("AA:00", "BB:01", "Connected")};
   connected.m_connected = true;
-  auto disconnected = device("AA:00", "BB:02", "Disconnected");
+  auto disconnected{device("AA:00", "BB:02", "Disconnected")};
   disconnected.m_connected = false;
   model.loadSavedSelection({{"AA:00", "BB:03"}});
   model.replaceInventory({connected, disconnected});

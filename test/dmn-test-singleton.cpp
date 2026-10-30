@@ -43,12 +43,12 @@ std::shared_ptr<Dmn_A> Dmn_A::s_instances{};
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto inst1 = Dmn_A::createInstance(1, 2);
+  auto inst1{Dmn_A::createInstance(1, 2)};
   std::cout << "Value: " << inst1->getValue() << ", :" << inst1 << "\n";
 
   EXPECT_TRUE(1 == Dmn_A::s_priorCreateInstance);
 
-  auto inst2 = Dmn_A::createInstance(1, 2);
+  auto inst2{Dmn_A::createInstance(1, 2)};
   std::cout << "Value: " << inst2->getValue() << ", :" << inst2 << "\n";
 
   EXPECT_TRUE(1 == Dmn_A::s_priorCreateInstance);

@@ -83,13 +83,13 @@ TEST(DlockCanonicalProto, MessageBodyCompatibility) {
 
 TEST(DlockRange, IntervalConversionPreservesEndpointsAndValidity) {
   const dmn::Dmn_IntervalRange interval{-1, 7};
-  const auto converted = dmn::Dmn_DLock_Range::fromInterval(interval);
+  const auto converted{dmn::Dmn_DLock_Range::fromInterval(interval)};
   EXPECT_EQ(converted.m_start, -1);
   EXPECT_EQ(converted.m_end, 7);
   EXPECT_FALSE(converted.isValid());
 
   const dmn::Dmn_DLock_Range lockRange{4, 9};
-  const auto roundTrip = static_cast<dmn::Dmn_IntervalRange>(lockRange);
+  const auto roundTrip{static_cast<dmn::Dmn_IntervalRange>(lockRange)};
   EXPECT_EQ(roundTrip.m_start, lockRange.m_start);
   EXPECT_EQ(roundTrip.m_end, lockRange.m_end);
   EXPECT_TRUE(lockRange.overlaps({9, 12}));
@@ -108,8 +108,8 @@ TEST(DlockBase, DeletesDerivedInstanceThroughBasePointer) {
   };
 
   bool destroyed{};
-  std::unique_ptr<dmn::Dmn_DLock_Base> lock =
-      std::make_unique<DerivedDLock>(destroyed);
+  std::unique_ptr<dmn::Dmn_DLock_Base> lock{
+      std::make_unique<DerivedDLock>(destroyed)};
   lock.reset();
 
   EXPECT_TRUE(destroyed);
@@ -120,7 +120,7 @@ TEST(DlockBase, DeletesDerivedInstanceThroughBasePointer) {
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
 
   google::protobuf::ShutdownProtobufLibrary();
 

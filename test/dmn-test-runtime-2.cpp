@@ -24,7 +24,7 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto inst{dmn::Dmn_Runtime_Manager<>::createInstance()};
 
   dmn::Dmn_Runtime_Job::TaskFncType timedJob{};
   timedJob = [&inst](const auto &) -> dmn::Dmn_Runtime_Task {

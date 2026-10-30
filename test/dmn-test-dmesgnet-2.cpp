@@ -53,27 +53,27 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1")};
 
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2")};
 
-    auto read_from_write_1 = write_1;
-    auto write_to_read_1 = read_1;
+    auto read_from_write_1{write_1};
+    auto write_to_read_1{read_1};
 
-    auto read_from_write_2 = write_2;
-    auto write_to_read_2 = read_2;
+    auto read_from_write_2{write_2};
+    auto write_to_read_2{read_2};
 
     dmn::DMesgPb dmesgpb1{};
     dmn::Dmn_Proc dmesg1_to_dmesg2{
         "dmesg1_to_dmesg2", [read_from_write_1, write_to_read_2, &dmesgpb1]() {
           while (true) {
-            auto data = read_from_write_1->read();
+            auto data{read_from_write_1->read()};
             if (!data) {
               break;
             }
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_Proc dmesg2_to_dmesg1{
         "dmesg2_to_dmesg1", [read_from_write_2, write_to_read_1, &dmesgpb2]() {
           while (true) {
-            auto data = read_from_write_2->read();
+            auto data{read_from_write_2->read()};
             if (!data) {
               break;
             }
@@ -111,17 +111,17 @@ int main(int argc, char *argv[]) {
     dmesg1_to_dmesg2.exec();
     dmesg2_to_dmesg1.exec();
 
-    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1))};
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg2", std::move(read_2), std::move(write_2));
+    auto dmesgnet2{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg2", std::move(read_2), std::move(write_2))};
 
     std::this_thread::sleep_for(std::chrono::seconds(15));
-    auto sys1 = dmesgpb1.body().sys().self();
-    auto sys2 = dmesgpb2.body().sys().self();
+    auto sys1{dmesgpb1.body().sys().self()};
+    auto sys2{dmesgpb2.body().sys().self()};
 
     EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
     EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));

@@ -125,7 +125,7 @@ auto Dmn_Proc::getThreadId() const -> Dmn_Proc::ThreadId {
  * @return The previous state before this call
  */
 auto Dmn_Proc::setState(State state) -> Dmn_Proc::State {
-  const State old_state = this->m_state;
+  const State old_state{this->m_state};
 
   this->m_state = state;
 
@@ -174,7 +174,7 @@ auto Dmn_Proc::wait() -> bool {
   setState(State::kReady);
   setState(State::kReady);
 
-  auto failure = std::exchange(m_failure, {});
+  auto failure{std::exchange(m_failure, {})};
   if (failure) {
     std::rethrow_exception(failure);
   }

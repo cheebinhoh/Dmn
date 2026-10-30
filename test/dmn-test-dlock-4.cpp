@@ -63,7 +63,7 @@ TEST(DlockBlockingAcquire, OverlappingGrantBlocksCandidateUntilOwnerReleases) {
 
                          std::lock_guard<std::mutex> guard(lock);
 
-                         auto post_release = snapshot;
+                         auto post_release{snapshot};
                          candidate_allowed_after_release.store(
                              post_release.canAcceptEntry(candidate));
                        }};
@@ -133,7 +133,7 @@ TEST(DlockBlockingAcquire, WaitingRequestIsBlockedByAnExistingGrant) {
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
 
   google::protobuf::ShutdownProtobufLibrary();
 

@@ -139,7 +139,7 @@ void Dmn_State::setStateFnc(FncType fnc, int index) {
     throw std::out_of_range("setStateFnc: index must be >= 0");
   }
 
-  const int n = static_cast<int>(m_states.size());
+  const int n{static_cast<int>(m_states.size())};
   if (index == n || index == 0) {
     // The reserved slot makes n the next 1-based user-state index.
     m_states.emplace_back(std::move(fnc));

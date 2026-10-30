@@ -39,9 +39,9 @@ template <class T> struct Dmn_IntervalBTreeTestAccess {
       return tree.m_size == 0;
     }
 
-    std::size_t entryCount = 0;
-    std::size_t leafDepth = 0;
-    bool sawLeaf = false;
+    std::size_t entryCount{0};
+    std::size_t leafDepth{0};
+    bool sawLeaf{false};
     std::vector<const typename Tree::Entry *> orderedEntries;
 
     if (!validateNode(tree.m_root.get(), true, 0, leafDepth, sawLeaf,
@@ -62,7 +62,7 @@ template <class T> struct Dmn_IntervalBTreeTestAccess {
 
 private:
   static auto validateSubtreeMaxEnd(const typename Tree::Node *node) -> bool {
-    auto maximumEnd = std::numeric_limits<std::int64_t>::min();
+    auto maximumEnd{std::numeric_limits<std::int64_t>::min()};
 
     for (const auto &entry : node->m_entries) {
       maximumEnd = std::max(maximumEnd, entry->m_range.m_end);
@@ -83,8 +83,8 @@ private:
       const typename Tree::Node *node, bool isRoot, std::size_t depth,
       std::size_t &leafDepth, bool &sawLeaf, std::size_t &entryCount,
       std::vector<const typename Tree::Entry *> &orderedEntries) -> bool {
-    constexpr std::size_t minimumDegree = 2;
-    constexpr std::size_t maximumKeys = 2 * minimumDegree - 1;
+    constexpr std::size_t minimumDegree{2};
+    constexpr std::size_t maximumKeys{2 * minimumDegree - 1};
 
     if (!node || node->m_entries.size() > maximumKeys ||
         (!isRoot && node->m_entries.size() < minimumDegree - 1)) {
@@ -134,7 +134,7 @@ private:
 } // namespace dmn::detail
 
 struct IntervalBTreeCopyTracked {
-  static inline std::size_t copies = 0;
+  static inline std::size_t copies{0};
   int m_value{};
 
   explicit IntervalBTreeCopyTracked(int value) : m_value(value) {}
@@ -191,8 +191,8 @@ TEST(IntervalRange, AdjacentRangesDoNotConflict) {
 TEST(IntervalRange, HandlesInt64BoundariesWithoutOverflow) {
   using dmn::Dmn_IntervalRange;
 
-  constexpr auto min = std::numeric_limits<std::int64_t>::min();
-  constexpr auto max = std::numeric_limits<std::int64_t>::max();
+  constexpr auto min{std::numeric_limits<std::int64_t>::min()};
+  constexpr auto max{std::numeric_limits<std::int64_t>::max()};
 
   EXPECT_TRUE((Dmn_IntervalRange{min, min}).isValid());
   EXPECT_TRUE((Dmn_IntervalRange{max, max}).isValid());
@@ -243,7 +243,7 @@ TEST(IntervalBTree, StoresOneEntry) {
 
 TEST(IntervalBTree, EmptyTreeQueriesAndRemovalsAreNoOps) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t visitorCalls = 0;
+  std::size_t visitorCalls{0};
 
   EXPECT_TRUE(tree.empty());
   EXPECT_EQ(tree.size(), 0U);
@@ -274,13 +274,13 @@ TEST(IntervalBTree, RejectsInvalidInsertionWithoutMutation) {
 
 TEST(IntervalBTree, EndpointInsertionRejectsInvalidRangesBeforeMutation) {
   dmn::Dmn_IntervalBTree<int> tree;
-  const int copiedValue = 7;
+  const int copiedValue{7};
   EXPECT_THROW(tree.add(5, 2, copiedValue), std::invalid_argument);
   EXPECT_THROW(tree.add(5, 2, 9), std::invalid_argument);
   EXPECT_TRUE(tree.empty());
 
   dmn::Dmn_IntervalBTree<std::unique_ptr<int>> moveTree;
-  auto movedValue = std::make_unique<int>(42);
+  auto movedValue{std::make_unique<int>(42)};
   EXPECT_THROW(tree.add(5, 2, copiedValue), std::invalid_argument);
   EXPECT_THROW(moveTree.add(5, 2, std::move(movedValue)),
                std::invalid_argument);
@@ -296,7 +296,7 @@ TEST(IntervalBTree, CanonicalOrderSimple) {
   ASSERT_TRUE(tree.add({1, 3}, 10));
   ASSERT_TRUE(tree.add({1, 2}, 11));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].first.m_start, 1);
@@ -319,7 +319,7 @@ TEST(IntervalBTree, DuplicateRangesUseStableTieBreak) {
 
   ASSERT_TRUE(tree.add({2, 5}, 20));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 2U);
   EXPECT_EQ(entries[0].second, 10);
@@ -333,8 +333,8 @@ TEST(IntervalBTree, DuplicateRangesUseCallerOrdering) {
   ASSERT_TRUE(tree.add({2, 5}, 10));
   ASSERT_TRUE(tree.add({2, 5}, 20));
 
-  const auto entries = tree.enumerateCanonical(
-      [](const int &lhs, const int &rhs) { return lhs < rhs; });
+  const auto entries{tree.enumerateCanonical(
+      [](const int &lhs, const int &rhs) { return lhs < rhs; })};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].second, 10);
@@ -349,13 +349,13 @@ TEST(IntervalBTree, DuplicateOrderingCallbackNotCalledForDistinctRanges) {
   ASSERT_TRUE(tree.add({1, 4}, 10));
   ASSERT_TRUE(tree.add({2, 6}, 20));
 
-  std::size_t callbackCalls = 0;
-  const auto entries =
+  std::size_t callbackCalls{0};
+  const auto entries{
       tree.enumerateCanonical([&callbackCalls](const int &, const int &) {
         ++callbackCalls;
 
         return false;
-      });
+      })};
 
   EXPECT_EQ(callbackCalls, 0U);
   ASSERT_EQ(entries.size(), 3U);
@@ -415,9 +415,9 @@ TEST(IntervalBTree, PriorityEvaluatorCannotMutateTreeReentrantly) {
 
 TEST(IntervalBTree, CustomComparatorIsUsed) {
   using Range = dmn::Dmn_IntervalBTree<int>::range_type;
-  const auto reverseStart = [](const Range &lhs, const Range &rhs) {
+  const auto reverseStart{[](const Range &lhs, const Range &rhs) {
     return lhs.m_start > rhs.m_start;
-  };
+  }};
 
   dmn::Dmn_IntervalBTree<int> tree(reverseStart);
 
@@ -425,7 +425,7 @@ TEST(IntervalBTree, CustomComparatorIsUsed) {
   ASSERT_TRUE(tree.add({5, 7}, 50));
   ASSERT_TRUE(tree.add({3, 4}, 30));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].second, 50);
@@ -435,9 +435,9 @@ TEST(IntervalBTree, CustomComparatorIsUsed) {
 
 TEST(IntervalBTree, CustomComparatorEquivalentRangesUseDefaultTieBreak) {
   using Range = dmn::Dmn_IntervalBTree<int>::range_type;
-  const auto compareStartOnly = [](const Range &lhs, const Range &rhs) {
+  const auto compareStartOnly{[](const Range &lhs, const Range &rhs) {
     return lhs.m_start < rhs.m_start;
-  };
+  }};
 
   dmn::Dmn_IntervalBTree<int> tree(compareStartOnly);
 
@@ -445,7 +445,7 @@ TEST(IntervalBTree, CustomComparatorEquivalentRangesUseDefaultTieBreak) {
   ASSERT_TRUE(tree.add({2, 3}, 23));
   ASSERT_TRUE(tree.add({1, 8}, 18));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].second, 18);
@@ -460,7 +460,7 @@ TEST(IntervalBTree, ConstructorsUseDefaultAndCustomComparators) {
   Tree defaultTree;
   ASSERT_TRUE(defaultTree.add({5, 7}, 50));
   ASSERT_TRUE(defaultTree.add({1, 3}, 10));
-  const auto defaultEntries = defaultTree.enumerateCanonical();
+  const auto defaultEntries{defaultTree.enumerateCanonical()};
   ASSERT_EQ(defaultEntries.size(), 2U);
   EXPECT_EQ(defaultEntries[0].second, 10);
   EXPECT_EQ(defaultEntries[1].second, 50);
@@ -470,7 +470,7 @@ TEST(IntervalBTree, ConstructorsUseDefaultAndCustomComparators) {
   });
   ASSERT_TRUE(customTree.add({5, 7}, 50));
   ASSERT_TRUE(customTree.add({1, 3}, 10));
-  const auto customEntries = customTree.enumerateCanonical();
+  const auto customEntries{customTree.enumerateCanonical()};
   ASSERT_EQ(customEntries.size(), 2U);
   EXPECT_EQ(customEntries[0].second, 50);
   EXPECT_EQ(customEntries[1].second, 10);
@@ -479,10 +479,10 @@ TEST(IntervalBTree, ConstructorsUseDefaultAndCustomComparators) {
 TEST(IntervalBTree, SupportsStringPayload) {
   dmn::Dmn_IntervalBTree<std::string> tree;
 
-  const std::string payload = "stored";
+  const std::string payload{"stored"};
   ASSERT_TRUE(tree.add({1, 3}, payload));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries[0].second, "stored");
@@ -499,7 +499,7 @@ TEST(IntervalBTree, SupportsStructPayload) {
   const Payload payload{"worker", 4};
 
   ASSERT_TRUE(tree.add({1, 3}, payload));
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries[0].second.m_name, "worker");
@@ -512,7 +512,7 @@ TEST(IntervalBTree, PayloadDoesNotAffectDefaultRangeOrdering) {
   ASSERT_TRUE(tree.add({5, 7}, "a-first-payload"));
   ASSERT_TRUE(tree.add({1, 3}, "z-second-payload"));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
 
   ASSERT_EQ(entries.size(), 2U);
   EXPECT_EQ(entries[0].first.m_start, 1);
@@ -523,7 +523,7 @@ TEST(IntervalBTree, PayloadDoesNotAffectDefaultRangeOrdering) {
 
 TEST(IntervalBTree, MoveOnlyPayloadCanBeInserted) {
   dmn::Dmn_IntervalBTree<std::unique_ptr<int>> tree;
-  auto payload = std::make_unique<int>(42);
+  auto payload{std::make_unique<int>(42)};
 
   ASSERT_TRUE(tree.add({1, 3}, std::move(payload)));
 
@@ -534,7 +534,7 @@ TEST(IntervalBTree, MoveOnlyPayloadCanBeInserted) {
 
 TEST(IntervalBTree, InvalidMoveInsertionDoesNotConsumePayload) {
   dmn::Dmn_IntervalBTree<std::unique_ptr<int>> tree;
-  auto payload = std::make_unique<int>(42);
+  auto payload{std::make_unique<int>(42)};
 
   EXPECT_THROW(tree.add({5, 2}, std::move(payload)), std::invalid_argument);
 
@@ -547,14 +547,14 @@ TEST(IntervalBTree, InvalidMoveInsertionDoesNotConsumePayload) {
 TEST(IntervalBTree, CopyAndMoveInsertionOverloads) {
   dmn::Dmn_IntervalBTree<std::string> tree;
 
-  std::string copiedPayload = "copy";
+  std::string copiedPayload{"copy"};
   ASSERT_TRUE(tree.add({1, 2}, copiedPayload));
   copiedPayload = "changed";
 
-  std::string movedPayload = "move";
+  std::string movedPayload{"move"};
   ASSERT_TRUE(tree.add({3, 4}, std::move(movedPayload)));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 2U);
   EXPECT_EQ(entries[0].second, "copy");
   EXPECT_EQ(entries[1].second, "move");
@@ -570,7 +570,7 @@ TEST(IntervalBTree, RootStoragePreservesMultipleEntries) {
   EXPECT_EQ(tree.size(), 8U);
   EXPECT_FALSE(tree.empty());
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 8U);
 
   for (std::size_t index = 0; index < entries.size(); ++index) {
@@ -615,7 +615,7 @@ TEST(IntervalBTree, NodeChildrenPartitionCorrectly) {
   using Access = dmn::detail::Dmn_IntervalBTreeTestAccess<int>;
   EXPECT_TRUE(Access::validate(tree));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 80U);
 
   for (std::size_t index = 0; index < entries.size(); ++index) {
@@ -649,8 +649,8 @@ TEST(IntervalBTree, InsertionDeterministicAcrossOrders) {
         descendingTree.add({start, start + 1}, static_cast<int>(start * 10)));
   }
 
-  const auto ascendingEntries = ascendingTree.enumerateCanonical();
-  const auto descendingEntries = descendingTree.enumerateCanonical();
+  const auto ascendingEntries{ascendingTree.enumerateCanonical()};
+  const auto descendingEntries{descendingTree.enumerateCanonical()};
   ASSERT_EQ(ascendingEntries.size(), descendingEntries.size());
 
   for (std::size_t index = 0; index < ascendingEntries.size(); ++index) {
@@ -676,8 +676,8 @@ TEST(IntervalBTree, EnumerationIsIndependentOfNodeSplits) {
         splitOrderTree.add({start, start + 2}, static_cast<int>(start)));
   }
 
-  const auto first = insertionOrderTree.enumerateCanonical();
-  const auto second = splitOrderTree.enumerateCanonical();
+  const auto first{insertionOrderTree.enumerateCanonical()};
+  const auto second{splitOrderTree.enumerateCanonical()};
   ASSERT_EQ(first.size(), second.size());
 
   for (std::size_t index = 0; index < first.size(); ++index) {
@@ -701,7 +701,7 @@ TEST(IntervalBTree, SplitPreservesEntryValuesAndOrdinals) {
   using Access = dmn::detail::Dmn_IntervalBTreeTestAccess<int>;
   EXPECT_TRUE(Access::validate(tree));
 
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   std::vector<int> duplicateValues;
 
   for (const auto &entry : entries) {
@@ -721,7 +721,7 @@ TEST(IntervalBTree, FindOverlappingSingle) {
   ASSERT_TRUE(tree.add({1, 5}, 10));
   ASSERT_TRUE(tree.add({8, 12}, 20));
 
-  const auto entries = tree.findOverlapping({3, 4});
+  const auto entries{tree.findOverlapping({3, 4})};
 
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries[0].first.m_start, 1);
@@ -736,7 +736,7 @@ TEST(IntervalBTree, FindOverlappingMultipleInCanonicalOrder) {
   ASSERT_TRUE(tree.add({5, 12}, 2));
   ASSERT_TRUE(tree.add({30, 40}, 4));
 
-  const auto entries = tree.findOverlapping({7, 11});
+  const auto entries{tree.findOverlapping({7, 11})};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].second, 1);
@@ -749,7 +749,7 @@ TEST(IntervalBTree, FindOverlappingIncludesSharedEndpoints) {
   ASSERT_TRUE(tree.add({1, 2}, 1));
   ASSERT_TRUE(tree.add({3, 4}, 3));
 
-  const auto entries = tree.findOverlapping({2, 3});
+  const auto entries{tree.findOverlapping({2, 3})};
 
   ASSERT_EQ(entries.size(), 2U);
   EXPECT_EQ(entries[0].second, 1);
@@ -801,7 +801,7 @@ TEST(IntervalBTree, OverlapVisitorRejectsInvalidQueryWithoutInvocation) {
   dmn::Dmn_IntervalBTree<int> tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
 
-  std::size_t calls = 0;
+  std::size_t calls{0};
   EXPECT_THROW(tree.forEachOverlapping(
                    {5, 1}, [&calls](const auto &, const auto &) { ++calls; }),
                std::invalid_argument);
@@ -819,7 +819,7 @@ TEST(IntervalBTree, OverlapVisitorSupportsMoveOnlyPayload) {
   dmn::Dmn_IntervalBTree<std::unique_ptr<int>> tree;
   ASSERT_TRUE(tree.add({1, 5}, std::make_unique<int>(42)));
 
-  int visitedValue = 0;
+  int visitedValue{0};
   tree.forEachOverlapping({2, 3},
                           [&visitedValue](const auto &, const auto &value) {
                             visitedValue = *value;
@@ -842,7 +842,7 @@ TEST(IntervalBTree, OverlapVisitorCannotMutateTreeReentrantly) {
 TEST(IntervalBTree, TopologyReturnsClearWhenEmpty) {
   dmn::Dmn_IntervalBTree<int> tree;
 
-  const auto result = tree.queryTopology({1, 5}, 10);
+  const auto result{tree.queryTopology({1, 5}, 10)};
 
   EXPECT_EQ(result.m_status, dmn::Dmn_OverlayTopology::Clear);
   EXPECT_TRUE(result.m_isTop);
@@ -920,7 +920,7 @@ TEST(IntervalBTree, QueryTopologyIsHypothetical) {
   dmn::Dmn_IntervalBTree<int> tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
 
-  const auto result = tree.queryTopology({3, 8}, 20);
+  const auto result{tree.queryTopology({3, 8}, 20)};
 
   EXPECT_EQ(result.m_status, dmn::Dmn_OverlayTopology::OverlaidLeft);
   ASSERT_EQ(result.m_overlappingEntries.size(), 1U);
@@ -945,7 +945,7 @@ TEST(IntervalBTree, InvalidTopologyQueryReturnsClearWithoutMutation) {
   dmn::Dmn_IntervalBTree<int> tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
 
-  auto result = tree.queryTopology({6, 7}, 20);
+  auto result{tree.queryTopology({6, 7}, 20)};
 
   EXPECT_EQ(result.m_status, dmn::Dmn_OverlayTopology::Clear);
   EXPECT_TRUE(result.m_overlappingEntries.empty());
@@ -957,7 +957,7 @@ TEST(IntervalBTree, InvalidTopologyQueryReturnsClearWithoutMutation) {
 TEST(IntervalBTree, AddWithTopologyMatchesHypotheticalQuery) {
   dmn::Dmn_IntervalBTree<int> tree;
   ASSERT_TRUE(tree.add({1, 5}, 10));
-  const auto queried = tree.queryTopology({3, 8}, 20);
+  const auto queried{tree.queryTopology({3, 8}, 20)};
 
   EXPECT_THROW(tree.addWithTopology({3, 2}, 20), std::invalid_argument);
 
@@ -973,7 +973,7 @@ TEST(IntervalBTree, AddWithTopologyMatchesHypotheticalQuery) {
 
 TEST(IntervalBTree, NewEntryCallbackIsNotInvokedOnInsertion) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
 
   const auto [added, result] =
       tree.addWithTopology({1, 5}, 10,
@@ -989,7 +989,7 @@ TEST(IntervalBTree, StateCallbackReceivesTopologyTransition) {
   dmn::Dmn_IntervalBTree<int> tree;
   dmn::Dmn_OverlayState oldState;
   dmn::Dmn_OverlayState newState;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&calls, &oldState,
                         &newState](const auto &, const auto &,
@@ -1011,7 +1011,7 @@ TEST(IntervalBTree, StateCallbackReceivesPriorityTransition) {
   Tree tree({}, [](int lhs, int rhs) { return lhs > rhs; });
   dmn::Dmn_OverlayState oldState;
   dmn::Dmn_OverlayState newState;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&calls, &oldState,
                         &newState](const auto &, const auto &,
@@ -1030,7 +1030,7 @@ TEST(IntervalBTree, StateCallbackReceivesPriorityTransition) {
 
 TEST(IntervalBTree, MoveOnlyPayloadSupportsStateCallback) {
   dmn::Dmn_IntervalBTree<std::unique_ptr<int>> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({1, 5}, std::make_unique<int>(10),
                        [&calls](const auto &, const auto &, const auto &,
                                 const auto &) { ++calls; }));
@@ -1041,7 +1041,7 @@ TEST(IntervalBTree, MoveOnlyPayloadSupportsStateCallback) {
 
 TEST(IntervalBTree, RangeEndpointInsertionOverloadsForwardCallbacks) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add(1, 5, 10,
                        [&calls](const auto &, const auto &, const auto &,
                                 const auto &) { ++calls; }));
@@ -1107,7 +1107,7 @@ TEST(IntervalBTree, ReentrantMoveEnumerationFromCallbackIsRejected) {
 
 TEST(IntervalBTree, ReentrantInsertionFromCallbackIsRejected) {
   dmn::Dmn_IntervalBTree<int> tree;
-  bool tryReentrantInsert = true;
+  bool tryReentrantInsert{true};
   ASSERT_TRUE(
       tree.add({1, 5}, 10,
                [&tree, &tryReentrantInsert](const auto &, const auto &,
@@ -1144,14 +1144,14 @@ TEST(IntervalBTree, InsertionCallbacksFollowCanonicalOrder) {
 
 TEST(IntervalBTree, TopologyUsesInsertionLevelForContainment) {
   dmn::Dmn_IntervalBTree<int> tree;
-  dmn::Dmn_OverlayTopology oldEntryTopology = dmn::Dmn_OverlayTopology::Clear;
+  dmn::Dmn_OverlayTopology oldEntryTopology{dmn::Dmn_OverlayTopology::Clear};
   ASSERT_TRUE(tree.add({5, 10}, 1,
                        [&oldEntryTopology](const auto &, const auto &,
                                            const auto &, const auto &newState) {
                          oldEntryTopology = newState.m_topology;
                        }));
 
-  const auto result = tree.queryTopology({1, 15}, 2);
+  const auto result{tree.queryTopology({1, 15}, 2)};
   ASSERT_EQ(result.m_status, dmn::Dmn_OverlayTopology::CoveringExisting);
   ASSERT_TRUE(tree.add({1, 15}, 2));
 
@@ -1160,7 +1160,7 @@ TEST(IntervalBTree, TopologyUsesInsertionLevelForContainment) {
 
 TEST(IntervalBTree, ExactDuplicateInsertionKeepsBothEntriesFullyCovered) {
   dmn::Dmn_IntervalBTree<int> tree;
-  dmn::Dmn_OverlayTopology oldEntryTopology = dmn::Dmn_OverlayTopology::Clear;
+  dmn::Dmn_OverlayTopology oldEntryTopology{dmn::Dmn_OverlayTopology::Clear};
   ASSERT_TRUE(tree.add({5, 10}, 1,
                        [&oldEntryTopology](const auto &, const auto &,
                                            const auto &, const auto &newState) {
@@ -1181,7 +1181,7 @@ TEST(IntervalBTree, RemoveByRangeRemovesOneExactEntry) {
 
   EXPECT_TRUE(tree.removeByRange({1, 5}));
   EXPECT_EQ(tree.size(), 1U);
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries[0].second, 20);
 }
@@ -1203,7 +1203,7 @@ TEST(IntervalBTree, EmptyMatcherRemovesFirstDuplicateInInsertionOrder) {
   ASSERT_TRUE(tree.add({1, 5}, 20));
 
   EXPECT_TRUE(tree.removeByRange({1, 5}));
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries.front().second, 20);
 }
@@ -1215,7 +1215,7 @@ TEST(IntervalBTree, RemoveByRangeMatchesDuplicateByOpaqueValue) {
 
   EXPECT_TRUE(
       tree.removeByRange({1, 5}, [](const int &value) { return value == 20; }));
-  const auto entries = tree.enumerateCanonical();
+  const auto entries{tree.enumerateCanonical()};
   ASSERT_EQ(entries.size(), 1U);
   EXPECT_EQ(entries[0].second, 10);
 }
@@ -1278,14 +1278,14 @@ TEST(IntervalBTree, RemovalRebalancesBTree) {
 TEST(IntervalBTree, RemovalMaintainsInvariantsAcrossMixedOrders) {
   using Access = dmn::detail::Dmn_IntervalBTreeTestAccess<int>;
   dmn::Dmn_IntervalBTree<int> tree;
-  constexpr int entryCount = 64;
+  constexpr int entryCount{64};
 
   for (int index = 0; index < entryCount; ++index) {
     ASSERT_TRUE(tree.add({index * 3, index * 3}, index));
   }
 
   for (int step = 0; step < entryCount; ++step) {
-    const int index = (step * 37) % entryCount;
+    const int index{(step * 37) % entryCount};
     ASSERT_TRUE(tree.removeByRange({index * 3, index * 3}));
     ASSERT_TRUE(Access::validate(tree));
   }
@@ -1306,7 +1306,7 @@ TEST(IntervalBTree, RemovalRecomputesSurvivorTopologyAndPriority) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
   Tree tree({}, [](int lhs, int rhs) { return lhs > rhs; });
   dmn::Dmn_OverlayState latestState;
-  std::size_t callbacks = 0;
+  std::size_t callbacks{0};
   ASSERT_TRUE(tree.add({10, 12}, 1));
   ASSERT_TRUE(tree.add({13, 15}, 2));
   ASSERT_TRUE(
@@ -1351,7 +1351,7 @@ TEST(IntervalBTree, RemovalNotifiesFormerlyOverlaidEntry) {
 
 TEST(IntervalBTree, BatchRemovalNotifiesEachSurvivorOnce) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({0, 4}, 1,
                        [&calls](const auto &, const auto &, const auto &,
                                 const auto &) { ++calls; }));
@@ -1367,7 +1367,7 @@ TEST(IntervalBTree, BatchRemovalNotifiesEachSurvivorOnce) {
 
 TEST(IntervalBTree, RemovalCallbackRunsAfterTreeMutation) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t observedSize = 0;
+  std::size_t observedSize{0};
   ASSERT_TRUE(tree.add(
       {1, 5}, 10,
       [&tree, &observedSize](const auto &, const auto &, const auto &,
@@ -1382,7 +1382,7 @@ TEST(IntervalBTree, RemovalCallbackRunsAfterTreeMutation) {
 TEST(IntervalBTree, RemovalCallbackExceptionLeavesTreeValid) {
   using Access = dmn::detail::Dmn_IntervalBTreeTestAccess<int>;
   dmn::Dmn_IntervalBTree<int> tree;
-  bool throwOnCallback = false;
+  bool throwOnCallback{false};
 
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&throwOnCallback](const auto &, const auto &,
@@ -1447,7 +1447,7 @@ TEST(IntervalBTree, SubtreeMaxEndRemainsCorrectAcrossMutations) {
   dmn::Dmn_IntervalBTree<int> tree;
 
   for (int index = 0; index < 80; ++index) {
-    const auto start = index * 7;
+    const auto start{index * 7};
     ASSERT_TRUE(tree.add({start, start + (index % 9)}, index));
     ASSERT_TRUE(Access::validate(tree));
   }
@@ -1477,7 +1477,7 @@ TEST(IntervalBTree, PrunedOverlapQueriesMatchCanonicalBaseline) {
   dmn::Dmn_IntervalBTree<int> tree;
 
   for (int index = 0; index < 100; ++index) {
-    const auto start = index * 10;
+    const auto start{index * 10};
     ASSERT_TRUE(tree.add({start, start + 3}, index));
   }
 
@@ -1502,7 +1502,7 @@ TEST(IntervalBTree, PrunedOverlapQueriesMatchCanonicalBaseline) {
 
 TEST(IntervalBTree, ClearSuppressesCallbacksAndAllowsReuse) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&calls](const auto &, const auto &, const auto &,
                                 const auto &) { ++calls; }));
@@ -1520,7 +1520,7 @@ TEST(IntervalBTree, ClearSuppressesCallbacksAndAllowsReuse) {
 
 TEST(IntervalBTree, ReentrantClearFromCallbackIsRejected) {
   dmn::Dmn_IntervalBTree<int> tree;
-  bool tryReentrantClear = false;
+  bool tryReentrantClear{false};
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&tree, &tryReentrantClear](const auto &, const auto &,
                                                    const auto &, const auto &) {
@@ -1542,7 +1542,7 @@ TEST(IntervalBTree, MoveOnlyPayloadCanBeEnumeratedByMove) {
   ASSERT_TRUE(tree.add({3, 5}, std::make_unique<int>(30)));
   ASSERT_TRUE(tree.add({1, 2}, std::make_unique<int>(10)));
 
-  auto entries = tree.enumerateCanonicalMove();
+  auto entries{tree.enumerateCanonicalMove()};
 
   ASSERT_TRUE(tree.empty());
   ASSERT_EQ(entries.size(), 2U);
@@ -1558,8 +1558,8 @@ TEST(IntervalBTree, MoveEnumerationUsesDuplicateOrdering) {
   ASSERT_TRUE(tree.add({1, 5}, 10));
   ASSERT_TRUE(tree.add({1, 5}, 20));
 
-  const auto entries =
-      tree.enumerateCanonicalMove([](int lhs, int rhs) { return lhs < rhs; });
+  const auto entries{
+      tree.enumerateCanonicalMove([](int lhs, int rhs) { return lhs < rhs; })};
 
   ASSERT_EQ(entries.size(), 3U);
   EXPECT_EQ(entries[0].second, 10);
@@ -1570,14 +1570,14 @@ TEST(IntervalBTree, MoveEnumerationUsesDuplicateOrdering) {
 
 TEST(IntervalBTree, MoveEnumerationDoesNotDispatchCallbacks) {
   dmn::Dmn_IntervalBTree<int> tree;
-  std::size_t calls = 0;
+  std::size_t calls{0};
   ASSERT_TRUE(tree.add({1, 5}, 10,
                        [&calls](const auto &, const auto &, const auto &,
                                 const auto &) { ++calls; }));
   ASSERT_TRUE(tree.add({3, 8}, 20));
   calls = 0;
 
-  const auto entries = tree.enumerateCanonicalMove();
+  const auto entries{tree.enumerateCanonicalMove()};
 
   EXPECT_EQ(entries.size(), 2U);
   EXPECT_EQ(calls, 0U);
@@ -1589,12 +1589,12 @@ TEST(IntervalBTree, CanonicalReconstructionPreservesTopology) {
   ASSERT_TRUE(source.add({1, 8}, 1));
   ASSERT_TRUE(source.add({4, 10}, 2));
   ASSERT_TRUE(source.add({12, 15}, 3));
-  const auto canonical = source.enumerateCanonical();
+  const auto canonical{source.enumerateCanonical()};
 
   Tree destination({}, [](int lhs, int rhs) { return lhs < rhs; });
   destination.reconstructFromCanonical(canonical);
 
-  const auto reconstructed = destination.enumerateCanonical();
+  const auto reconstructed{destination.enumerateCanonical()};
   ASSERT_EQ(reconstructed.size(), canonical.size());
 
   for (std::size_t index = 0; index < canonical.size(); ++index) {
@@ -1604,8 +1604,8 @@ TEST(IntervalBTree, CanonicalReconstructionPreservesTopology) {
     EXPECT_EQ(reconstructed[index].second, canonical[index].second);
   }
 
-  const auto reconstructedOverlaps = destination.findOverlapping({5, 12});
-  const auto sourceOverlaps = source.findOverlapping({5, 12});
+  const auto reconstructedOverlaps{destination.findOverlapping({5, 12})};
+  const auto sourceOverlaps{source.findOverlapping({5, 12})};
   ASSERT_EQ(reconstructedOverlaps.size(), sourceOverlaps.size());
 
   for (std::size_t index = 0; index < sourceOverlaps.size(); ++index) {
@@ -1636,17 +1636,17 @@ TEST(IntervalBTree, ReconstructionValidationFailureLeavesTreeUnchanged) {
 TEST(IntervalBTree, ReconstructionReconnectsRegisteredCallbacks) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
   Tree tree;
-  auto context = std::make_shared<int>(73);
-  int observedContext = 0;
-  int observedValue = 0;
-  const auto registration = tree.registerStateCallback(
+  auto context{std::make_shared<int>(73)};
+  int observedContext{0};
+  int observedValue{0};
+  const auto registration{tree.registerStateCallback(
       [](const int &value) { return value == 10; }, context,
       [&observedContext,
        &observedValue](const Tree::callback_context &callbackContext,
                        const int &value, const auto &, const auto &) {
         observedContext = *std::static_pointer_cast<int>(callbackContext);
         observedValue = value;
-      });
+      })};
   const std::vector<std::pair<dmn::Dmn_IntervalRange, int>> entries{
       {{1, 5}, 10}};
 
@@ -1662,12 +1662,12 @@ TEST(IntervalBTree, ReconstructionReconnectsRegisteredCallbacks) {
 TEST(IntervalBTree, UnregisterCallbackStopsFutureDispatch) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
   Tree tree;
-  std::size_t calls = 0;
-  const auto registration = tree.registerStateCallback(
+  std::size_t calls{0};
+  const auto registration{tree.registerStateCallback(
       [](const int &) { return true; }, {},
       [&calls](const auto &, const auto &, const auto &, const auto &) {
         ++calls;
-      });
+      })};
 
   tree.reconstructFromCanonical({{{1, 5}, 10}});
   tree.unregisterStateCallback(registration);
@@ -1680,11 +1680,10 @@ TEST(IntervalBTree, UnregisterCallbackStopsFutureDispatch) {
 TEST(IntervalBTree, CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
   Tree tree;
-  const Tree::registered_state_callback callback =
-      [](const auto &, const auto &, const auto &, const auto &) {};
-  const std::function<bool(const int &)> matcher = [](const int &) {
-    return true;
-  };
+  const Tree::registered_state_callback callback{
+      [](const auto &, const auto &, const auto &, const auto &) {}};
+  const std::function<bool(const int &)> matcher{
+      [](const int &) { return true; }};
 
   EXPECT_THROW(tree.registerStateCallback({}, {}, callback),
                std::invalid_argument);
@@ -1692,12 +1691,12 @@ TEST(IntervalBTree, CallbackRegistrationValidatesFunctionsAndIgnoresUnknownId) {
                                           Tree::registered_state_callback{}),
                std::invalid_argument);
 
-  std::size_t calls = 0;
-  const auto id = tree.registerStateCallback(
+  std::size_t calls{0};
+  const auto id{tree.registerStateCallback(
       matcher, {},
       [&calls](const auto &, const auto &, const auto &, const auto &) {
         ++calls;
-      });
+      })};
   tree.unregisterStateCallback(id + 1);
   tree.reconstructFromCanonical({{{1, 5}, 10}});
   ASSERT_TRUE(tree.add({3, 8}, 20));
@@ -1727,16 +1726,16 @@ TEST(IntervalBTree, ReconstructionUsesFirstMatchingRegistration) {
 
 TEST(IntervalBTree, ReconstructionPreservesDuplicateCanonicalOrder) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
-  const auto order = [](int lhs, int rhs) { return lhs < rhs; };
+  const auto order{[](int lhs, int rhs) { return lhs < rhs; }};
   Tree source;
   ASSERT_TRUE(source.add({1, 5}, 30));
   ASSERT_TRUE(source.add({1, 5}, 10));
   ASSERT_TRUE(source.add({1, 5}, 20));
-  const auto entries = source.enumerateCanonical(order);
+  const auto entries{source.enumerateCanonical(order)};
 
   Tree destination;
   destination.reconstructFromCanonical(entries, order);
-  const auto reconstructed = destination.enumerateCanonical(order);
+  const auto reconstructed{destination.enumerateCanonical(order)};
 
   ASSERT_EQ(reconstructed.size(), entries.size());
   for (std::size_t index = 0; index < entries.size(); ++index) {
@@ -1746,22 +1745,22 @@ TEST(IntervalBTree, ReconstructionPreservesDuplicateCanonicalOrder) {
 
 TEST(IntervalBTree, RebuildMatchesOriginalCanonicalOrder) {
   using Tree = dmn::Dmn_IntervalBTree<int>;
-  const auto rangeOrder = [](const auto &lhs, const auto &rhs) {
+  const auto rangeOrder{[](const auto &lhs, const auto &rhs) {
     return lhs.m_start > rhs.m_start;
-  };
+  }};
 
-  const auto duplicateOrder = [](int lhs, int rhs) { return lhs < rhs; };
+  const auto duplicateOrder{[](int lhs, int rhs) { return lhs < rhs; }};
   Tree source(rangeOrder);
   ASSERT_TRUE(source.add({1, 5}, 30));
   ASSERT_TRUE(source.add({10, 20}, 40));
   ASSERT_TRUE(source.add({1, 5}, 10));
   ASSERT_TRUE(source.add({5, 12}, 20));
-  const auto snapshot = source.enumerateCanonical(duplicateOrder);
+  const auto snapshot{source.enumerateCanonical(duplicateOrder)};
 
   Tree destination(rangeOrder);
   ASSERT_TRUE(destination.add({100, 110}, 99));
   destination.reconstructFromCanonical(snapshot, duplicateOrder);
-  const auto rebuilt = destination.enumerateCanonical(duplicateOrder);
+  const auto rebuilt{destination.enumerateCanonical(duplicateOrder)};
 
   ASSERT_EQ(rebuilt.size(), snapshot.size());
 
@@ -1777,7 +1776,7 @@ TEST(IntervalBTree, DestructorReleasesAllUniqueOwnedEntries) {
   {
     dmn::Dmn_IntervalBTree<std::shared_ptr<int>> tree;
     for (int index = 0; index < 256; ++index) {
-      auto value = std::make_shared<int>(index);
+      auto value{std::make_shared<int>(index)};
       values.push_back(value);
       ASSERT_TRUE(tree.add({index * 2, index * 2}, std::move(value)));
     }

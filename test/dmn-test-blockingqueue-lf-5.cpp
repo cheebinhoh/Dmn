@@ -24,18 +24,18 @@ int main(int argc, char *argv[]) {
   std::string data2{"xyz"};
   std::string data3{"mno"};
 
-  auto buf = std::make_unique<dmn::Dmn_BlockingQueue_Lf<std::string>>();
+  auto buf{std::make_unique<dmn::Dmn_BlockingQueue_Lf<std::string>>()};
   bool readDone{};
-  auto proc = std::make_unique<dmn::Dmn_Proc>(
+  auto proc{std::make_unique<dmn::Dmn_Proc>(
       "proc", [&buf, &readDone, data1, data2, data3]() -> void {
-        auto listOfData = buf->pop(3);
+        auto listOfData{buf->pop(3)};
 
         EXPECT_TRUE(listOfData.size() == 3);
         readDone = true;
         EXPECT_TRUE(data1 == listOfData[0]);
         EXPECT_TRUE(data2 == listOfData[1]);
         EXPECT_TRUE(data3 == listOfData[2]);
-      });
+      })};
 
   proc->exec();
   std::this_thread::sleep_for(std::chrono::seconds(2));

@@ -20,8 +20,8 @@
 namespace dmn::gui {
 namespace {
 
-constexpr int kMaximumDepth = 32;
-constexpr std::string_view kReplacement = "\xEF\xBF\xBD";
+constexpr int kMaximumDepth{32};
+constexpr std::string_view kReplacement{"\xEF\xBF\xBD"};
 
 void appendUtf8(std::string &out, const std::uint32_t codePoint) {
   if (codePoint < 0x80) {
@@ -44,14 +44,14 @@ void appendUtf8(std::string &out, const std::uint32_t codePoint) {
 // Returns the byte length of the valid UTF-8 sequence at `pos`, or 0.
 auto utf8SequenceLength(std::string_view text,
                         const std::size_t pos) -> std::size_t {
-  const auto byte = [&](const std::size_t index) {
+  const auto byte { [&](const std::size_t index) {
     return static_cast<unsigned char>(text[index]);
-  };
+  }};
 
-  const auto lead = byte(pos);
-  std::size_t length = 0;
-  std::uint32_t minimum = 0;
-  std::uint32_t codePoint = 0;
+  const auto lead{byte(pos)};
+  std::size_t length{0};
+  std::uint32_t minimum{0};
+  std::uint32_t codePoint{0};
   if (lead < 0x80) {
     return 1;
   }
@@ -95,7 +95,7 @@ auto utf8SequenceLength(std::string_view text,
 void dumpString(std::string &out, std::string_view text) {
   out.push_back('"');
   for (std::size_t pos = 0; pos < text.size();) {
-    const auto byte = static_cast<unsigned char>(text[pos]);
+    const auto byte{static_cast<unsigned char>(text[pos])};
     if (byte == '"' || byte == '\\') {
       out.push_back('\\');
       out.push_back(static_cast<char>(byte));
@@ -115,7 +115,7 @@ void dumpString(std::string &out, std::string_view text) {
       out += escaped.data();
       ++pos;
     } else {
-      const auto length = utf8SequenceLength(text, pos);
+      const auto length{utf8SequenceLength(text, pos)};
       if (length == 0) {
         out += kReplacement;
         ++pos;
@@ -152,7 +152,7 @@ public:
   explicit Parser(std::string_view text) : m_text{text} {}
 
   auto parseDocument() -> std::optional<Dmn_JsonValue> {
-    auto value = parseValue(0);
+    auto value{parseValue(0)};
     skipSpace();
     if (!value || m_pos != m_text.size()) {
       return std::nullopt;
@@ -201,7 +201,7 @@ private:
       return std::nullopt;
     }
 
-    const char current = m_text[m_pos];
+    const char current{m_text[m_pos]};
     if (current == '{') {
       return parseObject(depth);
     }
@@ -211,7 +211,7 @@ private:
     }
 
     if (current == '"') {
-      auto text = parseString();
+      auto text{parseString()};
       if (!text) {
         return std::nullopt;
       }
@@ -235,7 +235,7 @@ private:
   }
 
   auto parseNumber() -> std::optional<Dmn_JsonValue> {
-    const auto start = m_pos;
+    const auto start{m_pos};
     if (m_pos < m_text.size() && m_text[m_pos] == '-') {
       ++m_pos;
     }
@@ -254,7 +254,7 @@ private:
 
     const std::string token{m_text.substr(start, m_pos - start)};
     char *end = nullptr;
-    const double value = std::strtod(token.c_str(), &end);
+    const double value{std::strtod(token.c_str(), &end)};
     if (end != token.c_str() + token.size() || !std::isfinite(value)) {
       return std::nullopt;
     }
@@ -267,9 +267,9 @@ private:
       return std::nullopt;
     }
 
-    std::uint32_t value = 0;
+    std::uint32_t value{0};
     for (int i = 0; i < 4; ++i) {
-      const char digit = m_text[m_pos++];
+      const char digit{m_text[m_pos++]};
       value <<= 4;
       if (digit >= '0' && digit <= '9') {
         value |= static_cast<std::uint32_t>(digit - '0');
@@ -292,7 +292,7 @@ private:
 
     std::string out;
     while (m_pos < m_text.size()) {
-      const auto byte = static_cast<unsigned char>(m_text[m_pos]);
+      const auto byte{static_cast<unsigned char>(m_text[m_pos])};
       if (byte == '"') {
         ++m_pos;
 
@@ -304,7 +304,7 @@ private:
       }
 
       if (byte != '\\') {
-        const auto length = utf8SequenceLength(m_text, m_pos);
+        const auto length{utf8SequenceLength(m_text, m_pos)};
         if (length == 0) {
           return std::nullopt;
         }
@@ -319,7 +319,7 @@ private:
         return std::nullopt;
       }
 
-      const char escape = m_text[m_pos++];
+      const char escape{m_text[m_pos++]};
       switch (escape) {
       case '"':
       case '\\':
@@ -342,18 +342,18 @@ private:
         out.push_back('\t');
         break;
       case 'u': {
-        auto high = parseHex4();
+        auto high{parseHex4()};
         if (!high) {
           return std::nullopt;
         }
 
-        std::uint32_t codePoint = *high;
+        std::uint32_t codePoint{*high};
         if (codePoint >= 0xD800 && codePoint <= 0xDBFF) {
           if (!literal("\\u")) {
             return std::nullopt;
           }
 
-          auto low = parseHex4();
+          auto low{parseHex4()};
           if (!low || *low < 0xDC00 || *low > 0xDFFF) {
             return std::nullopt;
           }
@@ -376,13 +376,13 @@ private:
 
   auto parseArray(const int depth) -> std::optional<Dmn_JsonValue> {
     consume('[');
-    auto array = Dmn_JsonValue::array();
+    auto array{Dmn_JsonValue::array()};
     if (consume(']')) {
       return array;
     }
 
     do {
-      auto item = parseValue(depth + 1);
+      auto item{parseValue(depth + 1)};
       if (!item) {
         return std::nullopt;
       }
@@ -399,19 +399,19 @@ private:
 
   auto parseObject(const int depth) -> std::optional<Dmn_JsonValue> {
     consume('{');
-    auto object = Dmn_JsonValue::object();
+    auto object{Dmn_JsonValue::object()};
     if (consume('}')) {
       return object;
     }
 
     do {
       skipSpace();
-      auto key = parseString();
+      auto key{parseString()};
       if (!key || !consume(':')) {
         return std::nullopt;
       }
 
-      auto value = parseValue(depth + 1);
+      auto value{parseValue(depth + 1)};
       if (!value) {
         return std::nullopt;
       }
@@ -459,7 +459,7 @@ auto Dmn_JsonValue::dump() const -> std::string {
   } else if (const auto *object = std::get_if<Object>(&m_value);
              object != nullptr) {
     out.push_back('{');
-    bool first = true;
+    bool first{true};
     for (const auto &[key, member] : *object) {
       out += (first ? "" : ",");
       first = false;

@@ -24,7 +24,7 @@ namespace {
 
 auto waitForFlag(const std::atomic_bool &flag,
                  std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
 
   while (!flag.load(std::memory_order_acquire) &&
          std::chrono::steady_clock::now() < deadline) {
@@ -36,7 +36,7 @@ auto waitForFlag(const std::atomic_bool &flag,
 
 auto waitForCount(const std::atomic_int &count, int expected,
                   std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
 
   while (count.load(std::memory_order_acquire) < expected &&
          std::chrono::steady_clock::now() < deadline) {
@@ -49,7 +49,7 @@ auto waitForCount(const std::atomic_int &count, int expected,
 template <typename Timer>
 auto waitForFailure(const Timer &timer,
                     std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
 
   while (std::chrono::steady_clock::now() < deadline) {
     try {
@@ -68,10 +68,10 @@ auto waitForFailure(const Timer &timer,
 
 TEST(DmnTimer, FiresAfterConfiguredInterval) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kInterval = std::chrono::milliseconds(100);
+  constexpr auto kInterval{std::chrono::milliseconds(100)};
   std::atomic_bool timer_run{};
   Clock::time_point callback_at{};
-  const auto earliest_callback = Clock::now() + kInterval;
+  const auto earliest_callback{Clock::now() + kInterval};
   dmn::Dmn_Timer timer{kInterval, [&]() {
                          callback_at = Clock::now();
                          timer_run.store(true, std::memory_order_release);
@@ -139,7 +139,7 @@ TEST(DmnTimer, InvalidRestartLeavesRunningTimerUnchanged) {
 
 TEST(DmnTimer, StopPausesAndResumeStartsANewGeneration) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kInterval = std::chrono::milliseconds(180);
+  constexpr auto kInterval{std::chrono::milliseconds(180)};
   std::atomic_int callback_count{};
   std::vector<Clock::time_point> callback_times;
   std::mutex times_mutex;
@@ -152,7 +152,7 @@ TEST(DmnTimer, StopPausesAndResumeStartsANewGeneration) {
 
   timer.stop();
   std::this_thread::sleep_for(std::chrono::milliseconds(40));
-  const auto resumed_at = Clock::now();
+  const auto resumed_at{Clock::now()};
   timer.resume();
 
   ASSERT_TRUE(waitForCount(callback_count, 2, std::chrono::seconds(2)));
@@ -202,8 +202,8 @@ TEST(DmnTimer, StopReturnsWhileAdmittedCallbackIsRunning) {
 TEST(DmnTimer, StandardCallbackExceptionIsLoggedAndTimerContinues) {
   std::atomic_int callback_count{};
   dmn::Dmn_Timer timer{std::chrono::milliseconds(20), [&]() {
-                         const auto count = callback_count.fetch_add(
-                             1, std::memory_order_acq_rel);
+                         const auto count{callback_count.fetch_add(
+                             1, std::memory_order_acq_rel)};
                          if (count == 0) {
                            throw std::runtime_error("expected test exception");
                          }
@@ -233,8 +233,8 @@ TEST(DmnTimer, RejectsIntervalsOutsideSteadyClockRange) {
   using ClockRep = Clock::duration::rep;
   using HugeDuration = std::chrono::duration<long double, std::ratio<3600>>;
   using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
-  const auto first_unrepresentable_tick =
-      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
+  const auto first_unrepresentable_tick{
+      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)};
 
   EXPECT_THROW(
       (dmn::Dmn_Timer<HugeDuration>{

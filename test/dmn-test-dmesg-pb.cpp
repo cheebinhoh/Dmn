@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     self->mutable_initializedtimestamp()->set_seconds(tv.tv_sec);
     self->mutable_initializedtimestamp()->set_nanos(tv.tv_usec * 1000);
 
-    auto neightbor_node1 = dmesgpb_sys_body_sys->add_nodelist();
+    auto neightbor_node1{dmesgpb_sys_body_sys->add_nodelist()};
     neightbor_node1->set_state(dmn::DMesgStatePb::Ready);
     neightbor_node1->set_identifier("id3");
     neightbor_node1->set_masteridentifier("id3");
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     neightbor_node1->mutable_initializedtimestamp()->set_nanos(tv.tv_usec *
                                                                1000);
 
-    auto neightbor_node2 = dmesgpb_sys_body_sys->add_nodelist();
+    auto neightbor_node2{dmesgpb_sys_body_sys->add_nodelist()};
     neightbor_node2->set_state(dmn::DMesgStatePb::Ready);
     neightbor_node2->set_identifier("id4");
     neightbor_node2->set_masteridentifier("id3");

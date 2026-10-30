@@ -122,8 +122,8 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
     } else if (Dmn_Kafka::PollTimeoutMs == c.first) {
       m_poll_timeout_ms = std::strtoll(c.second.c_str(), nullptr, 0);
     } else {
-      auto res =
-          dmn::set_config(kafka_config, c.first.c_str(), c.second.c_str());
+      auto res{
+          dmn::set_config(kafka_config, c.first.c_str(), c.second.c_str())};
       if (!res.has_value()) {
         rd_kafka_conf_destroy(kafka_config);
 
@@ -179,9 +179,9 @@ Dmn_Kafka::Dmn_Kafka(Dmn_Kafka::Role role, Dmn_Kafka::ConfigType configs)
                                       RD_KAFKA_PARTITION_UA);
 
     // Subscribe to the list of topics.
-    rd_kafka_resp_err_t err = rd_kafka_subscribe(m_kafka, subscription);
+    rd_kafka_resp_err_t err{rd_kafka_subscribe(m_kafka, subscription)};
     if (err) {
-      const auto topic_count = subscription->cnt;
+      const auto topic_count{subscription->cnt};
       rd_kafka_topic_partition_list_destroy(subscription);
       rd_kafka_destroy(m_kafka);
 
@@ -257,7 +257,7 @@ auto Dmn_Kafka::read() -> std::optional<std::string> {
     return {};
   }
 
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_Kafka::cleanup_thunk_inflight, &inflightTicket);
 
@@ -348,16 +348,16 @@ void Dmn_Kafka::writeCopy(const std::string &item) {
 
   const char *topic = m_topic.c_str();
   const char *key = m_key.c_str();
-  const size_t key_len = m_key.size();
+  const size_t key_len{m_key.size()};
   const char *value = item.c_str();
-  const size_t value_len = item.size();
+  const size_t value_len{item.size()};
 
-  rd_kafka_resp_err_t err = rd_kafka_producev(
+  rd_kafka_resp_err_t err{rd_kafka_producev(
       m_kafka, RD_KAFKA_V_TOPIC(topic),
       RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY), // maybe RD_KAFKA_MSG_F_FREE?
       RD_KAFKA_V_KEY((void *)key, key_len),
       RD_KAFKA_V_VALUE((void *)value, value_len), RD_KAFKA_V_OPAQUE(nullptr),
-      RD_KAFKA_V_END);
+      RD_KAFKA_V_END)};
 
   Dmn_Proc::yield();
 

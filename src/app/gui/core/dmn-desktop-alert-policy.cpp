@@ -15,13 +15,13 @@ auto shouldSendDesktopAlert(const Dmn_AncsEvent &event) -> bool {
 
 auto makeDesktopAlert(const Dmn_DeviceIdentity &identity,
                       const std::size_t count) -> Dmn_DesktopAlert {
-  const auto id =
-      "device:" + identity.m_adapter_address + "|" + identity.m_device_address;
-  const auto body =
+  const auto id{"device:" + identity.m_adapter_address + "|" +
+                identity.m_device_address};
+  const auto body{
       std::to_string(count) +
       (count == 1 ? " new notification arrived. Open Dmn Bluetooth to view it."
                   : " new notifications arrived. Open Dmn Bluetooth to view "
-                    "them.");
+                    "them.")};
 
   return {id, "New iPhone notification", body};
 }

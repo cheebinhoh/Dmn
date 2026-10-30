@@ -234,16 +234,16 @@ public:
    * @brief If set to "yes" or "1", handlers opened with this config will
    * receive system messages (DMesgPb.message_type == "sys").
    */
-  static constexpr std::string_view kHandlerConfig_IncludeSys =
-      "Handler_IncludeSys";
+  static constexpr std::string_view kHandlerConfig_IncludeSys{
+      "Handler_IncludeSys"};
 
   /**
    * @brief If set to "yes" or "1", handlers opened with this config will
    * ignore topic filtering when reading: read() returns messages regardless of
    * topic value and write() will not set the message topic automatically.
    */
-  static constexpr std::string_view kHandlerConfig_NoTopicFilter =
-      "Handler_NoTopicFilter";
+  static constexpr std::string_view kHandlerConfig_NoTopicFilter{
+      "Handler_NoTopicFilter"};
 
   /**
    * @brief Type used to represent key/value configuration entries for the
@@ -624,7 +624,7 @@ public:
      * @throws std::runtime_error if the handler has already been closed.
      */
     std::shared_ptr<Dmn_DMesgHandler> operator->() const {
-      auto handler = m_handler.lock();
+      auto handler{m_handler.lock()};
       if (!handler) {
         throw std::runtime_error("handler has been closed");
       }
@@ -865,19 +865,19 @@ private:
 
 inline auto Dmn_DMesg::finalizeHandlerRegistration(
     std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler) -> HandlerType {
-  auto handlerProxy = Dmn_DMesg::Dmn_DMesgHandlerProxy();
+  auto handlerProxy{Dmn_DMesg::Dmn_DMesgHandlerProxy()};
 
   handler->m_owner = this;
   this->registerSubscriber(handler);
   handlerProxy.m_handler = handler;
 
   // Queue the handler's playback-complete marker after playback deliveries.
-  auto waitHandler = this->addExecTaskWithWait([this, handler]() {
+  auto waitHandler{this->addExecTaskWithWait([this, handler]() {
     this->m_handlers.push_back(handler);
     this->m_handler_states.try_emplace(handler.get());
     this->playbackLastTopicDMesgPbInternal();
     handler->setAfterInitialPlayback();
-  });
+  })};
 
   waitHandler->wait();
 
@@ -902,8 +902,8 @@ auto Dmn_DMesg::openHandler(U &&...arg) -> HandlerType {
   // serialized on the publisher context. Each handler receives snapshots on
   // its own async context for public state access and callbacks.
 
-  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler =
-      std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...);
+  std::shared_ptr<Dmn_DMesg::Dmn_DMesgHandler> handler{
+      std::make_shared<Dmn_DMesg::Dmn_DMesgHandler>(std::forward<U>(arg)...)};
 
   return finalizeHandlerRegistration(handler);
 }
@@ -918,7 +918,7 @@ inline auto Dmn_DMesg::openHandler(const HandlerSpec &spec) -> HandlerType {
 
 inline auto Dmn_DMesg::openHandlerWithFactory(
     const HandlerSpec &spec, const HandlerFactory &factory) -> HandlerType {
-  auto handler = factory(spec);
+  auto handler{factory(spec)};
   if (!handler) {
     throw std::runtime_error("handler factory produced a null handler");
   }

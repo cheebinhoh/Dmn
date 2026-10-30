@@ -21,11 +21,11 @@
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  auto pipe_1 = std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_1");
+  auto pipe_1{std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_1")};
 
-  auto pipe_2 = std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_2");
+  auto pipe_2{std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_2")};
 
-  auto pipe_3 = std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_3");
+  auto pipe_3{std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_3")};
 
   size_t pipe_1_cnt{};
   size_t pipe_2_cnt{};
@@ -33,14 +33,14 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Proc proc_1{"proc_1", [&pipe_1, &pipe_1_cnt]() {
                          do {
-                           auto data = pipe_1->read(4);
+                           auto data{pipe_1->read(4)};
                            pipe_1_cnt += data.size();
                          } while (true);
                        }};
 
   dmn::Dmn_Proc proc_2{"proc_2", [&pipe_2, &pipe_1, &pipe_2_cnt]() {
                          do {
-                           auto data = pipe_2->read(2);
+                           auto data{pipe_2->read(2)};
                            pipe_2_cnt += data.size();
 
                            for (auto &d : data) {
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
   dmn::Dmn_Proc proc_3{"proc_3", [&pipe_3, &pipe_2, &pipe_3_cnt]() {
                          do {
-                           auto data = pipe_3->read(1);
+                           auto data{pipe_3->read(1)};
                            pipe_3_cnt += data.size();
 
                            for (auto &d : data) {

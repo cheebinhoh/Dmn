@@ -75,21 +75,21 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_1")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_1")};
 
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("write_2")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("read_2")};
 
-    auto read_from_write_1 = write_1;
-    auto write_to_read_1 = read_1;
+    auto read_from_write_1{write_1};
+    auto write_to_read_1{read_1};
 
-    auto read_from_write_2 = write_2;
-    auto write_to_read_2 = read_2;
+    auto read_from_write_2{write_2};
+    auto write_to_read_2{read_2};
 
     dmn::DMesgPb dmesgpb1{};
     dmn::DMesgPb dmesgpb1_body{};
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
           static bool dup{};
 
           while (true) {
-            auto data = read_from_write_1->read();
+            auto data{read_from_write_1->read()};
             if (!data) {
               break;
             }
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
                         << "\n";
 
               if (!dup) {
-                auto copied = *data;
+                auto copied{*data};
                 write_to_read_2->write(copied);
                 dup = true;
 
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
           static bool print{};
 
           while (true) {
-            auto data = read_from_write_2->read();
+            auto data{read_from_write_2->read()};
             if (!data) {
               break;
             }
@@ -199,17 +199,17 @@ int main(int argc, char *argv[]) {
     dmesg1_to_dmesg2.exec();
     dmesg2_to_dmesg1.exec();
 
-    auto dmesgnet2 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg2", std::move(read_2), std::move(write_2));
+    auto dmesgnet2{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg2", std::move(read_2), std::move(write_2))};
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1))};
 
     std::this_thread::sleep_for(std::chrono::seconds(15));
-    auto sys1 = dmesgpb1_sys.body().sys().self();
-    auto sys2 = dmesgpb2_sys.body().sys().self();
+    auto sys1{dmesgpb1_sys.body().sys().self()};
+    auto sys2{dmesgpb2_sys.body().sys().self()};
 
     EXPECT_TRUE((sys1.state() == dmn::DMesgStatePb::Ready));
     EXPECT_TRUE((sys2.state() == dmn::DMesgStatePb::Ready));
@@ -232,11 +232,11 @@ int main(int argc, char *argv[]) {
     dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
     dmesgpb_body->set_message(data);
 
-    auto dmesg2_read_handle =
-        dmesgnet2->openHandler("writeHandler", "counter sync");
+    auto dmesg2_read_handle{
+        dmesgnet2->openHandler("writeHandler", "counter sync")};
     EXPECT_TRUE(dmesg2_read_handle);
 
-    auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
+    auto dmesg_handle{dmesgnet1->openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_handle);
     std::cout << "************** first write\n";
     dmesg_handle->write(dmesgpb);
@@ -245,7 +245,7 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     EXPECT_TRUE((dmesgpb1_body.topic() == "counter sync"));
 
-    auto dmesgdata = dmesg2_read_handle->read();
+    auto dmesgdata{dmesg2_read_handle->read()};
     std::cout << "data: " << (*dmesgdata).ShortDebugString() << "\n";
     EXPECT_TRUE(((*dmesgdata).topic() == "counter sync"));
     EXPECT_TRUE(((*dmesgdata).body().message() == "Hello dmesg async"));

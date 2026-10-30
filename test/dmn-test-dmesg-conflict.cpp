@@ -42,7 +42,7 @@ public:
 
   auto waitForSize(std::size_t size,
                    std::chrono::milliseconds timeout) -> bool {
-    auto lock = std::unique_lock{m_mutex};
+    auto lock{std::unique_lock{m_mutex}};
     return m_changed.wait_for(lock, timeout,
                               [&] { return m_events.size() >= size; });
   }
@@ -96,9 +96,9 @@ TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
   dmn::Dmn_DMesg publisher{"handler-close-drain-test"};
   std::promise<void> callbackEntered;
   std::promise<void> releaseCallback;
-  auto releaseCallbackFuture = releaseCallback.get_future().share();
-  auto writer = publisher.openHandler("writer", "orders");
-  auto observer = publisher.openHandlerWithFactory(
+  auto releaseCallbackFuture{releaseCallback.get_future().share()};
+  auto writer{publisher.openHandler("writer", "orders")};
+  auto observer{publisher.openHandlerWithFactory(
       dmn::Dmn_DMesg::HandlerSpec{"observer",
                                   "orders",
                                   {},
@@ -113,10 +113,10 @@ TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
         return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
             spec.m_name, spec.m_topic, spec.m_filter_fn,
             spec.m_async_process_fn, spec.m_configs);
-      });
+      })};
   ASSERT_TRUE(writer);
   ASSERT_TRUE(observer);
-  auto observerLifetime = observer.operator->();
+  auto observerLifetime{observer.operator->()};
 
   writer->write(makeMessage("close"));
   if (callbackEntered.get_future().wait_for(5s) != std::future_status::ready) {
@@ -125,10 +125,10 @@ TEST(DmnDMesgConflictTest, ClosingHandlerWaitsForRunningObserverCallback) {
     return;
   }
 
-  auto closeTask = std::async(std::launch::async, [&publisher, &observer] {
+  auto closeTask{std::async(std::launch::async, [&publisher, &observer] {
     publisher.closeHandler(observer);
-  });
-  const auto closeStatus = closeTask.wait_for(100ms);
+  })};
+  const auto closeStatus{closeTask.wait_for(100ms)};
   releaseCallback.set_value();
   static_cast<void>(observerLifetime->isInConflict());
 
@@ -144,7 +144,7 @@ TEST(DmnDMesgConflictTest, HandlerCanOutlivePublisherUntilClientReleasesIt) {
     std::shared_ptr<dmn::Dmn_DMesg::Dmn_DMesgHandler> clientHandler;
     {
       dmn::Dmn_DMesg publisher{"handler-client-lifetime-test"};
-      auto handler = publisher.openHandler("client-handler", "orders");
+      auto handler{publisher.openHandler("client-handler", "orders")};
       ASSERT_TRUE(handler);
 
       clientHandler = handler.operator->();
@@ -162,10 +162,10 @@ TEST(DmnDMesgConflictTest, AppliesConfiguredTopicBeforeIncrementingItsCounter) {
   dmn::Dmn_DMesg publisher{"configured-topic-counter-test"};
   std::promise<void> publisherPaused;
   std::promise<void> resumePublisher;
-  auto resumePublisherFuture = resumePublisher.get_future().share();
-  auto writer = publisher.openHandler("writer", "orders");
+  auto resumePublisherFuture{resumePublisher.get_future().share()};
+  auto writer{publisher.openHandler("writer", "orders")};
   // Hold publisher delivery so the writer can issue its next write first.
-  auto observer = publisher.openHandler(
+  auto observer{publisher.openHandler(
       "observer", "orders",
       [&publisherPaused, &resumePublisherFuture](const dmn::DMesgPb &message) {
         if ("first" == message.body().message()) {
@@ -174,15 +174,15 @@ TEST(DmnDMesgConflictTest, AppliesConfiguredTopicBeforeIncrementingItsCounter) {
         }
 
         return true;
-      });
+      })};
   ASSERT_TRUE(writer);
   ASSERT_TRUE(observer);
 
-  auto firstMessage = makeMessage("first");
+  auto firstMessage{makeMessage("first")};
   firstMessage.clear_topic();
   writer->write(firstMessage);
 
-  const auto pauseStatus = publisherPaused.get_future().wait_for(5s);
+  const auto pauseStatus{publisherPaused.get_future().wait_for(5s)};
   if (std::future_status::ready != pauseStatus) {
     resumePublisher.set_value();
     FAIL() << "publisher did not pause on first message";
@@ -204,11 +204,11 @@ TEST(DmnDMesgConflictTest, AppliesConfiguredTopicBeforeIncrementingItsCounter) {
 TEST(DmnDMesgConflictTest,
      NotifiesOnlyHandlersWithAnEstablishedMatchingTopicCounter) {
   dmn::Dmn_DMesg publisher{"conflict-test"};
-  auto writer = publisher.openHandler("writer", "orders");
-  auto observer = publisher.openHandler("observer", "orders");
-  auto filteredObserver =
+  auto writer{publisher.openHandler("writer", "orders")};
+  auto observer{publisher.openHandler("observer", "orders")};
+  auto filteredObserver{
       publisher.openHandler("filtered-observer", "orders",
-                            [](const dmn::DMesgPb &) { return false; });
+                            [](const dmn::DMesgPb &) { return false; })};
 
   ASSERT_TRUE(writer);
   ASSERT_TRUE(observer);
@@ -222,8 +222,8 @@ TEST(DmnDMesgConflictTest,
 
   std::promise<dmn::DMesgPb> writerConflict;
   std::promise<dmn::DMesgPb> observerConflict;
-  auto writerConflictResult = writerConflict.get_future();
-  auto observerConflictResult = observerConflict.get_future();
+  auto writerConflictResult{writerConflict.get_future()};
+  auto observerConflictResult{observerConflict.get_future()};
   std::atomic<unsigned int> filteredObserverConflictCount{};
 
   writer->setConflictCallbackTask(
@@ -248,8 +248,8 @@ TEST(DmnDMesgConflictTest,
 
   ASSERT_EQ(writerConflictResult.wait_for(5s), std::future_status::ready);
   ASSERT_EQ(observerConflictResult.wait_for(5s), std::future_status::ready);
-  const auto writerConflictMessage = writerConflictResult.get();
-  const auto observerConflictMessage = observerConflictResult.get();
+  const auto writerConflictMessage{writerConflictResult.get()};
+  const auto observerConflictMessage{observerConflictResult.get()};
   EXPECT_TRUE(writerConflictMessage.conflict());
   EXPECT_TRUE(observerConflictMessage.conflict());
   EXPECT_EQ(writerConflictMessage.topic(), "orders");
@@ -277,15 +277,15 @@ TEST(DmnDMesgConflictTest,
   dmn::Dmn_DMesg publisher{"handler-event-test"};
   HandlerEventCollector writerEvents;
   HandlerEventCollector observerEvents;
-  auto writer = openObservedHandler(publisher, "writer", writerEvents);
-  auto observer = openObservedHandler(publisher, "observer", observerEvents);
+  auto writer{openObservedHandler(publisher, "writer", writerEvents)};
+  auto observer{openObservedHandler(publisher, "observer", observerEvents)};
 
   ASSERT_TRUE(writer);
   ASSERT_TRUE(observer);
   ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("initial")));
   publisher.waitForEmpty();
 
-  auto observerEventsSnapshot = snapshotEvents(observer, observerEvents);
+  auto observerEventsSnapshot{snapshotEvents(observer, observerEvents)};
   ASSERT_EQ(observerEventsSnapshot.size(), 1U);
   EXPECT_EQ(observerEventsSnapshot[0].m_type,
             dmn::Dmn_DMesg::HandlerEventType::kMessage);
@@ -299,7 +299,7 @@ TEST(DmnDMesgConflictTest,
   EXPECT_FALSE(writer->writeAndCheckConflict(makeMessage("stale")));
   publisher.waitForEmpty();
 
-  auto writerEventsSnapshot = snapshotEvents(writer, writerEvents);
+  auto writerEventsSnapshot{snapshotEvents(writer, writerEvents)};
   observerEventsSnapshot = snapshotEvents(observer, observerEvents);
   ASSERT_EQ(writerEventsSnapshot.size(), 1U);
   ASSERT_EQ(observerEventsSnapshot.size(), 2U);
@@ -347,7 +347,7 @@ TEST(DmnDMesgConflictTest,
   EXPECT_EQ(writerEventsSnapshot.back().m_conflict_generation, 4U);
   EXPECT_FALSE(writerEventsSnapshot.back().m_message.has_value());
 
-  auto accepted = makeMessage("newer");
+  auto accepted{makeMessage("newer")};
   EXPECT_TRUE(writer->writeAndCheckConflict(accepted));
   publisher.waitForEmpty();
   observerEventsSnapshot = snapshotEvents(observer, observerEvents);
@@ -372,9 +372,9 @@ TEST(DmnDMesgConflictTest, RepeatedConflictDoesNotEmitAnotherStateTransition) {
   HandlerEventCollector firstWriterEvents;
   HandlerEventCollector secondWriterEvents;
   HandlerEventCollector observerEvents;
-  auto firstWriter =
-      openObservedHandler(publisher, "first-writer", firstWriterEvents);
-  auto observer = openObservedHandler(publisher, "observer", observerEvents);
+  auto firstWriter{
+      openObservedHandler(publisher, "first-writer", firstWriterEvents)};
+  auto observer{openObservedHandler(publisher, "observer", observerEvents)};
 
   ASSERT_TRUE(firstWriter);
   ASSERT_TRUE(observer);
@@ -384,19 +384,19 @@ TEST(DmnDMesgConflictTest, RepeatedConflictDoesNotEmitAnotherStateTransition) {
   firstWriter->setTopicRunningCounter("orders", 0U);
   EXPECT_FALSE(firstWriter->writeAndCheckConflict(makeMessage("first-stale")));
 
-  auto secondWriter =
-      openObservedHandler(publisher, "second-writer", secondWriterEvents);
+  auto secondWriter{
+      openObservedHandler(publisher, "second-writer", secondWriterEvents)};
   ASSERT_TRUE(secondWriter);
   secondWriter->setTopicRunningCounter("orders", 0U);
   EXPECT_FALSE(
       secondWriter->writeAndCheckConflict(makeMessage("second-stale")));
   publisher.waitForEmpty();
 
-  auto observerEventsSnapshot = snapshotEvents(observer, observerEvents);
-  auto firstWriterEventsSnapshot =
-      snapshotEvents(firstWriter, firstWriterEvents);
-  auto secondWriterEventsSnapshot =
-      snapshotEvents(secondWriter, secondWriterEvents);
+  auto observerEventsSnapshot{snapshotEvents(observer, observerEvents)};
+  auto firstWriterEventsSnapshot{
+      snapshotEvents(firstWriter, firstWriterEvents)};
+  auto secondWriterEventsSnapshot{
+      snapshotEvents(secondWriter, secondWriterEvents)};
   ASSERT_EQ(observerEventsSnapshot.size(), 2U);
   EXPECT_EQ(observerEventsSnapshot[0].m_type,
             dmn::Dmn_DMesg::HandlerEventType::kMessage);
@@ -415,16 +415,16 @@ TEST(DmnDMesgConflictTest, RepeatedConflictDoesNotEmitAnotherStateTransition) {
 
 TEST(DmnDMesgConflictTest, InitialPlaybackEventPrecedesSubsequentDelivery) {
   dmn::Dmn_DMesg publisher{"initial-playback-event-test"};
-  auto writer = publisher.openHandler("writer", "orders");
+  auto writer{publisher.openHandler("writer", "orders")};
   ASSERT_TRUE(writer);
   ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("cached")));
 
   HandlerEventCollector events;
   std::promise<void> playbackCallbackStarted;
-  auto playbackCallbackStartedFuture = playbackCallbackStarted.get_future();
+  auto playbackCallbackStartedFuture{playbackCallbackStarted.get_future()};
   std::promise<void> continuePlaybackCallback;
-  auto continuePlaybackCallbackFuture =
-      continuePlaybackCallback.get_future().share();
+  auto continuePlaybackCallbackFuture{
+      continuePlaybackCallback.get_future().share()};
   dmn::Dmn_DMesg::HandlerSpec spec{
       "observer",
       "orders",
@@ -439,16 +439,16 @@ TEST(DmnDMesgConflictTest, InitialPlaybackEventPrecedesSubsequentDelivery) {
           continuePlaybackCallbackFuture.wait();
         }
       }};
-  auto observer = publisher.openHandlerWithFactory(
+  auto observer{publisher.openHandlerWithFactory(
       spec, [](const dmn::Dmn_DMesg::HandlerSpec &handlerSpec) {
         return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
             handlerSpec.m_name, handlerSpec.m_topic, handlerSpec.m_filter_fn,
             handlerSpec.m_async_process_fn, handlerSpec.m_configs);
-      });
+      })};
   ASSERT_TRUE(observer);
 
-  const bool playbackCallbackIsRunning =
-      playbackCallbackStartedFuture.wait_for(5s) == std::future_status::ready;
+  const bool playbackCallbackIsRunning{
+      playbackCallbackStartedFuture.wait_for(5s) == std::future_status::ready};
   bool newerMessageAccepted{};
   if (playbackCallbackIsRunning) {
     newerMessageAccepted = writer->writeAndCheckConflict(makeMessage("newer"));
@@ -461,7 +461,7 @@ TEST(DmnDMesgConflictTest, InitialPlaybackEventPrecedesSubsequentDelivery) {
   publisher.waitForEmpty();
 
   ASSERT_TRUE(events.waitForSize(2U, 5s));
-  const auto eventsSnapshot = snapshotEvents(observer, events);
+  const auto eventsSnapshot{snapshotEvents(observer, events)};
   ASSERT_EQ(eventsSnapshot.size(), 2U);
   EXPECT_EQ(eventsSnapshot[0].m_type,
             dmn::Dmn_DMesg::HandlerEventType::kMessage);
@@ -483,8 +483,8 @@ TEST(DmnDMesgConflictTest, ForcedHandlerWriteEmitsRepairTransition) {
   dmn::Dmn_DMesg publisher{"forced-handler-event-test"};
   HandlerEventCollector writerEvents;
   HandlerEventCollector observerEvents;
-  auto writer = openObservedHandler(publisher, "writer", writerEvents);
-  auto observer = openObservedHandler(publisher, "observer", observerEvents);
+  auto writer{openObservedHandler(publisher, "writer", writerEvents)};
+  auto observer{openObservedHandler(publisher, "observer", observerEvents)};
 
   ASSERT_TRUE(writer);
   ASSERT_TRUE(observer);
@@ -494,13 +494,13 @@ TEST(DmnDMesgConflictTest, ForcedHandlerWriteEmitsRepairTransition) {
   EXPECT_FALSE(writer->writeAndCheckConflict(makeMessage("stale")));
   publisher.waitForEmpty();
 
-  auto repair = makeMessage("forced-repair");
+  auto repair{makeMessage("forced-repair")};
   dmn::Dmn_DMesg::Dmn_DMesgHandler::WriteFlags flags;
   flags.set(dmn::Dmn_DMesg::Dmn_DMesgHandler::kForce);
   writer->write(repair, flags);
 
-  auto writerEventsSnapshot = snapshotEvents(writer, writerEvents);
-  auto observerEventsSnapshot = snapshotEvents(observer, observerEvents);
+  auto writerEventsSnapshot{snapshotEvents(writer, writerEvents)};
+  auto observerEventsSnapshot{snapshotEvents(observer, observerEvents)};
   ASSERT_EQ(writerEventsSnapshot.size(), 2U);
   EXPECT_EQ(writerEventsSnapshot.back().m_type,
             dmn::Dmn_DMesg::HandlerEventType::kConflictResolved);
@@ -527,7 +527,7 @@ TEST(DmnDMesgConflictTest, ForcedHandlerWriteEmitsRepairTransition) {
 TEST(DmnDMesgConflictTest,
      ProcessingCallbacksRunOnHandlerContextInPublisherEventOrder) {
   dmn::Dmn_DMesg publisher{"handler-callback-context-test"};
-  auto writer = publisher.openHandler("writer", "orders");
+  auto writer{publisher.openHandler("writer", "orders")};
   ASSERT_TRUE(writer);
 
   std::promise<std::thread::id> filterThread;
@@ -537,13 +537,13 @@ TEST(DmnDMesgConflictTest,
   std::promise<std::thread::id> conflictCallbackThread;
   std::promise<int> messageEventOrder;
   std::promise<int> asyncProcessOrder;
-  auto filterThreadResult = filterThread.get_future();
-  auto messageEventThreadResult = messageEventThread.get_future();
-  auto asyncProcessThreadResult = asyncProcessThread.get_future();
-  auto conflictEventThreadResult = conflictEventThread.get_future();
-  auto conflictCallbackThreadResult = conflictCallbackThread.get_future();
-  auto messageEventOrderResult = messageEventOrder.get_future();
-  auto asyncProcessOrderResult = asyncProcessOrder.get_future();
+  auto filterThreadResult{filterThread.get_future()};
+  auto messageEventThreadResult{messageEventThread.get_future()};
+  auto asyncProcessThreadResult{asyncProcessThread.get_future()};
+  auto conflictEventThreadResult{conflictEventThread.get_future()};
+  auto conflictCallbackThreadResult{conflictCallbackThread.get_future()};
+  auto messageEventOrderResult{messageEventOrder.get_future()};
+  auto asyncProcessOrderResult{asyncProcessOrder.get_future()};
   std::atomic<int> callbackOrder{};
 
   dmn::Dmn_DMesg::HandlerSpec spec{
@@ -568,7 +568,7 @@ TEST(DmnDMesgConflictTest,
           conflictEventThread.set_value(std::this_thread::get_id());
         }
       }};
-  auto observer = publisher.openHandler(spec);
+  auto observer{publisher.openHandler(spec)};
   ASSERT_TRUE(observer);
 
   observer->setConflictCallbackTask(
@@ -587,9 +587,9 @@ TEST(DmnDMesgConflictTest,
   ASSERT_EQ(messageEventOrderResult.get(), 1);
   ASSERT_EQ(asyncProcessOrderResult.get(), 2);
 
-  const auto publisherContext = filterThreadResult.get();
-  const auto messageEventContext = messageEventThreadResult.get();
-  const auto asyncProcessContext = asyncProcessThreadResult.get();
+  const auto publisherContext{filterThreadResult.get()};
+  const auto messageEventContext{messageEventThreadResult.get()};
+  const auto asyncProcessContext{asyncProcessThreadResult.get()};
   EXPECT_NE(publisherContext, messageEventContext);
   EXPECT_EQ(messageEventContext, asyncProcessContext);
 
@@ -610,11 +610,11 @@ TEST(DmnDMesgConflictTest,
 
 TEST(DmnDMesgConflictTest, ObserverExceptionDoesNotInterruptDelivery) {
   dmn::Dmn_DMesg publisher{"throwing-handler-event-test"};
-  auto writer = publisher.openHandler("writer", "orders");
+  auto writer{publisher.openHandler("writer", "orders")};
   ASSERT_TRUE(writer);
 
   std::promise<void> observerCallbackRan;
-  auto observerCallbackResult = observerCallbackRan.get_future();
+  auto observerCallbackResult{observerCallbackRan.get_future()};
   dmn::Dmn_DMesg::HandlerSpec spec{
       "observer",
       "orders",
@@ -625,17 +625,17 @@ TEST(DmnDMesgConflictTest, ObserverExceptionDoesNotInterruptDelivery) {
         observerCallbackRan.set_value();
         throw std::runtime_error("observer failure");
       }};
-  auto observer = publisher.openHandlerWithFactory(
+  auto observer{publisher.openHandlerWithFactory(
       spec, [](const dmn::Dmn_DMesg::HandlerSpec &handlerSpec) {
         return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
             handlerSpec.m_name, handlerSpec.m_topic, handlerSpec.m_filter_fn,
             handlerSpec.m_async_process_fn, handlerSpec.m_configs);
-      });
+      })};
   ASSERT_TRUE(observer);
 
   ASSERT_TRUE(writer->writeAndCheckConflict(makeMessage("delivered")));
   publisher.waitForEmpty();
-  auto received = observer->read();
+  auto received{observer->read()};
   ASSERT_TRUE(received.has_value());
   EXPECT_EQ(received->body().message(), "delivered");
   ASSERT_EQ(observerCallbackResult.wait_for(5s), std::future_status::ready);
@@ -648,7 +648,7 @@ TEST(DmnDMesgConflictTest, ObserverExceptionDoesNotInterruptDelivery) {
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
   google::protobuf::ShutdownProtobufLibrary();
   return result;
 }

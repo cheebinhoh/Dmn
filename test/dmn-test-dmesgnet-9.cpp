@@ -29,22 +29,22 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_2 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_2");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_2{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("pipe_2")};
 
-    std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_1 =
+    std::shared_ptr<dmn::Dmn_Io<std::string>> pipe_1{
         std::make_unique<dmn::Dmn_Pipe<std::string>>(
-            "pipe_1", [pipe_2](std::string &&data) { pipe_2->write(data); });
+            "pipe_1", [pipe_2](std::string &&data) { pipe_2->write(data); })};
 
     dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", nullptr, std::move(pipe_1)};
 
     dmn::Dmn_DMesgNet dmesgnet2{"dmesg2", std::move(pipe_2)};
 
-    auto readHandler2 = dmesgnet2.openHandler("dmesg2.readHandler");
+    auto readHandler2{dmesgnet2.openHandler("dmesg2.readHandler")};
 
     dmn::DMesgPb dmesgpb_read{};
     dmn::Dmn_Proc proc2{"dmesg2", [readHandler2, &dmesgpb_read]() -> void {
-                          auto data = readHandler2->read();
+                          auto data{readHandler2->read()};
                           if (data) {
                             dmesgpb_read = *data;
                           }
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_Proc::yield();
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    auto dmesg_handle = dmesgnet1.openHandler("writeHandler");
+    auto dmesg_handle{dmesgnet1.openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_handle);
 
     dmn::DMesgPb dmesgpb{};
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    const std::string source = dmesgpb_read.sourceidentifier();
+    const std::string source{dmesgpb_read.sourceidentifier()};
     EXPECT_TRUE(dmesgpb_read.type() == dmesgpb.type());
     EXPECT_TRUE(dmesgpb_read.sourceidentifier() ==
                 dmesgpb.sourceidentifier()); // the source is the local DmesgNet
