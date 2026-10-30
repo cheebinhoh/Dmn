@@ -342,7 +342,7 @@ private:
    */
   template <std::atomic<Node *> Node::*NextField>
   static auto freeNodeChain(Node *head) -> uint64_t {
-    uint64_t count = 0;
+    uint64_t count{0};
 
     while (head != nullptr) {
       Node *next = (head->*NextField).load(std::memory_order_relaxed);
@@ -416,7 +416,7 @@ template <typename T> Dmn_BlockingQueue_Lf<T>::Dmn_BlockingQueue_Lf() {
     m_epochInFlightCount[i].store(0);
   }
 
-  auto dummy = new Node;
+  auto dummy{new Node};
 
   m_head.store(dummy);
   m_tail.store(dummy);
@@ -439,7 +439,7 @@ Dmn_BlockingQueue_Lf<T>::~Dmn_BlockingQueue_Lf() noexcept try {
   Node *ptr = m_head.load(std::memory_order_acquire);
   freeNodeList(ptr);
 
-  auto ep = m_epochData.load(std::memory_order_acquire);
+  auto ep{m_epochData.load(std::memory_order_acquire)};
   // The invariant below disappears when NDEBUG removes assert().
   [[maybe_unused]] auto globalEpochIndex = calc_epoch_index(ep.m_id);
 
@@ -484,21 +484,21 @@ auto Dmn_BlockingQueue_Lf<T>::pop(size_t count,
                                   long timeout) -> std::vector<T> {
   assert(count > 0);
 
-  auto inflightTicket = this->enterInflightGate();
+  auto inflightTicket{this->enterInflightGate()};
 
   std::vector<T> res{};
 
-  auto end = std::chrono::high_resolution_clock::now() +
-             std::chrono::microseconds(timeout);
+  auto end{std::chrono::high_resolution_clock::now() +
+           std::chrono::microseconds(timeout)};
   // Defer ordinary exceptions until the pthread cleanup scope is closed.
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
 
   try {
     do {
-      auto data = popOptional(false, inflightTicket);
+      auto data{popOptional(false, inflightTicket)};
       if (data) {
         res.push_back(std::move_if_noexcept(*data));
       } else {
@@ -530,9 +530,9 @@ template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::popOptional(bool wait) -> std::optional<T> {
   std::optional<T> data{};
 
-  auto inflightTicket = this->enterInflightGate();
+  auto inflightTicket{this->enterInflightGate()};
   // Defer ordinary exceptions until the pthread cleanup scope is closed.
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -610,9 +610,9 @@ auto Dmn_BlockingQueue_Lf<T>::popOptional(
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
-  auto inflightTicket = this->enterInflightGate();
+  auto inflightTicket{this->enterInflightGate()};
   // Defer ordinary exceptions until the pthread cleanup scope is closed.
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -636,9 +636,9 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::pushCopy(const T &item) {
 }
 
 template <typename T> void Dmn_BlockingQueue_Lf<T>::pushMove(T &&item) {
-  auto inflightTicket = this->enterInflightGate();
+  auto inflightTicket{this->enterInflightGate()};
   // Defer ordinary exceptions until the pthread cleanup scope is closed.
-  auto failure = std::exception_ptr{};
+  auto failure{std::exception_ptr{}};
 
   DMN_PROC_CLEANUP_PUSH(&Dmn_BlockingQueue_Lf<T>::cleanup_thunk_inflight,
                         &inflightTicket);
@@ -665,7 +665,7 @@ template <typename T>
 template <class U>
 void Dmn_BlockingQueue_Lf<T>::pushImpl(U &&item) {
   // Keep ownership local until the node is linked into the shared queue.
-  auto newNode = std::make_unique<Node>();
+  auto newNode{std::make_unique<Node>()};
 
   newNode->m_data = std::forward<U>(item);
 
@@ -752,7 +752,7 @@ void Dmn_BlockingQueue_Lf<T>::retireNode(uint64_t epochIndex, Node *node) {
   assert(epochIndex < s_epochDataSize);
 
   do {
-    auto first = m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
+    auto first{m_epochReclaimNode[epochIndex].load(std::memory_order_acquire)};
 
     // Relaxed: the subsequent CAS (release) will order this store.
     node->m_retired_next.store(first, std::memory_order_relaxed);
@@ -783,11 +783,11 @@ template <typename T> void Dmn_BlockingQueue_Lf<T>::shutdown() {
 
 template <typename T>
 auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
-  uint64_t epochIndex = 0;
-  auto total = m_in_flight_total.fetch_add(1, std::memory_order_acq_rel);
+  uint64_t epochIndex{0};
+  auto total{m_in_flight_total.fetch_add(1, std::memory_order_acq_rel)};
 
   do {
-    auto ep = m_epochData.load(std::memory_order_acquire);
+    auto ep{m_epochData.load(std::memory_order_acquire)};
     if ((total - ep.m_in_flight_total) >= s_epochTimeScale ||
         total < ep.m_in_flight_total) {
       EpochData epNew{.m_in_flight_total = total, .m_id = ep.m_id + 1};
@@ -800,15 +800,14 @@ auto Dmn_BlockingQueue_Lf<T>::enterInflightGuardFnc() -> uint64_t {
 
       epochIndex = calc_epoch_index(epNew.m_id);
 
-      uint64_t index = 0;
+      uint64_t index{0};
       while (index < s_epochDataSize) {
         if (epochIndex != index) {
-          auto count =
-              m_epochInFlightCount[index].load(std::memory_order_acquire);
+          auto count{
+              m_epochInFlightCount[index].load(std::memory_order_acquire)};
 
           if (0 == count) {
-            auto ptr =
-                m_epochReclaimNode[index].load(std::memory_order_acquire);
+            auto ptr{m_epochReclaimNode[index].load(std::memory_order_acquire)};
             if (nullptr != ptr) {
               if (!m_epochReclaimNode[index].compare_exchange_strong(
                       ptr, nullptr, std::memory_order_acq_rel,
@@ -854,13 +853,13 @@ void Dmn_BlockingQueue_Lf<T>::leaveInflightGuardFnc(
   // 0.
   if (1 == m_epochInFlightCount[epochIndex].fetch_sub(
                1, std::memory_order_acq_rel)) {
-    auto ep = m_epochData.load(std::memory_order_acquire);
-    auto globalEpochIndex = calc_epoch_index(ep.m_id);
+    auto ep{m_epochData.load(std::memory_order_acquire)};
+    auto globalEpochIndex{calc_epoch_index(ep.m_id)};
 
     if (globalEpochIndex != epochIndex) {
       do {
-        auto ptr =
-            m_epochReclaimNode[epochIndex].load(std::memory_order_acquire);
+        auto ptr{
+            m_epochReclaimNode[epochIndex].load(std::memory_order_acquire)};
         if (nullptr != ptr) {
           if (!m_epochReclaimNode[epochIndex].compare_exchange_strong(
                   ptr, nullptr, std::memory_order_acq_rel,

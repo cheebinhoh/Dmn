@@ -277,7 +277,7 @@ inline auto makeConfig() -> dmn::Dmn_DbusConfig { return {}; }
 template <typename Predicate>
 inline auto waitUntil(Predicate predicate,
                       std::chrono::milliseconds timeout = 3s) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
   while (std::chrono::steady_clock::now() < deadline) {
     if (predicate()) {
       return true;

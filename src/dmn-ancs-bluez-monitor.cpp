@@ -20,8 +20,8 @@ namespace {
 
 using namespace std::chrono_literals;
 
-constexpr std::size_t kBluetoothAddressLength = 17;
-constexpr auto kMaxSetupTimeout = 600s;
+constexpr std::size_t kBluetoothAddressLength{17};
+constexpr auto kMaxSetupTimeout{600s};
 
 auto isBluetoothAddress(std::string_view value) -> bool {
   if (value.size() != kBluetoothAddressLength) {
@@ -34,10 +34,10 @@ auto isBluetoothAddress(std::string_view value) -> bool {
         return false;
       }
     } else {
-      const auto character = value[index];
-      const bool isHex = (character >= '0' && character <= '9') ||
-                         (character >= 'A' && character <= 'F') ||
-                         (character >= 'a' && character <= 'f');
+      const auto character{value[index]};
+      const bool isHex{(character >= '0' && character <= '9') ||
+                       (character >= 'A' && character <= 'F') ||
+                       (character >= 'a' && character <= 'f')};
       if (!isHex) {
         return false;
       }
@@ -65,13 +65,13 @@ auto asciiCaseEqual(std::string_view left, std::string_view right) -> bool {
   }
 
   for (std::size_t index = 0; index < left.size(); ++index) {
-    const auto leftByte = static_cast<unsigned char>(left[index]);
-    const auto rightByte = static_cast<unsigned char>(right[index]);
-    const auto foldedLeft =
-        leftByte >= 'A' && leftByte <= 'Z' ? leftByte + ('a' - 'A') : leftByte;
-    const auto foldedRight = rightByte >= 'A' && rightByte <= 'Z'
-                                 ? rightByte + ('a' - 'A')
-                                 : rightByte;
+    const auto leftByte{static_cast<unsigned char>(left[index])};
+    const auto rightByte{static_cast<unsigned char>(right[index])};
+    const auto foldedLeft{
+        leftByte >= 'A' && leftByte <= 'Z' ? leftByte + ('a' - 'A') : leftByte};
+    const auto foldedRight{rightByte >= 'A' && rightByte <= 'Z'
+                               ? rightByte + ('a' - 'A')
+                               : rightByte};
 
     if (foldedLeft != foldedRight) {
       return false;
@@ -90,7 +90,7 @@ auto matchesAdapter(const Dmn_BluezAdapter &adapter,
 auto selectDevice(const std::vector<Dmn_BluezDevice> &devices,
                   std::string_view selector, std::string_view adapterPath)
     -> std::vector<Dmn_BluezDevice> {
-  const bool addressSelector = isBluetoothAddress(selector);
+  const bool addressSelector{isBluetoothAddress(selector)};
   std::vector<Dmn_BluezDevice> matches;
 
   for (const auto &device : devices) {
@@ -98,10 +98,9 @@ auto selectDevice(const std::vector<Dmn_BluezDevice> &devices,
       continue;
     }
 
-    const bool matched =
-        addressSelector
-            ? normalizedAddress(device.address) == normalizedAddress(selector)
-            : asciiCaseEqual(device.name, selector);
+    const bool matched{addressSelector ? normalizedAddress(device.address) ==
+                                             normalizedAddress(selector)
+                                       : asciiCaseEqual(device.name, selector)};
     if (matched) {
       matches.push_back(device);
     }
@@ -143,11 +142,11 @@ auto findSelectedAdapter(const Dmn_BluezInventory &inventory,
 auto findDeviceAdapter(const Dmn_BluezInventory &inventory,
                        const Dmn_BluezDevice &device)
     -> std::optional<Dmn_BluezAdapter> {
-  const auto found =
+  const auto found{
       std::find_if(inventory.adapters.begin(), inventory.adapters.end(),
                    [&device](const auto &adapter) {
                      return adapter.object_path == device.adapter_path;
-                   });
+                   })};
   if (found == inventory.adapters.end()) {
     return std::nullopt;
   }
@@ -166,7 +165,7 @@ auto validTimeout(std::chrono::milliseconds timeout) -> bool {
 
 auto remainingTimeout(std::chrono::steady_clock::time_point deadline)
     -> std::chrono::milliseconds {
-  const auto now = std::chrono::steady_clock::now();
+  const auto now{std::chrono::steady_clock::now()};
   if (now >= deadline) {
     return std::chrono::milliseconds::zero();
   }
@@ -196,14 +195,14 @@ auto cancellationError() -> Dmn_AncsMonitorError {
 class Dmn_AncsBluezMonitor::Impl {
 public:
   /** Interval between inventory checks while waiting for discovery. */
-  static constexpr auto kDiscoveryPollInterval = 100ms;
+  static constexpr auto kDiscoveryPollInterval{100ms};
 
   /** Interval between checks while waiting for a pairing/connection state. */
-  static constexpr auto kDeviceStatePollInterval = 100ms;
+  static constexpr auto kDeviceStatePollInterval{100ms};
 
   /** Upper bound for one BlueZ snapshot taken while waiting for device state.
    */
-  static constexpr auto kDeviceStateSnapshotTimeout = 2000ms;
+  static constexpr auto kDeviceStateSnapshotTimeout{2000ms};
 
   explicit Impl(const Dmn_BluezClientConfig &config)
       : m_bluez{config}, m_gatt{config}, m_ancs{m_gatt} {}
@@ -239,7 +238,7 @@ public:
 
     reportProgress(config, Dmn_AncsMonitorProgress::Inventory);
 
-    auto inventory = m_bluez.snapshot();
+    auto inventory{m_bluez.snapshot()};
     if (!inventory) {
       return std::unexpected(
           makeError(Dmn_AncsMonitorStage::Inventory, inventory.error()));
@@ -270,11 +269,12 @@ public:
       requestedAdapter = std::move(adapterMatches.front());
     }
 
-    const auto selectedAdapterPath =
-        requestedAdapter ? requestedAdapter->object_path : std::string{};
-    auto matches =
-        selectDevice(inventory->devices, deviceSelector, selectedAdapterPath);
-    std::optional<Dmn_BluezAdapter> adapter = requestedAdapter;
+    std::optional<Dmn_BluezAdapter> adapter{requestedAdapter};
+    const auto selectedAdapterPath{
+        requestedAdapter ? requestedAdapter->object_path : std::string{}};
+
+    auto matches{
+        selectDevice(inventory->devices, deviceSelector, selectedAdapterPath)};
 
     if (matches.size() == 1) {
       if (!adapter) {
@@ -305,8 +305,9 @@ public:
       }
 
       reportProgress(config, Dmn_AncsMonitorProgress::Discovery);
-      auto discovered =
-          discoverDevice(deviceSelector, *adapter, config.discovery_timeout);
+
+      auto discovered{
+          discoverDevice(deviceSelector, *adapter, config.discovery_timeout)};
       if (!discovered) {
         if (cancellationRequested(config)) {
           return std::unexpected(cancellationError());
@@ -348,7 +349,7 @@ public:
           std::nullopt});
     }
 
-    auto target = matches.front();
+    auto target{matches.front()};
 
     if (!adapter) {
       adapter = findDeviceAdapter(inventory.value(), target);
@@ -387,13 +388,14 @@ public:
                                std::nullopt});
     }
 
-    const auto actionSelector =
-        target.address.empty() ? target.object_path : target.address;
+    const auto actionSelector{target.address.empty() ? target.object_path
+                                                     : target.address};
     if (!config.require_existing_connection && !target.paired.value_or(false)) {
       reportProgress(config, Dmn_AncsMonitorProgress::Pairing);
-      const auto pairingDeadline =
-          std::chrono::steady_clock::now() + config.pairing_timeout;
-      const auto pairingCallTimeout = remainingTimeout(pairingDeadline);
+
+      const auto pairingDeadline{std::chrono::steady_clock::now() +
+                                 config.pairing_timeout};
+      const auto pairingCallTimeout{remainingTimeout(pairingDeadline)};
       if (pairingCallTimeout <= 0ms) {
         return std::unexpected(Dmn_AncsMonitorError{
             Dmn_AncsMonitorStage::Pairing,
@@ -402,16 +404,16 @@ public:
             std::nullopt});
       }
 
-      auto paired = m_bluez.pairDevice(actionSelector, adapter->object_path,
-                                       pairingCallTimeout);
+      auto paired{m_bluez.pairDevice(actionSelector, adapter->object_path,
+                                     pairingCallTimeout)};
       if (!paired) {
         return std::unexpected(
             makeError(Dmn_AncsMonitorStage::Pairing, paired.error()));
       }
 
-      auto confirmed =
-          waitForDeviceState(target, *adapter, true, std::nullopt,
-                             pairingDeadline, Dmn_AncsMonitorStage::Pairing);
+      auto confirmed{waitForDeviceState(target, *adapter, true, std::nullopt,
+                                        pairingDeadline,
+                                        Dmn_AncsMonitorStage::Pairing)};
       if (!confirmed) {
         return std::unexpected(confirmed.error());
       }
@@ -419,19 +421,19 @@ public:
       target = std::move(confirmed->device);
     }
 
-    const bool alreadyConnected = target.connected.value_or(false);
-    bool requestedRemainingProfiles = false;
-    const bool requestRemainingProfiles =
+    const bool alreadyConnected{target.connected.value_or(false)};
+    bool requestedRemainingProfiles{false};
+    const bool requestRemainingProfiles{
         !config.require_existing_connection ||
-        config.request_remaining_profiles_when_connected;
+        config.request_remaining_profiles_when_connected};
     if (requestRemainingProfiles) {
       reportProgress(config, Dmn_AncsMonitorProgress::Connection);
     }
 
     if (!config.require_existing_connection && !alreadyConnected) {
-      const auto connectionDeadline =
-          std::chrono::steady_clock::now() + config.connection_timeout;
-      const auto connectionCallTimeout = remainingTimeout(connectionDeadline);
+      const auto connectionDeadline{std::chrono::steady_clock::now() +
+                                    config.connection_timeout};
+      const auto connectionCallTimeout{remainingTimeout(connectionDeadline)};
       if (connectionCallTimeout <= 0ms) {
         return std::unexpected(Dmn_AncsMonitorError{
             Dmn_AncsMonitorStage::Connection,
@@ -440,24 +442,24 @@ public:
             std::nullopt});
       }
 
-      auto connected = m_bluez.connectDevice(
-          actionSelector, adapter->object_path, connectionCallTimeout);
+      auto connected{m_bluez.connectDevice(actionSelector, adapter->object_path,
+                                           connectionCallTimeout)};
       if (!connected) {
         return std::unexpected(
             makeError(Dmn_AncsMonitorStage::Connection, connected.error()));
       }
 
-      auto confirmed = waitForDeviceState(
+      auto confirmed{waitForDeviceState(
           target, *adapter, target.paired.value_or(false), true,
-          connectionDeadline, Dmn_AncsMonitorStage::Connection);
+          connectionDeadline, Dmn_AncsMonitorStage::Connection)};
       if (!confirmed) {
         return std::unexpected(confirmed.error());
       }
 
       target = std::move(confirmed->device);
     } else if (requestRemainingProfiles) {
-      auto connected = m_bluez.connectAvailableProfiles(
-          actionSelector, adapter->object_path, config.connection_timeout);
+      auto connected{m_bluez.connectAvailableProfiles(
+          actionSelector, adapter->object_path, config.connection_timeout)};
       if (!connected) {
         if (cancellationRequested(config)) {
           return std::unexpected(cancellationError());
@@ -479,9 +481,9 @@ public:
       return std::unexpected(cancellationError());
     }
 
-    auto ancsStarted = m_ancs.start(target.object_path, config.ancs);
+    auto ancsStarted{m_ancs.start(target.object_path, config.ancs)};
     if (!ancsStarted) {
-      const auto cleanup = m_ancs.stop();
+      const auto cleanup{m_ancs.stop()};
       if (!cleanup) {
         return std::unexpected(Dmn_AncsMonitorError{
             Dmn_AncsMonitorStage::Cleanup, cleanup.error().message,
@@ -498,7 +500,7 @@ public:
     }
 
     if (cancellationRequested(config)) {
-      const auto cleanup = m_ancs.stop();
+      const auto cleanup{m_ancs.stop()};
       if (!cleanup) {
         return std::unexpected(Dmn_AncsMonitorError{
             Dmn_AncsMonitorStage::Cleanup, cleanup.error().message,
@@ -541,13 +543,13 @@ private:
                       std::chrono::milliseconds timeout)
       -> std::expected<std::pair<Dmn_BluezDevice, Dmn_BluezAdapter>,
                        Dmn_AncsMonitorError> {
-    auto discovery = m_bluez.startDiscovery(adapter.object_path);
+    auto discovery{m_bluez.startDiscovery(adapter.object_path)};
     if (!discovery) {
       return std::unexpected(
           makeError(Dmn_AncsMonitorStage::Discovery, discovery.error()));
     }
 
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    const auto deadline{std::chrono::steady_clock::now() + timeout};
     std::vector<Dmn_BluezDevice> matches;
     do {
       matches = selectDevice(m_bluez.devices(), selector, adapter.object_path);
@@ -558,7 +560,7 @@ private:
       std::this_thread::sleep_for(kDiscoveryPollInterval);
     } while (std::chrono::steady_clock::now() < deadline);
 
-    auto stopped = m_bluez.stopDiscovery();
+    auto stopped{m_bluez.stopDiscovery()};
     if (!stopped) {
       return std::unexpected(
           makeError(Dmn_AncsMonitorStage::Discovery, stopped.error()));
@@ -590,17 +592,17 @@ private:
                           Dmn_AncsMonitorStage stage)
       -> std::expected<Dmn_AncsMonitorSession, Dmn_AncsMonitorError> {
     while (std::chrono::steady_clock::now() < deadline) {
-      const auto snapshotTimeout =
-          std::min(kDeviceStateSnapshotTimeout, remainingTimeout(deadline));
-      auto inventory = m_bluez.snapshot(snapshotTimeout);
+      const auto snapshotTimeout{
+          std::min(kDeviceStateSnapshotTimeout, remainingTimeout(deadline))};
+      auto inventory{m_bluez.snapshot(snapshotTimeout)};
       if (!inventory) {
         return std::unexpected(makeError(stage, inventory.error()));
       }
 
-      const auto selector =
-          selected.address.empty() ? selected.object_path : selected.address;
-      auto matches =
-          selectDevice(inventory->devices, selector, adapter.object_path);
+      const auto selector{selected.address.empty() ? selected.object_path
+                                                   : selected.address};
+      auto matches{
+          selectDevice(inventory->devices, selector, adapter.object_path)};
 
       if (matches.size() == 1 &&
           matches.front().paired.value_or(false) == paired &&

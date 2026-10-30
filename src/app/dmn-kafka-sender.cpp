@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
 
-  auto config = dmn::app::kafkaExampleConfig();
+  auto config{dmn::app::kafkaExampleConfig()};
   if (!config) {
     std::cerr << "Kafka example configuration error: " << config.error()
               << '\n';
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  auto write_configs = std::move(*config);
+  auto write_configs{std::move(*config)};
   write_configs["acks"] = "all";
   write_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   write_configs[dmn::Dmn_Kafka::Key] = "tick";

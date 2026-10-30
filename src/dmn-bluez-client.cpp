@@ -81,7 +81,7 @@ auto findInterface(const Dmn_DbusValue &interfaces,
 }
 
 auto adapterForDevicePath(const std::string &path) -> std::string {
-  const auto separator = path.rfind('/');
+  const auto separator{path.rfind('/')};
 
   return separator == std::string::npos ? std::string{}
                                         : path.substr(0, separator);
@@ -214,11 +214,11 @@ public:
   }
 
   void subscribe(const Dmn_DbusSignalMatch &match) {
-    auto result = m_dbus.subscribeWithPath(
+    auto result{m_dbus.subscribeWithPath(
         match, [this, member = match.member](std::string path,
                                              Dmn_DbusClient::Arguments args) {
           onSignal(member, std::move(path), std::move(args));
-        });
+        })};
     if (!result) {
       throw std::runtime_error("unable to subscribe to BlueZ " + match.member +
                                ": " + result.error().message);
@@ -239,11 +239,11 @@ public:
       m_stage_overflow = false;
     }
 
-    const auto droppedBefore = m_dbus.status().dropped_signal_messages;
-    auto result =
-        m_dbus.call(std::string{kBluez}, "/", std::string{kObjectManager},
-                    "GetManagedObjects", {}, timeout);
-    auto callbacksDrained = m_dbus.drainSignalCallbacks();
+    const auto droppedBefore{m_dbus.status().dropped_signal_messages};
+    auto result{m_dbus.call(std::string{kBluez}, "/",
+                            std::string{kObjectManager}, "GetManagedObjects",
+                            {}, timeout)};
+    auto callbacksDrained{m_dbus.drainSignalCallbacks()};
     if (!callbacksDrained) {
       std::lock_guard eventOrderLock{m_event_order_mutex};
       std::lock_guard lock{m_mutex};
@@ -299,7 +299,7 @@ public:
 
     std::lock_guard eventOrderLock{m_event_order_mutex};
 
-    const auto droppedAfter = m_dbus.status().dropped_signal_messages;
+    const auto droppedAfter{m_dbus.status().dropped_signal_messages};
     std::vector<Dmn_BluezEvent> events;
     std::vector<Dmn_BluezAdapter> adapters;
     std::vector<Dmn_BluezDevice> devices;
@@ -336,7 +336,7 @@ public:
             "BlueZ inventory staging queue overflow; retry snapshot"));
       }
 
-      auto previousDevices = std::move(m_devices);
+      auto previousDevices{std::move(m_devices)};
       m_adapters.clear();
       m_devices.clear();
       m_device_paths.clear();
@@ -356,9 +356,9 @@ public:
           const auto &path = pathValue.asObjectPath();
 
           if (const auto *device = findInterface(interfaces, kDevice)) {
-            auto parsedDevice = parseDevice(path, *device);
-            const auto prior =
-                previousDevices.find(deviceIdentity(parsedDevice));
+            auto parsedDevice{parseDevice(path, *device)};
+            const auto prior{
+                previousDevices.find(deviceIdentity(parsedDevice))};
 
             if (prior != previousDevices.end()) {
               parsedDevice.seen_during_discovery =
@@ -474,21 +474,21 @@ public:
                                          "BlueZ inventory is not available"));
       }
 
-      const bool isObjectPath = deviceSelector.starts_with('/');
-      const auto targetAddress = normalizedAddress(deviceSelector);
+      const bool isObjectPath{deviceSelector.starts_with('/')};
+      const auto targetAddress{normalizedAddress(deviceSelector)};
       std::vector<const Dmn_BluezDevice *> matches;
 
       for (const auto &entry : m_devices) {
         const auto &device = entry.second;
-        const bool matchesSelector =
+        const bool matchesSelector{
             isObjectPath ? device.object_path == deviceSelector
-                         : normalizedAddress(device.address) == targetAddress;
+                         : normalizedAddress(device.address) == targetAddress};
 
         if (!matchesSelector) {
           continue;
         }
 
-        const auto adapter = m_adapters.find(device.adapter_path);
+        const auto adapter{m_adapters.find(device.adapter_path)};
 
         if (adapterSelector && (adapter == m_adapters.end() ||
                                 (normalizedAddress(adapter->second.address) !=
@@ -521,7 +521,7 @@ public:
         alreadyInRequestedState = device.paired && *device.paired;
       } else if (action != DeviceAction::ConnectProfiles &&
                  action != DeviceAction::CancelConnection) {
-        const bool requestedConnected = action == DeviceAction::Connect;
+        const bool requestedConnected{action == DeviceAction::Connect};
 
         alreadyInRequestedState =
             device.connected && *device.connected == requestedConnected;
@@ -532,7 +532,7 @@ public:
       return {};
     }
 
-    const auto result =
+    const auto result{
         m_dbus.call(std::string{kBluez}, devicePath, std::string{kDevice},
                     action == DeviceAction::Connect ||
                             action == DeviceAction::ConnectProfiles
@@ -541,13 +541,13 @@ public:
                             action == DeviceAction::CancelConnection
                         ? "Disconnect"
                         : "Pair",
-                    {}, timeout);
+                    {}, timeout)};
     if (!result) {
       const auto &error = result.error();
-      const bool connectRequestAlreadyActive =
+      const bool connectRequestAlreadyActive{
           error.remote_name == "org.bluez.Error.InProgress" ||
           (error.remote_name == "org.bluez.Error.Failed" &&
-           error.message == "Operation already in progress");
+           error.message == "Operation already in progress")};
 
       if (action == DeviceAction::ConnectProfiles &&
           (error.remote_name == "org.bluez.Error.AlreadyConnected" ||
@@ -567,7 +567,7 @@ public:
     {
       std::lock_guard lock{m_mutex};
 
-      const auto adapter = m_adapters.find(adapterPath);
+      const auto adapter{m_adapters.find(adapterPath)};
 
       if (adapter == m_adapters.end()) {
         return std::unexpected(
@@ -596,10 +596,10 @@ public:
     std::vector<std::pair<Dmn_DbusValue, Dmn_DbusValue>> entries;
     entries.emplace_back(Dmn_DbusValue{"Transport"},
                          Dmn_DbusValue::variant(Dmn_DbusValue{"auto"}));
-    auto filter = Dmn_DbusValue::dictionary("s", "v", std::move(entries));
-    auto filterResult =
-        m_dbus.call(std::string{kBluez}, adapterPath, std::string{kAdapter},
-                    "SetDiscoveryFilter", {std::move(filter)});
+    auto filter{Dmn_DbusValue::dictionary("s", "v", std::move(entries))};
+    auto filterResult{m_dbus.call(std::string{kBluez}, adapterPath,
+                                  std::string{kAdapter}, "SetDiscoveryFilter",
+                                  {std::move(filter)})};
     if (!filterResult) {
       return std::unexpected(filterResult.error());
     }
@@ -619,8 +619,8 @@ public:
       }
     }
 
-    auto startResult = m_dbus.call(std::string{kBluez}, adapterPath,
-                                   std::string{kAdapter}, "StartDiscovery");
+    auto startResult{m_dbus.call(std::string{kBluez}, adapterPath,
+                                 std::string{kAdapter}, "StartDiscovery")};
     if (!startResult) {
       std::lock_guard lock{m_mutex};
 
@@ -660,8 +660,8 @@ public:
       adapterPath = m_discovery_adapter;
     }
 
-    auto result = m_dbus.call(std::string{kBluez}, adapterPath,
-                              std::string{kAdapter}, "StopDiscovery");
+    auto result{m_dbus.call(std::string{kBluez}, adapterPath,
+                            std::string{kAdapter}, "StopDiscovery")};
     if (!result) {
       return std::unexpected(result.error());
     }
@@ -676,7 +676,7 @@ public:
   }
 
   void setEventHandler(EventHandler handler) {
-    const bool available = static_cast<bool>(handler);
+    const bool available{static_cast<bool>(handler)};
     {
       std::lock_guard lock{m_mutex};
 
@@ -836,7 +836,7 @@ private:
 
   void onSignal(const std::string &member, std::string path,
                 Dmn_DbusClient::Arguments arguments) {
-    const auto droppedSignals = m_dbus.status().dropped_signal_messages;
+    const auto droppedSignals{m_dbus.status().dropped_signal_messages};
     std::lock_guard eventOrderLock{m_event_order_mutex};
 
     std::vector<Dmn_BluezEvent> events;
@@ -910,8 +910,8 @@ private:
           return;
         }
 
-        const auto oldOwner = arguments[1].asString();
-        const auto newOwner = arguments[2].asString();
+        const auto oldOwner{arguments[1].asString()};
+        const auto newOwner{arguments[2].asString()};
 
         if (!oldOwner.empty()) {
           m_available = false;
@@ -942,22 +942,22 @@ private:
       }
 
       if (member == "InterfacesAdded" && arguments.size() == 2) {
-        const auto path = arguments[0].asObjectPath();
+        const auto path{arguments[0].asObjectPath()};
         const auto &interfaces = arguments[1];
 
         if (const auto *props = findInterface(interfaces, kAdapter)) {
-          auto adapter = parseAdapter(path, *props);
+          auto adapter{parseAdapter(path, *props)};
           m_adapters[path] = adapter;
           events.push_back({Dmn_BluezEventKind::AdapterAdded, adapter, {}, {}});
         }
 
         if (const auto *props = findInterface(interfaces, kDevice)) {
-          auto device = parseDevice(path, *props);
+          auto device{parseDevice(path, *props)};
           device.seen_during_discovery =
               (m_discovery_active || m_discovery_starting) &&
               device.adapter_path == m_discovery_adapter;
-          const auto inserted = storeDevice(std::move(device));
-          const auto stored = findDeviceByPath(path);
+          const auto inserted{storeDevice(std::move(device))};
+          const auto stored{findDeviceByPath(path)};
 
           if (stored != m_devices.end()) {
             events.push_back({inserted ? Dmn_BluezEventKind::DeviceAdded
@@ -972,21 +972,21 @@ private:
       }
 
       if (member == "InterfacesRemoved" && arguments.size() == 2) {
-        const auto path = arguments[0].asObjectPath();
+        const auto path{arguments[0].asObjectPath()};
         const auto &interfaces = arguments[1].asArray().values;
 
         for (const auto &interface : interfaces) {
           if (interface.asString() == kAdapter) {
-            const auto found = m_adapters.find(path);
+            const auto found{m_adapters.find(path)};
             if (found != m_adapters.end()) {
               events.push_back(
                   {Dmn_BluezEventKind::AdapterRemoved, found->second, {}, {}});
               m_adapters.erase(found);
             }
           } else if (interface.asString() == kDevice) {
-            const auto pathEntry = m_device_paths.find(path);
+            const auto pathEntry{m_device_paths.find(path)};
             if (pathEntry != m_device_paths.end()) {
-              const auto found = m_devices.find(pathEntry->second);
+              const auto found{m_devices.find(pathEntry->second)};
               if (found == m_devices.end()) {
                 m_device_paths.erase(pathEntry);
 
@@ -1005,12 +1005,12 @@ private:
       }
 
       if (member == "PropertiesChanged" && arguments.size() == 3) {
-        const auto interface = arguments[0].asString();
+        const auto interface{arguments[0].asString()};
         const auto &changed = arguments[1];
         const auto &invalidated = arguments[2].asArray().values;
 
         if (interface == kAdapter) {
-          const auto found = m_adapters.find(path);
+          const auto found{m_adapters.find(path)};
           if (found == m_adapters.end()) {
             return;
           }
@@ -1019,21 +1019,21 @@ private:
           events.push_back(
               {Dmn_BluezEventKind::AdapterChanged, found->second, {}, {}});
         } else if (interface == kDevice) {
-          const auto found = findDeviceByPath(path);
+          const auto found{findDeviceByPath(path)};
           if (found == m_devices.end()) {
             return;
           }
 
-          const auto previousIdentity = found->first;
+          const auto previousIdentity{found->first};
           updateDevice(found->second, changed, invalidated);
 
           if (deviceIdentity(found->second) != previousIdentity) {
-            auto updatedDevice = std::move(found->second);
+            auto updatedDevice{std::move(found->second)};
             m_devices.erase(found);
             storeDevice(std::move(updatedDevice));
           }
 
-          const auto updated = findDeviceByPath(path);
+          const auto updated{findDeviceByPath(path)};
           if (updated == m_devices.end()) {
             return;
           }
@@ -1153,7 +1153,7 @@ private:
         m_recovery_requested = false;
       }
 
-      const auto result = snapshot();
+      const auto result{snapshot()};
       if (result) {
         emit({Dmn_BluezEventKind::ServiceAvailable,
               {},
@@ -1172,20 +1172,20 @@ private:
   using DeviceIdentity = std::pair<std::string, std::string>;
 
   auto deviceIdentity(const Dmn_BluezDevice &device) const -> DeviceIdentity {
-    const auto adapter = m_adapters.find(device.adapter_path);
-    const auto adapterIdentity =
-        adapter == m_adapters.end() || adapter->second.address.empty()
-            ? device.adapter_path
-            : adapter->second.address;
-    const auto deviceAddress =
-        device.address.empty() ? device.object_path : device.address;
+    const auto adapter{m_adapters.find(device.adapter_path)};
+    const auto adapterIdentity{adapter == m_adapters.end() ||
+                                       adapter->second.address.empty()
+                                   ? device.adapter_path
+                                   : adapter->second.address};
+    const auto deviceAddress{device.address.empty() ? device.object_path
+                                                    : device.address};
 
     return {adapterIdentity, deviceAddress};
   }
 
   auto findDeviceByPath(const std::string &path)
       -> std::map<DeviceIdentity, Dmn_BluezDevice>::iterator {
-    const auto pathEntry = m_device_paths.find(path);
+    const auto pathEntry{m_device_paths.find(path)};
 
     return pathEntry == m_device_paths.end()
                ? m_devices.end()
@@ -1193,9 +1193,9 @@ private:
   }
 
   auto storeDevice(Dmn_BluezDevice device) -> bool {
-    const auto identity = deviceIdentity(device);
-    const auto existing = m_devices.find(identity);
-    const bool inserted = existing == m_devices.end();
+    const auto identity{deviceIdentity(device)};
+    const auto existing{m_devices.find(identity)};
+    const bool inserted{existing == m_devices.end()};
 
     if (existing != m_devices.end()) {
       if (existing->second.object_path != device.object_path) {

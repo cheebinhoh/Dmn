@@ -21,9 +21,9 @@
 
 namespace {
 
-constexpr std::size_t kProducerPushLimit = 256;
-constexpr std::size_t kMinimumOperationsBeforeShutdown = 16;
-constexpr auto kOperationStartTimeout = std::chrono::seconds(30);
+constexpr std::size_t kProducerPushLimit{256};
+constexpr std::size_t kMinimumOperationsBeforeShutdown{16};
+constexpr auto kOperationStartTimeout{std::chrono::seconds(30)};
 
 class ObservableBlockingQueue final : public dmn::Dmn_BlockingQueue_Lf<int> {
 public:
@@ -37,8 +37,8 @@ public:
 
 protected:
   auto enterInflightGuardFnc() -> uint64_t override {
-    const auto epoch_index =
-        dmn::Dmn_BlockingQueue_Lf<int>::enterInflightGuardFnc();
+    const auto epoch_index{
+        dmn::Dmn_BlockingQueue_Lf<int>::enterInflightGuardFnc()};
 
     {
       std::lock_guard<std::mutex> lock(m_mutex);
@@ -102,7 +102,7 @@ struct ThrowingValue {
 TEST(DmnBlockingQueueLfStressTest, ReusesEpochBucketsAcrossManyOperations) {
   dmn::Dmn_BlockingQueue_Lf<std::uint64_t> queue{};
 
-  constexpr std::uint64_t kOperationCount = 60000;
+  constexpr std::uint64_t kOperationCount{60000};
   for (std::uint64_t i = 0; i < kOperationCount; ++i) {
     queue.push(i);
     EXPECT_EQ(queue.pop(), i);
@@ -130,7 +130,7 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
             }
 
             try {
-              int value = thread_index;
+              int value{thread_index};
               for (std::size_t i = 0; i < kProducerPushLimit; ++i) {
                 queue.push(value++);
                 pushed.fetch_add(1, std::memory_order_relaxed);
@@ -160,8 +160,8 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
 
     start.store(true, std::memory_order_release);
 
-    const auto deadline =
-        std::chrono::steady_clock::now() + kOperationStartTimeout;
+    const auto deadline{std::chrono::steady_clock::now() +
+                        kOperationStartTimeout};
     while ((pushed.load(std::memory_order_relaxed) <
                 kMinimumOperationsBeforeShutdown ||
             popped.load(std::memory_order_relaxed) <
@@ -170,8 +170,8 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
       std::this_thread::yield();
     }
 
-    const auto pushes_before_shutdown = pushed.load(std::memory_order_relaxed);
-    const auto pops_before_shutdown = popped.load(std::memory_order_relaxed);
+    const auto pushes_before_shutdown{pushed.load(std::memory_order_relaxed)};
+    const auto pops_before_shutdown{popped.load(std::memory_order_relaxed)};
 
     queue.shutdown();
 
@@ -197,7 +197,7 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownRacesWithConcurrentPushAndPop) {
 
 TEST(DmnBlockingQueueLfStressTest, ShutdownReleasesMultipleBlockingPopWaiters) {
   ObservableBlockingQueue queue{};
-  constexpr std::size_t kWaiterCount = 6;
+  constexpr std::size_t kWaiterCount{6};
   std::atomic_size_t interrupted_waiters{};
   std::atomic_bool unexpected_exception{};
   std::vector<std::thread> waiters;
@@ -214,7 +214,7 @@ TEST(DmnBlockingQueueLfStressTest, ShutdownReleasesMultipleBlockingPopWaiters) {
     });
   }
 
-  const auto all_waiters_entered = queue.waitForInflightEntries(kWaiterCount);
+  const auto all_waiters_entered{queue.waitForInflightEntries(kWaiterCount)};
   queue.shutdown();
 
   for (auto &waiter : waiters) {
@@ -257,7 +257,7 @@ TEST(DmnBlockingQueueLfStressTest, ThrowingPushAndPopKeepQueueUsable) {
   EXPECT_EQ(queue.waitForEmpty(), 1);
 
   queue.push(ThrowingValue{3});
-  const auto value = queue.pop();
+  const auto value{queue.pop()};
   EXPECT_EQ(value.m_value, 3);
   EXPECT_EQ(queue.waitForEmpty(), 2);
 }

@@ -18,12 +18,12 @@ namespace {
 
 auto compareCaseInsensitive(const std::string_view left,
                             const std::string_view right) -> int {
-  const auto commonLength = std::min(left.size(), right.size());
+  const auto commonLength{std::min(left.size(), right.size())};
   for (std::size_t index = 0; index < commonLength; ++index) {
-    const auto leftCharacter = static_cast<unsigned char>(left[index]);
-    const auto rightCharacter = static_cast<unsigned char>(right[index]);
-    const auto leftLower = std::tolower(leftCharacter);
-    const auto rightLower = std::tolower(rightCharacter);
+    const auto leftCharacter{static_cast<unsigned char>(left[index])};
+    const auto rightCharacter{static_cast<unsigned char>(right[index])};
+    const auto leftLower{std::tolower(leftCharacter)};
+    const auto rightLower{std::tolower(rightCharacter)};
 
     if (leftLower != rightLower) {
       return leftLower < rightLower ? -1 : 1;
@@ -78,8 +78,8 @@ auto deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string {
     return "Unavailable";
   }
 
-  auto status = device.m_paired ? (*device.m_paired ? "Paired" : "Not paired")
-                                : "Pairing status unavailable";
+  auto status{device.m_paired ? (*device.m_paired ? "Paired" : "Not paired")
+                              : "Pairing status unavailable"};
   std::string result{status};
 
   if (device.m_connected) {
@@ -98,17 +98,17 @@ auto deviceDisplayStatus(const Dmn_DeviceEntry &device) -> std::string {
 auto deviceActionAvailability(const Dmn_DeviceEntry &device,
                               const Dmn_DeviceActionContext &context)
     -> Dmn_DeviceActionAvailability {
-  const bool paired = device.m_paired.value_or(false);
-  const bool connected = device.m_connected == std::optional<bool>{true};
-  const bool targetReady = context.m_saved && device.m_present && paired;
-  const bool connectionActionsAllowed =
-      targetReady && !context.m_close_requested;
-  const bool monitoringAllowed =
-      targetReady && connected && !context.m_close_requested;
+  const bool paired{device.m_paired.value_or(false)};
+  const bool connected{device.m_connected == std::optional<bool>{true}};
+  const bool targetReady{context.m_saved && device.m_present && paired};
+  const bool connectionActionsAllowed{targetReady &&
+                                      !context.m_close_requested};
+  const bool monitoringAllowed{targetReady && connected &&
+                               !context.m_close_requested};
   // A stale or failed ANCS session must not disable the user's next action.
-  const bool monitoringRequested =
+  const bool monitoringRequested{
       context.m_monitor_requested ||
-      (context.m_monitor_start_pending && !context.m_monitor_cancel_requested);
+      (context.m_monitor_start_pending && !context.m_monitor_cancel_requested)};
 
   return {
       connectionActionsAllowed && !connected && !context.m_connection_pending,
@@ -141,7 +141,7 @@ void Dmn_DeviceSelectionModel::loadSavedSelection(
   normalized.reserve(selection.size());
 
   for (auto &identity : selection) {
-    auto stableIdentity = normalizeIdentity(std::move(identity));
+    auto stableIdentity{normalizeIdentity(std::move(identity))};
     if (stableIdentity.m_adapter_address.empty() ||
         stableIdentity.m_device_address.empty()) {
       continue;
@@ -163,20 +163,20 @@ void Dmn_DeviceSelectionModel::loadSavedSelection(
 
 auto Dmn_DeviceSelectionModel::setDraftSelected(
     const Dmn_DeviceIdentity &identity, const bool selected) -> bool {
-  const auto stableIdentity = normalizeIdentity(identity);
-  const auto existing = std::find(m_draft_selection.begin(),
-                                  m_draft_selection.end(), stableIdentity);
+  const auto stableIdentity{normalizeIdentity(identity)};
+  const auto existing{std::find(m_draft_selection.begin(),
+                                m_draft_selection.end(), stableIdentity)};
   if (!selected && existing != m_draft_selection.end()) {
     m_draft_selection.erase(existing);
 
     return true;
   }
 
-  const bool wasSaved = containsIdentity(m_saved_selection, stableIdentity);
-  const auto device = std::find_if(
+  const bool wasSaved{containsIdentity(m_saved_selection, stableIdentity)};
+  const auto device{std::find_if(
       m_devices.begin(), m_devices.end(), [&stableIdentity](const auto &entry) {
         return entry.m_identity == stableIdentity && entry.m_present;
-      });
+      })};
   if (device == m_devices.end() && !wasSaved) {
     return false;
   }
@@ -267,10 +267,10 @@ void Dmn_DeviceSelectionModel::mergeSavedDevices() {
                 [](const auto &device) { return !device.m_present; });
 
   for (const auto &identity : m_saved_selection) {
-    const auto found = std::find_if(m_devices.begin(), m_devices.end(),
-                                    [&identity](const auto &device) {
-                                      return device.m_identity == identity;
-                                    });
+    const auto found{std::find_if(m_devices.begin(), m_devices.end(),
+                                  [&identity](const auto &device) {
+                                    return device.m_identity == identity;
+                                  })};
     if (found == m_devices.end()) {
       m_devices.push_back(Dmn_DeviceEntry{identity, identity.m_device_address,
                                           std::nullopt, std::nullopt, false,
@@ -285,21 +285,21 @@ void Dmn_DeviceSelectionModel::applySort() {
   std::stable_sort(
       m_devices.begin(), m_devices.end(),
       [this](const auto &left, const auto &right) {
-        const auto leftName = deviceDisplayName(left);
-        const auto rightName = deviceDisplayName(right);
-        const auto leftPrimary = m_sort_column == Dmn_DeviceSortColumn::kName
-                                     ? leftName
-                                     : deviceDisplayStatus(left);
-        const auto rightPrimary = m_sort_column == Dmn_DeviceSortColumn::kName
-                                      ? rightName
-                                      : deviceDisplayStatus(right);
-        const auto primaryOrder =
-            compareCaseInsensitive(leftPrimary, rightPrimary);
+        const auto leftName{deviceDisplayName(left)};
+        const auto rightName{deviceDisplayName(right)};
+        const auto leftPrimary{m_sort_column == Dmn_DeviceSortColumn::kName
+                                   ? leftName
+                                   : deviceDisplayStatus(left)};
+        const auto rightPrimary{m_sort_column == Dmn_DeviceSortColumn::kName
+                                    ? rightName
+                                    : deviceDisplayStatus(right)};
+        const auto primaryOrder{
+            compareCaseInsensitive(leftPrimary, rightPrimary)};
         if (primaryOrder != 0) {
           return m_sort_ascending ? primaryOrder < 0 : primaryOrder > 0;
         }
 
-        const auto nameOrder = compareCaseInsensitive(leftName, rightName);
+        const auto nameOrder{compareCaseInsensitive(leftName, rightName)};
         if (nameOrder != 0) {
           return nameOrder < 0;
         }

@@ -52,17 +52,17 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1")};
 
-    auto read_from_write_1 = write_1;
+    auto read_from_write_1{write_1};
 
-    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1))};
 
-    auto dmesg_handle = dmesgnet1->openHandler("writeHandler");
+    auto dmesg_handle{dmesgnet1->openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_handle);
 
     dmn::DMesgPb dmesgpb{};
@@ -74,9 +74,9 @@ int main(int argc, char *argv[]) {
     dmn::DMesgBodyPb *dmesgpb_body = dmesgpb.mutable_body();
     dmesgpb_body->set_message(data);
 
-    auto dmesgpb2 = dmesgpb;
+    auto dmesgpb2{dmesgpb};
 
-    auto dmesgpb3 = dmesgpb;
+    auto dmesgpb3{dmesgpb};
 
     dmesg_handle->write(dmesgpb);
     dmesg_handle->write(dmesgpb2);
@@ -88,14 +88,14 @@ int main(int argc, char *argv[]) {
     bool hasData{};
     size_t dataCount{};
 
-    auto dataList = read_from_write_1->read(500, 10000000L);
+    auto dataList{read_from_write_1->read(500, 10000000L)};
     for (auto &data : dataList) {
       dmn::DMesgPb dmesgpb{};
 
       dmesgpb.ParseFromString(data);
 
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        auto sys = dmesgpb.body().sys().self();
+        auto sys{dmesgpb.body().sys().self()};
         if (sys.state() == dmn::DMesgStatePb::MasterPending) {
           EXPECT_TRUE((!ready));
           masterpending = true;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
       dmesgpb.ParseFromString(data);
 
       if (dmesgpb.type() == dmn::DMesgTypePb::sys) {
-        auto sys = dmesgpb.body().sys().self();
+        auto sys{dmesgpb.body().sys().self()};
 
         EXPECT_TRUE((sys.state() == dmn::DMesgStatePb::Ready));
       } else {
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 
       dmesgpb.ParseFromString(data);
       if (count == (dataList.size() - 1)) {
-        auto sys = dmesgpb.body().sys().self();
+        auto sys{dmesgpb.body().sys().self()};
 
         EXPECT_TRUE((dmn::DMesgStatePb::Destroyed == sys.state()));
       }

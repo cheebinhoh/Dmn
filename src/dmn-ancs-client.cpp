@@ -63,7 +63,7 @@ auto readUint16LittleEndian(std::span<const std::uint8_t> bytes,
 auto isValidUtf8(std::span<const std::uint8_t> bytes) -> bool {
   std::size_t index{};
   while (index < bytes.size()) {
-    const auto first = bytes[index];
+    const auto first{bytes[index]};
     if (first <= 0x7fU) {
       ++index;
 
@@ -90,7 +90,7 @@ auto isValidUtf8(std::span<const std::uint8_t> bytes) -> bool {
     }
 
     for (std::size_t offset = 1; offset <= continuationCount; ++offset) {
-      const auto continuation = bytes[index + offset];
+      const auto continuation{bytes[index + offset]};
       if ((continuation & 0xc0U) != 0x80U) {
         return false;
       }
@@ -223,7 +223,7 @@ auto Dmn_AncsDataSourceReassembler::consume(
                 "unexpected ANCS Data Source response command identifier"));
     }
 
-    const auto responseUid = readUint32LittleEndian(m_buffer, 1);
+    const auto responseUid{readUint32LittleEndian(m_buffer, 1)};
     if (responseUid != m_expected_uid) {
       m_terminal = true;
 
@@ -237,16 +237,16 @@ auto Dmn_AncsDataSourceReassembler::consume(
   }
 
   while (m_expected_attribute_index < kRequestedAttributeIds.size()) {
-    const auto available = m_buffer.size() - consumed;
+    const auto available{m_buffer.size() - consumed};
     if (available < kAttributeTupleHeaderSize) {
       break;
     }
 
-    const auto attributeId = m_buffer[consumed];
-    const auto attributeLength = readUint16LittleEndian(m_buffer, consumed + 1);
-    const auto valueOffset = consumed + kAttributeTupleHeaderSize;
-    const bool isExpectedAttribute =
-        attributeId == kRequestedAttributeIds[m_expected_attribute_index];
+    const auto attributeId{m_buffer[consumed]};
+    const auto attributeLength{readUint16LittleEndian(m_buffer, consumed + 1)};
+    const auto valueOffset{consumed + kAttributeTupleHeaderSize};
+    const bool isExpectedAttribute{
+        attributeId == kRequestedAttributeIds[m_expected_attribute_index]};
     if (!isExpectedAttribute) {
       if (isRequestedAttribute(attributeId)) {
         m_terminal = true;
@@ -276,8 +276,8 @@ auto Dmn_AncsDataSourceReassembler::consume(
       break;
     }
 
-    const auto attributeBytes = std::span<const std::uint8_t>{
-        m_buffer.data() + valueOffset, attributeLength};
+    const auto attributeBytes{std::span<const std::uint8_t>{
+        m_buffer.data() + valueOffset, attributeLength}};
     if (!isValidUtf8(attributeBytes)) {
       m_terminal = true;
 
@@ -320,11 +320,11 @@ auto Dmn_AncsDataSourceReassembler::consume(
 namespace dmn {
 namespace {
 
-constexpr auto kMaximumConfigTimeout = std::chrono::seconds{600};
+constexpr auto kMaximumConfigTimeout{std::chrono::seconds{600}};
 
 auto localDateString(std::chrono::system_clock::time_point timestamp)
     -> std::optional<std::string> {
-  const auto time = std::chrono::system_clock::to_time_t(timestamp);
+  const auto time{std::chrono::system_clock::to_time_t(timestamp)};
   std::tm localTime{};
 
   if (localtime_r(&time, &localTime) == nullptr) {
@@ -351,7 +351,7 @@ auto isValidAncsDate(std::string_view date) -> bool {
     }
   }
 
-  const auto numberAt = [date](std::size_t offset, std::size_t length) {
+  const auto numberAt{[date](std::size_t offset, std::size_t length) {
     unsigned int number{};
 
     for (std::size_t index = offset; index < offset + length; ++index) {
@@ -359,7 +359,7 @@ auto isValidAncsDate(std::string_view date) -> bool {
     }
 
     return number;
-  };
+  }};
 
   const std::chrono::year_month_day calendarDate{
       std::chrono::year{static_cast<int>(numberAt(0, 4))},
@@ -381,7 +381,7 @@ auto makeAncsError(Dmn_AncsErrorKind kind, std::string message,
 }
 
 auto mapGattError(const Dmn_GattError &gattError) -> Dmn_AncsError {
-  auto kind = Dmn_AncsErrorKind::Backend;
+  auto kind{Dmn_AncsErrorKind::Backend};
 
   switch (gattError.kind) {
   case Dmn_GattErrorKind::InvalidArgument:
@@ -422,8 +422,8 @@ auto makeAttributeRequest(std::uint32_t uid) -> std::vector<std::uint8_t> {
     request.push_back(detail::kRequestedAttributeIds[index]);
 
     if (index >= 1 && index <= 3) {
-      const auto maximum =
-          static_cast<std::uint16_t>(detail::kMaximumAttributeSizes[index]);
+      const auto maximum{
+          static_cast<std::uint16_t>(detail::kMaximumAttributeSizes[index])};
       request.push_back(static_cast<std::uint8_t>(maximum & 0xffU));
       request.push_back(static_cast<std::uint8_t>((maximum >> 8U) & 0xffU));
     }
@@ -558,8 +558,8 @@ public:
     setState(Dmn_AncsState::Starting);
     setState(Dmn_AncsState::ResolvingServices);
 
-    auto resolved = m_gatt.waitForServicesResolved(
-        deviceId, config.service_resolution_timeout);
+    auto resolved{m_gatt.waitForServicesResolved(
+        deviceId, config.service_resolution_timeout)};
     if (!resolved) {
       return failStartup(mapGattError(resolved.error()));
     }
@@ -571,7 +571,7 @@ public:
 
     setState(Dmn_AncsState::DiscoveringANCS);
 
-    auto services = m_gatt.discover(deviceId, config.gatt_operation_timeout);
+    auto services{m_gatt.discover(deviceId, config.gatt_operation_timeout)};
     if (!services) {
       return failStartup(mapGattError(services.error()));
     }
@@ -626,10 +626,10 @@ public:
     }
 
     setState(Dmn_AncsState::SubscribingDataSource);
-    auto dataSubscription = m_gatt.startNotify(
+    auto dataSubscription{m_gatt.startNotify(
         deviceId, dataSource->id,
         [this](const Dmn_GattEvent &event) { enqueueGattEvent(true, event); },
-        config.gatt_operation_timeout);
+        config.gatt_operation_timeout)};
 
     if (!dataSubscription) {
       return failStartup(mapGattError(dataSubscription.error()));
@@ -647,10 +647,10 @@ public:
     }
 
     setState(Dmn_AncsState::SubscribingNotificationSource);
-    auto notificationSubscription = m_gatt.startNotify(
+    auto notificationSubscription{m_gatt.startNotify(
         deviceId, notificationSource->id,
         [this](const Dmn_GattEvent &event) { enqueueGattEvent(false, event); },
-        config.gatt_operation_timeout);
+        config.gatt_operation_timeout)};
     if (!notificationSubscription) {
       return failStartup(mapGattError(notificationSubscription.error()));
     }
@@ -719,9 +719,9 @@ public:
     {
       std::lock_guard operationLock{m_operation_mutex};
 
-      auto cleanup = stopSubscriptions();
+      auto cleanup{stopSubscriptions()};
       if (!cleanup) {
-        auto error = cleanup.error();
+        auto error{cleanup.error()};
 
         error.kind = Dmn_AncsErrorKind::Cleanup;
         Dmn_AncsEvent event;
@@ -806,10 +806,10 @@ private:
   };
 
   auto validConfig(const Dmn_AncsConfig &config) const -> bool {
-    const auto validTimeout = [](std::chrono::milliseconds timeout) {
+    const auto validTimeout{[](std::chrono::milliseconds timeout) {
       return timeout > std::chrono::milliseconds::zero() &&
              timeout <= kMaximumConfigTimeout;
-    };
+    }};
 
     return validTimeout(config.service_resolution_timeout) &&
            validTimeout(config.gatt_operation_timeout) &&
@@ -847,7 +847,7 @@ private:
       m_event_queue.push_back(std::move(event));
     }
 
-    auto cleanup = stopSubscriptions();
+    auto cleanup{stopSubscriptions()};
     if (!cleanup) {
       error = cleanup.error();
       error.kind = Dmn_AncsErrorKind::Cleanup;
@@ -870,7 +870,7 @@ private:
 
     std::optional<Dmn_AncsError> firstError;
     if (m_notification_source_subscription) {
-      auto result = m_notification_source_subscription->stop();
+      auto result{m_notification_source_subscription->stop()};
 
       if (result) {
         m_notification_source_subscription.reset();
@@ -880,7 +880,7 @@ private:
     }
 
     if (m_data_source_subscription) {
-      auto result = m_data_source_subscription->stop();
+      auto result{m_data_source_subscription->stop()};
       if (result) {
         m_data_source_subscription.reset();
       } else if (!firstError) {
@@ -940,9 +940,9 @@ private:
       {
         std::unique_lock lock{m_mutex};
 
-        const auto deadline =
-            m_active_request ? m_active_request->deadline
-                             : std::chrono::steady_clock::time_point::max();
+        const auto deadline{m_active_request
+                                ? m_active_request->deadline
+                                : std::chrono::steady_clock::time_point::max()};
         m_condition.wait_until(lock, deadline, [this] {
           return m_shutdown || !m_event_queue.empty() ||
                  (m_ready && !m_gatt_queue.empty()) ||
@@ -1042,7 +1042,7 @@ private:
   }
 
   void processNotificationSourceValue(const std::vector<std::uint8_t> &value) {
-    auto parsed = detail::parseAncsNotificationSource(value);
+    auto parsed{detail::parseAncsNotificationSource(value)};
     if (!parsed) {
       if (parsed.error().kind == Dmn_AncsErrorKind::Unsupported &&
           !parsed.error().fatal) {
@@ -1060,14 +1060,14 @@ private:
       return;
     }
 
-    const auto notification = *parsed;
+    const auto notification{*parsed};
     if (notification.kind == Dmn_AncsNotificationKind::Removed) {
       bool ignoredBeforeStart{};
 
       {
         std::lock_guard lock{m_mutex};
 
-        const auto found = m_records.find(notification.uid);
+        const auto found{m_records.find(notification.uid)};
         ignoredBeforeStart =
             m_config.notification_date_cutoff.has_value() &&
             (found == m_records.end() || found->second.ignored_before_start ||
@@ -1109,9 +1109,9 @@ private:
       if (!record.unavailable && m_queued_uids.count(notification.uid) == 0 &&
           (!m_active_request ||
            m_active_request->notification.uid != notification.uid)) {
-        const auto maximum = m_config.maximum_pending_notifications;
+        const auto maximum{m_config.maximum_pending_notifications};
         if (maximum != 0 && m_pending_requests.size() >= maximum) {
-          const auto droppedUid = m_pending_requests.front();
+          const auto droppedUid{m_pending_requests.front()};
 
           m_pending_requests.pop_front();
           m_queued_uids.erase(droppedUid);
@@ -1167,7 +1167,7 @@ private:
     }
 
     if (!*parsed) {
-      const auto error = parsed->error();
+      const auto error{parsed->error()};
       if (!error.fatal) {
         emitAttributesUnavailable(uid, error);
         completeActiveRequest();
@@ -1197,7 +1197,7 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      const auto found = m_records.find(uid);
+      const auto found{m_records.find(uid)};
       if (found == m_records.end()) {
         missingRecord = true;
       } else {
@@ -1257,10 +1257,10 @@ private:
         return;
       }
 
-      const auto uid = m_pending_requests.front();
+      const auto uid{m_pending_requests.front()};
       m_pending_requests.pop_front();
       m_queued_uids.erase(uid);
-      const auto found = m_records.find(uid);
+      const auto found{m_records.find(uid)};
       if (found == m_records.end() || found->second.unavailable) {
         return;
       }
@@ -1272,7 +1272,8 @@ private:
       timeout = m_config.gatt_operation_timeout;
     }
 
-    const auto request = makeAttributeRequest(notification.uid);
+    const auto request{makeAttributeRequest(notification.uid)};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -1373,9 +1374,9 @@ private:
       m_active_request.reset();
     }
 
-    auto error = makeAncsError(Dmn_AncsErrorKind::Timeout,
-                               "ANCS attribute response deadline expired; "
-                               "session correlation is unsafe");
+    auto error{makeAncsError(Dmn_AncsErrorKind::Timeout,
+                             "ANCS attribute response deadline expired; "
+                             "session correlation is unsafe")};
     emitAttributesUnavailable(uid, error);
     failRuntime(std::move(error));
   }
@@ -1428,7 +1429,7 @@ private:
 
     std::lock_guard operationLock{m_operation_mutex};
 
-    const auto cleanup = stopSubscriptions();
+    const auto cleanup{stopSubscriptions()};
     if (!cleanup) {
       error.kind = Dmn_AncsErrorKind::Cleanup;
       error.message +=

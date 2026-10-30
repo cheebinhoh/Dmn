@@ -148,7 +148,7 @@ public:
     {
       std::lock_guard lock{mutex};
 
-      const auto found = handlers.find(characteristicId);
+      const auto found{handlers.find(characteristicId)};
       if (found != handlers.end()) {
         handler = found->second;
       }
@@ -196,9 +196,9 @@ public:
     std::unique_lock lock{mutex};
 
     return condition.wait_for(lock, 2s, [&] {
-      const auto eventCount = static_cast<std::size_t>(std::count_if(
+      const auto eventCount{static_cast<std::size_t>(std::count_if(
           events.begin(), events.end(),
-          [kind](const auto &event) { return event.kind == kind; }));
+          [kind](const auto &event) { return event.kind == kind; }))};
       return eventCount >= count;
     });
   }
@@ -301,7 +301,7 @@ TEST(DmnAncsClientTest, SubscribesDataSourceBeforeNotificationSource) {
   ASSERT_TRUE(client.setEventHandler(
       [&](const auto &event) { gatt.recordEvent(event); }));
 
-  const auto started = client.start(kDeviceId);
+  const auto started{client.start(kDeviceId)};
 
   ASSERT_TRUE(started) << started.error().message;
   {
@@ -323,16 +323,16 @@ TEST(DmnAncsClientTest, SubscribesDataSourceBeforeNotificationSource) {
 
   gatt.emit(kDataSourceId, makeResponse(kUid));
   ASSERT_TRUE(gatt.waitForEvent(dmn::Dmn_AncsEvent::Kind::NotificationAdded));
-  const auto events = gatt.copyEvents();
-  const auto readyEvent =
+  const auto events{gatt.copyEvents()};
+  const auto readyEvent{
       std::find_if(events.begin(), events.end(), [](const auto &event) {
         return event.kind == dmn::Dmn_AncsEvent::Kind::StateChanged &&
                event.state == dmn::Dmn_AncsState::Ready;
-      });
-  const auto addedEvent =
+      })};
+  const auto addedEvent{
       std::find_if(events.begin(), events.end(), [](const auto &event) {
         return event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded;
-      });
+      })};
   ASSERT_NE(readyEvent, events.end());
   ASSERT_NE(addedEvent, events.end());
   EXPECT_LT(readyEvent, addedEvent);
@@ -349,14 +349,14 @@ TEST(DmnAncsClientTest, RequiresHandlerAndValidFiniteTimeouts) {
   FakeGattClient gatt;
   dmn::Dmn_AncsClient client{gatt};
 
-  const auto noHandler = client.start(kDeviceId);
+  const auto noHandler{client.start(kDeviceId)};
   ASSERT_FALSE(noHandler);
   EXPECT_EQ(noHandler.error().kind, dmn::Dmn_AncsErrorKind::InvalidArgument);
 
   ASSERT_TRUE(client.setEventHandler([](const auto &) {}));
   dmn::Dmn_AncsConfig config;
   config.gatt_operation_timeout = 0ms;
-  const auto invalidConfig = client.start(kDeviceId, config);
+  const auto invalidConfig{client.start(kDeviceId, config)};
   ASSERT_FALSE(invalidConfig);
   EXPECT_EQ(invalidConfig.error().kind,
             dmn::Dmn_AncsErrorKind::InvalidArgument);
@@ -368,7 +368,7 @@ TEST(DmnAncsClientTest, MissingRequiredServiceFailsAndCanBeStopped) {
   dmn::Dmn_AncsClient client{gatt};
   ASSERT_TRUE(client.setEventHandler([](const auto &) {}));
 
-  const auto started = client.start(kDeviceId);
+  const auto started{client.start(kDeviceId)};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().kind, dmn::Dmn_AncsErrorKind::Unsupported);
@@ -385,7 +385,7 @@ TEST(DmnAncsClientTest, MissingRequiredCharacteristicIsReportedPrecisely) {
   dmn::Dmn_AncsClient client{gatt};
   ASSERT_TRUE(client.setEventHandler([](const auto &) {}));
 
-  const auto started = client.start(kDeviceId);
+  const auto started{client.start(kDeviceId)};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().kind, dmn::Dmn_AncsErrorKind::Unsupported);
@@ -402,7 +402,7 @@ TEST(DmnAncsClientTest, RollsBackDataSubscriptionWhenSecondSubscriptionFails) {
   ASSERT_TRUE(client.setEventHandler(
       [&](const auto &event) { gatt.recordEvent(event); }));
 
-  const auto started = client.start(kDeviceId);
+  const auto started{client.start(kDeviceId)};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().kind, dmn::Dmn_AncsErrorKind::Authorization);
@@ -428,7 +428,7 @@ TEST(DmnAncsClientTest, RetriesFailedSubscriptionCleanupOnNextStop) {
       [&](const auto &event) { gatt.recordEvent(event); }));
   ASSERT_TRUE(client.start(kDeviceId));
 
-  const auto firstStop = client.stop();
+  const auto firstStop{client.stop()};
 
   ASSERT_FALSE(firstStop);
   EXPECT_EQ(firstStop.error().kind, dmn::Dmn_AncsErrorKind::Cleanup);
@@ -494,7 +494,7 @@ TEST(DmnAncsClientTest,
   gatt.emit(kNotificationSourceId, notificationSourceValue(0, 1));
   ASSERT_TRUE(gatt.waitForWriteEntered());
   for (std::size_t index = 0; index < kBurstSize; ++index) {
-    const auto uid = static_cast<std::uint32_t>(index + 2);
+    const auto uid{static_cast<std::uint32_t>(index + 2)};
     gatt.emit(kNotificationSourceId, notificationSourceValue(0, uid));
   }
 
@@ -502,11 +502,11 @@ TEST(DmnAncsClientTest,
 
   ASSERT_TRUE(gatt.waitForEvent(dmn::Dmn_AncsEvent::Kind::NotificationRemoved));
   ASSERT_TRUE(gatt.waitForEvent(dmn::Dmn_AncsEvent::Kind::Error));
-  auto events = gatt.copyEvents();
-  const auto warning =
+  auto events{gatt.copyEvents()};
+  const auto warning{
       std::find_if(events.begin(), events.end(), [](const auto &event) {
         return event.kind == dmn::Dmn_AncsEvent::Kind::Error;
-      });
+      })};
   ASSERT_NE(warning, events.end());
   ASSERT_TRUE(warning->error.has_value());
   EXPECT_FALSE(warning->error->fatal);
@@ -516,10 +516,10 @@ TEST(DmnAncsClientTest,
   gatt.releaseBlockedWrite();
   constexpr std::size_t kExpectedRequests{kDefaultPendingLimit + 1};
   for (std::size_t index = 0; index < kExpectedRequests; ++index) {
-    const auto uid =
+    const auto uid{
         index == 0 ? 1U
                    : static_cast<std::uint32_t>(
-                         kBurstSize + 2 - kDefaultPendingLimit + index - 1);
+                         kBurstSize + 2 - kDefaultPendingLimit + index - 1)};
     ASSERT_TRUE(gatt.waitForWriteCount(index + 1))
         << "attribute request was not sent for UID " << uid;
     gatt.emit(kDataSourceId, makeResponse(uid));
@@ -529,17 +529,17 @@ TEST(DmnAncsClientTest,
   }
 
   events = gatt.copyEvents();
-  const auto addedCount =
+  const auto addedCount{
       std::count_if(events.begin(), events.end(), [](const auto &event) {
         return event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded;
-      });
+      })};
   EXPECT_EQ(addedCount, kExpectedRequests);
-  const auto hasAddedUid = [&events](std::uint32_t uid) {
+  const auto hasAddedUid{[&events](std::uint32_t uid) {
     return std::any_of(events.begin(), events.end(), [uid](const auto &event) {
       return event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded &&
              event.notification && event.notification->uid == uid;
     });
-  };
+  }};
   EXPECT_FALSE(hasAddedUid(2));
   EXPECT_TRUE(hasAddedUid(347));
   EXPECT_TRUE(hasAddedUid(601));
@@ -561,13 +561,13 @@ TEST(DmnAncsClientTest, ProcessesMoreThanFiveHundredQueuedNotifications) {
   gatt.emit(kNotificationSourceId, notificationSourceValue(0, 1));
   ASSERT_TRUE(gatt.waitForWriteEntered());
   for (std::size_t index = 0; index < kBurstSize; ++index) {
-    const auto uid = static_cast<std::uint32_t>(index + 2);
+    const auto uid{static_cast<std::uint32_t>(index + 2)};
     gatt.emit(kNotificationSourceId, notificationSourceValue(0, uid));
   }
 
   gatt.releaseBlockedWrite();
   for (std::size_t index = 0; index <= kBurstSize; ++index) {
-    const auto uid = static_cast<std::uint32_t>(index + 1);
+    const auto uid{static_cast<std::uint32_t>(index + 1)};
     ASSERT_TRUE(gatt.waitForWriteCount(index + 1))
         << "attribute request was not sent for UID " << uid;
     gatt.emit(kDataSourceId, makeResponse(uid));
@@ -608,7 +608,7 @@ TEST(DmnAncsClientTest, CanSuppressNotificationsPredatingSessionStart) {
   ASSERT_TRUE(
       gatt.waitForEventCount(dmn::Dmn_AncsEvent::Kind::NotificationAdded, 2));
 
-  const auto events = gatt.copyEvents();
+  const auto events{gatt.copyEvents()};
   EXPECT_FALSE(std::any_of(events.begin(), events.end(), [](const auto &event) {
     return (event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded ||
             event.kind == dmn::Dmn_AncsEvent::Kind::NotificationUpdated) &&
@@ -637,7 +637,7 @@ TEST(DmnAncsClientTest,
   ASSERT_TRUE(gatt.waitForWriteCount(2));
   ASSERT_TRUE(client.stop());
 
-  const auto events = gatt.copyEvents();
+  const auto events{gatt.copyEvents()};
   EXPECT_FALSE(std::any_of(events.begin(), events.end(), [](const auto &event) {
     return event.notification && event.notification->uid == kUid &&
            (event.kind == dmn::Dmn_AncsEvent::Kind::NotificationAdded ||
@@ -667,7 +667,7 @@ TEST(DmnAncsClientTest, SerializesCallbacksOffGattThreadAndStopsCleanly) {
     gatt.recordEvent(event);
   }));
 
-  const auto callerThread = std::this_thread::get_id();
+  const auto callerThread{std::this_thread::get_id()};
   ASSERT_TRUE(client.start(kDeviceId));
   {
     std::unique_lock lock{callbackMutex};
@@ -766,11 +766,11 @@ TEST(DmnAncsClientTest, FailsSessionOnControlPointWriteError) {
   gatt.emit(kNotificationSourceId, notificationSourceValue(0, 17));
 
   ASSERT_TRUE(gatt.waitForEvent(dmn::Dmn_AncsEvent::Kind::Error));
-  const auto events = gatt.copyEvents();
-  const auto error =
+  const auto events{gatt.copyEvents()};
+  const auto error{
       std::find_if(events.begin(), events.end(), [](const auto &event) {
         return event.kind == dmn::Dmn_AncsEvent::Kind::Error;
-      });
+      })};
   ASSERT_NE(error, events.end());
   ASSERT_TRUE(error->error.has_value());
   EXPECT_TRUE(error->error->fatal);

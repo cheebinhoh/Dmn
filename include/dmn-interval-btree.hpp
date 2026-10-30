@@ -620,10 +620,10 @@ private:
                 return lhs.m_end < rhs.m_end;
               });
 
-    bool leftCovered = clippedRanges.front().m_start == range.m_start;
-    bool rightCovered = false;
-    auto coveredEnd = clippedRanges.front().m_end;
-    bool continuousCoverage = leftCovered;
+    bool leftCovered{clippedRanges.front().m_start == range.m_start};
+    bool rightCovered{false};
+    auto coveredEnd{clippedRanges.front().m_end};
+    bool continuousCoverage{leftCovered};
 
     for (std::size_t index = 1; index < clippedRanges.size(); ++index) {
       const auto &next = clippedRanges[index];
@@ -641,9 +641,9 @@ private:
       return Dmn_OverlayTopology::FullyCovered;
     }
 
-    auto overlapStart = overlaps.front().m_start;
-    auto overlapEnd = overlaps.front().m_end;
-    bool hasContainedRange = false;
+    auto overlapStart{overlaps.front().m_start};
+    auto overlapEnd{overlaps.front().m_end};
+    bool hasContainedRange{false};
 
     for (const auto &overlap : overlaps) {
       overlapStart = std::min(overlapStart, overlap.m_start);
@@ -705,11 +705,11 @@ private:
     bool m_isLeaf{true};
   };
 
-  static constexpr std::size_t s_minimumDegree = 2;
+  static constexpr std::size_t s_minimumDegree{2};
 
   auto entryLess(const Entry &lhs, const Entry &rhs) const -> bool {
-    const bool identicalRanges = lhs.m_range.m_start == rhs.m_range.m_start &&
-                                 lhs.m_range.m_end == rhs.m_range.m_end;
+    const bool identicalRanges{lhs.m_range.m_start == rhs.m_range.m_start &&
+                               lhs.m_range.m_end == rhs.m_range.m_end};
 
     if (identicalRanges) {
       return lhs.m_ordinal < rhs.m_ordinal;
@@ -794,7 +794,7 @@ private:
   }
 
   auto refreshNodeMaxEnd(Node *node) -> std::int64_t {
-    auto maximumEnd = std::numeric_limits<std::int64_t>::min();
+    auto maximumEnd{std::numeric_limits<std::int64_t>::min()};
     for (const auto &entry : node->m_entries) {
       maximumEnd = std::max(maximumEnd, entry->m_range.m_end);
     }
@@ -833,7 +833,7 @@ private:
     }
 
     if (m_root->m_entries.size() == 2 * s_minimumDegree - 1) {
-      auto newRoot = std::make_unique<Node>();
+      auto newRoot{std::make_unique<Node>()};
 
       newRoot->m_isLeaf = false;
       newRoot->m_children.reserve(1);
@@ -866,7 +866,7 @@ private:
         transitions;
 
     for (const auto &[entry, oldState] : oldStates) {
-      const auto newState = calculateState(entry);
+      const auto newState{calculateState(entry)};
       entry->m_state = newState;
 
       if (oldState.m_topology != newState.m_topology ||
@@ -907,7 +907,7 @@ private:
     for (Entry *entry : entries) {
       if (entry->m_range.m_start == range.m_start &&
           entry->m_range.m_end == range.m_end) {
-        bool matches = true;
+        bool matches{true};
 
         if (matcher) {
           MutationBlockGuard guard(m_dispatchingCallbacks);
@@ -927,7 +927,7 @@ private:
                                  callback_registration_id &registrationId)
       -> state_change_callback {
     for (const auto &registration : m_callbackRegistrations) {
-      bool matches = false;
+      bool matches{false};
 
       {
         MutationBlockGuard guard(m_dispatchingCallbacks);
@@ -936,8 +936,8 @@ private:
 
       if (matches) {
         registrationId = registration.m_id;
-        const auto context = registration.m_context;
-        const auto callback = registration.m_callback;
+        const auto context{registration.m_context};
+        const auto callback{registration.m_callback};
 
         return [context, callback](const range_type &, const value_type &item,
                                    const Dmn_OverlayState &oldState,
@@ -959,14 +959,14 @@ private:
 
   auto removeMaximum(Node &node) -> std::unique_ptr<Entry> {
     if (node.m_isLeaf) {
-      auto entry = std::move(node.m_entries.back());
+      auto entry{std::move(node.m_entries.back())};
       node.m_entries.pop_back();
       refreshNodeMaxEnd(&node);
 
       return entry;
     }
 
-    auto childIndex = node.m_children.size() - 1;
+    auto childIndex{node.m_children.size() - 1};
     if (node.m_children[childIndex]->m_entries.size() == s_minimumDegree - 1) {
       if (childIndex > 0 && node.m_children[childIndex - 1]->m_entries.size() >=
                                 s_minimumDegree) {
@@ -977,7 +977,7 @@ private:
       }
     }
 
-    auto entry = removeMaximum(*node.m_children[childIndex]);
+    auto entry{removeMaximum(*node.m_children[childIndex])};
     refreshNodeMaxEnd(&node);
 
     return entry;
@@ -985,14 +985,14 @@ private:
 
   auto removeMinimum(Node &node) -> std::unique_ptr<Entry> {
     if (node.m_isLeaf) {
-      auto entry = std::move(node.m_entries.front());
+      auto entry{std::move(node.m_entries.front())};
       node.m_entries.erase(node.m_entries.begin());
       refreshNodeMaxEnd(&node);
 
       return entry;
     }
 
-    constexpr std::size_t childIndex = 0;
+    constexpr std::size_t childIndex{0};
     if (node.m_children[childIndex]->m_entries.size() == s_minimumDegree - 1) {
       if (node.m_children.size() > 1 &&
           node.m_children[1]->m_entries.size() >= s_minimumDegree) {
@@ -1002,7 +1002,7 @@ private:
       }
     }
 
-    auto entry = removeMinimum(*node.m_children[childIndex]);
+    auto entry{removeMinimum(*node.m_children[childIndex])};
     refreshNodeMaxEnd(&node);
 
     return entry;
@@ -1067,7 +1067,7 @@ private:
   }
 
   void eraseEntry(Node &node, const Entry *target) {
-    std::size_t index = 0;
+    std::size_t index{0};
     while (index < node.m_entries.size() &&
            entryLess(*node.m_entries[index], *target)) {
       ++index;
@@ -1146,10 +1146,10 @@ private:
 
   void splitChild(Node &parent, std::size_t childIndex) {
     Node &child = *parent.m_children[childIndex];
-    auto sibling = std::make_unique<Node>();
+    auto sibling{std::make_unique<Node>()};
     sibling->m_isLeaf = child.m_isLeaf;
 
-    constexpr auto maxKeys = 2 * s_minimumDegree - 1;
+    constexpr auto maxKeys{2 * s_minimumDegree - 1};
     sibling->m_entries.reserve(s_minimumDegree - 1);
 
     if (!child.m_isLeaf) {
@@ -1163,7 +1163,7 @@ private:
       sibling->m_entries.push_back(std::move(child.m_entries[index]));
     }
 
-    auto promoted = std::move(child.m_entries[s_minimumDegree - 1]);
+    auto promoted{std::move(child.m_entries[s_minimumDegree - 1])};
     child.m_entries.resize(s_minimumDegree - 1);
 
     if (!child.m_isLeaf) {
@@ -1188,7 +1188,7 @@ private:
   }
 
   void insertNonFull(Node &node, std::unique_ptr<Entry> entry) {
-    auto childIndex = node.m_entries.size();
+    auto childIndex{node.m_entries.size()};
     while (childIndex > 0 &&
            entryLess(*entry, *node.m_entries[childIndex - 1])) {
       --childIndex;
@@ -1283,8 +1283,8 @@ bool Dmn_IntervalBTree<T>::add(range_type range, const value_type &value,
     throw std::invalid_argument("range is invalid");
   }
 
-  auto entry = std::make_unique<Entry>(
-      Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}});
+  auto entry{std::make_unique<Entry>(
+      Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}})};
 
   return insertEntry(std::move(entry));
 }
@@ -1297,8 +1297,12 @@ bool Dmn_IntervalBTree<T>::add(range_type range, value_type &&value,
     throw std::invalid_argument("range is invalid");
   }
 
-  auto entry = std::make_unique<Entry>(Entry{
-      range, std::move(value), m_nextOrdinal, std::move(onStateChange), 0, {}});
+  auto entry{std::make_unique<Entry>(Entry{range,
+                                           std::move(value),
+                                           m_nextOrdinal,
+                                           std::move(onStateChange),
+                                           0,
+                                           {}})};
 
   return insertEntry(std::move(entry));
 }
@@ -1315,8 +1319,8 @@ auto Dmn_IntervalBTree<T>::addWithTopology(range_type range,
   }
 
   result = queryTopology(range, value);
-  auto entry = std::make_unique<Entry>(
-      Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}});
+  auto entry{std::make_unique<Entry>(
+      Entry{range, value, m_nextOrdinal, std::move(onStateChange), 0, {}})};
 
   if (!insertEntry(std::move(entry))) {
     return {false, {}};
@@ -1394,10 +1398,10 @@ std::size_t Dmn_IntervalBTree<T>::removeAllOverlapping(range_type range) {
       continue;
     }
 
-    const bool affected = std::any_of(
+    const bool affected{std::any_of(
         targets.begin(), targets.end(), [entry](const Entry *target) {
           return entry->m_range.overlaps(target->m_range);
-        });
+        })};
 
     if (affected) {
       oldStates.emplace_back(entry, entry->m_state);
@@ -1533,13 +1537,13 @@ void Dmn_IntervalBTree<T>::reconstructFromCanonical(
 
   for (const auto &entry : entries) {
     callback_registration_id registrationId{};
-    auto callback = callbackForReconstruction(entry.second, registrationId);
-    auto rebuiltEntry = std::make_unique<Entry>(Entry{entry.first,
-                                                      entry.second,
-                                                      rebuilt.m_nextOrdinal,
-                                                      std::move(callback),
-                                                      registrationId,
-                                                      {}});
+    auto callback{callbackForReconstruction(entry.second, registrationId)};
+    auto rebuiltEntry{std::make_unique<Entry>(Entry{entry.first,
+                                                    entry.second,
+                                                    rebuilt.m_nextOrdinal,
+                                                    std::move(callback),
+                                                    registrationId,
+                                                    {}})};
     rebuilt.insertEntry(std::move(rebuiltEntry));
   }
 
@@ -1566,7 +1570,7 @@ auto Dmn_IntervalBTree<T>::registerStateCallback(
     throw std::overflow_error("state callback registration id exhausted");
   }
 
-  const auto id = m_nextCallbackRegistrationId++;
+  const auto id{m_nextCallbackRegistrationId++};
   m_callbackRegistrations.push_back(
       {id, std::move(matches), std::move(context), std::move(callback)});
 
@@ -1578,11 +1582,11 @@ void Dmn_IntervalBTree<T>::unregisterStateCallback(
     callback_registration_id registration) {
   ensureMutationAllowed();
 
-  const auto registrationIt = std::find_if(
+  const auto registrationIt{std::find_if(
       m_callbackRegistrations.begin(), m_callbackRegistrations.end(),
       [registration](const CallbackRegistration &candidate) {
         return candidate.m_id == registration;
-      });
+      })};
 
   if (registrationIt == m_callbackRegistrations.end()) {
     return;

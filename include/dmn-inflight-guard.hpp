@@ -244,7 +244,7 @@ public:
    * @throws std::runtime_error if the inflight guard is already closed.
    */
   virtual auto enterInflightGate() -> std::unique_ptr<Ticket> final {
-    auto ticket = std::make_unique<Ticket>(this);
+    auto ticket{std::make_unique<Ticket>(this)};
 
     return ticket;
   }

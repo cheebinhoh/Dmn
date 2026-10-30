@@ -1023,10 +1023,10 @@ private:
 
       reply = dbus_message_new_method_return(message);
       if (request.size() >= 5 && request[0] == 0) {
-        const auto uid = static_cast<std::uint32_t>(request[1]) |
-                         (static_cast<std::uint32_t>(request[2]) << 8U) |
-                         (static_cast<std::uint32_t>(request[3]) << 16U) |
-                         (static_cast<std::uint32_t>(request[4]) << 24U);
+        const auto uid{static_cast<std::uint32_t>(request[1]) |
+                       (static_cast<std::uint32_t>(request[2]) << 8U) |
+                       (static_cast<std::uint32_t>(request[3]) << 16U) |
+                       (static_cast<std::uint32_t>(request[4]) << 24U)};
         std::string title;
         std::string notificationMessage;
         {
@@ -1155,10 +1155,10 @@ private:
 
       if (restartName) {
         DbusErrorGuard error;
-        const auto released =
-            dbus_bus_release_name(connection, kService, error.get());
-        const auto acquired = dbus_bus_request_name(
-            connection, kService, DBUS_NAME_FLAG_DO_NOT_QUEUE, error.get());
+        const auto released{
+            dbus_bus_release_name(connection, kService, error.get())};
+        const auto acquired{dbus_bus_request_name(
+            connection, kService, DBUS_NAME_FLAG_DO_NOT_QUEUE, error.get())};
         if (released != DBUS_RELEASE_NAME_REPLY_RELEASED ||
             acquired != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
             dbus_error_is_set(error.get())) {
@@ -1364,15 +1364,15 @@ private:
 
       if (releaseNameRequested || acquireNameRequested) {
         DbusErrorGuard error;
-        const auto result = releaseNameRequested
-                                ? dbus_bus_release_name(m_connection.get(),
-                                                        kService, error.get())
-                                : dbus_bus_request_name(
-                                      m_connection.get(), kService,
-                                      DBUS_NAME_FLAG_DO_NOT_QUEUE, error.get());
-        const auto expected = releaseNameRequested
-                                  ? DBUS_RELEASE_NAME_REPLY_RELEASED
-                                  : DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER;
+        const auto result{releaseNameRequested
+                              ? dbus_bus_release_name(m_connection.get(),
+                                                      kService, error.get())
+                              : dbus_bus_request_name(
+                                    m_connection.get(), kService,
+                                    DBUS_NAME_FLAG_DO_NOT_QUEUE, error.get())};
+        const auto expected{releaseNameRequested
+                                ? DBUS_RELEASE_NAME_REPLY_RELEASED
+                                : DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER};
         if (result != expected || dbus_error_is_set(error.get())) {
           std::lock_guard lock{m_mutex};
 
@@ -1517,8 +1517,8 @@ auto startCli(
   }
 
   if (outputPipeCapacity > 0) {
-    const auto capacity =
-        fcntl(descriptors[0], F_SETPIPE_SZ, outputPipeCapacity);
+    const auto capacity{
+        fcntl(descriptors[0], F_SETPIPE_SZ, outputPipeCapacity)};
     if (capacity < 0) {
       close(descriptors[0]);
       close(descriptors[1]);
@@ -1532,9 +1532,9 @@ auto startCli(
     }
 
     std::string prefill(static_cast<std::size_t>(capacity), 'x');
-    const auto written = write(descriptors[1], prefill.data(), prefill.size());
+    const auto written{write(descriptors[1], prefill.data(), prefill.size())};
     if (written != static_cast<ssize_t>(prefill.size())) {
-      const auto error = written < 0 ? errno : EIO;
+      const auto error{written < 0 ? errno : EIO};
       close(descriptors[0]);
       close(descriptors[1]);
       if (separateOutput) {
@@ -1581,9 +1581,9 @@ auto startCli(
   argumentVector.push_back(nullptr);
 
   std::vector<std::string> environmentStorage;
-  const auto testBusPrefix = busAddressEnvironment.empty()
-                                 ? std::string{}
-                                 : busAddressEnvironment + '=';
+  const auto testBusPrefix{busAddressEnvironment.empty()
+                               ? std::string{}
+                               : busAddressEnvironment + '='};
   constexpr std::string_view backpressureGateEnvironment{
       "DMN_BLUETOOTH_TEST_ENABLE_BACKPRESSURE_GATE="};
   for (char **entry = environ; entry != nullptr && *entry != nullptr; ++entry) {
@@ -1614,9 +1614,9 @@ auto startCli(
   environmentVector.push_back(nullptr);
 
   CliProcess process;
-  const int spawnResult =
-      posix_spawn(&process.pid, executable.c_str(), &actions, nullptr,
-                  argumentVector.data(), environmentVector.data());
+  const int spawnResult{posix_spawn(&process.pid, executable.c_str(), &actions,
+                                    nullptr, argumentVector.data(),
+                                    environmentVector.data())};
   posix_spawn_file_actions_destroy(&actions);
   close(descriptors[1]);
   if (separateOutput) {
@@ -1635,9 +1635,9 @@ auto startCli(
 
   process.outputFd = descriptors[0];
   process.errorFd = separateOutput ? errorDescriptors[0] : -1;
-  const auto setNonBlocking = [](int fd) {
+  const auto setNonBlocking{[](int fd) {
     return fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) >= 0;
-  };
+  }};
   if (!setNonBlocking(process.outputFd) ||
       (process.errorFd >= 0 && !setNonBlocking(process.errorFd))) {
     (void)kill(process.pid, SIGKILL);
@@ -1659,14 +1659,14 @@ auto startCli(
 
 void collectCliOutput(CliProcess &process) {
   char buffer[4096];
-  const auto collect = [&](int fd, std::string &stream) {
+  const auto collect{[&](int fd, std::string &stream) {
     if (fd < 0) {
       return;
     }
     while (true) {
-      const auto count = read(fd, buffer, sizeof(buffer));
+      const auto count{read(fd, buffer, sizeof(buffer))};
       if (count > 0) {
-        const auto size = static_cast<std::size_t>(count);
+        const auto size{static_cast<std::size_t>(count)};
         stream.append(buffer, size);
         process.output.append(buffer, size);
         continue;
@@ -1678,7 +1678,7 @@ void collectCliOutput(CliProcess &process) {
 
       return;
     }
-  };
+  }};
   collect(process.outputFd, process.stdoutOutput);
   if (process.errorFd >= 0) {
     collect(process.errorFd, process.stderrOutput);
@@ -1692,9 +1692,9 @@ void collectCliStderr(CliProcess &process) {
 
   char buffer[4096];
   while (true) {
-    const auto count = read(process.errorFd, buffer, sizeof(buffer));
+    const auto count{read(process.errorFd, buffer, sizeof(buffer))};
     if (count > 0) {
-      const auto size = static_cast<std::size_t>(count);
+      const auto size{static_cast<std::size_t>(count)};
       process.stderrOutput.append(buffer, size);
       process.output.append(buffer, size);
       continue;
@@ -1728,7 +1728,7 @@ void waitForCliOutput(CliProcess &process, std::chrono::milliseconds timeout) {
 
 auto waitForCliText(CliProcess &process, std::string_view expected,
                     std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
   while (std::chrono::steady_clock::now() < deadline) {
     collectCliOutput(process);
     if (process.output.find(expected) != std::string::npos) {
@@ -1736,7 +1736,7 @@ auto waitForCliText(CliProcess &process, std::string_view expected,
     }
 
     waitForCliOutput(process, 20ms);
-    const auto waited = waitpid(process.pid, &process.status, WNOHANG);
+    const auto waited{waitpid(process.pid, &process.status, WNOHANG)};
     if (waited == process.pid) {
       process.exited = true;
       collectCliOutput(process);
@@ -1752,7 +1752,7 @@ auto waitForCliText(CliProcess &process, std::string_view expected,
 
 auto waitForCliStderrText(CliProcess &process, std::string_view expected,
                           std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
   while (std::chrono::steady_clock::now() < deadline) {
     collectCliStderr(process);
     if (process.stderrOutput.find(expected) != std::string::npos) {
@@ -1760,7 +1760,7 @@ auto waitForCliStderrText(CliProcess &process, std::string_view expected,
     }
 
     if (!process.exited) {
-      const auto waited = waitpid(process.pid, &process.status, WNOHANG);
+      const auto waited{waitpid(process.pid, &process.status, WNOHANG)};
       if (waited == process.pid) {
         process.exited = true;
         collectCliStderr(process);
@@ -1784,11 +1784,11 @@ auto waitForCliStderrText(CliProcess &process, std::string_view expected,
 
 auto waitForCliExit(CliProcess &process,
                     std::chrono::milliseconds timeout) -> bool {
-  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  const auto deadline{std::chrono::steady_clock::now() + timeout};
   while (std::chrono::steady_clock::now() < deadline) {
     collectCliOutput(process);
     if (!process.exited) {
-      const auto waited = waitpid(process.pid, &process.status, WNOHANG);
+      const auto waited{waitpid(process.pid, &process.status, WNOHANG)};
       if (waited == process.pid) {
         process.exited = true;
       }
@@ -1812,13 +1812,13 @@ TEST(DmnBluezDeviceList, IncludesKnownDisconnectedDevices) {
   FakeBluezService service{bus.address()};
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
 
-  const auto adapters = client.snapshot();
+  const auto adapters{client.snapshot()};
   ASSERT_TRUE(adapters) << adapters.error().message;
   ASSERT_EQ(adapters->adapters.size(), 1U);
   EXPECT_EQ(adapters->adapters.front().name, "Test adapter");
   EXPECT_EQ(adapters->adapters.front().address, "B8:F7:75:BF:F3:C3");
   ASSERT_EQ(adapters->devices.size(), 1U);
-  const auto device = adapters->devices.front();
+  const auto device{adapters->devices.front()};
   EXPECT_EQ(device.name, "Known headset");
   EXPECT_EQ(device.address, "AA:BB:CC:DD:EE:FF");
   EXPECT_TRUE(device.paired.value());
@@ -1834,7 +1834,7 @@ TEST(DmnBluezDeviceList, EnumeratesEmptyAndMultipleAdapterInventories) {
     FakeBluezService service{bus.address(), 0, 1};
     dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
 
-    const auto inventory = client.snapshot();
+    const auto inventory{client.snapshot()};
     ASSERT_TRUE(inventory) << inventory.error().message;
     EXPECT_TRUE(inventory->adapters.empty());
     EXPECT_TRUE(inventory->devices.empty());
@@ -1847,7 +1847,7 @@ TEST(DmnBluezDeviceList, EnumeratesEmptyAndMultipleAdapterInventories) {
     FakeBluezService service{bus.address(), 0, 2};
     dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
 
-    const auto inventory = client.snapshot();
+    const auto inventory{client.snapshot()};
     ASSERT_TRUE(inventory) << inventory.error().message;
     ASSERT_EQ(inventory->adapters.size(), 2U);
     ASSERT_EQ(inventory->devices.size(), 2U);
@@ -1870,7 +1870,7 @@ TEST(DmnBluezDeviceList, FallsBackFromAliasToNameAndAddress) {
     ASSERT_TRUE(bus.valid());
     FakeBluezService service{bus.address(), mode};
     dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
-    const auto inventory = client.snapshot();
+    const auto inventory{client.snapshot()};
     ASSERT_TRUE(inventory) << inventory.error().message;
     ASSERT_EQ(inventory->devices.size(), 1U);
     EXPECT_EQ(inventory->devices.front().name, expected);
@@ -1881,7 +1881,7 @@ TEST(DmnBluezCli, SnapshotPrintsPortableCsvAndDoesNotStartDiscovery) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 3};
-  auto process = startCli(bus.address(), {});
+  auto process{startCli(bus.address(), {})};
   ASSERT_TRUE(waitForCliExit(process, 15s));
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -1907,7 +1907,7 @@ TEST(DmnBluezCli, ConnectKnownDeviceWaitsForObservedConnectedState) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--connect", "aa:bb:cc:dd:ee:ff"});
+  auto process{startCli(bus.address(), {"--connect", "aa:bb:cc:dd:ee:ff"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -1928,7 +1928,7 @@ TEST(DmnBluezCli, ConnectAlreadyConnectedIsNoOp) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -1945,7 +1945,7 @@ TEST(DmnBluezCli, DisconnectAlreadyDisconnectedIsNoOp) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -1961,9 +1961,9 @@ TEST(DmnBluezCli, DisconnectConnectedDeviceWaitsForObservedState) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
-  auto process =
+  auto process{
       startCli(bus.address(), {"--disconnect", "/org/bluez/hci0/"
-                                               "dev_AA_BB_CC_DD_EE_FF"});
+                                               "dev_AA_BB_CC_DD_EE_FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -1985,7 +1985,7 @@ TEST(DmnBluezCli, PairsSelectedDeviceUsingBluezDefaultAgent) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.setInitialPaired(false);
-  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2003,7 +2003,7 @@ TEST(DmnBluezCli, PairAlreadyPairedDeviceIsNoOp) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2020,7 +2020,7 @@ TEST(DmnBluezCli, ReportsPairingAgentFailureWithoutSuccessRow) {
   FakeBluezService service{bus.address()};
   service.setInitialPaired(false);
   service.setPairFailure(true);
-  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2037,7 +2037,7 @@ TEST(DmnBluezCli, PairTimesOutWithoutObservedPairedState) {
   FakeBluezService service{bus.address()};
   service.setInitialPaired(false);
   service.setPairTransition(false);
-  auto process = startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--pair", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2077,7 +2077,7 @@ TEST(DmnAncsBluezMonitorTest, OwnsDeviceSetupAndDeliversAncsEvents) {
   config.progress_handler = [&](const auto phase) {
     progress.push_back(phase);
   };
-  const auto started = monitor.start("Known headset", config);
+  const auto started{monitor.start("Known headset", config)};
   ASSERT_TRUE(started) << started.error().message;
   EXPECT_EQ(started->device.object_path, kDevicePath);
   EXPECT_TRUE(started->requested_remaining_profiles);
@@ -2118,7 +2118,7 @@ TEST(DmnAncsBluezMonitorTest,
   config.require_existing_connection = true;
   config.request_remaining_profiles_when_connected = true;
   config.ancs.service_resolution_timeout = 1s;
-  const auto started = monitor.start("Known headset", config);
+  const auto started{monitor.start("Known headset", config)};
 
   ASSERT_TRUE(started) << started.error().message;
   EXPECT_TRUE(started->requested_remaining_profiles);
@@ -2143,7 +2143,7 @@ TEST(DmnAncsBluezMonitorTest,
   dmn::Dmn_AncsMonitorConfig config;
   config.require_existing_connection = true;
   config.ancs.service_resolution_timeout = 1s;
-  const auto started = monitor.start("Known headset", config);
+  const auto started{monitor.start("Known headset", config)};
 
   ASSERT_TRUE(started) << started.error().message;
   EXPECT_FALSE(started->requested_remaining_profiles);
@@ -2162,7 +2162,7 @@ TEST(DmnAncsBluezMonitorTest, RequiresAlreadyConnectedDevice) {
   dmn::Dmn_AncsMonitorConfig config;
   config.require_existing_connection = true;
 
-  const auto started = monitor.start("Known headset", config);
+  const auto started{monitor.start("Known headset", config)};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Connection);
@@ -2196,7 +2196,7 @@ TEST(DmnAncsBluezMonitorTest,
     }
   };
 
-  const auto started = monitor.start("Known headset", config);
+  const auto started{monitor.start("Known headset", config)};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Cancelled);
@@ -2225,9 +2225,9 @@ TEST(DmnAncsBluezMonitorTest,
     return cancelRequested.load(std::memory_order_acquire);
   };
 
-  auto pendingStart = std::async(std::launch::async, [&] {
+  auto pendingStart{std::async(std::launch::async, [&] {
     return monitor.start("Known headset", config);
-  });
+  })};
   if (!service.waitForHeldGattStartNotify(5s)) {
     service.releaseHeldGattStartNotify();
     ASSERT_EQ(pendingStart.wait_for(5s), std::future_status::ready);
@@ -2237,7 +2237,7 @@ TEST(DmnAncsBluezMonitorTest,
   cancelRequested.store(true, std::memory_order_release);
   service.releaseHeldGattStartNotify();
   ASSERT_EQ(pendingStart.wait_for(5s), std::future_status::ready);
-  const auto started = pendingStart.get();
+  const auto started{pendingStart.get()};
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Cancelled);
   EXPECT_EQ(service.gattNotifyCounts(), (std::pair{2, 2}));
@@ -2253,7 +2253,7 @@ TEST(DmnAncsBluezMonitorTest, RejectsKnownDeviceOnUnpoweredAdapter) {
   dmn::Dmn_BluezClientConfig bluezConfig;
   bluezConfig.test_bus_address = bus.address();
   dmn::Dmn_AncsBluezMonitor monitor{bluezConfig};
-  const auto started = monitor.start("Known headset");
+  const auto started{monitor.start("Known headset")};
 
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().stage, dmn::Dmn_AncsMonitorStage::Inventory);
@@ -2273,11 +2273,11 @@ TEST(DmnBluetoothMonitorCli, PairsOnlySelectedDeviceBeforeConnectFailure) {
   FakeBluezService service{bus.address(), 0, 2};
   service.setInitialPaired(false);
   service.setDeviceActionFailures(true, false);
-  auto process =
+  auto process{
       startCli(bus.address(),
                {"monitor", "known headset", "--adapter", "B8:F7:75:BF:F3:C3",
                 "--pair-timeout", "1", "--connect-timeout", "1"},
-               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
   ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2295,9 +2295,9 @@ TEST(DmnBluetoothMonitorCli, RejectsConnectedDeviceWithoutAncsService) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
   ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2314,9 +2314,9 @@ TEST(DmnBluetoothMonitorCli, RejectsAmbiguousDeviceNameWithoutActions) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 2};
-  auto process =
-      startCli(bus.address(), {"monitor", "Known headset"},
-               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+  auto process{startCli(bus.address(), {"monitor", "Known headset"},
+                        DMN_BLUETOOTH_CLI_EXECUTABLE,
+                        "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
   ASSERT_TRUE(waitForCliExit(process, 10s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2337,9 +2337,9 @@ TEST(DmnBluetoothMonitorCli,
   service.enableAncsGatt();
   service.setServicesResolved(false);
   service.resolveServicesOnConnect();
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2359,11 +2359,11 @@ TEST(DmnBluetoothMonitorCli,
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
-  auto process =
-      startCli(bus.address(),
-               {"monitor", "Known headset", "--services-timeout", "1",
-                "--unlimited", "--ignore-existing"},
-               DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+  auto process{startCli(bus.address(),
+                        {"monitor", "Known headset", "--services-timeout", "1",
+                         "--unlimited", "--ignore-existing"},
+                        DMN_BLUETOOTH_CLI_EXECUTABLE,
+                        "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2388,9 +2388,9 @@ TEST(DmnBluetoothMonitorCli,
   service.setServicesResolved(false);
   service.resolveServicesOnConnect();
   service.setConnectOperationInProgress();
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2410,9 +2410,9 @@ TEST(DmnBluetoothMonitorCli, StopsOnSignalAndCleansUp) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS");
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS")};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2438,9 +2438,9 @@ TEST(DmnBluetoothMonitorCli, DoesNotLogContentToStderr) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true)};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2467,9 +2467,9 @@ TEST(DmnBluetoothMonitorCli, EscapesNotificationTerminalControls) {
   title += "[31m";
   title += "\xE2\x80\xAE";
   service.setAncsNotificationText(std::move(title), "Private body");
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true)};
 
   ASSERT_TRUE(waitForCliText(process, "message: Private body", 10s))
       << process.output;
@@ -2489,9 +2489,9 @@ TEST(DmnBluetoothMonitorCli, ExitsWhenStdoutCloses) {
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
   service.setInitialAncsNotification(false);
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true)};
 
   ASSERT_TRUE(waitForCliText(process, "monitor ready", 10s)) << process.output;
   close(process.outputFd);
@@ -2515,9 +2515,9 @@ TEST(DmnBluetoothMonitorCli, PrintsRemovedEventsWithoutAttributeRequests) {
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
   service.setInitialAncsNotification(false);
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true)};
 
   ASSERT_TRUE(waitForCliStderrText(process, "monitor ready", 10s))
       << process.output;
@@ -2537,10 +2537,10 @@ TEST(DmnBluetoothMonitorCli, BoundsOutputQueueWhenStdoutIsBackpressured) {
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
   service.setInitialAncsNotification(false);
-  auto process = startCli(
-      bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true,
-      4096, true);
+  auto process{startCli(bus.address(),
+                        {"monitor", "Known headset", "--services-timeout", "1"},
+                        DMN_BLUETOOTH_CLI_EXECUTABLE,
+                        "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true, 4096, true)};
 
   ASSERT_TRUE(waitForCliStderrText(process, "monitor ready", 10s))
       << process.output;
@@ -2550,11 +2550,11 @@ TEST(DmnBluetoothMonitorCli, BoundsOutputQueueWhenStdoutIsBackpressured) {
   ASSERT_TRUE(
       waitForCliStderrText(process, "DMN_TEST_OUTPUT_GATE_REACHED", 10s))
       << process.output;
-  constexpr auto testOutputQueueLimit =
-      static_cast<std::uint32_t>(DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT);
-  const auto overflowMessage =
+  constexpr auto testOutputQueueLimit{
+      static_cast<std::uint32_t>(DMN_BLUETOOTH_TEST_OUTPUT_QUEUE_LIMIT)};
+  const auto overflowMessage{
       "monitor failed: monitor output queue exceeded its " +
-      std::to_string(testOutputQueueLimit) + "-event limit";
+      std::to_string(testOutputQueueLimit) + "-event limit"};
   for (std::uint32_t uid = 1; uid <= testOutputQueueLimit + 1; ++uid) {
     service.emitGattValue(kNotificationSourcePath,
                           makeAncsNotificationSourceValue(uid, 2));
@@ -2578,9 +2578,9 @@ TEST(DmnBluetoothMonitorCli, InterruptsDuringStartupAndCleansUp) {
   FakeBluezService service{bus.address(), 0, 0, true};
   service.enableAncsGatt();
   service.holdNextGattStartNotify();
-  auto process = startCli(
+  auto process{startCli(
       bus.address(), {"monitor", "Known headset", "--services-timeout", "1"},
-      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true);
+      DMN_BLUETOOTH_CLI_EXECUTABLE, "DMN_BLUETOOTH_TEST_BUS_ADDRESS", true)};
 
   ASSERT_TRUE(waitForCliText(process, "starting ANCS session", 10s))
       << process.output;
@@ -2599,12 +2599,11 @@ TEST(DmnBluetoothMonitorCli, InterruptsDuringStartupAndCleansUp) {
 
 #if defined(DMN_ANCS_HARDWARE_TESTS)
 TEST(DmnBluetoothMonitorHardware, StartsAncsThroughProductionCli) {
-  auto process =
-      startCli({},
-               {"monitor", DMN_ANCS_HARDWARE_DEVICE, "--discovery-timeout",
-                "10", "--pair-timeout", "20", "--connect-timeout", "20",
-                "--services-timeout", "60"},
-               DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE, "", true);
+  auto process{startCli({},
+                        {"monitor", DMN_ANCS_HARDWARE_DEVICE,
+                         "--discovery-timeout", "10", "--pair-timeout", "20",
+                         "--connect-timeout", "20", "--services-timeout", "60"},
+                        DMN_BLUETOOTH_HARDWARE_CLI_EXECUTABLE, "", true)};
 
   if (!waitForCliStderrText(process, "monitor ready", 90s)) {
     if (!process.exited) {
@@ -2628,8 +2627,8 @@ TEST(DmnBluezCli, ConnectCanDiscoverOnlyTheSelectedDevice) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 4};
-  auto process = startCli(bus.address(),
-                          {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"});
+  auto process{startCli(bus.address(),
+                        {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active while waiting", 15s))
       << process.output;
   service.emitDeviceObject(true);
@@ -2651,8 +2650,8 @@ TEST(DmnBluezCli, DiscoveryStopFailurePreventsConnect) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 4};
-  auto process = startCli(bus.address(),
-                          {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"});
+  auto process{startCli(bus.address(),
+                        {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active while waiting", 15s))
       << process.output;
   service.setDiscoveryFailures(false, false, true);
@@ -2670,8 +2669,8 @@ TEST(DmnBluezCli, InterruptedTargetDiscoveryStopsWithoutConnecting) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 4};
-  auto process = startCli(bus.address(),
-                          {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"});
+  auto process{startCli(bus.address(),
+                        {"--connect", "AA:BB:CC:DD:EE:FF", "--discovery"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active while waiting", 15s))
       << process.output;
   ASSERT_EQ(kill(process.pid, SIGINT), 0);
@@ -2688,15 +2687,15 @@ TEST(DmnBluezCli, DuplicateDeviceAddressRequiresAdapterSelection) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 5};
 
-  auto ambiguous = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto ambiguous{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(ambiguous, 15s));
   ASSERT_TRUE(WIFEXITED(ambiguous.status));
   EXPECT_EQ(WEXITSTATUS(ambiguous.status), 9);
   EXPECT_NE(ambiguous.output.find("Device selection is ambiguous"),
             std::string::npos);
 
-  auto selected = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF",
-                                           "--adapter", "B8:F7:75:BF:F3:C4"});
+  auto selected{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF",
+                                         "--adapter", "B8:F7:75:BF:F3:C4"})};
   ASSERT_TRUE(waitForCliExit(selected, 15s)) << selected.output;
   ASSERT_TRUE(WIFEXITED(selected.status));
   EXPECT_EQ(WEXITSTATUS(selected.status), 0);
@@ -2710,7 +2709,7 @@ TEST(DmnBluezCli, ReportsConnectPolicyFailureWithoutSuccessRow) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.setDeviceActionFailures(true, false);
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2727,7 +2726,7 @@ TEST(DmnBluezCli, ReportsDisconnectPolicyFailureWithoutSuccessRow) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.setDeviceActionFailures(false, true);
-  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2744,7 +2743,7 @@ TEST(DmnBluezCli, ReportsTargetRemovalAfterConnectWithoutWaitingForTimeout) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.removeDeviceOnNextAction();
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2760,7 +2759,7 @@ TEST(DmnBluezCli, ReportsTargetRemovalAfterDisconnectWithoutWaitingForTimeout) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.removeDeviceOnNextAction();
-  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2777,7 +2776,7 @@ TEST(DmnBluezCli, ReportsBluezLossAfterConnectWithoutSuccessRow) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.releaseNameOnNextAction();
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2792,7 +2791,7 @@ TEST(DmnBluezCli, ReportsBluezRestartAfterConnectWithoutSuccessRow) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.restartNameOnNextAction();
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2807,7 +2806,7 @@ TEST(DmnBluezCli, ConnectTimesOutWithoutObservedConnectedState) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.setConnectionTransition(false);
-  auto process = startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--connect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2823,7 +2822,7 @@ TEST(DmnBluezCli, DisconnectTimesOutWithoutObservedDisconnectedState) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 0, true};
   service.setConnectionTransition(false);
-  auto process = startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"});
+  auto process{startCli(bus.address(), {"--disconnect", "AA:BB:CC:DD:EE:FF"})};
   ASSERT_TRUE(waitForCliExit(process, 5s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2854,7 +2853,7 @@ TEST(DmnBluezCli, RejectsInvalidConnectionOptionCombinations) {
                                  "--discovery"},
         std::vector<std::string>{"--pair", "AA:BB:CC:DD:EE:FF",
                                  "--discovery"}}) {
-    auto process = startCli(bus.address(), arguments);
+    auto process{startCli(bus.address(), arguments)};
     ASSERT_TRUE(waitForCliExit(process, 15s));
     ASSERT_TRUE(WIFEXITED(process.status));
     EXPECT_EQ(WEXITSTATUS(process.status), 2);
@@ -2870,7 +2869,7 @@ TEST(DmnBluezCli, RequiresExplicitAdapterWhenMultipleArePowered) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address(), 0, 2};
-  auto process = startCli(bus.address(), {"--discovery"});
+  auto process{startCli(bus.address(), {"--discovery"})};
   ASSERT_TRUE(waitForCliExit(process, 15s));
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -2888,8 +2887,8 @@ TEST(DmnBluezCli, ExplicitAdapterSelectsOnlyMatchingPoweredAdapter) {
 
   for (const auto &selector :
        {std::string{"B8:F7:75:BF:F3:C4"}, std::string{"/org/bluez/hci1"}}) {
-    auto process =
-        startCli(bus.address(), {"--discovery", "--adapter", selector});
+    auto process{
+        startCli(bus.address(), {"--discovery", "--adapter", selector})};
     ASSERT_TRUE(waitForCliText(process, "Discovery active", 15s))
         << process.output;
     ASSERT_EQ(kill(process.pid, SIGINT), 0);
@@ -2917,7 +2916,7 @@ TEST(DmnBluezCli, NoUsableOrUnpoweredAdapterDoesNotStartDiscovery) {
     PrivateBus bus;
     ASSERT_TRUE(bus.valid());
     FakeBluezService service{bus.address(), 0, topologyMode};
-    auto process = startCli(bus.address(), arguments);
+    auto process{startCli(bus.address(), arguments)};
     ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
     ASSERT_TRUE(WIFEXITED(process.status));
@@ -2932,7 +2931,7 @@ TEST(DmnBluezCli, ScanStopsOwnedSessionOnInterrupt) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--discovery"});
+  auto process{startCli(bus.address(), {"--discovery"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active", 15s))
       << process.output;
   service.emitConnected(true);
@@ -2956,7 +2955,7 @@ TEST(DmnBluezCli, ScanStopsOwnedSessionOnSigterm) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--discovery"});
+  auto process{startCli(bus.address(), {"--discovery"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active", 15s))
       << process.output;
   ASSERT_EQ(kill(process.pid, SIGTERM), 0);
@@ -2971,8 +2970,8 @@ TEST(DmnBluezCli, ReportsBluezLossDuringScanWithoutStaleSuccess) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process =
-      startCli(bus.address(), {"--discovery", "--adapter", kAdapterPath});
+  auto process{
+      startCli(bus.address(), {"--discovery", "--adapter", kAdapterPath})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active", 15s))
       << process.output;
   service.releaseName();
@@ -2991,8 +2990,8 @@ TEST(DmnBluezCli, ReportsDiscoveryStartFailure) {
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
   service.setDiscoveryFailures(false, true, false);
-  auto process = startCli(bus.address(),
-                          {"--discovery", "--adapter", "B8:F7:75:BF:F3:C3"});
+  auto process{startCli(bus.address(),
+                        {"--discovery", "--adapter", "B8:F7:75:BF:F3:C3"})};
   ASSERT_TRUE(waitForCliExit(process, 15s)) << process.output;
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -3007,8 +3006,8 @@ TEST(DmnBluezCli, ReportsDiscoveryStopFailureOnTermination) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(),
-                          {"--discovery", "--adapter", "B8:F7:75:BF:F3:C3"});
+  auto process{startCli(bus.address(),
+                        {"--discovery", "--adapter", "B8:F7:75:BF:F3:C3"})};
   ASSERT_TRUE(waitForCliText(process, "Discovery active", 15s))
       << process.output;
   service.setDiscoveryFailures(false, false, true);
@@ -3031,7 +3030,7 @@ TEST(DmnBluezCli, RejectsInvalidArgumentsWithUsage) {
         std::vector<std::string>{"--discovery", "--discovery"},
         std::vector<std::string>{"--adapter", "B8:F7:75:BF:F3:C3", "--adapter",
                                  "B8:F7:75:BF:F3:C3"}}) {
-    auto process = startCli(bus.address(), arguments);
+    auto process{startCli(bus.address(), arguments)};
     ASSERT_TRUE(waitForCliExit(process, 15s));
 
     ASSERT_TRUE(WIFEXITED(process.status));
@@ -3044,7 +3043,7 @@ TEST(DmnBluezCli, HelpPrintsUsageWithoutOpeningBluezConnection) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto process = startCli(bus.address(), {"--help"});
+  auto process{startCli(bus.address(), {"--help"})};
   ASSERT_TRUE(waitForCliExit(process, 15s));
 
   ASSERT_TRUE(WIFEXITED(process.status));
@@ -3080,7 +3079,7 @@ TEST(DmnBluezDiscovery, RejectsUnpoweredAdapterWithoutCallingBluez) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto started = client.startDiscovery(kAdapterPath);
+  const auto started{client.startDiscovery(kAdapterPath)};
   ASSERT_FALSE(started);
   EXPECT_EQ(started.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
   EXPECT_EQ(service.discoveryCounts(), (std::pair{0, 0}));
@@ -3097,7 +3096,7 @@ TEST(DmnBluezDiscovery, StartFailuresDoNotAcquireOwnedSession) {
     dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
     ASSERT_TRUE(client.snapshot());
 
-    const auto started = client.startDiscovery(kAdapterPath);
+    const auto started{client.startDiscovery(kAdapterPath)};
     ASSERT_FALSE(started);
     EXPECT_EQ(started.error().kind, dmn::Dmn_DbusErrorKind::Remote);
     EXPECT_EQ(started.error().remote_name, DBUS_ERROR_ACCESS_DENIED);
@@ -3119,7 +3118,7 @@ TEST(DmnBluezDiscovery, StopFailureRetainsOwnershipForRetry) {
   ASSERT_TRUE(client.startDiscovery(kAdapterPath));
 
   service.setDiscoveryFailures(false, false, true);
-  const auto firstStop = client.stopDiscovery();
+  const auto firstStop{client.stopDiscovery()};
   ASSERT_FALSE(firstStop);
   EXPECT_EQ(firstStop.error().kind, dmn::Dmn_DbusErrorKind::Remote);
   EXPECT_EQ(firstStop.error().remote_name, DBUS_ERROR_ACCESS_DENIED);
@@ -3156,7 +3155,7 @@ TEST(DmnBluezDeviceList, OwnerLossDuringSnapshotKeepsInventoryUnavailable) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   service.releaseNameDuringNextSnapshot();
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_FALSE(inventory);
   EXPECT_EQ(inventory.error().kind, dmn::Dmn_DbusErrorKind::NotConnected);
   EXPECT_TRUE(client.devices().empty());
@@ -3202,7 +3201,7 @@ TEST(DmnBluezDeviceList, ReloadsInventoryAfterBluezOwnerRestart) {
                                    [&] { return inventoryReadyAfterRestart; }));
   }
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_TRUE(inventory) << inventory.error().message;
   ASSERT_EQ(inventory->adapters.size(), 1U);
   ASSERT_EQ(inventory->devices.size(), 1U);
@@ -3229,7 +3228,7 @@ TEST(DmnBluezDeviceList, SnapshotReplayIsNotDeliveredAsLiveDuplicate) {
 
   service.emitDeviceDuringNextSnapshot();
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_TRUE(inventory) << inventory.error().message;
   ASSERT_EQ(inventory->devices.size(), 1U);
   service.emitConnected(true);
@@ -3274,7 +3273,7 @@ TEST(DmnBluezDiscovery, SnapshotRefreshPreservesSeenDeviceMarkers) {
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return seenEvent; }));
   }
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_TRUE(inventory);
   ASSERT_EQ(inventory->devices.size(), 1U);
   EXPECT_TRUE(inventory->devices.front().seen_during_discovery);
@@ -3305,7 +3304,7 @@ TEST(DmnBluezDeviceList, TracksPropertyUpdatesWithSourcePath) {
   service.emitConnected(true);
   std::unique_lock lock{mutex};
   EXPECT_TRUE(condition.wait_for(lock, 2s, [&] { return connectedEvent; }));
-  const auto devices = client.devices();
+  const auto devices{client.devices()};
   ASSERT_EQ(devices.size(), 1U);
   EXPECT_TRUE(devices.front().connected.value());
 }
@@ -3314,7 +3313,7 @@ TEST(DmnBluezDeviceList, SignalQueueOverflowInvalidatesAndResynchronizes) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto config = makeClientConfig(bus.address());
+  auto config{makeClientConfig(bus.address())};
   config.limits.max_signal_messages = 1;
   config.limits.max_signal_bytes = 1024;
   dmn::Dmn_BluezClient client{config};
@@ -3347,7 +3346,7 @@ TEST(DmnBluezDeviceList, SignalQueueOverflowInvalidatesAndResynchronizes) {
         lock, 5s, [&] { return inventoryRestoredAfterOverflow; }));
   }
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_TRUE(inventory) << inventory.error().message;
   const auto &devices = inventory->devices;
   ASSERT_EQ(devices.size(), 1U);
@@ -3358,7 +3357,7 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
   FakeBluezService service{bus.address()};
-  auto config = makeClientConfig(bus.address());
+  auto config{makeClientConfig(bus.address())};
   config.limits.max_signal_messages = 4096;
   config.limits.max_signal_bytes = 4U * 1024U * 1024U;
   dmn::Dmn_BluezClient client{config};
@@ -3379,8 +3378,8 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   });
 
   service.holdNextSnapshotReply();
-  auto pendingSnapshot =
-      std::async(std::launch::async, [&client] { return client.snapshot(); });
+  auto pendingSnapshot{
+      std::async(std::launch::async, [&client] { return client.snapshot(); })};
 
   if (!service.waitForHeldSnapshot(5s)) {
     service.releaseHeldSnapshot();
@@ -3392,7 +3391,7 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
   service.releaseHeldSnapshot();
 
   ASSERT_EQ(pendingSnapshot.wait_for(15s), std::future_status::ready);
-  const auto failedSnapshot = pendingSnapshot.get();
+  const auto failedSnapshot{pendingSnapshot.get()};
   ASSERT_FALSE(failedSnapshot);
   EXPECT_EQ(failedSnapshot.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
   EXPECT_NE(failedSnapshot.error().message.find("staging queue overflow"),
@@ -3405,7 +3404,7 @@ TEST(DmnBluezDeviceList, StagingOverflowRejectsSnapshotAndAllowsRetry) {
     EXPECT_TRUE(condition.wait_for(lock, 5s, [&] { return overflowEvent; }));
   }
 
-  const auto retriedSnapshot = client.snapshot();
+  const auto retriedSnapshot{client.snapshot()};
   ASSERT_TRUE(retriedSnapshot) << retriedSnapshot.error().message;
   ASSERT_EQ(retriedSnapshot->devices.size(), 1U);
   EXPECT_FALSE(retriedSnapshot->devices.front().connected.value());
@@ -3478,7 +3477,7 @@ TEST(DmnBluezDeviceList, InvalidatedConnectionPropertyBecomesUnknown) {
     ASSERT_TRUE(condition.wait_for(lock, 2s, [&] { return invalidatedEvent; }));
   }
 
-  const auto devices = client.devices();
+  const auto devices{client.devices()};
   ASSERT_EQ(devices.size(), 1U);
   EXPECT_FALSE(devices.front().connected.has_value());
 }
@@ -3561,7 +3560,7 @@ TEST(DmnBluezDeviceList, UpdatesByStableDeviceIdentityAcrossPathChanges) {
         condition.wait_for(lock, 2s, [&] { return alternatePathEvent; }));
   }
 
-  auto devices = client.devices();
+  auto devices{client.devices()};
   ASSERT_EQ(devices.size(), 1U);
   EXPECT_EQ(devices.front().object_path, alternatePath);
 
@@ -3591,10 +3590,10 @@ TEST(DmnBluezClient, DeviceActionResolvesCurrentObjectPath) {
   constexpr char alternatePath[] =
       "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF_current";
   service.emitDeviceObject(true, alternatePath);
-  const auto deadline = std::chrono::steady_clock::now() + 2s;
+  const auto deadline{std::chrono::steady_clock::now() + 2s};
 
   while (std::chrono::steady_clock::now() < deadline) {
-    const auto devices = client.devices();
+    const auto devices{client.devices()};
     if (devices.size() == 1 && devices.front().object_path == alternatePath) {
       break;
     }
@@ -3602,11 +3601,11 @@ TEST(DmnBluezClient, DeviceActionResolvesCurrentObjectPath) {
     std::this_thread::sleep_for(10ms);
   }
 
-  const auto devices = client.devices();
+  const auto devices{client.devices()};
   ASSERT_EQ(devices.size(), 1U);
   ASSERT_EQ(devices.front().object_path, alternatePath);
-  const auto connected =
-      client.connectDevice("aa:bb:cc:dd:ee:ff", "B8:F7:75:BF:F3:C3");
+  const auto connected{
+      client.connectDevice("aa:bb:cc:dd:ee:ff", "B8:F7:75:BF:F3:C3")};
   ASSERT_TRUE(connected) << connected.error().message;
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.deviceActionPaths(),
@@ -3622,8 +3621,8 @@ TEST(DmnBluezClient, ConnectAvailableProfilesHandlesAlreadyConnected) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto connected =
-      client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+  const auto connected{client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF",
+                                                       "B8:F7:75:BF:F3:C3")};
   ASSERT_TRUE(connected) << connected.error().message;
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
@@ -3638,8 +3637,8 @@ TEST(DmnBluezClient, ConnectAvailableProfilesAcceptsInProgressResponse) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto connected =
-      client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+  const auto connected{client.connectAvailableProfiles("AA:BB:CC:DD:EE:FF",
+                                                       "B8:F7:75:BF:F3:C3")};
   ASSERT_TRUE(connected) << connected.error().message;
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{1, 0}));
   EXPECT_EQ(service.deviceActionPaths().first, kDevicePath);
@@ -3653,8 +3652,8 @@ TEST(DmnBluezClient, CancelConnectionAttemptDisconnectsEvenWhenNotConnected) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto canceled =
-      client.cancelConnectionAttempt("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3");
+  const auto canceled{
+      client.cancelConnectionAttempt("AA:BB:CC:DD:EE:FF", "B8:F7:75:BF:F3:C3")};
 
   ASSERT_TRUE(canceled) << canceled.error().message;
   EXPECT_EQ(service.deviceActionCounts(), (std::pair{0, 1}));
@@ -3670,13 +3669,13 @@ TEST(DmnBluezClient, PairUsesCurrentObjectPathAndDefaultAgent) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto paired =
-      client.pairDevice("aa:bb:cc:dd:ee:ff", "B8:F7:75:BF:F3:C3");
+  const auto paired{
+      client.pairDevice("aa:bb:cc:dd:ee:ff", "B8:F7:75:BF:F3:C3")};
   ASSERT_TRUE(paired) << paired.error().message;
   EXPECT_EQ(service.pairCount(), 1);
   EXPECT_EQ(service.pairPath(), kDevicePath);
 
-  const auto inventory = client.snapshot();
+  const auto inventory{client.snapshot()};
   ASSERT_TRUE(inventory);
   ASSERT_EQ(inventory->devices.size(), 1);
   EXPECT_TRUE(inventory->devices.front().paired.value());
@@ -3689,7 +3688,7 @@ TEST(DmnBluezClient, PairAlreadyPairedIsNoOp) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto paired = client.pairDevice("AA:BB:CC:DD:EE:FF");
+  const auto paired{client.pairDevice("AA:BB:CC:DD:EE:FF")};
   ASSERT_TRUE(paired) << paired.error().message;
   EXPECT_EQ(service.pairCount(), 0);
 }
@@ -3703,7 +3702,7 @@ TEST(DmnBluezClient, PairReturnsDefaultAgentFailure) {
   dmn::Dmn_BluezClient client{makeClientConfig(bus.address())};
   ASSERT_TRUE(client.snapshot());
 
-  const auto paired = client.pairDevice("AA:BB:CC:DD:EE:FF");
+  const auto paired{client.pairDevice("AA:BB:CC:DD:EE:FF")};
   ASSERT_FALSE(paired);
   EXPECT_EQ(paired.error().kind, dmn::Dmn_DbusErrorKind::Remote);
   EXPECT_EQ(paired.error().message, "injected pairing agent failure");
@@ -3720,9 +3719,9 @@ TEST(DmnBluezClient, PairHonorsFiniteMethodTimeout) {
   ASSERT_TRUE(client.snapshot());
 
   service.holdNextDeviceAction();
-  const auto pairResult =
-      client.pairDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
-  const auto pairHeld = service.waitForHeldDeviceAction(1s);
+  const auto pairResult{
+      client.pairDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms)};
+  const auto pairHeld{service.waitForHeldDeviceAction(1s)};
   service.releaseHeldDeviceAction();
   ASSERT_FALSE(pairResult);
   EXPECT_EQ(pairResult.error().kind, dmn::Dmn_DbusErrorKind::Timeout);
@@ -3739,9 +3738,9 @@ TEST(DmnBluezClient, ConnectHonorsFiniteMethodTimeout) {
   ASSERT_TRUE(client.snapshot());
 
   service.holdNextDeviceAction();
-  const auto connectResult =
-      client.connectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
-  const auto connectHeld = service.waitForHeldDeviceAction(1s);
+  const auto connectResult{
+      client.connectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms)};
+  const auto connectHeld{service.waitForHeldDeviceAction(1s)};
   service.releaseHeldDeviceAction();
   ASSERT_FALSE(connectResult);
   EXPECT_EQ(connectResult.error().kind, dmn::Dmn_DbusErrorKind::Timeout);
@@ -3758,9 +3757,9 @@ TEST(DmnBluezClient, DisconnectHonorsFiniteMethodTimeout) {
   ASSERT_TRUE(client.snapshot());
 
   service.holdNextDeviceAction();
-  const auto disconnectResult =
-      client.disconnectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms);
-  const auto disconnectHeld = service.waitForHeldDeviceAction(1s);
+  const auto disconnectResult{
+      client.disconnectDevice("AA:BB:CC:DD:EE:FF", std::nullopt, 50ms)};
+  const auto disconnectHeld{service.waitForHeldDeviceAction(1s)};
   service.releaseHeldDeviceAction();
   ASSERT_TRUE(disconnectHeld);
   ASSERT_FALSE(disconnectResult);

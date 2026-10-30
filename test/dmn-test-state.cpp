@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(s1.isFinalized());
 
   dmn::Dmn_State s2{"default2"};
-  int s2_count = 0;
+  int s2_count{0};
   s2.setStateFnc([&s2_count](dmn::Dmn_State &s) {
     ++s2_count;
     s.setEnd();
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
   EXPECT_THROW(s2.setNext(-1), std::out_of_range);
   EXPECT_THROW(s2.setNext(3), std::out_of_range);
 
-  int s3_count = 0;
+  int s3_count{0};
   dmn::Dmn_State s3{"count up to 3"};
   EXPECT_TRUE(!s3.isInitialized());
   EXPECT_TRUE(!s3.isFinalized());
@@ -262,8 +262,8 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(s3.isFinalized());
   EXPECT_TRUE(3 == s3_count);
 
-  int s4_state_count = 0;
-  int s4_count = 0;
+  int s4_state_count{0};
+  int s4_count{0};
   dmn::Dmn_State s4{"two states: step to 4 (by 1), step to 10 (by 2)"};
   EXPECT_TRUE(!s4.isInitialized());
   EXPECT_TRUE(!s4.isFinalized());

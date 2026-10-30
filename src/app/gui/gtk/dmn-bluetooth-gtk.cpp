@@ -51,12 +51,12 @@ namespace {
 
 using dmn::gui::Dmn_JsonValue;
 
-constexpr auto kApplicationId = DMN_BLUETOOTH_GTK_APP_ID;
-constexpr auto kSettingsSchemaId = "com.cheebinhoh.DmnBluetooth";
-constexpr auto kPollInterval = std::chrono::milliseconds{200};
-constexpr auto kScanRetryInterval = std::chrono::seconds{10};
-constexpr std::size_t kFeedLimit = 1000;
-constexpr std::size_t kFeedVisibleLimit = 200;
+constexpr auto kApplicationId{DMN_BLUETOOTH_GTK_APP_ID};
+constexpr auto kSettingsSchemaId{"com.cheebinhoh.DmnBluetooth"};
+constexpr auto kPollInterval{std::chrono::milliseconds{200}};
+constexpr auto kScanRetryInterval{std::chrono::seconds{10}};
+constexpr std::size_t kFeedLimit{1000};
+constexpr std::size_t kFeedVisibleLimit{200};
 
 enum class KindFilter { kAll, kNotifications, kProblems };
 
@@ -210,7 +210,7 @@ const char *const kCategoryNames[] = {"Other",
                                       "Business and finance",
                                       "Location",
                                       "Entertainment"};
-constexpr int kCategoryCount = 12;
+constexpr int kCategoryCount{12};
 
 auto categoryName(const int category) -> std::string {
   return category >= 0 && category < kCategoryCount ? kCategoryNames[category]
@@ -230,14 +230,14 @@ auto lower(std::string text) -> std::string {
 //------------------------------------------------------------------------
 
 auto command(const char *type) -> Dmn_JsonValue {
-  auto json = Dmn_JsonValue::object();
+  auto json{Dmn_JsonValue::object()};
   json.set("type", type);
 
   return json;
 }
 
 auto deviceCommand(const char *type, const Device &device) -> Dmn_JsonValue {
-  auto json = command(type);
+  auto json{command(type)};
   json.set("adapter", device.m_adapter);
   json.set("device", device.m_address);
 
@@ -301,14 +301,14 @@ auto openSettings() -> GSettings * {
 }
 
 auto readIdentities(GSettings *settings, const char *key) -> Dmn_JsonValue {
-  auto list = Dmn_JsonValue::array();
+  auto list{Dmn_JsonValue::array()};
   auto *value = g_settings_get_value(settings, key);
   GVariantIter iterator;
   const char *adapter = nullptr;
   const char *device = nullptr;
   g_variant_iter_init(&iterator, value);
   while (g_variant_iter_next(&iterator, "(&s&s)", &adapter, &device)) {
-    auto identity = Dmn_JsonValue::object();
+    auto identity{Dmn_JsonValue::object()};
     identity.set("adapter", adapter);
     identity.set("device", device);
     list.push(std::move(identity));
@@ -340,14 +340,14 @@ void writeIdentities(GSettings *settings, const char *key,
 //------------------------------------------------------------------------
 
 auto alertIdentity(const std::string &key) -> dmn::gui::Dmn_DeviceIdentity {
-  const auto slash = key.find('/');
+  const auto slash{key.find('/')};
 
   return {key.substr(0, slash), key.substr(slash + 1)};
 }
 
 void withdrawAlert(AppState *state, const std::string &key) {
   if (state->m_alert_counts.erase(key) != 0) {
-    const auto alert = dmn::gui::makeDesktopAlert(alertIdentity(key), 1);
+    const auto alert{dmn::gui::makeDesktopAlert(alertIdentity(key), 1)};
     g_application_withdraw_notification(G_APPLICATION(state->m_app),
                                         alert.m_id.c_str());
   }
@@ -356,7 +356,7 @@ void withdrawAlert(AppState *state, const std::string &key) {
 void withdrawAllAlerts(AppState *state) {
   for (const auto &[key, count] : state->m_alert_counts) {
     (void)count;
-    const auto alert = dmn::gui::makeDesktopAlert(alertIdentity(key), 1);
+    const auto alert{dmn::gui::makeDesktopAlert(alertIdentity(key), 1)};
     g_application_withdraw_notification(G_APPLICATION(state->m_app),
                                         alert.m_id.c_str());
   }
@@ -365,9 +365,9 @@ void withdrawAllAlerts(AppState *state) {
 }
 
 void sendAlert(AppState *state, const Event &event) {
-  const auto key = event.key();
-  const auto count = ++state->m_alert_counts[key];
-  const auto alert = dmn::gui::makeDesktopAlert(alertIdentity(key), count);
+  const auto key{event.key()};
+  const auto count{++state->m_alert_counts[key]};
+  const auto alert{dmn::gui::makeDesktopAlert(alertIdentity(key), count)};
   auto *notification = g_notification_new(alert.m_title.c_str());
   g_notification_set_body(notification, alert.m_body.c_str());
   g_notification_set_default_action(notification, "app.open");
@@ -402,21 +402,21 @@ auto makeEvent(const Dmn_JsonValue &json) -> Event {
   event.m_adapter = json.getString("adapter");
   event.m_address = json.getString("device");
   event.m_device_name = json.getString("name");
-  const auto kind = json.getString("kind");
+  const auto kind{json.getString("kind")};
   event.m_is_problem = kind == "error" || kind == "monitor_error";
 
   const auto *notification = json.find("notification");
   if (notification != nullptr && notification->isObject()) {
     event.m_is_notification = true;
-    const auto notificationKind = notification->getString("kind");
-    const auto title = notification->getString("title");
-    const auto app = notification->getString("app_identifier");
+    const auto notificationKind{notification->getString("kind")};
+    const auto title{notification->getString("title")};
+    const auto app{notification->getString("app_identifier")};
     event.m_headline = !title.empty() ? title
                        : !app.empty() ? app
                                       : "Notification";
     std::string text;
     for (const auto *key : {"subtitle", "message"}) {
-      const auto part = notification->getString(key);
+      const auto part{notification->getString(key)};
       if (!part.empty()) {
         text += text.empty() ? part : " — " + part;
       }
@@ -431,14 +431,14 @@ auto makeEvent(const Dmn_JsonValue &json) -> Event {
     event.m_summary = text;
     event.m_search_text = app;
     event.m_category = static_cast<int>(notification->getNumber("category", 0));
-    const auto line = [](const char *name, const std::string &value) {
+    const auto line{[](const char *name, const std::string &value) {
       return std::string{name} + ": " +
              (value.empty() ? "Unavailable" : value) + "\n";
-    };
-    const auto number = [&](const char *key) {
+    }};
+    const auto number{[&](const char *key) {
       return std::to_string(
           static_cast<std::uint64_t>(notification->getNumber(key, 0)));
-    };
+    }};
     const char *eventName = notificationKind == "added"     ? "Added"
                             : notificationKind == "updated" ? "Updated"
                             : notificationKind == "removed"
@@ -497,7 +497,7 @@ auto eventVisible(const AppState *state, const Event &event) -> bool {
     return false;
   }
 
-  const auto needle = lower(state->m_feed_search);
+  const auto needle{lower(state->m_feed_search)};
 
   return needle.empty() ||
          event.m_search_text.find(needle) != std::string::npos;
@@ -505,7 +505,7 @@ auto eventVisible(const AppState *state, const Event &event) -> bool {
 
 void rebuildFeed(AppState *state) {
   clearChildren(state->m_feed_box);
-  std::size_t shown = 0;
+  std::size_t shown{0};
   for (auto it = state->m_events.rbegin();
        it != state->m_events.rend() && shown < kFeedVisibleLimit; ++it) {
     if (!eventVisible(state, *it)) {
@@ -526,8 +526,8 @@ void rebuildFeed(AppState *state) {
       gtk_box_append(GTK_BOX(inner), makeLabel(it->m_summary, nullptr, true));
     }
 
-    const auto caption =
-        it->m_device_name + " · " + formatTime(it->m_received_ms);
+    const auto caption{it->m_device_name + " · " +
+                       formatTime(it->m_received_ms)};
     gtk_box_append(GTK_BOX(inner), makeLabel(caption, "caption"));
     gtk_box_append(GTK_BOX(row), inner);
     if (it->m_is_notification) {
@@ -565,7 +565,7 @@ auto deviceMatches(const AppState *state, const Device &device) -> bool {
     return false;
   }
 
-  const auto needle = lower(state->m_device_search);
+  const auto needle{lower(state->m_device_search)};
   if (needle.empty()) {
     return true;
   }
@@ -607,7 +607,7 @@ auto makeDeviceCard(AppState *state, const Device &device) -> GtkWidget * {
   auto *check = gtk_check_button_new();
   gtk_check_button_set_active(GTK_CHECK_BUTTON(check), device.m_selected);
   connectVoid(check, "toggled", [state, device, check] {
-    auto json = deviceCommand("select", device);
+    auto json{deviceCommand("select", device)};
     json.set("selected", gtk_check_button_get_active(GTK_CHECK_BUTTON(check)));
     sendCommand(state, json);
   });
@@ -621,10 +621,10 @@ auto makeDeviceCard(AppState *state, const Device &device) -> GtkWidget * {
       GTK_BOX(inner),
       makeLabel(device.m_address + " · " + device.m_status, "caption"));
   if (device.m_monitor_state != "idle") {
-    const auto detail =
-        device.m_monitor_detail.empty()
-            ? device.m_monitor_state
-            : device.m_monitor_state + ": " + device.m_monitor_detail;
+    const auto detail{device.m_monitor_detail.empty()
+                          ? device.m_monitor_state
+                          : device.m_monitor_state + ": " +
+                                device.m_monitor_detail};
     gtk_box_append(GTK_BOX(inner),
                    makeLabel("Monitoring " + detail, "caption"));
   }
@@ -641,7 +641,7 @@ auto makeDeviceCard(AppState *state, const Device &device) -> GtkWidget * {
         withdrawAlert(state, device.key());
         sendCommand(state, deviceCommand("disconnect", device));
       }));
-  const bool stop = device.m_can_stop_monitoring;
+  const bool stop{device.m_can_stop_monitoring};
   gtk_box_append(GTK_BOX(actions),
                  makeButton(stop ? "Stop monitoring" : "Start monitoring",
                             stop || device.m_can_start_monitoring, true,
@@ -650,7 +650,7 @@ auto makeDeviceCard(AppState *state, const Device &device) -> GtkWidget * {
                                 withdrawAlert(state, device.key());
                               }
 
-                              auto json = deviceCommand("monitor", device);
+                              auto json{deviceCommand("monitor", device)};
                               json.set("enabled", !stop);
                               sendCommand(state, json);
                             }));
@@ -678,9 +678,9 @@ void rebuildDevices(AppState *state) {
     }
   }
 
-  const auto addGroup = [state](const char *heading,
-                                const std::vector<const Device *> &devices,
-                                const char *empty) {
+  const auto addGroup{[state](const char *heading,
+                              const std::vector<const Device *> &devices,
+                              const char *empty) {
     auto *title = makeLabel(heading, "title-4");
     gtk_widget_set_margin_top(title, 6);
     gtk_box_append(GTK_BOX(state->m_device_box), title);
@@ -693,7 +693,7 @@ void rebuildDevices(AppState *state) {
       gtk_box_append(GTK_BOX(state->m_device_box),
                      makeDeviceCard(state, *device));
     }
-  };
+  }};
 
   addGroup("Previous selected devices", previous,
            "No saved devices yet. Select a device and save to keep it here.");
@@ -735,14 +735,14 @@ auto parseDevices(const Dmn_JsonValue *devices) -> std::vector<Device> {
 }
 
 void updateSortButtons(AppState *state) {
-  const auto label = [state](const char *name, const char *column) {
+  const auto label{[state](const char *name, const char *column) {
     std::string text{name};
     if (state->m_sort_column == column) {
       text += state->m_sort_ascending ? " ▲" : " ▼";
     }
 
     return text;
-  };
+  }};
 
   gtk_button_set_label(GTK_BUTTON(state->m_name_sort_button),
                        label("Name", "name").c_str());
@@ -753,14 +753,14 @@ void updateSortButtons(AppState *state) {
 // The app scans for its whole lifetime: request it whenever the engine
 // reports it idle, throttled so a failing adapter is not hammered.
 void ensureScanning(AppState *state) {
-  const auto now = std::chrono::steady_clock::now();
-  const bool due = !state->m_scan_requested ||
-                   now - state->m_last_scan_request >= kScanRetryInterval;
+  const auto now{std::chrono::steady_clock::now()};
+  const bool due{!state->m_scan_requested ||
+                 now - state->m_last_scan_request >= kScanRetryInterval};
   if (due && state->m_ready && state->m_adapters_known && !state->m_scanning &&
       !state->m_busy) {
     state->m_scan_requested = true;
     state->m_last_scan_request = now;
-    auto json = command("scan");
+    auto json{command("scan")};
     json.set("enabled", true);
     sendCommand(state, json);
   }
@@ -785,9 +785,9 @@ void handleState(AppState *state, const Dmn_JsonValue &message) {
 
   state->m_devices = parseDevices(message.find("devices"));
   const auto *devices = message.find("devices");
-  const auto signature = (devices != nullptr ? devices->dump() : "") +
-                         (state->m_unsaved ? "u" : "-") + state->m_sort_column +
-                         (state->m_sort_ascending ? "a" : "d");
+  const auto signature{(devices != nullptr ? devices->dump() : "") +
+                       (state->m_unsaved ? "u" : "-") + state->m_sort_column +
+                       (state->m_sort_ascending ? "a" : "d")};
   if (signature != state->m_devices_signature) {
     state->m_devices_signature = signature;
     rebuildDevices(state);
@@ -798,10 +798,10 @@ void handleState(AppState *state, const Dmn_JsonValue &message) {
 }
 
 void handleEvent(AppState *state, const Dmn_JsonValue &message) {
-  auto event = makeEvent(message);
-  const bool addedNotification =
+  auto event{makeEvent(message)};
+  const bool addedNotification{
       event.m_is_notification &&
-      message.find("notification")->getString("kind") == "added";
+      message.find("notification")->getString("kind") == "added"};
   state->m_events.push_back(event);
   if (state->m_events.size() > kFeedLimit) {
     state->m_events.pop_front();
@@ -815,7 +815,7 @@ void handleEvent(AppState *state, const Dmn_JsonValue &message) {
 }
 
 void handleMessage(AppState *state, const std::string &text) {
-  auto message = Dmn_JsonValue::parse(text);
+  auto message{Dmn_JsonValue::parse(text)};
   if (!message) {
     state->m_notice = "Bad engine message.";
     setStatusText(state);
@@ -823,9 +823,9 @@ void handleMessage(AppState *state, const std::string &text) {
     return;
   }
 
-  const auto type = message->getString("type");
+  const auto type{message->getString("type")};
   if (type == "ready") {
-    const int protocol = static_cast<int>(message->getNumber("protocol", 0));
+    const int protocol{static_cast<int>(message->getNumber("protocol", 0))};
     state->m_ready = protocol == dmn::gui::kEngineProtocolVersion;
     if (!state->m_ready) {
       state->m_notice = "The Bluetooth engine uses protocol " +
@@ -860,7 +860,7 @@ void startReader(AppState *state) {
   state->m_reader_started = true;
   state->m_reader.exec([state] {
     while (!state->m_stop_reader.load(std::memory_order_acquire)) {
-      auto text = state->m_engine->nextMessage(kPollInterval);
+      auto text{state->m_engine->nextMessage(kPollInterval)};
       if (!text) {
         continue;
       }
@@ -1046,9 +1046,9 @@ auto makeVerticalBox(const int spacing) -> GtkWidget * {
 }
 
 void sortBy(AppState *state, const char *column) {
-  const bool ascending =
-      state->m_sort_column == column ? !state->m_sort_ascending : true;
-  auto json = command("sort");
+  const bool ascending{state->m_sort_column == column ? !state->m_sort_ascending
+                                                      : true};
+  auto json{command("sort")};
   json.set("column", column);
   json.set("ascending", ascending);
   sendCommand(state, json);
@@ -1278,7 +1278,7 @@ void loadPreferences(AppState *state) {
 void sendStartupCommands(AppState *state) {
   sendCommand(state, command("hello"));
 
-  auto configure = command("configure");
+  auto configure{command("configure")};
   if (state->m_settings != nullptr && !state->m_demo) {
     configure.set("saved",
                   readIdentities(state->m_settings, "selected-devices"));
@@ -1416,8 +1416,8 @@ void shutdownApplication(GApplication *app, gpointer) {
 } // namespace
 
 auto main(int argc, char **argv) -> int {
-  bool demo = false;
-  int kept = 1;
+  bool demo{false};
+  int kept{1};
   for (int index = 1; index < argc; ++index) {
     if (std::strcmp(argv[index], "--version") == 0) {
       g_print("%s\n", DMN_VERSION);
@@ -1462,7 +1462,7 @@ auto main(int argc, char **argv) -> int {
 
   g_signal_connect(app, "activate", G_CALLBACK(activate), nullptr);
   g_signal_connect(app, "shutdown", G_CALLBACK(shutdownApplication), nullptr);
-  const int result = g_application_run(G_APPLICATION(app), argc, argv);
+  const int result{g_application_run(G_APPLICATION(app), argc, argv)};
   g_object_unref(app);
 
   return result;

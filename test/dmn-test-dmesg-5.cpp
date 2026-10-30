@@ -32,23 +32,23 @@ int main(int argc, char *argv[]) {
     std::mutex callback_mutex;
     std::condition_variable callback_cv;
     int callback_count{0};
-    auto dmesg_handler =
+    auto dmesg_handler{
         dmesg.openHandler("handler", subscribed_topic, nullptr,
-                          [&callback_mutex, &callback_cv, &callback_count](
-                              const dmn::DMesgPb &msg) mutable -> void {
+                          [&callback_mutex, &callback_cv,
+                           &callback_count](const dmn::DMesgPb &msg) -> void {
                             EXPECT_TRUE("counter sync 1" == msg.topic());
                             {
                               std::lock_guard lock{callback_mutex};
                               callback_count++;
                             }
                             callback_cv.notify_one();
-                          });
+                          })};
     EXPECT_TRUE(dmesg_handler);
 
-    auto dmesg_write_handler1 = dmesg.openHandler("writeHandler", topics[0]);
+    auto dmesg_write_handler1{dmesg.openHandler("writeHandler", topics[0])};
     EXPECT_TRUE(dmesg_write_handler1);
 
-    auto dmesg_write_handler2 = dmesg.openHandler("writeHandler", topics[1]);
+    auto dmesg_write_handler2{dmesg.openHandler("writeHandler", topics[1])};
     EXPECT_TRUE(dmesg_write_handler2);
 
     for (int n = 0; n < 6; n++) {
@@ -67,9 +67,10 @@ int main(int argc, char *argv[]) {
     }
 
     std::unique_lock lock{callback_mutex};
-    auto callbacks_completed =
-        callback_cv.wait_for(lock, std::chrono::seconds(30),
-                             [&callback_count] { return callback_count >= 3; });
+    auto callbacks_completed{
+        callback_cv.wait_for(lock, std::chrono::seconds(30), [&callback_count] {
+          return callback_count >= 3;
+        })};
     EXPECT_TRUE(callbacks_completed);
     lock.unlock();
 

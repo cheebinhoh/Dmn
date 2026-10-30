@@ -108,11 +108,11 @@ public:
    * @throws std::runtime_error if the timer pipe has been shut down.
    */
   void start(const T &reltime, std::function<void()> fn = {}) {
-    const auto interval = toClockDuration(reltime);
-    auto generation = std::make_shared<Generation>();
+    const auto interval{toClockDuration(reltime)};
+    auto generation{std::make_shared<Generation>()};
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    const auto deadline = nextDeadline(interval);
+    const auto deadline{nextDeadline(interval)};
 
     m_pipe->writeAt(deadline, Tick{generation});
 
@@ -158,8 +158,8 @@ public:
 
     rethrowFailureLocked();
 
-    auto generation = std::make_shared<Generation>();
-    const auto deadline = nextDeadline(m_interval);
+    auto generation{std::make_shared<Generation>()};
+    const auto deadline{nextDeadline(m_interval)};
     m_pipe->writeAt(deadline, Tick{generation});
 
     m_generation = std::move(generation);
@@ -194,14 +194,14 @@ private:
 
     const std::chrono::duration<long double, Clock::period> clock_ticks{
         reltime};
-    const long double rounded_ticks = std::ceil(clock_ticks.count());
+    const long double rounded_ticks{std::ceil(clock_ticks.count())};
     static_assert(std::numeric_limits<Rep>::radix == 2,
                   "steady_clock duration representation must be binary");
-    const auto max_exponent = std::numeric_limits<long double>::max_exponent;
-    const long double exclusive_max =
+    const auto max_exponent{std::numeric_limits<long double>::max_exponent};
+    const long double exclusive_max{
         std::numeric_limits<Rep>::digits < max_exponent
             ? std::ldexp(1.0L, std::numeric_limits<Rep>::digits)
-            : std::numeric_limits<long double>::infinity();
+            : std::numeric_limits<long double>::infinity()};
 
     if (!std::isfinite(rounded_ticks) || rounded_ticks >= exclusive_max) {
       throw std::overflow_error(
@@ -213,9 +213,9 @@ private:
 
   static auto nextDeadline(Clock::duration interval) -> Clock::time_point {
     using Rep = Clock::duration::rep;
-    const auto now = Clock::now();
-    const auto now_ticks = now.time_since_epoch().count();
-    const auto interval_ticks = interval.count();
+    const auto now{Clock::now()};
+    const auto now_ticks{now.time_since_epoch().count()};
+    const auto interval_ticks{interval.count()};
 
     if (now_ticks > 0 &&
         interval_ticks > std::numeric_limits<Rep>::max() - now_ticks) {
@@ -256,7 +256,7 @@ private:
         return;
       }
 
-      const auto deadline = nextDeadline(m_interval);
+      const auto deadline{nextDeadline(m_interval)};
       try {
         // Keep this injection point on recurring writes, not initial
         // scheduling.

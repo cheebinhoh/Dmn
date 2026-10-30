@@ -14,11 +14,11 @@
 namespace dmn::gui {
 namespace {
 
-constexpr auto kInitialRetryDelay = std::chrono::seconds{5};
-constexpr auto kMaximumRetryDelay = std::chrono::seconds{60};
-constexpr unsigned int kRetryJitterMinimumPercent = 80;
-constexpr unsigned int kRetryJitterMaximumPercent = 100;
-constexpr unsigned int kMaximumBackoffAttempt = 5;
+constexpr auto kInitialRetryDelay{std::chrono::seconds{5}};
+constexpr auto kMaximumRetryDelay{std::chrono::seconds{60}};
+constexpr unsigned int kRetryJitterMinimumPercent{80};
+constexpr unsigned int kRetryJitterMaximumPercent{100};
+constexpr unsigned int kMaximumBackoffAttempt{5};
 
 } // namespace
 
@@ -37,8 +37,8 @@ auto Dmn_DeviceMonitorController::reconcile(
       continue;
     }
 
-    const bool connected =
-        device.m_present && device.m_paired && device.m_connected;
+    const bool connected{device.m_present && device.m_paired &&
+                         device.m_connected};
     if (device.m_monitor_active &&
         (!device.m_saved || !device.m_monitoring_requested || !connected ||
          device.m_monitor_restart_required)) {
@@ -79,17 +79,17 @@ auto Dmn_DeviceMonitorController::recordStartFailure(
     ++retryState.m_attempts;
   }
 
-  auto delay = kInitialRetryDelay;
+  auto delay{kInitialRetryDelay};
   for (unsigned int attempt = 1;
        attempt < retryState.m_attempts && delay < kMaximumRetryDelay;
        ++attempt) {
     delay = std::min(delay * 2, kMaximumRetryDelay);
   }
 
-  const auto delayMilliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(delay).count();
-  const auto jitteredDelay = std::chrono::milliseconds{
-      delayMilliseconds * static_cast<std::int64_t>(jitterPercent) / 100};
+  const auto delayMilliseconds{
+      std::chrono::duration_cast<std::chrono::milliseconds>(delay).count()};
+  const auto jitteredDelay{std::chrono::milliseconds{
+      delayMilliseconds * static_cast<std::int64_t>(jitterPercent) / 100}};
   retryState.m_next_attempt = now + jitteredDelay;
 
   return jitteredDelay;
@@ -109,10 +109,10 @@ void Dmn_DeviceMonitorController::resetRetries(
 
 auto Dmn_DeviceMonitorController::retryStateFor(
     const Dmn_DeviceIdentity &identity) -> RetryState & {
-  const auto found = std::find_if(m_retry_states.begin(), m_retry_states.end(),
-                                  [&identity](const auto &retryState) {
-                                    return retryState.m_identity == identity;
-                                  });
+  const auto found{std::find_if(m_retry_states.begin(), m_retry_states.end(),
+                                [&identity](const auto &retryState) {
+                                  return retryState.m_identity == identity;
+                                })};
   if (found != m_retry_states.end()) {
     return *found;
   }

@@ -105,8 +105,8 @@ void usage(std::ostream &out) {
 
 auto parseSeconds(std::string_view text, std::chrono::seconds &value) -> bool {
   unsigned int seconds{};
-  const auto parsed =
-      std::from_chars(text.data(), text.data() + text.size(), seconds);
+  const auto parsed{
+      std::from_chars(text.data(), text.data() + text.size(), seconds)};
   if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() ||
       seconds == 0 || seconds > 600) {
     return false;
@@ -222,7 +222,7 @@ auto appendEscapedCodePoint(std::string &output, std::uint32_t codePoint,
     output += "\\x";
     output += encodeHex(codePoint, 2);
   } else {
-    const auto characterType = u_charType(static_cast<UChar32>(codePoint));
+    const auto characterType{u_charType(static_cast<UChar32>(codePoint))};
     if (characterType == U_CONTROL_CHAR || characterType == U_FORMAT_CHAR ||
         characterType == U_LINE_SEPARATOR ||
         characterType == U_PARAGRAPH_SEPARATOR) {
@@ -241,7 +241,7 @@ auto escapedText(std::string_view value) -> std::string {
   std::string output;
   std::size_t index{};
   while (index < value.size()) {
-    const auto first = static_cast<unsigned char>(value[index]);
+    const auto first{static_cast<unsigned char>(value[index])};
     std::size_t width{1};
     std::uint32_t codePoint{first};
     bool valid{true};
@@ -263,8 +263,8 @@ auto escapedText(std::string_view value) -> std::string {
         valid = false;
       } else {
         for (std::size_t offset = 1; offset < width; ++offset) {
-          const auto continuation =
-              static_cast<unsigned char>(value[index + offset]);
+          const auto continuation{
+              static_cast<unsigned char>(value[index + offset])};
           if ((continuation & 0xc0) != 0x80) {
             valid = false;
             break;
@@ -375,12 +375,12 @@ auto printNotification(const Notification &notification) -> bool {
             << " flags=0x" << encodeHex(notification.flags, 2) << '\n';
   if (notification.event != "removed" &&
       notification.event != "attributes_unavailable") {
-    const auto printField = [](std::string_view label,
-                               const std::optional<std::string> &value) {
-      if (value && !value->empty()) {
-        std::cout << label << ": " << escapedText(*value) << '\n';
-      }
-    };
+    const auto printField{
+        [](std::string_view label, const std::optional<std::string> &value) {
+          if (value && !value->empty()) {
+            std::cout << label << ": " << escapedText(*value) << '\n';
+          }
+        }};
     printField("app_identifier", notification.appIdentifier);
     printField("title", notification.title);
     printField("subtitle", notification.subtitle);
@@ -521,7 +521,7 @@ auto startFailure(std::string_view code) -> StartFailure {
 }
 
 auto runMonitor(const Options &options) -> int {
-  auto runtime = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto runtime{dmn::Dmn_Runtime_Manager<>::createInstance()};
   std::atomic_bool signalSeen{};
   runtime->registerSignalHandlerHook(SIGINT,
                                      [&signalSeen](int) { signalSeen = true; });
@@ -566,8 +566,8 @@ auto runMonitor(const Options &options) -> int {
   std::atomic_bool mainLoopActive{};
   std::atomic<std::size_t> queuedOutputEvents{};
 #if defined(DMN_BLUETOOTH_TEST_BACKPRESSURE_GATE)
-  const bool testBackpressureGate =
-      std::getenv("DMN_BLUETOOTH_TEST_ENABLE_BACKPRESSURE_GATE") != nullptr;
+  const bool testBackpressureGate{
+      std::getenv("DMN_BLUETOOTH_TEST_ENABLE_BACKPRESSURE_GATE") != nullptr};
   std::mutex testOutputMutex;
   std::condition_variable testOutputCondition;
   bool releaseTestOutput{};
@@ -600,9 +600,9 @@ auto runMonitor(const Options &options) -> int {
 
   // Engine events arrive on the reader thread; the bounded queue and the
   // runtime job hop keep printing off that thread and detect a stalled stdout.
-  const auto handleEvent = [&](const dmn::gui::Dmn_JsonValue &message) {
-    const auto kind = message.getString("kind");
-    const auto count = queuedOutputEvents.fetch_add(1) + 1;
+  const auto handleEvent{[&](const dmn::gui::Dmn_JsonValue &message) {
+    const auto kind{message.getString("kind")};
+    const auto count{queuedOutputEvents.fetch_add(1) + 1};
     if (count > kMaximumQueuedOutputEvents) {
       queuedOutputEvents.fetch_sub(1);
       failure.set(ExitStatus::RuntimeFailure,
@@ -637,8 +637,8 @@ auto runMonitor(const Options &options) -> int {
       }
     }
 
-    const auto errorText = message.getString("error");
-    const auto fatal = message.getBool("terminal", false);
+    const auto errorText{message.getString("error")};
+    const auto fatal{message.getBool("terminal", false)};
     try {
       runtime->addJob([&, notification = std::move(notification), kind,
                        errorText, fatal](const dmn::Dmn_Runtime_Job &) {
@@ -680,10 +680,10 @@ auto runMonitor(const Options &options) -> int {
         runtime->exitMainLoop();
       }
     }
-  };
+  }};
 
-  const auto handleDirect = [&](const dmn::gui::Dmn_JsonValue &message) {
-    const auto state = message.getString("state");
+  const auto handleDirect{[&](const dmn::gui::Dmn_JsonValue &message) {
+    const auto state{message.getString("state")};
     if (state == "progress") {
       std::cerr << progressMessage(message.getString("stage"), options.device)
                 << '\n';
@@ -708,23 +708,23 @@ auto runMonitor(const Options &options) -> int {
     }
 
     direct.changed.notify_all();
-  };
+  }};
 
   // nextMessage() returns nothing on timeout, so the reader runs until the
   // engine's final "bye" message.
   std::thread reader{[&] {
     for (;;) {
-      const auto text = engine.nextMessage(100ms);
+      const auto text{engine.nextMessage(100ms)};
       if (!text) {
         continue;
       }
 
-      const auto message = dmn::gui::Dmn_JsonValue::parse(*text);
+      const auto message{dmn::gui::Dmn_JsonValue::parse(*text)};
       if (!message || !message->isObject()) {
         continue;
       }
 
-      const auto type = message->getString("type");
+      const auto type{message->getString("type")};
       if (type == "event") {
         handleEvent(*message);
       } else if (type == "direct_monitor") {
@@ -735,20 +735,20 @@ auto runMonitor(const Options &options) -> int {
     }
   }};
 
-  const auto stopMonitor = [&]() -> std::string {
+  const auto stopMonitor{[&]() -> std::string {
     (void)engine.send(R"({"type":"stop_direct"})");
     std::unique_lock lock{direct.mutex};
     direct.changed.wait(lock, [&] { return direct.stopped; });
 
     return direct.stopError;
-  };
+  }};
 
-  const auto finish = [&] {
+  const auto finish{[&] {
     (void)engine.send(R"({"type":"shutdown"})");
     reader.join();
-  };
+  }};
 
-  auto command = dmn::gui::Dmn_JsonValue::object();
+  auto command{dmn::gui::Dmn_JsonValue::object()};
   command.set("type", "monitor_direct");
   command.set("device", options.device);
   if (options.adapter) {
@@ -775,14 +775,14 @@ auto runMonitor(const Options &options) -> int {
   }
 
   if (direct.phase == DirectState::Phase::Failed) {
-    const auto interrupted =
-        direct.cancelled && signalSeen.load(std::memory_order_acquire);
+    const auto interrupted{direct.cancelled &&
+                           signalSeen.load(std::memory_order_acquire)};
     finish();
     if (interrupted) {
       return exitCode(ExitStatus::Success);
     }
 
-    const auto reported = startFailure(direct.code);
+    const auto reported{startFailure(direct.code)};
     std::cerr << reported.prefix << ": " << escapedText(direct.detail);
     if (!direct.remoteName.empty()) {
       std::cerr << " (" << escapedText(direct.remoteName) << ")";
@@ -793,8 +793,8 @@ auto runMonitor(const Options &options) -> int {
     return exitCode(reported.status);
   }
 
-  auto stopBeforeMainLoop = [&] {
-    const auto stopError = stopMonitor();
+  auto stopBeforeMainLoop{[&] {
+    const auto stopError{stopMonitor()};
     finish();
     if (!stopError.empty()) {
       std::cerr << "ANCS subscription cleanup failed: "
@@ -804,11 +804,11 @@ auto runMonitor(const Options &options) -> int {
     }
 
     return exitCode(ExitStatus::Success);
-  };
+  }};
 
   sigset_t pendingSignals{};
   if (sigpending(&pendingSignals) != 0) {
-    const auto error = errno;
+    const auto error{errno};
     std::cerr << "unable to check for pending shutdown signals: "
               << std::strerror(error) << '\n';
     (void)stopBeforeMainLoop();
@@ -816,10 +816,10 @@ auto runMonitor(const Options &options) -> int {
     return exitCode(ExitStatus::RuntimeFailure);
   }
 
-  const auto interruptPending = sigismember(&pendingSignals, SIGINT);
-  const auto terminatePending = sigismember(&pendingSignals, SIGTERM);
+  const auto interruptPending{sigismember(&pendingSignals, SIGINT)};
+  const auto terminatePending{sigismember(&pendingSignals, SIGTERM)};
   if (interruptPending < 0 || terminatePending < 0) {
-    const auto error = errno;
+    const auto error{errno};
     std::cerr << "unable to inspect pending shutdown signals: "
               << std::strerror(error) << '\n';
     (void)stopBeforeMainLoop();
@@ -842,7 +842,7 @@ auto runMonitor(const Options &options) -> int {
 
   mainLoopActive = false;
 
-  const auto stopError = stopMonitor();
+  const auto stopError{stopMonitor()};
   if (!stopError.empty()) {
     failure.set(ExitStatus::RuntimeFailure,
                 "ANCS subscription cleanup failed: " + stopError);
@@ -856,8 +856,8 @@ auto runMonitor(const Options &options) -> int {
     std::cerr << "monitor failed: " << escapedText(currentDiagnostic) << '\n';
   }
 
-  auto drainOutputJobs = [&] {
-    auto barrierComplete = std::make_shared<std::atomic_bool>();
+  auto drainOutputJobs{[&] {
+    auto barrierComplete{std::make_shared<std::atomic_bool>()};
     runtime->addJob([runtime, barrierComplete](const dmn::Dmn_Runtime_Job &) {
       *barrierComplete = true;
       runtime->exitMainLoop();
@@ -868,7 +868,7 @@ auto runMonitor(const Options &options) -> int {
       runtime->enterMainLoop();
       mainLoopActive = false;
     }
-  };
+  }};
 
   try {
     drainOutputJobs();
@@ -890,7 +890,7 @@ auto main(int argc, char **argv) -> int {
     return exitCode(ExitStatus::Success);
   }
 
-  const auto applicationStartedAt = std::chrono::system_clock::now();
+  const auto applicationStartedAt{std::chrono::system_clock::now()};
   Options options;
   options.applicationStartedAt = applicationStartedAt;
   if (!parseOptions(argc, argv, options)) {

@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
     write_configs[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
     write_configs[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-    std::shared_ptr<dmn::Dmn_Kafka> producer = std::make_unique<dmn::Dmn_Kafka>(
-        dmn::Dmn_Kafka::Role::kProducer, write_configs);
+    std::shared_ptr<dmn::Dmn_Kafka> producer{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kProducer, write_configs)};
 
     // reader for DMesgNet
     dmn::Dmn_Kafka::ConfigType read_configs{};
@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
     read_configs["auto.offset.reset"] = "latest";
     read_configs[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-    std::shared_ptr<dmn::Dmn_Kafka> consumer = std::make_unique<dmn::Dmn_Kafka>(
-        dmn::Dmn_Kafka::Role::kConsumer, read_configs);
+    std::shared_ptr<dmn::Dmn_Kafka> consumer{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kConsumer, read_configs)};
 
     const dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer),
                                       std::move(producer)};
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     // consume prior messages from topic.
     dmn::DMesgPb dmesgPbRead{};
     while (true) {
-      auto dataRead = consumer_other.read();
+      auto dataRead{consumer_other.read()};
       if (dataRead) {
         dmesgPbRead.ParseFromString(*dataRead);
 

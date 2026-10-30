@@ -270,9 +270,9 @@ public:
       return {};
     }
 
-    auto stop = std::move(m_stop);
+    auto stop{std::move(m_stop)};
     try {
-      auto result = stop();
+      auto result{stop()};
       if (!result) {
         m_stop = std::move(stop);
       }

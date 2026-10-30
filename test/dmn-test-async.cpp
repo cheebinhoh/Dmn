@@ -42,13 +42,13 @@ static void timer_handler([[maybe_unused]] int sig) { EXPECT_TRUE(false); }
 
 TEST(DmnAsync, DelayedTaskRunsNoEarlierThanDeadline) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kDelay = std::chrono::milliseconds{250};
+  constexpr auto kDelay{std::chrono::milliseconds{250}};
   dmn::Dmn_Async async{"delayed-deadline"};
   Clock::time_point executed_at{};
-  const auto earliest_execution = Clock::now() + kDelay;
+  const auto earliest_execution{Clock::now() + kDelay};
 
-  auto handle = async.addExecTaskAfterWithWait(
-      kDelay, [&executed_at]() { executed_at = Clock::now(); });
+  auto handle{async.addExecTaskAfterWithWait(
+      kDelay, [&executed_at]() { executed_at = Clock::now(); })};
   handle->wait();
 
   EXPECT_GE(executed_at, earliest_execution);
@@ -57,24 +57,24 @@ TEST(DmnAsync, DelayedTaskRunsNoEarlierThanDeadline) {
 TEST(DmnAsync, FutureTasksReturnValuesAndPropagateExceptions) {
   dmn::Dmn_Async async{"future-results"};
 
-  auto result = async.addExecTaskFuture(
-      [](int left, int right) { return left + right; }, 20, 22);
+  auto result{async.addExecTaskFuture(
+      [](int left, int right) { return left + right; }, 20, 22)};
   EXPECT_EQ(result.get(), 42);
 
   std::string argument{"owned"};
-  auto ownedArgument = async.addExecTaskFuture(
-      [](std::string value) { return value; }, argument);
+  auto ownedArgument{async.addExecTaskFuture(
+      [](std::string value) { return value; }, argument)};
   argument = "changed";
   EXPECT_EQ(ownedArgument.get(), "owned");
 
   bool voidTaskRan{};
-  auto voidResult =
-      async.addExecTaskFuture([&voidTaskRan]() { voidTaskRan = true; });
+  auto voidResult{
+      async.addExecTaskFuture([&voidTaskRan]() { voidTaskRan = true; })};
   EXPECT_NO_THROW(voidResult.get());
   EXPECT_TRUE(voidTaskRan);
 
-  auto failure = async.addExecTaskFuture(
-      []() -> int { throw std::runtime_error{"future task failure"}; });
+  auto failure{async.addExecTaskFuture(
+      []() -> int { throw std::runtime_error{"future task failure"}; })};
   EXPECT_THROW(
       {
         try {
@@ -87,14 +87,14 @@ TEST(DmnAsync, FutureTasksReturnValuesAndPropagateExceptions) {
       std::runtime_error);
 
   std::vector<int> executionOrder;
-  auto first = async.addExecTaskFuture([&executionOrder]() {
+  auto first{async.addExecTaskFuture([&executionOrder]() {
     executionOrder.push_back(1);
     return 1;
-  });
-  auto second = async.addExecTaskFuture([&executionOrder]() {
+  })};
+  auto second{async.addExecTaskFuture([&executionOrder]() {
     executionOrder.push_back(2);
     return 2;
-  });
+  })};
   EXPECT_EQ(first.get(), 1);
   EXPECT_EQ(second.get(), 2);
   EXPECT_EQ(executionOrder, (std::vector<int>{1, 2}));
@@ -104,15 +104,15 @@ TEST(DmnAsync, FutureTasksReturnValuesAndPropagateExceptions) {
 
 TEST(DmnAsync, DelayedFutureRespectsDeadlineAndValidatesDuration) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kDelay = std::chrono::milliseconds{30};
+  constexpr auto kDelay{std::chrono::milliseconds{30}};
   dmn::Dmn_Async async{"delayed-future"};
-  const auto earliestExecution = Clock::now() + kDelay;
+  const auto earliestExecution{Clock::now() + kDelay};
   Clock::time_point executedAt{};
 
-  auto result = async.addExecTaskAfterFuture(kDelay, [&executedAt]() {
+  auto result{async.addExecTaskAfterFuture(kDelay, [&executedAt]() {
     executedAt = Clock::now();
     return 17;
-  });
+  })};
   EXPECT_EQ(result.get(), 17);
   EXPECT_GE(executedAt, earliestExecution);
 
@@ -122,10 +122,10 @@ TEST(DmnAsync, DelayedFutureRespectsDeadlineAndValidatesDuration) {
                 .get(),
             21);
 
-  auto failure =
+  auto failure{
       async.addExecTaskAfterFuture(std::chrono::milliseconds{1}, []() -> int {
         throw std::runtime_error{"delayed future failure"};
-      });
+      })};
   EXPECT_THROW(
       {
         try {
@@ -142,8 +142,8 @@ TEST(DmnAsync, DelayedFutureRespectsDeadlineAndValidatesDuration) {
       std::invalid_argument);
 
   using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
-  const auto firstUnrepresentableTick =
-      std::ldexp(1.0L, std::numeric_limits<Clock::duration::rep>::digits);
+  const auto firstUnrepresentableTick{
+      std::ldexp(1.0L, std::numeric_limits<Clock::duration::rep>::digits)};
   EXPECT_THROW(async.addExecTaskAfterFuture(
                    ClockTickDuration{firstUnrepresentableTick}, []() {}),
                std::overflow_error);
@@ -152,10 +152,10 @@ TEST(DmnAsync, DelayedFutureRespectsDeadlineAndValidatesDuration) {
   if (std::numeric_limits<long double>::digits >=
           std::numeric_limits<ClockRep>::digits &&
       Clock::now().time_since_epoch().count() > 0) {
-    const auto exclusiveMax =
-        std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
-    const auto nowTicks =
-        static_cast<long double>(Clock::now().time_since_epoch().count());
+    const auto exclusiveMax{
+        std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)};
+    const auto nowTicks{
+        static_cast<long double>(Clock::now().time_since_epoch().count())};
     const ClockTickDuration overflowingDeadline{exclusiveMax - nowTicks + 1.0L};
     EXPECT_THROW(async.addExecTaskAfterFuture(overflowingDeadline, []() {}),
                  std::overflow_error);
@@ -166,8 +166,8 @@ TEST(DmnAsync, DiscardingFutureDoesNotCancelAcceptedTask) {
   dmn::Dmn_Async async{"discarded-future"};
   std::promise<void> taskStarted;
   std::promise<void> releaseTask;
-  auto startedSignal = taskStarted.get_future();
-  auto releaseSignal = releaseTask.get_future().share();
+  auto startedSignal{taskStarted.get_future()};
+  auto releaseSignal{releaseTask.get_future().share()};
   bool submittedTaskRan{};
 
   async.addExecTask([&taskStarted, releaseSignal = std::move(releaseSignal)] {
@@ -177,8 +177,8 @@ TEST(DmnAsync, DiscardingFutureDoesNotCancelAcceptedTask) {
   startedSignal.wait();
 
   {
-    auto abandoned = async.addExecTaskFuture(
-        [&submittedTaskRan]() { submittedTaskRan = true; });
+    auto abandoned{async.addExecTaskFuture(
+        [&submittedTaskRan]() { submittedTaskRan = true; })};
     static_cast<void>(abandoned);
   }
 
@@ -202,12 +202,12 @@ TEST(DmnAsync, AcceptedFutureCompletesWhenAsyncIsDestroyed) {
 
 TEST(DmnAsync, DelayedFutureCannotRunBeforeDeadline) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kDelay = std::chrono::milliseconds{30};
+  constexpr auto kDelay{std::chrono::milliseconds{30}};
   dmn::Dmn_Async async{"delayed-future-deadline"};
   std::promise<void> taskStarted;
   std::promise<void> releaseTask;
-  auto startedSignal = taskStarted.get_future();
-  auto releaseSignal = releaseTask.get_future().share();
+  auto startedSignal{taskStarted.get_future()};
+  auto releaseSignal{releaseTask.get_future().share()};
   Clock::time_point executedAt{};
 
   async.addExecTask([&taskStarted, releaseSignal = std::move(releaseSignal)] {
@@ -216,9 +216,9 @@ TEST(DmnAsync, DelayedFutureCannotRunBeforeDeadline) {
   });
   startedSignal.wait();
 
-  const auto deadline = Clock::now() + kDelay;
-  auto completion = async.addExecTaskAfterFuture(
-      kDelay, [&executedAt]() { executedAt = Clock::now(); });
+  const auto deadline{Clock::now() + kDelay};
+  auto completion{async.addExecTaskAfterFuture(
+      kDelay, [&executedAt]() { executedAt = Clock::now(); })};
   EXPECT_EQ(completion.wait_for(std::chrono::milliseconds{1}),
             std::future_status::timeout);
   std::this_thread::sleep_until(deadline);
@@ -232,7 +232,7 @@ TEST(DmnAsync, DelayedFutureCannotRunBeforeDeadline) {
 
 TEST(DmnAsync, NegativeDelayedDurationsAreRejected) {
   dmn::Dmn_Async async{"negative-delay"};
-  auto callback = []() {};
+  auto callback{[]() {}};
 
   EXPECT_THROW(async.addExecTaskAfter(std::chrono::milliseconds{-1}, callback),
                std::invalid_argument);
@@ -245,8 +245,8 @@ TEST(DmnAsync, UnrepresentableDelayedDurationIsRejectedBeforeEnqueue) {
   using Clock = std::chrono::steady_clock;
   using ClockRep = Clock::duration::rep;
   using ClockTickDuration = std::chrono::duration<long double, Clock::period>;
-  const auto first_unrepresentable_tick =
-      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
+  const auto first_unrepresentable_tick{
+      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)};
   dmn::Dmn_Async async{"overflow-delay"};
   bool callback_run{};
 
@@ -274,10 +274,10 @@ TEST(DmnAsync, DelayedDeadlineOverflowIsRejectedBeforeEnqueue) {
                     "for this platform";
   }
 
-  const auto exclusive_max =
-      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits);
-  const auto now_ticks =
-      static_cast<long double>(Clock::now().time_since_epoch().count());
+  const auto exclusive_max{
+      std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)};
+  const auto now_ticks{
+      static_cast<long double>(Clock::now().time_since_epoch().count())};
   const ClockTickDuration delay{exclusive_max - now_ticks + 1.0L};
   dmn::Dmn_Async async{"overflow-deadline"};
   bool callback_run{};
@@ -290,26 +290,26 @@ TEST(DmnAsync, DelayedDeadlineOverflowIsRejectedBeforeEnqueue) {
 
 TEST(DmnAsync, DelayedTaskDoesNotBusyPollWhileWaiting) {
   using Clock = std::chrono::steady_clock;
-  constexpr auto kDelay = std::chrono::milliseconds{600};
+  constexpr auto kDelay{std::chrono::milliseconds{600}};
   dmn::Dmn_Async async{"delayed-idle-cpu"};
   Clock::time_point executed_at{};
-  const auto earliest_execution = Clock::now() + kDelay;
-  const auto wall_start = Clock::now();
-  const auto cpu_start = std::clock();
-  auto handle = async.addExecTaskAfterWithWait(
-      kDelay, [&executed_at]() { executed_at = Clock::now(); });
+  const auto earliest_execution{Clock::now() + kDelay};
+  const auto wall_start{Clock::now()};
+  const auto cpu_start{std::clock()};
+  auto handle{async.addExecTaskAfterWithWait(
+      kDelay, [&executed_at]() { executed_at = Clock::now(); })};
   handle->wait();
 
-  const auto cpu_end = std::clock();
-  const auto wall_elapsed = Clock::now() - wall_start;
-  const auto wall_seconds = std::chrono::duration<double>(wall_elapsed).count();
+  const auto cpu_end{std::clock()};
+  const auto wall_elapsed{Clock::now() - wall_start};
+  const auto wall_seconds{std::chrono::duration<double>(wall_elapsed).count()};
 
   EXPECT_GE(executed_at, earliest_execution);
   EXPECT_GE(wall_elapsed, kDelay);
   ASSERT_NE(cpu_start, static_cast<std::clock_t>(-1));
   ASSERT_NE(cpu_end, static_cast<std::clock_t>(-1));
-  const auto cpu_seconds = static_cast<double>(cpu_end - cpu_start) /
-                           static_cast<double>(CLOCKS_PER_SEC);
+  const auto cpu_seconds{static_cast<double>(cpu_end - cpu_start) /
+                         static_cast<double>(CLOCKS_PER_SEC)};
   EXPECT_LT(cpu_seconds, wall_seconds / 2.0);
 }
 
@@ -338,10 +338,10 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(static_cast<long long>(cnt) == 200);
 
   dmn::Dmn_Async async{"timer"};
-  int val = 1;
+  int val{1};
   std::chrono::steady_clock::time_point executed_at{};
-  const auto due_time =
-      std::chrono::steady_clock::now() + std::chrono::milliseconds{250};
+  const auto due_time{std::chrono::steady_clock::now() +
+                      std::chrono::milliseconds{250}};
   async.addExecTaskAfter(std::chrono::milliseconds{250}, [&]() -> void {
     val = 2;
     executed_at = std::chrono::steady_clock::now();
@@ -354,10 +354,10 @@ int main(int argc, char *argv[]) {
   bool done{};
   dmn::Dmn_Async asyncWithWait{"async"};
 
-  auto waitHandler = asyncWithWait.addExecTaskWithWait([&done]() -> void {
+  auto waitHandler{asyncWithWait.addExecTaskWithWait([&done]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     done = true;
-  });
+  })};
 
   waitHandler->wait();
   EXPECT_TRUE(done);

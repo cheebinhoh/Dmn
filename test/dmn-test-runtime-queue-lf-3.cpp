@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
   // 2. Define the range [100, 500]
   std::uniform_int_distribution<> distr(100, 500);
 
-  auto inst =
-      dmn::Dmn_Runtime_Manager<dmn::Dmn_BlockingQueue_Lf>::createInstance();
+  auto inst{
+      dmn::Dmn_Runtime_Manager<dmn::Dmn_BlockingQueue_Lf>::createInstance()};
   int count{};
 
   dmn::Dmn_Runtime_Job::TaskFncType timedJob{};
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
               },
               dmn::Dmn_Runtime_Job::Priority::kHigh);
 
-          int random_ms = distr(gen);
+          int random_ms{distr(gen)};
           dmn::Dmn_Proc::yield();
           std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
         }
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
                 }
               });
 
-          int random_ms = distr(gen);
+          int random_ms{distr(gen)};
           dmn::Dmn_Proc::yield();
           std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
         }
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
               },
               dmn::Dmn_Runtime_Job::Priority::kMedium);
 
-          int random_ms = distr(gen);
+          int random_ms{distr(gen)};
           dmn::Dmn_Proc::yield();
           std::this_thread::sleep_for(std::chrono::milliseconds(random_ms));
         }

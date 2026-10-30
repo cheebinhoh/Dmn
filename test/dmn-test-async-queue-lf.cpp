@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
   EXPECT_TRUE(static_cast<long long>(cnt) == 200);
 
   dmn::Dmn_Async<dmn::Dmn_BlockingQueue_Lf> async{"timer"};
-  int val = 1;
+  int val{1};
   async.addExecTaskAfter(std::chrono::seconds(5),
                          [&val]() -> void { val = 2; });
   std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -74,10 +74,10 @@ int main(int argc, char *argv[]) {
   bool done{};
   dmn::Dmn_Async<dmn::Dmn_BlockingQueue_Lf> asyncWithWait{"async"};
 
-  auto waitHandler = asyncWithWait.addExecTaskWithWait([&done]() -> void {
+  auto waitHandler{asyncWithWait.addExecTaskWithWait([&done]() -> void {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     done = true;
-  });
+  })};
 
   waitHandler->wait();
   EXPECT_TRUE(done);

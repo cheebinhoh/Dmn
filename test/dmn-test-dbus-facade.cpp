@@ -48,7 +48,7 @@ auto makeConfig() -> dmn::Dmn_DbusConfig {
 }
 
 TEST(DmnDbusFacadeTest, RejectsInvalidConfigAndExplicitAddress) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.signal_path = "invalid/path";
   EXPECT_THROW((dmn::Dmn_DMesgDbus{"invalid-config", config}),
                std::invalid_argument);
@@ -61,17 +61,17 @@ TEST(DmnDbusFacadeTest, RejectsInvalidConfigAndExplicitAddress) {
 
 TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
   dmn::Dmn_DMesgDbus node{"facade-api", makeConfig()};
-  const auto initialStatus = node.status();
+  const auto initialStatus{node.status()};
   EXPECT_FALSE(initialStatus.input.terminal_error);
   EXPECT_FALSE(initialStatus.output.terminal_error);
   EXPECT_FALSE(node.getTopicLastMessage("facade-topic"));
 
   std::atomic<unsigned int> filterCalls{};
   std::promise<std::string> asyncMessage;
-  auto asyncMessageFuture = asyncMessage.get_future();
+  auto asyncMessageFuture{asyncMessage.get_future()};
   std::promise<dmn::Dmn_DMesgDbus::HandlerEvent> handlerEvent;
-  auto handlerEventFuture = handlerEvent.get_future();
-  auto receiverSpec = dmn::Dmn_DMesgDbus::HandlerSpec{
+  auto handlerEventFuture{handlerEvent.get_future()};
+  auto receiverSpec{dmn::Dmn_DMesgDbus::HandlerSpec{
       "facade-receiver",
       "facade-topic",
       [&filterCalls](const dmn::DMesgPb &) {
@@ -86,12 +86,12 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
         if (event.m_type == dmn::Dmn_DMesgDbus::HandlerEventType::kMessage) {
           handlerEvent.set_value(event);
         }
-      }};
-  auto receiver = node.openHandler(receiverSpec);
+      }}};
+  auto receiver{node.openHandler(receiverSpec)};
   ASSERT_TRUE(receiver);
 
-  auto sender = node.openHandler(
-      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-sender", "facade-topic"});
+  auto sender{node.openHandler(
+      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-sender", "facade-topic"})};
   ASSERT_TRUE(sender);
 
   dmn::DMesgPb message;
@@ -103,7 +103,7 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
   EXPECT_EQ(asyncMessageFuture.get(), "facade-local");
   EXPECT_EQ(filterCalls.load(), 1U);
   ASSERT_EQ(handlerEventFuture.wait_for(5s), std::future_status::ready);
-  const auto deliveredEvent = handlerEventFuture.get();
+  const auto deliveredEvent{handlerEventFuture.get()};
   EXPECT_EQ(deliveredEvent.m_topic, "facade-topic");
   ASSERT_TRUE(deliveredEvent.m_message.has_value());
   EXPECT_EQ(deliveredEvent.m_message->body().message(), "facade-local");
@@ -119,7 +119,7 @@ TEST(DmnDbusFacadeTest, ForwardsHandlerTopicAndStatusOperations) {
   EXPECT_EQ(lastMessage->body().message(), "facade-local");
 
   EXPECT_NO_THROW(node.resetConflictStateWithLastTopicMessage("facade-topic"));
-  const auto activeStatus = node.status();
+  const auto activeStatus{node.status()};
   EXPECT_GT(activeStatus.output.messages_written, 0U);
 
   node.closeHandler(receiver);
@@ -134,7 +134,7 @@ TEST(DmnDbusFacadeTest, FactoryForwardingPreservesHandlerSpec) {
       "factory-handler", "factory-topic", {}, {}, {{"custom", "value"}}};
   bool factoryCalled{};
 
-  auto handler = node.openHandlerWithFactory(
+  auto handler{node.openHandlerWithFactory(
       spec, [&factoryCalled](const dmn::Dmn_DMesgDbus::HandlerSpec &received) {
         factoryCalled = true;
         EXPECT_EQ(received.m_name, "factory-handler");
@@ -144,7 +144,7 @@ TEST(DmnDbusFacadeTest, FactoryForwardingPreservesHandlerSpec) {
         return std::make_shared<dmn::Dmn_DMesg::Dmn_DMesgHandler>(
             received.m_name, received.m_topic, received.m_filter_fn,
             received.m_async_process_fn, received.m_configs);
-      });
+      })};
 
   EXPECT_TRUE(factoryCalled);
   ASSERT_TRUE(handler);
@@ -161,9 +161,9 @@ TEST(DmnDbusFacadeTest, FactoryForwardingPreservesHandlerSpec) {
 }
 
 TEST(DmnDbusFacadeTest, DestructionSendsFinalHeartbeatBeforeReleasingOutput) {
-  const auto config = makeConfig();
-  auto monitor = std::make_shared<dmn::Dmn_DbusInput>(config);
-  auto facade = std::make_unique<dmn::Dmn_DMesgDbus>("facade-shutdown", config);
+  const auto config{makeConfig()};
+  auto monitor{std::make_shared<dmn::Dmn_DbusInput>(config)};
+  auto facade{std::make_unique<dmn::Dmn_DMesgDbus>("facade-shutdown", config)};
   std::atomic<bool> stopping{};
   std::atomic<bool> sawDestroyedHeartbeat{};
   std::atomic<bool> readerFailed{};
@@ -189,8 +189,8 @@ TEST(DmnDbusFacadeTest, DestructionSendsFinalHeartbeatBeforeReleasingOutput) {
         }
       }};
 
-  const bool receivedInitialHeartbeat = waitUntil(
-      [&monitor] { return monitor->status().messages_received > 0; }, 20s);
+  const bool receivedInitialHeartbeat{waitUntil(
+      [&monitor] { return monitor->status().messages_received > 0; }, 20s)};
   if (!receivedInitialHeartbeat) {
     stopping = true;
     monitor->shutdown();
@@ -202,8 +202,8 @@ TEST(DmnDbusFacadeTest, DestructionSendsFinalHeartbeatBeforeReleasingOutput) {
   }
 
   facade.reset();
-  const bool receivedFinalHeartbeat = waitUntil(
-      [&sawDestroyedHeartbeat] { return sawDestroyedHeartbeat.load(); });
+  const bool receivedFinalHeartbeat{waitUntil(
+      [&sawDestroyedHeartbeat] { return sawDestroyedHeartbeat.load(); })};
 
   stopping = true;
   monitor->shutdown();
@@ -214,9 +214,9 @@ TEST(DmnDbusFacadeTest, DestructionSendsFinalHeartbeatBeforeReleasingOutput) {
 }
 
 TEST(DmnDbusFacadeTest, ExchangesDmesgWithOptionAEndpointPeer) {
-  const auto config = makeConfig();
-  auto peerInput = std::make_shared<dmn::Dmn_DbusInput>(config);
-  auto peerOutput = std::make_shared<dmn::Dmn_DbusOutput>(config);
+  const auto config{makeConfig()};
+  auto peerInput{std::make_shared<dmn::Dmn_DbusInput>(config)};
+  auto peerOutput{std::make_shared<dmn::Dmn_DbusOutput>(config)};
   dmn::Dmn_DMesgNet peer{"option-a-peer", peerInput, peerOutput};
   dmn::Dmn_DMesgDbus facade{"option-b-facade", config};
 
@@ -227,12 +227,12 @@ TEST(DmnDbusFacadeTest, ExchangesDmesgWithOptionAEndpointPeer) {
       },
       20s));
 
-  auto facadeReceiver = facade.openHandler(
-      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-receiver", "to-facade"});
-  auto facadeSender = facade.openHandler(
-      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-sender", "to-peer"});
-  auto peerReceiver = peer.openHandler("peer-receiver", "to-peer");
-  auto peerSender = peer.openHandler("peer-sender", "to-facade");
+  auto facadeReceiver{facade.openHandler(
+      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-receiver", "to-facade"})};
+  auto facadeSender{facade.openHandler(
+      dmn::Dmn_DMesgDbus::HandlerSpec{"facade-sender", "to-peer"})};
+  auto peerReceiver{peer.openHandler("peer-receiver", "to-peer")};
+  auto peerSender{peer.openHandler("peer-sender", "to-facade")};
 
   dmn::DMesgPb fromFacade;
   fromFacade.set_type(dmn::DMesgTypePb::message);
@@ -241,24 +241,24 @@ TEST(DmnDbusFacadeTest, ExchangesDmesgWithOptionAEndpointPeer) {
   fromPeer.set_type(dmn::DMesgTypePb::message);
   fromPeer.mutable_body()->set_message("from Option A");
 
-  auto facadeWrite =
-      std::async(std::launch::async, [&facadeSender, &fromFacade] {
-        facadeSender->write(fromFacade);
-      });
-  auto peerWrite = std::async(std::launch::async, [&peerSender, &fromPeer] {
+  auto facadeWrite{std::async(std::launch::async, [&facadeSender, &fromFacade] {
+    facadeSender->write(fromFacade);
+  })};
+  auto peerWrite{std::async(std::launch::async, [&peerSender, &fromPeer] {
     peerSender->write(fromPeer);
-  });
+  })};
   facadeWrite.get();
   peerWrite.get();
 
-  auto facadeRead = std::async(
-      std::launch::async, [&facadeReceiver] { return facadeReceiver->read(); });
-  auto peerRead = std::async(std::launch::async,
-                             [&peerReceiver] { return peerReceiver->read(); });
+  auto facadeRead{std::async(std::launch::async, [&facadeReceiver] {
+    return facadeReceiver->read();
+  })};
+  auto peerRead{std::async(std::launch::async,
+                           [&peerReceiver] { return peerReceiver->read(); })};
   ASSERT_EQ(facadeRead.wait_for(5s), std::future_status::ready);
   ASSERT_EQ(peerRead.wait_for(5s), std::future_status::ready);
-  const auto receivedByFacade = facadeRead.get();
-  const auto receivedByPeer = peerRead.get();
+  const auto receivedByFacade{facadeRead.get()};
+  const auto receivedByPeer{peerRead.get()};
   ASSERT_TRUE(receivedByFacade);
   ASSERT_TRUE(receivedByPeer);
   EXPECT_EQ(receivedByFacade->body().message(), "from Option A");
@@ -274,25 +274,25 @@ TEST(DmnDbusFacadeTest, StatusReportsInputAndOutputDisconnect) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
 
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.bus_address = bus.address();
   dmn::Dmn_DMesgDbus facade{"facade-disconnect", config};
 
-  const auto initialStatus = facade.status();
+  const auto initialStatus{facade.status()};
   EXPECT_FALSE(initialStatus.input.terminal_error);
   EXPECT_FALSE(initialStatus.output.terminal_error);
 
   bus.stop();
   ASSERT_TRUE(waitUntil(
       [&facade] {
-        const auto currentStatus = facade.status();
+        const auto currentStatus{facade.status()};
 
         return currentStatus.input.terminal_error &&
                currentStatus.output.terminal_error;
       },
       5s));
 
-  const auto disconnectedStatus = facade.status();
+  const auto disconnectedStatus{facade.status()};
   EXPECT_EQ(disconnectedStatus.input.terminal_error,
             std::make_error_code(std::errc::connection_reset));
   EXPECT_EQ(disconnectedStatus.output.terminal_error,
@@ -310,7 +310,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
   google::protobuf::ShutdownProtobufLibrary();
 
   return result;

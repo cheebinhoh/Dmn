@@ -182,7 +182,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
     m_write_handler = Dmn_DMesg::openHandler(
         m_name,
         []([[maybe_unused]] const dmn::DMesgPb &) -> bool { return false; },
-        []([[maybe_unused]] dmn::DMesgPb dmesgPbWrite) mutable -> void {});
+        []([[maybe_unused]] dmn::DMesgPb dmesgPbWrite) -> void {});
 
     m_input_proc =
         std::make_unique<Dmn_Proc>(m_name + "_inputProc", [this]() -> void {
@@ -236,8 +236,8 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                     { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
                     dmesgpb_read);
               } else if (dmesgpb_read.conflict()) {
-                auto lastMesgPb =
-                    this->getTopicLastMessage(dmesgpb_read.topic());
+                auto lastMesgPb{
+                    this->getTopicLastMessage(dmesgpb_read.topic())};
                 assert(lastMesgPb);
 
                 DMN_ASYNC_CALL_WITH_CAPTURE(
@@ -254,7 +254,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                     },
                     this, dmesgpbForce = *lastMesgPb);
               } else if (dmesgpb_read.force() && dmesgpb_read.playback()) {
-                bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
+                bool ok{m_write_handler->writeAndCheckConflict(dmesgpb_read)};
                 if (ok) {
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
@@ -269,14 +269,14 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgpb_read,
                                                               this->m_name);
 
-                auto lastMesgPb =
-                    this->getTopicLastMessage(dmesgpb_read.topic());
+                auto lastMesgPb{
+                    this->getTopicLastMessage(dmesgpb_read.topic())};
                 if (lastMesgPb && lastMesgPb->runningcounter() >=
                                       dmesgpb_read.runningcounter()) {
                   DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
                 }
 
-                bool ok = m_write_handler->writeAndCheckConflict(dmesgpb_read);
+                bool ok{m_write_handler->writeAndCheckConflict(dmesgpb_read)};
 
                 if (ok) {
                   DMN_ASYNC_CALL_WITH_CAPTURE(
@@ -326,7 +326,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
  * to avoid echoing inbound network messages back to the network.
  */
 void Dmn_DMesgNet::createSubscriptHandler() {
-  auto handlerConfig = Dmn_DMesg::kHandlerConfig_Default;
+  auto handlerConfig{Dmn_DMesg::kHandlerConfig_Default};
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_IncludeSys}] = "yes";
   handlerConfig[std::string{Dmn_DMesg::kHandlerConfig_NoTopicFilter}] = "yes";
 
@@ -339,7 +339,7 @@ void Dmn_DMesgNet::createSubscriptHandler() {
       [this](const dmn::DMesgPb &dmesgPb) -> bool {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
-      [this](dmn::DMesgPb dmesgPbWrite) mutable -> void {
+      [this](dmn::DMesgPb dmesgPbWrite) -> void {
         if (m_output_handler) {
           DMN_ASYNC_CALL_WITH_CAPTURE(
               {
@@ -356,7 +356,7 @@ void Dmn_DMesgNet::createSubscriptHandler() {
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(dmesgPbWrite,
                                                               this->m_name);
 
-                bool ready = m_ready.test(std::memory_order_relaxed);
+                bool ready{m_ready.test(std::memory_order_relaxed)};
                 if (ready || dmesgPbWrite.type() == dmn::DMesgTypePb::sys) {
                   if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
                     this->sendPendingOutboundQueueMessage();
@@ -410,7 +410,7 @@ void Dmn_DMesgNet::createTimerProc() {
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
         [this]() -> void {
-          this->addExecTask([this]() mutable -> void {
+          this->addExecTask([this]() -> void {
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
               this->m_master_pending_counter++;
@@ -457,9 +457,9 @@ void Dmn_DMesgNet::createTimerProc() {
 
             this->m_sys_handler->write(this->m_sys);
 
-            const bool master =
+            const bool master{
                 this->m_sys.body().sys().self().masteridentifier() ==
-                this->m_sys.body().sys().self().identifier();
+                this->m_sys.body().sys().self().identifier()};
 
             // if self is a master, # of neighbor is increase,
             // let resend prior last message per topic.
@@ -467,7 +467,7 @@ void Dmn_DMesgNet::createTimerProc() {
                 (m_number_of_neighbor <
                  this->m_sys.body().sys().nodelist().size())) {
               for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
-                dmn::DMesgPb pb = topic_dmesgpb.second;
+                dmn::DMesgPb pb{topic_dmesgpb.second};
 
                 DMESG_PB_SET_MSG_PLAYBACK(pb, true);
                 DMESG_PB_SET_MSG_SOURCEWRITEHANDLERIDENTIFIER(pb, this->m_name);
@@ -538,7 +538,7 @@ void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
  * @param dmesgpb_other The remote sys DMesgPb received from the network.
  */
 void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
-  auto other = dmesgpb_other.body().sys().self();
+  auto other{dmesgpb_other.body().sys().self()};
   auto *self = this->m_sys.mutable_body()->mutable_sys()->mutable_self();
 
   struct timeval tval {};
@@ -614,7 +614,7 @@ void Dmn_DMesgNet::reconciliateDMesgPbSys(const dmn::DMesgPb &dmesgpb_other) {
     }
   } // if (self->state() == dmn::DMesgStatePb::Ready)
 
-  int index = 0;
+  int index{0};
   while (index < this->m_sys.mutable_body()->mutable_sys()->nodelist().size()) {
     if (other.identifier() == this->m_sys.mutable_body()
                                   ->mutable_sys()

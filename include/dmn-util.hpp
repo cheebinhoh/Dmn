@@ -68,9 +68,9 @@ inline std::vector<UChar> stringToUnicode(const std::string_view value) {
   }
 
   const auto *utf8 = value.empty() ? "" : value.data();
-  const auto length = static_cast<int32_t>(value.size());
-  UErrorCode status = U_ZERO_ERROR;
-  int32_t unicodeLength = 0;
+  const auto length{static_cast<int32_t>(value.size())};
+  UErrorCode status{U_ZERO_ERROR};
+  int32_t unicodeLength{0};
 
   u_strFromUTF8(nullptr, 0, &unicodeLength, utf8, length, &status);
   if (status != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(status)) {
@@ -102,11 +102,11 @@ inline std::vector<UChar> stringToUnicode(const std::string_view value) {
 inline std::vector<UChar> normalizeNfd(const std::vector<UChar> &value,
                                        const UNormalizer2 *normalizer) {
   const auto *source = value.empty() ? u"" : value.data();
-  const auto length = static_cast<int32_t>(value.size());
-  UErrorCode status = U_ZERO_ERROR;
+  const auto length{static_cast<int32_t>(value.size())};
+  UErrorCode status{U_ZERO_ERROR};
 
-  const auto resultLength =
-      unorm2_normalize(normalizer, source, length, nullptr, 0, &status);
+  const auto resultLength{
+      unorm2_normalize(normalizer, source, length, nullptr, 0, &status)};
   if (status != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(status)) {
     throw std::runtime_error{"ICU failed to normalize a string"};
   }
@@ -114,9 +114,9 @@ inline std::vector<UChar> normalizeNfd(const std::vector<UChar> &value,
   status = U_ZERO_ERROR;
   std::vector<UChar> result(static_cast<std::size_t>(resultLength) + 1);
 
-  const auto actualLength =
+  const auto actualLength{
       unorm2_normalize(normalizer, source, length, result.data(),
-                       static_cast<int32_t>(result.size()), &status);
+                       static_cast<int32_t>(result.size()), &status)};
   if (U_FAILURE(status)) {
     throw std::runtime_error{"ICU failed to normalize a string"};
   }
@@ -135,20 +135,20 @@ inline std::vector<UChar> normalizeNfd(const std::vector<UChar> &value,
  */
 inline std::vector<UChar> foldUnicodeCase(const std::vector<UChar> &value) {
   const auto *source = value.empty() ? u"" : value.data();
-  const auto length = static_cast<int32_t>(value.size());
-  UErrorCode status = U_ZERO_ERROR;
+  const auto length{static_cast<int32_t>(value.size())};
+  UErrorCode status{U_ZERO_ERROR};
 
-  const auto resultLength =
-      u_strFoldCase(nullptr, 0, source, length, U_FOLD_CASE_DEFAULT, &status);
+  const auto resultLength{
+      u_strFoldCase(nullptr, 0, source, length, U_FOLD_CASE_DEFAULT, &status)};
   if (status != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(status)) {
     throw std::runtime_error{"ICU failed to fold a string"};
   }
 
   status = U_ZERO_ERROR;
   std::vector<UChar> result(static_cast<std::size_t>(resultLength) + 1);
-  const auto actualLength =
+  const auto actualLength{
       u_strFoldCase(result.data(), static_cast<int32_t>(result.size()), source,
-                    length, U_FOLD_CASE_DEFAULT, &status);
+                    length, U_FOLD_CASE_DEFAULT, &status)};
   if (U_FAILURE(status)) {
     throw std::runtime_error{"ICU failed to fold a string"};
   }
@@ -168,14 +168,14 @@ inline std::vector<UChar> foldUnicodeCase(const std::vector<UChar> &value) {
  * @throws std::runtime_error if ICU initialization or processing fails.
  */
 inline std::vector<UChar> unicodeCaseFoldNfd(std::string_view value) {
-  UErrorCode status = U_ZERO_ERROR;
+  UErrorCode status{U_ZERO_ERROR};
   const auto *normalizer = unorm2_getNFDInstance(&status);
   if (U_FAILURE(status)) {
     throw std::runtime_error{"ICU failed to initialize Unicode normalization"};
   }
 
-  const auto decoded = stringToUnicode(value);
-  const auto normalized = normalizeNfd(decoded, normalizer);
+  const auto decoded{stringToUnicode(value)};
+  const auto normalized{normalizeNfd(decoded, normalizer)};
 
   return normalizeNfd(foldUnicodeCase(normalized), normalizer);
 }

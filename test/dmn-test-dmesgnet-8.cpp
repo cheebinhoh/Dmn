@@ -30,10 +30,10 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_1 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_1{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001)};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_1{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true)};
 
     bool read_data{};
     dmn::DMesgPb dmesgpb_read{};
@@ -42,12 +42,12 @@ int main(int argc, char *argv[]) {
     read_socket_1.reset();
     write_socket_1.reset();
 
-    auto write_handle_1 = dmesgnet1.openHandler(
+    auto write_handle_1{dmesgnet1.openHandler(
         "dmesg-1-handler", "counter sync", nullptr,
-        [&dmesgpb_read, &read_data](dmn::DMesgPb data) mutable -> void {
+        [&dmesgpb_read, &read_data](dmn::DMesgPb data) -> void {
           read_data = true;
           dmesgpb_read = std::move(data);
-        });
+        })};
 
     dmn::DMesgPb dmesgpb{};
     dmesgpb.set_type(dmn::DMesgTypePb::message);
@@ -60,10 +60,10 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(std::chrono::seconds(3));
     EXPECT_TRUE(!read_data);
 
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000);
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_2 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true);
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_socket_2{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000)};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_socket_2{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001, true)};
 
     dmn::Dmn_DMesgNet dmesgnet2{"dmesg-2", std::move(read_socket_2),
                                 std::move(write_socket_2)};
@@ -71,12 +71,12 @@ int main(int argc, char *argv[]) {
     write_socket_2.reset();
 
     dmn::DMesgPb dmesgpb_read_2{};
-    auto read_handle_2 = dmesgnet2.openHandler(
+    auto read_handle_2{dmesgnet2.openHandler(
         "dmesg-2-handler", "counter sync", nullptr,
-        [&dmesgpb_read_2, &read_data](dmn::DMesgPb data) mutable -> void {
+        [&dmesgpb_read_2, &read_data](dmn::DMesgPb data) -> void {
           read_data = true;
           dmesgpb_read_2 = std::move(data);
-        });
+        })};
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
     EXPECT_TRUE(read_data);

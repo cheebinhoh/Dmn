@@ -28,9 +28,9 @@ using dmn::gui::Dmn_Engine;
 using dmn::gui::Dmn_EngineBackend;
 using dmn::gui::Dmn_JsonValue;
 
-constexpr auto kWait = std::chrono::seconds{10};
-constexpr auto kDevice = "AA:BB:CC:00:00:01";
-constexpr auto kAdapter = "00:11:22:33:44:55";
+constexpr auto kWait{std::chrono::seconds{10}};
+constexpr auto kDevice{"AA:BB:CC:00:00:01"};
+constexpr auto kAdapter{"00:11:22:33:44:55"};
 
 class Pump {
 public:
@@ -54,21 +54,21 @@ public:
 
   auto waitMessage(const std::function<bool(const Dmn_JsonValue &)> &predicate)
       -> bool {
-    const auto deadline = std::chrono::steady_clock::now() + kWait;
+    const auto deadline{std::chrono::steady_clock::now() + kWait};
     while (std::chrono::steady_clock::now() < deadline) {
-      auto text = m_engine.nextMessage(std::chrono::milliseconds{100});
+      auto text{m_engine.nextMessage(std::chrono::milliseconds{100})};
       if (!text) {
         continue;
       }
 
-      auto message = Dmn_JsonValue::parse(*text);
+      auto message{Dmn_JsonValue::parse(*text)};
       if (!message) {
         ADD_FAILURE() << "engine produced invalid JSON: " << *text;
 
         return false;
       }
 
-      const auto type = message->getString("type");
+      const auto type{message->getString("type")};
       if (type == "event") {
         m_events.push_back(*message);
       } else if (type == "persist") {
@@ -111,7 +111,7 @@ auto device(const Dmn_JsonValue &state,
 
 auto command(const std::string &type, const std::string &adapter = {},
              const std::string &address = {}) -> std::string {
-  auto json = Dmn_JsonValue::object();
+  auto json{Dmn_JsonValue::object()};
   json.set("type", type);
   if (!adapter.empty()) {
     json.set("adapter", adapter);
@@ -123,7 +123,7 @@ auto command(const std::string &type, const std::string &adapter = {},
 
 auto selectCommand(const std::string &address,
                    const bool selected) -> std::string {
-  auto json = Dmn_JsonValue::parse(command("select", kAdapter, address));
+  auto json{Dmn_JsonValue::parse(command("select", kAdapter, address))};
   json->set("selected", selected);
 
   return json->dump();
@@ -235,13 +235,14 @@ public:
 };
 
 TEST(CosmicJsonTest, RoundTripsEscapesAndSurrogatePairs) {
-  const auto parsed = Dmn_JsonValue::parse(
-      R"({"a":"line\nquote\" \u00e9 \ud83d\ude00","b":[1,2.5,true,null]})");
+  const auto parsed{Dmn_JsonValue::parse(
+      R"({"a":"line\nquote\" \u00e9 \ud83d\ude00","b":[1,2.5,true,null]})")};
+
   ASSERT_TRUE(parsed.has_value());
   EXPECT_EQ(parsed->getString("a"), "line\nquote\" \xC3\xA9 \xF0\x9F\x98\x80");
   ASSERT_EQ(parsed->find("b")->items().size(), 4U);
 
-  const auto again = Dmn_JsonValue::parse(parsed->dump());
+  const auto again{Dmn_JsonValue::parse(parsed->dump())};
   ASSERT_TRUE(again.has_value());
   EXPECT_EQ(again->getString("a"), parsed->getString("a"));
 }
@@ -255,22 +256,22 @@ TEST(CosmicJsonTest, RejectsMalformedInput) {
 }
 
 TEST(CosmicJsonTest, DumpReplacesInvalidUtf8AndEscapesControls) {
-  const auto dumped = Dmn_JsonValue{std::string{"a\xFF\x01z"}}.dump();
+  const auto dumped{Dmn_JsonValue{std::string{"a\xFF\x01z"}}.dump()};
   EXPECT_EQ(dumped, "\"a\xEF\xBF\xBD\\u0001z\"");
   EXPECT_TRUE(Dmn_JsonValue::parse(dumped).has_value());
 }
 
 TEST(CosmicEngineTest, RejectsMalformedCommands) {
-  auto engine = fastDemoEngine();
+  auto engine{fastDemoEngine()};
   EXPECT_FALSE(engine->send("not json"));
   EXPECT_FALSE(engine->send("[]"));
   EXPECT_FALSE(engine->send(R"({"no_type":1})"));
 }
 
 TEST(CosmicEngineTest, AnnouncesReadyThenPublishesInventory) {
-  auto engine = fastDemoEngine();
-  const auto ready =
-      Dmn_JsonValue::parse(engine->nextMessage(kWait).value_or("null"));
+  auto engine{fastDemoEngine()};
+  const auto ready{
+      Dmn_JsonValue::parse(engine->nextMessage(kWait).value_or("null"))};
   ASSERT_TRUE(ready.has_value());
   EXPECT_EQ(ready->getString("type"), "ready");
   EXPECT_EQ(ready->getNumber("protocol", 0), 1);
@@ -283,7 +284,7 @@ TEST(CosmicEngineTest, AnnouncesReadyThenPublishesInventory) {
 }
 
 TEST(CosmicEngineTest, ConnectRequiresSavedPairedDevice) {
-  auto engine = fastDemoEngine();
+  auto engine{fastDemoEngine()};
   Pump pump{*engine};
   ASSERT_TRUE(pump.waitState([](const Dmn_JsonValue &state) {
     return state.find("devices")->items().size() == 3U;
@@ -297,7 +298,7 @@ TEST(CosmicEngineTest, ConnectRequiresSavedPairedDevice) {
 }
 
 TEST(CosmicEngineTest, FullDemoWorkflowPersistsIntentAndReceivesEvents) {
-  auto engine = fastDemoEngine();
+  auto engine{fastDemoEngine()};
   Pump pump{*engine};
   ASSERT_TRUE(pump.waitState([](const Dmn_JsonValue &state) {
     return state.find("devices")->items().size() == 3U;
@@ -324,7 +325,7 @@ TEST(CosmicEngineTest, FullDemoWorkflowPersistsIntentAndReceivesEvents) {
   EXPECT_TRUE(device(pump.m_last_state, kDevice)
                   ->getBool("can_start_monitoring", false));
 
-  auto monitor = Dmn_JsonValue::parse(command("monitor", kAdapter, kDevice));
+  auto monitor{Dmn_JsonValue::parse(command("monitor", kAdapter, kDevice))};
   monitor->set("enabled", true);
   pump.send(monitor->dump());
   ASSERT_TRUE(pump.waitState([](const Dmn_JsonValue &state) {
@@ -350,9 +351,9 @@ TEST(CosmicEngineTest, FullDemoWorkflowPersistsIntentAndReceivesEvents) {
   EXPECT_TRUE(pump.m_persists.back().find("monitoring")->items().empty());
 
   pump.send(command("shutdown"));
-  bool bye = false;
+  bool bye{false};
   for (int i = 0; i < 200 && !bye; ++i) {
-    const auto text = engine->nextMessage(std::chrono::milliseconds{50});
+    const auto text{engine->nextMessage(std::chrono::milliseconds{50})};
     bye = text && text->find(R"("type":"bye")") != std::string::npos;
   }
 
@@ -366,9 +367,9 @@ TEST(CosmicEngineTest, ConfigureRestoresIntentAndFailedStartIsReported) {
   Dmn_Engine engine{std::make_unique<FailingMonitorBackend>(), options};
   Pump pump{engine};
 
-  auto configure = Dmn_JsonValue::object();
+  auto configure{Dmn_JsonValue::object()};
   configure.set("type", "configure");
-  auto identity = Dmn_JsonValue::object();
+  auto identity{Dmn_JsonValue::object()};
   identity.set("adapter", kAdapter);
   identity.set("device", kDevice);
   configure.set("saved", Dmn_JsonValue::array().push(identity));
@@ -392,14 +393,14 @@ TEST(CosmicEngineTest, ResumesMonitoringWhenSavedDeviceReconnects) {
   dmn::gui::Dmn_EngineOptions options;
   options.m_tick_interval = std::chrono::milliseconds{20};
   options.m_inventory_refresh_interval = std::chrono::milliseconds{50};
-  auto backend = std::make_unique<ReconnectingBackend>();
+  auto backend{std::make_unique<ReconnectingBackend>()};
   auto *raw = backend.get();
   Dmn_Engine engine{std::move(backend), options};
   Pump pump{engine};
 
-  auto configure = Dmn_JsonValue::object();
+  auto configure{Dmn_JsonValue::object()};
   configure.set("type", "configure");
-  auto identity = Dmn_JsonValue::object();
+  auto identity{Dmn_JsonValue::object()};
   identity.set("adapter", kAdapter);
   identity.set("device", kDevice);
   configure.set("saved", Dmn_JsonValue::array().push(identity));

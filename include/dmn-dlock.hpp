@@ -262,8 +262,8 @@ struct Dmn_DLock_TableSnapshot {
   auto canonicalize() -> void {
     std::sort(m_entries.begin(), m_entries.end(),
               [](const Dmn_DLock_Entry &lhs, const Dmn_DLock_Entry &rhs) {
-                const auto lhs_key = lhs.canonicalKey();
-                const auto rhs_key = rhs.canonicalKey();
+                const auto lhs_key{lhs.canonicalKey()};
+                const auto rhs_key{rhs.canonicalKey()};
 
                 return lhs_key < rhs_key;
               });
@@ -288,9 +288,9 @@ struct Dmn_DLock_TableSnapshot {
       for (std::size_t j = i + 1; j < m_entries.size(); ++j) {
         const auto &lhs = m_entries[i];
         const auto &rhs = m_entries[j];
-        const bool same_domain = lhs.m_domain == rhs.m_domain;
-        const bool granted_overlap =
-            lhs.m_granted && rhs.m_granted && lhs.m_range.overlaps(rhs.m_range);
+        const bool same_domain{lhs.m_domain == rhs.m_domain};
+        const bool granted_overlap{lhs.m_granted && rhs.m_granted &&
+                                   lhs.m_range.overlaps(rhs.m_range)};
 
         if (same_domain && granted_overlap) {
           return false;
@@ -333,7 +333,7 @@ struct Dmn_DLock_TableSnapshot {
 
   auto withCandidate(const Dmn_DLock_Entry &candidate) const
       -> Dmn_DLock_TableSnapshot {
-    Dmn_DLock_TableSnapshot result = *this;
+    Dmn_DLock_TableSnapshot result{*this};
     if (classifyGrantCandidate(candidate) != Dmn_DLock_ResultCode::kOk) {
       return {};
     }
@@ -368,7 +368,7 @@ struct Dmn_DLock_TableSnapshot {
     table.set_next_sequence(m_next_sequence);
     table.set_next_fencing_token(m_next_fencing_token);
 
-    auto snapshot = m_entries;
+    auto snapshot{m_entries};
     std::sort(snapshot.begin(), snapshot.end(),
               [](const Dmn_DLock_Entry &lhs, const Dmn_DLock_Entry &rhs) {
                 return lhs.canonicalKey() < rhs.canonicalKey();
@@ -559,8 +559,8 @@ public:
 
   auto openHandler(std::string_view session_name = "session",
                    std::string_view topic = "dlock") -> HandlerType {
-    auto handler =
-        std::make_shared<Dmn_DLock_Handler>(session_name, topic, m_config);
+    auto handler{
+        std::make_shared<Dmn_DLock_Handler>(session_name, topic, m_config)};
     HandlerType proxy{};
     proxy.m_handler = handler;
 
@@ -631,7 +631,7 @@ public:
     }
 
     std::unique_lock<std::mutex> lock(m_mutex);
-    std::string request_id = options.m_request_id;
+    std::string request_id{options.m_request_id};
     if (request_id.empty()) {
       request_id =
           std::string("req-") + std::to_string(m_table.m_next_sequence + 1);
@@ -673,7 +673,7 @@ public:
     entry.m_waiting = false;
     entry.m_granted = true;
 
-    const auto candidate = m_table.withCandidate(entry);
+    const auto candidate{m_table.withCandidate(entry)};
     if (candidate.m_entries.empty()) {
       return {Dmn_DLock_ResultCode::kConflict, range, request_id,
               "range already unavailable"};
@@ -693,7 +693,7 @@ public:
     std::lock_guard workersLock{m_async_workers_mutex};
     if (m_shutting_down.load(std::memory_order_acquire)) {
       std::promise<Dmn_DLock_Result> promise;
-      auto future = promise.get_future();
+      auto future{promise.get_future()};
       promise.set_value({Dmn_DLock_ResultCode::kShutdown, range,
                          options.m_request_id, "lock is shutting down"});
 
@@ -702,11 +702,11 @@ public:
 
     reapCompletedAsyncWorkers();
 
-    auto promise = std::make_shared<std::promise<Dmn_DLock_Result>>();
-    auto future = promise->get_future();
-    auto completion = std::make_shared<std::promise<void>>();
-    auto completionFuture = completion->get_future().share();
-    auto worker = std::make_unique<Dmn_Proc>(
+    auto promise{std::make_shared<std::promise<Dmn_DLock_Result>>()};
+    auto future{promise->get_future()};
+    auto completion{std::make_shared<std::promise<void>>()};
+    auto completionFuture{completion->get_future().share()};
+    auto worker{std::make_unique<Dmn_Proc>(
         "dlock-acquire", [this, range, options, promise, completion]() {
           try {
             promise->set_value(acquireLock(range, options));
@@ -715,7 +715,7 @@ public:
           }
 
           completion->set_value();
-        });
+        })};
 
     auto *workerPtr = worker.get();
     m_async_workers.push_back({std::move(worker), std::move(completionFuture)});
@@ -731,10 +731,10 @@ public:
   auto releaseLock(std::string_view request_id) -> Dmn_DLock_Result {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    auto it = std::find_if(m_table.m_entries.begin(), m_table.m_entries.end(),
-                           [&](const Dmn_DLock_Entry &entry) {
-                             return entry.m_request_id == request_id;
-                           });
+    auto it{std::find_if(m_table.m_entries.begin(), m_table.m_entries.end(),
+                         [&](const Dmn_DLock_Entry &entry) {
+                           return entry.m_request_id == request_id;
+                         })};
     if (it == m_table.m_entries.end()) {
       return {Dmn_DLock_ResultCode::kInvalidState,
               {},
@@ -742,7 +742,7 @@ public:
               "request not found"};
     }
 
-    const auto range = it->m_range;
+    const auto range{it->m_range};
     m_table.m_entries.erase(it);
     m_cv.notify_all();
 
@@ -763,7 +763,7 @@ private:
   };
 
   void reapCompletedAsyncWorkers() {
-    auto worker = m_async_workers.begin();
+    auto worker{m_async_workers.begin()};
     while (worker != m_async_workers.end()) {
       if (worker->m_completion.wait_for(std::chrono::seconds::zero()) ==
           std::future_status::ready) {

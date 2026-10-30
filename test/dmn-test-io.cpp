@@ -43,15 +43,15 @@ int main(int argc, char *argv[]) {
 
   // parameters to tune
   bool input_to_sleep_use_ns = true; /* nano or milliseconds */
-  int input_to_sleep_milliseconds = 1;
+  int input_to_sleep_milliseconds{1};
   int input_to_sleep_nanoseconds = 500000; /* 0.5 milliseconds */
-  int input_to_run_seconds = 5;
+  int input_to_run_seconds{5};
 
   dmn::Dmn_Pipe<std::string> out_pipe{
       "out_pipe", [&input_cnt](std::string item) -> void {
-        std::size_t found = item.find(": ");
+        std::size_t found{item.find(": ")};
         if (found != std::string::npos) {
-          std::string source = item.substr(0, found);
+          std::string source{item.substr(0, found)};
 
           input_cnt[source]++;
         }
@@ -71,11 +71,11 @@ int main(int argc, char *argv[]) {
   sensor_input.exec([&staging_pipe, input_to_sleep_use_ns,
                      input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
                      input_to_run_seconds, &sensor_input_i]() -> void {
-    system_clock::time_point start = system_clock::now();
+    system_clock::time_point start{system_clock::now()};
 
     while (true) {
-      std::string item = "sensor_input: " + std::to_string(sensor_input_i) +
-                         ": " + std::string(2000, 'x');
+      std::string item{"sensor_input: " + std::to_string(sensor_input_i) +
+                       ": " + std::string(2000, 'x')};
       staging_pipe.write(item);
 
       sensor_input_i++;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
             std::chrono::milliseconds(input_to_sleep_milliseconds));
       }
 
-      system_clock::time_point wakeup = system_clock::now();
+      system_clock::time_point wakeup{system_clock::now()};
       if (std::chrono::duration_cast<std::chrono::seconds>(wakeup - start)
               .count() >= input_to_run_seconds) {
         break;
@@ -103,10 +103,10 @@ int main(int argc, char *argv[]) {
   gps_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
                   input_to_run_seconds, &gps_input_i]() -> void {
-    system_clock::time_point start = system_clock::now();
+    system_clock::time_point start{system_clock::now()};
 
     while (true) {
-      std::string item = "gps_input: " + std::to_string(gps_input_i) + ": data";
+      std::string item{"gps_input: " + std::to_string(gps_input_i) + ": data"};
       staging_pipe.write(item);
 
       gps_input_i++;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
             std::chrono::milliseconds(input_to_sleep_milliseconds));
       }
 
-      system_clock::time_point wakeup = system_clock::now();
+      system_clock::time_point wakeup{system_clock::now()};
       if (std::chrono::duration_cast<std::chrono::seconds>(wakeup - start)
               .count() >= input_to_run_seconds) {
         break;
@@ -133,10 +133,10 @@ int main(int argc, char *argv[]) {
   imu_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
                   input_to_run_seconds, &imu_input_i]() -> void {
-    system_clock::time_point start = system_clock::now();
+    system_clock::time_point start{system_clock::now()};
 
     while (true) {
-      std::string item = "imu_input: " + std::to_string(imu_input_i) + ": data";
+      std::string item{"imu_input: " + std::to_string(imu_input_i) + ": data"};
       staging_pipe.write(item);
 
       imu_input_i++;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
             std::chrono::milliseconds(input_to_sleep_milliseconds));
       }
 
-      system_clock::time_point wakeup = system_clock::now();
+      system_clock::time_point wakeup{system_clock::now()};
       if (std::chrono::duration_cast<std::chrono::seconds>(wakeup - start)
               .count() >= input_to_run_seconds) {
         break;
@@ -163,10 +163,10 @@ int main(int argc, char *argv[]) {
   ext_input.exec([&staging_pipe, input_to_sleep_use_ns,
                   input_to_sleep_nanoseconds, input_to_sleep_milliseconds,
                   input_to_run_seconds, &ext_input_i]() -> void {
-    system_clock::time_point start = system_clock::now();
+    system_clock::time_point start{system_clock::now()};
 
     while (true) {
-      std::string item = "ext_input: " + std::to_string(ext_input_i) + ": data";
+      std::string item{"ext_input: " + std::to_string(ext_input_i) + ": data"};
       staging_pipe.write(item);
 
       ext_input_i++;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
             std::chrono::milliseconds(input_to_sleep_milliseconds));
       }
 
-      system_clock::time_point wakeup = system_clock::now();
+      system_clock::time_point wakeup{system_clock::now()};
       if (std::chrono::duration_cast<std::chrono::seconds>(wakeup - start)
               .count() >= input_to_run_seconds) {
         break;

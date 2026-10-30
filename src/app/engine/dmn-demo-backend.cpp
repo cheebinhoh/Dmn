@@ -21,7 +21,7 @@
 namespace dmn::gui {
 namespace {
 
-constexpr std::string_view kAdapterAddress = "00:11:22:33:44:55";
+constexpr std::string_view kAdapterAddress{"00:11:22:33:44:55"};
 constexpr std::chrono::milliseconds kOperationDelay{150};
 
 struct DemoPhone {
@@ -134,7 +134,7 @@ public:
       return std::unexpected(Dmn_BackendError{"Canceled", true});
     }
 
-    auto feed = std::make_unique<Feed>();
+    auto feed{std::make_unique<Feed>()};
     auto *raw = feed.get();
     {
       std::lock_guard lock{m_mutex};
@@ -158,7 +158,7 @@ public:
     std::unique_ptr<Feed> feed;
     {
       std::lock_guard lock{m_mutex};
-      const auto found = m_feeds.find(lower(identity.m_device_address));
+      const auto found{m_feeds.find(lower(identity.m_device_address))};
       if (found == m_feeds.end()) {
         return {};
       }
@@ -229,7 +229,7 @@ private:
   }
 
   void feedLoop(const Dmn_DeviceIdentity &identity, Feed &feed) {
-    std::uint32_t uid = 1;
+    std::uint32_t uid{1};
     for (;;) {
       Dmn_BackendMonitorEvent event;
       event.m_kind = Dmn_BackendMonitorEvent::Kind::kNotification;

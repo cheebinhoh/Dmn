@@ -66,7 +66,7 @@ TEST(DmnAncsParserTest, RejectsNotificationSourceValuesWithWrongLength) {
   for (const auto value : {std::span<const std::uint8_t>{},
                            std::span<const std::uint8_t>{shortValue},
                            std::span<const std::uint8_t>{longValue}}) {
-    const auto parsed = dmn::detail::parseAncsNotificationSource(value);
+    const auto parsed{dmn::detail::parseAncsNotificationSource(value)};
     ASSERT_FALSE(parsed);
     EXPECT_EQ(parsed.error().kind, dmn::Dmn_AncsErrorKind::Protocol);
     EXPECT_TRUE(parsed.error().fatal);
@@ -77,7 +77,7 @@ TEST(DmnAncsParserTest, ParsesEventFieldsAndPreservesUnknownRawValues) {
   const std::array<std::uint8_t, 8> bytes{1,    0xa5, 0xfe, 7,
                                           0x78, 0x56, 0x34, 0x12};
 
-  const auto parsed = dmn::detail::parseAncsNotificationSource(bytes);
+  const auto parsed{dmn::detail::parseAncsNotificationSource(bytes)};
 
   ASSERT_TRUE(parsed) << parsed.error().message;
   EXPECT_EQ(parsed->kind, dmn::Dmn_AncsNotificationKind::Updated);
@@ -90,7 +90,7 @@ TEST(DmnAncsParserTest, ParsesEventFieldsAndPreservesUnknownRawValues) {
 TEST(DmnAncsParserTest, ReportsReservedEventAsNonfatalUnsupportedInput) {
   const std::array<std::uint8_t, 8> bytes{3, 0, 0, 0, 1, 0, 0, 0};
 
-  const auto parsed = dmn::detail::parseAncsNotificationSource(bytes);
+  const auto parsed{dmn::detail::parseAncsNotificationSource(bytes)};
 
   ASSERT_FALSE(parsed);
   EXPECT_EQ(parsed.error().kind, dmn::Dmn_AncsErrorKind::Unsupported);
@@ -105,25 +105,25 @@ TEST(DmnAncsParserTest, ParsesEveryKnownNotificationEventKind) {
 
   for (std::uint8_t eventId = 0; eventId < expectedKinds.size(); ++eventId) {
     const std::array<std::uint8_t, 8> bytes{eventId, 0, 0, 0, 0, 0, 0, 0};
-    const auto parsed = dmn::detail::parseAncsNotificationSource(bytes);
+    const auto parsed{dmn::detail::parseAncsNotificationSource(bytes)};
     ASSERT_TRUE(parsed);
     EXPECT_EQ(parsed->kind, expectedKinds[eventId]);
   }
 }
 
 TEST(DmnAncsParserTest, ReassemblesResponseAtEveryTwoFragmentBoundary) {
-  constexpr std::uint32_t kUid = 0x78563412U;
-  const auto response = makeAttributeResponse(kUid);
+  constexpr std::uint32_t kUid{0x78563412U};
+  const auto response{makeAttributeResponse(kUid)};
 
   for (std::size_t split = 1; split < response.size(); ++split) {
     dmn::detail::Dmn_AncsDataSourceReassembler parser{kUid};
-    const auto first =
-        parser.consume(std::span<const std::uint8_t>{response}.first(split));
+    const auto first{
+        parser.consume(std::span<const std::uint8_t>{response}.first(split))};
     ASSERT_TRUE(first) << first.error().message;
     EXPECT_FALSE(first->has_value()) << "split=" << split;
 
-    const auto second =
-        parser.consume(std::span<const std::uint8_t>{response}.subspan(split));
+    const auto second{
+        parser.consume(std::span<const std::uint8_t>{response}.subspan(split))};
     ASSERT_TRUE(second) << second.error().message;
     ASSERT_TRUE(second->has_value()) << "split=" << split;
     EXPECT_EQ((*second)->app_identifier, "com.example.mail");
@@ -136,14 +136,14 @@ TEST(DmnAncsParserTest, ReassemblesResponseAtEveryTwoFragmentBoundary) {
 }
 
 TEST(DmnAncsParserTest, ReassemblesOneByteFragments) {
-  constexpr std::uint32_t kUid = 0x10203040U;
-  const auto response = makeAttributeResponse(kUid);
+  constexpr std::uint32_t kUid{0x10203040U};
+  const auto response{makeAttributeResponse(kUid)};
   dmn::detail::Dmn_AncsDataSourceReassembler parser{kUid};
   std::optional<dmn::detail::Dmn_AncsAttributeSet> completed;
 
   for (const auto byte : response) {
     const std::array<std::uint8_t, 1> fragment{byte};
-    const auto result = parser.consume(fragment);
+    const auto result{parser.consume(fragment)};
     ASSERT_TRUE(result) << result.error().message;
     if (result->has_value()) {
       completed = std::move(**result);
@@ -157,7 +157,7 @@ TEST(DmnAncsParserTest, ReassemblesOneByteFragments) {
 
 TEST(DmnAncsParserTest,
      SkipsUnknownBoundedAttributesWithoutReorderingKnownOnes) {
-  constexpr std::uint32_t kUid = 99;
+  constexpr std::uint32_t kUid{99};
   Bytes response{0};
   appendUint32(response, kUid);
   appendAttribute(response, 200, "future");
@@ -167,7 +167,7 @@ TEST(DmnAncsParserTest,
   appendAttribute(response, 3, "message");
   appendAttribute(response, 5, "date");
 
-  const auto parsed = consumeCompleteResponse(response, kUid);
+  const auto parsed{consumeCompleteResponse(response, kUid)};
 
   ASSERT_TRUE(parsed) << parsed.error().message;
   ASSERT_TRUE(parsed->has_value());
@@ -179,13 +179,13 @@ TEST(DmnAncsParserTest,
 TEST(DmnAncsParserTest, RejectsWrongCommandAndMismatchedUid) {
   Bytes wrongCommand{1};
   appendUint32(wrongCommand, 1);
-  const auto commandResult = consumeCompleteResponse(wrongCommand, 1);
+  const auto commandResult{consumeCompleteResponse(wrongCommand, 1)};
   ASSERT_FALSE(commandResult);
   EXPECT_EQ(commandResult.error().kind, dmn::Dmn_AncsErrorKind::Protocol);
 
   Bytes wrongUid{0};
   appendUint32(wrongUid, 2);
-  const auto uidResult = consumeCompleteResponse(wrongUid, 1);
+  const auto uidResult{consumeCompleteResponse(wrongUid, 1)};
   ASSERT_FALSE(uidResult);
   EXPECT_EQ(uidResult.error().kind, dmn::Dmn_AncsErrorKind::Protocol);
 }
@@ -195,7 +195,7 @@ TEST(DmnAncsParserTest, RejectsKnownAttributesOutOfRequestedOrder) {
   appendUint32(response, 7);
   appendAttribute(response, 1, "title");
 
-  const auto parsed = consumeCompleteResponse(response, 7);
+  const auto parsed{consumeCompleteResponse(response, 7)};
 
   ASSERT_FALSE(parsed);
   EXPECT_EQ(parsed.error().kind, dmn::Dmn_AncsErrorKind::Protocol);
@@ -204,7 +204,7 @@ TEST(DmnAncsParserTest, RejectsKnownAttributesOutOfRequestedOrder) {
 TEST(DmnAncsParserTest, RejectsOversizedResponseAndAttributeValues) {
   const Bytes tooLarge(8193, 0);
   dmn::detail::Dmn_AncsDataSourceReassembler largeParser{1};
-  const auto largeResult = largeParser.consume(tooLarge);
+  const auto largeResult{largeParser.consume(tooLarge)};
   ASSERT_FALSE(largeResult);
   EXPECT_EQ(largeResult.error().kind, dmn::Dmn_AncsErrorKind::ResourceLimit);
 
@@ -213,7 +213,7 @@ TEST(DmnAncsParserTest, RejectsOversizedResponseAndAttributeValues) {
   appendAttribute(response, 0, "app");
   appendAttribute(response, 1, std::string(257, 'x'));
   dmn::detail::Dmn_AncsDataSourceReassembler attributeParser{5};
-  const auto attributeResult = attributeParser.consume(response);
+  const auto attributeResult{attributeParser.consume(response)};
   ASSERT_FALSE(attributeResult);
   EXPECT_EQ(attributeResult.error().kind,
             dmn::Dmn_AncsErrorKind::ResourceLimit);
@@ -227,7 +227,7 @@ TEST(DmnAncsParserTest, InvalidUtf8IsNonfatalAndRawBytesAreNotReturned) {
   response.push_back(0xff);
   dmn::detail::Dmn_AncsDataSourceReassembler parser{6};
 
-  const auto parsed = parser.consume(response);
+  const auto parsed{parser.consume(response)};
 
   ASSERT_FALSE(parsed);
   EXPECT_EQ(parsed.error().kind, dmn::Dmn_AncsErrorKind::Protocol);
@@ -237,7 +237,7 @@ TEST(DmnAncsParserTest, InvalidUtf8IsNonfatalAndRawBytesAreNotReturned) {
 
 TEST(DmnAncsParserTest,
      IncompleteResponseRemainsIncompleteUntilAllTuplesArrive) {
-  constexpr std::uint32_t kUid = 10;
+  constexpr std::uint32_t kUid{10};
   Bytes response{0};
   appendUint32(response, kUid);
   appendAttribute(response, 0, "app");
@@ -246,13 +246,13 @@ TEST(DmnAncsParserTest,
   appendAttribute(response, 3, "message");
   dmn::detail::Dmn_AncsDataSourceReassembler parser{kUid};
 
-  const auto partial = parser.consume(response);
+  const auto partial{parser.consume(response)};
   ASSERT_TRUE(partial) << partial.error().message;
   EXPECT_FALSE(partial->has_value());
 
   Bytes finalAttribute{};
   appendAttribute(finalAttribute, 5, "date");
-  const auto complete = parser.consume(finalAttribute);
+  const auto complete{parser.consume(finalAttribute)};
   ASSERT_TRUE(complete) << complete.error().message;
   ASSERT_TRUE(complete->has_value());
   EXPECT_EQ((*complete)->date, "date");

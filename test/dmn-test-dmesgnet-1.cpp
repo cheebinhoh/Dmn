@@ -74,22 +74,22 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
-    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1 =
-        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1");
+    std::shared_ptr<dmn::Dmn_Io<std::string>> write_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1")};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> read_1{
+        std::make_unique<dmn::Dmn_Pipe<std::string>>("127.0.0.1")};
 
-    auto read_from_write_1 = write_1;
+    auto read_from_write_1{write_1};
 
-    auto dmesgnet1 = std::make_unique<dmn::Dmn_DMesgNet>(
-        "dmesg1", std::move(read_1), std::move(write_1));
+    auto dmesgnet1{std::make_unique<dmn::Dmn_DMesgNet>(
+        "dmesg1", std::move(read_1), std::move(write_1))};
 
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     bool masterpending{};
     bool ready{};
 
-    auto dataList = read_from_write_1->read(50, 10000000L);
+    auto dataList{read_from_write_1->read(50, 10000000L)};
     for (auto &data : dataList) {
       dmn::DMesgPb dmesgpb{};
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
       EXPECT_TRUE((dmesgpb.type() == dmn::DMesgTypePb::sys));
 
-      auto sys = dmesgpb.body().sys().self();
+      auto sys{dmesgpb.body().sys().self()};
       if (sys.state() == dmn::DMesgStatePb::MasterPending) {
         EXPECT_TRUE((!ready));
         masterpending = true;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 
       dmesgpb.ParseFromString(data);
       if (count == (dataList.size() - 1)) {
-        auto sys = dmesgpb.body().sys().self();
+        auto sys{dmesgpb.body().sys().self()};
 
         EXPECT_TRUE((dmn::DMesgStatePb::Destroyed == sys.state()));
       }

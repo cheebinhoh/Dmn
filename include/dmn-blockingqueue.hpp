@@ -197,7 +197,7 @@ inline auto Dmn_BlockingQueue<Derived, T>::pop(std::size_t count,
 
 template <typename Derived, typename T>
 inline auto Dmn_BlockingQueue<Derived, T>::pop() -> T {
-  auto data = static_cast<Derived *>(this)->popOptional(true);
+  auto data{static_cast<Derived *>(this)->popOptional(true)};
   if (!data) {
     throw std::runtime_error("pop is interrupted, and return without data");
   }

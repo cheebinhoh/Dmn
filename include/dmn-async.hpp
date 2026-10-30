@@ -89,7 +89,7 @@
  */
 #define DMN_ASYNC_CALL_WITH_REF_CAPTURE(block)                                 \
   do {                                                                         \
-    this->addExecTask([&]() mutable -> void { block; });                       \
+    this->addExecTask([&]() -> void { block; });                               \
   } while (false)
 
 /**
@@ -129,12 +129,12 @@ class Dmn_Async {
 
     const std::chrono::duration<long double, Clock::period> clock_ticks{
         duration};
-    const long double rounded_ticks = std::ceil(clock_ticks.count());
-    const auto max_exponent = std::numeric_limits<long double>::max_exponent;
-    const long double exclusive_max =
+    const long double rounded_ticks{std::ceil(clock_ticks.count())};
+    const auto max_exponent{std::numeric_limits<long double>::max_exponent};
+    const long double exclusive_max{
         std::numeric_limits<ClockRep>::digits < max_exponent
             ? std::ldexp(1.0L, std::numeric_limits<ClockRep>::digits)
-            : std::numeric_limits<long double>::infinity();
+            : std::numeric_limits<long double>::infinity()};
     if (!std::isfinite(rounded_ticks) || rounded_ticks < 0 ||
         rounded_ticks >= exclusive_max) {
       throw std::overflow_error("Dmn_Async delay exceeds steady_clock range");
@@ -145,9 +145,9 @@ class Dmn_Async {
 
   static auto nextDeadline(Clock::duration delay) -> Clock::time_point {
     using Rep = Clock::duration::rep;
-    const auto now = Clock::now();
-    const auto now_ticks = now.time_since_epoch().count();
-    const auto delay_ticks = delay.count();
+    const auto now{Clock::now()};
+    const auto now_ticks{now.time_since_epoch().count()};
+    const auto delay_ticks{delay.count()};
 
     if (now_ticks > 0 &&
         delay_ticks > std::numeric_limits<Rep>::max() - now_ticks) {
@@ -406,17 +406,17 @@ auto Dmn_Async<QueueType>::addExecTaskAfterWithWait(
     throw std::invalid_argument("Dmn_Async delay must not be negative");
   }
 
-  const auto clock_duration = toClockDuration(duration);
-  const auto deadline = nextDeadline(clock_duration);
+  const auto clock_duration{toClockDuration(duration)};
+  const auto deadline{nextDeadline(clock_duration)};
 
-  auto bound_task = [f = std::forward<Callable>(func),
-                     ... captured_args = std::forward<Args>(args)]() mutable {
+  auto bound_task{[f = std::forward<Callable>(func),
+                   ... captured_args = std::forward<Args>(args)]() mutable {
     std::invoke(std::move(f), std::move(captured_args)...);
-  };
+  }};
 
-  auto task_shared_ptr =
-      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task));
-  auto task_ret = task_shared_ptr;
+  auto task_shared_ptr{
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task))};
+  auto task_ret{task_shared_ptr};
 
   this->m_pipe->writeAt(deadline, task_shared_ptr);
 
@@ -434,14 +434,14 @@ template <template <class> class QueueType>
 template <typename Callable, typename... Args>
 auto Dmn_Async<QueueType>::addExecTaskWithWait(Callable &&func, Args &&...args)
     -> std::shared_ptr<Dmn_Async::Dmn_Async_Handle> {
-  auto bound_task = [f = std::forward<Callable>(func),
-                     ... captured_args = std::forward<Args>(args)]() mutable {
+  auto bound_task{[f = std::forward<Callable>(func),
+                   ... captured_args = std::forward<Args>(args)]() mutable {
     std::invoke(std::move(f), std::move(captured_args)...);
-  };
+  }};
 
-  auto task_shared_ptr =
-      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task));
-  auto task_ret = task_shared_ptr;
+  auto task_shared_ptr{
+      std::make_shared<Dmn_Async::Dmn_Async_Handle>(std::move(bound_task))};
+  auto task_ret{task_shared_ptr};
 
   this->m_pipe->write(task_shared_ptr);
 
@@ -458,11 +458,10 @@ auto Dmn_Async<QueueType>::addExecTaskFuture(Callable &&func, Args &&...args)
   static_assert(!std::is_reference_v<Result>,
                 "Dmn_Async future tasks must return an owned value or void");
 
-  auto promise = std::make_shared<std::promise<Result>>();
-  auto future = promise->get_future();
-  auto completionTask = [promise, callable = std::forward<Callable>(func),
-                         ... captured_args =
-                             std::forward<Args>(args)]() mutable {
+  auto promise{std::make_shared<std::promise<Result>>()};
+  auto future{promise->get_future()};
+  auto completionTask{[promise, callable = std::forward<Callable>(func),
+                       ... captured_args = std::forward<Args>(args)]() mutable {
     try {
       if constexpr (std::is_void_v<Result>) {
         std::invoke(std::move(callable), std::move(captured_args)...);
@@ -474,7 +473,7 @@ auto Dmn_Async<QueueType>::addExecTaskFuture(Callable &&func, Args &&...args)
     } catch (...) {
       promise->set_exception(std::current_exception());
     }
-  };
+  }};
 
   this->addExecTaskWithWait(std::move(completionTask));
 
@@ -493,11 +492,10 @@ auto Dmn_Async<QueueType>::addExecTaskAfterFuture(
   static_assert(!std::is_reference_v<Result>,
                 "Dmn_Async future tasks must return an owned value or void");
 
-  auto promise = std::make_shared<std::promise<Result>>();
-  auto future = promise->get_future();
-  auto completionTask = [promise, callable = std::forward<Callable>(func),
-                         ... captured_args =
-                             std::forward<Args>(args)]() mutable {
+  auto promise{std::make_shared<std::promise<Result>>()};
+  auto future{promise->get_future()};
+  auto completionTask{[promise, callable = std::forward<Callable>(func),
+                       ... captured_args = std::forward<Args>(args)]() mutable {
     try {
       if constexpr (std::is_void_v<Result>) {
         std::invoke(std::move(callable), std::move(captured_args)...);
@@ -509,7 +507,7 @@ auto Dmn_Async<QueueType>::addExecTaskAfterFuture(
     } catch (...) {
       promise->set_exception(std::current_exception());
     }
-  };
+  }};
 
   this->addExecTaskAfterWithWait(duration, std::move(completionTask));
 

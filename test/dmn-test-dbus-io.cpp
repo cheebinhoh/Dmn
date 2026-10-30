@@ -129,7 +129,7 @@ void sendByteSignal(std::string_view path, const std::string &payload,
 }
 
 TEST(DmnDbusIoTest, RejectsInvalidQueueLimitsBeforeOpeningBus) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 0;
   EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::invalid_argument);
 
@@ -153,7 +153,7 @@ TEST(DmnDbusIoTest, RejectsInvalidQueueLimitsBeforeOpeningBus) {
 }
 
 TEST(DmnDbusIoTest, RejectsInvalidSignalTupleBeforeOpeningBus) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.signal_path = "not/an/object/path";
   EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::invalid_argument);
 
@@ -163,7 +163,7 @@ TEST(DmnDbusIoTest, RejectsInvalidSignalTupleBeforeOpeningBus) {
 }
 
 TEST(DmnDbusIoTest, RejectsInvalidExplicitBusAddressWithoutFallback) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.bus_address = "not-a-dbus-address";
   EXPECT_THROW(dmn::Dmn_DbusInput input{config}, std::system_error);
   EXPECT_THROW(dmn::Dmn_DbusOutput output{config}, std::system_error);
@@ -187,7 +187,7 @@ TEST(DmnDbusIoTest, AddMatchPolicyDenialFailsConstructionAndClosesConnection) {
   PrivateBus bus{daemonConfig};
   ASSERT_TRUE(bus.valid());
 
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.bus_address = bus.address();
   const auto initialNameCount{dmn_test_dbus::busNameCount(bus.address())};
 
@@ -204,7 +204,7 @@ TEST(DmnDbusIoTest, AddMatchPolicyDenialFailsConstructionAndClosesConnection) {
 }
 
 TEST(DmnDbusIoTest, ConfiguredSignalTupleIsIsolatedFromDefaultTuple) {
-  auto customConfig = makeConfig();
+  auto customConfig{makeConfig()};
   customConfig.signal_path = "/org/example/ByteIo";
   customConfig.signal_interface = "org.example.ByteIo";
   customConfig.signal_member = "Payload";
@@ -212,10 +212,10 @@ TEST(DmnDbusIoTest, ConfiguredSignalTupleIsIsolatedFromDefaultTuple) {
   dmn::Dmn_DbusInput customInput{customConfig};
   dmn::Dmn_DbusInput defaultInput{makeConfig()};
   dmn::Dmn_DbusOutput customOutput{customConfig};
-  auto customRead = std::async(std::launch::async,
-                               [&customInput] { return customInput.read(); });
-  auto defaultRead = std::async(
-      std::launch::async, [&defaultInput] { return defaultInput.read(); });
+  auto customRead{std::async(std::launch::async,
+                             [&customInput] { return customInput.read(); })};
+  auto defaultRead{std::async(std::launch::async,
+                              [&defaultInput] { return defaultInput.read(); })};
   const std::string payload{"custom-route"};
 
   customOutput.write(payload);
@@ -234,7 +234,7 @@ TEST(DmnDbusIoTest, ConfiguredSignalTupleIsIsolatedFromDefaultTuple) {
 }
 
 TEST(DmnDbusIoTest, DeliversBinaryPayloadToEveryMatchingSubscriber) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   dmn::Dmn_DbusInput first{config};
   dmn::Dmn_DbusInput second{config};
   dmn::Dmn_DbusOutput output{config};
@@ -242,10 +242,10 @@ TEST(DmnDbusIoTest, DeliversBinaryPayloadToEveryMatchingSubscriber) {
 
   output.write(payload);
 
-  auto firstRead =
-      std::async(std::launch::async, [&first] { return first.read(); });
-  auto secondRead =
-      std::async(std::launch::async, [&second] { return second.read(); });
+  auto firstRead{
+      std::async(std::launch::async, [&first] { return first.read(); })};
+  auto secondRead{
+      std::async(std::launch::async, [&second] { return second.read(); })};
 
   ASSERT_EQ(firstRead.wait_for(3s), std::future_status::ready);
   ASSERT_EQ(secondRead.wait_for(3s), std::future_status::ready);
@@ -255,14 +255,14 @@ TEST(DmnDbusIoTest, DeliversBinaryPayloadToEveryMatchingSubscriber) {
   EXPECT_EQ(output.status().messages_written, 1U);
 
   output.write(std::string{});
-  auto firstEmptyRead =
-      std::async(std::launch::async, [&first] { return first.read(); });
-  auto secondEmptyRead =
-      std::async(std::launch::async, [&second] { return second.read(); });
+  auto firstEmptyRead{
+      std::async(std::launch::async, [&first] { return first.read(); })};
+  auto secondEmptyRead{
+      std::async(std::launch::async, [&second] { return second.read(); })};
   ASSERT_EQ(firstEmptyRead.wait_for(3s), std::future_status::ready);
   ASSERT_EQ(secondEmptyRead.wait_for(3s), std::future_status::ready);
-  const auto firstEmpty = firstEmptyRead.get();
-  const auto secondEmpty = secondEmptyRead.get();
+  const auto firstEmpty{firstEmptyRead.get()};
+  const auto secondEmpty{secondEmptyRead.get()};
   ASSERT_TRUE(firstEmpty);
   ASSERT_TRUE(secondEmpty);
   EXPECT_TRUE(firstEmpty->empty());
@@ -270,7 +270,7 @@ TEST(DmnDbusIoTest, DeliversBinaryPayloadToEveryMatchingSubscriber) {
 }
 
 TEST(DmnDbusIoTest, ReportsMalformedBodyAndIgnoresNonmatchingSignal) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   dmn::Dmn_DbusInput input{config};
 
   sendMalformedSignal();
@@ -289,7 +289,7 @@ TEST(DmnDbusIoTest, ReportsMalformedBodyAndIgnoresNonmatchingSignal) {
 }
 
 TEST(DmnDbusIoTest, RejectsOversizedSignalBeforeQueueAdmission) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 4;
   config.max_queued_bytes = 4;
   dmn::Dmn_DbusInput input{config};
@@ -301,7 +301,7 @@ TEST(DmnDbusIoTest, RejectsOversizedSignalBeforeQueueAdmission) {
 }
 
 TEST(DmnDbusIoTest, EnforcesPayloadLimitAndUnsupportedDirections) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 4;
   config.max_queued_bytes = 8;
   dmn::Dmn_DbusInput input{config};
@@ -330,7 +330,7 @@ TEST(DmnDbusIoTest, EnforcesPayloadLimitAndUnsupportedDirections) {
 }
 
 TEST(DmnDbusIoTest, DropsNewestWhenInputMessageQueueIsFull) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 4;
   config.max_queued_messages = 1;
   config.max_queued_bytes = 8;
@@ -343,7 +343,7 @@ TEST(DmnDbusIoTest, DropsNewestWhenInputMessageQueueIsFull) {
   output.write("two!");
 
   ASSERT_TRUE(waitUntil([&input] {
-    const auto status = input.status();
+    const auto status{input.status()};
 
     return status.messages_received + status.input_queue_drops == 2;
   }));
@@ -357,12 +357,12 @@ TEST(DmnDbusIoTest, DropsNewestWhenInputMessageQueueIsFull) {
 }
 
 TEST(DmnDbusIoTest, EnforcesInputByteLimitIndependentlyOfMessageCount) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 4;
   config.max_queued_messages = 4;
   config.max_queued_bytes = 4;
   dmn::Dmn_DbusInput input{config};
-  auto outputConfig = config;
+  auto outputConfig{config};
   outputConfig.max_queued_bytes = 8;
   dmn::Dmn_DbusOutput output{outputConfig};
 
@@ -372,7 +372,7 @@ TEST(DmnDbusIoTest, EnforcesInputByteLimitIndependentlyOfMessageCount) {
   output.write("xy");
 
   ASSERT_TRUE(waitUntil([&input] {
-    const auto status = input.status();
+    const auto status{input.status()};
 
     return status.messages_received + status.input_queue_drops == 2;
   }));
@@ -390,7 +390,7 @@ TEST(DmnDbusIoTest, OutputWriteBlocksWhenQueueFullAndStaysBounded) {
   constexpr int kWrites{200};
   const std::string payload(kPayloadBytes, 'x');
 
-  auto byteConfig = makeConfig();
+  auto byteConfig{makeConfig()};
   byteConfig.max_message_bytes = kPayloadBytes;
   byteConfig.max_queued_messages = 16;
   byteConfig.max_queued_bytes = kPayloadBytes;
@@ -404,7 +404,7 @@ TEST(DmnDbusIoTest, OutputWriteBlocksWhenQueueFullAndStaysBounded) {
   EXPECT_GT(byteLimited.status().output_write_waits, 0U);
   byteLimited.shutdown();
 
-  auto countConfig = byteConfig;
+  auto countConfig{byteConfig};
   countConfig.max_queued_messages = 1;
   countConfig.max_queued_bytes = 2 * kPayloadBytes;
   dmn::Dmn_DbusOutput countLimited{countConfig};
@@ -420,13 +420,13 @@ TEST(DmnDbusIoTest, OutputWriteBlocksWhenQueueFullAndStaysBounded) {
 
 TEST(DmnDbusIoTest, BlockedOutputWritersAreAdmittedInArrivalOrder) {
   constexpr int kWriters{12};
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.max_message_bytes = 64 * 1024;
   config.max_queued_messages = 1;
   config.max_queued_bytes = 64 * 1024;
 
   // Only the output is constrained; the input must retain every message.
-  auto inputConfig = config;
+  auto inputConfig{config};
   inputConfig.max_queued_messages = kWriters * 2;
   inputConfig.max_queued_bytes = 2 * 1024 * 1024;
 
@@ -444,7 +444,7 @@ TEST(DmnDbusIoTest, BlockedOutputWritersAreAdmittedInArrivalOrder) {
   }
 
   for (int index = 0; index < kWriters; ++index) {
-    const auto received = input.read();
+    const auto received{input.read()};
     ASSERT_TRUE(received.has_value());
     EXPECT_EQ((*received)[0], static_cast<char>('A' + index));
   }
@@ -458,7 +458,7 @@ TEST(DmnDbusIoTest, BlockedOutputWritersAreAdmittedInArrivalOrder) {
 }
 
 TEST(DmnDbusIoTest, ShutdownDrainsQueuedInputThenCancelsBlockedRead) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   dmn::Dmn_DbusInput input{config};
   dmn::Dmn_DbusOutput output{config};
 
@@ -478,8 +478,8 @@ TEST(DmnDbusIoTest, ShutdownDrainsQueuedInputThenCancelsBlockedRead) {
   }
 
   dmn::Dmn_DbusInput blockedInput{config};
-  auto read = std::async(std::launch::async,
-                         [&blockedInput] { return blockedInput.read(); });
+  auto read{std::async(std::launch::async,
+                       [&blockedInput] { return blockedInput.read(); })};
   blockedInput.shutdown();
   EXPECT_EQ(read.wait_for(2s), std::future_status::ready);
   EXPECT_THROW(read.get(), std::system_error);
@@ -491,7 +491,7 @@ TEST(DmnDbusIoTest, ShutdownDrainsQueuedInputThenCancelsBlockedRead) {
 TEST(DmnDbusIoTest, DrainsQueuedInputBeforeReportingBusDisconnect) {
   PrivateBus bus;
   ASSERT_TRUE(bus.valid());
-  auto config = makeConfig();
+  auto config{makeConfig()};
   config.bus_address = bus.address();
   dmn::Dmn_DbusInput input{config};
   dmn::Dmn_DbusOutput output{config};
@@ -523,17 +523,17 @@ TEST(DmnDbusIoTest, PrivateBusesDoNotExchangeSignalsOrReplayHistory) {
   ASSERT_TRUE(publisherBus.valid());
   ASSERT_TRUE(subscriberBus.valid());
 
-  auto outputConfig = makeConfig();
+  auto outputConfig{makeConfig()};
   outputConfig.bus_address = publisherBus.address();
   dmn::Dmn_DbusOutput output{outputConfig};
   output.write("private");
   ASSERT_TRUE(waitUntil(
       [&output] { return output.status().messages_queued_to_libdbus == 1; }));
 
-  auto inputConfig = makeConfig();
+  auto inputConfig{makeConfig()};
   inputConfig.bus_address = subscriberBus.address();
   dmn::Dmn_DbusInput input{inputConfig};
-  auto read = std::async(std::launch::async, [&input] { return input.read(); });
+  auto read{std::async(std::launch::async, [&input] { return input.read(); })};
   std::this_thread::sleep_for(100ms);
   input.shutdown();
   ASSERT_EQ(read.wait_for(2s), std::future_status::ready);
@@ -541,7 +541,7 @@ TEST(DmnDbusIoTest, PrivateBusesDoNotExchangeSignalsOrReplayHistory) {
 }
 
 TEST(DmnDbusIoTest, ConcurrentSignalDeliveryAndInputShutdownCompleteSafely) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   dmn::Dmn_DbusInput input{config};
   dmn::Dmn_DbusOutput output{config};
   std::thread publisher{[&output] {
@@ -567,12 +567,12 @@ TEST(DmnDbusIoTest, ConcurrentSignalDeliveryAndInputShutdownCompleteSafely) {
 
 TEST(DmnDbusIoTest,
      DmnMesgNetExchangesApplicationMessagesOverInjectedEndpoints) {
-  auto config = makeConfig();
+  auto config{makeConfig()};
   dmn::Dmn_DbusInput observer{config};
-  auto inputA = std::make_shared<dmn::Dmn_DbusInput>(config);
-  auto outputA = std::make_shared<dmn::Dmn_DbusOutput>(config);
-  auto inputB = std::make_shared<dmn::Dmn_DbusInput>(config);
-  auto outputB = std::make_shared<dmn::Dmn_DbusOutput>(config);
+  auto inputA{std::make_shared<dmn::Dmn_DbusInput>(config)};
+  auto outputA{std::make_shared<dmn::Dmn_DbusOutput>(config)};
+  auto inputB{std::make_shared<dmn::Dmn_DbusInput>(config)};
+  auto outputB{std::make_shared<dmn::Dmn_DbusOutput>(config)};
 
   std::atomic<bool> readyA{};
   std::atomic<bool> readyB{};
@@ -583,7 +583,7 @@ TEST(DmnDbusIoTest,
   std::thread observerWorker{[&] {
     while (true) {
       try {
-        const auto payload = observer.read();
+        const auto payload{observer.read()};
         if (!payload) {
           continue;
         }
@@ -628,10 +628,10 @@ TEST(DmnDbusIoTest,
   }};
   InputThreadGuard observerGuard{observer, observerWorker};
 
-  auto nodeA =
-      std::make_unique<dmn::Dmn_DMesgNet>("dbus-node-a", inputA, outputA);
-  auto nodeB =
-      std::make_unique<dmn::Dmn_DMesgNet>("dbus-node-b", inputB, outputB);
+  auto nodeA{
+      std::make_unique<dmn::Dmn_DMesgNet>("dbus-node-a", inputA, outputA)};
+  auto nodeB{
+      std::make_unique<dmn::Dmn_DMesgNet>("dbus-node-b", inputB, outputB)};
 
   const bool ready{waitUntil(
       [&readyA, &readyB] { return readyA.load() && readyB.load(); }, 20s)};
@@ -641,10 +641,10 @@ TEST(DmnDbusIoTest,
       << " input B received=" << inputB->status().messages_received
       << " output B submitted=" << outputB->status().messages_queued_to_libdbus;
 
-  auto receiverA = nodeA->openHandler("dbus-receiver-a", "from-b");
-  auto receiverB = nodeB->openHandler("dbus-receiver-b", "from-a");
-  auto senderA = nodeA->openHandler("dbus-sender-a");
-  auto senderB = nodeB->openHandler("dbus-sender-b");
+  auto receiverA{nodeA->openHandler("dbus-receiver-a", "from-b")};
+  auto receiverB{nodeB->openHandler("dbus-receiver-b", "from-a")};
+  auto senderA{nodeA->openHandler("dbus-sender-a")};
+  auto senderB{nodeB->openHandler("dbus-sender-b")};
   dmn::DMesgPb messageA;
   messageA.set_topic("from-a");
   messageA.set_type(dmn::DMesgTypePb::message);
@@ -654,20 +654,20 @@ TEST(DmnDbusIoTest,
   messageB.set_type(dmn::DMesgTypePb::message);
   messageB.mutable_body()->set_message("B to A");
 
-  auto sendA = std::async(std::launch::async,
-                          [&senderA, &messageA] { senderA->write(messageA); });
-  auto sendB = std::async(std::launch::async,
-                          [&senderB, &messageB] { senderB->write(messageB); });
+  auto sendA{std::async(std::launch::async,
+                        [&senderA, &messageA] { senderA->write(messageA); })};
+  auto sendB{std::async(std::launch::async,
+                        [&senderB, &messageB] { senderB->write(messageB); })};
   sendA.get();
   sendB.get();
-  auto receivedA = std::async(std::launch::async,
-                              [&receiverA] { return receiverA->read(); });
-  auto receivedB = std::async(std::launch::async,
-                              [&receiverB] { return receiverB->read(); });
+  auto receivedA{std::async(std::launch::async,
+                            [&receiverA] { return receiverA->read(); })};
+  auto receivedB{std::async(std::launch::async,
+                            [&receiverB] { return receiverB->read(); })};
   ASSERT_EQ(receivedA.wait_for(3s), std::future_status::ready);
   ASSERT_EQ(receivedB.wait_for(3s), std::future_status::ready);
-  const auto messageReadA = receivedA.get();
-  const auto messageReadB = receivedB.get();
+  const auto messageReadA{receivedA.get()};
+  const auto messageReadB{receivedB.get()};
   ASSERT_TRUE(messageReadA);
   ASSERT_TRUE(messageReadB);
   EXPECT_EQ(messageReadA->body().message(), "B to A");
@@ -685,7 +685,7 @@ TEST(DmnDbusIoTest,
     return outputA->status().messages_written > writesBeforeDestroy;
   }));
   ASSERT_TRUE(waitUntil([&outputA] {
-    const auto status = outputA->status();
+    const auto status{outputA->status()};
 
     return status.messages_queued_to_libdbus == status.messages_written;
   }));

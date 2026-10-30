@@ -525,7 +525,7 @@ auto Dmn_Pipe<T, QueueType>::read(size_t count,
 template <typename T, typename QueueType>
 auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
                                             long timeout) -> size_t {
-  auto dataList = this->pop(count, timeout);
+  auto dataList{this->pop(count, timeout)};
 
   size_t processedCount{};
 
@@ -547,7 +547,7 @@ auto Dmn_Pipe<T, QueueType>::readAndProcess(Dmn_Pipe::Task fn, size_t count,
   }
 #endif
   catch (...) {
-    const auto failure = std::current_exception();
+    const auto failure{std::current_exception()};
 
     {
       std::lock_guard<std::mutex> lock(m_mutex);
@@ -652,7 +652,7 @@ auto Dmn_Pipe<T, QueueType>::waitForEmpty() -> uint64_t {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     Dmn_Proc::testcancel();
-    const auto inbound_count = m_submitted_count;
+    const auto inbound_count{m_submitted_count};
 
     m_empty_cond.wait(lock, [this, inbound_count] {
       return m_count >= inbound_count || m_processing_exception || isShutdown();
@@ -697,7 +697,7 @@ void Dmn_Pipe<T, QueueType>::scheduledProcessingLoop(const Dmn_Pipe::Task &fn) {
           return;
         }
 
-        auto immediate_item = QueueType::popNoWait();
+        auto immediate_item{QueueType::popNoWait()};
         if (immediate_item) {
           item.emplace(std::move_if_noexcept(*immediate_item));
 
@@ -705,8 +705,8 @@ void Dmn_Pipe<T, QueueType>::scheduledProcessingLoop(const Dmn_Pipe::Task &fn) {
         }
 
         if (!m_scheduled_queue.empty()) {
-          const auto deadline = m_scheduled_queue.begin()->first;
-          const auto now = std::chrono::steady_clock::now();
+          const auto deadline{m_scheduled_queue.begin()->first};
+          const auto now{std::chrono::steady_clock::now()};
 
           if (deadline <= now) {
             item.emplace(std::move(m_scheduled_queue.begin()->second));

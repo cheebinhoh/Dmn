@@ -52,9 +52,8 @@ int main(int argc, char *argv[]) {
     write_configs_1[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
     write_configs_1[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-    std::shared_ptr<dmn::Dmn_Kafka> producer1 =
-        std::make_unique<dmn::Dmn_Kafka>(dmn::Dmn_Kafka::Role::kProducer,
-                                         write_configs_1);
+    std::shared_ptr<dmn::Dmn_Kafka> producer1{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kProducer, write_configs_1)};
 
     // reader for DMesgNet
     dmn::Dmn_Kafka::ConfigType read_configs_1{};
@@ -64,9 +63,8 @@ int main(int argc, char *argv[]) {
     read_configs_1["auto.offset.reset"] = "earliest";
     read_configs_1[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-    std::shared_ptr<dmn::Dmn_Kafka> consumer1 =
-        std::make_unique<dmn::Dmn_Kafka>(dmn::Dmn_Kafka::Role::kConsumer,
-                                         read_configs_1);
+    std::shared_ptr<dmn::Dmn_Kafka> consumer1{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kConsumer, read_configs_1)};
 
     // dmesgnet2
     // writer for DMesgNet
@@ -76,9 +74,8 @@ int main(int argc, char *argv[]) {
     write_configs_2[dmn::Dmn_Kafka::Topic] = "Dmn_dmesgnet";
     write_configs_2[dmn::Dmn_Kafka::Key] = "Dmn_dmesgnet";
 
-    std::shared_ptr<dmn::Dmn_Kafka> producer2 =
-        std::make_unique<dmn::Dmn_Kafka>(dmn::Dmn_Kafka::Role::kProducer,
-                                         write_configs_2);
+    std::shared_ptr<dmn::Dmn_Kafka> producer2{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kProducer, write_configs_2)};
 
     // reader for DMesgNet
     dmn::Dmn_Kafka::ConfigType read_configs_2{};
@@ -88,9 +85,8 @@ int main(int argc, char *argv[]) {
     read_configs_2["auto.offset.reset"] = "earliest";
     read_configs_2[dmn::Dmn_Kafka::PollTimeoutMs] = "7000";
 
-    std::shared_ptr<dmn::Dmn_Kafka> consumer2 =
-        std::make_unique<dmn::Dmn_Kafka>(dmn::Dmn_Kafka::Role::kConsumer,
-                                         read_configs_2);
+    std::shared_ptr<dmn::Dmn_Kafka> consumer2{std::make_unique<dmn::Dmn_Kafka>(
+        dmn::Dmn_Kafka::Role::kConsumer, read_configs_2)};
 
     // dmesgnet1
     dmn::Dmn_DMesgNet dmesgnet1{"dmesg1", std::move(consumer1),
@@ -112,13 +108,13 @@ int main(int argc, char *argv[]) {
     std::map<std::string, std::string> master_list{};
     int n{};
     while (n < 10000) {
-      auto data_read = consumer_other.read();
+      auto data_read{consumer_other.read()};
       if (data_read) {
         dmesgpb_read.ParseFromString(*data_read);
 
-        int i = 0;
+        int i{0};
         while (i < dmesgpb_read.body().sys().nodelist().size()) {
-          auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+          auto id{dmesgpb_read.body().sys().nodelist().Get(i).identifier()};
           node_list[dmesgpb_read.body().sys().self().identifier()] = id;
           i++;
         }

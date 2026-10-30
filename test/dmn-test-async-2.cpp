@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   dmn::Dmn_Async async{"run"};
 
   Counter counter{};
-  auto waitHandler = async.addExecTaskWithWait(std::ref(counter), 5);
+  auto waitHandler{async.addExecTaskWithWait(std::ref(counter), 5)};
   waitHandler->wait();
 
   EXPECT_TRUE(counter.getCount() == 5);

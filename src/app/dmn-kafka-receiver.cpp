@@ -23,7 +23,7 @@
 
 #include "dmn-kafka-example-config.hpp"
 
-static volatile sig_atomic_t run = 1;
+static volatile sig_atomic_t run{1};
 
 /**
  * @brief Signal termination of program
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     return EXIT_SUCCESS;
   }
 
-  auto config = dmn::app::kafkaExampleConfig();
+  auto config{dmn::app::kafkaExampleConfig()};
   if (!config) {
     std::cerr << "Kafka example configuration error: " << config.error()
               << '\n';
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  auto read_configs = std::move(*config);
+  auto read_configs{std::move(*config)};
   read_configs["group.id"] = "dmn-kafka-receiver";
   read_configs[dmn::Dmn_Kafka::Topic] = "timer_counter";
   read_configs["auto.offset.reset"] = "earliest";
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
   // Start polling for messages.
   while (run) {
-    auto data = consumer.read();
+    auto data{consumer.read()};
 
     if (data) {
       std::cout << "Consumed message: " << (*data) << "\n";

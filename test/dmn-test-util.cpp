@@ -74,10 +74,10 @@ TEST(DmnUtilTest, StringCompareRejectsMalformedUtf8OnlyWhenFolding) {
 }
 
 TEST(DmnUtilTest, ScopeGuardRunsCleanupOnce) {
-  int calls = 0;
+  int calls{0};
 
   {
-    auto guard = dmn::make_scope_guard([&]() noexcept { ++calls; });
+    auto guard{dmn::make_scope_guard([&]() noexcept { ++calls; })};
     static_cast<void>(guard);
   }
 
@@ -85,10 +85,10 @@ TEST(DmnUtilTest, ScopeGuardRunsCleanupOnce) {
 }
 
 TEST(DmnUtilTest, ScopeGuardReleaseDismissesCleanup) {
-  int calls = 0;
+  int calls{0};
 
   {
-    auto guard = dmn::make_scope_guard([&]() noexcept { ++calls; });
+    auto guard{dmn::make_scope_guard([&]() noexcept { ++calls; })};
     guard.release();
   }
 
@@ -96,11 +96,11 @@ TEST(DmnUtilTest, ScopeGuardReleaseDismissesCleanup) {
 }
 
 TEST(DmnUtilTest, ScopeGuardMoveTransfersCleanupResponsibility) {
-  int calls = 0;
+  int calls{0};
 
   {
-    auto source = dmn::make_scope_guard([&]() noexcept { ++calls; });
-    auto destination = std::move(source);
+    auto source{dmn::make_scope_guard([&]() noexcept { ++calls; })};
+    auto destination{std::move(source)};
     static_cast<void>(destination);
   }
 

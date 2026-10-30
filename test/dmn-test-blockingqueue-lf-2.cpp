@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
 
   std::uniform_int_distribution<> global_distr(1, 10);
 
-  auto queue = std::make_unique<dmn::Dmn_BlockingQueue_Lf<int>>();
+  auto queue{std::make_unique<dmn::Dmn_BlockingQueue_Lf<int>>()};
 
   long long count1{};
-  auto proc1 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc1{std::make_unique<dmn::Dmn_Proc>(
       "proc1", [&queue, &global_distr, &count1]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -37,15 +37,15 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count1++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   long long count2{};
-  auto proc2 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc2{std::make_unique<dmn::Dmn_Proc>(
       "proc2", [&queue, &global_distr, &count2]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -54,15 +54,15 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count2++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   long long count3{};
-  auto proc3 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc3{std::make_unique<dmn::Dmn_Proc>(
       "proc3", [&queue, &global_distr, &count3]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -71,15 +71,15 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count3++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   long long count4{};
-  auto proc4 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc4{std::make_unique<dmn::Dmn_Proc>(
       "proc4", [&queue, &global_distr, &count4]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -88,15 +88,15 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count4++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   long long count5{};
-  auto proc5 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc5{std::make_unique<dmn::Dmn_Proc>(
       "proc5", [&queue, &global_distr, &count5]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -105,15 +105,15 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count5++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   long long count6{};
-  auto proc6 = std::make_unique<dmn::Dmn_Proc>(
+  auto proc6{std::make_unique<dmn::Dmn_Proc>(
       "proc6", [&queue, &global_distr, &count6]() {
         std::mt19937 local_gen(std::random_device{}());
 
@@ -122,12 +122,12 @@ int main(int argc, char *argv[]) {
             [[maybe_unused]] int i = queue->pop();
             count6++;
 
-            int pause = global_distr(local_gen);
+            int pause{global_distr(local_gen)};
             std::this_thread::sleep_for(std::chrono::microseconds(pause));
           }
         } catch (...) {
         }
-      });
+      })};
 
   proc1->exec();
   proc2->exec();
@@ -138,23 +138,22 @@ int main(int argc, char *argv[]) {
 
   std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start{std::chrono::high_resolution_clock::now()};
 
   for (int i = 0; i < 10000; i++) {
     queue->push(i);
   }
 
-  auto endSending = std::chrono::high_resolution_clock::now();
-  auto durationSending =
-      std::chrono::duration_cast<std::chrono::microseconds>(endSending - start);
+  auto endSending{std::chrono::high_resolution_clock::now()};
+  auto durationSending{std::chrono::duration_cast<std::chrono::microseconds>(
+      endSending - start)};
 
-  size_t total = queue->waitForEmpty();
+  size_t total{queue->waitForEmpty()};
   EXPECT_TRUE((10000 == total));
 
-  auto endProcessing = std::chrono::high_resolution_clock::now();
-  auto durationProcessing =
-      std::chrono::duration_cast<std::chrono::microseconds>(endProcessing -
-                                                            start);
+  auto endProcessing{std::chrono::high_resolution_clock::now()};
+  auto durationProcessing{std::chrono::duration_cast<std::chrono::microseconds>(
+      endProcessing - start)};
 
   std::this_thread::sleep_for(std::chrono::microseconds(10000));
   queue = {};

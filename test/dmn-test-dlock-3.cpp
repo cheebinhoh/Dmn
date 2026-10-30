@@ -37,13 +37,13 @@ TEST(DlockLocalMirror, SingleGrantedEntryIsCanonicalAndValid) {
   table.m_entries.push_back(entry);
 
   EXPECT_TRUE(table.validate());
-  auto proto = table.toProto();
+  auto proto{table.toProto()};
   EXPECT_EQ(proto.domain(), "domain-a");
   EXPECT_EQ(proto.entries_size(), 1);
   EXPECT_EQ(proto.entries(0).range().start(), 10);
   EXPECT_EQ(proto.entries(0).range().end(), 20);
 
-  auto round = dmn::Dmn_DLock_TableSnapshot::fromProto(proto);
+  auto round{dmn::Dmn_DLock_TableSnapshot::fromProto(proto)};
   EXPECT_EQ(round.m_entries.size(), 1U);
   EXPECT_EQ(round.m_entries[0].m_request_id, "req-1");
   EXPECT_TRUE(round.validate());
@@ -83,8 +83,8 @@ TEST(DlockLocalMirror, OverlappingGrantedEntriesAreRejected) {
 
   EXPECT_FALSE(table.validate());
 
-  auto candidate = two;
-  auto result = table.withCandidate(candidate);
+  auto candidate{two};
+  auto result{table.withCandidate(candidate)};
   EXPECT_EQ(result.m_entries.size(), 0U);
 }
 
@@ -138,7 +138,7 @@ TEST(DlockLocalMirror, CandidateClassificationCoversInvalidWaitingAndGranted) {
   grant.m_granted = true;
   table.m_entries.push_back(grant);
 
-  auto candidate = grant;
+  auto candidate{grant};
   candidate.m_request_id = "candidate";
   candidate.m_session_id = "session-candidate";
   candidate.m_range = {15, 16};
@@ -155,7 +155,7 @@ TEST(DlockLocalMirror, CandidateClassificationCoversInvalidWaitingAndGranted) {
             dmn::Dmn_DLock_ResultCode::kInvalidRange);
 
   candidate.m_range = {21, 25};
-  const auto extended = table.withCandidate(candidate);
+  const auto extended{table.withCandidate(candidate)};
   EXPECT_EQ(extended.m_entries.size(), 2U);
   EXPECT_EQ(extended.m_table_version, 4U);
   EXPECT_EQ(table.m_entries.size(), 1U);
@@ -204,8 +204,8 @@ TEST(DlockLocalMirror, SnapshotCodecPreservesAllTableAndEntryFields) {
   entry.m_granted = true;
   table.m_entries.push_back(entry);
 
-  const auto proto = table.toProto();
-  const auto restored = dmn::Dmn_DLock_TableSnapshot::fromProto(proto);
+  const auto proto{table.toProto()};
+  const auto restored{dmn::Dmn_DLock_TableSnapshot::fromProto(proto)};
 
   EXPECT_EQ(restored.m_domain, table.m_domain);
   EXPECT_EQ(restored.m_schema_version, table.m_schema_version);
@@ -284,7 +284,7 @@ TEST(DlockLocalMirror, CandidateWithHigherPriorityWinsCanonicalOrder) {
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
 
   google::protobuf::ShutdownProtobufLibrary();
 

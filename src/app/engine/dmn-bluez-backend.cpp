@@ -278,8 +278,8 @@ public:
       -> Dmn_BackendResult override {
     std::lock_guard lock{m_mutex};
     try {
-      auto result = enabled ? client().startDiscovery(adapterPath)
-                            : client().stopDiscovery();
+      auto result { enabled ? client().startDiscovery(adapterPath)
+                            : client().stopDiscovery()};
       if (!result) {
         return std::unexpected(Dmn_BackendError{result.error().message});
       }
@@ -317,8 +317,8 @@ public:
                const std::atomic<bool> &cancel,
                const ProgressHandler &progress) -> Dmn_BackendResult override {
     try {
-      auto monitor = std::make_unique<Dmn_AncsBluezMonitor>(bluezConfig());
-      const auto handlerResult = monitor->setEventHandler(
+      auto monitor{std::make_unique<Dmn_AncsBluezMonitor>(bluezConfig())};
+      const auto handlerResult { monitor->setEventHandler(
           [this, identity](const Dmn_AncsEvent &event) {
             MonitorEventHandler handler;
             {
@@ -329,18 +329,18 @@ public:
             if (handler) {
               handler(identity, toEvent(event));
             }
-          });
+          })};
       if (!handlerResult) {
         return std::unexpected(Dmn_BackendError{handlerResult.error().message,
                                                 false, "ancs_startup",
                                                 handlerResult.error().message});
       }
 
-      const auto config = monitorConfig(identity, cancel, progress);
-      auto started = monitor->start(identity.m_device_address, config);
+      const auto config{monitorConfig(identity, cancel, progress)};
+      auto started{monitor->start(identity.m_device_address, config)};
       if (!started) {
-        const auto cancelled =
-            started.error().stage == Dmn_AncsMonitorStage::Cancelled;
+        const auto cancelled {
+            started.error().stage == Dmn_AncsMonitorStage::Cancelled};
 
         return std::unexpected(Dmn_BackendError{
             std::string{stageName(started.error().stage)} + ": " +
@@ -375,7 +375,7 @@ public:
     std::unique_ptr<Dmn_AncsBluezMonitor> monitor;
     {
       std::lock_guard lock{m_monitor_mutex};
-      const auto found = m_monitors.find(key(identity));
+      const auto found{m_monitors.find(key(identity))};
       if (found == m_monitors.end()) {
         return {};
       }
@@ -385,7 +385,7 @@ public:
     }
 
     try {
-      auto stopped = monitor->stop();
+      auto stopped{monitor->stop()};
       if (!stopped) {
         return std::unexpected(Dmn_BackendError{stopped.error().message});
       }
@@ -478,7 +478,7 @@ private:
   auto snapshotLocked(const std::chrono::milliseconds timeout)
       -> std::expected<Dmn_BackendInventory, Dmn_BackendError> {
     try {
-      auto inventory = client().snapshot(timeout);
+      auto inventory{client().snapshot(timeout)};
       if (!inventory) {
         return std::unexpected(Dmn_BackendError{inventory.error().message});
       }
@@ -493,7 +493,7 @@ private:
       }
 
       for (const auto &device : inventory->devices) {
-        const auto adapter = adapterAddress.find(device.adapter_path);
+        const auto adapter{adapterAddress.find(device.adapter_path)};
         if (adapter == adapterAddress.end()) {
           continue;
         }
@@ -523,19 +523,19 @@ private:
     }
 
     try {
-      const auto deadline =
-          std::chrono::steady_clock::now() + kDeviceStateTimeout;
-      const auto result =
+      const auto deadline {
+          std::chrono::steady_clock::now() + kDeviceStateTimeout};
+      const auto result {
           wantConnected ? client().connectDevice(identity.m_device_address,
                                                  identity.m_adapter_address,
                                                  kDeviceStateTimeout)
                         : client().disconnectDevice(identity.m_device_address,
                                                     identity.m_adapter_address,
-                                                    kDeviceStateTimeout);
-      const auto cancelled = [&] {
+                                                    kDeviceStateTimeout)};
+      const auto cancelled { [&] {
         return wantConnected &&
                m_cancel_connect.load(std::memory_order_acquire);
-      };
+      }};
 
       if (cancelled()) {
         return std::unexpected(Dmn_BackendError{"Canceled", true});
@@ -551,9 +551,9 @@ private:
           return std::unexpected(Dmn_BackendError{"Canceled", true});
         }
 
-        const auto remaining =
+        const auto remaining {
             std::chrono::duration_cast<std::chrono::milliseconds>(
-                deadline - std::chrono::steady_clock::now());
+                deadline - std::chrono::steady_clock::now())};
         if (remaining <= std::chrono::milliseconds::zero()) {
           return std::unexpected(Dmn_BackendError{
               std::string{"device did not reach the requested "} +
@@ -561,20 +561,20 @@ private:
               " state before the deadline"});
         }
 
-        auto current =
-            snapshotLocked(std::min(remaining, kDeviceSnapshotTimeout));
+        auto current {
+            snapshotLocked(std::min(remaining, kDeviceSnapshotTimeout))};
         if (!current) {
           return std::unexpected(current.error());
         }
 
-        const auto device =
+        const auto device {
             std::find_if(current->m_devices.begin(), current->m_devices.end(),
                          [&identity](const auto &entry) {
                            return entry.m_identity.m_adapter_address ==
                                       identity.m_adapter_address &&
                                   lower(entry.m_identity.m_device_address) ==
                                       lower(identity.m_device_address);
-                         });
+                         })};
         if (device == current->m_devices.end()) {
           return std::unexpected(Dmn_BackendError{
               "the device disappeared before its connection state was "

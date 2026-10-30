@@ -116,9 +116,9 @@ TEST(DmnProc, ClientFlagLetsTaskExitCooperativelyBeforeWait) {
 
 TEST(DmnProc, ExposesWorkerThreadIdAfterTaskCompletes) {
   std::promise<dmn::Dmn_Proc::ThreadId> workerIdPromise;
-  auto workerIdFuture = workerIdPromise.get_future();
+  auto workerIdFuture{workerIdPromise.get_future()};
   std::promise<void> finishPromise;
-  auto finishFuture = finishPromise.get_future().share();
+  auto finishFuture{finishPromise.get_future().share()};
   dmn::Dmn_Proc proc{
       "worker-id",
       [&] {
@@ -131,7 +131,7 @@ TEST(DmnProc, ExposesWorkerThreadIdAfterTaskCompletes) {
   ASSERT_TRUE(proc.exec());
   ASSERT_EQ(workerIdFuture.wait_for(std::chrono::seconds(2)),
             std::future_status::ready);
-  const auto workerId = workerIdFuture.get();
+  const auto workerId{workerIdFuture.get()};
   EXPECT_NE(workerId, dmn::Dmn_Proc::ThreadId{});
   EXPECT_EQ(proc.getThreadId(), workerId);
 

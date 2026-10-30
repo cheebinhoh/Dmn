@@ -60,13 +60,13 @@ int main(int argc, char *argv[]) {
     std::map<std::string, std::string> master_list{};
     int n{};
     while (n < 10000) {
-      auto data_read = consumer_other.read();
+      auto data_read{consumer_other.read()};
       if (data_read) {
         dmesgpb_read.ParseFromString(*data_read);
 
-        int i = 0;
+        int i{0};
         while (i < dmesgpb_read.body().sys().nodelist().size()) {
-          auto id = dmesgpb_read.body().sys().nodelist().Get(i).identifier();
+          auto id{dmesgpb_read.body().sys().nodelist().Get(i).identifier()};
           node_list[dmesgpb_read.body().sys().self().identifier()] = id;
           i++;
         }

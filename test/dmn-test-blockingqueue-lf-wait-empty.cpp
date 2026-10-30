@@ -26,8 +26,8 @@ public:
 
 protected:
   auto enterInflightGuardFnc() -> uint64_t override {
-    const auto epoch_index =
-        dmn::Dmn_BlockingQueue_Lf<int>::enterInflightGuardFnc();
+    const auto epoch_index{
+        dmn::Dmn_BlockingQueue_Lf<int>::enterInflightGuardFnc()};
 
     if (m_signal_inflight_entry.exchange(false, std::memory_order_acq_rel)) {
       m_inflight_entry.set_value();
@@ -47,11 +47,11 @@ TEST(DmnBlockingQueueLfWaitForEmptyTest, WaitsForConcurrentConsumerToDrain) {
   ObservableBlockingQueue queue{};
   queue.push(42);
 
-  auto inflight_entry = queue.nextInflightEntryFuture();
+  auto inflight_entry{queue.nextInflightEntryFuture()};
   queue.signalNextInflightEntry();
 
   std::promise<uint64_t> drained_count_promise{};
-  auto drained_count = drained_count_promise.get_future();
+  auto drained_count{drained_count_promise.get_future()};
   std::thread wait_thread{[&queue, &drained_count_promise] {
     drained_count_promise.set_value(queue.waitForEmpty());
   }};
@@ -74,11 +74,11 @@ TEST(DmnBlockingQueueLfWaitForEmptyTest, ReturnsWhenShutdownBegins) {
   ObservableBlockingQueue queue{};
   queue.push(42);
 
-  auto inflight_entry = queue.nextInflightEntryFuture();
+  auto inflight_entry{queue.nextInflightEntryFuture()};
   queue.signalNextInflightEntry();
 
   std::promise<uint64_t> drained_count_promise{};
-  auto drained_count = drained_count_promise.get_future();
+  auto drained_count{drained_count_promise.get_future()};
   std::thread wait_thread{[&queue, &drained_count_promise] {
     drained_count_promise.set_value(queue.waitForEmpty());
   }};

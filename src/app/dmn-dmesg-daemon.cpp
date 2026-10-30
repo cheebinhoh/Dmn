@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  auto inst = dmn::Dmn_Runtime_Manager<>::createInstance();
+  auto inst{dmn::Dmn_Runtime_Manager<>::createInstance()};
 
   // for TESTING
   dmn::Dmn_Proc proc{

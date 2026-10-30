@@ -23,10 +23,10 @@ int main(int argc, char *argv[]) {
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
 
-    auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+    auto dmesg_write_handle{dmesg.openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_write_handle);
 
-    auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
+    auto dmesg_read_handle1{dmesg.openHandler("readHandler1")};
 
     dmn::DMesgPb dmesgpb1{};
     dmesgpb1.set_topic("id1");

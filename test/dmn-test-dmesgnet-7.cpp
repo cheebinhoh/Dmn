@@ -29,10 +29,10 @@ int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   {
-    std::shared_ptr<dmn::Dmn_Io<std::string>> readSocket1 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001);
-    std::shared_ptr<dmn::Dmn_Io<std::string>> writeSocket1 =
-        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true);
+    std::shared_ptr<dmn::Dmn_Io<std::string>> readSocket1{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5001)};
+    std::shared_ptr<dmn::Dmn_Io<std::string>> writeSocket1{
+        std::make_unique<dmn::Dmn_Socket>("127.0.0.1", 5000, true)};
 
     bool readData{};
     dmn::DMesgPb msgPb{};
@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
     readSocket1.reset();
     writeSocket1.reset();
 
-    auto readHandler = dmesgnet1.openHandler(
-        "dmesg-1-handler", nullptr,
-        [&msgPb, &readData](dmn::DMesgPb data) mutable -> void {
-          readData = true;
-          msgPb = std::move(data);
-        });
+    auto readHandler{
+        dmesgnet1.openHandler("dmesg-1-handler", nullptr,
+                              [&msgPb, &readData](dmn::DMesgPb data) -> void {
+                                readData = true;
+                                msgPb = std::move(data);
+                              })};
 
     dmn::DMesgPb dmesgpb{};
     dmesgpb.set_topic("counter sync");

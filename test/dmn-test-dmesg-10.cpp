@@ -22,17 +22,17 @@ int main(int argc, char *argv[]) {
   {
     dmn::Dmn_DMesg dmesg{"dmesg"};
 
-    auto dmesg_write_handle = dmesg.openHandler("writeHandler");
+    auto dmesg_write_handle{dmesg.openHandler("writeHandler")};
     EXPECT_TRUE(dmesg_write_handle);
 
-    auto dmesg_read_handle1 = dmesg.openHandler("readHandler1");
+    auto dmesg_read_handle1{dmesg.openHandler("readHandler1")};
 
-    auto dmesg_read_handle2 = dmesg.openHandler(
+    auto dmesg_read_handle2{dmesg.openHandler(
         "readHandler2", [](const dmn::DMesgPb &dmesgpb) -> bool {
           return dmesgpb.body().message() != "message string 1";
-        });
+        })};
 
-    auto dmesg_read_handle_id2 = dmesg.openHandler("readHandler1", "id2");
+    auto dmesg_read_handle_id2{dmesg.openHandler("readHandler1", "id2")};
 
     dmn::DMesgPb dmesgpb1{};
     dmesgpb1.set_topic("id1");
@@ -52,13 +52,13 @@ int main(int argc, char *argv[]) {
     dmn::DMesgBodyPb *dmesgpb_body2 = dmesgpb2.mutable_body();
     dmesgpb_body2->set_message("message string 2");
 
-    dmn::DMesgPb dmesgpb3 = dmesgpb2;
-    dmn::DMesgPb dmesgpb4 = dmesgpb3;
+    dmn::DMesgPb dmesgpb3{dmesgpb2};
+    dmn::DMesgPb dmesgpb4{dmesgpb3};
 
     dmn::Dmn_Proc proc_read1{
         "read1", [&dmesg_read_handle1, &dmesgpb1]() -> void {
           std::cout << "before read1\n";
-          auto dmesgpb_read = dmesg_read_handle1->read();
+          auto dmesgpb_read{dmesg_read_handle1->read()};
           std::cout << "after read1, and proceed to validate read\n";
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb1.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     dmn::Dmn_Proc proc_read2{
         "read2", [&dmesg_read_handle2, &dmesgpb2]() -> void {
           std::cout << "before read2\n";
-          auto dmesgpb_read = dmesg_read_handle2->read();
+          auto dmesgpb_read{dmesg_read_handle2->read()};
           std::cout << "after read2, and proceed to validate read\n";
           EXPECT_TRUE(dmesgpb_read->topic() == dmesgpb2.topic());
           EXPECT_TRUE(dmesgpb_read->sourceidentifier() ==
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     proc_read1.wait();
     proc_read2.wait();
 
-    auto runningCounter = dmesg_write_handle->getTopicRunningCounter("id1");
+    auto runningCounter{dmesg_write_handle->getTopicRunningCounter("id1")};
 
     std::cout << "topic runningCounter: " << runningCounter << "\n";
 
@@ -103,11 +103,11 @@ int main(int argc, char *argv[]) {
     runningCounter = dmesg_write_handle->getTopicRunningCounter("id1");
     std::cout << "topic runningCounter: " << runningCounter << "\n";
 
-    auto ok = dmesg_write_handle->writeAndCheckConflict(dmesgpb3);
+    auto ok{dmesg_write_handle->writeAndCheckConflict(dmesgpb3)};
     EXPECT_TRUE((!ok));
     std::cout << "write without conflict: " << ok << "\n";
 
-    auto inConflict = dmesg_write_handle->isInConflict();
+    auto inConflict{dmesg_write_handle->isInConflict()};
     EXPECT_TRUE((inConflict));
 
     inConflict = dmesg_read_handle1->isInConflict();
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     inConflict = dmesg_read_handle1->isInConflict();
     EXPECT_TRUE((!inConflict));
 
-    auto dmesg_read_handle3 = dmesg.openHandler("readHandler3");
+    auto dmesg_read_handle3{dmesg.openHandler("readHandler3")};
 
     runningCounter = dmesg_read_handle3->getTopicRunningCounter("id1");
     std::cout << "Running counter for read_handle3: " << runningCounter << "\n";

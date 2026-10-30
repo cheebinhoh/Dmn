@@ -28,12 +28,12 @@ TEST(DmnSocketTest, PreservesEmptyDatagramsAndRejectsTruncation) {
   }
 
   sender.write(std::string{});
-  const auto empty = receiver.read();
+  const auto empty{receiver.read()};
   ASSERT_TRUE(empty.has_value());
   EXPECT_TRUE(empty->empty());
 
   sender.write("hello socket");
-  const auto message = receiver.read();
+  const auto message{receiver.read()};
   ASSERT_TRUE(message.has_value());
   EXPECT_EQ(*message, "hello socket");
 }

@@ -48,11 +48,11 @@ void Dmn_DeviceMonitorEventStore::append(Dmn_DeviceMonitorEvent event) {
   }
 
   m_next_sequence = std::max(m_next_sequence, event.m_sequence + 1);
-  const auto position =
+  const auto position{
       std::upper_bound(m_events.begin(), m_events.end(), event.m_sequence,
                        [](const auto sequence, const auto &candidate) {
                          return sequence < candidate.m_sequence;
-                       });
+                       })};
   m_events.insert(position, std::move(event));
   if (m_events.size() > m_maximum_events) {
     m_events.erase(m_events.begin());
@@ -85,16 +85,16 @@ auto Dmn_DeviceMonitorEventStore::events() const
 
 auto Dmn_DeviceMonitorEventStore::eventForSequence(
     const std::uint64_t sequence) const -> const Dmn_DeviceMonitorEvent * {
-  const auto event = std::find_if(m_events.begin(), m_events.end(),
-                                  [sequence](const auto &candidate) {
-                                    return candidate.m_sequence == sequence;
-                                  });
+  const auto event{std::find_if(m_events.begin(), m_events.end(),
+                                [sequence](const auto &candidate) {
+                                  return candidate.m_sequence == sequence;
+                                })};
 
   return event == m_events.end() ? nullptr : &*event;
 }
 
 auto Dmn_DeviceMonitorEventStore::clear() -> std::size_t {
-  const auto removed = m_events.size();
+  const auto removed{m_events.size()};
   m_events.clear();
   m_evicted_events = 0;
 
@@ -130,10 +130,10 @@ auto matchesEventFilter(const Dmn_DeviceMonitorEvent &event,
     return true;
   }
 
-  const auto query = caseFold(filter.m_search);
-  const auto containsQuery = [&query](const std::string_view value) {
+  const auto query{caseFold(filter.m_search)};
+  const auto containsQuery{[&query](const std::string_view value) {
     return caseFold(value).find(query) != std::string::npos;
-  };
+  }};
   if (containsQuery(deviceName) ||
       containsQuery(event.m_identity.m_adapter_address) ||
       containsQuery(event.m_identity.m_device_address)) {

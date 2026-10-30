@@ -59,8 +59,8 @@ auto stateManager() -> std::shared_ptr<dmn::Dmn_Runtime_State_Manager> {
 } // namespace
 
 TEST(DmnRuntimeState, CreatesSingletonManagerAndStateHandle) {
-  auto first = stateManager();
-  auto second = stateManager();
+  auto first{stateManager()};
+  auto second{stateManager()};
 
   EXPECT_NE(first, nullptr);
   EXPECT_EQ(first.get(), second.get());
@@ -70,7 +70,7 @@ TEST(DmnRuntimeState, CreatesSingletonManagerAndStateHandle) {
 }
 
 TEST(DmnRuntimeState, RejectsEmptyRuntimeCallback) {
-  auto state = stateManager()->createState("empty-callback");
+  auto state{stateManager()->createState("empty-callback")};
 
   EXPECT_THROW(state->setRuntimeStateFnc({}), std::invalid_argument);
   EXPECT_FALSE(state->hasStateFncs());
@@ -79,7 +79,7 @@ TEST(DmnRuntimeState, RejectsEmptyRuntimeCallback) {
 TEST(DmnRuntimeState, RejectsExternalMutationAfterSubmission) {
   using namespace std::chrono_literals;
 
-  auto state = stateManager()->createState("frozen-after-run");
+  auto state{stateManager()->createState("frozen-after-run")};
   state->setStateFnc([](dmn::Dmn_State &current) { current.setEnd(); });
   dmn::Dmn_State &base = *state;
 
@@ -99,9 +99,9 @@ TEST(DmnRuntimeState, RuntimeCallbackCanObserveCancellationDirectly) {
   using namespace std::chrono_literals;
 
   std::promise<void> callbackStarted;
-  auto callbackStartedFuture = callbackStarted.get_future();
+  auto callbackStartedFuture{callbackStarted.get_future()};
   std::atomic_bool observedCancellation{};
-  auto state = stateManager()->createState("runtime-aware-callback");
+  auto state{stateManager()->createState("runtime-aware-callback")};
   state->setRuntimeStateFnc([&callbackStarted, &observedCancellation](
                                 dmn::Dmn_Runtime_State &current) {
     callbackStarted.set_value();
@@ -132,7 +132,7 @@ TEST(DmnRuntimeState, RejectsRecursiveRunNextFromRuntimeCallback) {
 
   std::atomic_bool recursiveRunRejected{};
   std::atomic_int secondStateCount{};
-  auto state = stateManager()->createState("recursive-run-next");
+  auto state{stateManager()->createState("recursive-run-next")};
 
   state->setStateFnc(
       [&recursiveRunRejected](dmn::Dmn_State &current) {
@@ -165,15 +165,15 @@ TEST(DmnRuntimeState, RejectsRecursiveRunNextFromRuntimeCallback) {
 TEST(DmnRuntimeState, RejectsUnconfiguredAndPreRunCancelledStates) {
   using namespace std::chrono_literals;
 
-  auto manager = stateManager();
-  auto unconfigured = manager->createState("unconfigured");
-  auto unconfiguredFuture = unconfigured->getFuture();
+  auto manager{stateManager()};
+  auto unconfigured{manager->createState("unconfigured")};
+  auto unconfiguredFuture{unconfigured->getFuture()};
   EXPECT_FALSE(unconfigured->run());
   EXPECT_EQ(unconfiguredFuture.wait_for(0ms), std::future_status::timeout);
 
-  auto cancelled = manager->createState("cancelled");
-  auto cancelledFuture = cancelled->getFuture();
-  auto secondCancelledFuture = cancelled->getFuture();
+  auto cancelled{manager->createState("cancelled")};
+  auto cancelledFuture{cancelled->getFuture()};
+  auto secondCancelledFuture{cancelled->getFuture()};
   cancelled->cancel();
   cancelled->cancel();
 
@@ -188,9 +188,9 @@ TEST(DmnRuntimeState, RejectsUnconfiguredAndPreRunCancelledStates) {
 TEST(DmnRuntimeState, ExecutesStatesAndReportsStateFailures) {
   using namespace std::chrono_literals;
 
-  auto manager = stateManager();
+  auto manager{stateManager()};
   int stateCount{};
-  auto state = manager->createState("count-to-three");
+  auto state{manager->createState("count-to-three")};
   state->setStateFnc([&stateCount](dmn::Dmn_State &current) {
     if (++stateCount >= 3) {
       current.setEnd();
@@ -198,10 +198,10 @@ TEST(DmnRuntimeState, ExecutesStatesAndReportsStateFailures) {
   });
 
   std::atomic_bool onErrorCalled{};
-  auto failed = manager->createState("failed-state");
+  auto failed{manager->createState("failed-state")};
   failed->setStateFnc(
       [](dmn::Dmn_State &) { throw std::runtime_error{"state failure"}; });
-  auto failedFuture = failed->getFuture();
+  auto failedFuture{failed->getFuture()};
 
   EXPECT_TRUE(state->run());
   EXPECT_TRUE(failed->run(dmn::Dmn_Runtime_Job::Priority::kMedium,
@@ -228,18 +228,18 @@ TEST(DmnRuntimeState, ExecutesStatesAndReportsStateFailures) {
 TEST(DmnRuntimeState, SerializesMultipleStateExecutions) {
   using namespace std::chrono_literals;
 
-  constexpr int stateCount = 8;
+  constexpr int stateCount{8};
   std::atomic_int activeSteps{};
   std::atomic_int completedSteps{};
   std::atomic_bool concurrentExecution{};
   std::atomic_bool executedInRuntimeThread{true};
-  auto manager = stateManager();
-  auto runtimeInstance = runtime();
+  auto manager{stateManager()};
+  auto runtimeInstance{runtime()};
   std::vector<dmn::DmnRuntimeStatePtr> states;
   states.reserve(stateCount);
 
   for (int index = 0; index < stateCount; ++index) {
-    auto state = manager->createState("serialized-state");
+    auto state{manager->createState("serialized-state")};
     state->setStateFnc([&activeSteps, &completedSteps, &concurrentExecution,
                         &executedInRuntimeThread,
                         runtimeInstance](dmn::Dmn_State &current) {
@@ -277,13 +277,13 @@ TEST(DmnRuntimeState, IsolatesStateFailureFromOtherQueuedStates) {
 
   std::atomic_bool errorCallbackCalled{};
   std::atomic_int successfulStepCount{};
-  auto manager = stateManager();
-  auto failed = manager->createState("isolated-failure");
+  auto manager{stateManager()};
+  auto failed{manager->createState("isolated-failure")};
   failed->setStateFnc(
       [](dmn::Dmn_State &) { throw std::runtime_error{"expected failure"}; });
-  auto failedFuture = failed->getFuture();
+  auto failedFuture{failed->getFuture()};
 
-  auto successful = manager->createState("isolated-success");
+  auto successful{manager->createState("isolated-success")};
   successful->setStateFnc([&successfulStepCount](dmn::Dmn_State &current) {
     ++successfulStepCount;
     current.setEnd();
@@ -312,9 +312,9 @@ TEST(DmnRuntimeState, CancelsQueuedStateWithoutRunningUserStep) {
   using namespace std::chrono_literals;
 
   std::atomic_int stepCount{};
-  auto state = stateManager()->createState("queued-cancelled-state");
+  auto state{stateManager()->createState("queued-cancelled-state")};
   state->setStateFnc([&stepCount](dmn::Dmn_State &) { ++stepCount; });
-  auto completion = state->getFuture();
+  auto completion{state->getFuture()};
 
   // No main loop is running, so cancellation occurs before this queued job can
   // enter its user-defined state step.
@@ -338,12 +338,12 @@ TEST(DmnRuntimeState, RetainsStateUntilCompletionAfterClientHandleReleased) {
   using namespace std::chrono_literals;
 
   std::atomic_int stepCount{};
-  auto state = stateManager()->createState("manager-retained-state");
+  auto state{stateManager()->createState("manager-retained-state")};
   state->setStateFnc([&stepCount](dmn::Dmn_State &current) {
     ++stepCount;
     current.setEnd();
   });
-  auto completion = state->getFuture();
+  auto completion{state->getFuture()};
   std::weak_ptr<dmn::Dmn_Runtime_State> weakState{state};
 
   EXPECT_TRUE(state->run());
@@ -365,17 +365,17 @@ TEST(DmnRuntimeState, HonorsPriorityOrdering) {
   using namespace std::chrono_literals;
 
   std::vector<char> executionOrder;
-  auto manager = stateManager();
-  auto high = manager->createState("high-priority");
-  auto medium = manager->createState("medium-priority");
-  auto low = manager->createState("low-priority");
-  const auto configure = [&executionOrder](dmn::DmnRuntimeStatePtr state,
-                                           char marker) {
-    state->setStateFnc([&executionOrder, marker](dmn::Dmn_State &current) {
-      executionOrder.push_back(marker);
-      current.setEnd();
-    });
-  };
+  auto manager{stateManager()};
+  auto high{manager->createState("high-priority")};
+  auto medium{manager->createState("medium-priority")};
+  auto low{manager->createState("low-priority")};
+  const auto configure{
+      [&executionOrder](dmn::DmnRuntimeStatePtr state, char marker) {
+        state->setStateFnc([&executionOrder, marker](dmn::Dmn_State &current) {
+          executionOrder.push_back(marker);
+          current.setEnd();
+        });
+      }};
   configure(high, 'H');
   configure(medium, 'M');
   configure(low, 'L');
@@ -398,15 +398,15 @@ TEST(DmnRuntimeState, HonorsPriorityOrdering) {
 TEST(DmnRuntimeState, DelaysInitialSubmission) {
   using namespace std::chrono_literals;
 
-  constexpr auto delay = 100ms;
+  constexpr auto delay{100ms};
   dmn::Clock::time_point executedAt{};
-  auto state = stateManager()->createState("delayed-state");
+  auto state{stateManager()->createState("delayed-state")};
   state->setStateFnc([&executedAt](dmn::Dmn_State &current) {
     executedAt = dmn::Clock::now();
     current.setEnd();
   });
 
-  const auto submittedAt = dmn::Clock::now();
+  const auto submittedAt{dmn::Clock::now()};
   EXPECT_TRUE(state->run(dmn::Dmn_Runtime_Job::Priority::kMedium, delay));
 
   Runtime_Main_Loop loop{runtime()};
@@ -419,13 +419,13 @@ TEST(DmnRuntimeState, DelaysInitialSubmission) {
 TEST(DmnRuntimeState, RejectsRunAndWaitOperationsFromRuntimeThread) {
   using namespace std::chrono_literals;
 
-  auto state = stateManager()->createState("runtime-thread-state");
+  auto state{stateManager()->createState("runtime-thread-state")};
   std::atomic_bool runRejected{};
   std::atomic_bool waitRejected{};
   std::atomic_bool waitForRejected{};
   std::promise<void> completed;
-  auto completedFuture = completed.get_future();
-  auto runtimeInstance = runtime();
+  auto completedFuture{completed.get_future()};
+  auto runtimeInstance{runtime()};
 
   runtimeInstance->addJob(
       [&state, &runRejected, &waitRejected, &waitForRejected,
@@ -464,13 +464,13 @@ TEST(DmnRuntimeState, RejectsRunAndWaitOperationsFromRuntimeThread) {
 TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
   using namespace std::chrono_literals;
 
-  constexpr int stateCount = 24;
+  constexpr int stateCount{24};
   std::atomic_int completedUserSteps{};
   std::atomic_int cancelledUserSteps{};
   std::atomic_int submissionFailures{};
   std::atomic_int waitFailures{};
   std::barrier startSubmissions{stateCount};
-  auto manager = stateManager();
+  auto manager{stateManager()};
   Runtime_Main_Loop loop{runtime()};
   std::vector<std::thread> clients;
   clients.reserve(stateCount);
@@ -479,8 +479,8 @@ TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
     clients.emplace_back([index, &manager, &completedUserSteps,
                           &cancelledUserSteps, &submissionFailures,
                           &waitFailures, &startSubmissions]() {
-      const bool cancelState = index % 2 == 0;
-      auto state = manager->createState("concurrent-state");
+      const bool cancelState{index % 2 == 0};
+      auto state{manager->createState("concurrent-state")};
       state->setStateFnc([cancelState, &completedUserSteps,
                           &cancelledUserSteps](dmn::Dmn_State &current) {
         if (cancelState) {
@@ -504,7 +504,7 @@ TEST(DmnRuntimeState, HandlesConcurrentStateLifecycleOperations) {
         state->cancel();
       }
 
-      const auto completion = state->getFuture();
+      const auto completion{state->getFuture()};
       if (completion.wait_for(5s) != std::future_status::ready ||
           (cancelState ? !state->isCancelled() : !state->isCompleted())) {
         ++waitFailures;
@@ -529,13 +529,13 @@ TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
 
   // Keep this test last: shutdown permanently disables the process-wide
   // runtime-state manager singleton.
-  auto manager = stateManager();
+  auto manager{stateManager()};
   std::promise<void> blockingStepStarted;
-  auto blockingStepStartedFuture = blockingStepStarted.get_future();
+  auto blockingStepStartedFuture{blockingStepStarted.get_future()};
   std::promise<void> allowBlockingStepToFinish;
-  auto allowBlockingStepToFinishFuture = allowBlockingStepToFinish.get_future();
+  auto allowBlockingStepToFinishFuture{allowBlockingStepToFinish.get_future()};
 
-  auto runningState = manager->createState("shutdown-running-state");
+  auto runningState{manager->createState("shutdown-running-state")};
   runningState->setStateFnc(
       [&blockingStepStarted,
        &allowBlockingStepToFinishFuture](dmn::Dmn_State &current) {
@@ -543,16 +543,16 @@ TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
         allowBlockingStepToFinishFuture.wait();
         current.setEnd();
       });
-  auto runningStateFuture = runningState->getFuture();
+  auto runningStateFuture{runningState->getFuture()};
 
-  constexpr int queuedStateCount = 32;
+  constexpr int queuedStateCount{32};
   std::atomic_int queuedStepCount{};
   std::vector<dmn::DmnRuntimeStatePtr> queuedStates;
   std::vector<std::shared_future<void>> queuedStateFutures;
   queuedStates.reserve(queuedStateCount);
   queuedStateFutures.reserve(queuedStateCount);
   for (int index = 0; index < queuedStateCount; ++index) {
-    auto queuedState = manager->createState("shutdown-queued-state");
+    auto queuedState{manager->createState("shutdown-queued-state")};
     queuedState->setStateFnc(
         [&queuedStepCount](dmn::Dmn_State &) { ++queuedStepCount; });
     queuedStateFutures.emplace_back(queuedState->getFuture());
@@ -566,7 +566,7 @@ TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
   EXPECT_EQ(blockingStepStartedFuture.wait_for(5s), std::future_status::ready);
 
   std::promise<void> shutdownReturned;
-  auto shutdownReturnedFuture = shutdownReturned.get_future();
+  auto shutdownReturnedFuture{shutdownReturned.get_future()};
   std::thread shutdownThread{[&manager, &shutdownReturned]() {
     manager->shutdown();
     shutdownReturned.set_value();
@@ -590,7 +590,7 @@ TEST(DmnRuntimeState, ShutdownCancelsPendingStatesAndRejectsNewSubmissions) {
 
   EXPECT_EQ(queuedStepCount.load(), 0);
 
-  auto postShutdownState = manager->createState("post-shutdown-state");
+  auto postShutdownState{manager->createState("post-shutdown-state")};
   postShutdownState->setStateFnc([](dmn::Dmn_State &) {});
   EXPECT_FALSE(postShutdownState->run());
 }

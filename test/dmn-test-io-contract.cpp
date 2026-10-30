@@ -40,8 +40,8 @@ TEST(DmnPipeContract, SynchronousReadPreservesFIFOAndCountsCompletedItems) {
   pipe.write(copied);
   pipe.write(std::move(moved));
 
-  const auto first = pipe.read();
-  const auto second = pipe.read();
+  const auto first{pipe.read()};
+  const auto second{pipe.read()};
 
   ASSERT_TRUE(first.has_value());
   ASSERT_TRUE(second.has_value());
@@ -54,8 +54,8 @@ TEST(DmnPipeContract, BulkReadReturnsAvailablePartialBatchAfterTimeout) {
   dmn::Dmn_Pipe<int> pipe{"bulk-timeout"};
   pipe.write(1);
 
-  const auto partial = pipe.read(2, 1000);
-  const auto empty = pipe.read(1, 1000);
+  const auto partial{pipe.read(2, 1000)};
+  const auto empty{pipe.read(1, 1000)};
 
   ASSERT_EQ(partial.size(), 1);
   EXPECT_EQ(partial.front(), 1);
@@ -68,7 +68,7 @@ TEST(DmnPipeContract, BulkReadReturnsRequestedBatchWhenAlreadyAvailable) {
   pipe.write(1);
   pipe.write(2);
 
-  const auto batch = pipe.read(2, 1000);
+  const auto batch{pipe.read(2, 1000)};
 
   ASSERT_EQ(batch.size(), 2);
   EXPECT_EQ(batch[0], 1);

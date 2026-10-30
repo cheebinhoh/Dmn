@@ -15,7 +15,7 @@ namespace {
 
 TEST(DlockSessionLifetime, ProxyRemainsLiveUntilClosed) {
   dmn::Dmn_DLock dlock{"dlock-lifetime"};
-  auto session = dlock.openHandler("session-a");
+  auto session{dlock.openHandler("session-a")};
 
   EXPECT_TRUE(session);
   EXPECT_TRUE(session.operator->());
@@ -27,8 +27,8 @@ TEST(DlockSessionLifetime, ProxyRemainsLiveUntilClosed) {
 TEST(DlockSessionLifetime, OneSessionOneHandler) {
   dmn::Dmn_DLock dlock{"dlock-single-session"};
 
-  auto first = dlock.openHandler("session-a");
-  auto second = dlock.openHandler("session-b");
+  auto first{dlock.openHandler("session-a")};
+  auto second{dlock.openHandler("session-b")};
 
   EXPECT_TRUE(first);
   EXPECT_TRUE(second);
@@ -43,8 +43,8 @@ TEST(DlockSessionLifetime, OneSessionOneHandler) {
 
 TEST(DlockSessionLifetime, ClosingOneProxyCopyLeavesOtherCopiesLive) {
   dmn::Dmn_DLock dlock{"dlock-proxy-copy"};
-  auto original = dlock.openHandler("session-a");
-  auto copy = original;
+  auto original{dlock.openHandler("session-a")};
+  auto copy{original};
 
   dlock.closeHandler(original);
   EXPECT_FALSE(original);
@@ -58,9 +58,9 @@ TEST(DlockSessionLifetime, ClosingOneProxyCopyLeavesOtherCopiesLive) {
 
 TEST(DlockSessionLifetime, HandlerPostRunsAndSnapshotValidationIsExposed) {
   dmn::Dmn_DLock dlock{"dlock-handler-api"};
-  auto handler = dlock.openHandler("session-a");
+  auto handler{dlock.openHandler("session-a")};
   std::promise<void> posted;
-  auto postedFuture = posted.get_future();
+  auto postedFuture{posted.get_future()};
   handler->postToOwnContext([&posted]() { posted.set_value(); });
   ASSERT_EQ(postedFuture.wait_for(std::chrono::seconds(5)),
             std::future_status::ready);
@@ -79,7 +79,7 @@ TEST(DlockSessionLifetime, HandlerPostRunsAndSnapshotValidationIsExposed) {
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
-  const int result = RUN_ALL_TESTS();
+  const int result{RUN_ALL_TESTS()};
 
   google::protobuf::ShutdownProtobufLibrary();
 

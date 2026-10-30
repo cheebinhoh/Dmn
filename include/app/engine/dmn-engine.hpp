@@ -90,7 +90,7 @@ namespace dmn::gui {
 /**
  * @brief Current JSON protocol major version.
  */
-inline constexpr int kEngineProtocolVersion = 1;
+inline constexpr int kEngineProtocolVersion{1};
 
 struct Dmn_EngineOptions {
   /**
