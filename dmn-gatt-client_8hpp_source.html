@@ -215,9 +215,9 @@ $(document).ready(function(){initNavTree('dmn-gatt-client_8hpp_source.html','');
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>      <span class="keywordflow">return</span> {};</div>
 <div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    }</div>
 <div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span> </div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6">stop</a> = std::move(m_stop);</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6">stop</a>{std::move(m_stop)};</div>
 <div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordflow">try</span> {</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>      <span class="keyword">auto</span> result = <a class="code hl_function" href="classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6">stop</a>();</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>      <span class="keyword">auto</span> result{<a class="code hl_function" href="classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6">stop</a>()};</div>
 <div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>      <span class="keywordflow">if</span> (!result) {</div>
 <div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>        m_stop = std::move(<a class="code hl_function" href="classdmn_1_1Dmn__GattNotification.html#ac573f0a46d5bf18adfb51f3f13ae7fa6">stop</a>);</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>      }</div>

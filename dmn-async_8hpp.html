@@ -239,7 +239,7 @@ Usage summary</h2>
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">  <span class="keywordflow">do</span> {                                                                         \</div>
-<div class="line">    this-&gt;addExecTask([&amp;]() <span class="keyword">mutable</span> -&gt; <span class="keywordtype">void</span> { block; });                       \</div>
+<div class="line">    this-&gt;addExecTask([&amp;]() -&gt; <span class="keywordtype">void</span> { block; });                               \</div>
 <div class="line">  } <span class="keywordflow">while</span> (<span class="keyword">false</span>)</div>
 </div><!-- fragment -->
 <p>Submit a task with reference-capture semantics (captures everything by reference) to the calling <code>Dmn_Async</code> instance. </p>

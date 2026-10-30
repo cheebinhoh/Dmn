@@ -357,7 +357,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="foldopen" id="foldopen00526" data-start="{" data-end="}">
 <div class="line"><a id="l00526" name="l00526"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">  526</a></span><span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Pipe.html#aaf681fa67d98dcdac972802086c501ea">Dmn_Pipe&lt;T, QueueType&gt;::readAndProcess</a>(Dmn_Pipe::Task <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">fn</a>, <span class="keywordtype">size_t</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">count</a>,</div>
 <div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>                                            <span class="keywordtype">long</span> timeout) -&gt; <span class="keywordtype">size_t</span> {</div>
-<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>  <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">dataList</a> = this-&gt;pop(<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">count</a>, timeout);</div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>  <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">dataList</a>{this-&gt;pop(<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">count</a>, timeout)};</div>
 <div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span> </div>
 <div class="line"><a id="l00530" name="l00530"></a><span class="lineno">  530</span>  <span class="keywordtype">size_t</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">processedCount</a>{};</div>
 <div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span> </div>
@@ -379,7 +379,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>  }</div>
 <div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>  <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>    <span class="keyword">const</span> <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">failure</a> = std::current_exception();</div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>    <span class="keyword">const</span> <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">failure</a>{std::current_exception()};</div>
 <div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span> </div>
 <div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>    {</div>
 <div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span>      std::lock_guard&lt;std::mutex&gt; <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">lock</a>(m_mutex);</div>
@@ -494,7 +494,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00652" name="l00652"></a><span class="lineno">  652</span>    std::unique_lock&lt;std::mutex&gt; <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">lock</a>(m_mutex);</div>
 <div class="line"><a id="l00653" name="l00653"></a><span class="lineno">  653</span> </div>
 <div class="line"><a id="l00654" name="l00654"></a><span class="lineno">  654</span>    <a class="code hl_function" href="classdmn_1_1Dmn__Proc.html#a8be7a6ef05b4fa9aa6d232dc5c6c669f">Dmn_Proc::testcancel</a>();</div>
-<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>    <span class="keyword">const</span> <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">inbound_count</a> = m_submitted_count;</div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno">  655</span>    <span class="keyword">const</span> <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">inbound_count</a>{m_submitted_count};</div>
 <div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span> </div>
 <div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span>    m_empty_cond.wait(<a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">lock</a>, [<span class="keyword">this</span>, <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">inbound_count</a>] {</div>
 <div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span>      <span class="keywordflow">return</span> m_count &gt;= <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">inbound_count</a> || m_processing_exception || isShutdown();</div>
@@ -540,7 +540,7 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>          <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>        }</div>
 <div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span> </div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>        <span class="keyword">auto</span> immediate_item = QueueType::popNoWait();</div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>        <span class="keyword">auto</span> immediate_item{QueueType::popNoWait()};</div>
 <div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>        <span class="keywordflow">if</span> (immediate_item) {</div>
 <div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>          item.emplace(std::move_if_noexcept(*immediate_item));</div>
 <div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span> </div>
@@ -548,8 +548,8 @@ $(document).ready(function(){initNavTree('dmn-pipe_8hpp_source.html',''); initRe
 <div class="line"><a id="l00705" name="l00705"></a><span class="lineno">  705</span>        }</div>
 <div class="line"><a id="l00706" name="l00706"></a><span class="lineno">  706</span> </div>
 <div class="line"><a id="l00707" name="l00707"></a><span class="lineno">  707</span>        <span class="keywordflow">if</span> (!m_scheduled_queue.empty()) {</div>
-<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>          <span class="keyword">const</span> <span class="keyword">auto</span> deadline = m_scheduled_queue.begin()-&gt;first;</div>
-<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>          <span class="keyword">const</span> <span class="keyword">auto</span> now = std::chrono::steady_clock::now();</div>
+<div class="line"><a id="l00708" name="l00708"></a><span class="lineno">  708</span>          <span class="keyword">const</span> <span class="keyword">auto</span> deadline{m_scheduled_queue.begin()-&gt;first};</div>
+<div class="line"><a id="l00709" name="l00709"></a><span class="lineno">  709</span>          <span class="keyword">const</span> <span class="keyword">auto</span> now{std::chrono::steady_clock::now()};</div>
 <div class="line"><a id="l00710" name="l00710"></a><span class="lineno">  710</span> </div>
 <div class="line"><a id="l00711" name="l00711"></a><span class="lineno">  711</span>          <span class="keywordflow">if</span> (deadline &lt;= now) {</div>
 <div class="line"><a id="l00712" name="l00712"></a><span class="lineno">  712</span>            item.emplace(std::move(m_scheduled_queue.begin()-&gt;second));</div>

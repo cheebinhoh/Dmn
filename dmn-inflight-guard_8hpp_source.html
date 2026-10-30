@@ -200,7 +200,7 @@ $(document).ready(function(){initNavTree('dmn-inflight-guard_8hpp_source.html','
 <div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span> </div>
 <div class="foldopen" id="foldopen00246" data-start="{" data-end="}">
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno"><a class="line" href="classdmn_1_1Dmn__Inflight__Guard.html#a308aad8716a84e809168fbe6523f3b43">  246</a></span>  <span class="keyword">virtual</span> <span class="keyword">auto</span> <a class="code hl_function" href="classdmn_1_1Dmn__Inflight__Guard.html#a308aad8716a84e809168fbe6523f3b43">enterInflightGate</a>() -&gt; std::unique_ptr&lt;Ticket&gt; <span class="keyword">final</span> {</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">ticket</a> = std::make_unique&lt;Ticket&gt;(<span class="keyword">this</span>);</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="keyword">auto</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">ticket</a>{std::make_unique&lt;Ticket&gt;(<span class="keyword">this</span>)};</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    <span class="keywordflow">return</span> <a class="code hl_typedef" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">ticket</a>;</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>  }</div>

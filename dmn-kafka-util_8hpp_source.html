@@ -111,7 +111,7 @@ $(document).ready(function(){initNavTree('dmn-kafka-util_8hpp_source.html',''); 
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">namespace </span>dmn {</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> kKafkaErrorStringLength = 512;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> kKafkaErrorStringLength{512};</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">auto</span> <a class="code hl_function" href="dmn-kafka-util_8hpp.html#ad39521e51187a6fd915fa830ffbbfb51">set_config</a>(rd_kafka_conf_t *conf, std::string_view key,</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                std::string_view value)</div>
