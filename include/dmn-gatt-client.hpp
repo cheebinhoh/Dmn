@@ -110,15 +110,15 @@ struct Dmn_GattError {
 };
 
 /**
+ * @brief A GATT operation result carrying success or a typed error.
+ */
+using Dmn_GattResult = std::expected<void, Dmn_GattError>;
+
+/**
  * @brief A GATT operation result carrying either a value or typed error.
  */
 template <typename T>
 using Dmn_GattValueResult = std::expected<T, Dmn_GattError>;
-
-/**
- * @brief A GATT operation result carrying success or a typed error.
- */
-using Dmn_GattResult = std::expected<void, Dmn_GattError>;
 
 /**
  * @brief A remote GATT characteristic and its advertised capabilities.
@@ -220,6 +220,7 @@ public:
    * @brief Construct an empty notification token.
    */
   Dmn_GattNotification() = default;
+
   /**
    * @brief Construct a token with backend cleanup ownership.
    *
@@ -340,13 +341,6 @@ public:
    */
   auto operator=(Dmn_GattClient &&) -> Dmn_GattClient & = delete;
 
-protected:
-  /**
-   * @brief Initialize the backend-neutral contract for a derived backend.
-   */
-  Dmn_GattClient() = default;
-
-public:
   /**
    * @brief Wait until the selected device's GATT service tree is resolved.
    *
@@ -400,6 +394,12 @@ public:
                     const std::string &characteristicId,
                     const std::vector<std::uint8_t> &value,
                     std::chrono::milliseconds timeout) -> Dmn_GattResult = 0;
+
+protected:
+  /**
+   * @brief Initialize the backend-neutral contract for a derived backend.
+   */
+  Dmn_GattClient() = default;
 };
 
 } // namespace dmn
