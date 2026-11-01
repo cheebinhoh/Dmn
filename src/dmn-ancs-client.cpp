@@ -396,15 +396,19 @@ auto mapGattError(const Dmn_GattError &gattError) -> Dmn_AncsError {
   case Dmn_GattErrorKind::InvalidArgument:
     kind = Dmn_AncsErrorKind::InvalidArgument;
     break;
+
   case Dmn_GattErrorKind::NotReady:
     kind = Dmn_AncsErrorKind::NotReady;
     break;
+
   case Dmn_GattErrorKind::Timeout:
     kind = Dmn_AncsErrorKind::Timeout;
     break;
+
   case Dmn_GattErrorKind::Remote:
     kind = Dmn_AncsErrorKind::Remote;
     break;
+
   case Dmn_GattErrorKind::Backend:
   case Dmn_GattErrorKind::Decode:
     kind = Dmn_AncsErrorKind::Backend;

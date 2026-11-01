@@ -939,6 +939,7 @@ TEST_F(DbusClientTest, DeliversOwnedSignalsOffDispatchThreadAndCancels) {
   std::this_thread::sleep_for(20ms);
   EXPECT_EQ(callbackCount.load(), 1U);
   subscription->cancel();
+  std::this_thread::sleep_for(20ms);
   auto emittedAgain{
       m_client->call(kServiceName, kObjectPath, kInterface, "EmitSignal")};
   ASSERT_TRUE(emittedAgain.has_value()) << emittedAgain.error().message;
