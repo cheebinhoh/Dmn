@@ -32,20 +32,45 @@ dmn_build_n_test_all() {
 dmn_build_n_install_app() {
   (
     set -e
+    INSTALL_PREFIX="$HOME/.local"
 
+    # CMake installs the Cargo-built release executable with the runtime assets.
+    cargo build \
+      --manifest-path src/app/gui/cosmic/Cargo.toml \
+      --release \
+      --locked \
+      && \
     cmake -S . -B build-app \
       -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX="$HOME/.local" \
+      -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
+      -DDMN_BUILD_TESTS=OFF \
       -DENABLE_APP_BLUEZ_DISCOVERY_CLI=ON \
       -DENABLE_APP_BLUETOOTH_CLI=ON \
       -DENABLE_APP_BLUETOOTH_GTK=ON \
       -DENABLE_APP_BLUETOOTH_COSMIC=ON \
+      "-DDMN_BLUETOOTH_COSMIC_EXECUTABLE=$PWD/src/app/gui/cosmic/target/release/dmn-bluetooth-cosmic" \
       -DENABLE_DMN_DMESGNET=OFF \
       -DCMAKE_COMPILE_WARNING_AS_ERROR=ON \
       && \
       cmake --build build-app --parallel 2 \
       && \
-      cmake --install build-app --component Runtime 
+      cmake --install build-app --component Runtime \
+      && \
+      test -x "$INSTALL_PREFIX/bin/dmn-bluetooth-gtk" \
+      && \
+      test -f "$INSTALL_PREFIX/share/applications/com.cheebinhoh.dmn-bluetooth.desktop" \
+      && \
+      test -f "$INSTALL_PREFIX/share/metainfo/com.cheebinhoh.dmn-bluetooth.metainfo.xml" \
+      && \
+      test -x "$INSTALL_PREFIX/bin/dmn-bluetooth-cosmic" \
+      && \
+      test -f "$INSTALL_PREFIX/bin/libdmn-bluetooth-cabi.so" \
+      && \
+      test -f "$INSTALL_PREFIX/share/applications/io.github.cheebinhoh.dmnbluetoothcosmic.desktop" \
+      && \
+      test -f "$INSTALL_PREFIX/share/metainfo/io.github.cheebinhoh.dmnbluetoothcosmic.metainfo.xml" \
+      && \
+      printf 'Installed GTK and COSMIC apps under %s/bin\\n' "$INSTALL_PREFIX"
 
     set +e
   )

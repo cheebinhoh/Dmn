@@ -1,0 +1,68 @@
+# Local build manifest for the native COSMIC frontend.
+#
+# The local directory source is for development only. Before submitting to
+# Flathub, replace it with a release-tagged Git source and its exact commit.
+# Generate cargo-sources.json from the committed Cargo.lock with
+# flatpak-cargo-generator.py; the generated source list vendors crates.io and
+# pinned Cargo Git dependencies for an offline build.
+app-id: io.github.cheebinhoh.dmnbluetoothcosmic
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: dmn-bluetooth-cosmic
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --system-talk-name=org.bluez
+  - --talk-name=org.freedesktop.Notifications
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - name: dmn-bluetooth-cosmic
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/dmn-bluetooth-cosmic/cargo
+        CARGO_NET_OFFLINE: 'true'
+        DMN_CMAKE_GENERATOR: Ninja
+        DMN_CMAKE_ARGS: >-
+          -DDMN_ALLOW_DEPENDENCY_FETCH=OFF
+          -DDMN_BUILD_TESTS=OFF
+          -DENABLE_DMN_DMESGNET=OFF
+    build-commands:
+      - mv "$CARGO_HOME/config" "$CARGO_HOME/config.toml"
+      - cargo --offline build --release --locked --manifest-path src/app/gui/cosmic/Cargo.toml
+      - install -Dm755 src/app/gui/cosmic/target/release/dmn-bluetooth-cosmic /app/bin/dmn-bluetooth-cosmic
+      - install -Dm755 "$(find src/app/gui/cosmic/target/release/build -type f -name libdmn-bluetooth-cabi.so -print -quit)" /app/bin/libdmn-bluetooth-cabi.so
+      - install -Dm644 src/app/gui/cosmic/data/io.github.cheebinhoh.dmnbluetoothcosmic.desktop /app/share/applications/io.github.cheebinhoh.dmnbluetoothcosmic.desktop
+      - install -Dm644 src/app/gui/cosmic/data/io.github.cheebinhoh.dmnbluetoothcosmic.metainfo.xml /app/share/metainfo/io.github.cheebinhoh.dmnbluetoothcosmic.metainfo.xml
+      - install -Dm644 src/app/gui/cosmic/data/icons/hicolor/scalable/apps/io.github.cheebinhoh.dmnbluetoothcosmic.svg /app/share/icons/hicolor/scalable/apps/io.github.cheebinhoh.dmnbluetoothcosmic.svg
+      - install -Dm644 src/app/gui/cosmic/data/icons/hicolor/128x128/apps/io.github.cheebinhoh.dmnbluetoothcosmic.png /app/share/icons/hicolor/128x128/apps/io.github.cheebinhoh.dmnbluetoothcosmic.png
+      - install -Dm644 LICENSE /app/share/licenses/io.github.cheebinhoh.dmnbluetoothcosmic/LICENSE
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .flatpak-builder
+          - build
+          - build-all
+          - build-app
+          - target
+          - src/app/gui/cosmic/target
+      # GitHub source archives omit libcosmic's pinned submodules.
+      - type: archive
+        archive-type: tar-gzip
+        url: https://codeload.github.com/pop-os/iced/tar.gz/229186b5180b6217d93866c912e6373ac378b231
+        sha256: 0ad249ad782200bf17f0a0a054055b673708e58a24b86878a2a5323b2f9afa85
+        dest: flatpak-cargo/git/libcosmic-8990a05/iced
+      - type: archive
+        archive-type: tar-gzip
+        url: https://codeload.github.com/pop-os/cosmic-icons/tar.gz/343c007f37cd71716e68f01c43ecf2764b7f7c47
+        sha256: 3f62bb2c74bb60ba1d28bd5debba163d04275e813994fa531b516c1d3994a73d
+        dest: flatpak-cargo/git/libcosmic-8990a05/cosmic-icons
+      - cargo-sources.json

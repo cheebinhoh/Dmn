@@ -21,8 +21,49 @@ if (ENABLE_APP_BLUETOOTH_COSMIC)
                           PRIVATE dmn-bluetooth-engine
   )
 
+  set(DMN_BLUETOOTH_COSMIC_EXECUTABLE
+      "${CMAKE_CURRENT_SOURCE_DIR}/cosmic/target/release/dmn-bluetooth-cosmic"
+      CACHE FILEPATH
+      "Cargo-built COSMIC Bluetooth executable to install"
+  )
+
+  # The Cargo-built executable has an $ORIGIN runpath fallback, so colocate
+  # the C ABI library with it for relocatable native installations.
   install(TARGETS dmn-bluetooth-cabi
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT Runtime
+  )
+
+  install(PROGRAMS "${DMN_BLUETOOTH_COSMIC_EXECUTABLE}"
+          DESTINATION "${CMAKE_INSTALL_BINDIR}"
+          COMPONENT Runtime
+  )
+
+  set(DMN_BLUETOOTH_COSMIC_DATA_DIR
+      "${CMAKE_CURRENT_SOURCE_DIR}/cosmic/data"
+  )
+
+  install(FILES
+            "${DMN_BLUETOOTH_COSMIC_DATA_DIR}/io.github.cheebinhoh.dmnbluetoothcosmic.desktop"
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+          COMPONENT Runtime
+  )
+
+  install(FILES
+            "${DMN_BLUETOOTH_COSMIC_DATA_DIR}/io.github.cheebinhoh.dmnbluetoothcosmic.metainfo.xml"
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo"
+          COMPONENT Runtime
+  )
+
+  install(FILES
+            "${DMN_BLUETOOTH_COSMIC_DATA_DIR}/icons/hicolor/scalable/apps/io.github.cheebinhoh.dmnbluetoothcosmic.svg"
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+          COMPONENT Runtime
+  )
+
+  install(FILES
+            "${DMN_BLUETOOTH_COSMIC_DATA_DIR}/icons/hicolor/128x128/apps/io.github.cheebinhoh.dmnbluetoothcosmic.png"
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps"
+          COMPONENT Runtime
   )
 endif()

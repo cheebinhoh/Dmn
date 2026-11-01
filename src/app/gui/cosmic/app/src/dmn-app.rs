@@ -167,7 +167,7 @@ impl App {
     fn ensure_scanning(&mut self) {
         let due = self
             .last_scan_request
-            .map_or(true, |at| at.elapsed() >= SCAN_RETRY_INTERVAL);
+            .is_none_or(|at| at.elapsed() >= SCAN_RETRY_INTERVAL);
         if due && self.model.should_start_scan() {
             self.last_scan_request = Some(Instant::now());
             self.send(Command::Scan { enabled: true });
@@ -189,7 +189,7 @@ impl cosmic::Application for App {
     type Flags = Flags;
     type Message = Message;
 
-    const APP_ID: &'static str = "io.github.cheebinhoh.DmnBluetoothCosmic";
+    const APP_ID: &'static str = "io.github.cheebinhoh.dmnbluetoothcosmic";
 
     fn core(&self) -> &cosmic::Core {
         &self.core
@@ -211,8 +211,10 @@ impl cosmic::Application for App {
             .map(Settings::load)
             .unwrap_or_default();
 
-        let mut model = Model::default();
-        model.notice = warning;
+        let model = Model {
+            notice: warning,
+            ..Model::default()
+        };
         let app = App {
             core,
             model,
