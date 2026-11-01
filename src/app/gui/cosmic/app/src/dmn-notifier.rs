@@ -12,7 +12,7 @@ use zbus::blocking::Connection;
 use zbus::zvariant::Value;
 
 const APP_NAME: &str = "Dmn Bluetooth";
-const APP_ICON: &str = "io.github.cheebinhoh.DmnBluetoothCosmic";
+const APP_ICON: &str = "io.github.cheebinhoh.dmnbluetoothcosmic";
 
 enum Request {
     /// Show or replace the alert for a device key with its aggregated count.

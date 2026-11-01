@@ -386,11 +386,26 @@ cargo fmt --all --check
 ```
 
 The binary loads `libdmn-bluetooth-cabi.so` through an rpath emitted by the
-build script; when copying the binary elsewhere, copy the library next to it
-and set the rpath to `$ORIGIN` (for example with `patchelf`). Desktop entry,
+build script. For a native installation, build the release binary first, then
+configure and install the CMake runtime assets and C ABI library:
+
+```bash
+cargo build --release --locked
+cmake -S . -B build-cosmic -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_APP_BLUETOOTH_COSMIC=ON -DDMN_BUILD_TESTS=OFF
+cmake --build build-cosmic --target dmn-bluetooth-cabi
+cmake --install build-cosmic --prefix "$HOME/.local"
+```
+
+The install includes the executable, its colocated C ABI library, desktop
+entry, AppStream metadata, and icons. Set
+`DMN_BLUETOOTH_COSMIC_EXECUTABLE` at CMake configure time to install a binary
+from a non-default Cargo target directory. The COSMIC notifier calls
+`org.freedesktop.Notifications` on the session bus; a Flatpak package must
+grant that session-bus name or use a notification portal. Desktop entry,
 AppStream metadata, and icons are in `src/app/gui/cosmic/data/`. Optional
-environment variables: `DMN_SOURCE_DIR`, `DMN_CMAKE_GENERATOR`, and
-`DMN_CMAKE_ARGS`.
+Cargo build-script environment variables: `DMN_SOURCE_DIR`,
+`DMN_CMAKE_GENERATOR`, and `DMN_CMAKE_ARGS`.
 
 Running CMake directly with `-DENABLE_APP_BLUETOOTH_COSMIC=ON` builds only the
 C library and its tests (`ctest -L dmn-gui`); the option is off by default and

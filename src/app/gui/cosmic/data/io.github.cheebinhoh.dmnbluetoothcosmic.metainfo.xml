@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright © 2026 Chee Bin HOH. All rights reserved. -->
+<component type="desktop-application">
+  <id>io.github.cheebinhoh.dmnbluetoothcosmic</id>
+  <name>Dmn Bluetooth (COSMIC)</name>
+  <summary>Monitor iPhone notifications over Bluetooth ANCS</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <developer id="io.github.cheebinhoh">
+    <name>Chee Bin Hoh</name>
+  </developer>
+  <description>
+    <p>Native COSMIC frontend for Dmn's BlueZ and Apple Notification Center Service monitoring.</p>
+  </description>
+  <url type="homepage">https://github.com/cheebinhoh/Dmn</url>
+  <url type="bugtracker">https://github.com/cheebinhoh/Dmn/issues</url>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <icon type="stock">io.github.cheebinhoh.dmnbluetoothcosmic</icon>
+  <launchable type="desktop-id">io.github.cheebinhoh.dmnbluetoothcosmic.desktop</launchable>
+  <provides>
+    <binary>dmn-bluetooth-cosmic</binary>
+  </provides>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Monitor Bluetooth devices and review incoming notifications.</caption>
+      <image type="source" width="1920" height="1020">https://raw.githubusercontent.com/cheebinhoh/Dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>View application information and recent monitoring activity.</caption>
+      <image type="source" width="966" height="954">https://raw.githubusercontent.com/cheebinhoh/Dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth-about.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="0.9.2" date="2026-11-01" type="development">
+      <description>
+        <p>Initial development release of the native COSMIC frontend, with Bluetooth device selection, explicit connection, ANCS monitoring, and an in-memory notification feed.</p>
+      </description>
+    </release>
+  </releases>
+</component>
