@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-ancs-client.cpp
- * @brief Bounded ANCS Notification Source and Data Source parsing.
+ * @brief ANCS session lifecycle, notifications, and bounded parsing.
  */
 
 #include "dmn-ancs-client.hpp"
@@ -129,18 +129,23 @@ auto assignAttribute(Dmn_AncsAttributeSet &attributes, std::size_t index,
   case 0:
     attributes.app_identifier = std::move(value);
     break;
+
   case 1:
     attributes.title = std::move(value);
     break;
+
   case 2:
     attributes.subtitle = std::move(value);
     break;
+
   case 3:
     attributes.message = std::move(value);
     break;
+
   case 4:
     attributes.date = std::move(value);
     break;
+
   default:
     break;
   }
@@ -156,17 +161,20 @@ auto parseAncsNotificationSource(std::span<const std::uint8_t> value)
               "ANCS Notification Source value must be exactly eight bytes"));
   }
 
-  Dmn_AncsNotification notification;
+  Dmn_AncsNotification notification{};
   switch (value[0]) {
   case 0:
     notification.kind = Dmn_AncsNotificationKind::Added;
     break;
+
   case 1:
     notification.kind = Dmn_AncsNotificationKind::Updated;
     break;
+
   case 2:
     notification.kind = Dmn_AncsNotificationKind::Removed;
     break;
+
   default:
     return std::unexpected(error(Dmn_AncsErrorKind::Unsupported,
                                  "unsupported ANCS event identifier", false));
@@ -261,6 +269,7 @@ auto Dmn_AncsDataSourceReassembler::consume(
       }
 
       consumed = valueOffset + attributeLength;
+
       continue;
     }
 
@@ -387,15 +396,19 @@ auto mapGattError(const Dmn_GattError &gattError) -> Dmn_AncsError {
   case Dmn_GattErrorKind::InvalidArgument:
     kind = Dmn_AncsErrorKind::InvalidArgument;
     break;
+
   case Dmn_GattErrorKind::NotReady:
     kind = Dmn_AncsErrorKind::NotReady;
     break;
+
   case Dmn_GattErrorKind::Timeout:
     kind = Dmn_AncsErrorKind::Timeout;
     break;
+
   case Dmn_GattErrorKind::Remote:
     kind = Dmn_AncsErrorKind::Remote;
     break;
+
   case Dmn_GattErrorKind::Backend:
   case Dmn_GattErrorKind::Decode:
     kind = Dmn_AncsErrorKind::Backend;
@@ -498,7 +511,7 @@ public:
           "ANCS device identifier and operation deadlines must be valid"));
     }
 
-    std::optional<std::string> notificationDateCutoff;
+    std::optional<std::string> notificationDateCutoff{};
     if (config.notification_date_cutoff) {
       notificationDateCutoff =
           localDateString(*config.notification_date_cutoff);
@@ -576,9 +589,9 @@ public:
       return failStartup(mapGattError(services.error()));
     }
 
-    std::optional<Dmn_GattCharacteristic> notificationSource;
-    std::optional<Dmn_GattCharacteristic> controlPoint;
-    std::optional<Dmn_GattCharacteristic> dataSource;
+    std::optional<Dmn_GattCharacteristic> notificationSource{};
+    std::optional<Dmn_GattCharacteristic> controlPoint{};
+    std::optional<Dmn_GattCharacteristic> dataSource{};
     bool ancsServiceFound{};
 
     for (const auto &service : *services) {
@@ -672,9 +685,9 @@ public:
 
       m_ready = true;
       m_state = Dmn_AncsState::Ready;
-      Dmn_AncsEvent event;
-      event.kind = Dmn_AncsEvent::Kind::StateChanged;
-      event.state = Dmn_AncsState::Ready;
+
+      Dmn_AncsEvent event{.kind = Dmn_AncsEvent::Kind::StateChanged,
+                          .state = Dmn_AncsState::Ready};
       m_event_queue.push_back(std::move(event));
     }
 
@@ -688,6 +701,7 @@ public:
     std::lock_guard apiLock{m_api_mutex};
 
     bool isStopped{};
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -722,11 +736,9 @@ public:
       auto cleanup{stopSubscriptions()};
       if (!cleanup) {
         auto error{cleanup.error()};
-
         error.kind = Dmn_AncsErrorKind::Cleanup;
-        Dmn_AncsEvent event;
-        event.kind = Dmn_AncsEvent::Kind::Error;
-        event.error = error;
+
+        Dmn_AncsEvent event{.kind = Dmn_AncsEvent::Kind::Error, .error = error};
         enqueueApplicationEvent(std::move(event));
         setState(Dmn_AncsState::Failed);
 
@@ -735,6 +747,7 @@ public:
     }
 
     setState(Dmn_AncsState::Stopped);
+
     {
       std::lock_guard lock{m_mutex};
 
@@ -746,6 +759,7 @@ public:
     m_condition.notify_all();
     m_control_point_condition.notify_all();
     workerLock.unlock();
+
     if (m_worker_started) {
       try {
         (void)m_worker.wait();
@@ -823,10 +837,10 @@ private:
       std::lock_guard lock{m_mutex};
 
       m_state = state;
-      Dmn_AncsEvent event;
+      Dmn_AncsEvent event{};
+
       event.kind = Dmn_AncsEvent::Kind::StateChanged;
       event.state = state;
-
       m_event_queue.push_back(std::move(event));
     }
 
@@ -840,6 +854,7 @@ private:
       m_ready = false;
       m_accept_gatt_events = false;
       clearSessionData();
+
       Dmn_AncsEvent event;
       event.kind = Dmn_AncsEvent::Kind::Error;
       event.error = error;
@@ -930,12 +945,12 @@ private:
 
   void run() {
     while (true) {
-      Dmn_AncsEvent appEvent;
-      GattPacket gattPacket;
+      Dmn_AncsEvent appEvent{};
+      GattPacket gattPacket{};
       bool hasAppEvent{};
       bool hasGattPacket{};
       bool hasControlPointResult{};
-      ControlPointResult controlPointResult;
+      ControlPointResult controlPointResult{};
 
       {
         std::unique_lock lock{m_mutex};
@@ -991,7 +1006,7 @@ private:
   }
 
   void dispatch(Dmn_AncsEvent event) {
-    EventHandler handler;
+    EventHandler handler{};
 
     {
       std::lock_guard lock{m_mutex};
@@ -1084,7 +1099,7 @@ private:
       }
 
       if (!ignoredBeforeStart) {
-        Dmn_AncsEvent event;
+        Dmn_AncsEvent event{};
 
         event.kind = Dmn_AncsEvent::Kind::NotificationRemoved;
         event.notification = notification;
@@ -1190,7 +1205,7 @@ private:
       return;
     }
 
-    Dmn_AncsEvent event;
+    Dmn_AncsEvent event{};
     bool missingRecord{};
     bool ignoreNotification{};
 
@@ -1233,9 +1248,9 @@ private:
   }
 
   struct ActiveRequest {
-    Dmn_AncsNotification notification;
+    Dmn_AncsNotification notification{};
     detail::Dmn_AncsDataSourceReassembler reassembler;
-    std::chrono::steady_clock::time_point deadline;
+    std::chrono::steady_clock::time_point deadline{};
     bool write_pending{true};
     bool removed{};
 
@@ -1245,10 +1260,10 @@ private:
   };
 
   void startNextRequest() {
-    Dmn_AncsNotification notification;
-    std::string controlPointId;
-    std::string deviceId;
-    std::chrono::milliseconds timeout;
+    Dmn_AncsNotification notification{};
+    std::string controlPointId{};
+    std::string deviceId{};
+    std::chrono::milliseconds timeout{};
 
     {
       std::lock_guard lock{m_mutex};
@@ -1267,6 +1282,7 @@ private:
 
       notification = found->second.notification;
       m_active_request.emplace(notification);
+
       controlPointId = m_control_point_id;
       deviceId = m_device_id;
       timeout = m_config.gatt_operation_timeout;
@@ -1291,7 +1307,7 @@ private:
 
   void runControlPointWrites() {
     while (true) {
-      ControlPointJob job;
+      ControlPointJob job{};
 
       {
         std::unique_lock lock{m_mutex};
@@ -1308,7 +1324,7 @@ private:
         m_control_point_jobs.pop_front();
       }
 
-      Dmn_GattResult result;
+      Dmn_GattResult result{};
 
       {
         std::lock_guard operationLock{m_operation_mutex};
@@ -1383,7 +1399,7 @@ private:
 
   void emitAttributesUnavailable(std::uint32_t uid,
                                  const Dmn_AncsError &error) {
-    Dmn_AncsEvent event;
+    Dmn_AncsEvent event{};
     event.kind = Dmn_AncsEvent::Kind::AttributesUnavailable;
     event.error = error;
 
@@ -1443,14 +1459,14 @@ private:
     {
       std::lock_guard lock{m_mutex};
 
-      Dmn_AncsEvent appEvent;
+      Dmn_AncsEvent appEvent{};
       appEvent.kind = Dmn_AncsEvent::Kind::Error;
       appEvent.error = error;
       m_event_queue.push_back(std::move(appEvent));
-      Dmn_AncsEvent stateEvent;
+
+      Dmn_AncsEvent stateEvent{};
       stateEvent.kind = Dmn_AncsEvent::Kind::StateChanged;
       stateEvent.state = Dmn_AncsState::Failed;
-
       m_event_queue.push_back(std::move(stateEvent));
     }
 

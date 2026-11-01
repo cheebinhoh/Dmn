@@ -41,7 +41,7 @@ auto property(const Dmn_DbusValue &properties,
 
 auto stringProperty(const Dmn_DbusValue &properties,
                     std::string_view name) -> std::optional<std::string> {
-  const auto *value = property(properties, name);
+  const auto *value{property(properties, name)};
   if (value == nullptr || value->signature() != "s") {
     return std::nullopt;
   }
@@ -51,7 +51,7 @@ auto stringProperty(const Dmn_DbusValue &properties,
 
 auto boolProperty(const Dmn_DbusValue &properties,
                   std::string_view name) -> std::optional<bool> {
-  const auto *value = property(properties, name);
+  const auto *value{property(properties, name)};
   if (value == nullptr || value->signature() != "b") {
     return std::nullopt;
   }
@@ -61,7 +61,7 @@ auto boolProperty(const Dmn_DbusValue &properties,
 
 auto int16Property(const Dmn_DbusValue &properties,
                    std::string_view name) -> std::optional<std::int16_t> {
-  const auto *value = property(properties, name);
+  const auto *value{property(properties, name)};
   if (value == nullptr || value->signature() != "n") {
     return std::nullopt;
   }
@@ -342,10 +342,10 @@ public:
       m_device_paths.clear();
 
       try {
-        const auto &objects = result->front().asDictionary().entries;
+        const auto &objects{result->front().asDictionary().entries};
 
         for (const auto &[pathValue, interfaces] : objects) {
-          const auto &path = pathValue.asObjectPath();
+          const auto &path{pathValue.asObjectPath()};
 
           if (const auto *adapter = findInterface(interfaces, kAdapter)) {
             m_adapters[path] = parseAdapter(path, *adapter);
@@ -353,7 +353,7 @@ public:
         }
 
         for (const auto &[pathValue, interfaces] : objects) {
-          const auto &path = pathValue.asObjectPath();
+          const auto &path{pathValue.asObjectPath()};
 
           if (const auto *device = findInterface(interfaces, kDevice)) {
             auto parsedDevice{parseDevice(path, *device)};
@@ -479,7 +479,7 @@ public:
       std::vector<const Dmn_BluezDevice *> matches;
 
       for (const auto &entry : m_devices) {
-        const auto &device = entry.second;
+        const auto &device{entry.second};
         const bool matchesSelector{
             isObjectPath ? device.object_path == deviceSelector
                          : normalizedAddress(device.address) == targetAddress};
@@ -514,7 +514,7 @@ public:
                           deviceSelector));
       }
 
-      const auto &device = *matches.front();
+      const auto &device{*matches.front()};
       devicePath = device.object_path;
 
       if (action == DeviceAction::Pair) {
@@ -543,7 +543,7 @@ public:
                         : "Pair",
                     {}, timeout)};
     if (!result) {
-      const auto &error = result.error();
+      const auto &error{result.error()};
       const bool connectRequestAlreadyActive{
           error.remote_name == "org.bluez.Error.InProgress" ||
           (error.remote_name == "org.bluez.Error.Failed" &&
@@ -611,7 +611,7 @@ public:
       m_discovery_adapter = adapterPath;
 
       for (auto &entry : m_devices) {
-        auto &device = entry.second;
+        auto &device{entry.second};
 
         if (device.adapter_path == adapterPath) {
           device.seen_during_discovery = false;
@@ -943,7 +943,7 @@ private:
 
       if (member == "InterfacesAdded" && arguments.size() == 2) {
         const auto path{arguments[0].asObjectPath()};
-        const auto &interfaces = arguments[1];
+        const auto &interfaces{arguments[1]};
 
         if (const auto *props = findInterface(interfaces, kAdapter)) {
           auto adapter{parseAdapter(path, *props)};
@@ -973,7 +973,7 @@ private:
 
       if (member == "InterfacesRemoved" && arguments.size() == 2) {
         const auto path{arguments[0].asObjectPath()};
-        const auto &interfaces = arguments[1].asArray().values;
+        const auto &interfaces{arguments[1].asArray().values};
 
         for (const auto &interface : interfaces) {
           if (interface.asString() == kAdapter) {
@@ -1006,8 +1006,8 @@ private:
 
       if (member == "PropertiesChanged" && arguments.size() == 3) {
         const auto interface{arguments[0].asString()};
-        const auto &changed = arguments[1];
-        const auto &invalidated = arguments[2].asArray().values;
+        const auto &changed{arguments[1]};
+        const auto &invalidated{arguments[2].asArray().values};
 
         if (interface == kAdapter) {
           const auto found{m_adapters.find(path)};

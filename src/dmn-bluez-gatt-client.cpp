@@ -7,7 +7,8 @@
  * The implementation translates the backend-neutral GATT contract into
  * bounded BlueZ property/method calls. Discovery returns owned snapshots;
  * notification subscriptions retain their D-Bus client and invalidate on
- * device, characteristic, or BlueZ-owner changes.
+ * device disconnection or service-tree changes, selected-device object
+ * removal, or a BlueZ-owner change.
  */
 
 #include "dmn-bluez-gatt-client.hpp"
@@ -66,7 +67,8 @@ auto remainingTimeout(std::chrono::steady_clock::time_point deadline)
 
 auto makeDbusConfig(const Dmn_BluezClientConfig &config)
     -> Dmn_DbusClientConfig {
-  Dmn_DbusClientConfig result;
+  Dmn_DbusClientConfig result{};
+
   result.limits = config.limits;
   result.bus_kind = config.test_bus_address.empty() ? Dmn_DbusBusKind::System
                                                     : Dmn_DbusBusKind::Address;
@@ -107,7 +109,7 @@ auto interface(const Dmn_DbusValue &interfaces,
 
 auto stringProperty(const Dmn_DbusValue &props,
                     std::string_view name) -> std::optional<std::string> {
-  const auto *value = property(props, name);
+  const auto *value{property(props, name)};
   if (value == nullptr || value->signature() != "s") {
     return std::nullopt;
   }
@@ -117,7 +119,7 @@ auto stringProperty(const Dmn_DbusValue &props,
 
 auto boolProperty(const Dmn_DbusValue &props,
                   std::string_view name) -> std::optional<bool> {
-  const auto *value = property(props, name);
+  const auto *value{property(props, name)};
   if (value == nullptr || value->signature() != "b") {
     return std::nullopt;
   }
@@ -152,14 +154,15 @@ class Dmn_BluezGattClient::Impl
     : public std::enable_shared_from_this<Dmn_BluezGattClient::Impl> {
 public:
   struct NotificationState {
-    std::mutex mutex;
-    NotificationHandler handler;
+    std::mutex mutex{};
+    NotificationHandler handler{};
     Dmn_DbusSubscription property_subscription;
     Dmn_DbusSubscription owner_subscription;
     Dmn_DbusSubscription object_subscription;
     bool invalidated{};
     bool started{};
-    std::string path;
+    bool stopping{};
+    std::string path{};
   };
 
   explicit Impl(const Dmn_BluezClientConfig &config)
@@ -208,12 +211,14 @@ public:
     }
 
     const auto resolved{result->front().asVariant().asBool()};
+
     if (remaining() <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "GATT operation deadline expired while reading device state"));
     }
 
     const auto connectedTimeout{remaining()};
+
     if (connectedTimeout <= std::chrono::milliseconds::zero()) {
       return std::unexpected(timeoutError(
           "GATT operation deadline expired while reading device state"));
@@ -223,6 +228,7 @@ public:
         std::string{kBluez}, deviceId, std::string{kProperties}, "Get",
         {Dmn_DbusValue{std::string{kDevice}}, Dmn_DbusValue{"Connected"}},
         connectedTimeout)};
+
     if (!connectedResult) {
       return std::unexpected(mapError(connectedResult.error()));
     }
@@ -258,14 +264,16 @@ public:
 
     const auto deadline{std::chrono::steady_clock::now() + timeout};
     const auto remaining{[&] { return remainingTimeout(deadline); }};
+
     struct WaitState {
-      std::mutex mutex;
-      std::condition_variable condition;
-      std::optional<bool> connected;
-      std::optional<bool> resolved;
-      std::optional<Dmn_GattError> failure;
+      std::mutex mutex{};
+      std::condition_variable condition{};
+      std::optional<bool> connected{};
+      std::optional<bool> resolved{};
+      std::optional<Dmn_GattError> failure{};
       bool observedConnectionChange{};
     };
+
     auto state{std::make_shared<WaitState>()};
     const auto propertiesTimeout{remaining()};
     if (propertiesTimeout <= std::chrono::milliseconds::zero()) {
@@ -499,7 +507,7 @@ public:
                     "BlueZ object tree contains a non-path key"));
         }
 
-        const auto &path = pathValue.asObjectPath();
+        const auto &path{pathValue.asObjectPath()};
         if (const auto *props = interface(interfaces, kGattService)) {
           const auto parent{property(*props, "Device")};
           if (parent == nullptr || parent->signature() != "o") {
@@ -537,7 +545,7 @@ public:
           }
 
           const auto uuid{stringProperty(*props, "UUID")};
-          const auto *flagsValue = property(*props, "Flags");
+          const auto *flagsValue{property(*props, "Flags")};
           if (!uuid || flagsValue == nullptr ||
               flagsValue->signature() != "as") {
             return std::unexpected(error(
@@ -570,7 +578,7 @@ public:
       std::vector<Dmn_GattService> result;
       result.reserve(services.size());
       for (auto &entry : services) {
-        auto &service = entry.second;
+        auto &service{entry.second};
         std::sort(service.characteristics.begin(),
                   service.characteristics.end(),
                   [](const auto &left, const auto &right) {
@@ -682,7 +690,7 @@ public:
             return;
           }
 
-          Dmn_GattEvent event;
+          Dmn_GattEvent event{};
           bool deliver{};
 
           {
@@ -694,10 +702,11 @@ public:
 
             if (path == characteristicId &&
                 arguments[0].asString() == kGattCharacteristic) {
-              const auto *value = property(arguments[1], "Value");
+              const auto *value{property(arguments[1], "Value")};
               if (value != nullptr && value->signature() == "ay") {
                 event.kind = Dmn_GattEvent::Kind::ValueChanged;
                 event.value = value->asByteArray();
+
                 deliver = true;
               }
             } else if (path == deviceId && arguments[0].asString() == kDevice) {
@@ -705,10 +714,11 @@ public:
               const auto resolved{
                   boolProperty(arguments[1], "ServicesResolved")};
               if ((connected && !*connected) || (resolved && !*resolved)) {
-                state->invalidated = true;
                 event.kind = Dmn_GattEvent::Kind::Invalidated;
                 event.message =
                     "BlueZ device disconnected or GATT services changed";
+
+                state->invalidated = true;
                 deliver = true;
               }
             }
@@ -805,7 +815,7 @@ public:
             return;
           }
 
-          const auto &removedPath = arguments[0].asObjectPath();
+          const auto &removedPath{arguments[0].asObjectPath()};
           if (removedPath != characteristicId && removedPath != deviceId &&
               !pathWithinDevice(deviceId, removedPath)) {
             return;
@@ -945,29 +955,31 @@ public:
 
   auto stopNotify(const std::shared_ptr<NotificationState> &state)
       -> Dmn_GattResult {
-    bool started{};
-    bool invalidated{};
-
     {
       std::lock_guard lock{state->mutex};
 
-      started = state->started;
-      invalidated = state->invalidated;
+      if (!state->started || state->invalidated || state->stopping) {
+        return {};
+      }
+
+      state->stopping = true;
     }
 
-    if (started && !invalidated) {
-      auto result{m_dbus.call(std::string{kBluez}, state->path,
-                              std::string{kGattCharacteristic}, "StopNotify",
-                              {})};
-      if (!result) {
-        return std::unexpected(mapError(result.error()));
-      }
+    auto result{m_dbus.call(std::string{kBluez}, state->path,
+                            std::string{kGattCharacteristic}, "StopNotify",
+                            {})};
+    if (!result) {
+      std::lock_guard lock{state->mutex};
+      state->stopping = false;
+
+      return std::unexpected(mapError(result.error()));
     }
 
     {
       std::lock_guard lock{state->mutex};
 
       state->started = false;
+      state->stopping = false;
     }
 
     state->property_subscription.cancel();

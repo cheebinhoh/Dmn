@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-ancs-client.hpp
- * @brief Public ANCS values and backend-neutral protocol parsing primitives.
+ * @brief Public ANCS session API, values, and parser primitives.
  *
  * Overview
  * --------

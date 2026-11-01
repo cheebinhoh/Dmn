@@ -38,7 +38,10 @@ public:
   explicit Dmn_BluezGattClient(const Dmn_BluezClientConfig &config = {});
 
   /**
-   * @brief Stop backend work and release the client-owned D-Bus connection.
+   * @brief Release this wrapper's backend ownership.
+   *
+   * Active notification tokens retain backend resources until they are
+   * stopped or destroyed.
    */
   ~Dmn_BluezGattClient() override;
 
