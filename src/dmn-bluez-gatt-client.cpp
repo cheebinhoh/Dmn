@@ -7,7 +7,8 @@
  * The implementation translates the backend-neutral GATT contract into
  * bounded BlueZ property/method calls. Discovery returns owned snapshots;
  * notification subscriptions retain their D-Bus client and invalidate on
- * device, characteristic, or BlueZ-owner changes.
+ * device disconnection or service-tree changes, selected-device object
+ * removal, or a BlueZ-owner change.
  */
 
 #include "dmn-bluez-gatt-client.hpp"
@@ -957,7 +958,6 @@ public:
     {
       std::lock_guard lock{state->mutex};
 
-      // If already stopped, invalid, or currently being stopped, exit early
       if (!state->started || state->invalidated || state->stopping) {
         return {};
       }
@@ -969,7 +969,6 @@ public:
                             std::string{kGattCharacteristic}, "StopNotify",
                             {})};
     if (!result) {
-      // Optional: Reset `stopping` if the call failed so it can be retried
       std::lock_guard lock{state->mutex};
       state->stopping = false;
 

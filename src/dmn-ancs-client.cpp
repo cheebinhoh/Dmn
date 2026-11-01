@@ -2,7 +2,7 @@
  * Copyright © 2026 Chee Bin HOH. All rights reserved.
  *
  * @file dmn-ancs-client.cpp
- * @brief Bounded ANCS Notification Source and Data Source parsing.
+ * @brief ANCS session lifecycle, notifications, and bounded parsing.
  */
 
 #include "dmn-ancs-client.hpp"
