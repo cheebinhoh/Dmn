@@ -36,7 +36,14 @@
   <releases>
     <release version="0.9.2" date="2026-11-01" type="development">
       <description>
-        <p>Initial development release of the native COSMIC frontend, with Bluetooth device selection, explicit connection, ANCS monitoring, and an in-memory notification feed.</p>
+        <p>Introducing Dmn Bluetooth, a native COSMIC desktop app for discovering and monitoring Bluetooth devices that expose Apple Notification Center Service (ANCS).</p>
+        <ul>
+          <li>Browse BlueZ-known and nearby Bluetooth devices, save device selections, and explicitly connect or disconnect.</li>
+          <li>Start and stop ANCS monitoring for eligible devices; saved selections and monitoring choices are restored when the app restarts.</li>
+          <li>Search and sort devices, and review a searchable notification-event feed with device and event filters.</li>
+          <li>Optionally show generic desktop alerts for new notifications. Alerts are enabled by default and do not include device names or notification text.</li>
+        </ul>
+        <p>Requirements and limitations: Linux with BlueZ and a COSMIC desktop session; monitoring requires a paired, connected ANCS-capable device. The feed is kept in memory for the current session and shows events received while monitoring; it does not retrieve complete notification history. Bluetooth adapter behavior and simultaneous monitoring of multiple devices depend on the supported system and devices.</p>
       </description>
     </release>
   </releases>
