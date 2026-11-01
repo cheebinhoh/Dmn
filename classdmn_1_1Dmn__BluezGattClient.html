@@ -122,9 +122,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7c2abaef10a7366a7aae59da74ecf42f" id="r_a7c2abaef10a7366a7aae59da74ecf42f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezGattClient.html#a7c2abaef10a7366a7aae59da74ecf42f">Dmn_BluezGattClient</a> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="structdmn_1_1Dmn__BluezClientConfig.html">Dmn_BluezClientConfig</a> &amp;<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">config</a>={})</td></tr>
 <tr class="memdesc:a7c2abaef10a7366a7aae59da74ecf42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to the system bus or an explicitly configured test bus.  <br /></td></tr>
 <tr class="separator:a7c2abaef10a7366a7aae59da74ecf42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21bbcfc7eca8ab9ec3717cf3b71aa2cc" id="r_a21bbcfc7eca8ab9ec3717cf3b71aa2cc"><td class="memItemLeft" align="right" valign="top"><a id="a21bbcfc7eca8ab9ec3717cf3b71aa2cc" name="a21bbcfc7eca8ab9ec3717cf3b71aa2cc"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>~Dmn_BluezGattClient</b> () <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
-<tr class="memdesc:a21bbcfc7eca8ab9ec3717cf3b71aa2cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop backend work and release the client-owned D-Bus connection. <br /></td></tr>
+<tr class="memitem:a21bbcfc7eca8ab9ec3717cf3b71aa2cc" id="r_a21bbcfc7eca8ab9ec3717cf3b71aa2cc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classdmn_1_1Dmn__BluezGattClient.html#a21bbcfc7eca8ab9ec3717cf3b71aa2cc">~Dmn_BluezGattClient</a> () <a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">override</a></td></tr>
+<tr class="memdesc:a21bbcfc7eca8ab9ec3717cf3b71aa2cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release this wrapper's backend ownership.  <br /></td></tr>
 <tr class="separator:a21bbcfc7eca8ab9ec3717cf3b71aa2cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09ee391f6a3572a35556f10262b1f796" id="r_a09ee391f6a3572a35556f10262b1f796"><td class="memItemLeft" align="right" valign="top"><a id="a09ee391f6a3572a35556f10262b1f796" name="a09ee391f6a3572a35556f10262b1f796"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Dmn_BluezGattClient</b> (<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">const</a> <a class="el" href="classdmn_1_1Dmn__BluezGattClient.html">Dmn_BluezGattClient</a> &amp;)=<a class="el" href="dmn-ancs-client_8hpp.html#a6e026d1a66ed5eb41b5bb294b6968a46">delete</a></td></tr>
@@ -225,6 +224,34 @@ Additional Inherited Members</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a21bbcfc7eca8ab9ec3717cf3b71aa2cc" name="a21bbcfc7eca8ab9ec3717cf3b71aa2cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21bbcfc7eca8ab9ec3717cf3b71aa2cc">&#9670;&#160;</a></span>~Dmn_BluezGattClient()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">dmn::Dmn_BluezGattClient::~Dmn_BluezGattClient </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Release this wrapper's backend ownership. </p>
+<p>Active notification tokens retain backend resources until they are stopped or destroyed. </p>
 
 </div>
 </div>

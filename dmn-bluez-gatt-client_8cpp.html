@@ -120,7 +120,7 @@ Classes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Remote GATT operations over BlueZ's D-Bus API. </p>
 <p>Copyright © 2026 Chee Bin HOH. All rights reserved.</p>
-<p>The implementation translates the backend-neutral GATT contract into bounded BlueZ property/method calls. Discovery returns owned snapshots; notification subscriptions retain their D-Bus client and invalidate on device, characteristic, or BlueZ-owner changes. </p>
+<p>The implementation translates the backend-neutral GATT contract into bounded BlueZ property/method calls. Discovery returns owned snapshots; notification subscriptions retain their D-Bus client and invalidate on device disconnection or service-tree changes, selected-device object removal, or a BlueZ-owner change. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
