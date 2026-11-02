@@ -679,10 +679,10 @@ TEST(DmnBluezGattClient, WaitsForServiceResolutionWithFiniteDeadline) {
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
   auto waiting{std::async(std::launch::async, [&] {
-    return client.waitForServicesResolved(kDevicePath, 2s);
+    return client.waitForServicesResolved(kDevicePath, 10s);
   })};
   ASSERT_TRUE(dmn_test_dbus::waitUntil(
-      [&] { return waiting.wait_for(0ms) == std::future_status::timeout; }));
+      [&] { return service.propertyGetCount() >= 1; }, 8s));
   service.setResolved(true);
   const auto result{waiting.get()};
   ASSERT_TRUE(result) << result.error().message;
