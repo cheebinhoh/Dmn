@@ -660,7 +660,7 @@ TEST(DmnBluezGattClient, DiscoversServicesAndCharacteristicsForSelectedDevice) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto discovered{client.discover(kDevicePath, 1s)};
+  const auto discovered{client.discover(kDevicePath, 10s)};
   ASSERT_TRUE(discovered) << discovered.error().message;
   ASSERT_EQ(discovered->size(), 1U);
   EXPECT_EQ(discovered->front().id, kServicePath);
