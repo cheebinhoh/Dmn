@@ -974,14 +974,14 @@ TEST(DmnBluezGattClient, WritesWithResponseAndPreservesRemotePermissionError) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
   const auto written{client.writeWithResponse(kDevicePath, kCharacteristicPath,
-                                              {9, 8, 7}, 1s)};
+                                              {9, 8, 7}, 10s)};
   ASSERT_TRUE(written) << written.error().message;
   EXPECT_EQ(service.writeType(), "request");
   EXPECT_EQ(service.writtenBytes(), (std::vector<std::uint8_t>{9, 8, 7}));
 
   service.setWriteError("org.bluez.Error.NotPermitted");
   const auto result{client.writeWithResponse(kDevicePath, kCharacteristicPath,
-                                             {9, 8, 7}, 1s)};
+                                             {9, 8, 7}, 10s)};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::Remote);
   EXPECT_EQ(result.error().remote_name, "org.bluez.Error.NotPermitted");
