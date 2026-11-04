@@ -957,8 +957,8 @@ void aboutAction(GSimpleAction *, GVariant *, gpointer userData) {
   gtk_box_append(
       GTK_BOX(content),
       makeAboutSection(state, "Links",
-                       {{"Repository", "https://github.com/cheebinhoh/Dmn"},
-                        {"Issues", "https://github.com/cheebinhoh/Dmn/issues"},
+                       {{"Repository", "https://github.com/cheebinhoh/dmn"},
+                        {"Issues", "https://github.com/cheebinhoh/dmn/issues"},
                         {"Email", "mailto:CheeBin.Hoh@gmail.com"}}));
   gtk_box_append(
       GTK_BOX(content),
@@ -969,7 +969,7 @@ void aboutAction(GSimpleAction *, GVariant *, gpointer userData) {
       makeAboutSection(
           state, "License",
           {{"GPL-3.0-only",
-            "https://github.com/cheebinhoh/Dmn?tab=GPL-3.0-1-ov-file"}}));
+            "https://github.com/cheebinhoh/dmn?tab=GPL-3.0-1-ov-file"}}));
 
   auto *comments = makeLabel("Bluetooth device and ANCS notification monitor.");
   gtk_label_set_justify(GTK_LABEL(comments), GTK_JUSTIFY_CENTER);

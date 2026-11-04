@@ -12,8 +12,8 @@
   <description>
     <p>Native COSMIC frontend for Dmn's BlueZ and Apple Notification Center Service monitoring.</p>
   </description>
-  <url type="homepage">https://github.com/cheebinhoh/Dmn</url>
-  <url type="bugtracker">https://github.com/cheebinhoh/Dmn/issues</url>
+  <url type="homepage">https://github.com/cheebinhoh/dmn</url>
+  <url type="bugtracker">https://github.com/cheebinhoh/dmn/issues</url>
   <categories>
     <category>Utility</category>
   </categories>
@@ -26,11 +26,11 @@
   <screenshots>
     <screenshot type="default">
       <caption>Monitor Bluetooth devices and review incoming notifications.</caption>
-      <image type="source" width="1920" height="1020">https://raw.githubusercontent.com/cheebinhoh/Dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth.png</image>
+      <image type="source" width="1920" height="1020">https://raw.githubusercontent.com/cheebinhoh/dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth.png</image>
     </screenshot>
     <screenshot>
       <caption>View application information and recent monitoring activity.</caption>
-      <image type="source" width="966" height="954">https://raw.githubusercontent.com/cheebinhoh/Dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth-about.png</image>
+      <image type="source" width="966" height="954">https://raw.githubusercontent.com/cheebinhoh/dmn/0.9.2/src/app/gui/cosmic/data/screenshots/dmn-bluetooth-about.png</image>
     </screenshot>
   </screenshots>
   <releases>

@@ -232,11 +232,11 @@ impl cosmic::Application for App {
                 .comments("Bluetooth device and ANCS notification monitor.")
                 .copyright("© 2026 Chee Bin Hoh")
                 .license("GPL-3.0-only")
-                .license_url("https://github.com/cheebinhoh/Dmn?tab=GPL-3.0-1-ov-file")
+                .license_url("https://github.com/cheebinhoh/dmn?tab=GPL-3.0-1-ov-file")
                 .developers([("Chee Bin Hoh", "https://github.com/cheebinhoh")])
                 .links([
-                    ("Repository", "https://github.com/cheebinhoh/Dmn"),
-                    ("Issues", "https://github.com/cheebinhoh/Dmn/issues"),
+                    ("Repository", "https://github.com/cheebinhoh/dmn"),
+                    ("Issues", "https://github.com/cheebinhoh/dmn/issues"),
                     ("Email", "mailto:CheeBin.Hoh@gmail.com"),
                 ]),
             show_about: false,

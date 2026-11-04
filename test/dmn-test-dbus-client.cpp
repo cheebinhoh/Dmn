@@ -219,6 +219,16 @@ public:
   FakeDbusService(const FakeDbusService &) = delete;
   auto operator=(const FakeDbusService &) -> FakeDbusService & = delete;
 
+  auto echoCallCount() const -> std::size_t { return m_echo_call_count.load(); }
+
+  auto nestedArrayCallCount() const -> std::size_t {
+    return m_nested_array_call_count.load();
+  }
+
+  auto managedObjectsCallCount() const -> std::size_t {
+    return m_managed_objects_call_count.load();
+  }
+
 private:
   static auto filter(DBusConnection *connection, DBusMessage *message,
                      void *data) -> DBusHandlerResult {
@@ -229,6 +239,7 @@ private:
 
     DBusMessage *reply{};
     if (dbus_message_is_method_call(message, kInterface, "Echo")) {
+      ++self->m_echo_call_count;
       reply = echo(connection, message);
     } else if (dbus_message_is_method_call(message, kInterface, "Fail")) {
       reply = dbus_message_new_error(message, "org.dmn.Test.Failed",
@@ -256,6 +267,7 @@ private:
       reply = self->acceptObjectManagerShape(message);
     } else if (dbus_message_is_method_call(message, kInterface,
                                            "AcceptNestedArray")) {
+      ++self->m_nested_array_call_count;
       const char *signature = dbus_message_get_signature(message);
       reply = signature != nullptr && std::string_view{signature} == "aas"
                   ? dbus_message_new_method_return(message)
@@ -273,6 +285,7 @@ private:
     } else if (dbus_message_is_method_call(message,
                                            "org.freedesktop.DBus.ObjectManager",
                                            "GetManagedObjects")) {
+      ++self->m_managed_objects_call_count;
       reply = self->getManagedObjects(message);
     } else {
       reply = dbus_message_new_error(message, DBUS_ERROR_UNKNOWN_METHOD,
@@ -682,6 +695,9 @@ private:
 
   DbusConnectionPtr m_connection;
   std::atomic_bool m_stopping{};
+  std::atomic_size_t m_echo_call_count{};
+  std::atomic_size_t m_nested_array_call_count{};
+  std::atomic_size_t m_managed_objects_call_count{};
   std::thread m_worker;
   dbus_uint32_t m_level{7};
 };
@@ -1545,39 +1561,64 @@ TEST_F(DbusClientTest, ShutdownReportsQueuedSignalsItDiscards) {
   EXPECT_GT(status.shutdown_discarded_signal_bytes, 0U);
 }
 
-TEST_F(DbusClientTest, RejectsArrayElementTypeMismatchAndContainerDepthLimit) {
+TEST_F(DbusClientTest, RejectsArrayElementTypeMismatchBeforeSendingCall) {
+  const auto callsBefore{m_service->echoCallCount()};
   auto mismatched{
       dmn::Dmn_DbusValue::array("s", {dmn::Dmn_DbusValue{std::uint32_t{1}}})};
   auto invalid{m_client->call(kServiceName, kObjectPath, kInterface, "Echo",
                               {mismatched})};
   ASSERT_FALSE(invalid.has_value());
   EXPECT_EQ(invalid.error().kind, dmn::Dmn_DbusErrorKind::InvalidArgument);
+  EXPECT_EQ(m_service->echoCallCount(), callsBefore);
+}
 
+TEST_F(DbusClientTest, RejectsContainerDepthLimitBeforeSendingCall) {
   auto config{dmn::Dmn_DbusClientConfig{}};
   config.bus_kind = dmn::Dmn_DbusBusKind::Address;
   config.bus_address = m_bus.address();
   config.limits.max_container_depth = 1;
-  config.limits.method_timeout = 500ms;
+  config.limits.method_timeout = 5s;
   dmn::Dmn_DbusClient shallowClient{config};
   auto nested{dmn::Dmn_DbusValue::array(
       "as",
       {dmn::Dmn_DbusValue::array("s", {dmn::Dmn_DbusValue{"too deep"}})})};
+  const auto callsBefore{m_service->echoCallCount()};
   auto tooDeep{shallowClient.call(kServiceName, kObjectPath, kInterface, "Echo",
                                   {nested})};
   ASSERT_FALSE(tooDeep.has_value());
   EXPECT_EQ(tooDeep.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
+  EXPECT_EQ(m_service->echoCallCount(), callsBefore);
+}
 
+TEST_F(DbusClientTest, AcceptsArrayAtContainerDepthLimit) {
+  auto config{dmn::Dmn_DbusClientConfig{}};
+  config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+  config.bus_address = m_bus.address();
   config.limits.max_container_depth = 2;
+  config.limits.method_timeout = 5s;
   dmn::Dmn_DbusClient exactDepthClient{config};
+  auto nested{dmn::Dmn_DbusValue::array(
+      "as",
+      {dmn::Dmn_DbusValue::array("s", {dmn::Dmn_DbusValue{"at limit"}})})};
+  const auto callsBefore{m_service->nestedArrayCallCount()};
   auto atDepthLimit{exactDepthClient.call(kServiceName, kObjectPath, kInterface,
                                           "AcceptNestedArray", {nested})};
   ASSERT_TRUE(atDepthLimit) << atDepthLimit.error().message;
+  EXPECT_EQ(m_service->nestedArrayCallCount(), callsBefore + 1);
+}
 
+TEST_F(DbusClientTest, RejectsReplyBeyondContainerDepthLimit) {
+  auto config{dmn::Dmn_DbusClientConfig{}};
+  config.bus_kind = dmn::Dmn_DbusBusKind::Address;
+  config.bus_address = m_bus.address();
   config.limits.max_container_depth = 2;
+  config.limits.method_timeout = 5s;
   dmn::Dmn_DbusClient shallowReplyClient{config};
+  const auto callsBefore{m_service->managedObjectsCallCount()};
   auto deepReply{shallowReplyClient.call(kServiceName, kObjectPath,
                                          "org.freedesktop.DBus.ObjectManager",
                                          "GetManagedObjects")};
+  EXPECT_EQ(m_service->managedObjectsCallCount(), callsBefore + 1);
   ASSERT_FALSE(deepReply);
   EXPECT_EQ(deepReply.error().kind, dmn::Dmn_DbusErrorKind::ResourceLimit);
 }

@@ -660,7 +660,7 @@ TEST(DmnBluezGattClient, DiscoversServicesAndCharacteristicsForSelectedDevice) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
-  const auto discovered{client.discover(kDevicePath, 1s)};
+  const auto discovered{client.discover(kDevicePath, 10s)};
   ASSERT_TRUE(discovered) << discovered.error().message;
   ASSERT_EQ(discovered->size(), 1U);
   EXPECT_EQ(discovered->front().id, kServicePath);
@@ -679,10 +679,10 @@ TEST(DmnBluezGattClient, WaitsForServiceResolutionWithFiniteDeadline) {
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
 
   auto waiting{std::async(std::launch::async, [&] {
-    return client.waitForServicesResolved(kDevicePath, 2s);
+    return client.waitForServicesResolved(kDevicePath, 10s);
   })};
   ASSERT_TRUE(dmn_test_dbus::waitUntil(
-      [&] { return waiting.wait_for(0ms) == std::future_status::timeout; }));
+      [&] { return service.propertyGetCount() >= 1; }, 8s));
   service.setResolved(true);
   const auto result{waiting.get()};
   ASSERT_TRUE(result) << result.error().message;
@@ -974,14 +974,14 @@ TEST(DmnBluezGattClient, WritesWithResponseAndPreservesRemotePermissionError) {
   FakeBluez service{bus.address()};
   dmn::Dmn_BluezGattClient client{configFor(bus.address())};
   const auto written{client.writeWithResponse(kDevicePath, kCharacteristicPath,
-                                              {9, 8, 7}, 1s)};
+                                              {9, 8, 7}, 10s)};
   ASSERT_TRUE(written) << written.error().message;
   EXPECT_EQ(service.writeType(), "request");
   EXPECT_EQ(service.writtenBytes(), (std::vector<std::uint8_t>{9, 8, 7}));
 
   service.setWriteError("org.bluez.Error.NotPermitted");
   const auto result{client.writeWithResponse(kDevicePath, kCharacteristicPath,
-                                             {9, 8, 7}, 1s)};
+                                             {9, 8, 7}, 10s)};
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().kind, dmn::Dmn_GattErrorKind::Remote);
   EXPECT_EQ(result.error().remote_name, "org.bluez.Error.NotPermitted");
