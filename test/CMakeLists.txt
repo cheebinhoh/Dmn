@@ -364,6 +364,7 @@ if (ENABLE_APP_BLUETOOTH_GTK)
   if (APPSTREAMCLI_EXECUTABLE)
     add_test(NAME dmn-bluetooth-gtk-appstream
                COMMAND "${APPSTREAMCLI_EXECUTABLE}" validate
+                       --no-net
                        "${CMAKE_BINARY_DIR}/src/app/gui/gtk/${DMN_BLUETOOTH_GTK_APP_ID}.metainfo.xml"
     )
 
