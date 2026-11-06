@@ -12,8 +12,10 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -46,6 +48,65 @@ auto makeConfig() -> dmn::Dmn_DbusConfig {
 
   return config;
 }
+
+class BlockingInput final : public dmn::Dmn_Io<std::string> {
+public:
+  auto read() -> std::optional<std::string> override {
+    std::unique_lock lock{m_mutex};
+    m_stopped.wait(lock, [this] { return m_shutdown; });
+    return std::nullopt;
+  }
+
+  void write([[maybe_unused]] const std::string &item) override {}
+  void write([[maybe_unused]] std::string &&item) override {}
+
+  void shutdown() override {
+    {
+      std::lock_guard lock{m_mutex};
+      m_shutdown = true;
+    }
+    m_stopped.notify_all();
+  }
+
+private:
+  std::condition_variable m_stopped;
+  std::mutex m_mutex;
+  bool m_shutdown{};
+};
+
+class FailingOutput final : public dmn::Dmn_Io<std::string> {
+public:
+  auto read() -> std::optional<std::string> override { return std::nullopt; }
+
+  void write([[maybe_unused]] const std::string &item) override {
+    ++m_attempts;
+    throw std::runtime_error{"simulated output failure"};
+  }
+
+  void write([[maybe_unused]] std::string &&item) override {
+    ++m_attempts;
+    throw std::runtime_error{"simulated output failure"};
+  }
+
+  [[nodiscard]] auto attempts() const -> unsigned int { return m_attempts; }
+
+private:
+  std::atomic<unsigned int> m_attempts{};
+};
+
+class RecordingOutput final : public dmn::Dmn_Io<std::string> {
+public:
+  auto read() -> std::optional<std::string> override { return std::nullopt; }
+
+  void write([[maybe_unused]] const std::string &item) override { ++m_writes; }
+
+  void write([[maybe_unused]] std::string &&item) override { ++m_writes; }
+
+  [[nodiscard]] auto writes() const -> unsigned int { return m_writes; }
+
+private:
+  std::atomic<unsigned int> m_writes{};
+};
 
 TEST(DmnDbusFacadeTest, RejectsInvalidConfigAndExplicitAddress) {
   auto config{makeConfig()};
@@ -297,6 +358,34 @@ TEST(DmnDbusFacadeTest, StatusReportsInputAndOutputDisconnect) {
             std::make_error_code(std::errc::connection_reset));
   EXPECT_EQ(disconnectedStatus.output.terminal_error,
             std::make_error_code(std::errc::connection_reset));
+
+  PrivateBus replacementBus;
+  ASSERT_TRUE(replacementBus.valid());
+  auto replacementConfig{makeConfig()};
+  replacementConfig.bus_address = replacementBus.address();
+  auto replacementOutput{
+      std::make_shared<dmn::Dmn_DbusOutput>(replacementConfig)};
+  ASSERT_TRUE(facade.setOutputHandler(replacementOutput));
+
+  const auto recoveredOutputStatus{facade.status().output};
+  EXPECT_FALSE(recoveredOutputStatus.terminal_error);
+  EXPECT_EQ(recoveredOutputStatus.messages_written, 0U);
+}
+
+TEST(DmnDbusFacadeTest, ReplacesFailedOutputWithoutShuttingDownNode) {
+  auto input{std::make_shared<BlockingInput>()};
+  auto failedOutput{std::make_shared<FailingOutput>()};
+  dmn::Dmn_DMesgNet node{"replace-output", input, failedOutput};
+
+  ASSERT_TRUE(
+      waitUntil([&failedOutput] { return failedOutput->attempts() == 1; }));
+  std::this_thread::sleep_for(100ms);
+  EXPECT_EQ(failedOutput->attempts(), 1U);
+
+  auto replacement{std::make_shared<RecordingOutput>()};
+  ASSERT_TRUE(node.setOutputHandler(replacement));
+  ASSERT_TRUE(waitUntil([&replacement] { return replacement->writes() > 0; }));
+  EXPECT_EQ(failedOutput->attempts(), 1U);
 }
 
 } // namespace

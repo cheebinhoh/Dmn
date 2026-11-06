@@ -47,6 +47,7 @@
 
 #include <cassert>
 #include <chrono>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -138,7 +139,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
     Dmn_DMesg::closeHandler(m_subscript_handler);
   }
 
-  if (m_output_handler) {
+  if (hasOutputHandler()) {
     // Before destroying Dmn_DMesgNet, send a final heartbeat and relinquish
     // mastership if this node is the master.
     //
@@ -159,7 +160,7 @@ Dmn_DMesgNet::~Dmn_DMesgNet() noexcept try {
     std::string serialized_string{};
     this->m_sys.SerializeToString(&serialized_string);
 
-    m_output_handler->write(serialized_string);
+    writeOutput(serialized_string, true);
   }
 
 } catch (...) {
@@ -197,11 +198,15 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 break;
               }
 
-              std::cerr << "Dmn_DMesgNet[" << m_name
-                        << "]: input read failed: " << error.what() << '\n';
               if (error.code() == std::errc::message_size) {
+                std::cerr << "Dmn_DMesgNet[" << m_name
+                          << "]: input read failed: " << error.what() << '\n';
+
                 continue;
               }
+
+              std::cerr << "Dmn_DMesgNet[" << m_name
+                        << "]: input read failed: " << error.what() << '\n';
 
               break;
             }
@@ -233,8 +238,14 @@ void Dmn_DMesgNet::createInputHandlerProc() {
 
               if (dmesgpb_read.type() == dmn::DMesgTypePb::sys) {
                 DMN_ASYNC_CALL_WITH_CAPTURE(
-                    { this->reconciliateDMesgPbSys(dmesgpb_read); }, this,
-                    dmesgpb_read);
+                    {
+                      if (m_shutdown.load(std::memory_order_acquire)) {
+                        return;
+                      }
+
+                      this->reconciliateDMesgPbSys(dmesgpb_read);
+                    },
+                    this, dmesgpb_read);
               } else if (dmesgpb_read.conflict()) {
                 auto lastMesgPb{
                     this->getTopicLastMessage(dmesgpb_read.topic())};
@@ -242,6 +253,10 @@ void Dmn_DMesgNet::createInputHandlerProc() {
 
                 DMN_ASYNC_CALL_WITH_CAPTURE(
                     {
+                      if (m_shutdown.load(std::memory_order_acquire)) {
+                        return;
+                      }
+
                       if (m_is_master) {
                         std::string serialized_string{};
 
@@ -249,7 +264,7 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                         DMESG_PB_SET_MSG_FORCE(dmesgpbForce, true);
 
                         dmesgpbForce.SerializeToString(&serialized_string);
-                        m_output_handler->write(serialized_string);
+                        writeOutput(serialized_string);
                       }
                     },
                     this, dmesgpbForce = *lastMesgPb);
@@ -258,6 +273,10 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 if (ok) {
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
+                        if (m_shutdown.load(std::memory_order_acquire)) {
+                          return;
+                        }
+
                         m_topic_last_dmesgpb[dmesgpb_read.topic()] =
                             dmesgpb_read;
                       },
@@ -281,6 +300,10 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 if (ok) {
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
+                        if (m_shutdown.load(std::memory_order_acquire)) {
+                          return;
+                        }
+
                         m_topic_last_dmesgpb[dmesgpb_read.topic()] =
                             dmesgpb_read;
                       },
@@ -288,17 +311,23 @@ void Dmn_DMesgNet::createInputHandlerProc() {
                 } else {
                   DMN_ASYNC_CALL_WITH_CAPTURE(
                       {
+                        if (m_shutdown.load(std::memory_order_acquire)) {
+                          return;
+                        }
+
                         DMESG_PB_SET_MSG_CONFLICT(dmesgpb_read, true);
 
                         std::string serialized_string{};
                         dmesgpb_read.SerializeToString(&serialized_string);
-                        m_output_handler->write(serialized_string);
+                        if (!writeOutput(serialized_string)) {
+                          return;
+                        }
 
                         DMESG_PB_SET_MSG_PLAYBACK(dmesgpbForce, true);
                         DMESG_PB_SET_MSG_FORCE(dmesgpbForce, true);
 
                         dmesgpbForce.SerializeToString(&serialized_string);
-                        m_output_handler->write(serialized_string);
+                        writeOutput(serialized_string);
                       },
                       this, dmesgpb_read, dmesgpbForce = *lastMesgPb);
                 }
@@ -340,9 +369,13 @@ void Dmn_DMesgNet::createSubscriptHandler() {
         return dmesgPb.sourcewritehandleridentifier() != this->m_name;
       },
       [this](dmn::DMesgPb dmesgPbWrite) -> void {
-        if (m_output_handler) {
+        if (hasOutputHandler()) {
           DMN_ASYNC_CALL_WITH_CAPTURE(
               {
+                if (m_shutdown.load(std::memory_order_acquire)) {
+                  return;
+                }
+
                 std::string serialized_string{};
 
                 // set the source, so that we can skip it if the
@@ -363,7 +396,9 @@ void Dmn_DMesgNet::createSubscriptHandler() {
                   }
 
                   dmesgPbWrite.SerializeToString(&serialized_string);
-                  m_output_handler->write(serialized_string);
+                  if (!writeOutput(serialized_string)) {
+                    return;
+                  }
 
                   if (dmesgPbWrite.type() != dmn::DMesgTypePb::sys) {
                     m_topic_last_dmesgpb[dmesgPbWrite.topic()] = dmesgPbWrite;
@@ -399,7 +434,7 @@ void Dmn_DMesgNet::createSubscriptHandler() {
  * Ready.
  */
 void Dmn_DMesgNet::createTimerProc() {
-  if (m_input_handler && m_output_handler) {
+  if (m_input_handler && hasOutputHandler()) {
     // Periodic heartbeat timer that drives master election.
     // When in MasterPending state the counter increments each tick; once it
     // reaches DMN_DMESGNET_MASTERPENDING_MAX_COUNTER the node self-elects as
@@ -410,7 +445,15 @@ void Dmn_DMesgNet::createTimerProc() {
     m_timer_proc = std::make_unique<dmn::Dmn_Timer<std::chrono::nanoseconds>>(
         std::chrono::nanoseconds(DMN_DMESGNET_HEARTBEAT_IN_NS),
         [this]() -> void {
+          if (m_shutdown.load(std::memory_order_acquire)) {
+            return;
+          }
+
           this->addExecTask([this]() -> void {
+            if (m_shutdown.load(std::memory_order_acquire)) {
+              return;
+            }
+
             if (this->m_sys.body().sys().self().state() ==
                 dmn::DMesgStatePb::MasterPending) {
               this->m_master_pending_counter++;
@@ -463,7 +506,7 @@ void Dmn_DMesgNet::createTimerProc() {
 
             // if self is a master, # of neighbor is increase,
             // let resend prior last message per topic.
-            if (m_output_handler && master &&
+            if (hasOutputHandler() && master &&
                 (m_number_of_neighbor <
                  this->m_sys.body().sys().nodelist().size())) {
               for (auto &topic_dmesgpb : m_topic_last_dmesgpb) {
@@ -474,7 +517,9 @@ void Dmn_DMesgNet::createTimerProc() {
 
                 std::string serialized_string{};
                 pb.SerializeToString(&serialized_string);
-                m_output_handler->write(serialized_string);
+                if (!writeOutput(serialized_string)) {
+                  return;
+                }
               }
             }
 
@@ -502,18 +547,20 @@ auto Dmn_DMesgNet::getLastTopicCacheInternal()
  * @brief Flush all queued outbound messages that were deferred while the node
  * was not yet ready (m_ready not set).
  *
- * Must only be called when m_ready is set and m_output_handler is non-null.
+ * Must only be called when m_ready is set and an output handler is installed.
  */
 void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
   assert(m_ready.test());
 
-  if (m_output_handler) {
+  if (hasOutputHandler() && !m_shutdown.load(std::memory_order_acquire)) {
     for (auto &p : m_topic_outbound_pending_dmesgpb) {
       for (auto &dmesgPb : p.second) {
         std::string serialized_string{};
 
         dmesgPb.SerializeToString(&serialized_string);
-        m_output_handler->write(serialized_string);
+        if (!writeOutput(serialized_string)) {
+          return;
+        }
 
         if (dmesgPb.type() != dmn::DMesgTypePb::sys) {
           m_topic_last_dmesgpb[dmesgPb.topic()] = dmesgPb;
@@ -523,6 +570,79 @@ void Dmn_DMesgNet::sendPendingOutboundQueueMessage() {
       p.second.clear();
     }
   }
+}
+
+auto Dmn_DMesgNet::writeOutput(const std::string &payload,
+                               bool duringShutdown) noexcept -> bool {
+  std::shared_ptr<Dmn_Io<std::string>> outputHandler;
+  std::uint64_t outputGeneration{};
+
+  {
+    std::lock_guard lock{m_output_mutex};
+
+    if (m_output_failed ||
+        (!duringShutdown && m_shutdown.load(std::memory_order_acquire))) {
+      return false;
+    }
+
+    outputHandler = m_output_handler;
+    outputGeneration = m_output_generation;
+  }
+
+  if (!outputHandler) {
+    return false;
+  }
+
+  const auto markOutputFailed = [this, outputGeneration]() {
+    std::lock_guard lock{m_output_mutex};
+
+    if (m_output_generation == outputGeneration) {
+      m_output_failed = true;
+    }
+  };
+
+  try {
+    outputHandler->write(payload);
+
+    return true;
+  } catch (const std::exception &error) {
+    markOutputFailed();
+
+    std::cerr << "Dmn_DMesgNet[" << m_name
+              << "]: output write failed: " << error.what() << '\n';
+  } catch (...) {
+    markOutputFailed();
+
+    std::cerr << "Dmn_DMesgNet[" << m_name
+              << "]: output write failed with a non-standard exception\n";
+  }
+
+  return false;
+}
+
+auto Dmn_DMesgNet::setOutputHandler(
+    std::shared_ptr<Dmn_Io<std::string>> outputHandler) -> bool {
+  if (m_shutdown.load(std::memory_order_acquire)) {
+    return false;
+  }
+
+  std::lock_guard lock{m_output_mutex};
+
+  if (m_shutdown.load(std::memory_order_acquire)) {
+    return false;
+  }
+
+  m_output_handler = std::move(outputHandler);
+  ++m_output_generation;
+  m_output_failed = false;
+
+  return true;
+}
+
+auto Dmn_DMesgNet::hasOutputHandler() const -> bool {
+  std::lock_guard lock{m_output_mutex};
+
+  return static_cast<bool>(m_output_handler) && !m_output_failed;
 }
 
 /**

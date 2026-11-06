@@ -15,6 +15,7 @@
 #endif
 
 #include <memory>
+#include <mutex>
 #include <new>
 #include <string_view>
 
@@ -54,6 +55,7 @@ struct Dmn_DMesgDbus::Impl {
   // input first, then sends the final best-effort heartbeat through output.
   std::shared_ptr<Dmn_DbusInput> input;
   std::shared_ptr<Dmn_DbusOutput> output;
+  mutable std::mutex endpoint_mutex;
   Dmn_DMesgNet node;
 };
 
@@ -86,8 +88,24 @@ void Dmn_DMesgDbus::resetConflictStateWithLastTopicMessage(
   m_impl->node.resetConflictStateWithLastTopicMessage(topic);
 }
 
+auto Dmn_DMesgDbus::setOutputHandler(
+    std::shared_ptr<Dmn_DbusOutput> outputHandler) -> bool {
+  std::lock_guard lock{m_impl->endpoint_mutex};
+
+  if (!m_impl->node.setOutputHandler(outputHandler)) {
+    return false;
+  }
+
+  m_impl->output = std::move(outputHandler);
+
+  return true;
+}
+
 auto Dmn_DMesgDbus::status() const -> Dmn_DMesgDbusStatus {
-  return Dmn_DMesgDbusStatus{m_impl->input->status(), m_impl->output->status()};
+  std::lock_guard lock{m_impl->endpoint_mutex};
+  return Dmn_DMesgDbusStatus{m_impl->input->status(),
+                             m_impl->output ? m_impl->output->status()
+                                            : Dmn_DbusIoStatus{}};
 }
 
 } // namespace dmn
