@@ -68,7 +68,9 @@
 #include "dmn-timer.hpp"
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <sys/time.h>
@@ -120,6 +122,18 @@ public:
   Dmn_DMesgNet &operator=(const Dmn_DMesgNet &obj) = delete;
   Dmn_DMesgNet(Dmn_DMesgNet &&obj) = delete;
   Dmn_DMesgNet &operator=(Dmn_DMesgNet &&obj) = delete;
+
+  /**
+   * @brief Replace the outbound transport and re-enable network writes.
+   *
+   * A failed output is not retried until this method installs a handler.
+   * Passing nullptr disables outbound writes. Any write already in progress
+   * may finish on the previous handler.
+   *
+   * @return false if shutdown has begun; otherwise true.
+   */
+  auto
+  setOutputHandler(std::shared_ptr<Dmn_Io<std::string>> outputHandler) -> bool;
 
 protected:
   /**
@@ -173,6 +187,15 @@ private:
   void sendPendingOutboundQueueMessage();
 
   /**
+   * @brief Send one payload unless shutdown or an output failure has disabled
+   *        outbound writes.
+   */
+  auto writeOutput(const std::string &payload,
+                   bool duringShutdown = false) noexcept -> bool;
+
+  [[nodiscard]] auto hasOutputHandler() const -> bool;
+
+  /**
    * Constructor-initialized members.
    */
   std::string m_name{}; ///< Instance name.
@@ -180,6 +203,9 @@ private:
       m_input_handler{}; ///< Inbound I/O handler.
   std::shared_ptr<Dmn_Io<std::string>>
       m_output_handler{}; ///< Outbound I/O handler.
+  mutable std::mutex m_output_mutex{};
+  std::uint64_t m_output_generation{};
+  bool m_output_failed{};
 
   /**
    * Internal runtime state and helper objects.

@@ -129,6 +129,16 @@ public:
   void resetConflictStateWithLastTopicMessage(std::string_view topic);
 
   /**
+   * @brief Replace the D-Bus output endpoint after a transport failure.
+   *
+   * The endpoint must be configured for the same signal routing and bus as
+   * its peers. Passing nullptr disables outbound writes.
+   *
+   * @return false if shutdown has begun; otherwise true.
+   */
+  auto setOutputHandler(std::shared_ptr<Dmn_DbusOutput> outputHandler) -> bool;
+
+  /**
    * @brief Return thread-safe input and output endpoint status snapshots.
    */
   [[nodiscard]] auto status() const -> Dmn_DMesgDbusStatus;
